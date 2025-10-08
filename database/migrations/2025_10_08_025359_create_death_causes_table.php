@@ -9,22 +9,20 @@ return new class extends Migration
     /**
      * Run the migrations.
      */
-    public function up(): void // ROLES
+    public function up(): void // CAUSAS DE MUERTE
     {
-        Schema::create('roles', function (Blueprint $table) {
+        Schema::create('death_causes', function (Blueprint $table) {
             $table->id(); // int PRIMARY KEY AUTO_INCREMENT
-            $table->string('name', 255); // varchar(255) NOT NULL 
+            $table->string('name', 255); // varchar(255) NOT NULL
             $table->timestamps(); // created_at y updated_at automáticamente
         });
     }
-
-
 
     /**
      * Reverse the migrations.
      */
     public function down(): void
     {
-        Schema::dropIfExists('roles');
+        Schema::dropIfExists('death_causes');
     }
 };
