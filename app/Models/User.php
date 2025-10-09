@@ -19,7 +19,15 @@ class User extends Authenticatable
      */
     protected $fillable = [
         'name',
+        'first_last_name',
+        'second_last_name',
         'email',
+        'phone',
+        'username',
+        'is_active',
+        'position_id',
+        'jurisdiction_id',
+        'role_id',
         'password',
     ];
 
@@ -28,9 +36,12 @@ class User extends Authenticatable
      *
      * @var list<string>
      */
-    protected $hidden = [
+    protected $hidden = [ // Protege datos sensibles en respuestas API
         'password',
-        'remember_token',
+        'remember_token',   // Token de sesión
+        'phone',            // Teléfono personal
+        'email',           // Email institucional
+        'username',        // Nombre de usuario
     ];
 
     /**
@@ -43,6 +54,56 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'is_active' => 'boolean',
         ];
+    }
+
+    /**
+     * Relationship: User belongs to Role
+     */
+
+    public function role()
+    {
+        return $this->belongsTo(Role::class);
+    }
+
+    /**
+     * Relationship: User belongs to Position
+     */
+    public function position()
+    {
+        return $this->belongsTo(Position::class);
+    }
+
+    /**
+     * Relationship: User belongs to Jurisdiction
+     */
+    public function jurisdiction()
+    {
+        return $this->belongsTo(Jurisdiction::class);
+    }
+
+    /**
+     * Relationship: User has many Publications
+     */
+    public function publications()
+    {
+        return $this->hasMany(Publication::class);
+    }
+
+    /**
+     * Relationship: User has many Comments
+     */
+    public function comments()
+    {
+        return $this->hasMany(PublicationComment::class);
+    }
+
+    /**
+     * Relationship: User has many Notifications
+     */
+    public function notifications()
+    {
+        return $this->hasMany(Notification::class);
     }
 }
