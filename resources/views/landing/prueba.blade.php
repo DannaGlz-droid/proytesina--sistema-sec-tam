@@ -7,5 +7,8 @@
 </head>
 <body>
     <h1>atenção atenção!!</h1>
+
+    <h1 class="text-4xl text-pink-600">¡Hola, pap!</h1>
+
 </body>
 </html>
