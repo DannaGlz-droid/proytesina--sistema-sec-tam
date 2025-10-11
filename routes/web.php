@@ -22,6 +22,15 @@ Route::view('/prueba', 'landing.prueba')->name('prueba');
 
 //---------------------------------------------------------
 
-Route::view('estadisticas/nuevo-registro', 'estadisticas.nuevo-registro')->name('nuevo-registro');
+// Estadísticas
+Route::view('estadisticas/registro', 'estadisticas.registro')->name('estadisticas.nuevo-registro');
+Route::view('estadisticas/actualizar-registro', 'estadisticas.actualizar-registro')->name('estadisticas.actualizar-registro');
 
+// Usuarios
+Route::view('usuario/gestion-de-usuarios/registro', 'usuario.gestion-de-usuarios.registro')->name('usuario.registro');
+Route::view('usuario/gestion-de-usuarios/actualizar-registro', 'usuario.gestion-de-usuarios.actualizar-registro')->name('usuario.actualizar-registro');
+Route::view('usuario/gestion-de-usuarios/actualizar-contrasena', 'usuario.gestion-de-usuarios.actualizar-contrasena')->name('usuario.actualizar-contrasena');
+
+// Reportes
+Route::view('reportes/registro/seguridad-vial', 'reportes.registro.seguridad-vial')->name('reportes.seguridad-vial');
 require __DIR__.'/auth.php';
