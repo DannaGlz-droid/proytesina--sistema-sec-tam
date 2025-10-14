@@ -32,5 +32,10 @@ Route::view('usuario/gestion-de-usuarios/actualizar-registro', 'usuario.gestion-
 Route::view('usuario/gestion-de-usuarios/actualizar-contrasena', 'usuario.gestion-de-usuarios.actualizar-contrasena')->name('usuario.actualizar-contrasena');
 
 // Reportes
+
+Route::view('reportes/hola', 'reportes.hola')->name('reportes.hola');
+
 Route::view('reportes/registro/seguridad-vial', 'reportes.registro.seguridad-vial')->name('reportes.seguridad-vial');
+Route::view('reportes/registro/observatorio-de-lesiones', 'reportes.registro.observatorio-de-lesiones')->name('reportes.observatorio-de-lesiones');
+Route::view('reportes/registro/alcoholimetria', 'reportes.registro.alcoholimetria')->name('reportes.alcoholimetria');
 require __DIR__.'/auth.php';

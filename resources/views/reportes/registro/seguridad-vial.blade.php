@@ -23,16 +23,13 @@
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-3 lg:gap-4">
                     <div class="space-y-3">
                         <div>
-                            <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1">Tipo de actividad *</label>
-                            <select class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200" name="tipo_actividad">
-                                <option value="">Seleccione el tipo de actividad</option>
-                                <option value="capacitacion">Capacitación</option>
-                                <option value="taller">Taller</option>
-                                <option value="conferencia">Conferencia</option>
-                                <option value="reunion">Reunión</option>
-                                <option value="evento">Evento especial</option>
-                            </select>
+                            <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1">Tema *</label>
+                            <input type="text" 
+                                   class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200" 
+                                   placeholder="Ej: Prevención de enfermedades"
+                                   value="{{ old('tema') }}">
                         </div>
+
                         <div>
                             <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1">Fecha de la actividad *</label>
                             <input type="date" 
@@ -49,12 +46,16 @@
                     </div>
                     
                     <div class="space-y-3">
-                        <div>
-                            <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1">Tema *</label>
-                            <input type="text" 
-                                   class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200" 
-                                   placeholder="Ej: Prevención de enfermedades"
-                                   value="{{ old('tema') }}">
+                         <div>
+                            <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1">Tipo de actividad *</label>
+                            <select class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200" name="tipo_actividad">
+                                <option value="">Seleccione el tipo de actividad</option>
+                                <option value="capacitacion">Capacitación</option>
+                                <option value="taller">Taller</option>
+                                <option value="conferencia">Conferencia</option>
+                                <option value="reunion">Reunión</option>
+                                <option value="evento">Evento especial</option>
+                            </select>
                         </div>
                         <div>
                             <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1">Participantes *</label>
