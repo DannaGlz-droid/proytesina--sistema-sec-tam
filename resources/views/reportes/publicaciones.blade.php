@@ -39,6 +39,7 @@
                         <label class="block text-xs font-semibold text-[#404041] mb-1 font-lora">Buscar</label>
                         <div class="relative">
                             <input type="text" placeholder="Títulos, usuarios..." class="w-full border border-[#404041] rounded-lg px-3 py-1.5 pl-9 text-xs focus:outline-none focus:ring-1 focus:ring-[#611132] focus:border-transparent">
+                            <!-- ICONO DE BÚSQUEDA CORREGIDO - POSICIÓN EXACTA -->
                             <i class="fas fa-search absolute left-3 top-2.5 text-gray-400 text-xs"></i>
                         </div>
                     </div>
@@ -96,8 +97,10 @@
                             <div class="flex justify-between items-start mb-4">
                                 <div class="text-gray-600 text-sm font-medium font-lora">sábado, 14 de octubre de 2023</div>
                                 <div class="relative">
+                                    <!-- ICONO DE COMENTARIO CON PUNTO ROJO MEJORADO -->
                                     <div class="relative w-5 h-5 flex items-center justify-center text-gray-500">
                                         <i class="fas fa-comment-alt text-sm"></i>
+                                        <!-- PUNTO ROJO PERFECTAMENTE POSICIONADO -->
                                         <div class="absolute -top-0.5 -right-0.5 w-2 h-2 bg-red-500 rounded-full border border-white"></div>
                                     </div>
                                 </div>
@@ -121,9 +124,10 @@
                             </div>
                         </div>
                         
+                        <!-- Línea separadora SUPERIOR - gray-300 -->
                         <div class="h-[1px] bg-gray-300 my-3"></div>
                         
-                        <!-- ARCHIVOS ADJUNTOS -->
+                        <!-- ARCHIVOS ADJUNTOS - MÁS GRANDE -->
                         <div class="flex-none">
                             <div class="bg-gray-50 p-4 rounded-lg border border-[#404041] cursor-pointer transition-all duration-300 hover:bg-gray-100 hover:translate-x-1">
                                 <div class="flex items-center gap-3">
@@ -141,9 +145,10 @@
                             </div>
                         </div>
                         
+                        <!-- Línea separadora INFERIOR - gray-300 -->
                         <div class="h-[1px] bg-gray-300 my-3"></div>
                         
-                        <!-- BOTONES -->
+                        <!-- BOTONES - ÁREA FIJA -->
                         <div class="flex-none">
                             <div class="flex justify-end gap-2">
                                 <button class="w-8 h-8 flex items-center justify-center rounded-lg border border-[#404041] text-[#404041] transition-all duration-300 hover:bg-[#404041] hover:text-white ver-detalle" 
@@ -176,6 +181,7 @@
                             <div class="flex justify-between items-start mb-4">
                                 <div class="text-gray-600 text-sm font-medium font-lora">viernes, 13 de octubre de 2023</div>
                                 <div class="relative">
+                                    <!-- ICONO DE COMENTARIO SIN PUNTO ROJO -->
                                     <div class="relative w-5 h-5 flex items-center justify-center text-gray-500">
                                         <i class="fas fa-comment-alt text-sm"></i>
                                     </div>
@@ -196,9 +202,10 @@
                             </div>
                         </div>
                         
+                        <!-- Línea separadora SUPERIOR - gray-300 -->
                         <div class="h-[1px] bg-gray-300 my-3"></div>
                         
-                        <!-- ARCHIVOS ADJUNTOS -->
+                        <!-- ARCHIVOS ADJUNTOS - MÁS GRANDE -->
                         <div class="flex-none">
                             <div class="bg-gray-50 p-4 rounded-lg border border-[#404041] cursor-pointer transition-all duration-300 hover:bg-gray-100 hover:translate-x-1">
                                 <div class="flex items-center gap-3">
@@ -216,9 +223,10 @@
                             </div>
                         </div>
                         
+                        <!-- Línea separadora INFERIOR - gray-300 -->
                         <div class="h-[1px] bg-gray-300 my-3"></div>
                         
-                        <!-- BOTONES -->
+                        <!-- BOTONES - MISMA POSICIÓN -->
                         <div class="flex-none">
                             <div class="flex justify-end gap-2">
                                 <button class="w-8 h-8 flex items-center justify-center rounded-lg border border-[#404041] text-[#404041] transition-all duration-300 hover:bg-[#404041] hover:text-white ver-detalle" 
@@ -244,15 +252,17 @@
                         </div>
                     </div>
 
-                    <!-- Reporte 3 - Alcoholimetría (CON BOTÓN ESPECIAL) -->
+                    <!-- Reporte 3 - Alcoholimetría -->
                     <div class="border border-[#404041] rounded-lg p-5 bg-white transition-all duration-300 hover:-translate-y-1 hover:shadow-lg group flex flex-col h-full relative">
                         <!-- CONTENIDO SUPERIOR - ÁREA FIJA -->
                         <div class="flex-grow">
                             <div class="flex justify-between items-start mb-4">
                                 <div class="text-gray-600 text-sm font-medium font-lora">jueves, 12 de octubre de 2023</div>
                                 <div class="relative">
+                                    <!-- ICONO DE COMENTARIO CON PUNTO ROJO MEJORADO -->
                                     <div class="relative w-5 h-5 flex items-center justify-center text-gray-500">
                                         <i class="fas fa-comment-alt text-sm"></i>
+                                        <!-- PUNTO ROJO PERFECTAMENTE POSICIONADO -->
                                         <div class="absolute -top-0.5 -right-0.5 w-2 h-2 bg-red-500 rounded-full border border-white"></div>
                                     </div>
                                 </div>
@@ -272,9 +282,10 @@
                             </div>
                         </div>
                         
+                        <!-- Línea separadora SUPERIOR - gray-300 -->
                         <div class="h-[1px] bg-gray-300 my-3"></div>
                         
-                        <!-- ARCHIVOS ADJUNTOS -->
+                        <!-- ARCHIVOS ADJUNTOS - MÁS GRANDE -->
                         <div class="flex-none">
                             <div class="bg-gray-50 p-4 rounded-lg border border-[#404041] cursor-pointer transition-all duration-300 hover:bg-gray-100 hover:translate-x-1">
                                 <div class="flex items-center gap-3">
@@ -292,33 +303,23 @@
                             </div>
                         </div>
                         
+                        <!-- Línea separadora INFERIOR - gray-300 -->
                         <div class="h-[1px] bg-gray-300 my-3"></div>
                         
-                        <!-- BOTONES - CON BOTÓN ESPECIAL PARA ALCOHOLIMETRÍA -->
+                        <!-- BOTONES - MISMA POSICIÓN -->
                         <div class="flex-none">
                             <div class="flex justify-end gap-2">
-                                <button class="ver-detalle-alcohol w-8 h-8 flex items-center justify-center rounded-lg border border-[#404041] text-[#404041] transition-all duration-300 hover:bg-[#404041] hover:text-white" 
+                                <button class="w-8 h-8 flex items-center justify-center rounded-lg border border-[#404041] text-[#404041] transition-all duration-300 hover:bg-[#404041] hover:text-white ver-detalle" 
                                         title="Ver detalles"
                                         data-titulo="Operativo alcoholimetría fin de semana"
                                         data-tipo="Alcoholimetría"
-                                        data-fecha-actividad="sábado, 14 de octubre de 2023"
-                                        data-fecha-publicacion="lunes, 16 de octubre de 2023"
+                                        data-actividad="Operativo"
                                         data-usuario="Ana Martínez"
+                                        data-fecha="jueves, 12 de octubre de 2023"
                                         data-estado="Finalizado"
-                                        data-descripcion="Operativo de alcoholimetría realizado durante el fin de semana en puntos estratégicos de la ciudad. Se realizaron 150 pruebas con resultados positivos en 12 casos. Reporte completo incluye estadísticas y recomendaciones para futuros operativos."
-                                        data-puntos-revision="8"
-                                        data-conductores-no-aptos="12"
-                                        data-pruebas-realizadas="150"
-                                        data-mujeres-no-aptas="3"
-                                        data-hombres-no-aptos="9"
-                                        data-automoviles-no-aptos="5"
-                                        data-motocicletas-no-aptas="4"
-                                        data-transporte-colectivo-no-apto="1"
-                                        data-transporte-individual-no-apto="2"
-                                        data-transporte-carga-no-apto="0"
-                                        data-emergencia-no-apto="0"
+                                        data-descripcion="Operativo de alcoholimetría realizado durante el fin de semana en puntos estratégicos de la ciudad. Se realizaron 150 pruebas con resultados positivos en 8 casos. Reporte completo incluye estadísticas y recomendaciones."
                                         data-archivos='["reporte_operativo.pdf", "estadisticas.xlsx", "fotos_evidencia.zip"]'
-                                        data-comentarios='[{"usuario": "Carlos Rodríguez", "fecha": "17/10/2023", "mensaje": "Excelente trabajo en el operativo. Los números son alentadores."}, {"usuario": "María González", "fecha": "18/10/2023", "mensaje": "¿Podemos extender el operativo al próximo fin de semana?"}]'>
+                                        data-comentarios='[{"usuario": "Roberto Sánchez", "fecha": "13/10/2023", "mensaje": "Buen trabajo en el operativo. Los números son alentadores."}, {"usuario": "Carlos Rodríguez", "fecha": "13/10/2023", "mensaje": "¿Podemos extender el operativo al próximo fin de semana?"}]'>
                                     <i class="fas fa-eye text-sm"></i>
                                 </button>
                                 <button class="w-8 h-8 flex items-center justify-center rounded-lg border border-[#C08400] text-[#C08400] transition-all duration-300 hover:bg-[#C08400] hover:text-white" title="Editar">
@@ -338,6 +339,7 @@
                             <div class="flex justify-between items-start mb-4">
                                 <div class="text-gray-600 text-sm font-medium font-lora">miércoles, 11 de octubre de 2023</div>
                                 <div class="relative">
+                                    <!-- ICONO DE COMENTARIO SIN PUNTO ROJO -->
                                     <div class="relative w-5 h-5 flex items-center justify-center text-gray-500">
                                         <i class="fas fa-comment-alt text-sm"></i>
                                     </div>
@@ -362,9 +364,10 @@
                             </div>
                         </div>
                         
+                        <!-- Línea separadora SUPERIOR - gray-300 -->
                         <div class="h-[1px] bg-gray-300 my-3"></div>
                         
-                        <!-- ARCHIVOS ADJUNTOS -->
+                        <!-- ARCHIVOS ADJUNTOS - MÁS GRANDE -->
                         <div class="flex-none">
                             <div class="bg-gray-50 p-4 rounded-lg border border-[#404041] cursor-pointer transition-all duration-300 hover:bg-gray-100 hover:translate-x-1">
                                 <div class="flex items-center gap-3">
@@ -382,9 +385,10 @@
                             </div>
                         </div>
                         
+                        <!-- Línea separadora INFERIOR - gray-300 -->
                         <div class="h-[1px] bg-gray-300 my-3"></div>
                         
-                        <!-- BOTONES -->
+                        <!-- BOTONES - MISMA POSICIÓN -->
                         <div class="flex-none">
                             <div class="flex justify-end gap-2">
                                 <button class="w-8 h-8 flex items-center justify-center rounded-lg border border-[#404041] text-[#404041] transition-all duration-300 hover:bg-[#404041] hover:text-white ver-detalle" 
@@ -413,7 +417,7 @@
             </div>
         </div>
 
-        <!-- Paginación -->
+        <!-- Paginación - FUERA del contenedor principal -->
         <div class="flex justify-center gap-2 mt-8">
             <button class="px-3 py-2 border border-[#404041] bg-white rounded-lg opacity-50 cursor-not-allowed">
                 <i class="fas fa-chevron-left text-sm"></i>
@@ -427,8 +431,257 @@
         </div>
     </div>
 
-    <!-- INCLUIR EL COMPONENTE DEL MODAL DE ALCOHOLIMETRÍA -->
-    @include('components.modal-reporte')
+    <!-- FONDO PERFECTO - NI MUY OSCURO NI MUY CLARO -->
+<div id="modalReporte" class="fixed inset-0 bg-gray-900 bg-opacity-40 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-xl shadow-2xl max-w-4xl w-full mx-4 max-h-[90vh] overflow-hidden transform transition-all duration-300 scale-95 opacity-0">
+            <!-- HEADER DEL MODAL -->
+            <div class="bg-gray-50 px-6 py-4 border-b border-gray-300 flex justify-between items-center">
+                <div>
+                    <h2 class="text-xl font-lora font-bold text-[#404041]">Detalles del Reporte</h2>
+                    <p class="text-sm text-gray-600 mt-1">Información completa del reporte seleccionado</p>
+                </div>
+                <button id="cerrarModal" class="text-gray-500 hover:text-gray-700 transition-colors duration-200">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+
+            <!-- CONTENIDO DEL MODAL -->
+            <div class="p-6 overflow-y-auto max-h-[calc(90vh-120px)]">
+                <!-- INFORMACIÓN PRINCIPAL -->
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+                    <!-- Columna 1: Información básica -->
+                    <div class="lg:col-span-2">
+                        <div class="bg-gray-50 rounded-lg p-4 border border-gray-300">
+                            <h3 class="text-lg font-semibold text-[#404041] mb-3 font-lora" id="modalTitulo">Título del reporte</h3>
+                            
+                            <div class="space-y-2">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+                                        <i class="fas fa-tag text-blue-600 text-sm"></i>
+                                    </div>
+                                    <div>
+                                        <p class="text-xs text-gray-500">Tipo de reporte</p>
+                                        <p class="text-sm font-semibold text-[#404041]" id="modalTipo">Seguridad Vial</p>
+                                    </div>
+                                </div>
+                                
+                                <div class="flex items-center gap-3">
+                                    <div class="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
+                                        <i class="fas fa-tasks text-green-600 text-sm"></i>
+                                    </div>
+                                    <div>
+                                        <p class="text-xs text-gray-500">Actividad</p>
+                                        <p class="text-sm font-semibold text-[#404041]" id="modalActividad">Taller</p>
+                                    </div>
+                                </div>
+                                
+                                <div class="flex items-center gap-3">
+                                    <div class="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
+                                        <i class="fas fa-user text-purple-600 text-sm"></i>
+                                    </div>
+                                    <div>
+                                        <p class="text-xs text-gray-500">Subido por</p>
+                                        <p class="text-sm font-semibold text-[#404041]" id="modalUsuario">Usuario</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Columna 2: Fecha y estado -->
+                    <div class="space-y-4">
+                        <div class="bg-gray-50 rounded-lg p-4 border border-gray-300">
+                            <h4 class="font-semibold text-[#404041] mb-2 text-sm">Fecha de creación</h4>
+                            <p class="text-sm text-gray-600" id="modalFecha">sábado, 14 de octubre de 2023</p>
+                        </div>
+                        
+                        <div class="bg-gray-50 rounded-lg p-4 border border-gray-300">
+                            <h4 class="font-semibold text-[#404041] mb-2 text-sm">Estado</h4>
+                            <span class="inline-block bg-green-100 text-green-800 px-2 py-1 rounded text-xs font-semibold" id="modalEstado">Completado</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- DESCRIPCIÓN -->
+                <div class="mb-6">
+                    <h4 class="font-semibold text-[#404041] mb-3 text-lg font-lora">Descripción</h4>
+                    <div class="bg-gray-50 rounded-lg p-4 border border-gray-300">
+                        <p class="text-gray-700 leading-relaxed" id="modalDescripcion">
+                            Descripción detallada del reporte aparecerá aquí...
+                        </p>
+                    </div>
+                </div>
+
+                <!-- ARCHIVOS ADJUNTOS -->
+                <div class="mb-6">
+                    <h4 class="font-semibold text-[#404041] mb-3 text-lg font-lora">Archivos Adjuntos</h4>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3" id="modalArchivos">
+                        <!-- Los archivos se insertarán dinámicamente aquí -->
+                    </div>
+                </div>
+
+                <!-- COMENTARIOS -->
+                <div>
+                    <h4 class="font-semibold text-[#404041] mb-3 text-lg font-lora">Comentarios</h4>
+                    <div class="space-y-3" id="modalComentarios">
+                        <!-- Los comentarios se insertarán dinámicamente aquí -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- FOOTER DEL MODAL -->
+            <div class="bg-gray-50 px-6 py-4 border-t border-gray-300 flex justify-end gap-3">
+                <button class="px-4 py-2 border border-[#404041] text-[#404041] rounded-lg text-sm font-semibold hover:bg-gray-100 transition-all duration-300 font-lora">
+                    <i class="fas fa-edit mr-2"></i>Editar
+                </button>
+                <button class="px-4 py-2 bg-[#611132] text-white rounded-lg text-sm font-semibold hover:bg-[#4a0e26] transition-all duration-300 font-lora">
+                    <i class="fas fa-download mr-2"></i>Descargar Reporte
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Script para manejar el modal -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const modal = document.getElementById('modalReporte');
+            const cerrarModal = document.getElementById('cerrarModal');
+            const modalContent = modal.querySelector('div > div'); // El contenedor interno
+            const botonesVerDetalle = document.querySelectorAll('.ver-detalle');
+
+            // Función para abrir el modal
+            function abrirModal(datos) {
+                // Llenar el modal con los datos
+                document.getElementById('modalTitulo').textContent = datos.titulo;
+                document.getElementById('modalTipo').textContent = datos.tipo;
+                document.getElementById('modalActividad').textContent = datos.actividad;
+                document.getElementById('modalUsuario').textContent = datos.usuario;
+                document.getElementById('modalFecha').textContent = datos.fecha;
+                document.getElementById('modalEstado').textContent = datos.estado;
+                document.getElementById('modalDescripcion').textContent = datos.descripcion;
+
+                // Actualizar color del estado
+                const estadoElement = document.getElementById('modalEstado');
+                estadoElement.className = 'inline-block px-2 py-1 rounded text-xs font-semibold ';
+                if (datos.estado === 'Completado') {
+                    estadoElement.classList.add('bg-green-100', 'text-green-800');
+                } else if (datos.estado === 'En progreso') {
+                    estadoElement.classList.add('bg-yellow-100', 'text-yellow-800');
+                } else if (datos.estado === 'En revisión') {
+                    estadoElement.classList.add('bg-blue-100', 'text-blue-800');
+                } else if (datos.estado === 'Finalizado') {
+                    estadoElement.classList.add('bg-green-100', 'text-green-800');
+                }
+
+                // Llenar archivos adjuntos
+                const archivosContainer = document.getElementById('modalArchivos');
+                archivosContainer.innerHTML = '';
+                datos.archivos.forEach(archivo => {
+                    const extension = archivo.split('.').pop();
+                    const icono = obtenerIconoArchivo(extension);
+                    archivosContainer.innerHTML += `
+                        <div class="flex items-center gap-3 p-3 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer">
+                            <div class="w-10 h-10 bg-[#BC955C] rounded-lg flex items-center justify-center text-white">
+                                <i class="${icono} text-sm"></i>
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <p class="text-sm font-semibold text-[#404041] truncate">${archivo}</p>
+                                <p class="text-xs text-gray-500">${extension.toUpperCase()} • ${obtenerTamañoAleatorio()}</p>
+                            </div>
+                            <button class="text-gray-400 hover:text-[#611132] transition-colors">
+                                <i class="fas fa-download text-sm"></i>
+                            </button>
+                        </div>
+                    `;
+                });
+
+                // Llenar comentarios
+                const comentariosContainer = document.getElementById('modalComentarios');
+                comentariosContainer.innerHTML = '';
+                datos.comentarios.forEach(comentario => {
+                    comentariosContainer.innerHTML += `
+                        <div class="bg-white border border-gray-300 rounded-lg p-4">
+                            <div class="flex justify-between items-start mb-2">
+                                <div class="font-semibold text-[#404041]">${comentario.usuario}</div>
+                                <div class="text-xs text-gray-500">${comentario.fecha}</div>
+                            </div>
+                            <p class="text-gray-700 text-sm">${comentario.mensaje}</p>
+                        </div>
+                    `;
+                });
+
+                // Mostrar el modal con animación
+                modal.classList.remove('hidden');
+                setTimeout(() => {
+                    modalContent.classList.remove('scale-95', 'opacity-0');
+                    modalContent.classList.add('scale-100', 'opacity-100');
+                }, 50);
+            }
+
+            // Función para cerrar el modal
+            function cerrarModalFunc() {
+                modalContent.classList.remove('scale-100', 'opacity-100');
+                modalContent.classList.add('scale-95', 'opacity-0');
+                setTimeout(() => {
+                    modal.classList.add('hidden');
+                }, 300);
+            }
+
+            // Event listeners
+            botonesVerDetalle.forEach(boton => {
+                boton.addEventListener('click', function() {
+                    const datos = {
+                        titulo: this.getAttribute('data-titulo'),
+                        tipo: this.getAttribute('data-tipo'),
+                        actividad: this.getAttribute('data-actividad'),
+                        usuario: this.getAttribute('data-usuario'),
+                        fecha: this.getAttribute('data-fecha'),
+                        estado: this.getAttribute('data-estado'),
+                        descripcion: this.getAttribute('data-descripcion'),
+                        archivos: JSON.parse(this.getAttribute('data-archivos')),
+                        comentarios: JSON.parse(this.getAttribute('data-comentarios'))
+                    };
+                    abrirModal(datos);
+                });
+            });
+
+            cerrarModal.addEventListener('click', cerrarModalFunc);
+
+            // Cerrar modal al hacer clic fuera del contenido
+            modal.addEventListener('click', function(e) {
+                if (e.target === modal) {
+                    cerrarModalFunc();
+                }
+            });
+
+            // Cerrar modal con ESC
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape' && !modal.classList.contains('hidden')) {
+                    cerrarModalFunc();
+                }
+            });
+
+            // Funciones auxiliares
+            function obtenerIconoArchivo(extension) {
+                const iconos = {
+                    'pdf': 'fas fa-file-pdf',
+                    'xlsx': 'fas fa-file-excel',
+                    'xls': 'fas fa-file-excel',
+                    'doc': 'fas fa-file-word',
+                    'docx': 'fas fa-file-word',
+                    'jpg': 'fas fa-file-image',
+                    'png': 'fas fa-file-image',
+                    'zip': 'fas fa-file-archive'
+                };
+                return iconos[extension] || 'fas fa-file';
+            }
+
+            function obtenerTamañoAleatorio() {
+                const tamanios = ['2.1 MB', '1.5 MB', '3.2 MB', '856 KB', '4.7 MB'];
+                return tamanios[Math.floor(Math.random() * tamanios.length)];
+            }
+        });
+    </script>
 
     <!-- Incluir Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
