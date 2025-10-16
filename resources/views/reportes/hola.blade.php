@@ -297,30 +297,28 @@
                         <!-- BOTONES - CON BOTÓN ESPECIAL PARA ALCOHOLIMETRÍA -->
                         <div class="flex-none">
                             <div class="flex justify-end gap-2">
-                                <button class="ver-detalle-alcohol w-8 h-8 flex items-center justify-center rounded-lg border border-[#404041] text-[#404041] transition-all duration-300 hover:bg-[#404041] hover:text-white" 
-                                        title="Ver detalles"
-                                        data-titulo="Operativo alcoholimetría fin de semana"
-                                        data-tipo="Alcoholimetría"
-                                        data-fecha-actividad="sábado, 14 de octubre de 2023"
-                                        data-fecha-publicacion="lunes, 16 de octubre de 2023"
-                                        data-usuario="Ana Martínez"
-                                        data-estado="Finalizado"
-                                        data-descripcion="Operativo de alcoholimetría realizado durante el fin de semana en puntos estratégicos de la ciudad. Se realizaron 150 pruebas con resultados positivos en 12 casos. Reporte completo incluye estadísticas y recomendaciones para futuros operativos."
-                                        data-puntos-revision="8"
-                                        data-conductores-no-aptos="12"
-                                        data-pruebas-realizadas="150"
-                                        data-mujeres-no-aptas="3"
-                                        data-hombres-no-aptos="9"
-                                        data-automoviles-no-aptos="5"
-                                        data-motocicletas-no-aptas="4"
-                                        data-transporte-colectivo-no-apto="1"
-                                        data-transporte-individual-no-apto="2"
-                                        data-transporte-carga-no-apto="0"
-                                        data-emergencia-no-apto="0"
-                                        data-archivos='["reporte_operativo.pdf", "estadisticas.xlsx", "fotos_evidencia.zip"]'
-                                        data-comentarios='[{"usuario": "Carlos Rodríguez", "fecha": "17/10/2023", "mensaje": "Excelente trabajo en el operativo. Los números son alentadores."}, {"usuario": "María González", "fecha": "18/10/2023", "mensaje": "¿Podemos extender el operativo al próximo fin de semana?"}]'>
-                                    <i class="fas fa-eye text-sm"></i>
-                                </button>
+                                <!-- En el reporte de alcoholimetría, actualiza el botón ver-detalle-alcohol -->
+<button class="ver-detalle-alcohol w-8 h-8 flex items-center justify-center rounded-lg border border-[#404041] text-[#404041] transition-all duration-300 hover:bg-[#404041] hover:text-white" 
+        title="Ver detalles"
+        data-fecha-actividad="sábado, 14 de octubre de 2023"
+        data-fecha-operativo="8 de noviembre de 2023"
+        data-usuario="Roberto Sánchez Jiménez"
+        data-descripcion="Operativo de alcoholimetría realizado durante el fin de semana en puntos estratégicos de la ciudad. Se realizaron pruebas a conductores con el objetivo de garantizar la seguridad vial y prevenir accidentes relacionados con el consumo de alcohol."
+        data-puntos-revision="5"
+        data-conductores-no-aptos="12"
+        data-pruebas-realizadas="20"
+        data-mujeres-no-aptas="5"
+        data-hombres-no-aptos="6"
+        data-automoviles-no-aptos="5"
+        data-motocicletas-no-aptas="2"
+        data-transporte-colectivo-no-apto="0"
+        data-transporte-individual-no-apto="1"
+        data-transporte-carga-no-apto="1"
+        data-emergencia-no-apto="0"
+        data-archivos='["reporte_operativo.pdf", "estadisticas.xlsx", "fotos_evidencia.zip"]'
+        data-comentarios='[{"usuario": "Carlos Rodríguez", "fecha": "17/10/2023", "mensaje": "Excelente trabajo en el operativo. Los números son alentadores."}, {"usuario": "María González", "fecha": "18/10/2023", "mensaje": "¿Podemos extender el operativo al próximo fin de semana?"}]'>
+    <i class="fas fa-eye text-sm"></i>
+</button>
                                 <button class="w-8 h-8 flex items-center justify-center rounded-lg border border-[#C08400] text-[#C08400] transition-all duration-300 hover:bg-[#C08400] hover:text-white" title="Editar">
                                     <i class="fas fa-edit text-sm"></i>
                                 </button>
