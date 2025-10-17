@@ -41,15 +41,15 @@
                     
                     <!-- Estadísticas principales - Más compactas -->
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
-                        <div class="bg-white rounded-lg p-3 border border-gray-300 text-center h-20 flex flex-col justify-center">
+                        <div class="bg-white rounded-lg p-3 border border-[#404041] text-center h-20 flex flex-col justify-center">
                             <div class="flex items-center justify-center gap-2 mb-1">
                                 <i class="fas fa-map-marker-alt text-[#404041] text-lg"></i>
                                 <div class="text-2xl font-bold text-[#404041] font-lora" id="puntosRevision">5</div>
                             </div>
                             <p class="text-xs text-gray-700 font-lora">Puntos de revisión instalados</p>
                         </div>
-                        
-                        <div class="bg-white rounded-lg p-3 border border-gray-300 text-center h-20 flex flex-col justify-center">
+
+                        <div class="bg-white rounded-lg p-3 border border-[#404041] text-center h-20 flex flex-col justify-center">
                             <div class="flex items-center justify-center gap-2 mb-1">
                                 <i class="fas fa-user-times text-[#404041] text-lg"></i>
                                 <div class="text-2xl font-bold text-[#404041] font-lora" id="conductoresNoAptos">12</div>
@@ -57,7 +57,7 @@
                             <p class="text-xs text-gray-700 font-lora">Conductores no aptos</p>
                         </div>
                         
-                        <div class="bg-white rounded-lg p-3 border border-gray-300 text-center h-20 flex flex-col justify-center">
+                        <div class="bg-white rounded-lg p-3 border border-[#404041] text-center h-20 flex flex-col justify-center">
                             <div class="flex items-center justify-center gap-2 mb-1">
                                 <i class="fas fa-vial text-[#404041] text-lg"></i>
                                 <div class="text-2xl font-bold text-[#404041] font-lora" id="pruebasRealizadas">20</div>
@@ -78,7 +78,7 @@
                     <div class="mb-6">
                         <h5 class="font-semibold text-[#404041] mb-3 text-md font-lora">Por género</h5>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                            <div class="bg-white rounded-lg p-3 border border-gray-300 h-20 flex items-center justify-between">
+                            <div class="bg-white rounded-lg p-3 border border-[#404041] h-20 flex items-center justify-between">
                                 <div class="flex items-center gap-2">
                                     <i class="fas fa-female text-[#404041] text-lg"></i>
                                     <span class="text-sm text-gray-700 font-semibold font-lora">Mujeres</span>
@@ -86,7 +86,7 @@
                                 <div class="text-2xl font-bold text-[#404041] font-lora" id="mujeresNoAptas">5</div>
                             </div>
                             
-                            <div class="bg-white rounded-lg p-3 border border-gray-300 h-20 flex items-center justify-between">
+                            <div class="bg-white rounded-lg p-3 border border-[#404041] h-20 flex items-center justify-between">
                                 <div class="flex items-center gap-2">
                                     <i class="fas fa-male text-[#404041] text-lg"></i>
                                     <span class="text-sm text-gray-700 font-semibold font-lora">Hombres</span>
@@ -102,7 +102,7 @@
                         
                         <!-- Primera fila de 3 cuadros -->
                         <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3">
-                            <div class="bg-white rounded-lg p-3 border border-gray-300 text-center h-20 flex flex-col justify-center">
+                            <div class="bg-white rounded-lg p-3 border border-[#404041] text-center h-20 flex flex-col justify-center">
                                 <div class="flex items-center justify-center gap-2 mb-1">
                                     <i class="fas fa-car text-[#404041] text-lg"></i>
                                     <div class="text-xl font-bold text-[#404041] font-lora" id="automovilesNoAptos">5</div>
@@ -110,7 +110,7 @@
                                 <p class="text-xs text-gray-700 font-lora">Automóviles y camionetas</p>
                             </div>
                             
-                            <div class="bg-white rounded-lg p-3 border border-gray-300 text-center h-20 flex flex-col justify-center">
+                            <div class="bg-white rounded-lg p-3 border border-[#404041] text-center h-20 flex flex-col justify-center">
                                 <div class="flex items-center justify-center gap-2 mb-1">
                                     <i class="fas fa-motorcycle text-[#404041] text-lg"></i>
                                     <div class="text-xl font-bold text-[#404041] font-lora" id="motocicletasNoAptas">2</div>
@@ -118,7 +118,7 @@
                                 <p class="text-xs text-gray-700 font-lora">Motocicletas</p>
                             </div>
                             
-                            <div class="bg-white rounded-lg p-3 border border-gray-300 text-center h-20 flex flex-col justify-center">
+                            <div class="bg-white rounded-lg p-3 border border-[#404041] text-center h-20 flex flex-col justify-center">
                                 <div class="flex items-center justify-center gap-2 mb-1">
                                     <i class="fas fa-bus text-[#404041] text-lg"></i>
                                     <div class="text-xl font-bold text-[#404041] font-lora" id="transporteColectivoNoApto">0</div>
@@ -129,7 +129,7 @@
                         
                         <!-- Segunda fila de 3 cuadros -->
                         <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
-                            <div class="bg-white rounded-lg p-3 border border-gray-300 text-center h-20 flex flex-col justify-center">
+                            <div class="bg-white rounded-lg p-3 border border-[#404041] text-center h-20 flex flex-col justify-center">
                                 <div class="flex items-center justify-center gap-2 mb-1">
                                     <i class="fas fa-taxi text-[#404041] text-lg"></i>
                                     <div class="text-xl font-bold text-[#404041] font-lora" id="transporteIndividualNoApto">1</div>
@@ -137,7 +137,7 @@
                                 <p class="text-xs text-gray-700 font-lora">Transporte público individual</p>
                             </div>
                             
-                            <div class="bg-white rounded-lg p-3 border border-gray-300 text-center h-20 flex flex-col justify-center">
+                            <div class="bg-white rounded-lg p-3 border border-[#404041] text-center h-20 flex flex-col justify-center">
                                 <div class="flex items-center justify-center gap-2 mb-1">
                                     <i class="fas fa-truck text-[#404041] text-lg"></i>
                                     <div class="text-xl font-bold text-[#404041] font-lora" id="transporteCargaNoApto">1</div>
@@ -145,7 +145,7 @@
                                 <p class="text-xs text-gray-700 font-lora">Transporte de carga</p>
                             </div>
                             
-                            <div class="bg-white rounded-lg p-3 border border-gray-300 text-center h-20 flex flex-col justify-center">
+                            <div class="bg-white rounded-lg p-3 border border-[#404041] text-center h-20 flex flex-col justify-center">
                                 <div class="flex items-center justify-center gap-2 mb-1">
                                     <i class="fas fa-ambulance text-[#404041] text-lg"></i>
                                     <div class="text-xl font-bold text-[#404041] font-lora" id="emergenciaNoApto">0</div>
@@ -159,11 +159,11 @@
                 <!-- LÍNEA SEPARADORA DESPUÉS DE CONDUCTORES NO APTOS -->
                 <div class="h-px bg-gray-300 mb-6"></div>
 
-                <!-- DESCRIPCIÓN -->
+                <!-- DESCRIPCIÓN - CORREGIDA CON ANCHO COMPLETO -->
                 <div class="mb-6">
                     <h4 class="font-semibold text-[#404041] mb-3 text-lg font-lora">Descripción</h4>
-                    <div class="bg-gray-50 rounded-lg p-4 border border-gray-300">
-                        <p class="text-gray-700 leading-relaxed max-h-48 overflow-y-auto font-lora" id="modalDescripcionAlcohol">
+                    <div class="bg-white rounded-lg border border-[#404041] p-4">
+                        <p class="text-gray-700 leading-relaxed max-h-48 overflow-y-auto font-lora w-full px-2 text-left" id="modalDescripcionAlcohol">
                             Operativo de alcoholimetría realizado durante el fin de semana en puntos estratégicos de la ciudad. Se realizaron pruebas a conductores con el objetivo de garantizar la seguridad vial y prevenir accidentes relacionados con el consumo de alcohol.
                         </p>
                     </div>
@@ -172,12 +172,12 @@
                 <!-- LÍNEA SEPARADORA DESPUÉS DE DESCRIPCIÓN -->
                 <div class="h-px bg-gray-300 mb-6"></div>
 
-                <!-- ARCHIVOS ADJUNTOS - NUEVO DISEÑO MEJORADO -->
+                <!-- ARCHIVOS ADJUNTOS - NUEVO DISEÑO MEJORADO CON BORDES CORREGIDOS -->
                 <div class="mb-6">
                     <div class="flex justify-between items-center mb-4">
                         <h4 class="font-semibold text-[#404041] text-lg font-lora">Archivos Adjuntos</h4>
-                        <!-- Botón Descargar Todos los Archivos -->
-                        <button class="descargar-todos-archivos px-4 py-2 bg-[#611132] text-white rounded-lg text-sm font-semibold hover:bg-[#4a0e26] transition-all duration-300 font-lora whitespace-nowrap flex items-center gap-2">
+                        <!-- Botón Descargar Todos los Archivos - MÁS COMPACTO -->
+                        <button class="descargar-todos-archivos px-3 py-1.5 bg-[#611132] text-white rounded-lg text-xs font-medium hover:bg-[#4a0e26] transition-all duration-300 font-lora whitespace-nowrap flex items-center gap-1">
                             <i class="fas fa-download text-xs"></i>
                             Descargar Todos
                         </button>
@@ -190,7 +190,7 @@
                 <!-- LÍNEA SEPARADORA DESPUÉS DE ARCHIVOS ADJUNTOS -->
                 <div class="h-px bg-gray-300 mb-6"></div>
 
-                <!-- COMENTARIOS (EXACTAMENTE COMO EN EL CÓDIGO ORIGINAL) -->
+                <!-- COMENTARIOS CON BORDES CORREGIDOS -->
                 <div>
                     <h4 class="font-semibold text-[#404041] mb-4 text-lg font-lora">Comentarios</h4>
                     
@@ -209,7 +209,7 @@
                             <textarea 
                                 id="nuevoComentario"
                                 placeholder="Escribe tu comentario..."
-                                class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#611132] focus:border-transparent resize-none min-h-[42px] max-h-[120px]"
+                                class="w-full border border-[#404041] rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#611132] focus:border-transparent resize-none min-h-[42px] max-h-[120px]"
                                 rows="1"
                             ></textarea>
                         </div>
@@ -272,7 +272,7 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('transporteCargaNoApto').textContent = datos.transporteCargaNoApto || '1';
         document.getElementById('emergenciaNoApto').textContent = datos.emergenciaNoApto || '0';
 
-        // Llenar archivos adjuntos - CON COLORES ESTÁNDAR RECONOCIBLES
+        // Llenar archivos adjuntos - CON COLORES ESTÁNDAR RECONOCIBLES Y BORDES CORREGIDOS
         const archivosContainer = document.getElementById('modalArchivosAlcohol');
         archivosContainer.innerHTML = '';
         if (datos.archivos && datos.archivos.length > 0) {
@@ -281,7 +281,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 const { icono, color, colorHover } = obtenerEstiloArchivo(extension);
                 
                 archivosContainer.innerHTML += `
-                    <div class="bg-white rounded-xl border border-gray-300 overflow-hidden transition-all duration-300 hover:shadow-lg group cursor-pointer">
+                    <div class="bg-white rounded-xl border border-[#404041] overflow-hidden transition-all duration-300 hover:shadow-lg group cursor-pointer">
                         <!-- Parte superior con color que abarca todo el ancho -->
                         <div class="${color} h-20 flex items-center justify-center transition-colors duration-300 group-hover:${colorHover}">
                             <i class="${icono} text-3xl text-white"></i>
@@ -307,7 +307,7 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         }
 
-        // Llenar comentarios - BORDES QUE COINCIDEN CON EL COLOR DEL TEXTO (DEL CÓDIGO ORIGINAL)
+        // Llenar comentarios - BORDES CORREGIDOS A #404041
         const comentariosContainer = document.getElementById('modalComentariosAlcohol');
         comentariosContainer.innerHTML = '';
         if (datos.comentarios && datos.comentarios.length > 0) {
@@ -328,7 +328,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 let estiloUsuario = 'border border-gray-400 text-gray-600 bg-transparent px-2 py-0.5 rounded text-xs font-medium font-bold';
                 
                 comentariosContainer.innerHTML += `
-                    <div class="bg-white border border-gray-300 rounded-lg p-3">
+                    <div class="bg-white border border-[#404041] rounded-lg p-3">
                         <div class="flex justify-between items-start mb-2">
                             <div class="flex items-center gap-2">
                                 <div class="font-semibold text-[#404041] font-lora flex items-center gap-2">
@@ -706,35 +706,35 @@ document.addEventListener('DOMContentLoaded', function() {
 <style>
     /* Estilos para los botones del CRUD - MÁS DELGADOS COMO EN CENTRO DE CONTROL */
     .editar-reporte {
-        border-width: 1px; /* Cambiado de 2px a 1px para que sea más delgado */
-        font-weight: 500; /* Cambiado de 600 a 500 para que sea menos grueso */
+        border-width: 1px;
+        font-weight: 500;
         transition: all 0.3s ease;
     }
     
     .eliminar-reporte {
-        border-width: 1px; /* Cambiado de 2px a 1px para que sea más delgado */
-        font-weight: 500; /* Cambiado de 600 a 500 para que sea menos grueso */
+        border-width: 1px;
+        font-weight: 500;
         transition: all 0.3s ease;
     }
     
     .descargar-todos-archivos {
-        font-weight: 600;
+        font-weight: 500;
         transition: all 0.3s ease;
     }
     
     /* Efectos hover mejorados */
     .editar-reporte:hover {
         transform: translateY(-1px);
-        box-shadow: 0 4px 8px rgba(192, 132, 0, 0.3);
+        box-shadow: 0 2px 4px rgba(192, 132, 0, 0.2);
     }
     
     .eliminar-reporte:hover {
         transform: translateY(-1px);
-        box-shadow: 0 4px 8px rgba(171, 26, 26, 0.3);
+        box-shadow: 0 2px 4px rgba(171, 26, 26, 0.2);
     }
     
     .descargar-todos-archivos:hover {
         transform: translateY(-1px);
-        box-shadow: 0 4px 8px rgba(97, 17, 50, 0.3);
+        box-shadow: 0 2px 4px rgba(97, 17, 50, 0.2);
     }
 </style>
