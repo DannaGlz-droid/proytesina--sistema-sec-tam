@@ -25,11 +25,13 @@ Route::view('/prueba', 'landing.prueba')->name('prueba');
 // Estadísticas
 Route::view('estadisticas/registro', 'estadisticas.registro')->name('estadisticas.nuevo-registro');
 Route::view('estadisticas/actualizar-registro', 'estadisticas.actualizar-registro')->name('estadisticas.actualizar-registro');
+Route::view('estadisticas/graficas', 'estadisticas.graficas')->name('estadisticas.graficas');
 
 // Usuarios
 Route::view('usuario/gestion-de-usuarios/registro', 'usuario.gestion-de-usuarios.registro')->name('usuario.registro');
 Route::view('usuario/gestion-de-usuarios/actualizar-registro', 'usuario.gestion-de-usuarios.actualizar-registro')->name('usuario.actualizar-registro');
 Route::view('usuario/gestion-de-usuarios/actualizar-contrasena', 'usuario.gestion-de-usuarios.actualizar-contrasena')->name('usuario.actualizar-contrasena');
+Route::view('usuario/gestion-de-usuarios', 'usuario.gestion-de-usuarios.gestion-de-usuarios')->name('usuario.gestion-de-usuarios');
 
 // Reportes
 
@@ -38,4 +40,5 @@ Route::view('reportes/hola', 'reportes.hola')->name('reportes.hola');
 Route::view('reportes/registro/seguridad-vial', 'reportes.registro.seguridad-vial')->name('reportes.seguridad-vial');
 Route::view('reportes/registro/observatorio-de-lesiones', 'reportes.registro.observatorio-de-lesiones')->name('reportes.observatorio-de-lesiones');
 Route::view('reportes/registro/alcoholimetria', 'reportes.registro.alcoholimetria')->name('reportes.alcoholimetria');
+
 require __DIR__.'/auth.php';
