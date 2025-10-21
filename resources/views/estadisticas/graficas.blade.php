@@ -2,8 +2,8 @@
 @section('title', 'Estadísticas')
 @section('content')
 
-    @include('components.header')
-    @include('components.nav')
+    @include('components.header-admin')
+    @include('components.nav-estadisticas')
 
     <div class="px-4 lg:pl-10 pt-6 lg:pt-10 pb-8 lg:pb-12">
         <!-- HEADER CON TÍTULO Y BOTÓN EXTERNO -->

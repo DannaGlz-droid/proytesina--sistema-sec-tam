@@ -2,7 +2,7 @@
 @section('title', 'Registrar Usuario')
 @section('content')
 
-    @include('components.header')
+    @include('components.header-admin')
     @include('components.nav-usuario')
 
     <div class="px-4 lg:pl-10 pt-6 lg:pt-10 pb-8 lg:pb-12">

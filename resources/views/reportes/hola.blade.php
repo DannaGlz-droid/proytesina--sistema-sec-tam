@@ -2,8 +2,8 @@
 @section('title', 'Reportes')
 @section('content')
 
-    @include('components.header')
-    @include('components.nav')
+    @include('components.header-admin')
+    @include('components.nav-reportes')
 
     <div class="px-4 lg:pl-10 pt-6 lg:pt-10 pb-8 lg:pb-12">
         <h1 class="text-2xl lg:text-3xl font-lora font-bold text-[#404041] mb-3">Centro de Control</h1>

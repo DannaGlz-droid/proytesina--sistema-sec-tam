@@ -132,7 +132,7 @@
         </div>
     </x-filtros.seccion>
 
-    <!-- Ubicación -->
+    <!-- Resto de secciones... (sin cambios funcionales, solo estilos y estructura) -->
     <x-filtros.seccion icono="map-marker-alt" titulo="Ubicación">
         <div class="filter-group">
             <label class="block text-xs text-gray-600 font-lora mb-1">Jurisdicción:</label>
@@ -166,13 +166,10 @@
                 <option value="allende">Allende</option>
                 <option value="monterrey">Monterrey</option>
                 <option value="guadalupe">Guadalupe</option>
-                <option value="apodaca">Apodaca</option>
-                <option value="san_nicolas">San Nicolás</option>
             </select>
         </div>
     </x-filtros.seccion>
 
-    <!-- Demográficos -->
     <x-filtros.seccion icono="users" titulo="Demográficos">
         <div class="filter-group">
             <label class="block text-xs text-gray-600 font-lora mb-1">Sexo:</label>
@@ -191,7 +188,6 @@
         </div>
     </x-filtros.seccion>
 
-    <!-- Causas -->
     <x-filtros.seccion icono="heartbeat" titulo="Causas">
         <div class="filter-group">
             <label class="block text-xs text-gray-600 font-lora mb-1">Causa de defunción:</label>
@@ -205,19 +201,6 @@
                 <option value="respiratorias">Enfermedades respiratorias</option>
                 <option value="ahogamiento">Ahogamiento</option>
                 <option value="violencia">Violencia</option>
-            </select>
-        </div>
-    </x-filtros.seccion>
-
-    <!-- Resultados -->
-    <x-filtros.seccion icono="chart-bar" titulo="Resultados">
-        <div class="filter-group">
-            <label class="block text-xs text-gray-600 font-lora mb-1">Límite de resultados:</label>
-            <select id="chartLimit" class="w-full border border-[#404041] rounded-lg px-3 py-1.5 text-xs">
-                <option value="5">Top 5</option>
-                <option value="10" selected>Top 10</option>
-                <option value="15">Top 15</option>
-                <option value="all">Todos</option>
             </select>
         </div>
     </x-filtros.seccion>
@@ -397,10 +380,6 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
 
-        // Reset chart limit
-        const chartLimit = document.getElementById('chartLimit');
-        if (chartLimit) chartLimit.value = '10';
-
         // Reajusta secciones abiertas
         document.querySelectorAll('.filter-section-content').forEach(content => {
             if (content.style.maxHeight && content.style.maxHeight !== '0px') {
@@ -426,11 +405,10 @@ document.addEventListener('DOMContentLoaded', function() {
             municipioDefuncion: document.getElementById('municipioDefuncion')?.value,
             sexo: document.getElementById('sexo')?.value,
             edad: document.getElementById('edad')?.value,
-            causa: document.getElementById('causa')?.value,
-            chartLimit: document.getElementById('chartLimit')?.value
+            causa: document.getElementById('causa')?.value
         };
-        console.log('Aplicando filtros a gráficos:', filtros);
-        // aquí va la lógica real de filtrado para gráficos
+        console.log('Aplicando filtros:', filtros);
+        // aquí va la lógica real de filtrado / fetch
     });
 
     // Recalcula alturas de secciones abiertas al hacer resize (previene solapamiento)

@@ -2,17 +2,17 @@
 @section('title', 'Actualizar Contraseña')
 @section('content')
 
-    @include('components.header')
+    @include('components.header-admin')
     @include('components.nav-usuario')
 
     <div class="px-4 lg:pl-10 pt-6 lg:pt-10 pb-8 lg:pb-12">
         <h1 class="text-2xl lg:text-3xl font-lora font-bold text-[#404041] mb-3">Actualizar contraseña de usuario</h1>
         <p class="text-sm lg:text-base text-[#404041] font-lora mb-6">Modifique la contraseña de acceso para el usuario registrado.</p>
 
-        <!-- Información del usuario -->
-        <div class="mb-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
+        <!-- Información del usuario (azules reemplazados por gris) -->
+        <div class="mb-6 p-4 bg-gray-100 rounded-lg border border-gray-300 max-w-7xl">
             <div class="flex items-center">
-                <ion-icon name="person-circle-outline" class="text-2xl text-blue-500 mr-3"></ion-icon>
+                <ion-icon name="person-circle-outline" class="text-2xl text-gray-600 mr-3"></ion-icon>
                 <div>
                     <h3 class="text-sm lg:text-base font-medium text-[#404041]">
                         Usuario: <span class="font-bold">{{ $usuario->nombres ?? 'Nombre' }} {{ $usuario->apellido_paterno ?? 'Apellido' }}</span>
@@ -107,14 +107,15 @@
                 </div>
 
                 <!-- Botón para generar contraseña -->
-                <div class="mt-4 flex justify-end">
-                    <button type="button" 
-                            onclick="generatePassword()"
-                            class="text-xs px-3 py-1 border border-[#404041] text-[#404041] rounded-lg hover:bg-[#404041] hover:text-white transition-all duration-200 flex items-center">
-                        <ion-icon name="refresh-outline" class="mr-1"></ion-icon>
-                        Generar contraseña
-                    </button>
-                </div>
+                <!-- Reemplaza este bloque: "Botón para generar contraseña" -->
+<div class="mt-4 flex justify-start">
+    <button type="button"
+            onclick="generatePassword()"
+            class="text-xs px-3 py-1 border border-[#404041] text-[#404041] rounded-lg hover:bg-[#404041] hover:text-white transition-all duration-200 flex items-center mr-3">
+        <ion-icon name="refresh-outline" class="mr-1"></ion-icon>
+        Generar contraseña
+    </button>
+</div>
             </div>
 
             <!-- Línea separadora para botones -->
@@ -209,7 +210,8 @@
                     text = 'Media';
                     break;
                 case 4:
-                    color = 'bg-blue-500';
+                    // antes era color primario (vino/rojo); ahora gris para "Fuerte"
+                    color = 'bg-gray-600';
                     text = 'Fuerte';
                     break;
                 case 5:
@@ -224,7 +226,7 @@
             strengthText.className = `text-xs font-medium ${
                 strength <= 2 ? 'text-red-500' : 
                 strength <= 3 ? 'text-yellow-500' : 
-                strength <= 4 ? 'text-blue-500' : 'text-green-500'
+                strength <= 4 ? 'text-gray-600' : 'text-green-500'
             }`;
         }
 

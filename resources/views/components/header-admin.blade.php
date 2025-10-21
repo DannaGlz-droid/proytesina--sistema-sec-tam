@@ -4,7 +4,15 @@
 
     <!-- Botones y usuario a la derecha -->
     <div class="flex items-center">
-       
+        <!-- Botones que se ocultan en mobile -->
+        <div class="hidden lg:flex items-center">
+            <button class="text-sm lg:text-base bg-header hover:bg-[#B23A6E] text-white py-1 lg:py-1 px-3 lg:px-4 rounded-md transition duration-200 ease-in-out mr-3 lg:mr-4">
+                Reportes
+            </button>
+            <button class="text-sm lg:text-base bg-header hover:bg-[#9B4D6E] hover:text-[#E8CA8B] text-white py-1 lg:py-1 px-3 lg:px-4 rounded-md transition duration-200 ease-in-out mr-3 lg:mr-4">
+                Estadísticas
+            </button>
+        </div>
         
         <!-- Notificaciones con dropdown -->
         <div class="relative flex items-center mr-3 lg:mr-4" x-data="{ openNotifications: false }">

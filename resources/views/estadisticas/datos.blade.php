@@ -1,36 +1,62 @@
 @extends('layouts.principal')
-@section('title', 'Gestión de Usuarios')
+@section('title', 'Datos de Defunciones')
 @section('content')
 
     @include('components.header-admin')
-    @include('components.nav-usuario')
+    @include('components.nav-estadisticas')
 
     <div class="px-4 lg:pl-10 pt-6 lg:pt-10 pb-8 lg:pb-12">
         <!-- HEADER CON TÍTULO Y BOTÓN -->
         <div class="flex flex-col lg:flex-row lg:justify-between lg:items-center gap-4 mb-6">
             <div>
-                <h1 class="text-2xl lg:text-3xl font-lora font-bold text-[#404041] mb-2">Gestión de Usuarios</h1>
+                <h1 class="text-2xl lg:text-3xl font-lora font-bold text-[#404041] mb-2">Datos de Defunciones</h1>
                 <p class="text-sm lg:text-base text-[#404041] font-lora">
-                    Administre y gestione todos los usuarios del sistema con permisos y roles específicos.
+                    En esta sección puede cargar archivos (Excel o CSV), aplicar filtros y consultar los registros en la tabla.
                 </p>
             </div>
             
-            <!-- BOTÓN CREAR USUARIO -->
+            <!-- BOTÓN CARGAR ARCHIVO -->
             <button class="bg-[#611132] text-white px-4 py-2.5 rounded-lg text-xs font-semibold hover:bg-[#4a0e26] transition-all duration-300 font-lora flex items-center gap-2 whitespace-nowrap shadow-sm self-start lg:self-auto">
-                <i class="fas fa-plus text-xs"></i>
-                Crear Usuario
+                <i class="fas fa-upload text-xs"></i>
+                Cargar Archivo
             </button>
         </div>
 
         <!-- Layout principal: Filtros + Tabla -->
         <div class="flex flex-col lg:flex-row gap-6">
             
-            <!-- Columna Izquierda - Tus filtros personalizados -->
+            <!-- Columna Izquierda - Filtros -->
             <div class="lg:w-80">
-                <x-filtros.usuarios />
+                <!-- SECCIÓN CARGAR ARCHIVO -->
+                <div class="border border-[#404041] rounded-lg p-4 bg-white mb-6">
+                    <div class="flex justify-between items-center mb-4 border-b border-gray-300 pb-3">
+                        <h3 class="font-semibold text-[#404041] text-lg font-lora">Cargar Archivo</h3>
+                    </div>
+                    
+                    <div class="space-y-3">
+                        <!-- Área de Drag & Drop -->
+                        <div class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
+                            <i class="fas fa-cloud-upload-alt text-2xl text-gray-400 mb-2"></i>
+                            <p class="text-xs text-gray-600 font-lora mb-1">Arrastre un archivo aquí</p>
+                            <p class="text-xs text-gray-500 font-lora">(Excel/CSV)</p>
+                        </div>
+                        
+                        <!-- Información de tamaño -->
+                        <p class="text-xs text-gray-500 text-center font-lora">Tamaño máximo: 10MB</p>
+                        
+                        <!-- Botón Seleccionar Archivo -->
+                        <button id="selectFileBtn" type="button" class="w-full bg-[#611132] text-white px-4 py-2.5 rounded-lg text-xs font-semibold hover:bg-[#4a0e26] transition-all duration-300 font-lora flex items-center justify-center gap-2 shadow-sm" aria-controls="fileInput" aria-label="Seleccionar archivo">
+                            <i class="fas fa-folder-open text-xs"></i>
+                            Seleccionar archivo
+                        </button>
+                    </div>
+                </div>
+
+                <!-- COMPONENTE DE FILTROS -->
+                <x-filtros.defunciones />
             </div>
 
-            <!-- Columna Derecha - Tabla Flowbite adaptada -->
+            <!-- Columna Derecha - Tabla -->
             <div class="flex-1">
                 <div class="bg-white relative shadow-md sm:rounded-lg overflow-hidden border border-[#404041]">
                     
@@ -43,9 +69,9 @@
                                 <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
                                     <i class="fas fa-search text-gray-400 text-sm"></i>
                                 </div>
-                                <input type="text" id="table-search-users" 
+                                <input type="text" id="table-search-deaths" 
                                        class="bg-gray-50 border border-[#404041] text-gray-900 text-sm rounded-lg focus:ring-[#611132] focus:border-[#611132] block w-full pl-10 p-2.5" 
-                                       placeholder="Buscar por ID, usuario, nombre, correo...">
+                                       placeholder="Buscar por ID, nombre, municipio, causa...">
                             </div>
                         </div>
                         
@@ -72,18 +98,17 @@
                             <thead class="text-xs text-gray-700 uppercase bg-gray-50 border-b border-[#404041]">
                                 <tr>
                                     <th scope="col" class="px-3 py-2 font-lora whitespace-nowrap text-xs">ID</th>
-                                    <th scope="col" class="px-3 py-2 font-lora whitespace-nowrap text-xs">Usuario</th>
                                     <th scope="col" class="px-3 py-2 font-lora whitespace-nowrap text-xs">Nombre</th>
                                     <th scope="col" class="px-3 py-2 font-lora whitespace-nowrap text-xs">A. Paterno</th>
                                     <th scope="col" class="px-3 py-2 font-lora whitespace-nowrap text-xs">A. Materno</th>
-                                    <th scope="col" class="px-3 py-2 font-lora whitespace-nowrap text-xs">Correo</th>
-                                    <th scope="col" class="px-3 py-2 font-lora whitespace-nowrap text-xs">Teléfono</th>
-                                    <th scope="col" class="px-3 py-2 font-lora whitespace-nowrap text-xs">Cargo</th>
+                                    <th scope="col" class="px-3 py-2 font-lora whitespace-nowrap text-xs">Edad</th>
+                                    <th scope="col" class="px-3 py-2 font-lora whitespace-nowrap text-xs">Sexo</th>
+                                    <th scope="col" class="px-3 py-2 font-lora whitespace-nowrap text-xs">Fecha Def.</th>
+                                    <th scope="col" class="px-3 py-2 font-lora whitespace-nowrap text-xs">Municipio Res.</th>
+                                    <th scope="col" class="px-3 py-2 font-lora whitespace-nowrap text-xs">Municipio Def.</th>
                                     <th scope="col" class="px-3 py-2 font-lora whitespace-nowrap text-xs">Jurisd.</th>
-                                    <th scope="col" class="px-3 py-2 font-lora whitespace-nowrap text-xs">Fecha Alta</th>
-                                    <th scope="col" class="px-3 py-2 font-lora whitespace-nowrap text-xs">Rol</th>
-                                    <th scope="col" class="px-3 py-2 font-lora whitespace-nowrap text-xs">Estado</th>
-                                    <th scope="col" class="px-3 py-2 font-lora whitespace-nowrap text-xs">Últ. Sesión</th>
+                                    <th scope="col" class="px-3 py-2 font-lora whitespace-nowrap text-xs">Lugar</th>
+                                    <th scope="col" class="px-3 py-2 font-lora whitespace-nowrap text-xs">Causa</th>
                                     <th scope="col" class="px-3 py-2 font-lora whitespace-nowrap text-xs">
                                         <span class="sr-only">Acciones</span>
                                     </th>
@@ -92,33 +117,24 @@
                             <tbody>
                                 <!-- Fila 1 -->
                                 <tr class="border-b hover:bg-gray-50">
-                                    <td class="px-3 py-3 font-medium text-gray-900 whitespace-nowrap">001</td>
-                                    <td class="px-3 py-3 whitespace-nowrap">mgonzalez</td>
-                                    <td class="px-3 py-3 whitespace-nowrap">María</td>
-                                    <td class="px-3 py-3 whitespace-nowrap">González</td>
-                                    <td class="px-3 py-3 whitespace-nowrap">López</td>
-                                    <td class="px-3 py-3 whitespace-nowrap">maria.gonzalez@ejemplo.com</td>
-                                    <td class="px-3 py-3 whitespace-nowrap">812-345-6789</td>
-                                    <td class="px-3 py-3 whitespace-nowrap">Coordinador</td>
+                                    <td class="px-3 py-3 font-medium text-gray-900 whitespace-nowrap">D-001</td>
+                                    <td class="px-3 py-3 whitespace-nowrap">Juan</td>
+                                    <td class="px-3 py-3 whitespace-nowrap">Pérez</td>
+                                    <td class="px-3 py-3 whitespace-nowrap">García</td>
+                                    <td class="px-3 py-3 whitespace-nowrap">72</td>
+                                    <td class="px-3 py-3 whitespace-nowrap">M</td>
+                                    <td class="px-3 py-3 whitespace-nowrap">15/03/2024</td>
+                                    <td class="px-3 py-3 whitespace-nowrap">Municipio A</td>
+                                    <td class="px-3 py-3 whitespace-nowrap">Municipio X</td>
                                     <td class="px-3 py-3 whitespace-nowrap">Jurisd. I</td>
-                                    <td class="px-3 py-3 whitespace-nowrap">15/03/2023</td>
+                                    <td class="px-3 py-3 whitespace-nowrap">Hospital Central</td>
                                     <td class="px-3 py-3 whitespace-nowrap">
-                                        <span class="bg-green-100 text-green-800 text-xs font-medium px-2 py-0.5 rounded-full">Administrador</span>
+                                        <span class="bg-red-100 text-red-800 text-xs font-medium px-2 py-0.5 rounded-full">Cardiopatía</span>
                                     </td>
-                                    <td class="px-3 py-3 whitespace-nowrap">
-                                        <div class="flex items-center gap-1">
-                                            <span class="w-2 h-2 rounded-full bg-green-500"></span>
-                                            <span class="text-xs">Activo</span>
-                                        </div>
-                                    </td>
-                                    <td class="px-3 py-3 whitespace-nowrap">Hace 2 horas</td>
                                     <td class="px-3 py-3 whitespace-nowrap">
                                         <div class="flex items-center justify-end space-x-1">
                                             <button class="w-7 h-7 flex items-center justify-center rounded border border-[#404041] text-[#404041] hover:bg-[#404041] hover:text-white transition-all duration-200" title="Editar">
                                                 <i class="fas fa-edit text-xs"></i>
-                                            </button>
-                                            <button class="w-7 h-7 flex items-center justify-center rounded border border-[#C08400] text-[#C08400] hover:bg-[#C08400] hover:text-white transition-all duration-200" title="Cambiar Contraseña">
-                                                <i class="fas fa-key text-xs"></i>
                                             </button>
                                             <button class="w-7 h-7 flex items-center justify-center rounded border border-[#AB1A1A] text-[#AB1A1A] hover:bg-[#AB1A1A] hover:text-white transition-all duration-200" title="Eliminar">
                                                 <i class="fas fa-trash text-xs"></i>
@@ -129,33 +145,24 @@
 
                                 <!-- Fila 2 -->
                                 <tr class="border-b hover:bg-gray-50 bg-gray-50">
-                                    <td class="px-3 py-3 font-medium text-gray-900 whitespace-nowrap">002</td>
-                                    <td class="px-3 py-3 whitespace-nowrap">crodriguez</td>
-                                    <td class="px-3 py-3 whitespace-nowrap">Carlos</td>
-                                    <td class="px-3 py-3 whitespace-nowrap">Rodríguez</td>
-                                    <td class="px-3 py-3 whitespace-nowrap">Martínez</td>
-                                    <td class="px-3 py-3 whitespace-nowrap">carlos.rodriguez@ejemplo.com</td>
-                                    <td class="px-3 py-3 whitespace-nowrap">812-456-7890</td>
-                                    <td class="px-3 py-3 whitespace-nowrap">Analista</td>
+                                    <td class="px-3 py-3 font-medium text-gray-900 whitespace-nowrap">D-002</td>
+                                    <td class="px-3 py-3 whitespace-nowrap">María</td>
+                                    <td class="px-3 py-3 whitespace-nowrap">López</td>
+                                    <td class="px-3 py-3 whitespace-nowrap">Hernández</td>
+                                    <td class="px-3 py-3 whitespace-nowrap">65</td>
+                                    <td class="px-3 py-3 whitespace-nowrap">F</td>
+                                    <td class="px-3 py-3 whitespace-nowrap">22/04/2024</td>
+                                    <td class="px-3 py-3 whitespace-nowrap">Municipio B</td>
+                                    <td class="px-3 py-3 whitespace-nowrap">Municipio Y</td>
                                     <td class="px-3 py-3 whitespace-nowrap">Jurisd. II</td>
-                                    <td class="px-3 py-3 whitespace-nowrap">22/04/2023</td>
+                                    <td class="px-3 py-3 whitespace-nowrap">Domicilio</td>
                                     <td class="px-3 py-3 whitespace-nowrap">
-                                        <span class="bg-blue-100 text-blue-800 text-xs font-medium px-2 py-0.5 rounded-full">Editor</span>
+                                        <span class="bg-blue-100 text-blue-800 text-xs font-medium px-2 py-0.5 rounded-full">Cáncer</span>
                                     </td>
-                                    <td class="px-3 py-3 whitespace-nowrap">
-                                        <div class="flex items-center gap-1">
-                                            <span class="w-2 h-2 rounded-full bg-green-500"></span>
-                                            <span class="text-xs">Activo</span>
-                                        </div>
-                                    </td>
-                                    <td class="px-3 py-3 whitespace-nowrap">Hace 1 día</td>
                                     <td class="px-3 py-3 whitespace-nowrap">
                                         <div class="flex items-center justify-end space-x-1">
                                             <button class="w-7 h-7 flex items-center justify-center rounded border border-[#404041] text-[#404041] hover:bg-[#404041] hover:text-white transition-all duration-200" title="Editar">
                                                 <i class="fas fa-edit text-xs"></i>
-                                            </button>
-                                            <button class="w-7 h-7 flex items-center justify-center rounded border border-[#C08400] text-[#C08400] hover:bg-[#C08400] hover:text-white transition-all duration-200" title="Cambiar Contraseña">
-                                                <i class="fas fa-key text-xs"></i>
                                             </button>
                                             <button class="w-7 h-7 flex items-center justify-center rounded border border-[#AB1A1A] text-[#AB1A1A] hover:bg-[#AB1A1A] hover:text-white transition-all duration-200" title="Eliminar">
                                                 <i class="fas fa-trash text-xs"></i>
@@ -166,33 +173,24 @@
 
                                 <!-- Fila 3 -->
                                 <tr class="border-b hover:bg-gray-50">
-                                    <td class="px-3 py-3 font-medium text-gray-900 whitespace-nowrap">003</td>
-                                    <td class="px-3 py-3 whitespace-nowrap">amartinez</td>
-                                    <td class="px-3 py-3 whitespace-nowrap">Ana</td>
+                                    <td class="px-3 py-3 font-medium text-gray-900 whitespace-nowrap">D-003</td>
+                                    <td class="px-3 py-3 whitespace-nowrap">Carlos</td>
                                     <td class="px-3 py-3 whitespace-nowrap">Martínez</td>
-                                    <td class="px-3 py-3 whitespace-nowrap">Sánchez</td>
-                                    <td class="px-3 py-3 whitespace-nowrap">ana.martinez@ejemplo.com</td>
-                                    <td class="px-3 py-3 whitespace-nowrap">812-567-8901</td>
-                                    <td class="px-3 py-3 whitespace-nowrap">Supervisor</td>
+                                    <td class="px-3 py-3 whitespace-nowrap">Rodríguez</td>
+                                    <td class="px-3 py-3 whitespace-nowrap">48</td>
+                                    <td class="px-3 py-3 whitespace-nowrap">M</td>
+                                    <td class="px-3 py-3 whitespace-nowrap">10/05/2024</td>
+                                    <td class="px-3 py-3 whitespace-nowrap">Municipio C</td>
+                                    <td class="px-3 py-3 whitespace-nowrap">Municipio Z</td>
                                     <td class="px-3 py-3 whitespace-nowrap">Jurisd. III</td>
-                                    <td class="px-3 py-3 whitespace-nowrap">10/05/2023</td>
+                                    <td class="px-3 py-3 whitespace-nowrap">Accidente</td>
                                     <td class="px-3 py-3 whitespace-nowrap">
-                                        <span class="bg-purple-100 text-purple-800 text-xs font-medium px-2 py-0.5 rounded-full">Supervisor</span>
+                                        <span class="bg-yellow-100 text-yellow-800 text-xs font-medium px-2 py-0.5 rounded-full">Accidente</span>
                                     </td>
-                                    <td class="px-3 py-3 whitespace-nowrap">
-                                        <div class="flex items-center gap-1">
-                                            <span class="w-2 h-2 rounded-full bg-red-500"></span>
-                                            <span class="text-xs">Inactivo</span>
-                                        </div>
-                                    </td>
-                                    <td class="px-3 py-3 whitespace-nowrap">Hace 5 días</td>
                                     <td class="px-3 py-3 whitespace-nowrap">
                                         <div class="flex items-center justify-end space-x-1">
                                             <button class="w-7 h-7 flex items-center justify-center rounded border border-[#404041] text-[#404041] hover:bg-[#404041] hover:text-white transition-all duration-200" title="Editar">
                                                 <i class="fas fa-edit text-xs"></i>
-                                            </button>
-                                            <button class="w-7 h-7 flex items-center justify-center rounded border border-[#C08400] text-[#C08400] hover:bg-[#C08400] hover:text-white transition-all duration-200" title="Cambiar Contraseña">
-                                                <i class="fas fa-key text-xs"></i>
                                             </button>
                                             <button class="w-7 h-7 flex items-center justify-center rounded border border-[#AB1A1A] text-[#AB1A1A] hover:bg-[#AB1A1A] hover:text-white transition-all duration-200" title="Eliminar">
                                                 <i class="fas fa-trash text-xs"></i>
@@ -203,33 +201,24 @@
 
                                 <!-- Fila 4 -->
                                 <tr class="border-b hover:bg-gray-50 bg-gray-50">
-                                    <td class="px-3 py-3 font-medium text-gray-900 whitespace-nowrap">004</td>
-                                    <td class="px-3 py-3 whitespace-nowrap">rsanchez</td>
-                                    <td class="px-3 py-3 whitespace-nowrap">Roberto</td>
+                                    <td class="px-3 py-3 font-medium text-gray-900 whitespace-nowrap">D-004</td>
+                                    <td class="px-3 py-3 whitespace-nowrap">Ana</td>
                                     <td class="px-3 py-3 whitespace-nowrap">Sánchez</td>
-                                    <td class="px-3 py-3 whitespace-nowrap">Jiménez</td>
-                                    <td class="px-3 py-3 whitespace-nowrap">roberto.sanchez@ejemplo.com</td>
-                                    <td class="px-3 py-3 whitespace-nowrap">812-678-9012</td>
-                                    <td class="px-3 py-3 whitespace-nowrap">Técnico</td>
+                                    <td class="px-3 py-3 whitespace-nowrap">Gómez</td>
+                                    <td class="px-3 py-3 whitespace-nowrap">81</td>
+                                    <td class="px-3 py-3 whitespace-nowrap">F</td>
+                                    <td class="px-3 py-3 whitespace-nowrap">18/06/2024</td>
+                                    <td class="px-3 py-3 whitespace-nowrap">Municipio A</td>
+                                    <td class="px-3 py-3 whitespace-nowrap">Municipio W</td>
                                     <td class="px-3 py-3 whitespace-nowrap">Jurisd. I</td>
-                                    <td class="px-3 py-3 whitespace-nowrap">18/06/2023</td>
+                                    <td class="px-3 py-3 whitespace-nowrap">Hospital Regional</td>
                                     <td class="px-3 py-3 whitespace-nowrap">
-                                        <span class="bg-gray-100 text-gray-800 text-xs font-medium px-2 py-0.5 rounded-full">Usuario</span>
+                                        <span class="bg-green-100 text-green-800 text-xs font-medium px-2 py-0.5 rounded-full">COVID-19</span>
                                     </td>
-                                    <td class="px-3 py-3 whitespace-nowrap">
-                                        <div class="flex items-center gap-1">
-                                            <span class="w-2 h-2 rounded-full bg-green-500"></span>
-                                            <span class="text-xs">Activo</span>
-                                        </div>
-                                    </td>
-                                    <td class="px-3 py-3 whitespace-nowrap">Hace 1 semana</td>
                                     <td class="px-3 py-3 whitespace-nowrap">
                                         <div class="flex items-center justify-end space-x-1">
                                             <button class="w-7 h-7 flex items-center justify-center rounded border border-[#404041] text-[#404041] hover:bg-[#404041] hover:text-white transition-all duration-200" title="Editar">
                                                 <i class="fas fa-edit text-xs"></i>
-                                            </button>
-                                            <button class="w-7 h-7 flex items-center justify-center rounded border border-[#C08400] text-[#C08400] hover:bg-[#C08400] hover:text-white transition-all duration-200" title="Cambiar Contraseña">
-                                                <i class="fas fa-key text-xs"></i>
                                             </button>
                                             <button class="w-7 h-7 flex items-center justify-center rounded border border-[#AB1A1A] text-[#AB1A1A] hover:bg-[#AB1A1A] hover:text-white transition-all duration-200" title="Eliminar">
                                                 <i class="fas fa-trash text-xs"></i>

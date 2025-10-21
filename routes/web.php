@@ -26,8 +26,10 @@ Route::view('/prueba', 'landing.prueba')->name('prueba');
 Route::view('estadisticas/registro', 'estadisticas.registro')->name('estadisticas.nuevo-registro');
 Route::view('estadisticas/actualizar-registro', 'estadisticas.actualizar-registro')->name('estadisticas.actualizar-registro');
 Route::view('estadisticas/graficas', 'estadisticas.graficas')->name('estadisticas.graficas');
+Route::view('estadisticas/datos', 'estadisticas.datos')->name('estadisticas.datos');
 
 // Usuarios
+Route::view('usuario/miperfil', 'usuario.miperfil')->name('usuario.miperfil');
 Route::view('usuario/gestion-de-usuarios/registro', 'usuario.gestion-de-usuarios.registro')->name('usuario.registro');
 Route::view('usuario/gestion-de-usuarios/actualizar-registro', 'usuario.gestion-de-usuarios.actualizar-registro')->name('usuario.actualizar-registro');
 Route::view('usuario/gestion-de-usuarios/actualizar-contrasena', 'usuario.gestion-de-usuarios.actualizar-contrasena')->name('usuario.actualizar-contrasena');

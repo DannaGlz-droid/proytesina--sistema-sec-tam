@@ -2,7 +2,7 @@
 @section('title', 'Actualizar Usuario')
 @section('content')
 
-    @include('components.header')
+    @include('components.header-admin')
     @include('components.nav-usuario')
 
     <div class="px-4 lg:pl-10 pt-6 lg:pt-10 pb-8 lg:pb-12">
@@ -125,6 +125,27 @@
                                    placeholder="Ej: mgarcia"
                                    value="{{ old('username', $usuario->username ?? '') }}">
                         </div>
+                        
+                        <!-- Switch para estado activo/inactivo -->
+                        <div class="pt-2">
+                            <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-3">Estado de la cuenta</label>
+                            <div class="flex items-center">
+                                <label class="switch">
+                                    <input type="checkbox" 
+                                           name="activo"
+                                           value="1"
+                                           {{ (old('activo', $usuario->activo ?? 1) == 1) ? 'checked' : '' }}>
+                                    <span class="slider round"></span>
+                                </label>
+                                <span class="ml-3 text-sm font-medium text-[#404041]" id="toggleLabel">
+                                    {{ (old('activo', $usuario->activo ?? 1) == 1) ? 'Activo' : 'Inactivo' }}
+                                </span>
+                            </div>
+                            <p class="text-xs text-gray-500 mt-2">
+                                <i class="fas fa-info-circle text-[#611132] mr-1"></i>
+                                Cuando este inactivo, el usuario no podra iniciar sesión en el sistema.
+                            </p>
+                        </div>
                     </div>
                     
                     <div class="space-y-3">
@@ -137,6 +158,19 @@
                                 <option value="visor" {{ old('rol', $usuario->rol ?? '') == 'visor' ? 'selected' : '' }}>Visor</option>
                             </select>
                         </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sección de advertencia para usuarios inactivos -->
+            <div id="advertenciaInactivo" class="mb-6 p-4 border border-yellow-300 bg-yellow-50 rounded-lg {{ (old('activo', $usuario->activo ?? 1) == 1) ? 'hidden' : '' }}">
+                <div class="flex items-start">
+                    <i class="fas fa-exclamation-triangle text-yellow-500 text-lg mt-0.5 mr-3"></i>
+                    <div>
+                        <h3 class="font-semibold text-yellow-800 text-sm">Usuario inactivo</h3>
+                        <p class="text-yellow-700 text-xs mt-1">
+                            Este usuario está marcado como inactivo. No podrá iniciar sesión en el sistema hasta que sea reactivado.
+                        </p>
                     </div>
                 </div>
             </div>
@@ -158,7 +192,83 @@
         </div>
     </div>
 
+    <!-- Estilos para el switch -->
+    <style>
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 60px;
+            height: 34px;
+        }
+
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 26px;
+            width: 26px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+        }
+
+        input:checked + .slider {
+            background-color: #10B981;
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(26px);
+        }
+
+        .slider.round {
+            border-radius: 34px;
+        }
+
+        .slider.round:before {
+            border-radius: 50%;
+        }
+    </style>
+
+    <!-- Script para el switch de estado activo/inactivo -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const toggleCheckbox = document.querySelector('input[name="activo"]');
+            const toggleLabel = document.getElementById('toggleLabel');
+            const advertenciaInactivo = document.getElementById('advertenciaInactivo');
+            
+            toggleCheckbox.addEventListener('change', function() {
+                if (this.checked) {
+                    toggleLabel.textContent = 'Activo';
+                    advertenciaInactivo.classList.add('hidden');
+                } else {
+                    toggleLabel.textContent = 'Inactivo';
+                    advertenciaInactivo.classList.remove('hidden');
+                }
+            });
+        });
+    </script>
+
     <!-- Incluir Ionicons -->
     <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
     <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
+    
+    <!-- Incluir Font Awesome para los íconos -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 @endsection
