@@ -23,23 +23,23 @@
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-3 lg:gap-4">
                     <div class="space-y-3">
                         <div>
-                            <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1">Nombre(s) *</label>
+                            <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Nombre(s) *</label>
                             <input type="text" 
-                                   class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200" 
+                                   class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora" 
                                    placeholder="Ej: Juan Diego"
                                    value="{{ old('nombres', $defuncion->nombres ?? '') }}">
                         </div>
                         <div>
-                            <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1">Apellido paterno *</label>
+                            <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Apellido paterno *</label>
                             <input type="text" 
-                                   class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200" 
+                                   class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora" 
                                    placeholder="Ej: Nava"
                                    value="{{ old('apellido_paterno', $defuncion->apellido_paterno ?? '') }}">
                         </div>
                         <div>
-                            <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1">Edad *</label>
+                            <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Edad *</label>
                             <input type="number" 
-                                   class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200" 
+                                   class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora" 
                                    placeholder="Ej: 34"
                                    value="{{ old('edad', $defuncion->edad ?? '') }}">
                         </div>
@@ -47,15 +47,15 @@
                     
                     <div class="space-y-3">
                         <div>
-                            <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1">Apellido materno *</label>
+                            <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Apellido materno *</label>
                             <input type="text" 
-                                   class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200" 
+                                   class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora" 
                                    placeholder="Ej: Reyes"
                                    value="{{ old('apellido_materno', $defuncion->apellido_materno ?? '') }}">
                         </div>
                         <div>
-                            <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1">Sexo *</label>
-                            <select class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200" name="sexo">
+                            <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Sexo *</label>
+                            <select class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora" name="sexo">
                                 <option value="">Seleccione una opción</option>
                                 <option value="masculino" {{ old('sexo', $defuncion->sexo ?? '') == 'masculino' ? 'selected' : '' }}>Masculino</option>
                                 <option value="femenino" {{ old('sexo', $defuncion->sexo ?? '') == 'femenino' ? 'selected' : '' }}>Femenino</option>
@@ -79,16 +79,16 @@
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-3 lg:gap-4">
                     <div class="space-y-3">
                         <div>
-                            <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1">Municipio de residencia *</label>
-                            <select class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200" name="municipio_residencia">
+                            <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Municipio de residencia *</label>
+                            <select class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora" name="municipio_residencia">
                                 <option value="">Seleccione un municipio</option>
                                 <option value="monterrey" {{ old('municipio_residencia', $defuncion->municipio_residencia ?? '') == 'monterrey' ? 'selected' : '' }}>Monterrey</option>
                                 <option value="sanpedro" {{ old('municipio_residencia', $defuncion->municipio_residencia ?? '') == 'sanpedro' ? 'selected' : '' }}>San Pedro Garza García</option>
                             </select>
                         </div>
                         <div>
-                            <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1">Municipio de defunción *</label>
-                            <select class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200" name="municipio_defuncion">
+                            <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Municipio de defunción *</label>
+                            <select class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora" name="municipio_defuncion">
                                 <option value="">Seleccione un municipio</option>
                                 <option value="monterrey" {{ old('municipio_defuncion', $defuncion->municipio_defuncion ?? '') == 'monterrey' ? 'selected' : '' }}>Monterrey</option>
                                 <option value="sanpedro" {{ old('municipio_defuncion', $defuncion->municipio_defuncion ?? '') == 'sanpedro' ? 'selected' : '' }}>San Pedro Garza García</option>
@@ -98,17 +98,17 @@
                     
                     <div class="space-y-3">
                         <div>
-                            <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1">Jurisdicción</label>
+                            <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Jurisdicción</label>
                             <input type="text" 
-                                   class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg bg-gray-50 focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200" 
+                                   class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg bg-gray-50 focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora" 
                                    placeholder="Se asignará automáticamente"
                                    readonly
                                    value="{{ old('jurisdiccion', $defuncion->jurisdiccion ?? '') }}">
                         </div>
                         <div>
-                            <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1">Lugar específico *</label>
+                            <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Lugar específico *</label>
                             <input type="text" 
-                                   class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200" 
+                                   class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora" 
                                    placeholder="Ej: Carretera Monterrey-Saltillo, km 12"
                                    value="{{ old('lugar_especifico', $defuncion->lugar_especifico ?? '') }}">
                         </div>
@@ -131,8 +131,8 @@
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-3 lg:gap-4">
                     <div class="space-y-3">
                         <div>
-                            <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1">Causa de la defunción *</label>
-                            <select class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200" name="causa_defuncion">
+                            <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Causa de la defunción *</label>
+                            <select class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora" name="causa_defuncion">
                                 <option value="">Seleccione una causa</option>
                                 <option value="enfermedad" {{ old('causa_defuncion', $defuncion->causa_defuncion ?? '') == 'enfermedad' ? 'selected' : '' }}>Enfermedad cardiovascular</option>
                                 <option value="accidente" {{ old('causa_defuncion', $defuncion->causa_defuncion ?? '') == 'accidente' ? 'selected' : '' }}>Accidente</option>
@@ -143,9 +143,9 @@
                     
                     <div class="space-y-3">
                         <div>
-                            <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1">Fecha de defunción *</label>
+                            <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Fecha de defunción *</label>
                             <input type="date" 
-                                   class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200"
+                                   class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora"
                                    value="{{ old('fecha_defuncion', $defuncion->fecha_defuncion ?? '') }}">
                         </div>
                     </div>
@@ -155,15 +155,13 @@
             <!-- Línea separadora para botones -->
             <div class="h-px bg-gray-300 my-4 lg:my-6"></div>
 
-            <!-- Botones responsive -->
-            <div class="flex flex-col sm:flex-row justify-end gap-3 lg:gap-4">
-                <button type="button" class="w-full sm:w-auto px-4 lg:px-6 py-2 text-xs lg:text-sm border border-[#404041] text-[#404041] font-medium rounded-lg hover:bg-[#404041] hover:text-white transition-all duration-200">
-                    Cancelar
-                </button>
-                <button type="submit" class="w-full sm:w-auto px-4 lg:px-6 py-2 text-xs lg:text-sm bg-[#404041] text-white font-medium rounded-lg hover:bg-[#2a2a2a] transition-all duration-200">
-                    Actualizar registro
-                </button>
-            </div>
+            <!-- USAR COMPONENTE DE BOTONES ESTANDARIZADO -->
+            <x-form-buttons 
+                primaryText="Actualizar registro"
+                secondaryText="Volver al listado"
+                primaryType="submit"
+                secondaryType="button"
+            />
         </div>
     </div>
 

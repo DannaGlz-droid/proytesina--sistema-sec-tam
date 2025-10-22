@@ -1,13 +1,21 @@
 <div class="bg-nav text-white w-full font-sans">
     <div class="flex items-center h-9 lg:h-11 px-3 lg:px-5">
-        <button class="text-sm lg:text-base h-full hover:bg-[#9B4D6E] hover:text-[#E8CA8B] text-white py-1.5 px-6 lg:px-8 transition duration-200 ease-in-out flex items-center flex-shrink-0 relative after:hover:content-[''] after:hover:absolute after:hover:left-0 after:hover:right-0 after:hover:bottom-0 after:hover:h-0.5 after:hover:bg-[#DB9703]">
-            Centro de control
+        <!-- Botón Centro de control -->
+        <button class="text-sm lg:text-base h-full px-4 lg:px-6 transition duration-200 ease-in-out flex items-center flex-shrink-0 relative group">
+            <span class="relative py-1.5">
+                Centro de control
+                <span class="absolute bottom-0 left-0 w-0 h-0.5 bg-[#DB9703] transition-all duration-200 group-hover:w-full"></span>
+            </span>
         </button>
         
-        <div class="relative h-full" id="nuevoRegistroMenu">
-            <button class="text-sm lg:text-base h-full hover:bg-[#9B4D6E] hover:text-[#E8CA8B] text-white py-1.5 px-6 lg:px-8 transition duration-200 ease-in-out flex items-center flex-shrink-0 relative after:hover:content-[''] after:hover:absolute after:hover:left-0 after:hover:right-0 after:hover:bottom-0 after:hover:h-0.5 after:hover:bg-[#DB9703]">
-                Nuevo registro
-                <i class="fas fa-chevron-down text-xs ml-1 lg:ml-2 transition-transform duration-200" id="menuArrow"></i>
+        <!-- Botón Nuevo registro con dropdown -->
+        <div class="relative h-full group" id="nuevoRegistroMenu">
+            <button class="text-sm lg:text-base h-full px-4 lg:px-6 transition duration-200 ease-in-out flex items-center flex-shrink-0 group" id="menuButton">
+                <span class="relative py-1.5 flex items-center">
+                    Nuevo registro
+                    <i class="fas fa-chevron-down text-xs ml-1 lg:ml-2 transition-transform duration-200" id="menuArrow"></i>
+                    <span class="absolute bottom-0 left-0 w-0 h-0.5 bg-[#DB9703] transition-all duration-200 group-hover:w-full"></span>
+                </span>
             </button>
             
             <!-- Menú desplegable -->
@@ -32,6 +40,7 @@
     </div>
 </div>
 
+
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const menuContainer = document.getElementById('nuevoRegistroMenu');
@@ -51,5 +60,6 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 </script>
+
 
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">

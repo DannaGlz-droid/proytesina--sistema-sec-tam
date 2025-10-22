@@ -23,23 +23,23 @@
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-3 lg:gap-4">
                     <div class="space-y-3">
                         <div>
-                            <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1">Tema *</label>
+                            <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Tema *</label>
                             <input type="text" 
-                                   class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200" 
+                                   class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora" 
                                    placeholder="Ej: Prevención de enfermedades"
                                    value="{{ old('tema') }}">
                         </div>
 
                         <div>
-                            <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1">Fecha de la actividad *</label>
+                            <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Fecha de la actividad *</label>
                             <input type="date" 
-                                   class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200"
+                                   class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora"
                                    value="{{ old('fecha_actividad') }}">
                         </div>
                         <div>
-                            <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1">Lugar *</label>
+                            <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Lugar *</label>
                             <input type="text" 
-                                   class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200" 
+                                   class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora" 
                                    placeholder="Ej: Salón de usos múltiples"
                                    value="{{ old('lugar') }}">
                         </div>
@@ -47,8 +47,8 @@
                     
                     <div class="space-y-3">
                          <div>
-                            <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1">Tipo de actividad *</label>
-                            <select class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200" name="tipo_actividad">
+                            <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Tipo de actividad *</label>
+                            <select class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora" name="tipo_actividad">
                                 <option value="">Seleccione el tipo de actividad</option>
                                 <option value="capacitacion">Capacitación</option>
                                 <option value="taller">Taller</option>
@@ -58,16 +58,16 @@
                             </select>
                         </div>
                         <div>
-                            <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1">Participantes *</label>
+                            <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Participantes *</label>
                             <input type="number" 
-                                   class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200" 
+                                   class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora" 
                                    placeholder="Ej: 25"
                                    value="{{ old('participantes') }}">
                         </div>
                         <div>
-                            <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1">Promotor *</label>
+                            <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Promotor *</label>
                             <input type="text" 
-                                   class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200" 
+                                   class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora" 
                                    placeholder="Ej: Departamento de Salud"
                                    value="{{ old('promotor') }}">
                         </div>
@@ -88,9 +88,9 @@
                 
                 <div class="space-y-3">
                     <div>
-                        <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1">Descripción de la actividad *</label>
+                        <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Descripción de la actividad *</label>
                         <textarea 
-                            class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200" 
+                            class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora" 
                             rows="4"
                             placeholder="Describa los detalles de la actividad, objetivos, desarrollo y resultados..."
                         >{{ old('descripcion') }}</textarea>
@@ -117,11 +117,11 @@
                             <div class="flex items-center justify-between mb-3">
                                 <div class="flex items-center">
                                     <ion-icon name="document-outline" class="text-blue-500 mr-2 text-lg"></ion-icon>
-                                    <span class="text-sm font-medium text-[#404041]">Documento PDF</span>
+                                    <span class="text-sm font-medium text-[#404041] font-lora">Documento PDF</span>
                                 </div>
-                                <span id="pdf-status" class="text-xs px-2 py-1 bg-yellow-100 text-yellow-800 rounded">Pendiente</span>
+                                <span id="pdf-status" class="text-xs px-2 py-1 bg-yellow-100 text-yellow-800 rounded font-lora">Pendiente</span>
                             </div>
-                            <p class="text-xs text-gray-600">Formato: PDF (obligatorio)</p>
+                            <p class="text-xs text-gray-600 font-lora">Formato: PDF (obligatorio)</p>
                         </div>
 
                         <!-- (2) Hoja de Cálculo -->
@@ -129,11 +129,11 @@
                             <div class="flex items-center justify-between mb-3">
                                 <div class="flex items-center">
                                     <ion-icon name="stats-chart-outline" class="text-green-500 mr-2 text-lg"></ion-icon>
-                                    <span class="text-sm font-medium text-[#404041]">Hoja de Cálculo</span>
+                                    <span class="text-sm font-medium text-[#404041] font-lora">Hoja de Cálculo</span>
                                 </div>
-                                <span id="excel-status" class="text-xs px-2 py-1 bg-yellow-100 text-yellow-800 rounded">Pendiente</span>
+                                <span id="excel-status" class="text-xs px-2 py-1 bg-yellow-100 text-yellow-800 rounded font-lora">Pendiente</span>
                             </div>
-                            <p class="text-xs text-gray-600">Formato: XLSX (obligatorio)</p>
+                            <p class="text-xs text-gray-600 font-lora">Formato: XLSX (obligatorio)</p>
                         </div>
 
                         <!-- (3) Fotografías -->
@@ -141,17 +141,17 @@
                             <div class="flex items-center justify-between mb-3">
                                 <div class="flex items-center">
                                     <ion-icon name="images-outline" class="text-purple-500 mr-2 text-lg"></ion-icon>
-                                    <span class="text-sm font-medium text-[#404041]">Fotografías</span>
+                                    <span class="text-sm font-medium text-[#404041] font-lora">Fotografías</span>
                                 </div>
-                                <span id="photos-status" class="text-xs px-2 py-1 bg-yellow-100 text-yellow-800 rounded">0/4</span>
+                                <span id="photos-status" class="text-xs px-2 py-1 bg-yellow-100 text-yellow-800 rounded font-lora">0/4</span>
                             </div>
-                            <p class="text-xs text-gray-600">Formatos: JPG, JPEG, PNG (4 fotos obligatorias)</p>
+                            <p class="text-xs text-gray-600 font-lora">Formatos: JPG, JPEG, PNG (4 fotos obligatorias)</p>
                         </div>
                     </div>
 
                     <!-- Área de carga de archivos -->
                     <div>
-                        <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-2">Subir archivos (selección múltiple) *</label>
+                        <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-2 font-lora">Subir archivos (selección múltiple) *</label>
                         
                         <!-- Cuadro punteado para arrastrar y soltar -->
                         <div class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-[#404041] transition-colors duration-200 bg-gray-50">
@@ -164,10 +164,10 @@
                             
                             <div class="cursor-pointer" onclick="document.getElementById('file-input').click()">
                                 <ion-icon name="cloud-upload-outline" class="text-4xl text-gray-400 mb-3"></ion-icon>
-                                <p class="text-sm font-medium text-[#404041] mb-1">
+                                <p class="text-sm font-medium text-[#404041] mb-1 font-lora">
                                     Haga clic o arrastre archivos aquí para subirlos
                                 </p>
-                                <p class="text-xs text-gray-500">
+                                <p class="text-xs text-gray-500 font-lora">
                                     Formatos permitidos: PDF, XLSX, XLS, JPG, JPEG, PNG
                                 </p>
                             </div>
@@ -175,7 +175,7 @@
                         
                         <!-- Información de archivos seleccionados -->
                         <div id="file-list" class="mt-3 text-xs text-gray-600 hidden">
-                            <p class="font-medium mb-1">Archivos seleccionados:</p>
+                            <p class="font-medium mb-1 font-lora">Archivos seleccionados:</p>
                             <ul id="file-names" class="space-y-1"></ul>
                         </div>
                     </div>
@@ -185,18 +185,13 @@
             <!-- Línea separadora para botones -->
             <div class="h-[1px] bg-gray-300 my-4 lg:my-6"></div>
 
-            <!-- Botones responsive -->
-            <div class="flex flex-col sm:flex-row justify-end gap-3 lg:gap-4">
-                <button type="button" 
-                        onclick="clearForm()"
-                        class="w-full sm:w-auto px-4 lg:px-6 py-2 text-xs lg:text-sm border border-[#404041] text-[#404041] font-medium rounded-lg hover:bg-[#404041] hover:text-white transition-all duration-200">
-                    Limpiar formulario
-                </button>
-                <button type="submit" 
-                        class="w-full sm:w-auto px-4 lg:px-6 py-2 text-xs lg:text-sm bg-[#404041] text-white font-medium rounded-lg hover:bg-[#2a2a2a] transition-all duration-200">
-                    Guardar registro
-                </button>
-            </div>
+            <!-- USAR COMPONENTE DE BOTONES -->
+            <x-form-buttons 
+                primaryText="Guardar registro"
+                secondaryText="Limpiar formulario"
+                primaryType="submit"
+                secondaryType="button"
+            />
         </div>
     </div>
 
@@ -222,7 +217,7 @@
                 
                 // Agregar a la lista
                 const listItem = document.createElement('li');
-                listItem.className = 'flex items-center';
+                listItem.className = 'flex items-center font-lora';
                 listItem.innerHTML = `
                     <ion-icon name="document-outline" class="text-gray-400 mr-2"></ion-icon>
                     ${file.name} (${(file.size / 1024 / 1024).toFixed(2)} MB)
@@ -256,13 +251,13 @@
             
             if (currentCount >= requiredCount) {
                 element.textContent = currentCount === 1 ? 'Completado' : `${currentCount}/${requiredCount}`;
-                element.className = 'text-xs px-2 py-1 bg-green-100 text-green-800 rounded';
+                element.className = 'text-xs px-2 py-1 bg-green-100 text-green-800 rounded font-lora';
             } else if (currentCount > 0) {
                 element.textContent = typeName === 'Fotografías' ? `${currentCount}/${requiredCount}` : 'Incompleto';
-                element.className = 'text-xs px-2 py-1 bg-yellow-100 text-yellow-800 rounded';
+                element.className = 'text-xs px-2 py-1 bg-yellow-100 text-yellow-800 rounded font-lora';
             } else {
                 element.textContent = typeName === 'Fotografías' ? `0/${requiredCount}` : 'Pendiente';
-                element.className = 'text-xs px-2 py-1 bg-yellow-100 text-yellow-800 rounded';
+                element.className = 'text-xs px-2 py-1 bg-yellow-100 text-yellow-800 rounded font-lora';
             }
         }
         
@@ -271,11 +266,11 @@
                 document.querySelector('form').reset();
                 // Resetear estados de archivos
                 document.getElementById('pdf-status').textContent = 'Pendiente';
-                document.getElementById('pdf-status').className = 'text-xs px-2 py-1 bg-yellow-100 text-yellow-800 rounded';
+                document.getElementById('pdf-status').className = 'text-xs px-2 py-1 bg-yellow-100 text-yellow-800 rounded font-lora';
                 document.getElementById('excel-status').textContent = 'Pendiente';
-                document.getElementById('excel-status').className = 'text-xs px-2 py-1 bg-yellow-100 text-yellow-800 rounded';
+                document.getElementById('excel-status').className = 'text-xs px-2 py-1 bg-yellow-100 text-yellow-800 rounded font-lora';
                 document.getElementById('photos-status').textContent = '0/4';
-                document.getElementById('photos-status').className = 'text-xs px-2 py-1 bg-yellow-100 text-yellow-800 rounded';
+                document.getElementById('photos-status').className = 'text-xs px-2 py-1 bg-yellow-100 text-yellow-800 rounded font-lora';
                 document.getElementById('file-list').classList.add('hidden');
             }
         }

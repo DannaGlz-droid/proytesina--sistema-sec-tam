@@ -23,9 +23,9 @@
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-3 lg:gap-4">
                     <div class="space-y-3">
                         <div>
-                            <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1">Tema *</label>
+                            <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Tema *</label>
                             <input type="text" 
-                                   class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200" 
+                                   class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora" 
                                    placeholder="Ej: Operativo alcoholimetría fin de semana"
                                    value="{{ old('tema') }}">
                         </div>
@@ -33,9 +33,9 @@
                     
                     <div class="space-y-3">
                         <div>
-                            <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1">Fecha *</label>
+                            <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Fecha *</label>
                             <input type="date" 
-                                   class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200"
+                                   class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora"
                                    value="{{ old('fecha') }}">
                         </div>
                     </div>
@@ -55,9 +55,9 @@
                 
                 <div class="space-y-3">
                     <div>
-                        <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1">Puntos de revisión instalados *</label>
+                        <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Puntos de revisión instalados *</label>
                         <input type="number" 
-                               class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200" 
+                               class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora" 
                                placeholder="Ej: 15"
                                value="{{ old('puntos_revision') }}">
                     </div>
@@ -78,9 +78,9 @@
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-3 lg:gap-4">
                     <div class="space-y-3">
                         <div>
-                            <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1">Pruebas realizadas *</label>
+                            <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Pruebas realizadas *</label>
                             <input type="number" 
-                                   class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200" 
+                                   class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora" 
                                    placeholder="Ej: 250"
                                    value="{{ old('pruebas_realizadas') }}">
                         </div>
@@ -88,9 +88,9 @@
                     
                     <div class="space-y-3">
                         <div>
-                            <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1">Conductores no aptos *</label>
+                            <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Conductores no aptos *</label>
                             <input type="number" 
-                                   class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200" 
+                                   class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora" 
                                    placeholder="Ej: 12"
                                    value="{{ old('conductores_no_aptos') }}">
                         </div>
@@ -112,9 +112,9 @@
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-3 lg:gap-4">
                     <div class="space-y-3">
                         <div>
-                            <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1">Mujeres *</label>
+                            <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Mujeres *</label>
                             <input type="number" 
-                                   class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200" 
+                                   class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora" 
                                    placeholder="Ej: 3"
                                    value="{{ old('mujeres_no_aptas') }}">
                         </div>
@@ -122,9 +122,9 @@
                     
                     <div class="space-y-3">
                         <div>
-                            <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1">Hombres *</label>
+                            <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Hombres *</label>
                             <input type="number" 
-                                   class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200" 
+                                   class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora" 
                                    placeholder="Ej: 9"
                                    value="{{ old('hombres_no_aptos') }}">
                         </div>
@@ -146,23 +146,23 @@
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-3 lg:gap-4">
                     <div class="space-y-3">
                         <div>
-                            <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1">Automóviles y camionetas *</label>
+                            <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Automóviles y camionetas *</label>
                             <input type="number" 
-                                   class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200" 
+                                   class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora" 
                                    placeholder="Ej: 8"
                                    value="{{ old('automoviles_camionetas') }}">
                         </div>
                         <div>
-                            <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1">Motocicletas *</label>
+                            <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Motocicletas *</label>
                             <input type="number" 
-                                   class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200" 
+                                   class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora" 
                                    placeholder="Ej: 2"
                                    value="{{ old('motocicletas') }}">
                         </div>
                         <div>
-                            <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1">Transporte público colectivo *</label>
+                            <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Transporte público colectivo *</label>
                             <input type="number" 
-                                   class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200" 
+                                   class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora" 
                                    placeholder="Ej: 1"
                                    value="{{ old('transporte_colectivo') }}">
                         </div>
@@ -170,23 +170,23 @@
                     
                     <div class="space-y-3">
                         <div>
-                            <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1">Transporte público individual *</label>
+                            <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Transporte público individual *</label>
                             <input type="number" 
-                                   class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200" 
+                                   class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora" 
                                    placeholder="Ej: 0"
                                    value="{{ old('transporte_individual') }}">
                         </div>
                         <div>
-                            <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1">Transporte de carga *</label>
+                            <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Transporte de carga *</label>
                             <input type="number" 
-                                   class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200" 
+                                   class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora" 
                                    placeholder="Ej: 1"
                                    value="{{ old('transporte_carga') }}">
                         </div>
                         <div>
-                            <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1">Vehículos de emergencia *</label>
+                            <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Vehículos de emergencia *</label>
                             <input type="number" 
-                                   class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200" 
+                                   class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora" 
                                    placeholder="Ej: 0"
                                    value="{{ old('vehiculos_emergencia') }}">
                         </div>
@@ -211,16 +211,16 @@
                         <div class="flex items-center justify-between mb-3">
                             <div class="flex items-center">
                                 <ion-icon name="stats-chart-outline" class="text-green-500 mr-2 text-lg"></ion-icon>
-                                <span class="text-sm font-medium text-[#404041]">Hoja de Cálculo</span>
+                                <span class="text-sm font-medium text-[#404041] font-lora">Hoja de Cálculo</span>
                             </div>
-                            <span id="excel-status" class="text-xs px-2 py-1 bg-yellow-100 text-yellow-800 rounded">Pendiente</span>
+                            <span id="excel-status" class="text-xs px-2 py-1 bg-yellow-100 text-yellow-800 rounded font-lora">Pendiente</span>
                         </div>
-                        <p class="text-xs text-gray-600">Formato: XLSX (obligatorio)</p>
+                        <p class="text-xs text-gray-600 font-lora">Formato: XLSX (obligatorio)</p>
                     </div>
 
                     <!-- Área de carga de archivo -->
                     <div>
-                        <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-2">Subir archivo *</label>
+                        <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-2 font-lora">Subir archivo *</label>
                         
                         <!-- Cuadro punteado para arrastrar y soltar -->
                         <div class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-[#404041] transition-colors duration-200 bg-gray-50">
@@ -232,10 +232,10 @@
                             
                             <div class="cursor-pointer" onclick="document.getElementById('file-input').click()">
                                 <ion-icon name="cloud-upload-outline" class="text-4xl text-gray-400 mb-3"></ion-icon>
-                                <p class="text-sm font-medium text-[#404041] mb-1">
+                                <p class="text-sm font-medium text-[#404041] mb-1 font-lora">
                                     Haga clic o arrastre el archivo aquí para subirlo
                                 </p>
-                                <p class="text-xs text-gray-500">
+                                <p class="text-xs text-gray-500 font-lora">
                                     Formatos permitidos: XLSX, XLS
                                 </p>
                             </div>
@@ -243,7 +243,7 @@
                         
                         <!-- Información del archivo seleccionado -->
                         <div id="file-list" class="mt-3 text-xs text-gray-600 hidden">
-                            <p class="font-medium mb-1">Archivo seleccionado:</p>
+                            <p class="font-medium mb-1 font-lora">Archivo seleccionado:</p>
                             <ul id="file-names" class="space-y-1"></ul>
                         </div>
                     </div>
@@ -253,18 +253,13 @@
             <!-- Línea separadora para botones -->
             <div class="h-[1px] bg-gray-300 my-4 lg:my-6"></div>
 
-            <!-- Botones responsive -->
-            <div class="flex flex-col sm:flex-row justify-end gap-3 lg:gap-4">
-                <button type="button" 
-                        onclick="clearForm()"
-                        class="w-full sm:w-auto px-4 lg:px-6 py-2 text-xs lg:text-sm border border-[#404041] text-[#404041] font-medium rounded-lg hover:bg-[#404041] hover:text-white transition-all duration-200">
-                    Limpiar formulario
-                </button>
-                <button type="submit" 
-                        class="w-full sm:w-auto px-4 lg:px-6 py-2 text-xs lg:text-sm bg-[#404041] text-white font-medium rounded-lg hover:bg-[#2a2a2a] transition-all duration-200">
-                    Guardar registro
-                </button>
-            </div>
+            <!-- USAR COMPONENTE DE BOTONES -->
+            <x-form-buttons 
+                primaryText="Guardar registro"
+                secondaryText="Limpiar formulario"
+                primaryType="submit"
+                secondaryType="button"
+            />
         </div>
     </div>
 
@@ -288,7 +283,7 @@
                 if (extension === 'xlsx' || extension === 'xls') {
                     // Agregar a la lista
                     const listItem = document.createElement('li');
-                    listItem.className = 'flex items-center';
+                    listItem.className = 'flex items-center font-lora';
                     listItem.innerHTML = `
                         <ion-icon name="document-outline" class="text-gray-400 mr-2"></ion-icon>
                         ${file.name} (${(file.size / 1024 / 1024).toFixed(2)} MB)
@@ -297,7 +292,7 @@
                     
                     // Actualizar estado
                     document.getElementById('excel-status').textContent = 'Completado';
-                    document.getElementById('excel-status').className = 'text-xs px-2 py-1 bg-green-100 text-green-800 rounded';
+                    document.getElementById('excel-status').className = 'text-xs px-2 py-1 bg-green-100 text-green-800 rounded font-lora';
                     
                     fileList.classList.remove('hidden');
                 } else {
@@ -305,13 +300,13 @@
                     alert('Por favor seleccione un archivo Excel (XLSX o XLS)');
                     fileInput.value = '';
                     document.getElementById('excel-status').textContent = 'Pendiente';
-                    document.getElementById('excel-status').className = 'text-xs px-2 py-1 bg-yellow-100 text-yellow-800 rounded';
+                    document.getElementById('excel-status').className = 'text-xs px-2 py-1 bg-yellow-100 text-yellow-800 rounded font-lora';
                     fileList.classList.add('hidden');
                 }
             } else {
                 // No hay archivo seleccionado
                 document.getElementById('excel-status').textContent = 'Pendiente';
-                document.getElementById('excel-status').className = 'text-xs px-2 py-1 bg-yellow-100 text-yellow-800 rounded';
+                document.getElementById('excel-status').className = 'text-xs px-2 py-1 bg-yellow-100 text-yellow-800 rounded font-lora';
                 fileList.classList.add('hidden');
             }
         }
@@ -321,7 +316,7 @@
                 document.querySelector('form').reset();
                 // Resetear estado del archivo
                 document.getElementById('excel-status').textContent = 'Pendiente';
-                document.getElementById('excel-status').className = 'text-xs px-2 py-1 bg-yellow-100 text-yellow-800 rounded';
+                document.getElementById('excel-status').className = 'text-xs px-2 py-1 bg-yellow-100 text-yellow-800 rounded font-lora';
                 document.getElementById('file-list').classList.add('hidden');
             }
         }

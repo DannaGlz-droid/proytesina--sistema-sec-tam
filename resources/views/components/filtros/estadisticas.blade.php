@@ -147,7 +147,7 @@
         </div>
 
         <div class="filter-group">
-            <label class="block text-xs text-gray-600 font-lora mb-1">Municipio:</label>
+            <label class="block text-xs text-gray-600 font-lora mb-1">Municipio de residencia:</label>
             <select id="municipio" class="w-full border border-[#404041] rounded-lg px-3 py-1.5 text-xs">
                 <option value="">Todos</option>
                 <option value="allende">Allende</option>

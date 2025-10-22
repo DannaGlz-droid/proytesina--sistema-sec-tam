@@ -20,27 +20,29 @@ Route::middleware('auth')->group(function () {
 
 Route::view('/prueba', 'landing.prueba')->name('prueba');
 
-//---------------------------------------------------------
+//  VISTAS  ---------------------------------------------------------
 
-// Estadísticas
-Route::view('estadisticas/registro', 'estadisticas.registro')->name('estadisticas.nuevo-registro');
-Route::view('estadisticas/actualizar-registro', 'estadisticas.actualizar-registro')->name('estadisticas.actualizar-registro');
-Route::view('estadisticas/graficas', 'estadisticas.graficas')->name('estadisticas.graficas');
+// Usuarios (5)
+Route::view('usuario/miperfil', 'usuarios.miperfil')->name('usuario.miperfil');
+Route::view('usuario/gestion-de-usuarios', 'usuarios.gestion-de-usuarios')->name('usuario.gestion-de-usuarios');
+Route::view('usuario/gestion-de-usuarios/registro', 'usuarios.acciones.registro')->name('usuario.registro');
+Route::view('usuario/gestion-de-usuarios/actualizar-registro', 'usuarios.acciones.actualizar-registro')->name('usuario.actualizar-registro');
+Route::view('usuario/gestion-de-usuarios/actualizar-contrasena', 'usuarios.acciones.actualizar-contrasena')->name('usuario.actualizar-contrasena');
+
+// Estadísticas (4)
 Route::view('estadisticas/datos', 'estadisticas.datos')->name('estadisticas.datos');
+Route::view('estadisticas/registro', 'estadisticas.acciones.registro')->name('estadisticas.nuevo-registro');
+Route::view('estadisticas/actualizar-registro', 'estadisticas.acciones.actualizar-registro')->name('estadisticas.actualizar-registro');
+Route::view('estadisticas/graficas', 'estadisticas.graficas')->name('estadisticas.graficas');
 
-// Usuarios
-Route::view('usuario/miperfil', 'usuario.miperfil')->name('usuario.miperfil');
-Route::view('usuario/gestion-de-usuarios/registro', 'usuario.gestion-de-usuarios.registro')->name('usuario.registro');
-Route::view('usuario/gestion-de-usuarios/actualizar-registro', 'usuario.gestion-de-usuarios.actualizar-registro')->name('usuario.actualizar-registro');
-Route::view('usuario/gestion-de-usuarios/actualizar-contrasena', 'usuario.gestion-de-usuarios.actualizar-contrasena')->name('usuario.actualizar-contrasena');
-Route::view('usuario/gestion-de-usuarios', 'usuario.gestion-de-usuarios.gestion-de-usuarios')->name('usuario.gestion-de-usuarios');
-
-// Reportes
-
-Route::view('reportes/hola', 'reportes.hola')->name('reportes.hola');
-
+// Reportes (4)
+Route::view('reportes/centro-de-control', 'reportes.centro-de-control')->name('reportes.centro-de-control');
 Route::view('reportes/registro/seguridad-vial', 'reportes.registro.seguridad-vial')->name('reportes.seguridad-vial');
 Route::view('reportes/registro/observatorio-de-lesiones', 'reportes.registro.observatorio-de-lesiones')->name('reportes.observatorio-de-lesiones');
 Route::view('reportes/registro/alcoholimetria', 'reportes.registro.alcoholimetria')->name('reportes.alcoholimetria');
+//---
+Route::view('reportes/publicaciones', 'reportes.publicaciones')->name('reportes.publicaciones');
+
+// total: 13
 
 require __DIR__.'/auth.php';

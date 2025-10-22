@@ -5,7 +5,6 @@
     <!-- Botones y usuario a la derecha -->
     <div class="flex items-center">
        
-        
         <!-- Notificaciones con dropdown -->
         <div class="relative flex items-center mr-3 lg:mr-4" x-data="{ openNotifications: false }">
             <!-- Botón de notificaciones -->
@@ -111,15 +110,10 @@
                     <p class="text-xs text-gray-500 mt-1">Lic. Carlos Rodríguez</p>
                 </div>
 
-                <!-- Opciones del menú -->
+                <!-- Opciones del menú - SOLO Mi Perfil y Cerrar Sesión -->
                 <a href="/mi-perfil" class="flex items-center px-3 lg:px-4 py-2 lg:py-3 text-xs lg:text-sm text-gray-700 hover:bg-blue-50 transition-colors group">
                     <ion-icon name="person" class="text-gray-400 group-hover:text-blue-600 mr-2 lg:mr-3 text-sm lg:text-base"></ion-icon>
                     <span class="font-medium">Mi Perfil</span>
-                </a>
-
-                <a href="/gestion-usuarios" class="flex items-center px-3 lg:px-4 py-2 lg:py-3 text-xs lg:text-sm text-gray-700 hover:bg-blue-50 transition-colors group">
-                    <ion-icon name="people" class="text-gray-400 group-hover:text-blue-600 mr-2 lg:mr-3 text-sm lg:text-base"></ion-icon>
-                    <span class="font-medium">Gestión de Usuarios</span>
                 </a>
 
                 <!-- Separador -->
