@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\UserController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -19,6 +20,12 @@ Route::middleware('auth')->group(function () {
 
 
 Route::view('/prueba', 'landing.prueba')->name('prueba');
+
+// CONTROLADORES  ---------------------------------------------------
+
+Route::get('/hola', [UserController::class, 'index'])->name('user.index');
+Route::get('/create', [UserController::class, 'create'])->name('user.create');
+Route::get('/usuarios/gestion', [App\Http\Controllers\UserController::class, 'gestion'])->name('user.gestion');
 
 //  VISTAS  ---------------------------------------------------------
 

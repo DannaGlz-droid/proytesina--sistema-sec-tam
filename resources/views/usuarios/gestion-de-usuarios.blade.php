@@ -24,7 +24,6 @@
 
         <!-- Layout principal: Filtros + Tabla -->
         <div class="flex flex-col lg:flex-row gap-6">
-            
             <!-- Columna Izquierda - Tus filtros personalizados -->
             <div class="lg:w-80">
                 <x-filtros.usuarios />
@@ -33,11 +32,8 @@
             <!-- Columna Derecha - Tabla Flowbite adaptada -->
             <div class="flex-1">
                 <div class="bg-white relative shadow-md sm:rounded-lg overflow-hidden border border-[#404041]">
-                    
                     <!-- BARRA SUPERIOR: Búsqueda y Controles -->
                     <div class="flex flex-col md:flex-row items-center justify-between space-y-3 md:space-y-0 md:space-x-4 p-4">
-                        
-                        <!-- Búsqueda -->
                         <div class="w-full md:w-1/2">
                             <div class="relative w-full">
                                 <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
@@ -48,11 +44,7 @@
                                        placeholder="Buscar por ID, usuario, nombre, correo...">
                             </div>
                         </div>
-                        
-                        <!-- Controles Derecha -->
                         <div class="w-full md:w-auto flex flex-col md:flex-row space-y-2 md:space-y-0 items-stretch md:items-center justify-end md:space-x-3 flex-shrink-0">
-                            
-                            <!-- Selector de entradas -->
                             <div class="flex items-center space-x-2">
                                 <span class="text-sm text-gray-700 font-lora">Mostrar</span>
                                 <select id="entries-per-page" class="bg-gray-50 border border-[#404041] text-gray-900 text-sm rounded-lg focus:ring-[#611132] focus:border-[#611132] block w-16 p-2">
@@ -89,154 +81,62 @@
                                     </th>
                                 </tr>
                             </thead>
+
                             <tbody>
-                                <!-- Fila 1 -->
-                                <tr class="border-b hover:bg-gray-50">
-                                    <td class="px-3 py-3 font-medium text-gray-900 whitespace-nowrap">001</td>
-                                    <td class="px-3 py-3 whitespace-nowrap">mgonzalez</td>
-                                    <td class="px-3 py-3 whitespace-nowrap">María</td>
-                                    <td class="px-3 py-3 whitespace-nowrap">González</td>
-                                    <td class="px-3 py-3 whitespace-nowrap">López</td>
-                                    <td class="px-3 py-3 whitespace-nowrap">maria.gonzalez@ejemplo.com</td>
-                                    <td class="px-3 py-3 whitespace-nowrap">812-345-6789</td>
-                                    <td class="px-3 py-3 whitespace-nowrap">Coordinador</td>
-                                    <td class="px-3 py-3 whitespace-nowrap">Jurisd. I</td>
-                                    <td class="px-3 py-3 whitespace-nowrap">15/03/2023</td>
-                                    <td class="px-3 py-3 whitespace-nowrap">
-                                        <span class="bg-green-100 text-green-800 text-xs font-medium px-2 py-0.5 rounded-full">Administrador</span>
-                                    </td>
-                                    <td class="px-3 py-3 whitespace-nowrap">
-                                        <div class="flex items-center gap-1">
-                                            <span class="w-2 h-2 rounded-full bg-green-500"></span>
-                                            <span class="text-xs">Activo</span>
-                                        </div>
-                                    </td>
-                                    <td class="px-3 py-3 whitespace-nowrap">Hace 2 horas</td>
-                                    <td class="px-3 py-3 whitespace-nowrap">
-                                        <div class="flex items-center justify-end space-x-1">
-                                            <button class="w-7 h-7 flex items-center justify-center rounded border border-[#404041] text-[#404041] hover:bg-[#404041] hover:text-white transition-all duration-200" title="Editar">
-                                                <i class="fas fa-edit text-xs"></i>
-                                            </button>
-                                            <button class="w-7 h-7 flex items-center justify-center rounded border border-[#C08400] text-[#C08400] hover:bg-[#C08400] hover:text-white transition-all duration-200" title="Cambiar Contraseña">
-                                                <i class="fas fa-key text-xs"></i>
-                                            </button>
-                                            <button class="w-7 h-7 flex items-center justify-center rounded border border-[#AB1A1A] text-[#AB1A1A] hover:bg-[#AB1A1A] hover:text-white transition-all duration-200" title="Eliminar">
-                                                <i class="fas fa-trash text-xs"></i>
-                                            </button>
-                                        </div>
-                                    </td>
-                                </tr>
-
-                                <!-- Fila 2 -->
-                                <tr class="border-b hover:bg-gray-50 bg-gray-50">
-                                    <td class="px-3 py-3 font-medium text-gray-900 whitespace-nowrap">002</td>
-                                    <td class="px-3 py-3 whitespace-nowrap">crodriguez</td>
-                                    <td class="px-3 py-3 whitespace-nowrap">Carlos</td>
-                                    <td class="px-3 py-3 whitespace-nowrap">Rodríguez</td>
-                                    <td class="px-3 py-3 whitespace-nowrap">Martínez</td>
-                                    <td class="px-3 py-3 whitespace-nowrap">carlos.rodriguez@ejemplo.com</td>
-                                    <td class="px-3 py-3 whitespace-nowrap">812-456-7890</td>
-                                    <td class="px-3 py-3 whitespace-nowrap">Analista</td>
-                                    <td class="px-3 py-3 whitespace-nowrap">Jurisd. II</td>
-                                    <td class="px-3 py-3 whitespace-nowrap">22/04/2023</td>
-                                    <td class="px-3 py-3 whitespace-nowrap">
-                                        <span class="bg-blue-100 text-blue-800 text-xs font-medium px-2 py-0.5 rounded-full">Editor</span>
-                                    </td>
-                                    <td class="px-3 py-3 whitespace-nowrap">
-                                        <div class="flex items-center gap-1">
-                                            <span class="w-2 h-2 rounded-full bg-green-500"></span>
-                                            <span class="text-xs">Activo</span>
-                                        </div>
-                                    </td>
-                                    <td class="px-3 py-3 whitespace-nowrap">Hace 1 día</td>
-                                    <td class="px-3 py-3 whitespace-nowrap">
-                                        <div class="flex items-center justify-end space-x-1">
-                                            <button class="w-7 h-7 flex items-center justify-center rounded border border-[#404041] text-[#404041] hover:bg-[#404041] hover:text-white transition-all duration-200" title="Editar">
-                                                <i class="fas fa-edit text-xs"></i>
-                                            </button>
-                                            <button class="w-7 h-7 flex items-center justify-center rounded border border-[#C08400] text-[#C08400] hover:bg-[#C08400] hover:text-white transition-all duration-200" title="Cambiar Contraseña">
-                                                <i class="fas fa-key text-xs"></i>
-                                            </button>
-                                            <button class="w-7 h-7 flex items-center justify-center rounded border border-[#AB1A1A] text-[#AB1A1A] hover:bg-[#AB1A1A] hover:text-white transition-all duration-200" title="Eliminar">
-                                                <i class="fas fa-trash text-xs"></i>
-                                            </button>
-                                        </div>
-                                    </td>
-                                </tr>
-
-                                <!-- Fila 3 -->
-                                <tr class="border-b hover:bg-gray-50">
-                                    <td class="px-3 py-3 font-medium text-gray-900 whitespace-nowrap">003</td>
-                                    <td class="px-3 py-3 whitespace-nowrap">amartinez</td>
-                                    <td class="px-3 py-3 whitespace-nowrap">Ana</td>
-                                    <td class="px-3 py-3 whitespace-nowrap">Martínez</td>
-                                    <td class="px-3 py-3 whitespace-nowrap">Sánchez</td>
-                                    <td class="px-3 py-3 whitespace-nowrap">ana.martinez@ejemplo.com</td>
-                                    <td class="px-3 py-3 whitespace-nowrap">812-567-8901</td>
-                                    <td class="px-3 py-3 whitespace-nowrap">Supervisor</td>
-                                    <td class="px-3 py-3 whitespace-nowrap">Jurisd. III</td>
-                                    <td class="px-3 py-3 whitespace-nowrap">10/05/2023</td>
-                                    <td class="px-3 py-3 whitespace-nowrap">
-                                        <span class="bg-purple-100 text-purple-800 text-xs font-medium px-2 py-0.5 rounded-full">Supervisor</span>
-                                    </td>
-                                    <td class="px-3 py-3 whitespace-nowrap">
-                                        <div class="flex items-center gap-1">
-                                            <span class="w-2 h-2 rounded-full bg-red-500"></span>
-                                            <span class="text-xs">Inactivo</span>
-                                        </div>
-                                    </td>
-                                    <td class="px-3 py-3 whitespace-nowrap">Hace 5 días</td>
-                                    <td class="px-3 py-3 whitespace-nowrap">
-                                        <div class="flex items-center justify-end space-x-1">
-                                            <button class="w-7 h-7 flex items-center justify-center rounded border border-[#404041] text-[#404041] hover:bg-[#404041] hover:text-white transition-all duration-200" title="Editar">
-                                                <i class="fas fa-edit text-xs"></i>
-                                            </button>
-                                            <button class="w-7 h-7 flex items-center justify-center rounded border border-[#C08400] text-[#C08400] hover:bg-[#C08400] hover:text-white transition-all duration-200" title="Cambiar Contraseña">
-                                                <i class="fas fa-key text-xs"></i>
-                                            </button>
-                                            <button class="w-7 h-7 flex items-center justify-center rounded border border-[#AB1A1A] text-[#AB1A1A] hover:bg-[#AB1A1A] hover:text-white transition-all duration-200" title="Eliminar">
-                                                <i class="fas fa-trash text-xs"></i>
-                                            </button>
-                                        </div>
-                                    </td>
-                                </tr>
-
-                                <!-- Fila 4 -->
-                                <tr class="border-b hover:bg-gray-50 bg-gray-50">
-                                    <td class="px-3 py-3 font-medium text-gray-900 whitespace-nowrap">004</td>
-                                    <td class="px-3 py-3 whitespace-nowrap">rsanchez</td>
-                                    <td class="px-3 py-3 whitespace-nowrap">Roberto</td>
-                                    <td class="px-3 py-3 whitespace-nowrap">Sánchez</td>
-                                    <td class="px-3 py-3 whitespace-nowrap">Jiménez</td>
-                                    <td class="px-3 py-3 whitespace-nowrap">roberto.sanchez@ejemplo.com</td>
-                                    <td class="px-3 py-3 whitespace-nowrap">812-678-9012</td>
-                                    <td class="px-3 py-3 whitespace-nowrap">Técnico</td>
-                                    <td class="px-3 py-3 whitespace-nowrap">Jurisd. I</td>
-                                    <td class="px-3 py-3 whitespace-nowrap">18/06/2023</td>
-                                    <td class="px-3 py-3 whitespace-nowrap">
-                                        <span class="bg-gray-100 text-gray-800 text-xs font-medium px-2 py-0.5 rounded-full">Usuario</span>
-                                    </td>
-                                    <td class="px-3 py-3 whitespace-nowrap">
-                                        <div class="flex items-center gap-1">
-                                            <span class="w-2 h-2 rounded-full bg-green-500"></span>
-                                            <span class="text-xs">Activo</span>
-                                        </div>
-                                    </td>
-                                    <td class="px-3 py-3 whitespace-nowrap">Hace 1 semana</td>
-                                    <td class="px-3 py-3 whitespace-nowrap">
-                                        <div class="flex items-center justify-end space-x-1">
-                                            <button class="w-7 h-7 flex items-center justify-center rounded border border-[#404041] text-[#404041] hover:bg-[#404041] hover:text-white transition-all duration-200" title="Editar">
-                                                <i class="fas fa-edit text-xs"></i>
-                                            </button>
-                                            <button class="w-7 h-7 flex items-center justify-center rounded border border-[#C08400] text-[#C08400] hover:bg-[#C08400] hover:text-white transition-all duration-200" title="Cambiar Contraseña">
-                                                <i class="fas fa-key text-xs"></i>
-                                            </button>
-                                            <button class="w-7 h-7 flex items-center justify-center rounded border border-[#AB1A1A] text-[#AB1A1A] hover:bg-[#AB1A1A] hover:text-white transition-all duration-200" title="Eliminar">
-                                                <i class="fas fa-trash text-xs"></i>
-                                            </button>
-                                        </div>
-                                    </td>
-                                </tr>
+                                @if(isset($users) && $users->isNotEmpty())
+                                    @foreach($users as $user)
+                                        <tr class="border-b hover:bg-gray-50">
+                                            <td class="px-3 py-3 font-medium text-gray-900 whitespace-nowrap">{{ $user->id }}</td>
+                                            <td class="px-3 py-3 whitespace-nowrap">{{ $user->username }}</td>
+                                            <td class="px-3 py-3 whitespace-nowrap">{{ $user->name }}</td>
+                                            <td class="px-3 py-3 whitespace-nowrap">{{ $user->first_last_name }}</td>
+                                            <td class="px-3 py-3 whitespace-nowrap">{{ $user->second_last_name }}</td>
+                                            <td class="px-3 py-3 whitespace-nowrap">{{ $user->email }}</td>
+                                            <td class="px-3 py-3 whitespace-nowrap">{{ $user->phone }}</td>
+                                            <td class="px-3 py-3 whitespace-nowrap">{{ optional($user->position)->name ?? '—' }}</td>
+                                            <td class="px-3 py-3 whitespace-nowrap">{{ optional($user->jurisdiction)->name ?? '—' }}</td>
+                                            <td class="px-3 py-3 whitespace-nowrap">{{ $user->registration_date ? ( $user->registration_date instanceof \DateTimeInterface ? $user->registration_date->format('d/m/Y') : \Carbon\Carbon::parse($user->registration_date)->format('d/m/Y') ) : '—' }}</td>
+                                            <td class="px-3 py-3 whitespace-nowrap"><span class="bg-green-100 text-green-800 text-xs font-medium px-2 py-0.5 rounded-full">{{ optional($user->role)->name ?? '—' }}</span></td>
+                                            <td class="px-3 py-3 whitespace-nowrap">
+                                                <div class="flex items-center gap-1">
+                                                    <span class="w-2 h-2 rounded-full {{ $user->is_active ? 'bg-green-500' : 'bg-red-500' }}"></span>
+                                                    <span class="text-xs">{{ $user->is_active ? 'Activo' : 'Inactivo' }}</span>
+                                                </div>
+                                            </td>
+                                            <td class="px-3 py-3 whitespace-nowrap">
+                                                @php
+                                                    $last = $user->last_session;
+                                                    if ($last) {
+                                                        if ($last instanceof \Carbon\Carbon) {
+                                                            echo $last->diffForHumans();
+                                                        } elseif ($last instanceof \DateTimeInterface) {
+                                                            echo \Carbon\Carbon::instance($last)->diffForHumans();
+                                                        } else {
+                                                            try { echo \Carbon\Carbon::parse($last)->diffForHumans(); } catch (\Throwable $e) { echo '—'; }
+                                                        }
+                                                    } else { echo '—'; }
+                                                @endphp
+                                            </td>
+                                            <td class="px-3 py-3 whitespace-nowrap">
+                                                <div class="flex items-center justify-end space-x-1">
+                                                    <button class="w-7 h-7 flex items-center justify-center rounded border border-[#404041] text-[#404041] hover:bg-[#404041] hover:text-white transition-all duration-200" title="Editar">
+                                                        <i class="fas fa-edit text-xs"></i>
+                                                    </button>
+                                                    <button class="w-7 h-7 flex items-center justify-center rounded border border-[#C08400] text-[#C08400] hover:bg-[#C08400] hover:text-white transition-all duration-200" title="Cambiar Contraseña">
+                                                        <i class="fas fa-key text-xs"></i>
+                                                    </button>
+                                                    <button class="w-7 h-7 flex items-center justify-center rounded border border-[#AB1A1A] text-[#AB1A1A] hover:bg-[#AB1A1A] hover:text-white transition-all duration-200" title="Eliminar">
+                                                        <i class="fas fa-trash text-xs"></i>
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    @endforeach
+                                @else
+                                    <tr>
+                                        <td colspan="14" class="px-3 py-4 text-center text-sm text-gray-500">No se encontraron usuarios.</td>
+                                    </tr>
+                                @endif
                             </tbody>
                         </table>
                     </div>
