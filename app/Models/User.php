@@ -45,18 +45,15 @@ class User extends Authenticatable
     ];
 
     /**
-     * Get the attributes that should be cast.
+     * The attributes that should be cast.
      *
-     * @return array<string, string>
+     * @var array<string,string>
      */
-    protected function casts(): array
-    {
-        return [
-            'email_verified_at' => 'datetime',
-            'password' => 'hashed',
-            'is_active' => 'boolean',
-        ];
-    }
+    protected $casts = [
+        'email_verified_at' => 'datetime',
+        'password' => 'hashed',
+        'is_active' => 'boolean',
+    ];
 
     /**
      * Relationship: User belongs to Role
@@ -105,5 +102,29 @@ class User extends Authenticatable
     public function notifications()
     {
         return $this->hasMany(Notification::class);
+    }
+
+    /**
+     * Relationship: User has many Road Safety Reports
+     */
+    public function roadSafetyReports()
+    {
+        return $this->hasMany(RoadSafetyReport::class);
+    }
+
+    /**
+     * Relationship: User has many Injury Observatory Reports
+     */
+    public function injuryObservatoryReports()
+    {
+        return $this->hasMany(InjuryObservatoryReport::class);
+    }
+
+    /**
+     * Relationship: User has many Breathalyzer Reports
+     */
+    public function breathalyzerReports()
+    {
+        return $this->hasMany(BreathalyzerReport::class);
     }
 }

@@ -67,4 +67,28 @@ class Publication extends Model
     {
         return $this->hasMany(Notification::class);
     }
+
+    /**
+     * Relationship: Publication has many Road Safety Reports
+     */
+    public function roadSafetyReports()
+    {
+        return $this->hasMany(RoadSafetyReport::class);
+    }
+
+    /**
+     * Relationship: Publication has many Injury Observatory Reports
+     */
+    public function injuryObservatoryReports()
+    {
+        return $this->hasMany(InjuryObservatoryReport::class);
+    }
+
+    /**
+     * Relationship: Publication has many Breathalyzer Reports
+     */
+    public function breathalyzerReports()
+    {
+        return $this->hasMany(BreathalyzerReport::class);
+    }
 }
