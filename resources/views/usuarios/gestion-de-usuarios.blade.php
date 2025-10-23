@@ -17,8 +17,10 @@
             
             <!-- BOTÓN CREAR USUARIO -->
             <button class="bg-[#611132] text-white px-4 py-2.5 rounded-lg text-xs font-semibold hover:bg-[#4a0e26] transition-all duration-300 font-lora flex items-center gap-2 whitespace-nowrap shadow-sm self-start lg:self-auto">
-                <i class="fas fa-plus text-xs"></i>
-                Crear Usuario
+                <a href="{{ route('user.create') }}">
+                    <i class="fas fa-plus text-xs"></i>
+                    Crear Usuario
+                </a>
             </button>
         </div>
 
@@ -119,15 +121,21 @@
                                             </td>
                                             <td class="px-3 py-3 whitespace-nowrap">
                                                 <div class="flex items-center justify-end space-x-1">
-                                                    <button class="w-7 h-7 flex items-center justify-center rounded border border-[#404041] text-[#404041] hover:bg-[#404041] hover:text-white transition-all duration-200" title="Editar">
+                                                    <a href="{{ route('user.edit', $user->id) }}" class="w-7 h-7 flex items-center justify-center rounded border border-[#404041] text-[#404041] hover:bg-[#404041] hover:text-white transition-all duration-200" title="Editar">
                                                         <i class="fas fa-edit text-xs"></i>
-                                                    </button>
+                                                    </a>
                                                     <button class="w-7 h-7 flex items-center justify-center rounded border border-[#C08400] text-[#C08400] hover:bg-[#C08400] hover:text-white transition-all duration-200" title="Cambiar Contraseña">
-                                                        <i class="fas fa-key text-xs"></i>
+                                                        <a href="{{ route('user.update-password', $user->id) }}">
+                                                            <i class="fas fa-key text-xs"></i>
+                                                        </a>
                                                     </button>
-                                                    <button class="w-7 h-7 flex items-center justify-center rounded border border-[#AB1A1A] text-[#AB1A1A] hover:bg-[#AB1A1A] hover:text-white transition-all duration-200" title="Eliminar">
-                                                        <i class="fas fa-trash text-xs"></i>
-                                                    </button>
+                                                    <form method="POST" action="{{ route('user.destroy', $user->id) }}" onsubmit="return confirm('¿Eliminar usuario? Esta acción no se puede deshacer.');">
+                                                        @csrf
+                                                        @method('DELETE')
+                                                        <button type="submit" class="w-7 h-7 flex items-center justify-center rounded border border-[#AB1A1A] text-[#AB1A1A] hover:bg-[#AB1A1A] hover:text-white transition-all duration-200" title="Eliminar">
+                                                            <i class="fas fa-trash text-xs"></i>
+                                                        </button>
+                                                    </form>
                                                 </div>
                                             </td>
                                         </tr>

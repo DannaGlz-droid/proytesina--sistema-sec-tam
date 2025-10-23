@@ -259,6 +259,7 @@
                 secondaryText="Limpiar formulario"
                 primaryType="submit"
                 secondaryType="button"
+                secondaryOnclick="clearAlcoholimetriaForm()"
             />
         </div>
     </div>
@@ -311,7 +312,7 @@
             }
         }
         
-        function clearForm() {
+        function clearAlcoholimetriaForm() {
             if (confirm('¿Está seguro de que desea limpiar todos los campos del formulario?')) {
                 document.querySelector('form').reset();
                 // Resetear estado del archivo

@@ -23,18 +23,28 @@ Route::view('/prueba', 'landing.prueba')->name('prueba');
 
 // CONTROLADORES  ---------------------------------------------------
 
-Route::get('/hola', [UserController::class, 'index'])->name('user.index');
-Route::get('/create', [UserController::class, 'create'])->name('user.create');
-Route::get('/usuarios/gestion', [App\Http\Controllers\UserController::class, 'gestion'])->name('user.gestion');
+Route::get('usuario/gestion-de-usuarios', [UserController::class, 'index'])->name('user.user-gestion');
+Route::get('usuario/gestion-de-usuarios/registro', [UserController::class, 'create'])->name('user.create');
+Route::post('/usuario/gestion-de-usuarios/store', [UserController::class, 'store'])->name('user.store');
+Route::get('/usuario/gestion-de-usuarios/actualizar-registro/{user}', [UserController::class, 'edit'])->name('user.edit');
+Route::put('/usuario/gestion-de-usuarios/actualizar-registro/{user}', [UserController::class, 'update'])->name('user.update');
+Route::get('usuario/gestion-de-usuarios/actualizar-contrasena/{user?}', [UserController::class, 'password'])->name('user.update-password');
+Route::put('usuario/gestion-de-usuarios/actualizar-contrasena/{user}', [UserController::class, 'updatePassword'])->name('user.update-password.update');
+Route::get('/usuario/gestion-de-usuarios/mostrar/{user}', [UserController::class, 'show'])->name('user.show');
+Route::delete('/usuario/gestion-de-usuarios/eliminar/{user}', [UserController::class, 'destroy'])->name('user.destroy');
+//---
+//Route::get('/usuarios/gestion', [App\Http\Controllers\UserController::class, 'gestion'])->name('user.gestion');
+Route::get('usuario/gestion-de-usuarios/actualizar-registro/{id}', [App\Http\Controllers\UserController::class, 'edit'])->name('usuario.actualizar-registro');
 
 //  VISTAS  ---------------------------------------------------------
 
-// Usuarios (5)
+// Usuarios (views that are not controlled by UserController)
 Route::view('usuario/miperfil', 'usuarios.miperfil')->name('usuario.miperfil');
-Route::view('usuario/gestion-de-usuarios', 'usuarios.gestion-de-usuarios')->name('usuario.gestion-de-usuarios');
-Route::view('usuario/gestion-de-usuarios/registro', 'usuarios.acciones.registro')->name('usuario.registro');
-Route::view('usuario/gestion-de-usuarios/actualizar-registro', 'usuarios.acciones.actualizar-registro')->name('usuario.actualizar-registro');
-Route::view('usuario/gestion-de-usuarios/actualizar-contrasena', 'usuarios.acciones.actualizar-contrasena')->name('usuario.actualizar-contrasena');
+// Controller-backed route above provides the view with the required $user variable.
+
+// Note: the gestion and registro URIs are handled by UserController routes above
+// (user.index and user.create). We removed the Route::view duplicates to ensure
+// the controller can pass data (positions/roles/etc.) to the views.
 
 // Estadísticas (4)
 Route::view('estadisticas/datos', 'estadisticas.datos')->name('estadisticas.datos');

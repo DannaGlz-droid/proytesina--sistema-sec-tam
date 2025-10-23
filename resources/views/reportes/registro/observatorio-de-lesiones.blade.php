@@ -129,6 +129,7 @@
                 secondaryText="Limpiar formulario"
                 primaryType="submit"
                 secondaryType="button"
+                secondaryOnclick="clearObservatorioLesionesForm()"
             />
         </div>
     </div>
@@ -181,7 +182,7 @@
             }
         }
         
-        function clearForm() {
+        function clearObservatorioLesionesForm() {
             if (confirm('¿Está seguro de que desea limpiar todos los campos del formulario?')) {
                 document.querySelector('form').reset();
                 // Resetear estado del archivo

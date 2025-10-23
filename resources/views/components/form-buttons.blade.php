@@ -4,18 +4,32 @@
     'primaryIcon' => null,
     'secondaryIcon' => null,
     'primaryType' => 'submit',
-    'secondaryType' => 'button'
+    'secondaryType' => 'button',
+    // if provided, secondaryHref will render an <a> instead of a <button>
+    'secondaryHref' => null,
+    // if provided, secondaryOnclick will be added as an onclick attribute to the button
+    'secondaryOnclick' => null,
 ])
 
 <div class="flex flex-col sm:flex-row justify-end gap-3 lg:gap-4" {{ $attributes }}>
-    <!-- Botón secundario -->
-    <button type="{{ $secondaryType }}" 
-            class="border border-[#404041] text-[#404041] px-4 lg:px-6 py-2 rounded-lg text-xs lg:text-sm font-semibold hover:bg-gray-50 transition-all duration-300 font-lora flex items-center gap-1 whitespace-nowrap">
-        @if($secondaryIcon)
-            <i class="fas {{ $secondaryIcon }} text-xs"></i>
-        @endif
-        {{ $secondaryText }}
-    </button>
+    <!-- Botón secundario (o enlace si se pasó secondaryHref) -->
+    @if($secondaryHref)
+        <a href="{{ $secondaryHref }}" class="border border-[#404041] text-[#404041] px-4 lg:px-6 py-2 rounded-lg text-xs lg:text-sm font-semibold hover:bg-gray-50 transition-all duration-300 font-lora flex items-center gap-1 whitespace-nowrap">
+            @if($secondaryIcon)
+                <i class="fas {{ $secondaryIcon }} text-xs"></i>
+            @endif
+            {{ $secondaryText }}
+        </a>
+    @else
+        <button type="{{ $secondaryType }}" 
+                @if($secondaryOnclick) onclick="{!! $secondaryOnclick !!}" @endif
+                class="border border-[#404041] text-[#404041] px-4 lg:px-6 py-2 rounded-lg text-xs lg:text-sm font-semibold hover:bg-gray-50 transition-all duration-300 font-lora flex items-center gap-1 whitespace-nowrap">
+            @if($secondaryIcon)
+                <i class="fas {{ $secondaryIcon }} text-xs"></i>
+            @endif
+            {{ $secondaryText }}
+        </button>
+    @endif
     
     <!-- Botón primario -->
     <button type="{{ $primaryType }}" 

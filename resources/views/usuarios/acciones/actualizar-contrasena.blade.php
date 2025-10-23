@@ -15,11 +15,11 @@
                 <ion-icon name="person-circle-outline" class="text-2xl text-gray-600 mr-3"></ion-icon>
                 <div>
                     <h3 class="text-sm lg:text-base font-medium text-[#404041] font-lora">
-                        Usuario: <span class="font-bold">{{ $usuario->nombres ?? 'Nombre' }} {{ $usuario->apellido_paterno ?? 'Apellido' }}</span>
+                        Usuario: {{ $user->name  }} {{ $user->first_last_name }} {{ $user->second_last_name }}
                     </h3>
                     <p class="text-xs text-gray-600 mt-1 font-lora">
-                        Correo: {{ $usuario->email ?? 'usuario@ejemplo.com' }} | 
-                        Usuario: {{ $usuario->username ?? 'username' }}
+                        Correo: {{ $user->email }} | 
+                        Usuario: {{ $user->username }}
                     </p>
                 </div>
             </div>
@@ -29,7 +29,10 @@
         <div class="border border-[#404041] rounded-lg lg:rounded-xl p-4 lg:p-6 bg-white bg-opacity-95 max-w-7xl shadow-md">
             
             <!-- Sección: Contraseña -->
-            <div class="mb-6 lg:mb-8">
+            <form action="{{ route('user.update-password.update', $user->id) }}" method="POST">
+                @csrf
+                @method('PUT')
+                <div class="mb-6 lg:mb-8">
                 <div class="flex items-center mb-4">
                     <ion-icon name="lock-closed-outline" class="text-xl lg:text-xl text-[#404041] mr-2"></ion-icon>
                     <h2 class="text-lg lg:text-xl font-lora font-bold text-[#404041]">Configuración de contraseña</h2>
@@ -41,10 +44,14 @@
                         <div>
                             <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Nueva contraseña *</label>
                             <div class="relative">
-                                <input type="password" 
-                                       id="password"
+                    <input type="password" 
+                        id="password"
+                        name="password"
                                        class="w-full px-3 py-2 pr-10 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora" 
                                        placeholder="Ingrese la nueva contraseña">
+                    @error('password')
+                     <p class="text-xs text-red-600 mt-1">{{ $message }}</p>
+                    @enderror
                                 <button type="button" 
                                         onclick="togglePassword('password')"
                                         class="absolute inset-y-0 right-0 flex items-center justify-center w-10 text-gray-500 hover:text-[#404041] transition-colors duration-200">
@@ -58,10 +65,14 @@
                         <div>
                             <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Confirmar contraseña *</label>
                             <div class="relative">
-                                <input type="password" 
-                                       id="password_confirmation"
+                    <input type="password" 
+                        id="password_confirmation"
+                        name="password_confirmation"
                                        class="w-full px-3 py-2 pr-10 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora" 
                                        placeholder="Confirme la nueva contraseña">
+                    @error('password_confirmation')
+                     <p class="text-xs text-red-600 mt-1">{{ $message }}</p>
+                    @enderror
                                 <button type="button" 
                                         onclick="togglePassword('password_confirmation')"
                                         class="absolute inset-y-0 right-0 flex items-center justify-center w-10 text-gray-500 hover:text-[#404041] transition-colors duration-200">
@@ -123,9 +134,10 @@
             <x-form-buttons 
                 primaryText="Actualizar contraseña"
                 secondaryText="Volver al listado"
+                :secondary-href="route('user.user-gestion')"
                 primaryType="submit"
-                secondaryType="button"
             />
+            </form>
         </div>
     </div>
 

@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Document</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
     
@@ -11,8 +12,8 @@
 
     <h2>Lista de usuarios geniales ♥</h2>
 
-
-
+    <a href="{{ route('user.create') }}">Create new user</a>
+   
     @if($users->isEmpty())
             <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4">No hay usuarios disponibles.</div>
         @else
@@ -31,6 +32,7 @@
                             <th class="px-4 py-2 text-left text-xs font-medium text-gray-500">Activo</th>
                             <th class="px-4 py-2 text-left text-xs font-medium text-gray-500">Alta</th>
                             <th class="px-4 py-2 text-left text-xs font-medium text-gray-500">Última sesión</th>
+                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500">Acciones</th>
                         </tr>
                     </thead>
                     <tbody class="bg-white divide-y divide-gray-100">
@@ -65,6 +67,30 @@
                                         } else { echo '—'; }
                                     @endphp
                                 </td>
+                                <td class="px-3 py-3 whitespace-nowrap">
+  <div class="flex items-center justify-end space-x-1">
+    <a href="{{ route('user.edit', $user->id) }}"
+       class="w-7 h-7 flex items-center justify-center rounded border border-[#404041] text-[#404041] hover:bg-[#404041] hover:text-white transition-all duration-200"
+       title="Editar">
+      <i class="fas fa-edit text-xs"></i>
+    </a>
+
+    <a href="{{ route('user.show', $user->id) }}"
+       class="w-7 h-7 flex items-center justify-center rounded border border-[#404041] text-[#404041] hover:bg-[#404041] hover:text-white transition-all duration-200"
+       title="Ver">
+      <i class="fas fa-eye text-xs"></i>
+    </a>
+
+    <form action="{{ route('user.destroy', $user->id) }}" method="POST">
+        @csrf
+        @method('DELETE')
+        <input type="submit" value="DELETE"
+               class="w-7 h-7 flex items-center justify-center rounded border border-red-600 text-red-600 hover:bg-red-600 hover:text-white transition-all duration-200"
+               title="Eliminar"
+               onclick="return confirm('¿Estás seguro de que deseas eliminar este usuario?');">
+    </form>
+  </div>
+</td>
                             </tr>
                         @endforeach
                     </tbody>
