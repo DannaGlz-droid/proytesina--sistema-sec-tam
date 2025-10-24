@@ -25,6 +25,7 @@ class User extends Authenticatable
         'phone',
         'username',
         'is_active',
+        'registration_date',
         'position_id',
         'jurisdiction_id',
         'role_id',
@@ -128,5 +129,46 @@ class User extends Authenticatable
     public function breathalyzerReports()
     {
         return $this->hasMany(BreathalyzerReport::class);
+    }
+
+    /**
+     * Accessor: formatted registration date (d/m/Y) or null
+     * Keeps formatting logic out of the view.
+     */
+    public function getFormattedRegistrationDateAttribute()
+    {
+        if (! $this->registration_date) {
+            return null;
+        }
+
+        try {
+            if ($this->registration_date instanceof \DateTimeInterface) {
+                return $this->registration_date->format('d/m/Y');
+            }
+
+            return \Carbon\Carbon::parse($this->registration_date)->format('d/m/Y');
+        } catch (\Throwable $e) {
+            return null;
+        }
+    }
+
+    /**
+     * Accessor: human readable last session (diffForHumans) or null
+     */
+    public function getLastSessionDiffAttribute()
+    {
+        if (! $this->last_session) {
+            return null;
+        }
+
+        try {
+            if ($this->last_session instanceof \DateTimeInterface) {
+                return \Carbon\Carbon::instance($this->last_session)->diffForHumans();
+            }
+
+            return \Carbon\Carbon::parse($this->last_session)->diffForHumans();
+        } catch (\Throwable $e) {
+            return null;
+        }
     }
 }
