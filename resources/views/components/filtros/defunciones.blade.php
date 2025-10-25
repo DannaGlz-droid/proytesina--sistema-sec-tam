@@ -1,3 +1,9 @@
+@props([
+    'jurisdictions' => null,
+    'municipalities' => null,
+    'causes' => null,
+])
+
 <x-filtros.base titulo="Filtros">
     <x-slot name="headerActions">
         <button type="button" class="text-[#611132] text-xs font-semibold hover:text-[#4a0e26] transition-all duration-300 font-lora flex items-center gap-1" id="limpiarFiltros">
@@ -7,12 +13,13 @@
     </x-slot>
 
     <!-- Fechas (usando la lógica del demo que funciona) -->
-    <x-filtros.seccion icono="calendar-alt" titulo="Fechas" abierto="true">
+    <form id="filters-form" method="GET" action="{{ route('statistic.data') }}">
+    <x-filtros.seccion icono="calendar-alt" titulo="Fecha de defunción" abierto="true">
         <div class="space-y-2">
             <div class="filter-group">
                 <label class="block text-xs text-gray-600 font-lora mb-1">Rango:</label>
-                <select id="dateRange" class="w-full border border-[#404041] rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-[#611132] focus:border-transparent">
-                    <option value="all">Todas las fechas</option>
+                <select id="dateRange" name="dateRange" class="w-full border border-[#404041] rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-[#611132] focus:border-transparent">
+                    <option value="all">Todas</option>
                     <option value="year">Año específico</option>
                     <option value="month">Mes específico</option>
                     <option value="multiple-months">Múltiples meses</option>
@@ -22,95 +29,38 @@
             </div>
 
             <!-- Selectores condicionales: empezamos con display:none (como el demo que funciona) -->
-            <div class="filter-group" id="yearSelector" style="display: none;">
-                <label class="block text-xs text-gray-600 font-lora mb-1">Año:</label>
-                <select id="year" class="w-full border border-[#404041] rounded-lg px-3 py-1.5 text-xs">
-                    <option value="">Seleccionar año</option>
-                    <option value="2024">2024</option>
-                    <option value="2023">2023</option>
-                    <option value="2022">2022</option>
-                    <option value="2021">2021</option>
-                    <option value="2020">2020</option>
-                </select>
+                <div class="filter-group" id="yearSelector" style="display: none;">
+                <label class="block text-xs text-gray-600 font-lora mb-1">Año de defunción:</label>
+                @php $currentYear = now()->year; $minYear = 1950; @endphp
+                <input type="number" id="year" name="year" min="{{ $minYear }}" max="{{ $currentYear }}" value="{{ request('year') }}" class="w-full border border-[#404041] rounded-lg px-3 py-1.5 text-xs" placeholder="Ej: {{ $currentYear }}">
             </div>
 
             <div class="filter-group" id="monthSelector" style="display: none;">
-                <label class="block text-xs text-gray-600 font-lora mb-1">Mes:</label>
-                <select id="month" class="w-full border border-[#404041] rounded-lg px-3 py-1.5 text-xs">
-                    <option value="">Seleccionar mes</option>
-                    <option value="01">Enero</option>
-                    <option value="02">Febrero</option>
-                    <option value="03">Marzo</option>
-                    <option value="04">Abril</option>
-                    <option value="05">Mayo</option>
-                    <option value="06">Junio</option>
-                    <option value="07">Julio</option>
-                    <option value="08">Agosto</option>
-                    <option value="09">Septiembre</option>
-                    <option value="10">Octubre</option>
-                    <option value="11">Noviembre</option>
-                    <option value="12">Diciembre</option>
-                </select>
-            </div>
-
-            <div class="filter-group" id="multipleMonthsSelector" style="display: none;">
-                <label class="block text-xs text-gray-600 font-lora mb-1">Meses:</label>
+                <label class="block text-xs text-gray-600 font-lora mb-1">Mes de defunción:</label>
+                <input type="hidden" id="monthHidden" name="month" value="{{ request('month') }}">
                 <div class="grid grid-cols-3 gap-2 mt-2 months-container">
-                    <!-- Input seguido de label como en el demo para que el selector sibling funcione -->
-                    <div>
-                        <input type="checkbox" id="month-01" class="month-checkbox" value="01">
-                        <label for="month-01" class="month-label block text-center text-xs py-1.5 bg-gray-100 border border-gray-300 rounded cursor-pointer hover:bg-gray-200">Ene</label>
-                    </div>
-                    <div>
-                        <input type="checkbox" id="month-02" class="month-checkbox" value="02">
-                        <label for="month-02" class="month-label block text-center text-xs py-1.5 bg-gray-100 border border-gray-300 rounded cursor-pointer hover:bg-gray-200">Feb</label>
-                    </div>
-                    <div>
-                        <input type="checkbox" id="month-03" class="month-checkbox" value="03">
-                        <label for="month-03" class="month-label block text-center text-xs py-1.5 bg-gray-100 border border-gray-300 rounded cursor-pointer hover:bg-gray-200">Mar</label>
-                    </div>
-                    <div>
-                        <input type="checkbox" id="month-04" class="month-checkbox" value="04">
-                        <label for="month-04" class="month-label block text-center text-xs py-1.5 bg-gray-100 border border-gray-300 rounded cursor-pointer hover:bg-gray-200">Abr</label>
-                    </div>
-                    <div>
-                        <input type="checkbox" id="month-05" class="month-checkbox" value="05">
-                        <label for="month-05" class="month-label block text-center text-xs py-1.5 bg-gray-100 border border-gray-300 rounded cursor-pointer hover:bg-gray-200">May</label>
-                    </div>
-                    <div>
-                        <input type="checkbox" id="month-06" class="month-checkbox" value="06">
-                        <label for="month-06" class="month-label block text-center text-xs py-1.5 bg-gray-100 border border-gray-300 rounded cursor-pointer hover:bg-gray-200">Jun</label>
-                    </div>
-                    <div>
-                        <input type="checkbox" id="month-07" class="month-checkbox" value="07">
-                        <label for="month-07" class="month-label block text-center text-xs py-1.5 bg-gray-100 border border-gray-300 rounded cursor-pointer hover:bg-gray-200">Jul</label>
-                    </div>
-                    <div>
-                        <input type="checkbox" id="month-08" class="month-checkbox" value="08">
-                        <label for="month-08" class="month-label block text-center text-xs py-1.5 bg-gray-100 border border-gray-300 rounded cursor-pointer hover:bg-gray-200">Ago</label>
-                    </div>
-                    <div>
-                        <input type="checkbox" id="month-09" class="month-checkbox" value="09">
-                        <label for="month-09" class="month-label block text-center text-xs py-1.5 bg-gray-100 border border-gray-300 rounded cursor-pointer hover:bg-gray-200">Sep</label>
-                    </div>
-                    <div>
-                        <input type="checkbox" id="month-10" class="month-checkbox" value="10">
-                        <label for="month-10" class="month-label block text-center text-xs py-1.5 bg-gray-100 border border-gray-300 rounded cursor-pointer hover:bg-gray-200">Oct</label>
-                    </div>
-                    <div>
-                        <input type="checkbox" id="month-11" class="month-checkbox" value="11">
-                        <label for="month-11" class="month-label block text-center text-xs py-1.5 bg-gray-100 border border-gray-300 rounded cursor-pointer hover:bg-gray-200">Nov</label>
-                    </div>
-                    <div>
-                        <input type="checkbox" id="month-12" class="month-checkbox" value="12">
-                        <label for="month-12" class="month-label block text-center text-xs py-1.5 bg-gray-100 border border-gray-300 rounded cursor-pointer hover:bg-gray-200">Dic</label>
-                    </div>
+                    @php
+                        $months = [
+                            '01' => 'Ene','02' => 'Feb','03' => 'Mar','04' => 'Abr','05' => 'May','06' => 'Jun',
+                            '07' => 'Jul','08' => 'Ago','09' => 'Sep','10' => 'Oct','11' => 'Nov','12' => 'Dic'
+                        ];
+                        $selectedMonths = (array) request('selectedMonths', []);
+                        $singleMonth = request('month');
+                    @endphp
+                    @foreach($months as $mval => $mlabel)
+                        <div>
+                            <input type="checkbox" id="month-{{ $mval }}" name="selectedMonths[]" class="month-checkbox" value="{{ $mval }}" {{ in_array($mval, $selectedMonths) || ($singleMonth === $mval) ? 'checked' : '' }}>
+                            <label for="month-{{ $mval }}" class="month-label block text-center text-xs py-1.5 bg-gray-100 border border-gray-300 rounded cursor-pointer hover:bg-gray-200">{{ $mlabel }}</label>
+                        </div>
+                    @endforeach
                 </div>
             </div>
 
+            <!-- multiple months selector removed: monthSelector grid is used for both single and multi modes -->
+
             <div class="filter-group" id="quarterSelector" style="display: none;">
-                <label class="block text-xs text-gray-600 font-lora mb-1">Trimestre:</label>
-                <select id="quarter" class="w-full border border-[#404041] rounded-lg px-3 py-1.5 text-xs">
+                <label class="block text-xs text-gray-600 font-lora mb-1">Trimestre de defunción:</label>
+                <select id="quarter" name="quarter" class="w-full border border-[#404041] rounded-lg px-3 py-1.5 text-xs">
                     <option value="">Seleccionar trimestre</option>
                     <option value="1">Q1 (Ene-Mar)</option>
                     <option value="2">Q2 (Abr-Jun)</option>
@@ -121,12 +71,12 @@
 
             <div id="customRangeSelector" style="display: none;">
                 <div class="filter-group">
-                    <label class="block text-xs text-gray-600 font-lora mb-1">Desde:</label>
-                    <input type="date" id="startDate" class="w-full border border-[#404041] rounded-lg px-3 py-1.5 text-xs">
+                    <label class="block text-xs text-gray-600 font-lora mb-1">Desde (fecha de defunción):</label>
+                    <input type="date" id="startDate" name="startDate" class="w-full border border-[#404041] rounded-lg px-3 py-1.5 text-xs">
                 </div>
                 <div class="filter-group">
-                    <label class="block text-xs text-gray-600 font-lora mb-1">Hasta:</label>
-                    <input type="date" id="endDate" class="w-full border border-[#404041] rounded-lg px-3 py-1.5 text-xs">
+                    <label class="block text-xs text-gray-600 font-lora mb-1">Hasta (fecha de defunción):</label>
+                    <input type="date" id="endDate" name="endDate" class="w-full border border-[#404041] rounded-lg px-3 py-1.5 text-xs">
                 </div>
             </div>
         </div>
@@ -134,38 +84,48 @@
 
     <!-- Resto de secciones... (sin cambios funcionales, solo estilos y estructura) -->
     <x-filtros.seccion icono="map-marker-alt" titulo="Ubicación">
-        <div class="filter-group">
+            <div class="filter-group">
             <label class="block text-xs text-gray-600 font-lora mb-1">Jurisdicción:</label>
-            <select id="jurisdiccion" class="w-full border border-[#404041] rounded-lg px-3 py-1.5 text-xs">
+            <select id="jurisdiccion" name="jurisdiccion" class="w-full border border-[#404041] rounded-lg px-3 py-1.5 text-xs">
                 <option value="">Todas</option>
-                <option value="norte">Jurisdicción Norte</option>
-                <option value="sur">Jurisdicción Sur</option>
-                <option value="centro">Jurisdicción Centro</option>
-                <option value="este">Jurisdicción Este</option>
-                <option value="oeste">Jurisdicción Oeste</option>
+                @if($jurisdictions)
+                    @foreach($jurisdictions as $j)
+                        <option value="{{ $j->name }}" {{ request('jurisdiccion') === $j->name ? 'selected' : '' }}>{{ $j->name }}</option>
+                    @endforeach
+                @else
+                    <option value="norte">Jurisdicción Norte</option>
+                    <option value="sur">Jurisdicción Sur</option>
+                @endif
             </select>
         </div>
 
-        <div class="filter-group">
+            <div class="filter-group">
             <label class="block text-xs text-gray-600 font-lora mb-1">Municipio:</label>
-            <select id="municipio" class="w-full border border-[#404041] rounded-lg px-3 py-1.5 text-xs">
+            <select id="municipio" name="municipio" class="w-full border border-[#404041] rounded-lg px-3 py-1.5 text-xs">
                 <option value="">Todos</option>
-                <option value="allende">Allende</option>
-                <option value="monterrey">Monterrey</option>
-                <option value="guadalupe">Guadalupe</option>
-                <option value="apodaca">Apodaca</option>
-                <option value="san_nicolas">San Nicolás</option>
-                <option value="santa_catarina">Santa Catarina</option>
+                @if($municipalities)
+                    @foreach($municipalities as $m)
+                        <option value="{{ $m->name }}" {{ request('municipio') === $m->name ? 'selected' : '' }}>{{ $m->name }}</option>
+                    @endforeach
+                @else
+                    <option value="allende">Allende</option>
+                    <option value="monterrey">Monterrey</option>
+                @endif
             </select>
         </div>
 
-        <div class="filter-group">
+            <div class="filter-group">
             <label class="block text-xs text-gray-600 font-lora mb-1">Municipio de defunción:</label>
-            <select id="municipioDefuncion" class="w-full border border-[#404041] rounded-lg px-3 py-1.5 text-xs">
+            <select id="municipioDefuncion" name="municipioDefuncion" class="w-full border border-[#404041] rounded-lg px-3 py-1.5 text-xs">
                 <option value="">Todos</option>
-                <option value="allende">Allende</option>
-                <option value="monterrey">Monterrey</option>
-                <option value="guadalupe">Guadalupe</option>
+                @if($municipalities)
+                    @foreach($municipalities as $m)
+                        <option value="{{ $m->name }}" {{ request('municipioDefuncion') === $m->name ? 'selected' : '' }}>{{ $m->name }}</option>
+                    @endforeach
+                @else
+                    <option value="allende">Allende</option>
+                    <option value="monterrey">Monterrey</option>
+                @endif
             </select>
         </div>
     </x-filtros.seccion>
@@ -173,16 +133,16 @@
     <x-filtros.seccion icono="users" titulo="Demográficos">
         <div class="filter-group">
             <label class="block text-xs text-gray-600 font-lora mb-1">Sexo:</label>
-            <select id="sexo" class="w-full border border-[#404041] rounded-lg px-3 py-1.5 text-xs">
+            <select id="sexo" name="sexo" class="w-full border border-[#404041] rounded-lg px-3 py-1.5 text-xs">
                 <option value="">Todos</option>
-                <option value="hombre">Hombre</option>
-                <option value="mujer">Mujer</option>
+                <option value="F" {{ request('sexo') === 'F' ? 'selected' : (request('sexo') === 'f' ? 'selected' : '') }}>Femenino</option>
+                <option value="M" {{ request('sexo') === 'M' ? 'selected' : (request('sexo') === 'm' ? 'selected' : '') }}>Masculino</option>
             </select>
         </div>
 
         <div class="filter-group">
             <label class="block text-xs text-gray-600 font-lora mb-1">Edad:</label>
-            <input type="text" id="edad" class="w-full border border-[#404041] rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-[#611132] focus:border-transparent" 
+            <input type="text" id="edad" name="edad" class="w-full border border-[#404041] rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-[#611132] focus:border-transparent" 
                    placeholder="Ej: 25 o 20-30 o 5,10,15">
             <div class="text-xs text-gray-500 mt-1">Edad específica, rango o múltiples valores separados por coma</div>
         </div>
@@ -191,27 +151,28 @@
     <x-filtros.seccion icono="heartbeat" titulo="Causas">
         <div class="filter-group">
             <label class="block text-xs text-gray-600 font-lora mb-1">Causa de defunción:</label>
-            <select id="causa" class="w-full border border-[#404041] rounded-lg px-3 py-1.5 text-xs">
+            <select id="causa" name="causa" class="w-full border border-[#404041] rounded-lg px-3 py-1.5 text-xs">
                 <option value="">Todas</option>
-                <option value="cardiopatia">Enfermedades del corazón</option>
-                <option value="cancer">Cáncer</option>
-                <option value="covid">COVID-19</option>
-                <option value="accidente">Accidentes</option>
-                <option value="diabetes">Diabetes</option>
-                <option value="respiratorias">Enfermedades respiratorias</option>
-                <option value="ahogamiento">Ahogamiento</option>
-                <option value="violencia">Violencia</option>
+                @if($causes)
+                    @foreach($causes as $c)
+                        <option value="{{ $c->id }}" {{ request('causa') == $c->id ? 'selected' : '' }}>{{ $c->name }}</option>
+                    @endforeach
+                @else
+                    <option value="cardiopatia">Enfermedades del corazón</option>
+                    <option value="cancer">Cáncer</option>
+                @endif
             </select>
         </div>
     </x-filtros.seccion>
 
     <!-- Botón Filtrar -->
     <div class="mt-6 pt-4 border-t border-gray-300">
-        <button type="button" class="w-full bg-[#611132] text-white px-3 py-3 rounded-lg text-sm font-semibold hover:bg-[#4a0e26] transition-all duration-300 font-lora flex items-center justify-center gap-2" id="aplicarFiltros">
+        <button type="submit" form="filters-form" class="w-full bg-[#611132] text-white px-3 py-3 rounded-lg text-sm font-semibold hover:bg-[#4a0e26] transition-all duration-300 font-lora flex items-center justify-center gap-2">
             <i class="fas fa-filter text-sm"></i>
             Aplicar Filtros
         </button>
     </div>
+    </form>
 </x-filtros.base>
 
 <script>
@@ -307,7 +268,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 break;
             case 'multiple-months':
                 if (yearSelector) yearSelector.style.display = 'block';
-                if (multipleMonthsSelector) multipleMonthsSelector.style.display = 'block';
+                // reuse monthSelector grid for multiple months too
+                if (monthSelector) monthSelector.style.display = 'block';
                 break;
             case 'quarter':
                 if (yearSelector) yearSelector.style.display = 'block';
@@ -339,9 +301,55 @@ document.addEventListener('DOMContentLoaded', function() {
         showFor(dateRange.value);
     }
 
+    // Spinner behavior for year input: if empty, set to current year on first interaction so arrows start from current year
+    (function() {
+        const yearInput = document.getElementById('year');
+        const currentYear = {{ $currentYear ?? now()->year }};
+        if (!yearInput) return;
+
+        function ensureCurrentYear() {
+            if (yearInput.value === '' || yearInput.value === null) {
+                yearInput.value = currentYear;
+            }
+        }
+
+    yearInput.addEventListener('focus', ensureCurrentYear, { once: true });
+    yearInput.addEventListener('click', ensureCurrentYear, { once: true });
+    yearInput.addEventListener('mousedown', ensureCurrentYear, { once: true });
+    yearInput.addEventListener('touchstart', ensureCurrentYear, { once: true });
+    })();
+
     // Mantener comportamiento del demo para labels de meses (input + label)
     document.querySelectorAll('.month-checkbox').forEach(cb => {
         const label = document.querySelector(`label[for="${cb.id}"]`);
+
+        // click handler: enforce single-select when dateRange === 'month'
+        cb.addEventListener('click', (e) => {
+            const mode = dateRange?.value;
+            if (mode === 'month') {
+                // uncheck all other checkboxes
+                document.querySelectorAll('.month-checkbox').forEach(other => {
+                    if (other === cb) return;
+                    other.checked = false;
+                    const otherLabel = document.querySelector(`label[for="${other.id}"]`);
+                    if (otherLabel) {
+                        otherLabel.classList.remove('bg-[#611132]','text-white','border-[#611132]');
+                        otherLabel.classList.add('bg-gray-100','border-gray-300');
+                    }
+                });
+
+                // set the hidden month field to this value
+                const monthHidden = document.getElementById('monthHidden');
+                if (monthHidden) monthHidden.value = cb.checked ? cb.value : '';
+            }
+
+            // If in multiple-months mode, keep monthHidden cleared (controller uses selectedMonths[])
+            if (mode === 'multiple-months') {
+                const monthHidden = document.getElementById('monthHidden');
+                if (monthHidden) monthHidden.value = '';
+            }
+        });
+
         cb.addEventListener('change', () => {
             if (!label) return;
             if (cb.checked) {
@@ -360,13 +368,15 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // Limpiar filtros: usa lógica simple (como en demo)
+    // Edad: legacy single input 'edad' is used; no operator UI
+
+        // Limpiar filtros: usa lógica simple (como en demo)
     document.getElementById('limpiarFiltros')?.addEventListener('click', function() {
         if (dateRange) dateRange.selectedIndex = 0;
         hideAll();
 
         // Reset other controls
-        document.querySelectorAll('select:not(#dateRange), input[type="text"], input[type="date"]').forEach(el => {
+        document.querySelectorAll('select:not(#dateRange), input[type="text"], input[type="number"], input[type="date"]').forEach(el => {
             if (el.tagName === 'SELECT') el.selectedIndex = 0;
             else el.value = '';
         });

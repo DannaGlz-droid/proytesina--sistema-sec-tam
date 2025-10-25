@@ -23,6 +23,8 @@ Route::view('/prueba', 'landing.prueba')->name('prueba');
 
 // CONTROLADORES  ---------------------------------------------------
 
+// Usuarios (UserController)
+
 Route::get('usuario/gestion-de-usuarios', [UserController::class, 'index'])->name('user.user-gestion');
 Route::get('usuario/gestion-de-usuarios/registro', [UserController::class, 'create'])->name('user.create');
 Route::post('/usuario/gestion-de-usuarios/store', [UserController::class, 'store'])->name('user.store');
@@ -36,6 +38,14 @@ Route::delete('/usuario/gestion-de-usuarios/eliminar/{user}', [UserController::c
 //Route::get('/usuarios/gestion', [App\Http\Controllers\UserController::class, 'gestion'])->name('user.gestion');
 Route::get('usuario/gestion-de-usuarios/actualizar-registro/{id}', [App\Http\Controllers\UserController::class, 'edit'])->name('usuario.actualizar-registro');
 
+// Estadísticas (StatisticsController)
+
+Route::get('estadisticas/datos', [App\Http\Controllers\DeathController::class, 'datos'])->name('statistic.data');
+Route::get('estadisticas/registro', [App\Http\Controllers\DeathController::class, 'create'])->name('statistic.create');
+Route::post('estadisticas/store', [App\Http\Controllers\DeathController::class, 'store'])->name('statistic.store');
+Route::get('estadisticas/actualizar-registro/{death}', [App\Http\Controllers\DeathController::class, 'edit'])->name('statistic.edit');
+Route::put('estadisticas/actualizar-registro/{death}', [App\Http\Controllers\DeathController::class, 'update'])->name('statistic.update');
+Route::delete('estadisticas/datos/{death}', [App\Http\Controllers\DeathController::class, 'destroy'])->name('statistic.destroy');
 //  VISTAS  ---------------------------------------------------------
 
 // Usuarios (views that are not controlled by UserController)
@@ -47,9 +57,10 @@ Route::view('usuario/miperfil', 'usuarios.miperfil')->name('usuario.miperfil');
 // the controller can pass data (positions/roles/etc.) to the views.
 
 // Estadísticas (4)
-Route::view('estadisticas/datos', 'estadisticas.datos')->name('estadisticas.datos');
-Route::view('estadisticas/registro', 'estadisticas.acciones.registro')->name('estadisticas.nuevo-registro');
-Route::view('estadisticas/actualizar-registro', 'estadisticas.acciones.actualizar-registro')->name('estadisticas.actualizar-registro');
+//Route::view('estadisticas/datos', 'estadisticas.datos')->name('estadisticas.datos');
+//Route::view('estadisticas/registro', 'estadisticas.acciones.registro')->name('estadisticas.nuevo-registro');
+// The actualizar-registro view is now controller-backed (requires an id). Remove the standalone view route to avoid confusion.
+// Route::view('estadisticas/actualizar-registro', 'estadisticas.acciones.actualizar-registro')->name('estadisticas.actualizar-registro');
 Route::view('estadisticas/graficas', 'estadisticas.graficas')->name('estadisticas.graficas');
 
 // Reportes (4)

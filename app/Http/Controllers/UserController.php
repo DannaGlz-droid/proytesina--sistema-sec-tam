@@ -103,6 +103,8 @@ class UserController extends Controller
             'registration_date_asc' => ['registration_date','asc'],
             'username_asc' => ['username','asc'],
             'username_desc' => ['username','desc'],
+            'name_asc' => ['name','asc'],
+            'name_desc' => ['name','desc'],
             'id_desc' => ['id','desc'],
             'id_asc' => ['id','asc'],
         ];

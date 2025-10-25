@@ -21,7 +21,7 @@
             </div>
             <div class="filter-group">
                 <label class="block text-xs text-gray-600 font-lora mb-1">Última sesión:</label>
-                <select name="last_session" class="w-full border border-[#404041] rounded-lg px-3 py-1.5 text-xs" id="ultimaSesion">
+                <select name="last_session" class="w-full border border-[#404041] rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-[#611132] focus:border-[#611132]" id="ultimaSesion">
                     <option value="" {{ request('last_session') === null || request('last_session') === '' ? 'selected' : '' }}>Cualquier momento</option>
                     <option value="today" {{ request('last_session') === 'today' ? 'selected' : '' }}>Hoy</option>
                     <option value="7" {{ request('last_session') === '7' ? 'selected' : '' }}>Últimos 7 días</option>
@@ -49,7 +49,7 @@
 
             <div class="filter-group year-selector-group" id="yearSelector" style="display: {{ request('date_range') === 'year' ? 'block' : 'none' }};">
                 <label class="block text-xs text-gray-600 font-lora mb-1">Año:</label>
-                <select name="year" id="year" class="w-full border border-[#404041] rounded-lg px-3 py-1.5 text-xs">
+                <select name="year" id="year" class="w-full border border-[#404041] rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-[#611132] focus:border-[#611132]">
                     <option value="">Seleccionar año</option>
                     @for($y = date('Y'); $y >= date('Y')-5; $y--)
                         <option value="{{ $y }}" {{ request('year') == $y ? 'selected' : '' }}>{{ $y }}</option>
@@ -59,7 +59,7 @@
 
             <div class="filter-group month-selector-group" id="monthSelector" style="display: {{ request('date_range') === 'month' ? 'block' : 'none' }};">
                 <label class="block text-xs text-gray-600 font-lora mb-1">Mes:</label>
-                <select name="month" id="month" class="w-full border border-[#404041] rounded-lg px-3 py-1.5 text-xs">
+                <select name="month" id="month" class="w-full border border-[#404041] rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-[#611132] focus:border-[#611132]">
                     <option value="">Seleccionar mes</option>
                     <option value="01" {{ request('month') === '01' ? 'selected' : '' }}>Enero</option>
                     <option value="02" {{ request('month') === '02' ? 'selected' : '' }}>Febrero</option>
@@ -93,7 +93,7 @@
 
             <div class="filter-group quarter-selector-group" id="quarterSelector" style="display: {{ request('date_range') === 'quarter' ? 'block' : 'none' }};">
                 <label class="block text-xs text-gray-600 font-lora mb-1">Trimestre:</label>
-                <select name="quarter" id="quarter" class="w-full border border-[#404041] rounded-lg px-3 py-1.5 text-xs">
+                <select name="quarter" id="quarter" class="w-full border border-[#404041] rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-[#611132] focus:border-[#611132]">
                     <option value="">Seleccionar trimestre</option>
                     <option value="1" {{ request('quarter') === '1' ? 'selected' : '' }}>Q1 (Ene-Mar)</option>
                     <option value="2" {{ request('quarter') === '2' ? 'selected' : '' }}>Q2 (Abr-Jun)</option>
@@ -105,11 +105,11 @@
             <div id="customRangeSelector" class="custom-range-group" style="display: {{ request('date_range') === 'custom' ? 'block' : 'none' }};">
                 <div class="filter-group">
                     <label class="block text-xs text-gray-600 font-lora mb-1">Desde:</label>
-                    <input type="date" name="date_from" id="startDate" value="{{ request('date_from') }}" class="w-full border border-[#404041] rounded-lg px-3 py-1.5 text-xs">
+                    <input type="date" name="date_from" id="startDate" value="{{ request('date_from') }}" class="w-full border border-[#404041] rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-[#611132] focus:border-[#611132]">
                 </div>
                 <div class="filter-group">
                     <label class="block text-xs text-gray-600 font-lora mb-1">Hasta:</label>
-                    <input type="date" name="date_to" id="endDate" value="{{ request('date_to') }}" class="w-full border border-[#404041] rounded-lg px-3 py-1.5 text-xs">
+                    <input type="date" name="date_to" id="endDate" value="{{ request('date_to') }}" class="w-full border border-[#404041] rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-[#611132] focus:border-[#611132]">
                 </div>
             </div>
     </x-filtros.seccion>
@@ -118,7 +118,7 @@
     <x-filtros.seccion icono="briefcase" titulo="Cargo">
         <div class="filter-group">
             <label class="block text-xs text-gray-600 font-lora mb-1">Cargo:</label>
-            <select name="position_id" class="w-full border border-[#404041] rounded-lg px-3 py-1.5 text-xs" id="cargo">
+            <select name="position_id" class="w-full border border-[#404041] rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-[#611132] focus:border-[#611132]" id="cargo">
                 <option value="" {{ request('position_id') === null || request('position_id') === '' ? 'selected' : '' }}>Todos los cargos</option>
                 @if(isset($positions) && $positions->isNotEmpty())
                     @foreach($positions as $pos)
@@ -140,7 +140,7 @@
     <x-filtros.seccion icono="map-marker-alt" titulo="Ubicación">
         <div class="filter-group">
             <label class="block text-xs text-gray-600 font-lora mb-1">Jurisdicción:</label>
-            <select name="jurisdiction_id" class="w-full border border-[#404041] rounded-lg px-3 py-1.5 text-xs" id="jurisdiccion">
+            <select name="jurisdiction_id" class="w-full border border-[#404041] rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-[#611132] focus:border-[#611132]" id="jurisdiccion">
                 <option value="" {{ request('jurisdiction_id') === null || request('jurisdiction_id') === '' ? 'selected' : '' }}>Todas</option>
                 @if(isset($jurisdictions) && $jurisdictions->isNotEmpty())
                     @foreach($jurisdictions as $j)
@@ -159,7 +159,7 @@
     <x-filtros.seccion icono="user-tag" titulo="Rol">
         <div class="filter-group">
             <label class="block text-xs text-gray-600 font-lora mb-1">Tipo:</label>
-            <select name="role_id" class="w-full border border-[#404041] rounded-lg px-3 py-1.5 text-xs" id="rol">
+            <select name="role_id" class="w-full border border-[#404041] rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-[#611132] focus:border-[#611132]" id="rol">
                 <option value="" {{ request('role_id') === null || request('role_id') === '' ? 'selected' : '' }}>Todos</option>
                 @if(isset($roles) && $roles->isNotEmpty())
                     @foreach($roles as $r)

@@ -14,12 +14,12 @@
                     En esta sección puede cargar archivos (Excel o CSV), aplicar filtros y consultar los registros en la tabla.
                 </p>
             </div>
-            
-            <!-- BOTÓN CARGAR ARCHIVO -->
-            <button class="bg-[#611132] text-white px-4 py-2.5 rounded-lg text-xs font-semibold hover:bg-[#4a0e26] transition-all duration-300 font-lora flex items-center gap-2 whitespace-nowrap shadow-sm self-start lg:self-auto">
-                <i class="fas fa-upload text-xs"></i>
-                Cargar Archivo
-            </button>
+
+            <a href="{{ route('statistic.create') }}" class="bg-[#611132] text-white px-4 py-2.5 rounded-lg text-xs font-semibold hover:bg-[#4a0e26] transition-all duration-300 font-lora flex items-center gap-2 whitespace-nowrap shadow-sm self-start lg:self-auto">
+                <i class="fas fa-plus text-xs"></i>
+                Reg. Def.
+            </a>
+           
         </div>
 
         <!-- Layout principal: Filtros + Tabla -->
@@ -53,221 +53,87 @@
                 </div>
 
                 <!-- COMPONENTE DE FILTROS -->
-                <x-filtros.defunciones />
+                <x-filtros.defunciones :jurisdictions="$jurisdictions" :municipalities="$municipalities" :causes="$causes" />
             </div>
 
             <!-- Columna Derecha - Tabla -->
             <div class="flex-1">
-                <div class="bg-white relative shadow-md sm:rounded-lg overflow-hidden border border-[#404041]">
-                    
-                    <!-- BARRA SUPERIOR: Búsqueda y Controles -->
-                    <div class="flex flex-col md:flex-row items-center justify-between space-y-3 md:space-y-0 md:space-x-4 p-4">
-                        
-                        <!-- Búsqueda -->
-                        <div class="w-full md:w-1/2">
-                            <div class="relative w-full">
-                                <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                                    <i class="fas fa-search text-gray-400 text-sm"></i>
-                                </div>
-                                <input type="text" id="table-search-deaths" 
-                                       class="bg-gray-50 border border-[#404041] text-gray-900 text-sm rounded-lg focus:ring-[#611132] focus:border-[#611132] block w-full pl-10 p-2.5" 
-                                       placeholder="Buscar por ID, nombre, municipio, causa...">
-                            </div>
+                <x-table-controls
+                    :items="$deaths"
+                    :action="route('statistic.data')"
+                    :perPageOptions="[25,50,100,250]"
+                    :sortOptions="[
+                        // Show newest-first id as default, and oldest-first id second for clarity
+                        'id_desc' => 'ID: Recientes',
+                        'id_asc' => 'ID: Antiguos',
+                        'death_date_desc' => 'Fecha Def.: Recientes',
+                        'death_date_asc' => 'Fecha Def.: Antiguos',
+                        'age_asc' => 'Edad: Menor a mayor',
+                        'age_desc' => 'Edad: Mayor a menor',
+                        'name_asc' => 'Nombre: A–Z',
+                        'name_desc' => 'Nombre: Z–A',
+                    ]"
+                    :default-sort="'id_desc'">
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-sm text-left text-gray-500">
+                                <thead class="text-xs text-gray-700 uppercase bg-gray-50 border-b border-[#404041]">
+                                    <tr>
+                                        <th scope="col" class="px-3 py-2 font-lora whitespace-nowrap text-xs">ID</th>
+                                        <th scope="col" class="px-3 py-2 font-lora whitespace-nowrap text-xs">Nombre</th>
+                                        <th scope="col" class="px-3 py-2 font-lora whitespace-nowrap text-xs">A. Paterno</th>
+                                        <th scope="col" class="px-3 py-2 font-lora whitespace-nowrap text-xs">A. Materno</th>
+                                        <th scope="col" class="px-3 py-2 font-lora whitespace-nowrap text-xs">Edad</th>
+                                        <th scope="col" class="px-3 py-2 font-lora whitespace-nowrap text-xs">Sexo</th>
+                                        <th scope="col" class="px-3 py-2 font-lora whitespace-nowrap text-xs">Fecha Def.</th>
+                                        <th scope="col" class="px-3 py-2 font-lora whitespace-nowrap text-xs">Municipio Res.</th>
+                                        <th scope="col" class="px-3 py-2 font-lora whitespace-nowrap text-xs">Municipio Def.</th>
+                                        <th scope="col" class="px-3 py-2 font-lora whitespace-nowrap text-xs">Jurisd.</th>
+                                        <th scope="col" class="px-3 py-2 font-lora whitespace-nowrap text-xs">Lugar</th>
+                                        <th scope="col" class="px-3 py-2 font-lora whitespace-nowrap text-xs">Causa</th>
+                                        <th scope="col" class="px-3 py-2 font-lora whitespace-nowrap text-xs text-right w-24">Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @if(isset($deaths) && $deaths->isNotEmpty())
+                                        @foreach($deaths as $death)
+                                            <tr class="border-b hover:bg-gray-50 {{ $loop->even ? 'bg-gray-50' : 'bg-white' }}">
+                                                <td class="px-3 py-3 font-medium text-gray-900 whitespace-nowrap">{{ $death->id }}</td>
+                                                <td class="px-3 py-3 whitespace-nowrap">{{ $death->name ?? '—' }}</td>
+                                                <td class="px-3 py-3 whitespace-nowrap">{{ $death->first_last_name ?? '—' }}</td>
+                                                <td class="px-3 py-3 whitespace-nowrap">{{ $death->second_last_name ?? '—' }}</td>
+                                                <td class="px-3 py-3 whitespace-nowrap">{{ $death->age ?? '—' }}</td>
+                                                <td class="px-3 py-3 whitespace-nowrap">{{ $death->sex ?? '—' }}</td>
+                                                <td class="px-3 py-3 whitespace-nowrap">{{ $death->death_date ? $death->death_date->format('d/m/Y') : '—' }}</td>
+                                                <td class="px-3 py-3 whitespace-nowrap">{{ optional($death->residenceMunicipality)->name ?? '—' }}</td>
+                                                <td class="px-3 py-3 whitespace-nowrap">{{ optional($death->deathMunicipality)->name ?? '—' }}</td>
+                                                <td class="px-3 py-3 whitespace-nowrap">{{ optional($death->jurisdiction)->name ?? '—' }}</td>
+                                                <td class="px-3 py-3 whitespace-nowrap">{{ optional($death->deathLocation)->name ?? '—' }}</td>
+                                                <td class="px-3 py-3 whitespace-nowrap">{{ optional($death->deathCause)->name ?? '—' }}</td>
+                                                <td class="px-3 py-3 whitespace-nowrap w-24 text-right">
+                                                    <div class="flex items-center justify-end space-x-1">
+                                                        <a href="{{ route('statistic.edit', $death->id) }}" class="w-7 h-7 flex items-center justify-center rounded border border-[#404041] text-[#404041] hover:bg-[#404041] hover:text-white transition-all duration-200" title="Editar" aria-label="Editar defunción {{ $death->id }}">
+                                                        <i class="fas fa-edit text-xs"></i>
+                                                    </a>
+                                                        <form method="POST" action="{{ route('statistic.destroy', $death->id) }}" onsubmit="return confirm('¿Eliminar registro? Esta acción no se puede deshacer.');">
+                                                            @csrf
+                                                            @method('DELETE')
+                                                            <button type="submit" class="w-7 h-7 flex items-center justify-center rounded border border-[#AB1A1A] text-[#AB1A1A] hover:bg-[#AB1A1A] hover:text-white transition-all duration-200" title="Eliminar" aria-label="Eliminar registro {{ $death->id }}">
+                                                                <i class="fas fa-trash text-xs"></i>
+                                                            </button>
+                                                        </form>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        @endforeach
+                                    @else
+                                        <tr>
+                                            <td colspan="13" class="px-3 py-4 text-center text-sm text-gray-500">No se encontraron registros.</td>
+                                        </tr>
+                                    @endif
+                                </tbody>
+                            </table>
                         </div>
-                        
-                        <!-- Controles Derecha -->
-                        <div class="w-full md:w-auto flex flex-col md:flex-row space-y-2 md:space-y-0 items-stretch md:items-center justify-end md:space-x-3 flex-shrink-0">
-                            
-                            <!-- Selector de entradas -->
-                            <div class="flex items-center space-x-2">
-                                <span class="text-sm text-gray-700 font-lora">Mostrar</span>
-                                <select id="entries-per-page" class="bg-gray-50 border border-[#404041] text-gray-900 text-sm rounded-lg focus:ring-[#611132] focus:border-[#611132] block w-16 p-2">
-                                    <option value="10">10</option>
-                                    <option value="20">20</option>
-                                    <option value="50">50</option>
-                                    <option value="100">100</option>
-                                </select>
-                                <span class="text-sm text-gray-700 font-lora">entradas</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- TABLA -->
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-sm text-left text-gray-500">
-                            <thead class="text-xs text-gray-700 uppercase bg-gray-50 border-b border-[#404041]">
-                                <tr>
-                                    <th scope="col" class="px-3 py-2 font-lora whitespace-nowrap text-xs">ID</th>
-                                    <th scope="col" class="px-3 py-2 font-lora whitespace-nowrap text-xs">Nombre</th>
-                                    <th scope="col" class="px-3 py-2 font-lora whitespace-nowrap text-xs">A. Paterno</th>
-                                    <th scope="col" class="px-3 py-2 font-lora whitespace-nowrap text-xs">A. Materno</th>
-                                    <th scope="col" class="px-3 py-2 font-lora whitespace-nowrap text-xs">Edad</th>
-                                    <th scope="col" class="px-3 py-2 font-lora whitespace-nowrap text-xs">Sexo</th>
-                                    <th scope="col" class="px-3 py-2 font-lora whitespace-nowrap text-xs">Fecha Def.</th>
-                                    <th scope="col" class="px-3 py-2 font-lora whitespace-nowrap text-xs">Municipio Res.</th>
-                                    <th scope="col" class="px-3 py-2 font-lora whitespace-nowrap text-xs">Municipio Def.</th>
-                                    <th scope="col" class="px-3 py-2 font-lora whitespace-nowrap text-xs">Jurisd.</th>
-                                    <th scope="col" class="px-3 py-2 font-lora whitespace-nowrap text-xs">Lugar</th>
-                                    <th scope="col" class="px-3 py-2 font-lora whitespace-nowrap text-xs">Causa</th>
-                                    <th scope="col" class="px-3 py-2 font-lora whitespace-nowrap text-xs">
-                                        <span class="sr-only">Acciones</span>
-                                    </th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <!-- Fila 1 -->
-                                <tr class="border-b hover:bg-gray-50">
-                                    <td class="px-3 py-3 font-medium text-gray-900 whitespace-nowrap">D-001</td>
-                                    <td class="px-3 py-3 whitespace-nowrap">Juan</td>
-                                    <td class="px-3 py-3 whitespace-nowrap">Pérez</td>
-                                    <td class="px-3 py-3 whitespace-nowrap">García</td>
-                                    <td class="px-3 py-3 whitespace-nowrap">72</td>
-                                    <td class="px-3 py-3 whitespace-nowrap">M</td>
-                                    <td class="px-3 py-3 whitespace-nowrap">15/03/2024</td>
-                                    <td class="px-3 py-3 whitespace-nowrap">Municipio A</td>
-                                    <td class="px-3 py-3 whitespace-nowrap">Municipio X</td>
-                                    <td class="px-3 py-3 whitespace-nowrap">Jurisd. I</td>
-                                    <td class="px-3 py-3 whitespace-nowrap">Hospital Central</td>
-                                    <td class="px-3 py-3 whitespace-nowrap">
-                                        <span class="bg-red-100 text-red-800 text-xs font-medium px-2 py-0.5 rounded-full">Cardiopatía</span>
-                                    </td>
-                                    <td class="px-3 py-3 whitespace-nowrap">
-                                        <div class="flex items-center justify-end space-x-1">
-                                            <button class="w-7 h-7 flex items-center justify-center rounded border border-[#404041] text-[#404041] hover:bg-[#404041] hover:text-white transition-all duration-200" title="Editar">
-                                                <i class="fas fa-edit text-xs"></i>
-                                            </button>
-                                            <button class="w-7 h-7 flex items-center justify-center rounded border border-[#AB1A1A] text-[#AB1A1A] hover:bg-[#AB1A1A] hover:text-white transition-all duration-200" title="Eliminar">
-                                                <i class="fas fa-trash text-xs"></i>
-                                            </button>
-                                        </div>
-                                    </td>
-                                </tr>
-
-                                <!-- Fila 2 -->
-                                <tr class="border-b hover:bg-gray-50 bg-gray-50">
-                                    <td class="px-3 py-3 font-medium text-gray-900 whitespace-nowrap">D-002</td>
-                                    <td class="px-3 py-3 whitespace-nowrap">María</td>
-                                    <td class="px-3 py-3 whitespace-nowrap">López</td>
-                                    <td class="px-3 py-3 whitespace-nowrap">Hernández</td>
-                                    <td class="px-3 py-3 whitespace-nowrap">65</td>
-                                    <td class="px-3 py-3 whitespace-nowrap">F</td>
-                                    <td class="px-3 py-3 whitespace-nowrap">22/04/2024</td>
-                                    <td class="px-3 py-3 whitespace-nowrap">Municipio B</td>
-                                    <td class="px-3 py-3 whitespace-nowrap">Municipio Y</td>
-                                    <td class="px-3 py-3 whitespace-nowrap">Jurisd. II</td>
-                                    <td class="px-3 py-3 whitespace-nowrap">Domicilio</td>
-                                    <td class="px-3 py-3 whitespace-nowrap">
-                                        <span class="bg-blue-100 text-blue-800 text-xs font-medium px-2 py-0.5 rounded-full">Cáncer</span>
-                                    </td>
-                                    <td class="px-3 py-3 whitespace-nowrap">
-                                        <div class="flex items-center justify-end space-x-1">
-                                            <button class="w-7 h-7 flex items-center justify-center rounded border border-[#404041] text-[#404041] hover:bg-[#404041] hover:text-white transition-all duration-200" title="Editar">
-                                                <i class="fas fa-edit text-xs"></i>
-                                            </button>
-                                            <button class="w-7 h-7 flex items-center justify-center rounded border border-[#AB1A1A] text-[#AB1A1A] hover:bg-[#AB1A1A] hover:text-white transition-all duration-200" title="Eliminar">
-                                                <i class="fas fa-trash text-xs"></i>
-                                            </button>
-                                        </div>
-                                    </td>
-                                </tr>
-
-                                <!-- Fila 3 -->
-                                <tr class="border-b hover:bg-gray-50">
-                                    <td class="px-3 py-3 font-medium text-gray-900 whitespace-nowrap">D-003</td>
-                                    <td class="px-3 py-3 whitespace-nowrap">Carlos</td>
-                                    <td class="px-3 py-3 whitespace-nowrap">Martínez</td>
-                                    <td class="px-3 py-3 whitespace-nowrap">Rodríguez</td>
-                                    <td class="px-3 py-3 whitespace-nowrap">48</td>
-                                    <td class="px-3 py-3 whitespace-nowrap">M</td>
-                                    <td class="px-3 py-3 whitespace-nowrap">10/05/2024</td>
-                                    <td class="px-3 py-3 whitespace-nowrap">Municipio C</td>
-                                    <td class="px-3 py-3 whitespace-nowrap">Municipio Z</td>
-                                    <td class="px-3 py-3 whitespace-nowrap">Jurisd. III</td>
-                                    <td class="px-3 py-3 whitespace-nowrap">Accidente</td>
-                                    <td class="px-3 py-3 whitespace-nowrap">
-                                        <span class="bg-yellow-100 text-yellow-800 text-xs font-medium px-2 py-0.5 rounded-full">Accidente</span>
-                                    </td>
-                                    <td class="px-3 py-3 whitespace-nowrap">
-                                        <div class="flex items-center justify-end space-x-1">
-                                            <button class="w-7 h-7 flex items-center justify-center rounded border border-[#404041] text-[#404041] hover:bg-[#404041] hover:text-white transition-all duration-200" title="Editar">
-                                                <i class="fas fa-edit text-xs"></i>
-                                            </button>
-                                            <button class="w-7 h-7 flex items-center justify-center rounded border border-[#AB1A1A] text-[#AB1A1A] hover:bg-[#AB1A1A] hover:text-white transition-all duration-200" title="Eliminar">
-                                                <i class="fas fa-trash text-xs"></i>
-                                            </button>
-                                        </div>
-                                    </td>
-                                </tr>
-
-                                <!-- Fila 4 -->
-                                <tr class="border-b hover:bg-gray-50 bg-gray-50">
-                                    <td class="px-3 py-3 font-medium text-gray-900 whitespace-nowrap">D-004</td>
-                                    <td class="px-3 py-3 whitespace-nowrap">Ana</td>
-                                    <td class="px-3 py-3 whitespace-nowrap">Sánchez</td>
-                                    <td class="px-3 py-3 whitespace-nowrap">Gómez</td>
-                                    <td class="px-3 py-3 whitespace-nowrap">81</td>
-                                    <td class="px-3 py-3 whitespace-nowrap">F</td>
-                                    <td class="px-3 py-3 whitespace-nowrap">18/06/2024</td>
-                                    <td class="px-3 py-3 whitespace-nowrap">Municipio A</td>
-                                    <td class="px-3 py-3 whitespace-nowrap">Municipio W</td>
-                                    <td class="px-3 py-3 whitespace-nowrap">Jurisd. I</td>
-                                    <td class="px-3 py-3 whitespace-nowrap">Hospital Regional</td>
-                                    <td class="px-3 py-3 whitespace-nowrap">
-                                        <span class="bg-green-100 text-green-800 text-xs font-medium px-2 py-0.5 rounded-full">COVID-19</span>
-                                    </td>
-                                    <td class="px-3 py-3 whitespace-nowrap">
-                                        <div class="flex items-center justify-end space-x-1">
-                                            <button class="w-7 h-7 flex items-center justify-center rounded border border-[#404041] text-[#404041] hover:bg-[#404041] hover:text-white transition-all duration-200" title="Editar">
-                                                <i class="fas fa-edit text-xs"></i>
-                                            </button>
-                                            <button class="w-7 h-7 flex items-center justify-center rounded border border-[#AB1A1A] text-[#AB1A1A] hover:bg-[#AB1A1A] hover:text-white transition-all duration-200" title="Eliminar">
-                                                <i class="fas fa-trash text-xs"></i>
-                                            </button>
-                                        </div>
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-
-                    <!-- PAGINACIÓN -->
-                    <nav class="flex flex-col md:flex-row justify-between items-start md:items-center space-y-3 md:space-y-0 p-4 border-t border-[#404041]">
-                        <span class="text-sm font-normal text-gray-500 font-lora">
-                            Mostrando 
-                            <span class="font-semibold text-gray-900">1-4</span>
-                            de
-                            <span class="font-semibold text-gray-900">24</span>
-                            entradas
-                        </span>
-                        <ul class="inline-flex items-stretch -space-x-px">
-                            <li>
-                                <a href="#" class="flex items-center justify-center h-full py-1.5 px-3 ml-0 text-gray-500 bg-white rounded-l-lg border border-gray-300 hover:bg-gray-100 hover:text-gray-700">
-                                    <i class="fas fa-chevron-left text-xs"></i>
-                                </a>
-                            </li>
-                            <li>
-                                <a href="#" class="flex items-center justify-center text-sm py-2 px-3 leading-tight text-gray-500 bg-white border border-gray-300 hover:bg-gray-100 hover:text-gray-700">1</a>
-                            </li>
-                            <li>
-                                <a href="#" class="flex items-center justify-center text-sm py-2 px-3 leading-tight text-gray-500 bg-white border border-gray-300 hover:bg-gray-100 hover:text-gray-700">2</a>
-                            </li>
-                            <li>
-                                <a href="#" class="flex items-center justify-center text-sm py-2 px-3 leading-tight text-[#611132] bg-[#f8f1f4] border border-[#611132]">3</a>
-                            </li>
-                            <li>
-                                <a href="#" class="flex items-center justify-center text-sm py-2 px-3 leading-tight text-gray-500 bg-white border border-gray-300 hover:bg-gray-100 hover:text-gray-700">4</a>
-                            </li>
-                            <li>
-                                <a href="#" class="flex items-center justify-center text-sm py-2 px-3 leading-tight text-gray-500 bg-white border border-gray-300 hover:bg-gray-100 hover:text-gray-700">5</a>
-                            </li>
-                            <li>
-                                <a href="#" class="flex items-center justify-center h-full py-1.5 px-3 leading-tight text-gray-500 bg-white rounded-r-lg border border-gray-300 hover:bg-gray-100 hover:text-gray-700">
-                                    <i class="fas fa-chevron-right text-xs"></i>
-                                </a>
-                            </li>
-                        </ul>
-                    </nav>
-                </div>
+                    </x-table-controls>
             </div>
         </div>
     </div>

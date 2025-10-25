@@ -229,9 +229,11 @@
                     <x-form-buttons 
                         primaryText="Guardar registro"
                         secondaryText="Limpiar formulario"
+                        secondaryOnclick="clearRegistroForm(event)"
+                        tertiaryText="Volver al listado"
+                        tertiaryHref="{{ route('user.user-gestion') }}"
                         primaryType="submit"
                         secondaryType="button"
-                        secondaryOnclick="clearRegistroForm(event)"
                     />
                 </div>
 

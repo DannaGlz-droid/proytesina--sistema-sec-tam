@@ -133,8 +133,9 @@
             <!-- USAR COMPONENTE DE BOTONES PERSONALIZADO -->
             <x-form-buttons 
                 primaryText="Actualizar contraseña"
-                secondaryText="Volver al listado"
-                :secondary-href="route('user.user-gestion')"
+                secondaryText=""
+                tertiaryText="Volver al listado"
+                tertiaryHref="{{ route('user.user-gestion') }}"
                 primaryType="submit"
             />
             </form>
