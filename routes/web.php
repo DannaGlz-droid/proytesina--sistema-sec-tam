@@ -41,11 +41,19 @@ Route::get('usuario/gestion-de-usuarios/actualizar-registro/{id}', [App\Http\Con
 // Estadísticas (StatisticsController)
 
 Route::get('estadisticas/datos', [App\Http\Controllers\DeathController::class, 'datos'])->name('statistic.data');
+Route::get('estadisticas/datos/export', [App\Http\Controllers\DeathExportController::class, 'export'])->name('statistic.export');
+Route::post('estadisticas/import', [App\Http\Controllers\DeathImportController::class, 'import'])->name('statistic.import');
 Route::get('estadisticas/registro', [App\Http\Controllers\DeathController::class, 'create'])->name('statistic.create');
 Route::post('estadisticas/store', [App\Http\Controllers\DeathController::class, 'store'])->name('statistic.store');
 Route::get('estadisticas/actualizar-registro/{death}', [App\Http\Controllers\DeathController::class, 'edit'])->name('statistic.edit');
 Route::put('estadisticas/actualizar-registro/{death}', [App\Http\Controllers\DeathController::class, 'update'])->name('statistic.update');
 Route::delete('estadisticas/datos/{death}', [App\Http\Controllers\DeathController::class, 'destroy'])->name('statistic.destroy');
+// API endpoints for autocomplete
+Route::get('api/municipalities/search', [App\Http\Controllers\MunicipalityController::class, 'search'])->name('api.municipalities.search');
+Route::post('api/municipalities', [App\Http\Controllers\MunicipalityController::class, 'store'])->name('api.municipalities.store');
+// Lookup endpoints for remote autocompletes
+Route::get('api/causes/search', [App\Http\Controllers\LookupController::class, 'searchCauses'])->name('api.causes.search');
+Route::get('api/locations/search', [App\Http\Controllers\LookupController::class, 'searchLocations'])->name('api.locations.search');
 //  VISTAS  ---------------------------------------------------------
 
 // Usuarios (views that are not controlled by UserController)

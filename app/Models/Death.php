@@ -40,6 +40,17 @@ class Death extends Model
     ];
 
     /**
+     * Append formatted name attributes for display (keeps raw stored values intact).
+     * These will be available when the model is serialized (e.g. JSON responses) as
+     * `name_formatted`, `first_last_name_formatted`, `second_last_name_formatted`.
+     */
+    protected $appends = [
+        'name_formatted',
+        'first_last_name_formatted',
+        'second_last_name_formatted',
+    ];
+
+    /**
      * The attributes that should be cast.
      */
     protected $casts = [
@@ -86,5 +97,71 @@ class Death extends Model
     public function deathMunicipality()
     {
         return $this->belongsTo(Municipality::class, 'death_municipality_id');
+    }
+
+    /**
+     * Accessor: formatted full name (Title Case, preserves small words like 'de', 'la' in lower case).
+     */
+    public function getNameFormattedAttribute()
+    {
+        return self::formatPersonName($this->attributes['name'] ?? null);
+    }
+
+    /**
+     * Accessor: formatted first last name
+     */
+    public function getFirstLastNameFormattedAttribute()
+    {
+        return self::formatPersonName($this->attributes['first_last_name'] ?? null);
+    }
+
+    /**
+     * Accessor: formatted second last name
+     */
+    public function getSecondLastNameFormattedAttribute()
+    {
+        return self::formatPersonName($this->attributes['second_last_name'] ?? null);
+    }
+
+    /**
+     * Helper to format person names: converts to Title Case and lowercases small words.
+     * Made public so it can be reused by commands/scripts that normalize existing data.
+     */
+    public static function formatPersonName(?string $value): ?string
+    {
+        if ($value === null) return null;
+        $s = trim($value);
+        if ($s === '') return null;
+        // Lowercase the whole string first to normalize ALL CAPS inputs
+        $s = mb_strtolower($s, 'UTF-8');
+        // Convert to title case (multibyte)
+        $s = mb_convert_case($s, MB_CASE_TITLE, 'UTF-8');
+
+        // Keep certain small words lowercase in Spanish (de, del, la, las, los, y, e, al, a)
+        $small = ["De", "Del", "La", "Las", "Los", "Y", "E", "Al", "A", "El"];
+        foreach ($small as $word) {
+            // word boundaries, case-sensitive replacement (we know words are Title Case now)
+            $s = preg_replace('/\b' . preg_quote($word, '/') . '\b/u', mb_strtolower($word, 'UTF-8'), $s);
+        }
+
+        return $s;
+    }
+
+    /**
+     * Mutator: normalize name when saving so database becomes uniform.
+     */
+    public function setNameAttribute($value)
+    {
+        $this->attributes['name'] = $value === null ? null : self::formatPersonName($value);
+    }
+
+    public function setFirstLastNameAttribute($value)
+    {
+        $this->attributes['first_last_name'] = $value === null ? null : self::formatPersonName($value);
+    }
+
+    public function setSecondLastNameAttribute($value)
+    {
+        $this->attributes['second_last_name'] = $value === null ? null : self::formatPersonName($value);
     }
 }

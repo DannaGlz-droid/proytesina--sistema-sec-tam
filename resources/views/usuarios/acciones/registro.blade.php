@@ -31,6 +31,7 @@
                                         class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora" 
                                         placeholder="Ej: María Elena"
                                         value="{{ old('name') }}">
+                                    @error('name') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
                                 </div>
                                 <div>
                                     <label name="first_last_name" class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Apellido paterno</label>
@@ -38,13 +39,7 @@
                                         class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora" 
                                         placeholder="Ej: García"
                                         value="{{ old('first_last_name') }}">
-                                </div>
-                                <div>
-                                    <label name="email" class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Correo electrónico</label>
-                                    <input name="email" type="email" 
-                                        class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora" 
-                                        placeholder="Ej: usuario@ejemplo.com"
-                                        value="{{ old('email') }}">
+                                    @error('first_last_name') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
                                 </div>
                             </div>
                             
@@ -55,13 +50,27 @@
                                         class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora" 
                                         placeholder="Ej: López"
                                         value="{{ old('second_last_name') }}">
+                                    @error('second_last_name') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
                                 </div>
                                 <div>
-                                    <label name="phone" class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Teléfono</label>
-                                    <input name="phone" type="tel" 
-                                        class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora" 
-                                        placeholder="Ej: 8123456789"
-                                        value="{{ old('phone') }}">
+                                    <div class="grid grid-cols-2 gap-3">
+                                        <div>
+                                            <label name="email" class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Correo electrónico</label>
+                                            <input name="email" type="email" autocomplete="email"
+                                                class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora"
+                                                placeholder="Ej: usuario@ejemplo.com"
+                                                value="{{ old('email') }}">
+                                            @error('email') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
+                                        </div>
+                                        <div>
+                                            <label name="phone" class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Teléfono</label>
+                                            <input name="phone" type="tel" inputmode="tel" autocomplete="tel"
+                                                class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora"
+                                                placeholder="Ej: 8123456789"
+                                                value="{{ old('phone') }}">
+                                            @error('phone') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -82,7 +91,7 @@
                             <div class="space-y-3">
                                 <div>
                                     <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Cargo</label>
-                                    <select class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora" name="position_id">
+                                    <select id="position_select" class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora tomselect-select" name="position_id">
                                         <option value="">Seleccione un cargo</option>
                                         @if(isset($positions))
                                             @foreach($positions as $p)
@@ -130,21 +139,7 @@
                                         value="{{ old('username') }}">
                                 </div>
                                 <div>
-                                    <label  class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Rol</label>
-                                    <select class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora" name="role_id">
-                                        <option value="">Seleccione un rol</option>
-                                        @if(isset($roles))
-                                            @foreach($roles as $r)
-                                                <option value="{{ $r->id }}" {{ old('role_id') == $r->id ? 'selected' : '' }}>{{ $r->name }}</option>
-                                            @endforeach
-                                        @endif
-                                    </select>
-                                </div>
-                            </div>
-                            
-                            <div class="space-y-3">
-                                <div>
-                                    <label name="password"class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Contraseña</label>
+                                    <label name="password" class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Contraseña</label>
                                     <div class="relative">
                                         <input name="password" type="password" 
                                             id="password"
@@ -156,6 +151,20 @@
                                             <ion-icon name="eye-outline" class="text-lg"></ion-icon>
                                         </button>
                                     </div>
+                                </div>
+                            </div>
+                            
+                            <div class="space-y-3">
+                                <div>
+                                    <label  class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Rol</label>
+                                    <select class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora" name="role_id">
+                                        <option value="">Seleccione un rol</option>
+                                        @if(isset($roles))
+                                            @foreach($roles as $r)
+                                                <option value="{{ $r->id }}" {{ old('role_id') == $r->id ? 'selected' : '' }}>{{ $r->name }}</option>
+                                            @endforeach
+                                        @endif
+                                    </select>
                                 </div>
                                 <div>
                                     <label name="password_confirmation" class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Confirmar contraseña</label>
@@ -388,4 +397,160 @@
     <!-- Incluir Ionicons -->
     <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
     <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
+    <!-- Tom Select (only used for position select here) -->
+    <link href="https://cdn.jsdelivr.net/npm/tom-select/dist/css/tom-select.default.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/tom-select/dist/js/tom-select.complete.min.js"></script>
+    <style>
+        /* Make Tom Select control visually match your existing Tailwind input styles */
+        /* Tom Select control: try to match exact paddings/height of your native selects */
+        .ts-wrapper {
+            /* remove wrapper border so there's only one visible border (the control itself) */
+            border: none !important;
+            padding: 0 !important;
+            background: transparent !important;
+        }
+
+        /* Hide original select elements that are enhanced by Tom Select to avoid native arrow/box
+           (these selects have class "tomselect-select" in the template). We prefer an
+           accessible hide via the `sr-only` utility so the element remains in the DOM
+           for screen readers and form semantics. */
+        select.tomselect-select {
+            /* keep a minimal visual removal - TomSelect will still use the element */
+            position: absolute !important;
+            left: -9999px !important;
+            width: 1px !important;
+            height: 1px !important;
+            overflow: hidden !important;
+            opacity: 0 !important;
+            pointer-events: none !important;
+            border: 0 !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            background: transparent !important;
+            -webkit-appearance: none !important;
+            -moz-appearance: none !important;
+            appearance: none !important;
+        }
+
+        /* remove the IE dropdown arrow */
+        select.tomselect-select::-ms-expand { display: none !important; }
+        /* safety: some browsers render a native background image for select arrows */
+        select.tomselect-select { background-image: none !important; }
+
+        .ts-wrapper { display: block; width: 100%; }
+
+        .ts-control {
+            /* Mirror your Tailwind input: use the same padding/line-height and let height be automatic */
+            border: 1px solid #d1d5db !important; /* gray-300 */
+            border-radius: 0.5rem !important; /* rounded-lg */
+            padding: 8px 12px !important; /* px-3 py-2 equivalent */
+            background: #ffffff !important;
+            font-family: inherit;
+            font-size: 0.875rem; /* 14px */
+            line-height: 1.25rem !important;
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            position: relative;
+            box-sizing: border-box;
+            margin: 0 !important;
+            /* remove any inner shadow so it matches native selects exactly */
+            box-shadow: none !important;
+            height: auto !important;
+            min-height: 36px !important;
+        }
+        /* internal input/item inside Tom Select: remove extra padding and align line-height */
+        .ts-control .item, .ts-control input {
+            padding: 0 !important;
+            margin: 0 !important;
+            height: auto !important;
+            line-height: 1.25rem !important;
+            font-size: inherit;
+            font-family: inherit;
+        }
+        /* hide common internal toggle elements Tom Select may use (best-effort) */
+        .ts-control .dropdown-toggle,
+        .ts-control .ts-dropdown-toggle,
+        .ts-control .dropdown_toggle,
+        .ts-control .ts-clear {
+            display: none !important;
+        }
+        .ts-dropdown {
+            border: 1px solid #d1d5db;
+            border-radius: 0.5rem;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+            max-height: 240px;
+            overflow: auto;
+        }
+        .ts-dropdown .ts-option {
+            padding: 0.5rem 0.75rem;
+        }
+        /* caret we will inject (right side) */
+        .tomselect-caret {
+            display: none !important; /* hide injected caret so native arrow remains */
+            position: absolute;
+            right: 12px; /* align with native select padding */
+            top: 50%;
+            transform: translateY(-50%);
+            color: #6b7280; /* gray-500 */
+            pointer-events: none;
+            font-size: 0.9rem;
+        }
+
+        /* Draw a native-looking chevron on Tom Select controls so they match other selects.
+           This uses an inline SVG encoded as a data URI to mimic the thin outlined chevron. */
+        .ts-control::after {
+            content: "";
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 18px;
+            height: 18px;
+            background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'/></svg>");
+            background-repeat: no-repeat;
+            background-position: center;
+            background-size: 12px 12px;
+            pointer-events: none;
+            opacity: 0.92;
+        }
+
+        /* Small tweak for exact vertical alignment: ensure the Tom Select control aligns to baseline
+           with other form controls in the grid */
+        .ts-wrapper, .ts-control { vertical-align: middle; }
+
+        /* Target the Tom Select control generated next to each original select by ID
+           and nudge the death municipality control 1px up if still slightly lower. */
+        /* Ensure generated TomSelect controls match their original select container width
+           and don't receive manual transforms that break alignment. */
+        #residence_municipality_select + .ts-control,
+        #death_municipality_select + .ts-control,
+        #position_select + .ts-control {
+            padding: 8px 12px !important;
+            height: auto !important;
+            min-height: 36px !important;
+            transform: none !important;
+        }
+        /* (No chevron unification) keep native select appearance for non-TomSelect selects */
+    </style>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const pos = document.getElementById('position_select');
+            if (pos) {
+                try {
+                    new TomSelect(pos, {
+                        valueField: 'value',
+                        labelField: 'text',
+                        searchField: ['text'],
+                        create: false,
+                        maxItems: 1,
+                        preload: false,
+                        maxOptions: 50
+                    });
+                } catch (e) {
+                    console.warn('TomSelect init failed for #position_select', e);
+                }
+            }
+        });
+    </script>
 @endsection

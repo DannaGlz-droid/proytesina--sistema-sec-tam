@@ -1,12 +1,12 @@
 <div class="bg-nav text-white w-full font-sans">
     <div class="flex items-center h-9 lg:h-11 px-3 lg:px-5">
         <!-- Botón Centro de control -->
-        <button class="text-sm lg:text-base h-full px-4 lg:px-6 transition duration-200 ease-in-out flex items-center flex-shrink-0 relative group">
+    <a href="{{ route('reportes.centro-de-control') }}" class="text-sm lg:text-base h-full px-4 lg:px-6 transition duration-200 ease-in-out flex items-center flex-shrink-0 relative group">
             <span class="relative py-1.5">
                 Centro de control
                 <span class="absolute bottom-0 left-0 w-0 h-0.5 bg-[#DB9703] transition-all duration-200 group-hover:w-full"></span>
             </span>
-        </button>
+        </a>
         
         <!-- Botón Nuevo registro con dropdown -->
         <div class="relative h-full group" id="nuevoRegistroMenu">
@@ -22,15 +22,15 @@
             <div class="absolute left-0 top-full mt-0 w-48 bg-white border border-[#404041] rounded-lg shadow-xl opacity-0 invisible transition-all duration-200 transform origin-top -translate-y-2 z-50" 
                  id="dropdownMenu">
                 <div class="py-1">
-                    <a href="#" class="block px-4 py-3 text-sm text-[#404041] hover:bg-[#611132] hover:text-white transition-all duration-200 border-b border-gray-100">
+                    <a href="{{ route('reportes.seguridad-vial') }}" class="block px-4 py-3 text-sm text-[#404041] hover:bg-[#611132] hover:text-white transition-all duration-200 border-b border-gray-100">
                         <i class="fas fa-car-side mr-2 w-4 text-center"></i>
                         Seguridad vial
                     </a>
-                    <a href="#" class="block px-4 py-3 text-sm text-[#404041] hover:bg-[#611132] hover:text-white transition-all duration-200 border-b border-gray-100">
+                    <a href="{{ route('reportes.observatorio-de-lesiones') }}" class="block px-4 py-3 text-sm text-[#404041] hover:bg-[#611132] hover:text-white transition-all duration-200 border-b border-gray-100">
                         <i class="fas fa-chart-bar mr-2 w-4 text-center"></i>
                         Observatorio
                     </a>
-                    <a href="#" class="block px-4 py-3 text-sm text-[#404041] hover:bg-[#611132] hover:text-white transition-all duration-200">
+                    <a href="{{ route('reportes.alcoholimetria') }}" class="block px-4 py-3 text-sm text-[#404041] hover:bg-[#611132] hover:text-white transition-all duration-200">
                         <i class="fas fa-vial mr-2 w-4 text-center"></i>
                         Alcoholimetría
                     </a>

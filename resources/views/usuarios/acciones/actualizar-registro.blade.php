@@ -32,6 +32,7 @@
                                    class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora" 
                                    placeholder="Ej: María Elena"
                                    value="{{ old('name', $user->name) }}">
+                            @error('name') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
                         </div>
                         <div>
                             <label name="first_last_name" class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Apellido paterno</label>
@@ -39,13 +40,7 @@
                                    class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora" 
                                    placeholder="Ej: García"
                                    value="{{ old('first_last_name', $user->first_last_name) }}">
-                        </div>
-                        <div>
-                            <label name="email" class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Correo electrónico</label>
-                            <input name="email" type="email" 
-                                   class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora" 
-                                   placeholder="Ej: usuario@ejemplo.com"
-                                   value="{{ old('email', $user->email) }}">
+                            @error('first_last_name') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
                         </div>
                     </div>
                     
@@ -56,13 +51,27 @@
                                    class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora" 
                                    placeholder="Ej: López"
                                    value="{{ old('second_last_name', $user->second_last_name) }}">
+                            @error('second_last_name') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
                         </div>
                         <div>
-                            <label name="phone" class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Teléfono</label>
-                            <input name="phone" type="tel" 
-                                   class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora" 
-                                   placeholder="Ej: 8123456789"
-                                   value="{{ old('phone', $user->phone) }}">
+                            <div class="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label name="email" class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Correo electrónico</label>
+                                    <input name="email" type="email" autocomplete="email"
+                                           class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora"
+                                           placeholder="Ej: usuario@ejemplo.com"
+                                           value="{{ old('email', $user->email) }}">
+                                    @error('email') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
+                                </div>
+                                <div>
+                                    <label name="phone" class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Teléfono</label>
+                                    <input name="phone" type="tel" inputmode="tel" autocomplete="tel"
+                                           class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora"
+                                           placeholder="Ej: 8123456789"
+                                           value="{{ old('phone', $user->phone) }}">
+                                    @error('phone') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -83,7 +92,7 @@
                     <div class="space-y-3">
                         <div>
                             <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Cargo *</label>
-                            <select class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora" name="position_id">
+                            <select id="position_select" class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora tomselect-select" name="position_id">
                                 <option value="">Seleccione un cargo</option>
                                 @if(isset($positions))
                                     @foreach($positions as $p)
@@ -91,6 +100,7 @@
                                     @endforeach
                                 @endif
                             </select>
+                            @error('position_id') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
                         </div>
                     </div>
                     
@@ -274,7 +284,48 @@
     <!-- Incluir Ionicons -->
     <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
     <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
-    
+    <!-- Tom Select (only used for position select here) -->
+    <link href="https://cdn.jsdelivr.net/npm/tom-select/dist/css/tom-select.default.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/tom-select/dist/js/tom-select.complete.min.js"></script>
+    <style>
+        /* Make Tom Select control visually match your existing Tailwind input styles (copied from registro) */
+        .ts-wrapper { border: none !important; padding: 0 !important; background: transparent !important; }
+        select.tomselect-select { position: absolute !important; left: -9999px !important; width: 1px !important; height: 1px !important; overflow: hidden !important; opacity: 0 !important; pointer-events: none !important; border: 0 !important; margin: 0 !important; padding: 0 !important; background: transparent !important; -webkit-appearance: none !important; -moz-appearance: none !important; appearance: none !important; }
+        select.tomselect-select::-ms-expand { display: none !important; }
+        select.tomselect-select { background-image: none !important; }
+        .ts-wrapper { display: block; width: 100%; }
+        .ts-control { border: 1px solid #d1d5db !important; border-radius: 0.5rem !important; padding: 8px 12px !important; background: #ffffff !important; font-family: inherit; font-size: 0.875rem; line-height: 1.25rem !important; display: flex; align-items: center; justify-content: flex-start; position: relative; box-sizing: border-box; margin: 0 !important; box-shadow: none !important; height: auto !important; min-height: 36px !important; }
+        .ts-control .item, .ts-control input { padding: 0 !important; margin: 0 !important; height: auto !important; line-height: 1.25rem !important; font-size: inherit; font-family: inherit; }
+        .ts-control .dropdown-toggle, .ts-control .ts-dropdown-toggle, .ts-control .dropdown_toggle, .ts-control .ts-clear { display: none !important; }
+        .ts-dropdown { border: 1px solid #d1d5db; border-radius: 0.5rem; box-shadow: 0 2px 6px rgba(0,0,0,0.08); max-height: 240px; overflow: auto; }
+        .ts-dropdown .ts-option { padding: 0.5rem 0.75rem; }
+        .tomselect-caret { display: none !important; position: absolute; right: 12px; top: 50%; transform: translateY(-50%); color: #6b7280; pointer-events: none; font-size: 0.9rem; }
+        .ts-control::after { content: ""; position: absolute; right: 12px; top: 50%; transform: translateY(-50%); width: 18px; height: 18px; background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'/></svg>"); background-repeat: no-repeat; background-position: center; background-size: 12px 12px; pointer-events: none; opacity: 0.92; }
+        .ts-wrapper, .ts-control { vertical-align: middle; }
+        #position_select + .ts-control { padding: 8px 12px !important; height: auto !important; min-height: 36px !important; transform: none !important; }
+    </style>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const pos = document.getElementById('position_select');
+            if (pos) {
+                try {
+                    new TomSelect(pos, {
+                        valueField: 'value',
+                        labelField: 'text',
+                        searchField: ['text'],
+                        create: false,
+                        maxItems: 1,
+                        preload: false,
+                        maxOptions: 50
+                    });
+                } catch (e) {
+                    console.warn('TomSelect init failed for #position_select', e);
+                }
+            }
+        });
+    </script>
+
     <!-- Incluir Font Awesome para los íconos -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 @endsection

@@ -49,6 +49,9 @@
                             <i class="fas fa-folder-open text-xs"></i>
                             Seleccionar archivo
                         </button>
+                        <input id="fileInput" type="file" name="file" accept=".xlsx,.xls,.csv" class="hidden" />
+                        
+                        
                     </div>
                 </div>
 
@@ -141,3 +144,58 @@
     <!-- AGREGAR FONT AWESOME -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 @endsection
+
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    var selectBtn = document.getElementById('selectFileBtn');
+    var fileInput = document.getElementById('fileInput');
+    selectBtn && selectBtn.addEventListener('click', function () { fileInput.click(); });
+
+    fileInput && fileInput.addEventListener('change', function (e) {
+        var file = e.target.files[0];
+        if (!file) return;
+        if (file.size > 10 * 1024 * 1024) { alert('El archivo supera el límite de 10MB.'); return; }
+
+        if (!confirm('¿Deseas importar este archivo ahora? Esto procesará y guardará los registros en la base de datos.')) return;
+
+        var fd = new FormData();
+        fd.append('file', file);
+        fd.append('_token', '{{ csrf_token() }}');
+
+        var url = '{{ route("statistic.import") }}';
+        fetch(url, { method: 'POST', body: fd, headers: {} })
+            .then(function (res) {
+                // try to parse JSON even on non-2xx so we can show server message
+                return res.text().then(function (text) {
+                    try { return JSON.parse(text); } catch (e) { return { ok: false, message: text || 'Respuesta no JSON del servidor' }; }
+                });
+            })
+            .then(function (json) {
+                if (!json) { alert('Error inesperado'); return; }
+                // If server signaled failure, show its message
+                if (json.ok === false) {
+                    var serverMsg = json.message || (json.error_message ? json.error_message : 'Error en el servidor');
+                    alert('Importación fallida:\n' + serverMsg + '\n\nRevisa la consola o el log en el servidor para más detalles.');
+                    if (json.errors_file) console.info('Archivo de errores:', json.errors_file);
+                    return;
+                }
+
+                // Ensure numeric fields exist (defaults to 0)
+                var total = typeof json.total !== 'undefined' ? json.total : 0;
+                var imported = typeof json.imported !== 'undefined' ? json.imported : 0;
+                var failed = typeof json.failed !== 'undefined' ? json.failed : 0;
+
+                var msg = 'Importación finalizada:\nTotal filas: ' + total + '\nImportadas: ' + imported + '\nFallidas: ' + failed;
+                if (json.errors_file) msg += '\nArchivo de errores: ' + json.errors_file;
+                alert(msg);
+                // reload page to show new records
+                window.location.reload();
+            })
+            .catch(function (err) { console.error(err); alert('Error al subir o procesar el archivo. Revisa la consola.'); });
+    });
+});
+</script>
+@endpush
+
+ 

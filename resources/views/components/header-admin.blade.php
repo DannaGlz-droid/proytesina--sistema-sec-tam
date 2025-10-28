@@ -6,12 +6,12 @@
     <div class="flex items-center">
         <!-- Botones que se ocultan en mobile -->
         <div class="hidden lg:flex items-center">
-            <button class="text-sm lg:text-base bg-header hover:bg-[#B23A6E] text-white py-1 lg:py-1 px-3 lg:px-4 rounded-md transition duration-200 ease-in-out mr-3 lg:mr-4">
+            <a href="{{ route('reportes.publicaciones') }}" class="text-sm lg:text-base bg-header hover:bg-[#B23A6E] text-white py-1 lg:py-1 px-3 lg:px-4 rounded-md transition duration-200 ease-in-out mr-3 lg:mr-4 inline-flex items-center justify-center">
                 Reportes
-            </button>
-            <button class="text-sm lg:text-base bg-header hover:bg-[#9B4D6E] hover:text-[#E8CA8B] text-white py-1 lg:py-1 px-3 lg:px-4 rounded-md transition duration-200 ease-in-out mr-3 lg:mr-4">
+            </a>
+            <a href="{{ route('statistic.data') }}" class="text-sm lg:text-base bg-header hover:bg-[#9B4D6E] hover:text-[#E8CA8B] text-white py-1 lg:py-1 px-3 lg:px-4 rounded-md transition duration-200 ease-in-out mr-3 lg:mr-4 inline-flex items-center justify-center">
                 Estadísticas
-            </button>
+            </a>
         </div>
         
         <!-- Notificaciones con dropdown -->
@@ -84,7 +84,7 @@
         <!-- Avatar y nombre del usuario con dropdown responsive -->
         <div class="relative flex items-center" x-data="{ openProfile: false }">
             <!-- Área clickeable SOLO para ir al perfil -->
-            <a href="/mi-perfil" class="flex items-center space-x-0 lg:space-x-1">
+            <a href="{{ route('usuario.miperfil') }}" class="flex items-center space-x-0 lg:space-x-1">
                 <!-- Avatar circular más grande -->
                 <div class="w-9 h-9 lg:w-11 lg:h-11 rounded-full overflow-hidden">
                     <ion-icon name="person-circle" class="text-white text-4xl lg:text-[44px]"></ion-icon>
@@ -120,12 +120,12 @@
                 </div>
 
                 <!-- Opciones del menú -->
-                <a href="/mi-perfil" class="flex items-center px-3 lg:px-4 py-2 lg:py-3 text-xs lg:text-sm text-gray-700 hover:bg-blue-50 transition-colors group">
+                <a href="{{ route('usuario.miperfil') }}" class="flex items-center px-3 lg:px-4 py-2 lg:py-3 text-xs lg:text-sm text-gray-700 hover:bg-blue-50 transition-colors group">
                     <ion-icon name="person" class="text-gray-400 group-hover:text-blue-600 mr-2 lg:mr-3 text-sm lg:text-base"></ion-icon>
                     <span class="font-medium">Mi Perfil</span>
                 </a>
 
-                <a href="/gestion-usuarios" class="flex items-center px-3 lg:px-4 py-2 lg:py-3 text-xs lg:text-sm text-gray-700 hover:bg-blue-50 transition-colors group">
+                <a href="{{ route('user.user-gestion') }}" class="flex items-center px-3 lg:px-4 py-2 lg:py-3 text-xs lg:text-sm text-gray-700 hover:bg-blue-50 transition-colors group">
                     <ion-icon name="people" class="text-gray-400 group-hover:text-blue-600 mr-2 lg:mr-3 text-sm lg:text-base"></ion-icon>
                     <span class="font-medium">Gestión de Usuarios</span>
                 </a>

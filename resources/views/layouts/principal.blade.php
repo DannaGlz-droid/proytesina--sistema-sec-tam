@@ -21,5 +21,7 @@
 </head>
 <body>
     @yield('content')
+    {{-- Scripts pushed from child views --}}
+    @stack('scripts')
 </body>
 </html>
