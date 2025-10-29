@@ -69,7 +69,8 @@ Route::view('usuario/miperfil', 'usuarios.miperfil')->name('usuario.miperfil');
 //Route::view('estadisticas/registro', 'estadisticas.acciones.registro')->name('estadisticas.nuevo-registro');
 // The actualizar-registro view is now controller-backed (requires an id). Remove the standalone view route to avoid confusion.
 // Route::view('estadisticas/actualizar-registro', 'estadisticas.acciones.actualizar-registro')->name('estadisticas.actualizar-registro');
-Route::view('estadisticas/graficas', 'estadisticas.graficas')->name('estadisticas.graficas');
+Route::get('estadisticas/graficas', [App\Http\Controllers\StatisticsController::class, 'index'])->name('estadisticas.graficas');
+Route::get('estadisticas/charts-data', [App\Http\Controllers\StatisticsController::class, 'chartsData'])->name('estadisticas.charts-data');
 
 // Reportes (4)
 Route::view('reportes/centro-de-control', 'reportes.centro-de-control')->name('reportes.centro-de-control');

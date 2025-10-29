@@ -30,8 +30,9 @@
                 <div class="flex flex-col lg:flex-row gap-6">
                     
                     <!-- Columna Izquierda - Filtros (ANCHO FIJO) -->
-                    <div class="lg:w-80">
-                        <x-filtros.estadisticas />
+                    <div id="estadisticas-filtros" class="lg:w-80">
+                        {{-- Pasar las listas necesarias al componente de filtros para que use los datos reales de BD --}}
+                        <x-filtros.estadisticas :municipalities="$municipalities ?? collect()" :causes="$causes ?? collect()" :jurisdictions="$jurisdictions ?? collect()" :sexes="$sexes ?? collect()" />
                     </div>
 
                     <!-- Columna Derecha - Gráficos (ESPACIO RESTANTE) -->
@@ -115,6 +116,8 @@
 
     <!-- Incluir Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Data labels plugin para mostrar cifras directamente en los gráficos -->
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
 
     <!-- INCLUIR EL MODAL DE DESCARGAS -->
     @include('components.modal-descargas')
@@ -132,21 +135,23 @@
             const generoCtx = document.getElementById('generoChart').getContext('2d');
             const causaCtx = document.getElementById('causaChart').getContext('2d');
             
-            // Datos de ejemplo
+            // Inicialmente no hay datos (se cargarán vía fetch según filtros)
             const sampleData = {
-                municipios: ['Monterrey', 'Guadalupe', 'San Nicolás', 'Apodaca', 'Escobedo', 'Santa Catarina', 'Allende'],
-                municipioCounts: [125, 98, 76, 64, 52, 45, 38],
-                meses: ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'],
-                mesCounts: [85, 92, 78, 105, 120, 135, 142, 138, 125, 110, 95, 88],
-                edades: ['0-18', '19-35', '36-50', '51-65', '65+'],
-                edadCounts: [45, 120, 185, 210, 175],
-                generos: ['Hombre', 'Mujer'],
-                generoCounts: [420, 315],
-                causas: ['Accidente vial', 'Ahogamiento', 'Cáncer', 'COVID-19', 'Diabetes', 'Otras'],
-                causaCounts: [210, 85, 170, 145, 130, 200]
+                municipios: [], municipioCounts: [],
+                meses: [], mesCounts: [],
+                edades: [], edadCounts: [],
+                generos: [], generoCounts: [],
+                causas: [], causaCounts: []
             };
             
-            // Crear gráficos
+            // Registrar el plugin de datalabels (muestra los números dentro/debajo de los elementos)
+            try {
+                if (typeof ChartDataLabels !== 'undefined') Chart.register(ChartDataLabels);
+            } catch (e) {
+                console.warn('chartjs-plugin-datalabels no disponible:', e);
+            }
+
+            // Crear gráficos (inicialmente vacíos)
             charts.municipioChart = new Chart(municipioCtx, {
                 type: 'bar',
                 data: {
@@ -179,6 +184,13 @@
                     responsive: true,
                     maintainAspectRatio: false,
                     plugins: {
+                        datalabels: {
+                            color: '#222',
+                            anchor: 'end',
+                            align: 'end',
+                            formatter: function(value) { return value; },
+                            font: { weight: '600', size: 11 }
+                        },
                         legend: {
                             position: 'top',
                         }
@@ -212,6 +224,9 @@
                     responsive: true,
                     maintainAspectRatio: false,
                     plugins: {
+                        datalabels: {
+                            display: false // normalmente no mostramos etiquetas en líneas para no saturar
+                        },
                         legend: {
                             position: 'top',
                         }
@@ -240,6 +255,13 @@
                     responsive: true,
                     maintainAspectRatio: false,
                     plugins: {
+                        datalabels: {
+                            color: '#222',
+                            anchor: 'end',
+                            align: 'end',
+                            formatter: function(value) { return value; },
+                            font: { weight: '600', size: 11 }
+                        },
                         legend: {
                             position: 'top',
                         }
@@ -275,6 +297,17 @@
                     plugins: {
                         legend: {
                             position: 'right',
+                        },
+                        datalabels: {
+                            color: '#fff',
+                            formatter: function(value, ctx) {
+                                // Mostrar valor y porcentaje
+                                const data = ctx.chart.data.datasets[0].data;
+                                const sum = data.reduce((a, b) => a + b, 0) || 0;
+                                const pct = sum ? Math.round((value / sum) * 100) : 0;
+                                return value + ' (' + pct + '%)';
+                            },
+                            font: { weight: '700', size: 11 }
                         }
                     }
                 }
@@ -311,6 +344,16 @@
                     plugins: {
                         legend: {
                             position: 'right',
+                        },
+                        datalabels: {
+                            color: '#fff',
+                            formatter: function(value, ctx) {
+                                const data = ctx.chart.data.datasets[0].data;
+                                const sum = data.reduce((a, b) => a + b, 0) || 0;
+                                const pct = sum ? Math.round((value / sum) * 100) : 0;
+                                return value + ' (' + pct + '%)';
+                            },
+                            font: { weight: '700', size: 11 }
                         }
                     }
                 }
@@ -353,6 +396,163 @@
             document.getElementById('descargarTodo').addEventListener('click', function() {
                 window.mostrarModalDescargas('todo');
             });
+
+            // --- FETCH Y ACTUALIZACIÓN DINÁMICA SEGÚN FILTROS ---
+            const chartsEndpoint = '{{ route('estadisticas.charts-data') }}';
+
+            function mapSexLabel(s) {
+                if (!s) return s;
+                if (s === 'M' || s.toLowerCase() === 'm') return 'Hombre';
+                if (s === 'F' || s.toLowerCase() === 'f') return 'Mujer';
+                return s;
+            }
+
+            function normalizeDataset(labels, counts) {
+                if (!Array.isArray(labels) || labels.length === 0) {
+                    return { labels: ['Sin datos'], counts: [0] };
+                }
+                return { labels: labels, counts: counts };
+            }
+
+            function updateChartsFromResponse(resp) {
+                // Municipios
+                const m = normalizeDataset(resp.municipios.labels, resp.municipios.counts);
+                charts.municipioChart.data.labels = m.labels;
+                charts.municipioChart.data.datasets[0].data = m.counts;
+                charts.municipioChart.update();
+
+                // Tendencia
+                const t = normalizeDataset(resp.meses.labels, resp.meses.counts);
+                charts.tendenciaChart.data.labels = t.labels;
+                charts.tendenciaChart.data.datasets[0].data = t.counts;
+                charts.tendenciaChart.update();
+
+                // Edades
+                const e = normalizeDataset(resp.edades.labels, resp.edades.counts);
+                charts.edadChart.data.labels = e.labels;
+                charts.edadChart.data.datasets[0].data = e.counts;
+                charts.edadChart.update();
+
+                // Genero (mapear etiquetas)
+                let gLabels = (resp.generos.labels || []).map(mapSexLabel);
+                const g = normalizeDataset(gLabels, resp.generos.counts);
+                charts.generoChart.data.labels = g.labels;
+                charts.generoChart.data.datasets[0].data = g.counts;
+                charts.generoChart.update();
+
+                // Causas
+                const c = normalizeDataset(resp.causas.labels, resp.causas.counts);
+                charts.causaChart.data.labels = c.labels;
+                charts.causaChart.data.datasets[0].data = c.counts;
+                charts.causaChart.update();
+            }
+
+            // Build request params from the filters UI (maps ids to the endpoint query params)
+            function buildParamsFromFilterControls() {
+                const params = {};
+
+                const dateRange = document.getElementById('dateRange')?.value;
+                const year = document.getElementById('year')?.value;
+                const month = document.getElementById('month')?.value;
+                const selectedMonths = Array.from(document.querySelectorAll('.month-checkbox:checked')).map(i => i.value);
+                const quarter = document.getElementById('quarter')?.value;
+                const startDate = document.getElementById('startDate')?.value;
+                const endDate = document.getElementById('endDate')?.value;
+
+                // compute start_date/end_date according to the selected mode
+                if (dateRange === 'custom' && startDate && endDate) {
+                    params.start_date = startDate;
+                    params.end_date = endDate;
+                } else if (dateRange === 'month' && year && month) {
+                    const d1 = new Date(Number(year), Number(month) - 1, 1);
+                    const d2 = new Date(Number(year), Number(month), 0);
+                    params.start_date = d1.toISOString().slice(0,10);
+                    params.end_date = d2.toISOString().slice(0,10);
+                } else if (dateRange === 'year' && year) {
+                    params.start_date = `${year}-01-01`;
+                    params.end_date = `${year}-12-31`;
+                } else if (dateRange === 'multiple-months' && year && selectedMonths.length) {
+                    const months = selectedMonths.map(m => Number(m));
+                    const min = Math.min(...months);
+                    const max = Math.max(...months);
+                    const d1 = new Date(Number(year), min - 1, 1);
+                    const d2 = new Date(Number(year), max, 0);
+                    params.start_date = d1.toISOString().slice(0,10);
+                    params.end_date = d2.toISOString().slice(0,10);
+                } else if (dateRange === 'quarter' && year && quarter) {
+                    const q = Number(quarter);
+                    const startMonth = (q - 1) * 3;
+                    const d1 = new Date(Number(year), startMonth, 1);
+                    const d2 = new Date(Number(year), startMonth + 3, 0);
+                    params.start_date = d1.toISOString().slice(0,10);
+                    params.end_date = d2.toISOString().slice(0,10);
+                }
+
+                // Municipality of death (use the select id municipioDefuncion)
+                const muniDef = document.getElementById('municipioDefuncion')?.value;
+                if (muniDef) {
+                    if (/^\d+$/.test(muniDef)) params.municipality_id = muniDef; // send id
+                    else params.municipioDefuncion = muniDef; // send name fallback
+                }
+
+                // Cause (id if present)
+                const causa = document.getElementById('causa')?.value;
+                if (causa) {
+                    if (/^\d+$/.test(causa)) params.cause_id = causa;
+                    else params.causa = causa;
+                }
+
+                // Sex mapping: 'hombre'->M, 'mujer'->F
+                const sexo = document.getElementById('sexo')?.value;
+                if (sexo) {
+                    const s = sexo.toLowerCase();
+                    if (s === 'hombre') params.sex = 'M';
+                    else if (s === 'mujer') params.sex = 'F';
+                    else params.sex = sexo;
+                }
+
+                // limit for top-N
+                const limit = document.getElementById('chartLimit')?.value;
+                if (limit && limit !== 'all') params.limit = limit;
+
+                return params;
+            }
+
+            let fetchTimeout = null;
+            function loadChartsDebounced() {
+                if (fetchTimeout) clearTimeout(fetchTimeout);
+                fetchTimeout = setTimeout(loadCharts, 250);
+            }
+
+            function loadCharts() {
+                const params = buildParamsFromFilterControls();
+                const qs = new URLSearchParams(params).toString();
+                const url = chartsEndpoint + (qs ? ('?' + qs) : '');
+                fetch(url, { credentials: 'same-origin' })
+                    .then(r => {
+                        if (!r.ok) throw new Error('HTTP ' + r.status);
+                        return r.json();
+                    })
+                    .then(json => {
+                        updateChartsFromResponse(json);
+                    })
+                    .catch(err => {
+                        console.error('Error cargando datos de gráficos:', err);
+                    });
+            }
+
+            // Exponer función para ser invocada desde el panel de filtros
+            window.loadCharts = loadCharts;
+
+            // Escuchar cambios en los filtros
+            const filtrosContainer = document.getElementById('estadisticas-filtros');
+            if (filtrosContainer) {
+                filtrosContainer.addEventListener('change', loadChartsDebounced);
+                filtrosContainer.addEventListener('input', loadChartsDebounced);
+            }
+
+            // Cargar inicialmente (sin filtros)
+            loadCharts();
 
             // Lógica para selectores de fecha condicionales
             const dateRangeSelect = document.querySelector('select');

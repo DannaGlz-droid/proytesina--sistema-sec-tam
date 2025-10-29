@@ -138,11 +138,17 @@
             <label class="block text-xs text-gray-600 font-lora mb-1">Jurisdicción:</label>
             <select id="jurisdiccion" class="w-full border border-[#404041] rounded-lg px-3 py-1.5 text-xs">
                 <option value="">Todas</option>
-                <option value="norte">Jurisdicción Norte</option>
-                <option value="sur">Jurisdicción Sur</option>
-                <option value="centro">Jurisdicción Centro</option>
-                <option value="este">Jurisdicción Este</option>
-                <option value="oeste">Jurisdicción Oeste</option>
+                @isset($jurisdictions)
+                    @foreach($jurisdictions as $j)
+                        <option value="{{ $j->id }}">{{ $j->name }}</option>
+                    @endforeach
+                @else
+                    <option value="norte">Jurisdicción Norte</option>
+                    <option value="sur">Jurisdicción Sur</option>
+                    <option value="centro">Jurisdicción Centro</option>
+                    <option value="este">Jurisdicción Este</option>
+                    <option value="oeste">Jurisdicción Oeste</option>
+                @endisset
             </select>
         </div>
 
@@ -150,12 +156,18 @@
             <label class="block text-xs text-gray-600 font-lora mb-1">Municipio de residencia:</label>
             <select id="municipio" class="w-full border border-[#404041] rounded-lg px-3 py-1.5 text-xs">
                 <option value="">Todos</option>
-                <option value="allende">Allende</option>
-                <option value="monterrey">Monterrey</option>
-                <option value="guadalupe">Guadalupe</option>
-                <option value="apodaca">Apodaca</option>
-                <option value="san_nicolas">San Nicolás</option>
-                <option value="santa_catarina">Santa Catarina</option>
+                @isset($municipalities)
+                    @foreach($municipalities as $m)
+                        <option value="{{ $m->id }}">{{ $m->name }}</option>
+                    @endforeach
+                @else
+                    <option value="allende">Allende</option>
+                    <option value="monterrey">Monterrey</option>
+                    <option value="guadalupe">Guadalupe</option>
+                    <option value="apodaca">Apodaca</option>
+                    <option value="san_nicolas">San Nicolás</option>
+                    <option value="santa_catarina">Santa Catarina</option>
+                @endisset
             </select>
         </div>
 
@@ -163,11 +175,17 @@
             <label class="block text-xs text-gray-600 font-lora mb-1">Municipio de defunción:</label>
             <select id="municipioDefuncion" class="w-full border border-[#404041] rounded-lg px-3 py-1.5 text-xs">
                 <option value="">Todos</option>
-                <option value="allende">Allende</option>
-                <option value="monterrey">Monterrey</option>
-                <option value="guadalupe">Guadalupe</option>
-                <option value="apodaca">Apodaca</option>
-                <option value="san_nicolas">San Nicolás</option>
+                @isset($municipalities)
+                    @foreach($municipalities as $m)
+                        <option value="{{ $m->id }}">{{ $m->name }}</option>
+                    @endforeach
+                @else
+                    <option value="allende">Allende</option>
+                    <option value="monterrey">Monterrey</option>
+                    <option value="guadalupe">Guadalupe</option>
+                    <option value="apodaca">Apodaca</option>
+                    <option value="san_nicolas">San Nicolás</option>
+                @endisset
             </select>
         </div>
     </x-filtros.seccion>
@@ -178,8 +196,14 @@
             <label class="block text-xs text-gray-600 font-lora mb-1">Sexo:</label>
             <select id="sexo" class="w-full border border-[#404041] rounded-lg px-3 py-1.5 text-xs">
                 <option value="">Todos</option>
-                <option value="hombre">Hombre</option>
-                <option value="mujer">Mujer</option>
+                @isset($sexes)
+                    @foreach($sexes as $s)
+                        <option value="{{ $s->value }}">{{ $s->label }}</option>
+                    @endforeach
+                @else
+                    <option value="M">Hombre</option>
+                    <option value="F">Mujer</option>
+                @endisset
             </select>
         </div>
 
@@ -197,14 +221,20 @@
             <label class="block text-xs text-gray-600 font-lora mb-1">Causa de defunción:</label>
             <select id="causa" class="w-full border border-[#404041] rounded-lg px-3 py-1.5 text-xs">
                 <option value="">Todas</option>
-                <option value="cardiopatia">Enfermedades del corazón</option>
-                <option value="cancer">Cáncer</option>
-                <option value="covid">COVID-19</option>
-                <option value="accidente">Accidentes</option>
-                <option value="diabetes">Diabetes</option>
-                <option value="respiratorias">Enfermedades respiratorias</option>
-                <option value="ahogamiento">Ahogamiento</option>
-                <option value="violencia">Violencia</option>
+                @isset($causes)
+                    @foreach($causes as $c)
+                        <option value="{{ $c->id }}">{{ $c->name }}</option>
+                    @endforeach
+                @else
+                    <option value="cardiopatia">Enfermedades del corazón</option>
+                    <option value="cancer">Cáncer</option>
+                    <option value="covid">COVID-19</option>
+                    <option value="accidente">Accidentes</option>
+                    <option value="diabetes">Diabetes</option>
+                    <option value="respiratorias">Enfermedades respiratorias</option>
+                    <option value="ahogamiento">Ahogamiento</option>
+                    <option value="violencia">Violencia</option>
+                @endisset
             </select>
         </div>
     </x-filtros.seccion>
@@ -413,24 +443,28 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Aplicar filtros (colección simple)
     document.getElementById('aplicarFiltros')?.addEventListener('click', function() {
-        const filtros = {
-            dateRange: dateRange?.value,
-            year: document.getElementById('year')?.value,
-            month: document.getElementById('month')?.value,
-            selectedMonths: Array.from(document.querySelectorAll('.month-checkbox:checked')).map(i => i.value),
-            quarter: document.getElementById('quarter')?.value,
-            startDate: document.getElementById('startDate')?.value,
-            endDate: document.getElementById('endDate')?.value,
-            jurisdiccion: document.getElementById('jurisdiccion')?.value,
-            municipio: document.getElementById('municipio')?.value,
-            municipioDefuncion: document.getElementById('municipioDefuncion')?.value,
-            sexo: document.getElementById('sexo')?.value,
-            edad: document.getElementById('edad')?.value,
-            causa: document.getElementById('causa')?.value,
-            chartLimit: document.getElementById('chartLimit')?.value
-        };
-        console.log('Aplicando filtros a gráficos:', filtros);
-        // aquí va la lógica real de filtrado para gráficos
+        // Disparar carga de gráficos usando la función global expuesta desde la vista de gráficos
+        if (typeof window.loadCharts === 'function') {
+            window.loadCharts();
+        } else {
+            const filtros = {
+                dateRange: dateRange?.value,
+                year: document.getElementById('year')?.value,
+                month: document.getElementById('month')?.value,
+                selectedMonths: Array.from(document.querySelectorAll('.month-checkbox:checked')).map(i => i.value),
+                quarter: document.getElementById('quarter')?.value,
+                startDate: document.getElementById('startDate')?.value,
+                endDate: document.getElementById('endDate')?.value,
+                jurisdiccion: document.getElementById('jurisdiccion')?.value,
+                municipio: document.getElementById('municipio')?.value,
+                municipioDefuncion: document.getElementById('municipioDefuncion')?.value,
+                sexo: document.getElementById('sexo')?.value,
+                edad: document.getElementById('edad')?.value,
+                causa: document.getElementById('causa')?.value,
+                chartLimit: document.getElementById('chartLimit')?.value
+            };
+            console.log('Aplicando filtros a gráficos (fallback):', filtros);
+        }
     });
 
     // Recalcula alturas de secciones abiertas al hacer resize (previene solapamiento)
