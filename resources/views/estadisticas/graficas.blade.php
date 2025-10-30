@@ -493,24 +493,91 @@
                     const chartType = this.getAttribute('data-chart-type');
                     const chartId = this.closest('.chart-card').querySelector('canvas').id;
                     const chart = charts[chartId];
-                    
+
                     if (chart) {
                         // Remover clase active de todos los botones del mismo grupo
                         this.parentElement.querySelectorAll('.chart-type-btn').forEach(b => {
                             b.classList.remove('active', 'bg-[#611132]', 'text-white');
                             b.classList.add('bg-transparent', 'text-gray-600');
                         });
-                        
+
                         // Agregar clase active al botón clickeado
                         this.classList.add('active', 'bg-[#611132]', 'text-white');
                         this.classList.remove('bg-transparent', 'text-gray-600');
-                        
-                        // Cambiar tipo de gráfico
-                        chart.config.type = chartType;
-                        chart.update();
+
+                        // Recreate chart with appropriate options for the new type to avoid leftover gridlines
+                        recreateChart(chartId, chartType);
                     }
                 });
             });
+
+            // Helper: return sensible default options per chart type to avoid leaving scale/grid artifacts
+            function getDefaultOptionsForType(type) {
+                const base = {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'top' },
+                        datalabels: { display: true, color: '#fff', font: { weight: '600' } }
+                    }
+                };
+
+                if (type === 'pie' || type === 'doughnut') {
+                    base.plugins.legend.position = 'right';
+                    base.plugins.datalabels.formatter = function(value, ctx) {
+                        const data = ctx.chart.data.datasets[0].data;
+                        const sum = data.reduce((a,b)=>a+(Number(b)||0),0) || 0;
+                        const pct = sum ? Math.round((value / sum) * 100) : 0;
+                        return value.toLocaleString() + ' (' + pct + '%)';
+                    };
+                    // pie/doughnut do not use scales
+                } else {
+                    // bar/line/scatter: include scales and integer ticks
+                    base.plugins.datalabels.formatter = function(value) { return Number(value).toLocaleString(); };
+                    base.scales = {
+                        x: { ticks: { autoSkip: true }, grid: { display: false } },
+                        y: { beginAtZero: true, ticks: { callback: v => Math.round(v).toLocaleString() } }
+                    };
+                }
+
+                return base;
+            }
+
+            // Recreate a chart instance with the chosen type; this avoids leftover gridlines when switching
+            function recreateChart(chartId, newType) {
+                try {
+                    const old = charts[chartId];
+                    if (!old) return;
+                    const canvas = document.getElementById(chartId);
+                    const ctx = canvas.getContext('2d');
+
+                    // Deep clone data (labels + datasets) but not functions
+                    const data = JSON.parse(JSON.stringify(old.data || { labels: [], datasets: [] }));
+
+                    // Destroy old chart instance
+                    try { old.destroy(); } catch (e) { /* ignore */ }
+
+                    // Build default options for the new type
+                    const options = getDefaultOptionsForType(newType);
+
+                    // Register datalabels plugin if available
+                    try { if (typeof ChartDataLabels !== 'undefined') Chart.register(ChartDataLabels); } catch (e) {}
+
+                    // Create new chart
+                    const cfg = { type: newType, data: data, options: options };
+                    charts[chartId] = new Chart(ctx, cfg);
+
+                    // Apply nice scaling for cartesian charts
+                    if (newType === 'bar' || newType === 'line') {
+                        try {
+                            const max = Math.max(...(data.datasets[0].data.map(n => Number(n) || 0)));
+                            applyNiceScaling(charts[chartId], max);
+                        } catch (e) {}
+                    }
+                } catch (e) {
+                    console.error('Error recreating chart', e);
+                }
+            }
 
             // Descargar gráficas individuales - AHORA ABRE EL MODAL
             document.querySelectorAll('.chart-download-btn').forEach(btn => {
