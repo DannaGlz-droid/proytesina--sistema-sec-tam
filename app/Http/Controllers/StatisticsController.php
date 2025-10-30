@@ -51,19 +51,33 @@ class StatisticsController extends Controller
                 ->orderByDesc('total')
                 ->get();
 
-            // 5) Edades -> intentar usar birth_date si existe, si no usar columna age si existe
+            // 5) Edades -> usar enfoque epidemiológico (bins detallados). Preferir birth_date, sino age
             $edades = collect();
+            // bins: 0-4,5-14,15-24,25-34,35-44,45-54,55-64,65-74,75+
+            $ageOrder = ['0-4','5-14','15-24','25-34','35-44','45-54','55-64','65-74','75+','Desconocido'];
             if (Schema::hasColumn('deaths', 'birth_date')) {
                 $edades = DB::table('deaths')
                     ->select(DB::raw("CASE
-                        WHEN TIMESTAMPDIFF(YEAR, birth_date, CURDATE()) <= 18 THEN '0-18'
-                        WHEN TIMESTAMPDIFF(YEAR, birth_date, CURDATE()) BETWEEN 19 AND 35 THEN '19-35'
-                        WHEN TIMESTAMPDIFF(YEAR, birth_date, CURDATE()) BETWEEN 36 AND 50 THEN '36-50'
-                        WHEN TIMESTAMPDIFF(YEAR, birth_date, CURDATE()) BETWEEN 51 AND 65 THEN '51-65'
-                        ELSE '65+' END as range"),
-                        DB::raw('COUNT(*) as total'))
+                        WHEN birth_date IS NULL THEN 'Desconocido'
+                        WHEN TIMESTAMPDIFF(YEAR, birth_date, CURDATE()) BETWEEN 0 AND 4 THEN '0-4'
+                        WHEN TIMESTAMPDIFF(YEAR, birth_date, CURDATE()) BETWEEN 5 AND 14 THEN '5-14'
+                        WHEN TIMESTAMPDIFF(YEAR, birth_date, CURDATE()) BETWEEN 15 AND 24 THEN '15-24'
+                        WHEN TIMESTAMPDIFF(YEAR, birth_date, CURDATE()) BETWEEN 25 AND 34 THEN '25-34'
+                        WHEN TIMESTAMPDIFF(YEAR, birth_date, CURDATE()) BETWEEN 35 AND 44 THEN '35-44'
+                        WHEN TIMESTAMPDIFF(YEAR, birth_date, CURDATE()) BETWEEN 45 AND 54 THEN '45-54'
+                        WHEN TIMESTAMPDIFF(YEAR, birth_date, CURDATE()) BETWEEN 55 AND 64 THEN '55-64'
+                        WHEN TIMESTAMPDIFF(YEAR, birth_date, CURDATE()) BETWEEN 65 AND 74 THEN '65-74'
+                        ELSE '75+' END as range"), DB::raw('COUNT(*) as total'))
                     ->groupBy('range')
                     ->get();
+
+                // Reorder and ensure all bins present
+                $ordered = collect();
+                foreach ($ageOrder as $lbl) {
+                    $found = $edades->firstWhere('range', $lbl);
+                    $ordered->push((object)['range' => $lbl, 'total' => $found ? (int)$found->total : 0]);
+                }
+                $edades = $ordered;
             } elseif (Schema::hasColumn('deaths', 'age')) {
                 // Agrupar en PHP si sólo hay columna age
                 $byAge = DB::table('deaths')
@@ -73,25 +87,23 @@ class StatisticsController extends Controller
                     ->pluck('age')
                     ->toArray();
 
-                $ranges = [
-                    '0-18' => 0,
-                    '19-35' => 0,
-                    '36-50' => 0,
-                    '51-65' => 0,
-                    '65+' => 0,
-                ];
+                $ranges = ['0-4'=>0,'5-14'=>0,'15-24'=>0,'25-34'=>0,'35-44'=>0,'45-54'=>0,'55-64'=>0,'65-74'=>0,'75+'=>0,'Desconocido'=>0];
 
                 foreach ($byAge as $a) {
-                    if ($a <= 18) $ranges['0-18']++;
-                    elseif ($a <= 35) $ranges['19-35']++;
-                    elseif ($a <= 50) $ranges['36-50']++;
-                    elseif ($a <= 65) $ranges['51-65']++;
-                    else $ranges['65+']++;
+                    if ($a <= 4) $ranges['0-4']++;
+                    elseif ($a <= 14) $ranges['5-14']++;
+                    elseif ($a <= 24) $ranges['15-24']++;
+                    elseif ($a <= 34) $ranges['25-34']++;
+                    elseif ($a <= 44) $ranges['35-44']++;
+                    elseif ($a <= 54) $ranges['45-54']++;
+                    elseif ($a <= 64) $ranges['55-64']++;
+                    elseif ($a <= 74) $ranges['65-74']++;
+                    else $ranges['75+']++;
                 }
 
                 $edades = collect();
-                foreach ($ranges as $r => $t) {
-                    $edades->push((object)['range' => $r, 'total' => $t]);
+                foreach ($ageOrder as $r) {
+                    $edades->push((object)['range' => $r, 'total' => $ranges[$r] ?? 0]);
                 }
             }
 
@@ -188,170 +200,271 @@ class StatisticsController extends Controller
      */
     public function chartsData(Request $request)
     {
-    // Accept flexible filter keys: start_date,end_date, municipio (name), municipality_id (id), causa (name), cause_id (id), sex, limit
-    $filters = $request->all();
+        try {
+            // Accept flexible filter keys: start_date,end_date, municipio (name), municipality_id (id), causa (name), cause_id (id), sex, limit
+            $filters = $request->all();
 
-        // resolver columna de fecha
-        $dateColumn = Schema::hasColumn('deaths', 'death_date') ? 'death_date' : 'created_at';
+            // resolver columna de fecha
+            $dateColumn = Schema::hasColumn('deaths', 'death_date') ? 'death_date' : 'created_at';
 
-        // helper para aplicar filtros a un query builder
-        $applyFilters = function ($query) use ($filters, $dateColumn) {
-            // Fecha
-            if (!empty($filters['start_date']) && !empty($filters['end_date'])) {
-                $query->whereBetween($dateColumn, [$filters['start_date'], $filters['end_date']]);
+            // columna usada para agrupar por municipio principal (por defecto defunción)
+            $munCol = 'death_municipality_id';
+            if (!empty($filters['municipio_kind']) && $filters['municipio_kind'] === 'residence') {
+                $munCol = 'residence_municipality_id';
             }
 
-            // Municipio: accept numeric id (municipality_id) or name (municipio)
-            if (!empty($filters['municipality_id']) && is_numeric($filters['municipality_id'])) {
-                $query->where('death_municipality_id', (int)$filters['municipality_id']);
-            } elseif (!empty($filters['municipio'])) {
-                // filter by municipality name: find matching ids
-                $names = (array) $filters['municipio'];
-                $query->whereIn('death_municipality_id', DB::table('municipalities')->select('id')->whereIn('name', $names));
-            } elseif (!empty($filters['municipioDefuncion'])) {
-                $names = (array) $filters['municipioDefuncion'];
-                $query->whereIn('death_municipality_id', DB::table('municipalities')->select('id')->whereIn('name', $names));
-            }
+            // helper para aplicar filtros a un query builder
+            $applyFilters = function ($query) use ($filters, $dateColumn, $munCol) {
+                // Fecha
+                if (!empty($filters['start_date']) && !empty($filters['end_date'])) {
+                    $query->whereBetween($dateColumn, [$filters['start_date'], $filters['end_date']]);
+                }
 
-            // Causa: numeric id or name
-            if (!empty($filters['cause_id']) && is_numeric($filters['cause_id'])) {
-                $query->where('death_cause_id', (int)$filters['cause_id']);
-            } elseif (!empty($filters['causa'])) {
-                $names = (array) $filters['causa'];
-                $query->whereIn('death_cause_id', DB::table('death_causes')->select('id')->whereIn('name', $names));
-            }
+                // Municipio: accept numeric id (municipality_id) or name (municipio)
+                if (!empty($filters['municipality_id']) && is_numeric($filters['municipality_id'])) {
+                    $query->where($munCol, (int)$filters['municipality_id']);
+                } elseif (!empty($filters['municipio'])) {
+                    // filter by municipality name: find matching ids
+                    $names = (array) $filters['municipio'];
+                    $query->whereIn($munCol, DB::table('municipalities')->select('id')->whereIn('name', $names));
+                } elseif (!empty($filters['municipioDefuncion'])) {
+                    $names = (array) $filters['municipioDefuncion'];
+                    $query->whereIn($munCol, DB::table('municipalities')->select('id')->whereIn('name', $names));
+                }
 
-            // Sexo: accept 'M'/'F' or Spanish words
-            if (!empty($filters['sex'])) {
-                $s = $filters['sex'];
-                if (!is_string($s)) $s = (string) $s;
-                $sLower = mb_strtolower($s);
-                if ($sLower === 'hombre' || $sLower === 'm') $s = 'M';
-                elseif ($sLower === 'mujer' || $sLower === 'f') $s = 'F';
-                $query->where('sex', $s);
-            } elseif (!empty($filters['sexo'])) {
-                $s = $filters['sexo'];
-                $sLower = mb_strtolower($s);
-                if ($sLower === 'hombre' || $sLower === 'm') $s = 'M';
-                elseif ($sLower === 'mujer' || $sLower === 'f') $s = 'F';
-                $query->where('sex', $s);
-            }
+                // Causa: numeric id or name
+                if (!empty($filters['cause_id']) && is_numeric($filters['cause_id'])) {
+                    $query->where('death_cause_id', (int)$filters['cause_id']);
+                } elseif (!empty($filters['causa'])) {
+                    $names = (array) $filters['causa'];
+                    $query->whereIn('death_cause_id', DB::table('death_causes')->select('id')->whereIn('name', $names));
+                }
 
-            // Edad: soporta formatos "25" o "20-30" o "5,10,15" (aplica sobre 'age' si existe, o calcula desde birth_date)
-            if (!empty($filters['edad'])) {
-                $edadRaw = trim((string) $filters['edad']);
-                // solo números, rango o lista separados por coma
-                if (Schema::hasColumn('deaths', 'age')) {
-                    if (preg_match('/^\d+$/', $edadRaw)) {
-                        $query->where('age', (int)$edadRaw);
-                    } elseif (preg_match('/^(\d+)\s*-\s*(\d+)$/', $edadRaw, $m)) {
-                        $low = (int)$m[1]; $high = (int)$m[2];
-                        if ($low > $high) { $tmp = $low; $low = $high; $high = $tmp; }
-                        $query->whereBetween('age', [$low, $high]);
-                    } else {
-                        $parts = array_filter(array_map('trim', explode(',', $edadRaw)), fn($v) => $v !== '');
-                        $nums = array_map('intval', $parts);
-                        if (!empty($nums)) $query->whereIn('age', $nums);
-                    }
-                } elseif (Schema::hasColumn('deaths', 'birth_date')) {
-                    // calcular edad en años en SQL
-                    if (preg_match('/^\d+$/', $edadRaw)) {
-                        $query->whereRaw('TIMESTAMPDIFF(YEAR, birth_date, CURDATE()) = ?', [(int)$edadRaw]);
-                    } elseif (preg_match('/^(\d+)\s*-\s*(\d+)$/', $edadRaw, $m)) {
-                        $low = (int)$m[1]; $high = (int)$m[2];
-                        if ($low > $high) { $tmp = $low; $low = $high; $high = $tmp; }
-                        $query->whereRaw('TIMESTAMPDIFF(YEAR, birth_date, CURDATE()) BETWEEN ? AND ?', [$low, $high]);
-                    } else {
-                        $parts = array_filter(array_map('trim', explode(',', $edadRaw)), fn($v) => $v !== '');
-                        $nums = array_map('intval', $parts);
-                        if (!empty($nums)) {
-                            $placeholders = implode(',', array_fill(0, count($nums), '?'));
-                            $query->whereRaw("TIMESTAMPDIFF(YEAR, birth_date, CURDATE()) IN ($placeholders)", $nums);
+                // Sexo: accept 'M'/'F' or Spanish words
+                if (!empty($filters['sex'])) {
+                    $s = $filters['sex'];
+                    if (!is_string($s)) $s = (string) $s;
+                    $sLower = mb_strtolower($s);
+                    if ($sLower === 'hombre' || $sLower === 'm') $s = 'M';
+                    elseif ($sLower === 'mujer' || $sLower === 'f') $s = 'F';
+                    $query->where('sex', $s);
+                } elseif (!empty($filters['sexo'])) {
+                    $s = $filters['sexo'];
+                    $sLower = mb_strtolower($s);
+                    if ($sLower === 'hombre' || $sLower === 'm') $s = 'M';
+                    elseif ($sLower === 'mujer' || $sLower === 'f') $s = 'F';
+                    $query->where('sex', $s);
+                }
+
+                // Edad: soporta formatos "25" o "20-30" o "5,10,15" (aplica sobre 'age' si existe, o calcula desde birth_date)
+                if (!empty($filters['edad'])) {
+                    $edadRaw = trim((string) $filters['edad']);
+                    // solo números, rango o lista separados por coma
+                    if (Schema::hasColumn('deaths', 'age')) {
+                        if (preg_match('/^\d+$/', $edadRaw)) {
+                            $query->where('age', (int)$edadRaw);
+                        } elseif (preg_match('/^(\d+)\s*-\s*(\d+)$/', $edadRaw, $m)) {
+                            $low = (int)$m[1]; $high = (int)$m[2];
+                            if ($low > $high) { $tmp = $low; $low = $high; $high = $tmp; }
+                            $query->whereBetween('age', [$low, $high]);
+                        } else {
+                            $parts = array_filter(array_map('trim', explode(',', $edadRaw)), fn($v) => $v !== '');
+                            $nums = array_map('intval', $parts);
+                            if (!empty($nums)) $query->whereIn('age', $nums);
+                        }
+                    } elseif (Schema::hasColumn('deaths', 'birth_date')) {
+                        // calcular edad en años en SQL
+                        if (preg_match('/^\d+$/', $edadRaw)) {
+                            $query->whereRaw('TIMESTAMPDIFF(YEAR, birth_date, CURDATE()) = ?', [(int)$edadRaw]);
+                        } elseif (preg_match('/^(\d+)\s*-\s*(\d+)$/', $edadRaw, $m)) {
+                            $low = (int)$m[1]; $high = (int)$m[2];
+                            if ($low > $high) { $tmp = $low; $low = $high; $high = $tmp; }
+                            $query->whereRaw('TIMESTAMPDIFF(YEAR, birth_date, CURDATE()) BETWEEN ? AND ?', [$low, $high]);
+                        } else {
+                            $parts = array_filter(array_map('trim', explode(',', $edadRaw)), fn($v) => $v !== '');
+                            $nums = array_map('intval', $parts);
+                            if (!empty($nums)) {
+                                $placeholders = implode(',', array_fill(0, count($nums), '?'));
+                                $query->whereRaw("TIMESTAMPDIFF(YEAR, birth_date, CURDATE()) IN ($placeholders)", $nums);
+                            }
                         }
                     }
                 }
+            };
+
+            // Municipios
+            // Use the selected municipality column ($munCol) for the join/aggregation so the frontend
+            // toggle (municipio_kind) actually switches between residence/death municipalities.
+            $municipiosQ = DB::table('deaths')
+                ->leftJoin('municipalities', 'municipalities.id', '=', DB::raw("deaths.{$munCol}"))
+                ->select('municipalities.name as name', DB::raw('COUNT(deaths.id) as total'))
+                ->groupBy('municipalities.name')
+                ->orderByDesc('total');
+            $applyFilters($municipiosQ);
+            if (!empty($filters['limit']) && is_numeric($filters['limit'])) {
+                $municipiosQ->limit((int)$filters['limit']);
             }
-        };
+            $municipios = $municipiosQ->get();
 
-        // Municipios
-        $municipiosQ = DB::table('deaths')
-            ->leftJoin('municipalities', 'municipalities.id', '=', 'deaths.death_municipality_id')
-            ->select('municipalities.name as name', DB::raw('COUNT(deaths.id) as total'))
-            ->groupBy('municipalities.name')
-            ->orderByDesc('total');
-        $applyFilters($municipiosQ);
-        if (!empty($filters['limit']) && is_numeric($filters['limit'])) {
-            $municipiosQ->limit((int)$filters['limit']);
-        }
-        $municipios = $municipiosQ->get();
-
-        // Meses
-        $mesesQ = DB::table('deaths')
-            ->select(DB::raw("MONTH(deaths.{$dateColumn}) as month_number"),
-                     DB::raw("DATE_FORMAT(deaths.{$dateColumn}, '%b') as month_name"),
-                     DB::raw('COUNT(*) as total'))
-            ->groupBy(DB::raw("MONTH(deaths.{$dateColumn})"), DB::raw("DATE_FORMAT(deaths.{$dateColumn}, '%b')"))
-            ->orderBy(DB::raw("MONTH(deaths.{$dateColumn})"));
-        $applyFilters($mesesQ);
-        $meses = $mesesQ->get();
-
-        // Genero (sex)
-        $generosQ = DB::table('deaths')
-            ->select('sex', DB::raw('COUNT(*) as total'))
-            ->groupBy('sex');
-        $applyFilters($generosQ);
-        $generos = $generosQ->get();
-
-        // Causas
-        $causasQ = DB::table('deaths')
-            ->leftJoin('death_causes', 'death_causes.id', '=', 'deaths.death_cause_id')
-            ->select('death_causes.name as name', DB::raw('COUNT(deaths.id) as total'))
-            ->groupBy('death_causes.name')
-            ->orderByDesc('total');
-        $applyFilters($causasQ);
-        if (!empty($filters['limit']) && is_numeric($filters['limit'])) {
-            $causasQ->limit((int)$filters['limit']);
-        }
-        $causas = $causasQ->get();
-
-        // Edades (siempre calculadas sobre birth_date si existe, o sobre age si existe)
-        $edades = collect();
-        if (Schema::hasColumn('deaths', 'birth_date')) {
-            $edadesQ = DB::table('deaths')
-                ->select(DB::raw("CASE
-                    WHEN TIMESTAMPDIFF(YEAR, birth_date, CURDATE()) <= 18 THEN '0-18'
-                    WHEN TIMESTAMPDIFF(YEAR, birth_date, CURDATE()) BETWEEN 19 AND 35 THEN '19-35'
-                    WHEN TIMESTAMPDIFF(YEAR, birth_date, CURDATE()) BETWEEN 36 AND 50 THEN '36-50'
-                    WHEN TIMESTAMPDIFF(YEAR, birth_date, CURDATE()) BETWEEN 51 AND 65 THEN '51-65'
-                    ELSE '65+' END as range"), DB::raw('COUNT(*) as total'))
-                ->groupBy('range');
-            $applyFilters($edadesQ);
-            $edades = $edadesQ->get();
-        } elseif (Schema::hasColumn('deaths', 'age')) {
-            $byAgeQ = DB::table('deaths')->select('age')->whereNotNull('age');
-            $applyFilters($byAgeQ);
-            $byAge = $byAgeQ->get()->pluck('age')->toArray();
-
-            $ranges = ['0-18'=>0,'19-35'=>0,'36-50'=>0,'51-65'=>0,'65+'=>0];
-            foreach ($byAge as $a) {
-                if ($a <= 18) $ranges['0-18']++;
-                elseif ($a <= 35) $ranges['19-35']++;
-                elseif ($a <= 50) $ranges['36-50']++;
-                elseif ($a <= 65) $ranges['51-65']++;
-                else $ranges['65+']++;
+            // Jurisdicciones (por el campo jurisdiction_id en deaths, si existe la tabla)
+            $jurisdictions = collect();
+            if (Schema::hasTable('jurisdictions')) {
+                $jurQ = DB::table('deaths')
+                    ->leftJoin('jurisdictions', 'jurisdictions.id', '=', 'deaths.jurisdiction_id')
+                    ->select('jurisdictions.name as name', DB::raw('COUNT(deaths.id) as total'))
+                    ->groupBy('jurisdictions.name')
+                    ->orderByDesc('total');
+                $applyFilters($jurQ);
+                if (!empty($filters['limit']) && is_numeric($filters['limit'])) {
+                    $jurQ->limit((int)$filters['limit']);
+                }
+                $jurisdictions = $jurQ->get();
             }
-            foreach ($ranges as $r => $t) $edades->push((object)['range'=>$r,'total'=>$t]);
+
+            // Tendencia temporal: agrupar por día/mes/año según parámetro 'group_by'
+            $groupBy = !empty($filters['group_by']) ? $filters['group_by'] : 'month';
+
+            if ($groupBy === 'day') {
+                $mesesQ = DB::table('deaths')
+                    ->select(DB::raw("DATE(deaths.{$dateColumn}) as period"),
+                             DB::raw("MIN(DATE_FORMAT(deaths.{$dateColumn}, '%d %b %Y')) as period_label"),
+                             DB::raw('COUNT(*) as total'))
+                    ->groupBy(DB::raw("DATE(deaths.{$dateColumn})"))
+                    ->orderBy(DB::raw("DATE(deaths.{$dateColumn})"));
+            } elseif ($groupBy === 'year') {
+                $mesesQ = DB::table('deaths')
+                    ->select(DB::raw("DATE_FORMAT(deaths.{$dateColumn}, '%Y') as period"),
+                             DB::raw("MIN(DATE_FORMAT(deaths.{$dateColumn}, '%Y')) as period_label"),
+                             DB::raw('COUNT(*) as total'))
+                    ->groupBy(DB::raw("DATE_FORMAT(deaths.{$dateColumn}, '%Y')"))
+                    ->orderBy(DB::raw("DATE_FORMAT(deaths.{$dateColumn}, '%Y')"));
+            } else {
+                // default -> month
+                $mesesQ = DB::table('deaths')
+                    ->select(DB::raw("DATE_FORMAT(deaths.{$dateColumn}, '%Y-%m') as period"),
+                             DB::raw("MIN(DATE_FORMAT(deaths.{$dateColumn}, '%b %Y')) as period_label"),
+                             DB::raw('COUNT(*) as total'))
+                    ->groupBy(DB::raw("DATE_FORMAT(deaths.{$dateColumn}, '%Y-%m')"))
+                    ->orderBy(DB::raw("DATE_FORMAT(deaths.{$dateColumn}, '%Y-%m')"));
+            }
+            $applyFilters($mesesQ);
+            $meses = $mesesQ->get();
+
+            // Genero (sex)
+            $generosQ = DB::table('deaths')
+                ->select('sex', DB::raw('COUNT(*) as total'))
+                ->groupBy('sex');
+            $applyFilters($generosQ);
+            $generos = $generosQ->get();
+
+            // Causas
+            $causasQ = DB::table('deaths')
+                ->leftJoin('death_causes', 'death_causes.id', '=', 'deaths.death_cause_id')
+                ->select('death_causes.name as name', DB::raw('COUNT(deaths.id) as total'))
+                ->groupBy('death_causes.name')
+                ->orderByDesc('total');
+            $applyFilters($causasQ);
+            if (!empty($filters['limit']) && is_numeric($filters['limit'])) {
+                $causasQ->limit((int)$filters['limit']);
+            }
+            $causas = $causasQ->get();
+
+            // Edades (siempre calculadas sobre birth_date si existe, o sobre age si existe)
+            $edades = collect();
+            $ageOrder = ['0-4','5-14','15-24','25-34','35-44','45-54','55-64','65-74','75+','Desconocido'];
+            if (Schema::hasColumn('deaths', 'birth_date')) {
+                $edadesQ = DB::table('deaths')
+                    ->select(DB::raw("CASE
+                        WHEN birth_date IS NULL THEN 'Desconocido'
+                        WHEN TIMESTAMPDIFF(YEAR, birth_date, CURDATE()) BETWEEN 0 AND 4 THEN '0-4'
+                        WHEN TIMESTAMPDIFF(YEAR, birth_date, CURDATE()) BETWEEN 5 AND 14 THEN '5-14'
+                        WHEN TIMESTAMPDIFF(YEAR, birth_date, CURDATE()) BETWEEN 15 AND 24 THEN '15-24'
+                        WHEN TIMESTAMPDIFF(YEAR, birth_date, CURDATE()) BETWEEN 25 AND 34 THEN '25-34'
+                        WHEN TIMESTAMPDIFF(YEAR, birth_date, CURDATE()) BETWEEN 35 AND 44 THEN '35-44'
+                        WHEN TIMESTAMPDIFF(YEAR, birth_date, CURDATE()) BETWEEN 45 AND 54 THEN '45-54'
+                        WHEN TIMESTAMPDIFF(YEAR, birth_date, CURDATE()) BETWEEN 55 AND 64 THEN '55-64'
+                        WHEN TIMESTAMPDIFF(YEAR, birth_date, CURDATE()) BETWEEN 65 AND 74 THEN '65-74'
+                        ELSE '75+' END as range"), DB::raw('COUNT(*) as total'))
+                    ->groupBy('range');
+                $applyFilters($edadesQ);
+                $edadesRaw = $edadesQ->get();
+
+                // Reorder and fill missing bins
+                $ordered = collect();
+                foreach ($ageOrder as $lbl) {
+                    $found = $edadesRaw->firstWhere('range', $lbl);
+                    $ordered->push((object)['range' => $lbl, 'total' => $found ? (int)$found->total : 0]);
+                }
+                $edades = $ordered;
+            } elseif (Schema::hasColumn('deaths', 'age')) {
+                $byAgeQ = DB::table('deaths')->select('age')->whereNotNull('age');
+                $applyFilters($byAgeQ);
+                $byAge = $byAgeQ->get()->pluck('age')->toArray();
+
+                $ranges = ['0-4'=>0,'5-14'=>0,'15-24'=>0,'25-34'=>0,'35-44'=>0,'45-54'=>0,'55-64'=>0,'65-74'=>0,'75+'=>0,'Desconocido'=>0];
+                foreach ($byAge as $a) {
+                    if ($a <= 4) $ranges['0-4']++;
+                    elseif ($a <= 14) $ranges['5-14']++;
+                    elseif ($a <= 24) $ranges['15-24']++;
+                    elseif ($a <= 34) $ranges['25-34']++;
+                    elseif ($a <= 44) $ranges['35-44']++;
+                    elseif ($a <= 54) $ranges['45-54']++;
+                    elseif ($a <= 64) $ranges['55-64']++;
+                    elseif ($a <= 74) $ranges['65-74']++;
+                    else $ranges['75+']++;
+                }
+                foreach ($ageOrder as $r) $edades->push((object)['range'=>$r,'total'=>$ranges[$r] ?? 0]);
+            }
+
+            // Transformar a arrays simples
+            // Additionally build a compare set: residence vs death per municipality
+            $residenceQ = DB::table('deaths')
+                ->leftJoin('municipalities', 'municipalities.id', '=', 'deaths.residence_municipality_id')
+                ->select('municipalities.name as name', DB::raw('COUNT(deaths.id) as total'))
+                ->groupBy('municipalities.name')
+                ->orderByDesc('total');
+            $applyFilters($residenceQ);
+            if (!empty($filters['limit']) && is_numeric($filters['limit'])) $residenceQ->limit((int)$filters['limit']);
+            $residence = $residenceQ->get();
+
+            $deathMuniQ = DB::table('deaths')
+                ->leftJoin('municipalities', 'municipalities.id', '=', 'deaths.death_municipality_id')
+                ->select('municipalities.name as name', DB::raw('COUNT(deaths.id) as total'))
+                ->groupBy('municipalities.name')
+                ->orderByDesc('total');
+            $applyFilters($deathMuniQ);
+            if (!empty($filters['limit']) && is_numeric($filters['limit'])) $deathMuniQ->limit((int)$filters['limit']);
+            $deathMuni = $deathMuniQ->get();
+
+            $response = [
+                'municipios' => [ 'labels' => $municipios->pluck('name')->map(fn($v) => $v ?? 'Sin dato')->values()->all(), 'counts' => $municipios->pluck('total')->map(fn($v) => (int)$v)->values()->all() ],
+                'meses' => [ 'labels' => $meses->pluck('period_label')->values()->all(), 'counts' => $meses->pluck('total')->map(fn($v) => (int)$v)->values()->all() ],
+                'generos' => [ 'labels' => $generos->pluck('sex')->map(fn($v) => $v ?? 'Sin dato')->values()->all(), 'counts' => $generos->pluck('total')->map(fn($v) => (int)$v)->values()->all() ],
+                'causas' => [ 'labels' => $causas->pluck('name')->map(fn($v) => $v ?? 'Sin dato')->values()->all(), 'counts' => $causas->pluck('total')->map(fn($v) => (int)$v)->values()->all() ],
+                'edades' => [ 'labels' => $edades->pluck('range')->values()->all(), 'counts' => $edades->pluck('total')->map(fn($v) => (int)$v)->values()->all() ],
+                // Jurisdictions
+                'jurisdictions' => [ 'labels' => $jurisdictions->pluck('name')->map(fn($v) => $v ?? 'Sin dato')->values()->all(), 'counts' => $jurisdictions->pluck('total')->map(fn($v) => (int)$v)->values()->all() ],
+                // Residence vs Death per municipality (aligned labels)
+                'municipios_compare' => (function() use ($residence, $deathMuni) {
+                    $names = collect($residence->pluck('name'))->merge($deathMuni->pluck('name'))->unique()->values();
+                    $resMap = $residence->pluck('total', 'name');
+                    $deathMap = $deathMuni->pluck('total', 'name');
+                    $resCounts = $names->map(fn($n) => (int)($resMap[$n] ?? 0))->values()->all();
+                    $deathCounts = $names->map(fn($n) => (int)($deathMap[$n] ?? 0))->values()->all();
+                    return [ 'labels' => $names->all(), 'residence_counts' => $resCounts, 'death_counts' => $deathCounts ];
+                })(),
+            ];
+
+            return response()->json($response);
+        } catch (\Throwable $e) {
+            // Log the error and return a clear JSON payload so the frontend debug box shows the cause
+            \Log::error('chartsData error: ' . $e->getMessage(), ['exception' => $e]);
+            $debug = config('app.debug') ? $e->getMessage() . ' in ' . $e->getFile() . ':' . $e->getLine() : 'Database or configuration error';
+            return response()->json([
+                'error' => 'Could not fetch charts data',
+                'message' => $e->getMessage(),
+                'debug' => $debug,
+            ], 500);
         }
-
-        // Transformar a arrays simples
-        $response = [
-            'municipios' => [ 'labels' => $municipios->pluck('name')->map(fn($v) => $v ?? 'Sin dato')->values()->all(), 'counts' => $municipios->pluck('total')->map(fn($v) => (int)$v)->values()->all() ],
-            'meses' => [ 'labels' => $meses->pluck('month_name')->values()->all(), 'counts' => $meses->pluck('total')->map(fn($v) => (int)$v)->values()->all() ],
-            'generos' => [ 'labels' => $generos->pluck('sex')->map(fn($v) => $v ?? 'Sin dato')->values()->all(), 'counts' => $generos->pluck('total')->map(fn($v) => (int)$v)->values()->all() ],
-            'causas' => [ 'labels' => $causas->pluck('name')->map(fn($v) => $v ?? 'Sin dato')->values()->all(), 'counts' => $causas->pluck('total')->map(fn($v) => (int)$v)->values()->all() ],
-            'edades' => [ 'labels' => $edades->pluck('range')->values()->all(), 'counts' => $edades->pluck('total')->map(fn($v) => (int)$v)->values()->all() ],
-        ];
-
-        return response()->json($response);
     }
 }

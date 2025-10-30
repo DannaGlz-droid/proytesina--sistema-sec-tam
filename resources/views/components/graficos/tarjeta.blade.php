@@ -5,6 +5,16 @@
         <h3 class="chart-title font-semibold text-[#404041] text-lg font-lora">{{ $titulo }}</h3>
         
         <div class="chart-controls flex gap-2">
+            {{-- Toggle para seleccionar municipio por residencia/defunción (solo para el grafico de municipios) --}}
+            @if($graficoId === 'municipioChart')
+                <div class="flex items-center mr-2">
+                    <span class="text-xs text-gray-600 mr-2">Ver por:</span>
+                    <div id="municipioKindToggle" class="inline-flex rounded-md bg-gray-100 p-0.5">
+                        <button type="button" data-value="death" class="mun-kind-btn px-2 py-1 text-xs font-medium text-[#611132] bg-white rounded">Defunción</button>
+                        <button type="button" data-value="residence" class="mun-kind-btn px-2 py-1 text-xs font-medium text-gray-600 rounded">Residencia</button>
+                    </div>
+                </div>
+            @endif
             <!-- Selector de tipo de gráfico -->
             @if(count($tipos) > 1)
                 <div class="chart-type-selector flex bg-gray-100 rounded-lg p-1">
@@ -48,7 +58,5 @@
         </div>
     </div>
     
-    <div class="chart-wrapper h-80">
-        {{ $slot }}
-    </div>
+    {{ $slot }}
 </div>
