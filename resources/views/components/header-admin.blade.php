@@ -1,6 +1,9 @@
 <div class="bg-header text-white p-2 lg:p-3 w-full h-14 lg:h-16 font-sans flex items-center justify-between">
-    <!-- Texto principal a la izquierda -->
-    <h1 class="text-lg lg:text-xl truncate">.</h1>
+    <!-- Logo del admin a la izquierda (reemplaza el punto) -->
+    <div class="flex items-center space-x-3 ml-3 lg:ml-6">
+        <!-- Logo admin: coloque el archivo en public/images/logo-admin.png -->
+        <img src="{{ asset('images/logo-secretaria.png') }}" alt="Logo Administración" class="h-7 lg:h-9 object-contain">
+    </div>
 
     <!-- Botones y usuario a la derecha -->
     <div class="flex items-center">

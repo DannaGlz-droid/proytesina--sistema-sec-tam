@@ -292,19 +292,30 @@ class StatisticsController extends Controller
                 }
             };
 
-            // Municipios
-            // Use the selected municipality column ($munCol) for the join/aggregation so the frontend
-            // toggle (municipio_kind) actually switches between residence/death municipalities.
-            $municipiosQ = DB::table('deaths')
-                ->leftJoin('municipalities', 'municipalities.id', '=', DB::raw("deaths.{$munCol}"))
-                ->select('municipalities.name as name', DB::raw('COUNT(deaths.id) as total'))
-                ->groupBy('municipalities.name')
-                ->orderByDesc('total');
-            $applyFilters($municipiosQ);
-            if (!empty($filters['limit']) && is_numeric($filters['limit'])) {
-                $municipiosQ->limit((int)$filters['limit']);
+            // Municipios: build a list that includes ALL municipalities (so ones with 0 deaths
+            // are shown when user selects 'Todos'). We'll compute counts from deaths applying
+            // the same filters, then map counts onto the municipalities list.
+            $munCountsQ = DB::table('deaths')
+                ->select(DB::raw("{$munCol} as muni_id"), DB::raw('COUNT(*) as total'))
+                ->groupBy(DB::raw("{$munCol}"));
+            $applyFilters($munCountsQ);
+            // Note: do not apply a limit to the counts query; limits are handled client-side by grouping.
+            $munCountsRaw = $munCountsQ->get()->pluck('total', 'muni_id')->all();
+
+            // Build municipalities list - prefer restricting to the Tamaulipas jurisdicciones if available
+            $municipalitiesQ = DB::table('municipalities')->select('id','name','jurisdiction_id')->orderBy('name');
+            // If jurisdictions table looks like the 12 Tamaulipas jurisdictions, restrict to them
+            if (Schema::hasTable('jurisdictions') && DB::table('jurisdictions')->count() === 12) {
+                $jurIds = DB::table('jurisdictions')->pluck('id')->all();
+                $municipalitiesQ->whereIn('jurisdiction_id', $jurIds);
             }
-            $municipios = $municipiosQ->get();
+            $municipalitiesFull = $municipalitiesQ->get();
+
+            // Map counts onto the full municipalities list and sort by total desc for display
+            $municipios = $municipalitiesFull->map(function($m) use ($munCountsRaw) {
+                $total = isset($munCountsRaw[$m->id]) ? (int)$munCountsRaw[$m->id] : 0;
+                return (object)['name' => $m->name ?? 'Sin dato', 'total' => $total, 'id' => $m->id];
+            })->sortByDesc('total')->values();
 
             // Jurisdicciones (por el campo jurisdiction_id en deaths, si existe la tabla)
             $jurisdictions = collect();
@@ -418,23 +429,19 @@ class StatisticsController extends Controller
 
             // Transformar a arrays simples
             // Additionally build a compare set: residence vs death per municipality
-            $residenceQ = DB::table('deaths')
-                ->leftJoin('municipalities', 'municipalities.id', '=', 'deaths.residence_municipality_id')
-                ->select('municipalities.name as name', DB::raw('COUNT(deaths.id) as total'))
-                ->groupBy('municipalities.name')
-                ->orderByDesc('total');
-            $applyFilters($residenceQ);
-            if (!empty($filters['limit']) && is_numeric($filters['limit'])) $residenceQ->limit((int)$filters['limit']);
-            $residence = $residenceQ->get();
+            // Residence counts per municipality (map muni_id -> total)
+            $resCountsQ = DB::table('deaths')
+                ->select(DB::raw('residence_municipality_id as muni_id'), DB::raw('COUNT(*) as total'))
+                ->groupBy(DB::raw('residence_municipality_id'));
+            $applyFilters($resCountsQ);
+            $resCounts = $resCountsQ->get()->pluck('total','muni_id')->all();
 
-            $deathMuniQ = DB::table('deaths')
-                ->leftJoin('municipalities', 'municipalities.id', '=', 'deaths.death_municipality_id')
-                ->select('municipalities.name as name', DB::raw('COUNT(deaths.id) as total'))
-                ->groupBy('municipalities.name')
-                ->orderByDesc('total');
-            $applyFilters($deathMuniQ);
-            if (!empty($filters['limit']) && is_numeric($filters['limit'])) $deathMuniQ->limit((int)$filters['limit']);
-            $deathMuni = $deathMuniQ->get();
+            // Death counts per municipality (death_municipality_id)
+            $deathCountsQ = DB::table('deaths')
+                ->select(DB::raw('death_municipality_id as muni_id'), DB::raw('COUNT(*) as total'))
+                ->groupBy(DB::raw('death_municipality_id'));
+            $applyFilters($deathCountsQ);
+            $deathCounts = $deathCountsQ->get()->pluck('total','muni_id')->all();
 
             $response = [
                 'municipios' => [ 'labels' => $municipios->pluck('name')->map(fn($v) => $v ?? 'Sin dato')->values()->all(), 'counts' => $municipios->pluck('total')->map(fn($v) => (int)$v)->values()->all() ],
@@ -444,14 +451,17 @@ class StatisticsController extends Controller
                 'edades' => [ 'labels' => $edades->pluck('range')->values()->all(), 'counts' => $edades->pluck('total')->map(fn($v) => (int)$v)->values()->all() ],
                 // Jurisdictions
                 'jurisdictions' => [ 'labels' => $jurisdictions->pluck('name')->map(fn($v) => $v ?? 'Sin dato')->values()->all(), 'counts' => $jurisdictions->pluck('total')->map(fn($v) => (int)$v)->values()->all() ],
-                // Residence vs Death per municipality (aligned labels)
-                'municipios_compare' => (function() use ($residence, $deathMuni) {
-                    $names = collect($residence->pluck('name'))->merge($deathMuni->pluck('name'))->unique()->values();
-                    $resMap = $residence->pluck('total', 'name');
-                    $deathMap = $deathMuni->pluck('total', 'name');
-                    $resCounts = $names->map(fn($n) => (int)($resMap[$n] ?? 0))->values()->all();
-                    $deathCounts = $names->map(fn($n) => (int)($deathMap[$n] ?? 0))->values()->all();
-                    return [ 'labels' => $names->all(), 'residence_counts' => $resCounts, 'death_counts' => $deathCounts ];
+                // Residence vs Death per municipality (aligned to full municipalities list)
+                'municipios_compare' => (function() use ($municipios, $resCounts, $deathCounts) {
+                    $labels = $municipios->pluck('name')->values()->all();
+                    $res = [];
+                    $death = [];
+                    foreach ($municipios as $m) {
+                        $id = $m->id;
+                        $res[] = isset($resCounts[$id]) ? (int)$resCounts[$id] : 0;
+                        $death[] = isset($deathCounts[$id]) ? (int)$deathCounts[$id] : 0;
+                    }
+                    return [ 'labels' => $labels, 'residence_counts' => $res, 'death_counts' => $death ];
                 })(),
             ];
 

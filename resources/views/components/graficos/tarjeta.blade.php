@@ -2,7 +2,11 @@
 
 <div class="chart-card border border-[#404041] rounded-lg p-5 bg-white">
     <div class="chart-header flex justify-between items-center mb-4">
-        <h3 class="chart-title font-semibold text-[#404041] text-lg font-lora">{{ $titulo }}</h3>
+        <div class="flex items-center gap-3">
+            <h3 class="chart-title font-semibold text-[#404041] text-lg font-lora">{{ $titulo }}</h3>
+            <!-- Badge to show quick total/summary; JS will populate by data-chart-id -->
+            <div class="chart-total-badge text-sm text-gray-600" data-chart-id="{{ $graficoId }}" style="display:inline-block;">&nbsp;</div>
+        </div>
         
         <div class="chart-controls flex gap-2">
             {{-- Toggle para seleccionar municipio por residencia/defunción (solo para el grafico de municipios) --}}
@@ -29,6 +33,13 @@
                         <button class="chart-type-btn {{ $tipoInicial == 'line' ? 'active bg-[#611132] text-white' : 'bg-transparent text-gray-600' }} px-3 py-1 rounded text-xs flex items-center gap-1" 
                                 data-chart-type="line" title="Gráfico de Líneas">
                             <i class="fas fa-chart-line"></i>
+                        </button>
+                    @endif
+                    
+                    @if(in_array('area', $tipos))
+                        <button class="chart-type-btn {{ $tipoInicial == 'area' ? 'active bg-[#611132] text-white' : 'bg-transparent text-gray-600' }} px-3 py-1 rounded text-xs flex items-center gap-1" 
+                                data-chart-type="area" title="Gráfico de Área">
+                            <i class="fas fa-chart-area"></i>
                         </button>
                     @endif
                     

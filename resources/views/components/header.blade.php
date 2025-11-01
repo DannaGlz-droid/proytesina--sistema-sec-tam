@@ -1,6 +1,11 @@
 <div class="bg-header text-white p-2 lg:p-3 w-full h-14 lg:h-16 font-sans flex items-center justify-between">
-    <!-- Texto principal a la izquierda -->
-    <h1 class="text-lg lg:text-xl truncate">.</h1>
+    <!-- Logo a la izquierda -->
+    <div class="flex items-center space-x-3 ml-3 lg:ml-6">
+        <!-- Logo de la Secretaría de Salud: coloque el archivo en public/images/logo-secretaria.png -->
+        <img src="{{ asset('images/logo-secretaria.png') }}" alt="Logo Secretaría de Salud" class="h-7 lg:h-9 object-contain">
+        <!-- Texto opcional (oculto en pantallas pequeñas) -->
+        <span class="hidden lg:inline text-lg lg:text-xl font-semibold">Sistema SEC-TAM</span>
+    </div>
 
     <!-- Botones y usuario a la derecha -->
     <div class="flex items-center">

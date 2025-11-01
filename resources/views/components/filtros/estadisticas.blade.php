@@ -239,18 +239,7 @@
         </div>
     </x-filtros.seccion>
 
-    <!-- Resultados -->
-    <x-filtros.seccion icono="chart-bar" titulo="Resultados">
-        <div class="filter-group">
-            <label class="block text-xs text-gray-600 font-lora mb-1">Límite de resultados:</label>
-            <select id="chartLimit" class="w-full border border-[#404041] rounded-lg px-3 py-1.5 text-xs">
-                <option value="5">Top 5</option>
-                <option value="10" selected>Top 10</option>
-                <option value="15">Top 15</option>
-                <option value="all">Todos</option>
-            </select>
-        </div>
-    </x-filtros.seccion>
+    <!-- Resultados section removed — control moved next to chart presentation controls -->
 
     <!-- Botón Filtrar -->
     <div class="mt-6 pt-4 border-t border-gray-300">
@@ -427,10 +416,6 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
 
-        // Reset chart limit
-        const chartLimit = document.getElementById('chartLimit');
-        if (chartLimit) chartLimit.value = '10';
-
         // Reajusta secciones abiertas
         document.querySelectorAll('.filter-section-content').forEach(content => {
             if (content.style.maxHeight && content.style.maxHeight !== '0px') {
@@ -438,7 +423,17 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
 
-        console.log('Filtros limpiados');
+        // Llamar a la función de reinicio de gráficos si existe
+        if (typeof window.resetChartsToDefault === 'function') {
+            window.resetChartsToDefault();
+        }
+
+        // Cargar gráficos con filtros limpiados (todos los datos)
+        if (typeof window.loadCharts === 'function') {
+            setTimeout(() => window.loadCharts(), 150);
+        }
+
+        console.log('Filtros y gráficos limpiados');
     });
 
     // Aplicar filtros (colección simple)

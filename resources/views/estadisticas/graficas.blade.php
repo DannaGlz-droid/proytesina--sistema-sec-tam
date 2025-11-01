@@ -37,6 +37,39 @@
 
                     <!-- Columna Derecha - Gráficos (ESPACIO RESTANTE) -->
                     <div class="lg:flex-1">
+                        <!-- Controles de presentación: etiquetas + límite (Top N) + paleta colocados inline -->
+                        <div class="flex items-center gap-4 mb-4 flex-wrap">
+                            <label for="datalabelMode" class="text-sm text-gray-600 font-lora whitespace-nowrap">Etiquetas (valor / %)</label>
+                            <select id="datalabelMode" class="text-sm border border-gray-200 rounded px-3 py-1.5 pr-8 w-40 sm:w-52 font-lora bg-white">
+                                <option value="auto">Auto (predeterminado)</option>
+                                <option value="value">Sólo valores</option>
+                                <option value="percent">Sólo porcentaje</option>
+                                <option value="both">Valores y %</option>
+                                <option value="none">Ocultar</option>
+                            </select>
+
+                            <!-- Top / Límite de resultados (inline, compact) -->
+                            <label for="chartLimit" class="text-sm text-gray-600 font-lora whitespace-nowrap">Top</label>
+                            <select id="chartLimit" class="text-sm border border-gray-200 rounded px-2 py-1 pr-6 w-28 sm:w-32 font-lora bg-white" title="Mostrar sólo los N elementos principales">
+                                <option value="all">Todos</option>
+                                <option value="5">Top 5</option>
+                                <option value="10">Top 10</option>
+                                <option value="15">Top 15</option>
+                            </select>
+
+                            <!-- Selector de Paleta de Colores -->
+                            <label for="colorPalette" class="text-sm text-gray-600 font-lora whitespace-nowrap">Paleta</label>
+                            <select id="colorPalette" class="text-sm border border-gray-200 rounded px-3 py-1.5 pr-8 w-40 sm:w-52 font-lora bg-white" title="Seleccionar esquema de colores">
+                                <option value="principal">Principal Institucional</option>
+                                <option value="modern">Moderna Variada</option>
+                                <option value="nature">Natural Equilibrada</option>
+                                <option value="warm">Cálida</option>
+                                <option value="cool">Fría</option>
+                                <option value="sunset">Sunset</option>
+                                <option value="ocean">Ocean</option>
+                                <option value="vibrant">Vibrante</option>
+                            </select>
+                        </div>
                         
                         <!-- Categoría: Distribución Geográfica -->
                         <x-graficos.categoria 
@@ -50,8 +83,8 @@
                                 graficoId="municipioChart"
                             >
                                 <!-- label moved to header controls to keep layout compact -->
-                                <div class="chart-wrapper" style="height:320px; overflow:hidden; position:relative;">
-                                    <canvas id="municipioChart" class="chart-canvas" style="height:100% !important; width:100% !important; display:block;"></canvas>
+                                    <div class="chart-wrapper" style="height:300px; overflow:hidden; position:relative;">
+                                    <canvas id="municipioChart" class="chart-canvas" role="img" aria-label="Distribución por Municipios: número de defunciones por municipio" tabindex="0" style="height:100% !important; width:100% !important; display:block;"></canvas>
                                 </div>
                             </x-graficos.tarjeta>
                             
@@ -62,7 +95,7 @@
                                 graficoId="jurisdiccionChart"
                             >
                                 <div class="chart-wrapper" style="height:320px; overflow:hidden; position:relative;">
-                                    <canvas id="jurisdiccionChart" class="chart-canvas" style="height:100% !important; width:100% !important; display:block;"></canvas>
+                                        <canvas id="jurisdiccionChart" class="chart-canvas" role="img" aria-label="Distribución por Jurisdicción: número de defunciones por jurisdicción" tabindex="0" style="height:100% !important; width:100% !important; display:block;"></canvas>
                                 </div>
                             </x-graficos.tarjeta>
 
@@ -73,7 +106,7 @@
                                 graficoId="compareChart"
                             >
                                 <div class="chart-wrapper" style="height:320px; overflow:hidden; position:relative;">
-                                    <canvas id="compareChart" class="chart-canvas" style="height:100% !important; width:100% !important; display:block;"></canvas>
+                                    <canvas id="compareChart" class="chart-canvas" role="img" aria-label="Comparativa: número de defunciones por municipio comparando residencia y lugar de defunción" tabindex="0" style="height:100% !important; width:100% !important; display:block;"></canvas>
                                 </div>
                             </x-graficos.tarjeta>
                         </x-graficos.categoria>
@@ -85,14 +118,14 @@
                         >
                             <x-graficos.tarjeta 
                                     titulo="Tendencia" 
-                                    :tipos="['line', 'bar']" 
+                                    :tipos="['line', 'area']" 
                                     tipoInicial="line"
                                     graficoId="tendenciaChart"
                                 >
                                     <!-- Subtítulo dinámico: se actualizará según la granularidad seleccionada -->
                                     <div id="tendenciaSubtitle" class="text-sm text-gray-600 mb-2">Mensual</div>
                                     <div class="chart-wrapper" style="height:260px; overflow:hidden; position:relative;">
-                                        <canvas id="tendenciaChart" class="chart-canvas" style="height:100% !important; width:100% !important; display:block;"></canvas>
+                                        <canvas id="tendenciaChart" class="chart-canvas" role="img" aria-label="Tendencia temporal de defunciones en el periodo seleccionado" tabindex="0" style="height:100% !important; width:100% !important; display:block;"></canvas>
                                     </div>
                                 </x-graficos.tarjeta>
                         </x-graficos.categoria>
@@ -110,7 +143,7 @@
                                 graficoId="edadChart"
                             >
                                 <div class="chart-wrapper" style="height:260px; overflow:hidden; position:relative;">
-                                    <canvas id="edadChart" class="chart-canvas" style="height:100% !important; width:100% !important; display:block;"></canvas>
+                                    <canvas id="edadChart" class="chart-canvas" role="img" aria-label="Distribución por edades: conteo de defunciones por rango etario" tabindex="0" style="height:100% !important; width:100% !important; display:block;"></canvas>
                                 </div>
                             </x-graficos.tarjeta>
                             
@@ -120,8 +153,8 @@
                                 tipoInicial="doughnut"
                                 graficoId="generoChart"
                             >
-                                <div class="chart-wrapper" style="height:260px; overflow:hidden; position:relative;">
-                                    <canvas id="generoChart" class="chart-canvas" style="height:100% !important; width:100% !important; display:block;"></canvas>
+                                <div class="chart-wrapper" style="height:320px; overflow:hidden; position:relative;">
+                                    <canvas id="generoChart" class="chart-canvas" role="img" aria-label="Distribución por género: proporción y conteo de defunciones por sexo" tabindex="0" style="height:100% !important; width:100% !important; display:block;"></canvas>
                                 </div>
                             </x-graficos.tarjeta>
                         </x-graficos.categoria>
@@ -137,8 +170,8 @@
                                 tipoInicial="doughnut"
                                 graficoId="causaChart"
                             >
-                                <div class="chart-wrapper" style="height:260px; overflow:hidden; position:relative;">
-                                    <canvas id="causaChart" class="chart-canvas" style="height:100% !important; width:100% !important; display:block;"></canvas>
+                                <div class="chart-wrapper" style="height:340px; overflow:hidden; position:relative;">
+                                    <canvas id="causaChart" class="chart-canvas" role="img" aria-label="Causas de defunción: distribución por causa" tabindex="0" style="height:100% !important; width:100% !important; display:block;"></canvas>
                                 </div>
                             </x-graficos.tarjeta>
                         </x-graficos.categoria>
@@ -161,8 +194,10 @@
     <script>
     // Mapa de gráficos global para acceso desde el modal
     let charts = {};
-    // Municipio kind selected: 'death' (defunción) or 'residence' (residencia)
+    // Municipio kind selected: 'death' (defunción) o 'residence' (residencia)
     let selectedMunKind = 'residence';
+    // Modo de datalabels: 'auto'|'value'|'percent'|'both'|'none'
+    let dataLabelMode = 'auto';
 
         document.addEventListener('DOMContentLoaded', function() {
             // Inicializar gráficos
@@ -188,6 +223,237 @@
                 if (typeof ChartDataLabels !== 'undefined') Chart.register(ChartDataLabels);
             } catch (e) {
                 console.warn('chartjs-plugin-datalabels no disponible:', e);
+            }
+
+            // Variable global para almacenar la paleta seleccionada
+            let selectedPalette = 'principal';
+
+            // Definir múltiples paletas de colores profesionales con matices variados
+            const colorPalettes = {
+                // Armoniosa: inspirada en tu color institucional #611132 (vino)
+                principal: [
+                    '#611132', // vino institucional (principal)
+                    '#8B6F47', // dorado cálido (complementario cálido)
+                    '#2C5F5D', // verde azulado (triádico)
+                    '#9B4D6F', // rosa viejo (análogo)
+                    '#4A7C7E', // teal suave (complementario frío)
+                    '#A67C52', // caramelo (complementario split)
+                    '#3D4F5C', // azul pizarra (neutro frío)
+                    '#7A5060'  // malva (análogo suave)
+                ],
+                // Moderna: matices completamente diferentes (azul, verde, naranja, magenta, cyan, amarillo)
+                modern: [
+                    '#4A90A4', // azul turquesa
+                    '#7BA05B', // verde oliva
+                    '#D88559', // naranja terracota
+                    '#B565A7', // magenta
+                    '#5DADA5', // cyan
+                    '#D4A657', // mostaza
+                    '#8D6A9F', // púrpura
+                    '#6B8BA3'  // azul acero
+                ],
+                // Natural: tierra, bosque, cielo, mar (matices de naturaleza)
+                nature: [
+                    '#8B6F47', // tierra/café
+                    '#5A7D5F', // verde bosque
+                    '#6B9AC4', // azul cielo
+                    '#7E8B92', // gris piedra
+                    '#5D8C8A', // verde agua
+                    '#B88B62', // arena
+                    '#4A6B5F', // verde musgo
+                    '#8FA3AD'  // azul grisáceo
+                ],
+                // Cálida: rojos, naranjas, amarillos, marrones (solo tonos cálidos)
+                warm: [
+                    '#C85D5D', // rojo ladrillo
+                    '#D89155', // naranja calabaza
+                    '#E3B567', // dorado
+                    '#B67C5D', // marrón cálido
+                    '#D47B6A', // coral
+                    '#CBA052', // mostaza oscura
+                    '#A86F5F', // terracota
+                    '#8B7355'  // café con leche
+                ],
+                // Fría: azules, verdes, púrpuras (solo tonos fríos)
+                cool: [
+                    '#5B8BA6', // azul acero
+                    '#5A9B8E', // verde jade
+                    '#7E88B5', // azul lavanda
+                    '#6A8E90', // teal
+                    '#8895B9', // azul periwinkle
+                    '#5F9F93', // verde agua
+                    '#6B7FA8', // azul slate
+                    '#7B9C95'  // verde grisáceo
+                ],
+                // Sunset: paleta cálida inspirada en atardeceres
+                sunset: [
+                    '#D65D5D', // rojo atardecer
+                    '#E88C4F', // naranja intenso
+                    '#F5B95F', // ámbar dorado
+                    '#E6A06A', // melocotón
+                    '#C97575', // rosa coral
+                    '#D9955C', // naranja suave
+                    '#B88470', // marrón rosado
+                    '#9A7B6F'  // taupe cálido
+                ],
+                // Ocean: azules y verdes de océano profundo a costa
+                ocean: [
+                    '#2F5F7F', // azul marino profundo
+                    '#4A7A8C', // azul océano
+                    '#5D9B9B', // teal
+                    '#6BAEB4', // aqua
+                    '#5A8F83', // verde mar
+                    '#7BA8AB', // azul claro
+                    '#4E7B84', // azul petróleo
+                    '#83A5A3'  // verde agua pálido
+                ],
+                // Vibrante: colores vivos pero equilibrados con matices diferentes
+                vibrant: [
+                    '#E85D75', // rosa coral vibrante
+                    '#5AA4D4', // azul brillante
+                    '#7BC67E', // verde lima
+                    '#E89C4F', // naranja dorado
+                    '#9B7BC4', // púrpura
+                    '#5FC5C5', // cyan vibrante
+                    '#E6B65C', // amarillo mostaza
+                    '#8B8FA3'  // gris azulado
+                ]
+            };
+
+            function hexToRgba(hex, alpha) {
+                const h = hex.replace('#','');
+                const bigint = parseInt(h, 16);
+                const r = (bigint >> 16) & 255;
+                const g = (bigint >> 8) & 255;
+                const b = bigint & 255;
+                return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+            }
+
+            // Genera un gradiente de colores usando un solo color base con diferentes intensidades
+            function getMonochromaticPalette(count, baseColor, alpha = 0.75) {
+                const bg = [];
+                const br = [];
+
+                // Convertir hex a HSL (más robusto y legible)
+                const hr = parseInt(baseColor.slice(1, 3), 16);
+                const hg = parseInt(baseColor.slice(3, 5), 16);
+                const hb = parseInt(baseColor.slice(5, 7), 16);
+
+                // Utilidad: RGB -> HSL
+                function rgbToHsl(r, g, b) {
+                    r /= 255; g /= 255; b /= 255;
+                    const max = Math.max(r, g, b), min = Math.min(r, g, b);
+                    let h, s, l = (max + min) / 2;
+                    if (max === min) {
+                        h = s = 0; // achromatic
+                    } else {
+                        const d = max - min;
+                        s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+                        switch (max) {
+                            case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+                            case g: h = (b - r) / d + 2; break;
+                            case b: h = (r - g) / d + 4; break;
+                        }
+                        h /= 6;
+                    }
+                    return [Math.round(h * 360), Math.round(s * 100), Math.round(l * 100)];
+                }
+
+                const [baseH, baseS, baseL] = rgbToHsl(hr, hg, hb);
+
+                // Rango de variación de luminosidad (en porcentaje). Ajustable.
+                // Queremos mantener la similitud con el color base, así que variamos
+                // ±spread/2 alrededor de baseL, evitando valores extremos.
+                const spread = Math.min(40, Math.max(18, Math.floor(30 - Math.log10(Math.max(1, count)) * 4)));
+                const half = spread / 2;
+
+                // Si solo hay 1 elemento, devolver el color base directamente
+                if (count === 1) {
+                    bg.push(`hsla(${baseH}, ${Math.max(30, baseS)}%, ${Math.max(18, baseL)}%, ${alpha})`);
+                    br.push(`hsla(${baseH}, ${Math.max(30, baseS)}%, ${Math.max(8, baseL - 10)}%, 1)`);
+                    return { background: bg, border: br };
+                }
+
+                const step = spread / (count - 1);
+                for (let i = 0; i < count; i++) {
+                    // Distribuir luz desde baseL + half -> baseL - half
+                    const lightness = Math.round(Math.max(12, Math.min(88, baseL + half - (step * i))));
+                    const saturation = Math.round(Math.max(30, Math.min(90, baseS)));
+
+                    bg.push(`hsla(${baseH}, ${saturation}%, ${lightness}%, ${alpha})`);
+                    br.push(`hsla(${baseH}, ${saturation}%, ${Math.max(8, lightness - 10)}%, 1)`);
+                }
+
+                return { background: bg, border: br };
+            }
+
+            // devuelve array de colores RGBA para background y los borders según la paleta seleccionada
+            function getPalette(count, alpha = 0.75, forceMonochromatic = false) {
+                const currentPalette = colorPalettes[selectedPalette] || colorPalettes.principal;
+                
+                // Para gráficos que se ven mejor con un solo color (como municipios/jurisdicciones)
+                if (forceMonochromatic) {
+                    const baseColor = currentPalette[0]; // usar el primer color de la paleta
+                    return getMonochromaticPalette(count, baseColor, alpha);
+                }
+                
+                const bg = [];
+                const br = [];
+
+                // Si el número de categorías es mayor a la longitud de la paleta
+                // o hay muchas categorías (>=12), generamos colores adicionales
+                // pero usando los colores de la paleta seleccionada como base
+                const useGenerated = (count > currentPalette.length) || (count >= 12);
+
+                if (useGenerated) {
+                    // Primero usar todos los colores de la paleta seleccionada
+                    for (let i = 0; i < Math.min(count, currentPalette.length); i++) {
+                        const hex = currentPalette[i];
+                        bg.push(hexToRgba(hex, alpha));
+                        br.push(hexToRgba(hex, 1));
+                    }
+                    
+                    // Si necesitamos más colores, generar variaciones basadas en la paleta
+                    if (count > currentPalette.length) {
+                        // Extraer los tonos base de la paleta seleccionada
+                        const baseHues = currentPalette.map(hex => {
+                            const r = parseInt(hex.slice(1, 3), 16);
+                            const g = parseInt(hex.slice(3, 5), 16);
+                            const b = parseInt(hex.slice(5, 7), 16);
+                            const max = Math.max(r, g, b) / 255;
+                            const min = Math.min(r, g, b) / 255;
+                            const delta = max - min;
+                            let h = 0;
+                            if (delta !== 0) {
+                                if (max === r/255) h = ((g/255 - b/255) / delta) % 6;
+                                else if (max === g/255) h = (b/255 - r/255) / delta + 2;
+                                else h = (r/255 - g/255) / delta + 4;
+                            }
+                            return Math.round(h * 60);
+                        });
+                        
+                        // Generar colores adicionales interpolando entre los tonos de la paleta
+                        for (let i = currentPalette.length; i < count; i++) {
+                            const baseIndex = i % baseHues.length;
+                            const hueVariation = Math.floor(i / baseHues.length) * 30; // incremento de 30°
+                            const hue = (baseHues[baseIndex] + hueVariation) % 360;
+                            const saturation = 58 - (Math.floor(i / baseHues.length) * 8); // reducir saturación gradualmente
+                            const light = 48 + (i % 2 === 0 ? -4 : 4); // alternar claridad
+                            bg.push(`hsla(${hue}, ${Math.max(30, saturation)}%, ${light}%, ${alpha})`);
+                            br.push(`hsla(${hue}, ${Math.max(30, saturation)}%, ${light}%, 1)`);
+                        }
+                    }
+                    return { background: bg, border: br };
+                }
+
+                // fallback: usar la paleta definida (cíclica)
+                for (let i = 0; i < count; i++) {
+                    const hex = currentPalette[i % currentPalette.length];
+                    bg.push(hexToRgba(hex, alpha));
+                    br.push(hexToRgba(hex, 1));
+                }
+
+                return { background: bg, border: br };
             }
 
             // Crear gráficos (inicialmente vacíos)
@@ -231,7 +497,7 @@
                             align: 'center',
                             clamp: true,
                             formatter: function(value) { return value; },
-                            font: { weight: '600', size: 11 }
+                            font: { weight: '600', size: 13 }
                         },
                         legend: {
                             position: 'top',
@@ -298,11 +564,12 @@
                     maintainAspectRatio: false,
                     plugins: {
                         datalabels: {
-                            color: '#222',
-                            anchor: 'end',
-                            align: 'end',
+                            // center the labels inside the bars for better visibility
+                            color: '#fff',
+                            anchor: 'center',
+                            align: 'center',
                             formatter: function(value) { return value; },
-                            font: { weight: '600', size: 11 }
+                            font: { weight: '700', size: 13 }
                         },
                         legend: {
                             position: 'top',
@@ -349,7 +616,7 @@
                                 const pct = sum ? Math.round((value / sum) * 100) : 0;
                                 return value + ' (' + pct + '%)';
                             },
-                            font: { weight: '700', size: 11 }
+                            font: { weight: '700', size: 13 }
                         }
                     }
                 }
@@ -395,7 +662,7 @@
                                 const pct = sum ? Math.round((value / sum) * 100) : 0;
                                 return value + ' (' + pct + '%)';
                             },
-                            font: { weight: '700', size: 11 }
+                            font: { weight: '700', size: 13 }
                         }
                     }
                 }
@@ -418,7 +685,7 @@
                     responsive: true,
                     maintainAspectRatio: false,
                     plugins: {
-                        datalabels: { color: '#222', anchor: 'end', align: 'end', formatter: v=>v, font: { weight: '600', size: 11 } },
+                        datalabels: { color: '#222', anchor: 'end', align: 'end', formatter: v=>v, font: { weight: '600', size: 13 } },
                         legend: { position: 'top' }
                     },
                     scales: { y: { beginAtZero: true } }
@@ -438,7 +705,7 @@
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    plugins: { datalabels: { color: '#222', font:{weight:'600'} }, legend:{position:'top'} },
+                    plugins: { datalabels: { color: '#222', font:{weight:'600', size: 13} }, legend:{position:'top'} },
                     scales: { x: { stacked: false }, y: { beginAtZero: true, stacked: false } }
                 }
             });
@@ -511,6 +778,54 @@
                 });
             });
 
+            // Datalabels formatter generator depending on chart type and selected mode
+            function getDatalabelsFormatter(type, mode) {
+                // returns a function (value, ctx) => string | ''
+                mode = mode || 'auto';
+                if (mode === 'none') return function() { return ''; };
+
+                // helper to compute percent
+                const percentFor = function(value, ctx) {
+                    const data = ctx.chart.data.datasets[0].data;
+                    const sum = data.reduce((a,b)=>a+(Number(b)||0),0) || 0;
+                    const pct = sum ? Math.round((Number(value) / sum) * 100) : 0;
+                    return pct;
+                };
+
+                return function(value, ctx) {
+                    const isPie = (type === 'pie' || type === 'doughnut');
+                    // auto: pie/doughnut -> value + pct ; bars -> value only
+                    const actualMode = (mode === 'auto') ? (isPie ? 'both' : 'value') : mode;
+
+                    if (actualMode === 'value') return Number(value).toLocaleString();
+                    if (actualMode === 'percent') return percentFor(value, ctx) + '%';
+                    if (actualMode === 'both') return Number(value).toLocaleString() + ' (' + percentFor(value, ctx) + '%)';
+                    return '';
+                };
+            }
+
+            // Apply the current datalabels mode to a given chart instance
+            function updateDatalabelsForChartInstance(chart, type) {
+                try {
+                    if (!chart || !chart.options || !chart.options.plugins) return;
+                    // ensure plugin section exists
+                    chart.options.plugins.datalabels = chart.options.plugins.datalabels || {};
+                    const fmt = getDatalabelsFormatter(type, dataLabelMode);
+                    // decide whether to display at all
+                    const display = (dataLabelMode === 'none') ? false : true;
+                    chart.options.plugins.datalabels.display = display;
+                    chart.options.plugins.datalabels.formatter = fmt;
+                    // color choices: pies white, bars dark
+                    if (type === 'pie' || type === 'doughnut') chart.options.plugins.datalabels.color = '#fff';
+                    else chart.options.plugins.datalabels.color = '#222';
+                    // enforce font weight/size defaults
+                    chart.options.plugins.datalabels.font = chart.options.plugins.datalabels.font || { weight: '600', size: 13 };
+                    chart.update();
+                } catch (e) {
+                    console.warn('updateDatalabelsForChartInstance error', e);
+                }
+            }
+
             // Helper: return sensible default options per chart type to avoid leaving scale/grid artifacts
             function getDefaultOptionsForType(type) {
                 const base = {
@@ -518,25 +833,33 @@
                     maintainAspectRatio: false,
                     plugins: {
                         legend: { position: 'top' },
-                        datalabels: { display: true, color: '#fff', font: { weight: '600' } }
+                        datalabels: { display: true, color: '#fff', font: { weight: '600', size: 13 } }
                     }
                 };
 
                 if (type === 'pie' || type === 'doughnut') {
                     base.plugins.legend.position = 'right';
-                    base.plugins.datalabels.formatter = function(value, ctx) {
-                        const data = ctx.chart.data.datasets[0].data;
-                        const sum = data.reduce((a,b)=>a+(Number(b)||0),0) || 0;
-                        const pct = sum ? Math.round((value / sum) * 100) : 0;
-                        return value.toLocaleString() + ' (' + pct + '%)';
-                    };
+                    base.plugins.datalabels.formatter = getDatalabelsFormatter(type, dataLabelMode);
                     // pie/doughnut do not use scales
                 } else {
                     // bar/line/scatter: include scales and integer ticks
-                    base.plugins.datalabels.formatter = function(value) { return Number(value).toLocaleString(); };
+                    base.plugins.datalabels.formatter = getDatalabelsFormatter(type, dataLabelMode);
                     base.scales = {
                         x: { ticks: { autoSkip: true }, grid: { display: false } },
-                        y: { beginAtZero: true, ticks: { callback: v => Math.round(v).toLocaleString() } }
+                        y: { 
+                            beginAtZero: true, 
+                            ticks: { 
+                                callback: function(value, index, ticks) {
+                                    // Asegurarse de que value es un número primitivo
+                                    if (typeof value === 'object' && value !== null && value.value !== undefined) {
+                                        value = value.value;
+                                    }
+                                    const v = Number(value);
+                                    if (!Number.isFinite(v)) return '';
+                                    return Math.round(v).toLocaleString();
+                                }
+                            }
+                        }
                     };
                 }
 
@@ -557,18 +880,34 @@
                     // Destroy old chart instance
                     try { old.destroy(); } catch (e) { /* ignore */ }
 
+                    // Manejar tipo 'area' (que en Chart.js es 'line' con fill: true)
+                    let actualType = newType;
+                    if (newType === 'area') {
+                        actualType = 'line';
+                        // Configurar fill para todos los datasets
+                        data.datasets.forEach(dataset => {
+                            dataset.fill = true;
+                            dataset.backgroundColor = dataset.backgroundColor || 'rgba(97, 17, 50, 0.2)';
+                        });
+                    } else if (newType === 'line') {
+                        // Para línea pura, asegurar que no hay fill
+                        data.datasets.forEach(dataset => {
+                            dataset.fill = false;
+                        });
+                    }
+
                     // Build default options for the new type
-                    const options = getDefaultOptionsForType(newType);
+                    const options = getDefaultOptionsForType(actualType);
 
                     // Register datalabels plugin if available
                     try { if (typeof ChartDataLabels !== 'undefined') Chart.register(ChartDataLabels); } catch (e) {}
 
                     // Create new chart
-                    const cfg = { type: newType, data: data, options: options };
+                    const cfg = { type: actualType, data: data, options: options };
                     charts[chartId] = new Chart(ctx, cfg);
 
                     // Apply nice scaling for cartesian charts
-                    if (newType === 'bar' || newType === 'line') {
+                    if (actualType === 'bar' || actualType === 'line') {
                         try {
                             const max = Math.max(...(data.datasets[0].data.map(n => Number(n) || 0)));
                             applyNiceScaling(charts[chartId], max);
@@ -609,6 +948,45 @@
                 return { labels: labels, counts: counts };
             }
 
+            // Agrupar Top N — mostrar SOLO los top N (no agregar "Otros").
+            // limitValue puede ser 'all' o un número (string). Si es 'all' devuelve todas las etiquetas.
+            function groupTopN(labels, counts, limitValue) {
+                if (!Array.isArray(labels) || !Array.isArray(counts) || labels.length === 0) return { labels: ['Sin datos'], counts: [0] };
+                const topN = (limitValue && limitValue !== 'all') ? Number(limitValue) : labels.length;
+                if (!Number.isFinite(topN) || topN <= 0) return { labels: ['Sin datos'], counts: [0] };
+                if (labels.length <= topN) return { labels: labels.slice(), counts: counts.slice().map(n => Number(n) || 0) };
+
+                const arr = labels.map((lab, i) => ({ label: lab, count: Number(counts[i]) || 0 }));
+                // ordenar desc por conteo
+                arr.sort((a, b) => b.count - a.count);
+
+                const top = arr.slice(0, topN);
+                const outLabels = top.map(x => x.label);
+                const outCounts = top.map(x => x.count);
+
+                return { labels: outLabels, counts: outCounts };
+            }
+
+            // Similar a groupTopN pero para dos series (ej. residencia vs defunción)
+            // Devuelve SOLO los top N ordenados por la suma de ambas series.
+            function groupTopNCompare(labels, aCounts, bCounts, limitValue) {
+                if (!Array.isArray(labels) || labels.length === 0) return { labels: ['Sin datos'], aCounts: [0], bCounts: [0] };
+                const topN = (limitValue && limitValue !== 'all') ? Number(limitValue) : labels.length;
+                if (!Number.isFinite(topN) || topN <= 0) return { labels: ['Sin datos'], aCounts: [0], bCounts: [0] };
+                if (labels.length <= topN) return { labels: labels.slice(), aCounts: aCounts.slice().map(n=>Number(n)||0), bCounts: bCounts.slice().map(n=>Number(n)||0) };
+
+                const arr = labels.map((lab, i) => ({ label: lab, a: Number(aCounts[i]) || 0, b: Number(bCounts[i]) || 0, sum: (Number(aCounts[i]) || 0) + (Number(bCounts[i]) || 0) }));
+                // ordenar por suma (desc)
+                arr.sort((x, y) => y.sum - x.sum);
+
+                const top = arr.slice(0, topN);
+                const outLabels = top.map(x => x.label);
+                const outA = top.map(x => x.a);
+                const outB = top.map(x => x.b);
+
+                return { labels: outLabels, aCounts: outA, bCounts: outB };
+            }
+
             // Calcular un stepSize "agradable" para el eje Y (1,2,5 * 10^n) para ~5-8 ticks
             function niceStep(maxValue, targetTicks = 6) {
                 if (!isFinite(maxValue) || maxValue <= 0) return 1;
@@ -631,16 +1009,22 @@
                     y.beginAtZero = true;
                     // compute step from suggestedMax
                     const step = niceStep(suggestedMax || (y.suggestedMax || 0));
-                    y.ticks = y.ticks || {};
-                    y.ticks.stepSize = step;
-                    // force integer ticks and format with thousands separator
-                    y.ticks.callback = function(value) {
-                        // only show integers on axis
-                        const v = Number(value);
-                        if (!Number.isFinite(v)) return value;
-                        // Show integer tick; avoid decimals
-                        return Math.round(v).toLocaleString();
+                    
+                    // Recrear el objeto ticks completamente para evitar recursión
+                    y.ticks = {
+                        stepSize: step,
+                        callback: function(value, index, ticks) {
+                            // Asegurarse de que value es un número primitivo
+                            if (typeof value === 'object' && value !== null && value.value !== undefined) {
+                                value = value.value;
+                            }
+                            const v = Number(value);
+                            if (!Number.isFinite(v)) return '';
+                            // Show integer tick; avoid decimals
+                            return Math.round(v).toLocaleString();
+                        }
                     };
+                    
                     // Optionally set suggestedMax to a multiple of step so top tick is round
                     if (!y.suggestedMax || y.suggestedMax < suggestedMax) {
                         const top = Math.ceil((suggestedMax || 0) / step) * step;
@@ -751,22 +1135,54 @@
 
                 // Ajustar altura del wrapper dinámicamente según número de municipios (más etiquetas = más altura)
                 try {
+                    // Municipio: escala suave y con límite máximo para evitar ocupar toda la pantalla
                     const muniWrapper = document.getElementById('municipioChart')?.closest('.chart-wrapper');
                     if (muniWrapper) {
                         const labelCount = Array.isArray(m.labels) ? m.labels.length : 0;
-                        const base = 360; // altura por defecto (reducida para evitar exceso de espacio)
-                        const extraPer = 16; // px extra por etiqueta adicional
-                        const threshold = 10; // hasta 10 etiquetas no aumenta
+                        // base más compacto pero que puede crecer ligeramente según etiquetas
+                        const base = 300; // altura base más comedida
+                        const extraPer = 12; // px extra por etiqueta adicional (más suave)
+                        const threshold = 12; // no aumentamos hasta 12 etiquetas
                         const extra = labelCount > threshold ? (labelCount - threshold) * extraPer : 0;
-                        const newH = Math.max(base + extra, base);
+                        const maxH = 520; // cap máximo razonable
+                        const newH = Math.min(Math.max(base + extra, base), maxH);
                         muniWrapper.style.height = newH + 'px';
                     }
+
+                    // Género: normalmente dos segmentos — aseguramos un tamaño confortable pero no excesivo
+                    const generoWrapper = document.getElementById('generoChart')?.closest('.chart-wrapper');
+                    if (generoWrapper) {
+                        const gw = Math.max(280, Math.min(360, Math.floor(window.innerWidth * 0.32)));
+                        generoWrapper.style.height = gw + 'px';
+                    }
+
+                    // Causas: usar la misma heurística / tamaño que Género para mantener consistencia
+                    const causaWrapper = document.getElementById('causaChart')?.closest('.chart-wrapper');
+                    if (causaWrapper) {
+                        // reuse gw computed for genero (if available), fallback to a comfortable size
+                        const reuse = Math.max(280, Math.min(360, Math.floor(window.innerWidth * 0.32)));
+                        causaWrapper.style.height = reuse + 'px';
+                    }
+
+                    // Edad: adaptar a un tamaño cómodo similar a genero
+                    const edadWrapper = document.getElementById('edadChart')?.closest('.chart-wrapper');
+                    if (edadWrapper) {
+                        const ew = Math.max(300, Math.min(360, Math.floor(window.innerWidth * 0.32)));
+                        edadWrapper.style.height = ew + 'px';
+                    }
                 } catch (e) {
-                    console.warn('No se pudo ajustar altura dinámica de municipios:', e);
+                    console.warn('No se pudo ajustar altura dinámica de municipios/género/causas:', e);
                 }
 
-                charts.municipioChart.data.labels = m.labels;
-                charts.municipioChart.data.datasets[0].data = m.counts;
+                // Agrupar Top N según el selector chartLimit (si está presente)
+                const limitVal = document.getElementById('chartLimit')?.value || 'all';
+                const muniGrouped = groupTopN(m.labels, m.counts, limitVal, 'Otros');
+                charts.municipioChart.data.labels = muniGrouped.labels;
+                charts.municipioChart.data.datasets[0].data = muniGrouped.counts;
+                // Aplicar paleta monocromática para mejor apariencia con muchas categorías
+                const muniPalette = getPalette(muniGrouped.labels.length, 0.7, true);
+                charts.municipioChart.data.datasets[0].backgroundColor = muniPalette.background;
+                charts.municipioChart.data.datasets[0].borderColor = muniPalette.border;
                 // Update dataset label to reflect whether we're grouping by residence or death
                 charts.municipioChart.data.datasets[0].label = (selectedMunKind === 'residence') ? 'Defunciones (residencia)' : 'Defunciones (defunción)';
                 // aplicar escala agradable según el máximo del dataset
@@ -777,6 +1193,15 @@
                 const t = normalizeDataset(resp.meses.labels, resp.meses.counts);
                 charts.tendenciaChart.data.labels = t.labels;
                 charts.tendenciaChart.data.datasets[0].data = t.counts;
+                // Aplicar color de la paleta para la línea
+                const trendPalette = getPalette(1, 0.2);
+                const trendBorder = getPalette(1, 1.0);
+                charts.tendenciaChart.data.datasets[0].backgroundColor = trendPalette.background[0];
+                charts.tendenciaChart.data.datasets[0].borderColor = trendBorder.border[0];
+                charts.tendenciaChart.data.datasets[0].pointBackgroundColor = trendBorder.border[0];
+                charts.tendenciaChart.data.datasets[0].pointBorderColor = '#fff';
+                charts.tendenciaChart.data.datasets[0].pointHoverBackgroundColor = '#fff';
+                charts.tendenciaChart.data.datasets[0].pointHoverBorderColor = trendBorder.border[0];
                 try { const maxT = Math.max(...(t.counts.map(c=>Number(c)||0))); applyNiceScaling(charts.tendenciaChart, maxT); } catch(e){}
                 charts.tendenciaChart.update();
 
@@ -796,6 +1221,10 @@
                 const e = normalizeDataset(resp.edades.labels, resp.edades.counts);
                 charts.edadChart.data.labels = e.labels;
                 charts.edadChart.data.datasets[0].data = e.counts;
+                // Aplicar paleta de colores
+                const edadPalette = getPalette(e.labels.length, 0.7);
+                charts.edadChart.data.datasets[0].backgroundColor = edadPalette.background;
+                charts.edadChart.data.datasets[0].borderColor = edadPalette.border;
                 try { const maxE = Math.max(...(e.counts.map(c=>Number(c)||0))); applyNiceScaling(charts.edadChart, maxE); } catch(e){}
                 charts.edadChart.update();
 
@@ -804,36 +1233,91 @@
                 const g = normalizeDataset(gLabels, resp.generos.counts);
                 charts.generoChart.data.labels = g.labels;
                 charts.generoChart.data.datasets[0].data = g.counts;
+                // Aplicar paleta de colores
+                const generoPalette = getPalette(g.labels.length, 0.7);
+                charts.generoChart.data.datasets[0].backgroundColor = generoPalette.background;
+                charts.generoChart.data.datasets[0].borderColor = generoPalette.border;
                 charts.generoChart.update();
 
-                // Causas
+                // Causas (aplicar Top N + Otros)
                 const c = normalizeDataset(resp.causas.labels, resp.causas.counts);
-                charts.causaChart.data.labels = c.labels;
-                charts.causaChart.data.datasets[0].data = c.counts;
+                const causaGrouped = groupTopN(c.labels, c.counts, limitVal, 'Otros');
+                charts.causaChart.data.labels = causaGrouped.labels;
+                charts.causaChart.data.datasets[0].data = causaGrouped.counts;
+                // Aplicar paleta de colores
+                const causaPalette = getPalette(causaGrouped.labels.length, 0.7);
+                charts.causaChart.data.datasets[0].backgroundColor = causaPalette.background;
+                charts.causaChart.data.datasets[0].borderColor = causaPalette.border;
                 charts.causaChart.update();
 
-                // Jurisdicciones (si vienen)
+                // Jurisdicciones (si vienen) - aplicar Top N
                 if (resp.jurisdictions) {
                     const j = normalizeDataset(resp.jurisdictions.labels, resp.jurisdictions.counts);
-                    charts.jurisdiccionChart.data.labels = j.labels;
-                    charts.jurisdiccionChart.data.datasets[0].data = j.counts;
-                    try { const maxJ = Math.max(...(j.counts.map(c=>Number(c)||0))); applyNiceScaling(charts.jurisdiccionChart, maxJ); } catch(e){}
+                    const jurGrouped = groupTopN(j.labels, j.counts, limitVal, 'Otros');
+                    charts.jurisdiccionChart.data.labels = jurGrouped.labels;
+                    charts.jurisdiccionChart.data.datasets[0].data = jurGrouped.counts;
+                    // Aplicar paleta monocromática para mejor apariencia con muchas categorías
+                    const jurPalette = getPalette(jurGrouped.labels.length, 0.7, true);
+                    charts.jurisdiccionChart.data.datasets[0].backgroundColor = jurPalette.background;
+                    charts.jurisdiccionChart.data.datasets[0].borderColor = jurPalette.border;
+                    try { const maxJ = Math.max(...(jurGrouped.counts.map(c=>Number(c)||0))); applyNiceScaling(charts.jurisdiccionChart, maxJ); } catch(e){}
                     charts.jurisdiccionChart.update();
                 }
 
-                // Comparativa residencia vs defuncion
+                // Comparativa residencia vs defuncion (aplicar Top N sobre la suma de ambas series)
                 if (resp.municipios_compare) {
                     const labels = resp.municipios_compare.labels || [];
                     const resCounts = resp.municipios_compare.residence_counts || [];
                     const deathCounts = resp.municipios_compare.death_counts || [];
-                    // normalize to at least show something
-                    const cmp = normalizeDataset(labels, resCounts);
-                    charts.compareChart.data.labels = cmp.labels;
-                    charts.compareChart.data.datasets[0].data = resCounts;
-                    charts.compareChart.data.datasets[1].data = deathCounts;
-                    try { const both = resCounts.concat(deathCounts).map(c=>Number(c)||0); const maxC = both.length ? Math.max(...both) : 0; applyNiceScaling(charts.compareChart, maxC); } catch(e){}
+                    const cmpGrouped = groupTopNCompare(labels, resCounts, deathCounts, limitVal, 'Otros');
+                    charts.compareChart.data.labels = cmpGrouped.labels;
+                    charts.compareChart.data.datasets[0].data = cmpGrouped.aCounts;
+                    charts.compareChart.data.datasets[1].data = cmpGrouped.bCounts;
+                    // Usar solo 2 colores fijos: uno para Residencia y otro para Defunción
+                    // Residencia: gris/azul neutro, Defunción: primer color de la paleta seleccionada
+                    const cmpPalette = getPalette(2, 0.7);
+                    charts.compareChart.data.datasets[0].backgroundColor = 'rgba(100, 116, 139, 0.7)'; // Residencia en gris neutro
+                    charts.compareChart.data.datasets[0].borderColor = 'rgba(100, 116, 139, 1)';
+                    charts.compareChart.data.datasets[1].backgroundColor = cmpPalette.background[0]; // Defunción con primer color de paleta
+                    charts.compareChart.data.datasets[1].borderColor = cmpPalette.border[0];
+                    try { const both = cmpGrouped.aCounts.concat(cmpGrouped.bCounts).map(c=>Number(c)||0); const maxC = both.length ? Math.max(...both) : 0; applyNiceScaling(charts.compareChart, maxC); } catch(e){}
                     charts.compareChart.update();
                 }
+
+                // Update badges / totals for each chart (show quick total)
+                try {
+                    function setBadge(chartId, text) {
+                        const el = document.querySelector(`.chart-total-badge[data-chart-id="${chartId}"]`);
+                        if (!el) return;
+                        el.textContent = text;
+                    }
+
+                    // municipio totals: show number of municipios included + total defunciones
+                    const muniLabelsCount = (resp.municipios && Array.isArray(resp.municipios.labels)) ? resp.municipios.labels.length : 0;
+                    const totalMunicipios = (resp.municipios && Array.isArray(resp.municipios.counts)) ? resp.municipios.counts.reduce((a,b)=>a+(Number(b)||0),0) : 0;
+                    if (muniLabelsCount) setBadge('municipioChart', `Municipios: ${muniLabelsCount} · Total: ${totalMunicipios.toLocaleString()}`);
+                    else setBadge('municipioChart', totalMunicipios ? `Total: ${totalMunicipios.toLocaleString()}` : 'Sin datos');
+
+                    // tendencia total (already calculated earlier as sum of meses)
+                    const totalT = (resp.meses && Array.isArray(resp.meses.counts)) ? resp.meses.counts.reduce((a,b)=>a+(Number(b)||0),0) : 0;
+                    setBadge('tendenciaChart', totalT ? `Total: ${totalT.toLocaleString()}` : 'Sin datos');
+
+                    // edades
+                    const totalE = (resp.edades && Array.isArray(resp.edades.counts)) ? resp.edades.counts.reduce((a,b)=>a+(Number(b)||0),0) : 0;
+                    setBadge('edadChart', totalE ? `Total: ${totalE.toLocaleString()}` : 'Sin datos');
+
+                    // genero
+                    const totalG = (resp.generos && Array.isArray(resp.generos.counts)) ? resp.generos.counts.reduce((a,b)=>a+(Number(b)||0),0) : 0;
+                    setBadge('generoChart', totalG ? `Total: ${totalG.toLocaleString()}` : 'Sin datos');
+
+                    // causas
+                    const totalC = (resp.causas && Array.isArray(resp.causas.counts)) ? resp.causas.counts.reduce((a,b)=>a+(Number(b)||0),0) : 0;
+                    setBadge('causaChart', totalC ? `Total: ${totalC.toLocaleString()}` : 'Sin datos');
+
+                    // jurisdiccion
+                    const totalJ = (resp.jurisdictions && Array.isArray(resp.jurisdictions.counts)) ? resp.jurisdictions.counts.reduce((a,b)=>a+(Number(b)||0),0) : 0;
+                    setBadge('jurisdiccionChart', totalJ ? `Total: ${totalJ.toLocaleString()}` : 'Sin datos');
+                } catch (e) { console.warn('No se pudo actualizar badges:', e); }
             }
 
             // Build request params from the filters UI (maps ids to the endpoint query params)
@@ -1005,18 +1489,232 @@
                     });
             }
 
-            // Exponer función para ser invocada desde el panel de filtros
+            // Exponer funciones para ser invocadas desde el panel de filtros
             window.loadCharts = loadCharts;
+            window.resetChartsToDefault = resetChartsToDefault;
 
-            // Escuchar cambios en los filtros
-            const filtrosContainer = document.getElementById('estadisticas-filtros');
-            if (filtrosContainer) {
-                filtrosContainer.addEventListener('change', loadChartsDebounced);
-                filtrosContainer.addEventListener('input', loadChartsDebounced);
+            // (quick presets removed)
+
+            // Ya NO escuchamos cambios automáticos en los filtros
+            // const filtrosContainer = document.getElementById('estadisticas-filtros');
+            // if (filtrosContainer) {
+            //     filtrosContainer.addEventListener('change', loadChartsDebounced);
+            //     filtrosContainer.addEventListener('input', loadChartsDebounced);
+            // }
+
+            // Escuchar el botón "Aplicar Filtros"
+            const aplicarFiltrosBtn = document.getElementById('aplicarFiltros');
+            if (aplicarFiltrosBtn) {
+                aplicarFiltrosBtn.addEventListener('click', function() {
+                    loadChartsDebounced();
+                });
+            }
+
+            // Escuchar el botón "Limpiar" para reiniciar gráficos
+            const limpiarFiltrosBtn = document.getElementById('limpiarFiltros');
+            if (limpiarFiltrosBtn) {
+                limpiarFiltrosBtn.addEventListener('click', function() {
+                    // Reiniciar controles de gráficos a valores por defecto
+                    resetChartsToDefault();
+                    // Cargar gráficos con filtros vacíos (todos los datos)
+                    setTimeout(() => loadChartsDebounced(), 100);
+                });
+            }
+
+            // Función para reiniciar todos los controles de gráficos a valores por defecto
+            function resetChartsToDefault() {
+                try {
+                    // Reiniciar selector de etiquetas (datalabels)
+                    const dlSelect = document.getElementById('datalabelMode');
+                    if (dlSelect) {
+                        dlSelect.value = 'auto';
+                        dataLabelMode = 'auto';
+                    }
+
+                    // Reiniciar selector de límite (Top N)
+                    const limitSelect = document.getElementById('chartLimit');
+                    if (limitSelect) {
+                        limitSelect.value = 'all';
+                    }
+
+                    // Reiniciar selector de paleta
+                    const paletteSelect = document.getElementById('colorPalette');
+                    if (paletteSelect) {
+                        paletteSelect.value = 'principal';
+                        selectedPalette = 'principal';
+                    }
+
+                    // Reiniciar toggle de municipios a valor por defecto (residencia)
+                    const muniKindToggle = document.getElementById('municipioKindToggle');
+                    if (muniKindToggle) {
+                        const buttons = muniKindToggle.querySelectorAll('.mun-kind-btn');
+                        buttons.forEach(btn => {
+                            btn.classList.remove('bg-[#611132]', 'text-white');
+                            btn.classList.add('bg-transparent', 'text-gray-600');
+                        });
+                        const residenceBtn = muniKindToggle.querySelector('.mun-kind-btn[data-value="residence"]');
+                        if (residenceBtn) {
+                            residenceBtn.classList.remove('bg-transparent', 'text-gray-600');
+                            residenceBtn.classList.add('bg-[#611132]', 'text-white');
+                        }
+                        selectedMunKind = 'residence';
+                    }
+
+                    // Reiniciar botones de tipo de gráfico a sus valores por defecto
+                    Object.keys(charts).forEach(chartId => {
+                        const container = document.querySelector(`#${chartId}`).closest('.chart-card');
+                        if (!container) return;
+                        
+                        const buttons = container.querySelectorAll('.chart-type-btn');
+                        buttons.forEach(btn => {
+                            btn.classList.remove('active', 'bg-[#611132]', 'text-white');
+                            btn.classList.add('bg-transparent', 'text-gray-600');
+                        });
+
+                        // Activar botón por defecto según el tipo de gráfico
+                        let defaultType = 'bar';
+                        if (chartId === 'tendenciaChart') defaultType = 'line';
+                        else if (chartId === 'generoChart' || chartId === 'causaChart') defaultType = 'doughnut';
+
+                        const defaultBtn = container.querySelector(`.chart-type-btn[data-chart-type="${defaultType}"]`);
+                        if (defaultBtn) {
+                            defaultBtn.classList.add('active', 'bg-[#611132]', 'text-white');
+                            defaultBtn.classList.remove('bg-transparent', 'text-gray-600');
+                        }
+
+                        // Recrear gráfico con tipo por defecto si es necesario
+                        const currentChart = charts[chartId];
+                        if (currentChart && currentChart.config?.type !== defaultType) {
+                            recreateChart(chartId, defaultType);
+                        }
+                    });
+
+                    console.log('Controles de gráficos reiniciados a valores por defecto');
+                } catch (e) {
+                    console.warn('Error reiniciando controles de gráficos:', e);
+                }
+            }
+
+            // Wire datalabel mode select
+            const dlSelect = document.getElementById('datalabelMode');
+            if (dlSelect) {
+                // initialize from select value
+                dataLabelMode = dlSelect.value || 'auto';
+                dlSelect.addEventListener('change', function() {
+                    dataLabelMode = this.value || 'auto';
+                    // Recreate charts so new options (including datalabels formatters) are applied reliably.
+                    try {
+                        const chartIds = ['municipioChart','tendenciaChart','edadChart','generoChart','causaChart','jurisdiccionChart','compareChart'];
+                        chartIds.forEach(id => {
+                            const inst = charts[id];
+                            const currentType = inst?.config?.type || inst?.options?.type || (id === 'tendenciaChart' ? 'line' : 'bar');
+                            if (inst) recreateChart(id, currentType);
+                        });
+                    } catch (e) { console.warn('Error recreating charts for datalabel mode change', e); }
+                });
+            }
+
+            // Wire chart limit (Top N) select - placed outside the filters container so we must explicitly listen
+            const limitSelect = document.getElementById('chartLimit');
+            if (limitSelect) {
+                // ensure default exists
+                if (!limitSelect.value) limitSelect.value = 'all';
+                limitSelect.addEventListener('change', function() {
+                    // trigger a reload so backend receives the `limit` param and charts update accordingly
+                    try { loadChartsDebounced(); } catch (e) { console.warn('Error triggering reload on chartLimit change', e); }
+                });
+            }
+
+            // Wire color palette select
+            const paletteSelect = document.getElementById('colorPalette');
+            if (paletteSelect) {
+                // ensure default exists
+                if (!paletteSelect.value) paletteSelect.value = 'principal';
+                paletteSelect.addEventListener('change', function() {
+                    selectedPalette = this.value || 'principal';
+                    // Actualizar los colores de todos los gráficos
+                    try {
+                        Object.keys(charts).forEach(chartId => {
+                            const chart = charts[chartId];
+                            if (!chart || !chart.data || !chart.data.datasets) return;
+                            
+                            // El gráfico comparativo usa solo 2 colores fijos
+                            if (chartId === 'compareChart') {
+                                const cmpPalette = getPalette(2, 0.7);
+                                chart.data.datasets[0].backgroundColor = 'rgba(100, 116, 139, 0.7)'; // Residencia
+                                chart.data.datasets[0].borderColor = 'rgba(100, 116, 139, 1)';
+                                chart.data.datasets[1].backgroundColor = cmpPalette.background[0]; // Defunción
+                                chart.data.datasets[1].borderColor = cmpPalette.border[0];
+                            } else if (chartId === 'municipioChart' || chartId === 'jurisdiccionChart') {
+                                // Municipios y jurisdicciones usan paleta monocromática
+                                const dataLength = chart.data.labels ? chart.data.labels.length : 0;
+                                const palette = getPalette(dataLength, 0.7, true);
+                                
+                                // Actualizar colores de cada dataset
+                                chart.data.datasets.forEach(dataset => {
+                                    if (dataset) {
+                                        dataset.backgroundColor = palette.background;
+                                        dataset.borderColor = palette.border;
+                                    }
+                                });
+                            } else {
+                                // Otros gráficos usan la paleta completa multicolor
+                                const dataLength = chart.data.labels ? chart.data.labels.length : 0;
+                                const palette = getPalette(dataLength, 0.7);
+                                
+                                // Actualizar colores de cada dataset
+                                chart.data.datasets.forEach(dataset => {
+                                    if (dataset) {
+                                        dataset.backgroundColor = palette.background;
+                                        dataset.borderColor = palette.border;
+                                    }
+                                });
+                            }
+                            
+                            chart.update();
+                        });
+                    } catch (e) {
+                        console.warn('Error actualizando paleta de colores:', e);
+                    }
+                });
             }
 
             // Cargar inicialmente (sin filtros)
             loadCharts();
+
+            // Sincronizar botones de tipo de gráfico con el tipo real de cada chart
+            function syncChartTypeButtons() {
+                Object.keys(charts).forEach(chartId => {
+                    const chart = charts[chartId];
+                    if (!chart) return;
+                    
+                    const realType = chart.config?.type || chart.options?.type;
+                    const container = document.querySelector(`#${chartId}`).closest('.chart-card');
+                    if (!container) return;
+                    
+                    // Determinar si es tipo 'area' (line con fill: true)
+                    let displayType = realType;
+                    if (realType === 'line' && chart.data.datasets[0]?.fill === true) {
+                        displayType = 'area';
+                    }
+                    
+                    // Encontrar todos los botones de tipo en este contenedor
+                    const buttons = container.querySelectorAll('.chart-type-btn');
+                    buttons.forEach(btn => {
+                        btn.classList.remove('active', 'bg-[#611132]', 'text-white');
+                        btn.classList.add('bg-transparent', 'text-gray-600');
+                        
+                        // Marcar como activo el que coincide con el tipo de display
+                        if (btn.getAttribute('data-chart-type') === displayType) {
+                            btn.classList.add('active', 'bg-[#611132]', 'text-white');
+                            btn.classList.remove('bg-transparent', 'text-gray-600');
+                        }
+                    });
+                });
+            }
+
+            // Sincronizar después de crear los gráficos
+            setTimeout(syncChartTypeButtons, 100);
 
             // Lógica para selectores de fecha condicionales
             const dateRangeSelect = document.querySelector('select');
