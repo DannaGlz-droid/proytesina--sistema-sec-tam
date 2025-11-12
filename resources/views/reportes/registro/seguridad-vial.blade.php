@@ -1,15 +1,49 @@
 @extends('layouts.principal')
-@section('title', 'Registro de Actividades')
+@section('title', isset($publication) ? 'Editar Actividad' : 'Registro de Actividades')
 @section('content')
 
     @include('components.header-admin')
     @include('components.nav-reportes')
 
     <div class="px-4 lg:pl-10 pt-6 lg:pt-10 pb-8 lg:pb-12">
-        <h1 class="text-2xl lg:text-3xl font-lora font-bold text-[#404041] mb-3">Registro de actividades</h1>
-        <p class="text-sm lg:text-base text-[#404041] font-lora mb-6">Complete el formulario para registrar las actividades correspondientes.</p>
+        <h1 class="text-2xl lg:text-3xl font-lora font-bold text-[#404041] mb-3">
+            {{ isset($publication) ? 'Editar actividad' : 'Registro de actividades' }}
+        </h1>
+        <p class="text-sm lg:text-base text-[#404041] font-lora mb-6">Complete el formulario para {{ isset($publication) ? 'actualizar' : 'registrar' }} las actividades correspondientes.</p>
+
+        <!-- Mensajes de error -->
+        @if(session('error'))
+            <div class="mb-6 bg-red-50 border-l-4 border-red-500 p-4 rounded-lg shadow-sm">
+                <div class="flex items-center">
+                    <i class="fas fa-exclamation-circle text-red-500 text-xl mr-3"></i>
+                    <p class="text-sm text-red-800 font-lora font-medium">{{ session('error') }}</p>
+                </div>
+            </div>
+        @endif
+
+        @if($errors->any())
+            <div class="mb-6 bg-red-50 border-l-4 border-red-500 p-4 rounded-lg shadow-sm">
+                <div class="flex items-start">
+                    <i class="fas fa-exclamation-circle text-red-500 text-xl mr-3 mt-0.5"></i>
+                    <div>
+                        <p class="text-sm text-red-800 font-lora font-semibold mb-2">Errores de validación:</p>
+                        <ul class="list-disc list-inside text-sm text-red-700 font-lora space-y-1">
+                            @foreach($errors->all() as $error)
+                                <li>{{ $error }}</li>
+                            @endforeach
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        @endif
 
         <!-- Cuadro del formulario responsive -->
+        <form action="{{ isset($publication) ? route('reportes.seguridad-vial.update', $publication) : route('reportes.seguridad-vial.store') }}" method="POST" enctype="multipart/form-data">
+            @csrf
+            @if(isset($publication))
+                @method('PUT')
+            @endif
+            
         <div class="border border-[#404041] rounded-lg lg:rounded-xl p-4 lg:p-6 bg-white bg-opacity-95 max-w-7xl shadow-md">
             
             <!-- Sección 1: Información general -->
@@ -25,51 +59,64 @@
                         <div>
                             <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Tema *</label>
                             <input type="text" 
+                                   name="tema"
                                    class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora" 
                                    placeholder="Ej: Prevención de enfermedades"
-                                   value="{{ old('tema') }}">
+                                   value="{{ old('tema', isset($publication) ? $publication->topic : '') }}"
+                                   required>
                         </div>
 
                         <div>
                             <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Fecha de la actividad *</label>
                             <input type="date" 
+                                   name="fecha"
                                    class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora"
-                                   value="{{ old('fecha_actividad') }}">
+                                   value="{{ old('fecha', isset($publication) ? $publication->activity_date->format('Y-m-d') : '') }}"
+                                   required>
                         </div>
                         <div>
                             <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Lugar *</label>
                             <input type="text" 
+                                   name="lugar"
                                    class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora" 
                                    placeholder="Ej: Salón de usos múltiples"
-                                   value="{{ old('lugar') }}">
+                                   value="{{ old('lugar', isset($report) ? $report->location : '') }}"
+                                   required>
                         </div>
                     </div>
                     
                     <div class="space-y-3">
                          <div>
                             <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Tipo de actividad *</label>
-                            <select class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora" name="tipo_actividad">
+                            <select class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora" name="activity_type_id" required>
                                 <option value="">Seleccione el tipo de actividad</option>
-                                <option value="capacitacion">Capacitación</option>
-                                <option value="taller">Taller</option>
-                                <option value="conferencia">Conferencia</option>
-                                <option value="reunion">Reunión</option>
-                                <option value="evento">Evento especial</option>
+                                @php
+                                    $selectedActivity = old('activity_type_id', isset($report) ? $report->activity_type_id : '');
+                                @endphp
+                                <option value="1" {{ $selectedActivity == '1' ? 'selected' : '' }}>Capacitación</option>
+                                <option value="2" {{ $selectedActivity == '2' ? 'selected' : '' }}>Taller</option>
+                                <option value="3" {{ $selectedActivity == '3' ? 'selected' : '' }}>Conferencia</option>
+                                <option value="4" {{ $selectedActivity == '4' ? 'selected' : '' }}>Reunión</option>
+                                <option value="5" {{ $selectedActivity == '5' ? 'selected' : '' }}>Evento especial</option>
                             </select>
                         </div>
                         <div>
                             <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Participantes *</label>
                             <input type="number" 
+                                   name="participantes"
                                    class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora" 
                                    placeholder="Ej: 25"
-                                   value="{{ old('participantes') }}">
+                                   value="{{ old('participantes', isset($report) ? $report->participants : '') }}"
+                                   required>
                         </div>
                         <div>
                             <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Promotor *</label>
                             <input type="text" 
+                                   name="promotor"
                                    class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora" 
                                    placeholder="Ej: Departamento de Salud"
-                                   value="{{ old('promotor') }}">
+                                   value="{{ old('promotor', isset($report) ? $report->promoter : '') }}"
+                                   required>
                         </div>
                     </div>
                 </div>
@@ -90,10 +137,11 @@
                     <div>
                         <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Descripción de la actividad *</label>
                         <textarea 
+                            name="descripcion"
                             class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora" 
                             rows="4"
                             placeholder="Describa los detalles de la actividad, objetivos, desarrollo y resultados..."
-                        >{{ old('descripcion') }}</textarea>
+                        >{{ old('descripcion', isset($publication) ? $publication->description : '') }}</textarea>
                     </div>
                 </div>
             </div>
@@ -110,6 +158,56 @@
                 </div>
                 
                 <div class="space-y-4">
+                    <!-- Archivos existentes (solo en modo edición) -->
+                    @if(isset($publication) && $publication->files->count() > 0)
+                        <div class="mb-4">
+                            <div class="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                                <p class="font-medium mb-3 font-lora text-sm text-[#404041] flex items-center">
+                                    <ion-icon name="folder-open-outline" class="text-lg mr-2"></ion-icon>
+                                    Archivos actuales ({{ $publication->files->count() }})
+                                </p>
+                                <ul class="space-y-2">
+                                    @foreach($publication->files as $file)
+                                        <li class="flex items-center justify-between py-2 px-3 hover:bg-white rounded-lg border border-gray-200 transition-all duration-200 font-lora bg-white shadow-sm">
+                                            <div class="flex items-center flex-1 min-w-0">
+                                                @php
+                                                    $extension = pathinfo($file->original_name, PATHINFO_EXTENSION);
+                                                    $iconConfig = match(strtolower($extension)) {
+                                                        'pdf' => ['icon' => 'document-text-outline', 'color' => 'text-blue-500', 'bg' => 'bg-blue-50'],
+                                                        'xlsx', 'xls' => ['icon' => 'stats-chart-outline', 'color' => 'text-green-500', 'bg' => 'bg-green-50'],
+                                                        'jpg', 'jpeg', 'png' => ['icon' => 'image-outline', 'color' => 'text-purple-500', 'bg' => 'bg-purple-50'],
+                                                        default => ['icon' => 'document-outline', 'color' => 'text-gray-400', 'bg' => 'bg-gray-50']
+                                                    };
+                                                @endphp
+                                                <div class="flex-shrink-0 w-10 h-10 flex items-center justify-center rounded-lg {{ $iconConfig['bg'] }}">
+                                                    <ion-icon name="{{ $iconConfig['icon'] }}" class="{{ $iconConfig['color'] }} text-xl"></ion-icon>
+                                                </div>
+                                                <div class="ml-3 flex-1 min-w-0">
+                                                    <p class="text-sm font-medium text-[#404041] truncate">{{ $file->original_name }}</p>
+                                                    <p class="text-xs text-gray-500">{{ number_format($file->file_size / 1024 / 1024, 2) }} MB</p>
+                                                </div>
+                                            </div>
+                                            <button type="button" 
+                                                    onclick="if(confirm('¿Eliminar este archivo?')) { document.getElementById('delete-file-{{ $file->id }}').submit(); }"
+                                                    class="ml-3 flex-shrink-0 w-8 h-8 flex items-center justify-center rounded-lg text-red-500 hover:bg-red-50 hover:text-red-700 transition-all duration-200" 
+                                                    title="Eliminar archivo">
+                                                <ion-icon name="trash-outline" class="text-lg"></ion-icon>
+                                            </button>
+                                        </li>
+                                        <!-- Form oculto para eliminar archivo -->
+                                        <form id="delete-file-{{ $file->id }}" 
+                                              method="POST" 
+                                              action="{{ route('reportes.file.delete', $file) }}" 
+                                              class="hidden">
+                                            @csrf
+                                            @method('DELETE')
+                                        </form>
+                                    @endforeach
+                                </ul>
+                            </div>
+                        </div>
+                    @endif
+
                     <!-- Tres cuadros en una fila horizontal -->
                     <div class="flex flex-col lg:flex-row gap-4 mb-4">
                         <!-- (1) Documento PDF -->
@@ -119,9 +217,11 @@
                                     <ion-icon name="document-outline" class="text-blue-500 mr-2 text-lg"></ion-icon>
                                     <span class="text-sm font-medium text-[#404041] font-lora">Documento PDF</span>
                                 </div>
-                                <span id="pdf-status" class="text-xs px-2 py-1 bg-yellow-100 text-yellow-800 rounded font-lora">Pendiente</span>
+                                <span id="pdf-status" class="text-xs px-2 py-1 bg-yellow-100 text-yellow-800 rounded font-lora">
+                                    {{ isset($publication) ? 'Opcional' : 'Pendiente' }}
+                                </span>
                             </div>
-                            <p class="text-xs text-gray-600 font-lora">Formato: PDF (obligatorio)</p>
+                            <p class="text-xs text-gray-600 font-lora">Formato: PDF {{ isset($publication) ? '(opcional)' : '(obligatorio)' }}</p>
                         </div>
 
                         <!-- (2) Hoja de Cálculo -->
@@ -131,9 +231,11 @@
                                     <ion-icon name="stats-chart-outline" class="text-green-500 mr-2 text-lg"></ion-icon>
                                     <span class="text-sm font-medium text-[#404041] font-lora">Hoja de Cálculo</span>
                                 </div>
-                                <span id="excel-status" class="text-xs px-2 py-1 bg-yellow-100 text-yellow-800 rounded font-lora">Pendiente</span>
+                                <span id="excel-status" class="text-xs px-2 py-1 bg-yellow-100 text-yellow-800 rounded font-lora">
+                                    {{ isset($publication) ? 'Opcional' : 'Pendiente' }}
+                                </span>
                             </div>
-                            <p class="text-xs text-gray-600 font-lora">Formato: XLSX (obligatorio)</p>
+                            <p class="text-xs text-gray-600 font-lora">Formato: XLSX {{ isset($publication) ? '(opcional)' : '(obligatorio)' }}</p>
                         </div>
 
                         <!-- (3) Fotografías -->
@@ -143,9 +245,11 @@
                                     <ion-icon name="images-outline" class="text-purple-500 mr-2 text-lg"></ion-icon>
                                     <span class="text-sm font-medium text-[#404041] font-lora">Fotografías</span>
                                 </div>
-                                <span id="photos-status" class="text-xs px-2 py-1 bg-yellow-100 text-yellow-800 rounded font-lora">0/4</span>
+                                <span id="photos-status" class="text-xs px-2 py-1 bg-yellow-100 text-yellow-800 rounded font-lora">
+                                    {{ isset($publication) ? 'Opcional' : '0/4' }}
+                                </span>
                             </div>
-                            <p class="text-xs text-gray-600 font-lora">Formatos: JPG, JPEG, PNG (4 fotos obligatorias)</p>
+                            <p class="text-xs text-gray-600 font-lora">Formatos: JPG, JPEG, PNG {{ isset($publication) ? '(opcional)' : '(4 fotos obligatorias)' }}</p>
                         </div>
                     </div>
 
@@ -160,7 +264,7 @@
                                    class="hidden"
                                    accept=".pdf,.xlsx,.xls,.jpg,.jpeg,.png"
                                    multiple
-                                   onchange="updateFileStatus()">
+                                   onchange="addFiles(this.files)">
                             
                             <div class="cursor-pointer" onclick="document.getElementById('file-input').click()">
                                 <ion-icon name="cloud-upload-outline" class="text-4xl text-gray-400 mb-3"></ion-icon>
@@ -170,13 +274,21 @@
                                 <p class="text-xs text-gray-500 font-lora">
                                     Formatos permitidos: PDF, XLSX, XLS, JPG, JPEG, PNG
                                 </p>
+                                <p class="text-xs text-blue-600 font-lora mt-2">
+                                    Puede seleccionar múltiples archivos a la vez
+                                </p>
                             </div>
                         </div>
                         
                         <!-- Información de archivos seleccionados -->
-                        <div id="file-list" class="mt-3 text-xs text-gray-600 hidden">
-                            <p class="font-medium mb-1 font-lora">Archivos seleccionados:</p>
-                            <ul id="file-names" class="space-y-1"></ul>
+                        <div id="file-list" class="mt-4 hidden">
+                            <div class="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                                <p class="font-medium mb-3 font-lora text-sm text-[#404041] flex items-center">
+                                    <ion-icon name="folder-open-outline" class="text-lg mr-2"></ion-icon>
+                                    Archivos agregados
+                                </p>
+                                <ul id="file-names" class="space-y-2"></ul>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -194,13 +306,38 @@
                 secondaryOnclick="clearSeguridadVialForm()"
             />
         </div>
+        </form>
     </div>
 
     <!-- Script para manejo de archivos -->
     <script>
+        // Array para almacenar todos los archivos seleccionados
+        let selectedFiles = [];
+        
+        function addFiles(newFiles) {
+            // Agregar nuevos archivos al array
+            for (let i = 0; i < newFiles.length; i++) {
+                const file = newFiles[i];
+                // Verificar que el archivo no esté ya en la lista
+                const exists = selectedFiles.some(f => f.name === file.name && f.size === file.size);
+                if (!exists) {
+                    selectedFiles.push(file);
+                }
+            }
+            
+            // Actualizar la visualización
+            updateFileStatus();
+            
+            // Limpiar el input para permitir seleccionar el mismo archivo de nuevo si se elimina
+            document.getElementById('file-input').value = '';
+        }
+        
+        function removeFile(index) {
+            selectedFiles.splice(index, 1);
+            updateFileStatus();
+        }
+        
         function updateFileStatus() {
-            const fileInput = document.getElementById('file-input');
-            const files = fileInput.files;
             const fileList = document.getElementById('file-list');
             const fileNames = document.getElementById('file-names');
             
@@ -212,30 +349,49 @@
             fileNames.innerHTML = '';
             
             // Contar archivos por tipo y mostrar nombres
-            for (let i = 0; i < files.length; i++) {
-                const file = files[i];
+            selectedFiles.forEach((file, index) => {
                 const extension = file.name.split('.').pop().toLowerCase();
                 
-                // Agregar a la lista
-                const listItem = document.createElement('li');
-                listItem.className = 'flex items-center font-lora';
-                listItem.innerHTML = `
-                    <ion-icon name="document-outline" class="text-gray-400 mr-2"></ion-icon>
-                    ${file.name} (${(file.size / 1024 / 1024).toFixed(2)} MB)
-                `;
-                fileNames.appendChild(listItem);
+                // Determinar icono y color según el tipo
+                let iconName = 'document-outline';
+                let iconColor = 'text-gray-400';
                 
                 if (extension === 'pdf') {
                     pdfCount++;
+                    iconName = 'document-text-outline';
+                    iconColor = 'text-blue-500';
                 } else if (extension === 'xlsx' || extension === 'xls') {
                     excelCount++;
+                    iconName = 'stats-chart-outline';
+                    iconColor = 'text-green-500';
                 } else if (['jpg', 'jpeg', 'png'].includes(extension)) {
                     photoCount++;
+                    iconName = 'image-outline';
+                    iconColor = 'text-purple-500';
                 }
-            }
+                
+                // Agregar a la lista con botón de eliminar
+                const listItem = document.createElement('li');
+                listItem.className = 'flex items-center justify-between py-2 px-3 hover:bg-white rounded-lg border border-gray-200 transition-all duration-200 font-lora bg-white shadow-sm';
+                listItem.innerHTML = `
+                    <div class="flex items-center flex-1 min-w-0">
+                        <div class="flex-shrink-0 w-10 h-10 flex items-center justify-center rounded-lg ${iconColor === 'text-blue-500' ? 'bg-blue-50' : iconColor === 'text-green-500' ? 'bg-green-50' : 'bg-purple-50'}">
+                            <ion-icon name="${iconName}" class="${iconColor} text-xl"></ion-icon>
+                        </div>
+                        <div class="ml-3 flex-1 min-w-0">
+                            <p class="text-sm font-medium text-[#404041] truncate">${file.name}</p>
+                            <p class="text-xs text-gray-500">${(file.size / 1024 / 1024).toFixed(2)} MB</p>
+                        </div>
+                    </div>
+                    <button type="button" onclick="removeFile(${index})" class="ml-3 flex-shrink-0 w-8 h-8 flex items-center justify-center rounded-lg text-red-500 hover:bg-red-50 hover:text-red-700 transition-all duration-200" title="Eliminar archivo">
+                        <ion-icon name="trash-outline" class="text-lg"></ion-icon>
+                    </button>
+                `;
+                fileNames.appendChild(listItem);
+            });
             
             // Mostrar/ocultar lista de archivos
-            if (files.length > 0) {
+            if (selectedFiles.length > 0) {
                 fileList.classList.remove('hidden');
             } else {
                 fileList.classList.add('hidden');
@@ -265,6 +421,9 @@
         function clearSeguridadVialForm() {
             if (confirm('¿Está seguro de que desea limpiar todos los campos del formulario?')) {
                 document.querySelector('form').reset();
+                // Limpiar archivos seleccionados
+                selectedFiles = [];
+                updateFileStatus();
                 // Resetear estados de archivos
                 document.getElementById('pdf-status').textContent = 'Pendiente';
                 document.getElementById('pdf-status').className = 'text-xs px-2 py-1 bg-yellow-100 text-yellow-800 rounded font-lora';
@@ -311,9 +470,64 @@
             function handleDrop(e) {
                 const dt = e.dataTransfer;
                 const files = dt.files;
-                fileInput.files = files;
-                updateFileStatus();
+                addFiles(files);
             }
+            
+            // Interceptar el envío del formulario para agregar los archivos
+            document.querySelector('form').addEventListener('submit', function(e) {
+                // Contar archivos por tipo
+                let pdfCount = 0;
+                let excelCount = 0;
+                let photoCount = 0;
+                
+                selectedFiles.forEach(file => {
+                    const extension = file.name.split('.').pop().toLowerCase();
+                    if (extension === 'pdf') pdfCount++;
+                    else if (extension === 'xlsx' || extension === 'xls') excelCount++;
+                    else if (['jpg', 'jpeg', 'png'].includes(extension)) photoCount++;
+                });
+                
+                // Validar que se cumplan los requisitos
+                if (selectedFiles.length === 0) {
+                    e.preventDefault();
+                    alert('Debe seleccionar al menos un archivo antes de enviar el formulario.');
+                    return false;
+                }
+                
+                if (pdfCount < 1) {
+                    e.preventDefault();
+                    alert('Debe incluir al menos 1 archivo PDF.');
+                    return false;
+                }
+                
+                if (excelCount < 1) {
+                    e.preventDefault();
+                    alert('Debe incluir al menos 1 archivo Excel (XLSX).');
+                    return false;
+                }
+                
+                if (photoCount < 4) {
+                    e.preventDefault();
+                    alert(`Debe incluir 4 fotografías. Actualmente tiene ${photoCount} foto(s).`);
+                    return false;
+                }
+                
+                // Crear un DataTransfer para poder asignar múltiples archivos al input
+                const dataTransfer = new DataTransfer();
+                selectedFiles.forEach(file => {
+                    dataTransfer.items.add(file);
+                });
+                
+                // Crear un input hidden con todos los archivos
+                const hiddenInput = document.createElement('input');
+                hiddenInput.type = 'file';
+                hiddenInput.name = 'archivos[]';
+                hiddenInput.multiple = true;
+                hiddenInput.files = dataTransfer.files;
+                hiddenInput.style.display = 'none';
+                
+                this.appendChild(hiddenInput);
+            });
         });
     </script>
 

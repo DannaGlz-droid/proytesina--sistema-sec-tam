@@ -2,17 +2,17 @@
     <!-- Logo del admin a la izquierda (reemplaza el punto) -->
     <div class="flex items-center space-x-3 ml-3 lg:ml-6">
         <!-- Logo admin: coloque el archivo en public/images/logo-admin.png -->
-        <img src="{{ asset('images/logo-secretaria.png') }}" alt="Logo Administración" class="h-7 lg:h-9 object-contain">
+        <img src="<?php echo e(asset('images/logo-secretaria.png')); ?>" alt="Logo Administración" class="h-7 lg:h-9 object-contain">
     </div>
 
     <!-- Botones y usuario a la derecha -->
     <div class="flex items-center">
         <!-- Botones que se ocultan en mobile -->
         <div class="hidden lg:flex items-center">
-            <a href="{{ route('reportes.index') }}" class="text-sm lg:text-base bg-header hover:bg-[#B23A6E] text-white py-1 lg:py-1 px-3 lg:px-4 rounded-md transition duration-200 ease-in-out mr-3 lg:mr-4 inline-flex items-center justify-center">
+            <a href="<?php echo e(route('reportes.index')); ?>" class="text-sm lg:text-base bg-header hover:bg-[#B23A6E] text-white py-1 lg:py-1 px-3 lg:px-4 rounded-md transition duration-200 ease-in-out mr-3 lg:mr-4 inline-flex items-center justify-center">
                 Reportes
             </a>
-            <a href="{{ route('statistic.data') }}" class="text-sm lg:text-base bg-header hover:bg-[#9B4D6E] hover:text-[#E8CA8B] text-white py-1 lg:py-1 px-3 lg:px-4 rounded-md transition duration-200 ease-in-out mr-3 lg:mr-4 inline-flex items-center justify-center">
+            <a href="<?php echo e(route('statistic.data')); ?>" class="text-sm lg:text-base bg-header hover:bg-[#9B4D6E] hover:text-[#E8CA8B] text-white py-1 lg:py-1 px-3 lg:px-4 rounded-md transition duration-200 ease-in-out mr-3 lg:mr-4 inline-flex items-center justify-center">
                 Estadísticas
             </a>
         </div>
@@ -87,15 +87,15 @@
         <!-- Avatar y nombre del usuario con dropdown responsive -->
         <div class="relative flex items-center" x-data="{ openProfile: false }">
             <!-- Área clickeable SOLO para ir al perfil -->
-            <a href="{{ route('usuario.miperfil') }}" class="flex items-center space-x-0 lg:space-x-1">
+            <a href="<?php echo e(route('usuario.miperfil')); ?>" class="flex items-center space-x-0 lg:space-x-1">
                 <!-- Avatar circular más grande -->
                 <div class="w-9 h-9 lg:w-11 lg:h-11 rounded-full overflow-hidden">
                     <ion-icon name="person-circle" class="text-white text-4xl lg:text-[44px]"></ion-icon>
                 </div>
                 <!-- Nombre y cargo - se oculta en mobile -->
                 <div class="text-left hidden lg:block">
-                    <p class="text-sm font-semibold">{{ auth()->user()->name }}</p>
-                    <p class="text-xs text-gray-300">{{ auth()->user()->position->name ?? 'Sin cargo' }}</p>
+                    <p class="text-sm font-semibold"><?php echo e(auth()->user()->name); ?></p>
+                    <p class="text-xs text-gray-300"><?php echo e(auth()->user()->position->name ?? 'Sin cargo'); ?></p>
                 </div>
             </a>
 
@@ -119,16 +119,16 @@
                 <!-- Encabezado del menú -->
                 <div class="px-3 lg:px-4 py-2 lg:py-3 border-b border-gray-100 bg-gray-50">
                     <p class="text-xs lg:text-sm font-medium text-gray-600">Cuenta</p>
-                    <p class="text-xs text-gray-500 mt-1">{{ auth()->user()->name }}</p>
+                    <p class="text-xs text-gray-500 mt-1"><?php echo e(auth()->user()->name); ?></p>
                 </div>
 
                 <!-- Opciones del menú -->
-                <a href="{{ route('usuario.miperfil') }}" class="flex items-center px-3 lg:px-4 py-2 lg:py-3 text-xs lg:text-sm text-gray-700 hover:bg-blue-50 transition-colors group">
+                <a href="<?php echo e(route('usuario.miperfil')); ?>" class="flex items-center px-3 lg:px-4 py-2 lg:py-3 text-xs lg:text-sm text-gray-700 hover:bg-blue-50 transition-colors group">
                     <ion-icon name="person" class="text-gray-400 group-hover:text-blue-600 mr-2 lg:mr-3 text-sm lg:text-base"></ion-icon>
                     <span class="font-medium">Mi Perfil</span>
                 </a>
 
-                <a href="{{ route('user.user-gestion') }}" class="flex items-center px-3 lg:px-4 py-2 lg:py-3 text-xs lg:text-sm text-gray-700 hover:bg-blue-50 transition-colors group">
+                <a href="<?php echo e(route('user.user-gestion')); ?>" class="flex items-center px-3 lg:px-4 py-2 lg:py-3 text-xs lg:text-sm text-gray-700 hover:bg-blue-50 transition-colors group">
                     <ion-icon name="people" class="text-gray-400 group-hover:text-blue-600 mr-2 lg:mr-3 text-sm lg:text-base"></ion-icon>
                     <span class="font-medium">Gestión de Usuarios</span>
                 </a>
@@ -137,8 +137,8 @@
                 <div class="border-t border-gray-100 my-1 lg:my-2"></div>
 
                 <!-- Cerrar sesión -->
-                <form method="POST" action="{{ route('logout') }}">
-                    @csrf
+                <form method="POST" action="<?php echo e(route('logout')); ?>">
+                    <?php echo csrf_field(); ?>
                     <button type="submit" class="w-full flex items-center px-3 lg:px-4 py-2 lg:py-3 text-xs lg:text-sm text-red-600 hover:bg-red-50 transition-colors group text-left">
                         <ion-icon name="log-out" class="text-red-400 group-hover:text-red-600 mr-2 lg:mr-3 text-sm lg:text-base"></ion-icon>
                         <span class="font-medium">Cerrar Sesión</span>
@@ -147,4 +147,4 @@
             </div>
         </div>
     </div>
-</div>
+</div><?php /**PATH C:\Proyectos Laravel\sistema-sec-tam\resources\views/components/header-admin.blade.php ENDPATH**/ ?>

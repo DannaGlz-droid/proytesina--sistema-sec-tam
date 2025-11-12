@@ -1,32 +1,32 @@
-@extends('layouts.principal')
-@section('title', 'Reportes')
-@section('content')
 
-    @include('components.header-admin')
-    @include('components.nav-reportes')
+<?php $__env->startSection('title', 'Reportes'); ?>
+<?php $__env->startSection('content'); ?>
+
+    <?php echo $__env->make('components.header-admin', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?>
+    <?php echo $__env->make('components.nav-reportes', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?>
 
     <div class="px-4 lg:pl-10 pt-6 lg:pt-10 pb-8 lg:pb-12">
         <h1 class="text-2xl lg:text-3xl font-lora font-bold text-[#404041] mb-3">Centro de Control</h1>
         <p class="text-sm lg:text-base text-[#404041] font-lora mb-6">Monitoreo y administración centralizada de reportes.</p>
 
         <!-- Mensajes de éxito y error -->
-        @if(session('success'))
+        <?php if(session('success')): ?>
             <div class="mb-6 bg-green-50 border-l-4 border-green-500 p-4 rounded-lg shadow-sm">
                 <div class="flex items-center">
                     <i class="fas fa-check-circle text-green-500 text-xl mr-3"></i>
-                    <p class="text-sm text-green-800 font-lora font-medium">{{ session('success') }}</p>
+                    <p class="text-sm text-green-800 font-lora font-medium"><?php echo e(session('success')); ?></p>
                 </div>
             </div>
-        @endif
+        <?php endif; ?>
 
-        @if(session('error'))
+        <?php if(session('error')): ?>
             <div class="mb-6 bg-red-50 border-l-4 border-red-500 p-4 rounded-lg shadow-sm">
                 <div class="flex items-center">
                     <i class="fas fa-exclamation-circle text-red-500 text-xl mr-3"></i>
-                    <p class="text-sm text-red-800 font-lora font-medium">{{ session('error') }}</p>
+                    <p class="text-sm text-red-800 font-lora font-medium"><?php echo e(session('error')); ?></p>
                 </div>
             </div>
-        @endif
+        <?php endif; ?>
 
         <!-- Contenedor principal -->
         <div class="border border-[#404041] rounded-lg lg:rounded-xl bg-white bg-opacity-95 max-w-full shadow-md overflow-hidden">
@@ -99,7 +99,7 @@
                 <!-- CONTADOR DE RESULTADOS -->
                 <div class="flex justify-between items-center mb-6">
                     <div class="text-xs text-gray-600 font-lora">
-                        <span class="font-semibold text-[#404041]">{{ $publications->count() }}</span> resultados encontrados
+                        <span class="font-semibold text-[#404041]"><?php echo e($publications->count()); ?></span> resultados encontrados
                     </div>
                     <div class="text-xs text-gray-500 font-lora">
                         <!-- Espacio para filtros adicionales si se necesitan -->
@@ -108,8 +108,8 @@
 
                 <!-- Grid de reportes - 4 columnas -->
                 <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-5 items-stretch">
-                    @forelse($publications as $pub)
-                        @php
+                    <?php $__empty_1 = true; $__currentLoopData = $publications; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $pub): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
+                        <?php
                             // Determinar tipo de reporte y sus datos específicos
                             $tipoDisplay = '';
                             $badgeClass = 'bg-[#4C8CC4] text-white';
@@ -180,52 +180,51 @@
                             // Archivos JSON
                             $archivosArray = $pub->files->pluck('original_name')->toArray();
                             $archivosJson = json_encode($archivosArray);
-                        @endphp
+                        ?>
 
-                        @php
+                        <?php
                             $user = $pub->user ?? null;
                             $uGiven = $user->name ?? '';
                             $uFirst = $user->first_last_name ?? '';
                             $uSecond = $user->second_last_name ?? '';
                             $uFull = trim(implode(' ', array_filter([$uGiven, $uFirst, $uSecond])));
                             $uShort = trim($uGiven . ($uFirst ? ' ' . $uFirst : '')) ?: 'Usuario';
-                        @endphp
+                        ?>
 
-                        <x-publicacion-card
-                            :tipo="$tipoDisplay"
-                            :titulo="$pub->topic"
-                            :fecha="$pub->publication_date->locale('es')->isoFormat('dddd, D [de] MMMM [de] YYYY')"
-                            :usuario="$uShort"
-                            :usuario_full="$uFull"
-                            :descripcion="$activityInfo"
-                            :archivosCount="$pub->files->count()"
-                            :badgeClass="$badgeClass"
-                            :badgeBorderClass="$badgeBorderClass"
-                            data-publication-tipo="{{ $pub->publication_type }}">
+                        <?php if (isset($component)) { $__componentOriginale6927a94816a78ea3a8d4a0fc9fc3d88 = $component; } ?>
+<?php if (isset($attributes)) { $__attributesOriginale6927a94816a78ea3a8d4a0fc9fc3d88 = $attributes; } ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.publicacion-card','data' => ['tipo' => $tipoDisplay,'titulo' => $pub->topic,'fecha' => $pub->publication_date->locale('es')->isoFormat('dddd, D [de] MMMM [de] YYYY'),'usuario' => $uShort,'usuarioFull' => $uFull,'descripcion' => $activityInfo,'archivosCount' => $pub->files->count(),'badgeClass' => $badgeClass,'badgeBorderClass' => $badgeBorderClass,'dataPublicationTipo' => ''.e($pub->publication_type).'']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component->withName('publicacion-card'); ?>
+<?php if ($component->shouldRender()): ?>
+<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
+<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
+<?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
+<?php endif; ?>
+<?php $component->withAttributes(['tipo' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($tipoDisplay),'titulo' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($pub->topic),'fecha' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($pub->publication_date->locale('es')->isoFormat('dddd, D [de] MMMM [de] YYYY')),'usuario' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($uShort),'usuario_full' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($uFull),'descripcion' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($activityInfo),'archivosCount' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($pub->files->count()),'badgeClass' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($badgeClass),'badgeBorderClass' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($badgeBorderClass),'data-publication-tipo' => ''.e($pub->publication_type).'']); ?>
 
                             <div class="flex justify-end gap-2">
-                                <button class="w-8 h-8 flex items-center justify-center rounded-lg border border-[#404041] text-[#404041] transition-all duration-300 hover:bg-[#404041] hover:text-white {{ $claseModal }}" 
+                                <button class="w-8 h-8 flex items-center justify-center rounded-lg border border-[#404041] text-[#404041] transition-all duration-300 hover:bg-[#404041] hover:text-white <?php echo e($claseModal); ?>" 
                                         title="Ver detalles"
-                                        data-tipo="{{ $pub->publication_type }}"
-                                        data-titulo="{{ $pub->topic }}"
-                                        data-fecha="{{ $pub->publication_date->locale('es')->isoFormat('dddd, D [de] MMMM [de] YYYY') }}"
-                                        data-fecha-actividad="{{ $pub->activity_date->locale('es')->isoFormat('dddd, D [de] MMMM [de] YYYY') }}"
-                                        data-usuario="{{ $uFull ?: ($pub->user->name ?? 'Usuario') }}"
-                                        data-position="{{ $pub->user->position->name ?? '' }}"
-                                        data-descripcion="{{ $pub->description ?? '' }}"
-                                        data-archivos='{{ $archivosJson }}'
+                                        data-tipo="<?php echo e($pub->publication_type); ?>"
+                                        data-titulo="<?php echo e($pub->topic); ?>"
+                                        data-fecha="<?php echo e($pub->publication_date->locale('es')->isoFormat('dddd, D [de] MMMM [de] YYYY')); ?>"
+                                        data-fecha-actividad="<?php echo e($pub->activity_date->locale('es')->isoFormat('dddd, D [de] MMMM [de] YYYY')); ?>"
+                                        data-usuario="<?php echo e($uFull ?: ($pub->user->name ?? 'Usuario')); ?>"
+                                        data-position="<?php echo e($pub->user->position->name ?? ''); ?>"
+                                        data-descripcion="<?php echo e($pub->description ?? ''); ?>"
+                                        data-archivos='<?php echo e($archivosJson); ?>'
                                         data-comentarios='[]'
-                                        @foreach($dataAttributes as $key => $value)
-                                            {{ $key }}="{{ $value }}"
-                                        @endforeach>
+                                        <?php $__currentLoopData = $dataAttributes; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $key => $value): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                            <?php echo e($key); ?>="<?php echo e($value); ?>"
+                                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>>
                                     <i class="fas fa-eye text-sm"></i>
                                 </button>
-                                <a href="{{ $editRoute }}" class="w-8 h-8 flex items-center justify-center rounded-lg border border-[#C08400] text-[#C08400] transition-all duration-300 hover:bg-[#C08400] hover:text-white" title="Editar">
+                                <a href="<?php echo e($editRoute); ?>" class="w-8 h-8 flex items-center justify-center rounded-lg border border-[#C08400] text-[#C08400] transition-all duration-300 hover:bg-[#C08400] hover:text-white" title="Editar">
                                     <i class="fas fa-edit text-sm"></i>
                                 </a>
-                                <form method="POST" action="{{ route('reportes.destroy', $pub) }}" onsubmit="return false;">
-                                    @csrf
-                                    @method('DELETE')
+                                <form method="POST" action="<?php echo e(route('reportes.destroy', $pub)); ?>" onsubmit="return false;">
+                                    <?php echo csrf_field(); ?>
+                                    <?php echo method_field('DELETE'); ?>
                                     <button type="button" class="w-8 h-8 flex items-center justify-center rounded-lg border border-[#AB1A1A] text-[#AB1A1A] transition-all duration-300 hover:bg-[#AB1A1A] hover:text-white" title="Eliminar"
                                         onclick="if(confirm('¿Eliminar esta publicación? Esta acción no se puede deshacer.')) { this.closest('form').submit(); }">
                                         <i class="fas fa-trash text-sm"></i>
@@ -233,8 +232,17 @@
                                 </form>
                             </div>
 
-                        </x-publicacion-card>
-                    @empty
+                         <?php echo $__env->renderComponent(); ?>
+<?php endif; ?>
+<?php if (isset($__attributesOriginale6927a94816a78ea3a8d4a0fc9fc3d88)): ?>
+<?php $attributes = $__attributesOriginale6927a94816a78ea3a8d4a0fc9fc3d88; ?>
+<?php unset($__attributesOriginale6927a94816a78ea3a8d4a0fc9fc3d88); ?>
+<?php endif; ?>
+<?php if (isset($__componentOriginale6927a94816a78ea3a8d4a0fc9fc3d88)): ?>
+<?php $component = $__componentOriginale6927a94816a78ea3a8d4a0fc9fc3d88; ?>
+<?php unset($__componentOriginale6927a94816a78ea3a8d4a0fc9fc3d88); ?>
+<?php endif; ?>
+                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?>
                         <div class="col-span-full text-center py-12">
                             <div class="text-gray-400 mb-4">
                                 <i class="fas fa-inbox text-6xl"></i>
@@ -242,7 +250,7 @@
                             <p class="text-lg font-lora text-gray-600">No hay publicaciones registradas</p>
                             <p class="text-sm text-gray-500 font-lora mt-2">Comienza creando un nuevo reporte</p>
                         </div>
-                    @endforelse
+                    <?php endif; ?>
                 </div>
             </div>
         </div>
@@ -266,9 +274,9 @@
 
     <!-- INCLUIR TODOS LOS COMPONENTES DE MODALES -->
   <!-- INCLUIR TODOS LOS COMPONENTES DE MODALES -->
-@include('components.modal-alcoholimetria')
-@include('components.modal-seguridad-vial') 
-@include('components.modal-observatorio')
+<?php echo $__env->make('components.modal-alcoholimetria', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?>
+<?php echo $__env->make('components.modal-seguridad-vial', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?> 
+<?php echo $__env->make('components.modal-observatorio', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?>
 
     <!-- JAVASCRIPT SIMPLIFICADO Y FUNCIONAL -->
     <script>
@@ -638,4 +646,5 @@ document.addEventListener('DOMContentLoaded', function() {
 
     <!-- Incluir Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-@endsection
+<?php $__env->stopSection(); ?>
+<?php echo $__env->make('layouts.principal', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH C:\Proyectos Laravel\sistema-sec-tam\resources\views/reportes/publicaciones.blade.php ENDPATH**/ ?>

@@ -28,7 +28,8 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerate();
 
-        return redirect()->intended(route('dashboard', absolute: false));
+    // Redirect to the intended URL (if present), otherwise go to the statistics page
+    return redirect()->intended(route('statistic.data', absolute: false));
     }
 
     /**
@@ -42,6 +43,7 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerateToken();
 
-        return redirect('/');
+        // After logout, redirect to the login page
+        return redirect()->route('login');
     }
 }

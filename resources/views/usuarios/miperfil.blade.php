@@ -18,11 +18,26 @@
                     <div class="flex flex-col items-center mb-6">
                         <div class="w-24 h-24 bg-[#611132] rounded-full flex items-center justify-center mb-4">
                             <span class="text-white text-2xl font-lora font-bold">
-                                {{ substr('María', 0, 1) }}{{ substr('González', 0, 1) }}
+                                @php
+                                    $givenName = trim(auth()->user()->name ?? '');
+                                    $firstLast = trim(auth()->user()->first_last_name ?? '');
+                                    $secondLast = trim(auth()->user()->second_last_name ?? '');
+                                    $fullName = trim(implode(' ', array_filter([$givenName, $firstLast, $secondLast])));
+                                    $initials = '';
+                                    if ($fullName !== '') {
+                                        $parts = preg_split('/\s+/', $fullName);
+                                        if (count($parts) >= 2) {
+                                            $initials = mb_substr($parts[0], 0, 1) . mb_substr($parts[1], 0, 1);
+                                        } else {
+                                            $initials = mb_substr($parts[0], 0, 2);
+                                        }
+                                    }
+                                @endphp
+                                {{ strtoupper($initials) }}
                             </span>
                         </div>
-                        <h2 class="text-lg font-lora font-bold text-[#404041] text-center">María González López</h2>
-                        <p class="text-sm text-gray-600 font-lora text-center">Coordinador</p>
+                        <h2 class="text-lg font-lora font-bold text-[#404041] text-center">{{ $fullName ?: auth()->user()->name }}</h2>
+                        <p class="text-sm text-gray-600 font-lora text-center">{{ auth()->user()->position->name ?? 'Sin cargo' }}</p>
                        
                     </div>
 
@@ -32,7 +47,7 @@
                             <i class="fas fa-envelope text-[#611132] text-sm"></i>
                             <div>
                                 <p class="text-xs text-gray-500 font-lora">Correo</p>
-                                <p class="text-sm text-[#404041] font-lora">maria.gonzalez@ejemplo.com</p>
+                                <p class="text-sm text-[#404041] font-lora">{{ auth()->user()->email }}</p>
                             </div>
                         </div>
                         
@@ -40,7 +55,7 @@
                             <i class="fas fa-briefcase text-[#611132] text-sm"></i>
                             <div>
                                 <p class="text-xs text-gray-500 font-lora">Cargo</p>
-                                <p class="text-sm text-[#404041] font-lora">Coordinador</p>
+                                <p class="text-sm text-[#404041] font-lora">{{ auth()->user()->position->name ?? 'Sin cargo' }}</p>
                             </div>
                         </div>
                         
@@ -48,17 +63,20 @@
                             <i class="fas fa-map-marker-alt text-[#611132] text-sm"></i>
                             <div>
                                 <p class="text-xs text-gray-500 font-lora">Jurisdicción</p>
-                                <p class="text-sm text-[#404041] font-lora">Jurisd. I</p>
+                                <p class="text-sm text-[#404041] font-lora">{{ auth()->user()->jurisdiction->name ?? 'Sin jurisdicción' }}</p>
                             </div>
                         </div>
                     </div>
 
                     <!-- BOTÓN CERRAR SESIÓN -->
                     <div class="mt-6 pt-4 border-t border-gray-200">
-                        <button class="w-full bg-[#611132] text-white px-4 py-2.5 rounded-lg text-xs font-semibold hover:bg-[#4a0e26] transition-all duration-300 font-lora flex items-center justify-center gap-2" id="cerrarSesion">
-                            <i class="fas fa-sign-out-alt text-xs"></i>
-                            Cerrar Sesión
-                        </button>
+                        <form method="POST" action="{{ route('logout') }}">
+                            @csrf
+                            <button type="submit" class="w-full bg-[#611132] text-white px-4 py-2.5 rounded-lg text-xs font-semibold hover:bg-[#4a0e26] transition-all duration-300 font-lora flex items-center justify-center gap-2">
+                                <i class="fas fa-sign-out-alt text-xs"></i>
+                                Cerrar Sesión
+                            </button>
+                        </form>
                     </div>
                 </div>
             </div>
@@ -82,12 +100,12 @@
                                 
                                 <div>
                                     <label class="block text-xs text-gray-600 font-lora mb-1">Usuario</label>
-                                    <p class="text-sm text-[#404041] font-lora bg-gray-50 px-3 py-2 rounded border">mgonzalez</p>
+                                    <p class="text-sm text-[#404041] font-lora bg-gray-50 px-3 py-2 rounded border">{{ auth()->user()->username ?? explode('@', auth()->user()->email)[0] }}</p>
                                 </div>
                                 
                                 <div>
                                     <label class="block text-xs text-gray-600 font-lora mb-1">Nombre Completo</label>
-                                    <p class="text-sm text-[#404041] font-lora bg-gray-50 px-3 py-2 rounded border">María González López</p>
+                                    <p class="text-sm text-[#404041] font-lora bg-gray-50 px-3 py-2 rounded border">{{ $fullName ?? auth()->user()->name }}</p>
                                 </div>
                             </div>
 
@@ -97,12 +115,12 @@
                                 
                                 <div>
                                     <label class="block text-xs text-gray-600 font-lora mb-1">Correo Electrónico</label>
-                                    <p class="text-sm text-[#404041] font-lora bg-gray-50 px-3 py-2 rounded border">maria.gonzalez@ejemplo.com</p>
+                                    <p class="text-sm text-[#404041] font-lora bg-gray-50 px-3 py-2 rounded border">{{ auth()->user()->email }}</p>
                                 </div>
                                 
                                 <div>
                                     <label class="block text-xs text-gray-600 font-lora mb-1">Teléfono</label>
-                                    <p class="text-sm text-[#404041] font-lora bg-gray-50 px-3 py-2 rounded border">812-345-6789</p>
+                                    <p class="text-sm text-[#404041] font-lora bg-gray-50 px-3 py-2 rounded border">{{ auth()->user()->phone ?? 'No especificado' }}</p>
                                 </div>
                             </div>
 
@@ -112,12 +130,12 @@
                                 
                                 <div>
                                     <label class="block text-xs text-gray-600 font-lora mb-1">Cargo</label>
-                                    <p class="text-sm text-[#404041] font-lora bg-gray-50 px-3 py-2 rounded border">Coordinador</p>
+                                    <p class="text-sm text-[#404041] font-lora bg-gray-50 px-3 py-2 rounded border">{{ auth()->user()->position->name ?? 'Sin cargo' }}</p>
                                 </div>
                                 
                                 <div>
                                     <label class="block text-xs text-gray-600 font-lora mb-1">Jurisdicción</label>
-                                    <p class="text-sm text-[#404041] font-lora bg-gray-50 px-3 py-2 rounded border">Jurisdicción I</p>
+                                    <p class="text-sm text-[#404041] font-lora bg-gray-50 px-3 py-2 rounded border">{{ auth()->user()->jurisdiction->name ?? 'Sin jurisdicción' }}</p>
                                 </div>
                             </div>
 
@@ -127,21 +145,26 @@
                                 
                                 <div>
                                     <label class="block text-xs text-gray-600 font-lora mb-1">Fecha de Alta</label>
-                                    <p class="text-sm text-[#404041] font-lora bg-gray-50 px-3 py-2 rounded border">15/03/2023</p>
+                                    <p class="text-sm text-[#404041] font-lora bg-gray-50 px-3 py-2 rounded border">{{ auth()->user()->created_at->format('d/m/Y') }}</p>
                                 </div>
                                 
                                 <div class="grid grid-cols-2 gap-6">
                                     <div>
                                         <label class="block text-xs text-gray-600 font-lora mb-1">Estado de la Cuenta</label>
                                         <div class="flex items-center gap-2">
-                                            <span class="w-2 h-2 rounded-full bg-green-500"></span>
-                                            <span class="text-sm text-green-600 font-lora">Activo</span>
+                                            @if(auth()->user()->status ?? true)
+                                                <span class="w-2 h-2 rounded-full bg-green-500"></span>
+                                                <span class="text-sm text-green-600 font-lora">Activo</span>
+                                            @else
+                                                <span class="w-2 h-2 rounded-full bg-red-500"></span>
+                                                <span class="text-sm text-red-600 font-lora">Inactivo</span>
+                                            @endif
                                         </div>
                                     </div>
                                     
                                     <div>
                                         <label class="block text-xs text-gray-600 font-lora mb-1">Rol en el Sistema</label>
-                                        <span class="inline-block bg-green-100 text-green-800 text-xs font-medium px-2 py-1 rounded-full">Administrador</span>
+                                        <span class="inline-block bg-green-100 text-green-800 text-xs font-medium px-2 py-1 rounded-full">{{ auth()->user()->role->name ?? 'Usuario' }}</span>
                                     </div>
                                 </div>
                             </div>
@@ -168,31 +191,4 @@
 
     <!-- AGREGAR FONT AWESOME -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-
-    <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // Botón cerrar sesión
-        document.getElementById('cerrarSesion').addEventListener('click', function() {
-            if (confirm('¿Estás seguro de que deseas cerrar sesión?')) {
-                // Aquí iría la lógica para cerrar sesión
-                console.log('Cerrando sesión...');
-                // window.location.href = '/logout'; // Descomenta esta línea en producción
-                alert('Sesión cerrada exitosamente');
-            }
-        });
-
-        // Simular datos del usuario (en una aplicación real esto vendría del backend)
-        const userData = {
-            usuario: 'mgonzalez',
-            nombre: 'María González López',
-            correo: 'maria.gonzalez@ejemplo.com',
-            telefono: '812-345-6789',
-            cargo: 'Coordinador',
-            jurisdiccion: 'Jurisd. I',
-            fechaAlta: '15/03/2023',
-            rol: 'Administrador',
-            estado: 'Activo'
-        };
-    });
-    </script>
 @endsection

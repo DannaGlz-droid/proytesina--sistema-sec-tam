@@ -1,6 +1,34 @@
-@props(['tipo', 'titulo', 'colorBadge', 'colorBorder', 'modalId'])
+<?php $attributes ??= new \Illuminate\View\ComponentAttributeBag;
 
-<div id="{{ $modalId }}" class="fixed inset-0 bg-gray-900 bg-opacity-40 flex items-center justify-center z-50 hidden transition-opacity duration-200">
+$__newAttributes = [];
+$__propNames = \Illuminate\View\ComponentAttributeBag::extractPropNames((['tipo', 'titulo', 'colorBadge', 'colorBorder', 'modalId']));
+
+foreach ($attributes->all() as $__key => $__value) {
+    if (in_array($__key, $__propNames)) {
+        $$__key = $$__key ?? $__value;
+    } else {
+        $__newAttributes[$__key] = $__value;
+    }
+}
+
+$attributes = new \Illuminate\View\ComponentAttributeBag($__newAttributes);
+
+unset($__propNames);
+unset($__newAttributes);
+
+foreach (array_filter((['tipo', 'titulo', 'colorBadge', 'colorBorder', 'modalId']), 'is_string', ARRAY_FILTER_USE_KEY) as $__key => $__value) {
+    $$__key = $$__key ?? $__value;
+}
+
+$__defined_vars = get_defined_vars();
+
+foreach ($attributes->all() as $__key => $__value) {
+    if (array_key_exists($__key, $__defined_vars)) unset($$__key);
+}
+
+unset($__defined_vars, $__key, $__value); ?>
+
+<div id="<?php echo e($modalId); ?>" class="fixed inset-0 bg-gray-900 bg-opacity-40 flex items-center justify-center z-50 hidden transition-opacity duration-200">
     <div class="bg-white rounded-xl shadow-2xl max-w-4xl w-full mx-4 max-h-[95vh] overflow-hidden transform transition-all duration-300 scale-95 opacity-0 border border-gray-200">
 
         <!-- HEADER -->
@@ -8,9 +36,10 @@
             <div class="flex justify-between items-start mb-2">
                 <div class="flex-1">
                     <div class="flex items-center gap-3 mb-1">
-                        <h2 class="text-xl font-lora font-bold text-[#404041] modal-titulo">{{ $titulo }}</h2>
-                        <div class="inline-block {{ $colorBadge }} text-white px-3 py-1 rounded-lg text-xs font-semibold font-lora border-l-4 {{ $colorBorder }}">
-                            {{ ucwords(str_replace('_', ' ', $tipo)) }}
+                        <h2 class="text-xl font-lora font-bold text-[#404041] modal-titulo"><?php echo e($titulo); ?></h2>
+                        <div class="inline-block <?php echo e($colorBadge); ?> text-white px-3 py-1 rounded-lg text-xs font-semibold font-lora border-l-4 <?php echo e($colorBorder); ?>">
+                            <?php echo e(ucwords(str_replace('_', ' ', $tipo))); ?>
+
                         </div>
                     </div>
                     <!-- Mostrar la fecha de la actividad directamente bajo el título -->
@@ -39,7 +68,8 @@
             <div class="p-6 overflow-y-auto flex-1">
                 
                 <!-- SECCIÓN ESPECÍFICA DEL TIPO DE REPORTE -->
-                {{ $slot }}
+                <?php echo e($slot); ?>
+
                 
                 <!-- LÍNEA SEPARADORA -->
                 <div class="h-px bg-gray-300 mb-6"></div>
@@ -114,4 +144,4 @@
             </div>
         </div>
     </div>
-</div>
+</div><?php /**PATH C:\Proyectos Laravel\sistema-sec-tam\resources\views/components/modal-reporte-base.blade.php ENDPATH**/ ?>
