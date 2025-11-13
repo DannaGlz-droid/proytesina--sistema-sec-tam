@@ -84,21 +84,24 @@
                     </div>
 
                     <!-- FORMULARIO PARA NUEVO COMENTARIO -->
-                    <div class="flex gap-3 items-start w-full">
-                        <div class="flex-1">
-                            <textarea 
-                                class="nuevo-comentario w-full border border-[#404041] rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#611132] focus:border-transparent resize-none min-h-[42px] max-h-[120px]"
-                                rows="1"
-                                placeholder="Escribe tu comentario..."
-                            ></textarea>
+                    <!-- Admin/Coordinador siempre pueden comentar, Operador solo en sus propias publicaciones -->
+                    <div class="comentario-form-container" style="display: none;">
+                        <div class="flex gap-3 items-start w-full">
+                            <div class="flex-1">
+                                <textarea 
+                                    class="nuevo-comentario w-full border border-[#404041] rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#611132] focus:border-transparent resize-none min-h-[42px] max-h-[120px]"
+                                    rows="1"
+                                    placeholder="Escribe tu comentario..."
+                                ></textarea>
+                            </div>
+                            <button 
+                                class="enviar-comentario px-4 bg-[#611132] text-white text-xs font-semibold rounded-lg hover:bg-[#4a0e26] transition-all duration-200 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed h-[42px] whitespace-nowrap mt-0"
+                                disabled
+                            >
+                                <i class="fas fa-paper-plane text-xs"></i>
+                                Enviar
+                            </button>
                         </div>
-                        <button 
-                            class="enviar-comentario px-4 bg-[#611132] text-white text-xs font-semibold rounded-lg hover:bg-[#4a0e26] transition-all duration-200 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed h-[42px] whitespace-nowrap mt-0"
-                            disabled
-                        >
-                            <i class="fas fa-paper-plane text-xs"></i>
-                            Enviar
-                        </button>
                     </div>
                 </div>
             </div>

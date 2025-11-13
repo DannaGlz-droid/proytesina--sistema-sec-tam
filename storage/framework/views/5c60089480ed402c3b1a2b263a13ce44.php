@@ -9,12 +9,19 @@
     <div class="flex items-center">
         <!-- Botones que se ocultan en mobile -->
         <div class="hidden lg:flex items-center">
-            <a href="<?php echo e(route('reportes.index')); ?>" class="text-sm lg:text-base bg-header hover:bg-[#B23A6E] text-white py-1 lg:py-1 px-3 lg:px-4 rounded-md transition duration-200 ease-in-out mr-3 lg:mr-4 inline-flex items-center justify-center">
-                Reportes
-            </a>
-            <a href="<?php echo e(route('statistic.data')); ?>" class="text-sm lg:text-base bg-header hover:bg-[#9B4D6E] hover:text-[#E8CA8B] text-white py-1 lg:py-1 px-3 lg:px-4 rounded-md transition duration-200 ease-in-out mr-3 lg:mr-4 inline-flex items-center justify-center">
-                Estadísticas
-            </a>
+            
+            <?php if(!auth()->user()->isGuest()): ?>
+                <a href="<?php echo e(route('reportes.index')); ?>" class="text-sm lg:text-base bg-header hover:bg-[#B23A6E] text-white py-1 lg:py-1 px-3 lg:px-4 rounded-md transition duration-200 ease-in-out mr-3 lg:mr-4 inline-flex items-center justify-center">
+                    Reportes
+                </a>
+            <?php endif; ?>
+            
+            
+            <?php if(auth()->user()->hasAnyRole(['Administrador', 'Coordinador'])): ?>
+                <a href="<?php echo e(route('statistic.data')); ?>" class="text-sm lg:text-base bg-header hover:bg-[#9B4D6E] hover:text-[#E8CA8B] text-white py-1 lg:py-1 px-3 lg:px-4 rounded-md transition duration-200 ease-in-out mr-3 lg:mr-4 inline-flex items-center justify-center">
+                    Estadísticas
+                </a>
+            <?php endif; ?>
         </div>
         
         <!-- Notificaciones con dropdown -->
@@ -128,10 +135,13 @@
                     <span class="font-medium">Mi Perfil</span>
                 </a>
 
-                <a href="<?php echo e(route('user.user-gestion')); ?>" class="flex items-center px-3 lg:px-4 py-2 lg:py-3 text-xs lg:text-sm text-gray-700 hover:bg-blue-50 transition-colors group">
-                    <ion-icon name="people" class="text-gray-400 group-hover:text-blue-600 mr-2 lg:mr-3 text-sm lg:text-base"></ion-icon>
-                    <span class="font-medium">Gestión de Usuarios</span>
-                </a>
+                
+                <?php if(auth()->user()->isAdmin()): ?>
+                    <a href="<?php echo e(route('user.user-gestion')); ?>" class="flex items-center px-3 lg:px-4 py-2 lg:py-3 text-xs lg:text-sm text-gray-700 hover:bg-blue-50 transition-colors group">
+                        <ion-icon name="people" class="text-gray-400 group-hover:text-blue-600 mr-2 lg:mr-3 text-sm lg:text-base"></ion-icon>
+                        <span class="font-medium">Gestión de Usuarios</span>
+                    </a>
+                <?php endif; ?>
 
                 <!-- Separador -->
                 <div class="border-t border-gray-100 my-1 lg:my-2"></div>

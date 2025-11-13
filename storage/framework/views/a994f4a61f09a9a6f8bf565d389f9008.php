@@ -14,6 +14,9 @@ $__propNames = \Illuminate\View\ComponentAttributeBag::extractPropNames(([
     // badge classes (bg and left border) to allow different colors per tipo
     'badgeClass' => 'bg-[#4C8CC4] text-white',
     'badgeBorderClass' => 'border-[#13264F]',
+    // show small red dot when the publication has comments (boolean)
+    'hasComments' => false,
+    'hasUnread' => false,
 ]));
 
 foreach ($attributes->all() as $__key => $__value) {
@@ -42,6 +45,9 @@ foreach (array_filter(([
     // badge classes (bg and left border) to allow different colors per tipo
     'badgeClass' => 'bg-[#4C8CC4] text-white',
     'badgeBorderClass' => 'border-[#13264F]',
+    // show small red dot when the publication has comments (boolean)
+    'hasComments' => false,
+    'hasUnread' => false,
 ]), 'is_string', ARRAY_FILTER_USE_KEY) as $__key => $__value) {
     $$__key = $$__key ?? $__value;
 }
@@ -61,7 +67,9 @@ unset($__defined_vars, $__key, $__value); ?>
             <div class="relative">
                 <div class="relative w-5 h-5 flex items-center justify-center text-gray-500">
                     <i class="fas fa-comment-alt text-sm"></i>
-                    <div class="absolute -top-0.5 -right-0.5 w-2 h-2 bg-red-500 rounded-full border border-white"></div>
+                    <?php if(($hasUnread ?? false) || ($hasComments && !isset($hasUnread))): ?>
+                        <div class="absolute -top-0.5 -right-0.5 w-2 h-2 bg-red-500 rounded-full border border-white"></div>
+                    <?php endif; ?>
                 </div>
             </div>
         </div>

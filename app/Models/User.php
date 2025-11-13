@@ -171,4 +171,66 @@ class User extends Authenticatable
             return null;
         }
     }
+
+    /**
+     * Helper: Check if user has a specific role
+     * 
+     * @param string $roleName
+     * @return bool
+     */
+    public function hasRole(string $roleName): bool
+    {
+        return $this->role && $this->role->name === $roleName;
+    }
+
+    /**
+     * Helper: Check if user has any of the given roles
+     * 
+     * @param array $roles
+     * @return bool
+     */
+    public function hasAnyRole(array $roles): bool
+    {
+        return $this->role && in_array($this->role->name, $roles);
+    }
+
+    /**
+     * Helper: Check if user is Administrator
+     * 
+     * @return bool
+     */
+    public function isAdmin(): bool
+    {
+        return $this->hasRole('Administrador');
+    }
+
+    /**
+     * Helper: Check if user is Coordinator
+     * 
+     * @return bool
+     */
+    public function isCoordinator(): bool
+    {
+        return $this->hasRole('Coordinador');
+    }
+
+    /**
+     * Helper: Check if user is Operator
+     * 
+     * @return bool
+     */
+    public function isOperator(): bool
+    {
+        return $this->hasRole('Operador');
+    }
+
+    /**
+     * Helper: Check if user is Guest
+     * 
+     * @return bool
+     */
+    public function isGuest(): bool
+    {
+        return $this->hasRole('Invitado');
+    }
 }

@@ -191,16 +191,64 @@
                             $uShort = trim($uGiven . ($uFirst ? ' ' . $uFirst : '')) ?: 'Usuario';
                         ?>
 
+                        <?php
+                            // Determine if there are any unread comments for current user
+                            // Only count comments from OTHER users that current user hasn't read
+                            $comentarios = $pub->comentarios_json ?? [];
+                            $hasUnread = false;
+                            $currentUserId = auth()->id();
+                            
+                            // Convert to array if it's a Collection
+                            if ($comentarios instanceof \Illuminate\Support\Collection) {
+                                $comentarios = $comentarios->toArray();
+                            }
+                            
+                            // DEBUG: Log para publicación #10
+                            if ($pub->id == 10) {
+                                \Log::info("Publication #10 debug for user #{$currentUserId}:", [
+                                    'total_comments' => count($comentarios),
+                                    'comments_detail' => array_map(function($c) use ($currentUserId) {
+                                        return [
+                                            'id' => $c['id'] ?? 'N/A',
+                                            'author_id' => $c['user']['id'] ?? 'N/A',
+                                            'seen_by_current' => $c['seen_by_current_user'] ?? false,
+                                            'is_own' => ($c['user']['id'] ?? null) == $currentUserId
+                                        ];
+                                    }, $comentarios)
+                                ]);
+                            }
+                            
+                            if (!empty($comentarios) && is_array($comentarios)) {
+                                foreach ($comentarios as $cc) {
+                                    // Skip comments written by current user (they don't count as "unread")
+                                    $commentAuthorId = $cc['user']['id'] ?? null;
+                                    if ($commentAuthorId == $currentUserId) {
+                                        continue;
+                                    }
+                                    // Check if this comment from another user is unread
+                                    if (!($cc['seen_by_current_user'] ?? false)) {
+                                        $hasUnread = true;
+                                        break;
+                                    }
+                                }
+                            }
+                            
+                            // DEBUG: Log result
+                            if ($pub->id == 10) {
+                                \Log::info("Publication #10 hasUnread result for user #{$currentUserId}: " . ($hasUnread ? 'TRUE' : 'FALSE'));
+                            }
+                        ?>
+
                         <?php if (isset($component)) { $__componentOriginale6927a94816a78ea3a8d4a0fc9fc3d88 = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginale6927a94816a78ea3a8d4a0fc9fc3d88 = $attributes; } ?>
-<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.publicacion-card','data' => ['tipo' => $tipoDisplay,'titulo' => $pub->topic,'fecha' => $pub->publication_date->locale('es')->isoFormat('dddd, D [de] MMMM [de] YYYY'),'usuario' => $uShort,'usuarioFull' => $uFull,'descripcion' => $activityInfo,'archivosCount' => $pub->files->count(),'badgeClass' => $badgeClass,'badgeBorderClass' => $badgeBorderClass,'dataPublicationTipo' => ''.e($pub->publication_type).'']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.publicacion-card','data' => ['dataPublicationId' => ''.e($pub->id).'','tipo' => $tipoDisplay,'titulo' => $pub->topic,'fecha' => $pub->publication_date->locale('es')->isoFormat('dddd, D [de] MMMM [de] YYYY'),'usuario' => $uShort,'usuarioFull' => $uFull,'descripcion' => $activityInfo,'archivosCount' => $pub->files->count(),'badgeClass' => $badgeClass,'badgeBorderClass' => $badgeBorderClass,'hasComments' => count($pub->comentarios_json ?? []) > 0,'hasUnread' => $hasUnread,'dataPublicationTipo' => ''.e($pub->publication_type).'']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
 <?php $component->withName('publicacion-card'); ?>
 <?php if ($component->shouldRender()): ?>
 <?php $__env->startComponent($component->resolveView(), $component->data()); ?>
 <?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
 <?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
 <?php endif; ?>
-<?php $component->withAttributes(['tipo' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($tipoDisplay),'titulo' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($pub->topic),'fecha' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($pub->publication_date->locale('es')->isoFormat('dddd, D [de] MMMM [de] YYYY')),'usuario' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($uShort),'usuario_full' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($uFull),'descripcion' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($activityInfo),'archivosCount' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($pub->files->count()),'badgeClass' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($badgeClass),'badgeBorderClass' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($badgeBorderClass),'data-publication-tipo' => ''.e($pub->publication_type).'']); ?>
+<?php $component->withAttributes(['data-publication-id' => ''.e($pub->id).'','tipo' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($tipoDisplay),'titulo' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($pub->topic),'fecha' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($pub->publication_date->locale('es')->isoFormat('dddd, D [de] MMMM [de] YYYY')),'usuario' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($uShort),'usuario_full' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($uFull),'descripcion' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($activityInfo),'archivosCount' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($pub->files->count()),'badgeClass' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($badgeClass),'badgeBorderClass' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($badgeBorderClass),'has-comments' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute(count($pub->comentarios_json ?? []) > 0),'has-unread' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($hasUnread),'data-publication-tipo' => ''.e($pub->publication_type).'']); ?>
 
                             <div class="flex justify-end gap-2">
                                 <button class="w-8 h-8 flex items-center justify-center rounded-lg border border-[#404041] text-[#404041] transition-all duration-300 hover:bg-[#404041] hover:text-white <?php echo e($claseModal); ?>" 
@@ -213,7 +261,9 @@
                                         data-position="<?php echo e($pub->user->position->name ?? ''); ?>"
                                         data-descripcion="<?php echo e($pub->description ?? ''); ?>"
                                         data-archivos='<?php echo e($archivosJson); ?>'
-                                        data-comentarios='[]'
+                                        data-comentarios='<?php echo json_encode($pub->comentarios_json, 15, 512) ?>'
+                                        data-publication-id="<?php echo e($pub->id); ?>"
+                                        data-is-owner="<?php echo e(auth()->id() === $pub->user_id ? 'true' : 'false'); ?>"
                                         <?php $__currentLoopData = $dataAttributes; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $key => $value): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                                             <?php echo e($key); ?>="<?php echo e($value); ?>"
                                         <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>>
@@ -282,6 +332,7 @@
     <script>
 document.addEventListener('DOMContentLoaded', function() {
     console.log('=== INICIANDO SISTEMA DE MODALES ===');
+    const CURRENT_USER_ID = <?php echo e(auth()->id() ?? 'null'); ?>;
     
     // Función simple para mostrar modal
     function showModal(modalId) {
@@ -361,17 +412,23 @@ document.addEventListener('DOMContentLoaded', function() {
                 fillBasicData(modal, this.dataset);
                 
                 // Datos específicos de alcoholimetría
+                // Use kebab-case for class names and convert to camelCase to access dataset properties
                 const specificFields = [
-                    'puntosRevision', 'conductoresNoAptos', 'pruebasRealizadas',
-                    'mujeresNoAptas', 'hombresNoAptos', 'automovilesNoAptos',
-                    'motocicletasNoAptas', 'transporteColectivoNoApto',
-                    'transporteIndividualNoApto', 'transporteCargaNoApto', 'emergenciaNoApto'
+                    'puntos-revision', 'conductores-no-aptos', 'pruebas-realizadas',
+                    'mujeres-no-aptas', 'hombres-no-aptos', 'automoviles-no-aptos',
+                    'motocicletas-no-aptas', 'transporte-colectivo-no-apto',
+                    'transporte-individual-no-apto', 'transporte-carga-no-apto', 'emergencia-no-apto'
                 ];
-                
-                specificFields.forEach(field => {
-                    const element = modal.querySelector(`.modal-${field}`);
-                    if (element && this.dataset[field]) {
-                        element.textContent = this.dataset[field];
+
+                function kebabToCamel(s) {
+                    return s.replace(/-([a-z])/g, function(_, c) { return c.toUpperCase(); });
+                }
+
+                specificFields.forEach(kebab => {
+                    const element = modal.querySelector(`.modal-${kebab}`);
+                    const key = kebabToCamel(kebab);
+                    if (element && this.dataset[key] !== undefined && this.dataset[key] !== '') {
+                        element.textContent = this.dataset[key];
                     }
                 });
                 
@@ -520,37 +577,130 @@ document.addEventListener('DOMContentLoaded', function() {
         if (comentariosContainer && dataset.comentarios) {
             try {
                 const comentarios = JSON.parse(dataset.comentarios);
-                comentariosContainer.innerHTML = '';
                 
-                if (comentarios.length > 0) {
-                    comentarios.forEach(comentario => {
-                        comentariosContainer.innerHTML += `
-                            <div class="bg-white border border-[#404041] rounded-lg p-3">
-                                <div class="flex justify-between items-start mb-2">
-                                    <div class="font-semibold text-[#404041] font-lora">
-                                        ${comentario.usuario}
-                                    </div>
-                                    <div class="text-xs text-gray-500 font-lora whitespace-nowrap">
-                                        ${comentario.fecha}
-                                    </div>
-                                </div>
-                                <p class="text-gray-700 text-sm break-words font-lora">
-                                    ${comentario.mensaje}
-                                </p>
-                            </div>
-                        `;
-                    });
-                } else {
-                    comentariosContainer.innerHTML = `
-                        <div class="text-center py-8 text-gray-500 font-lora">
-                            <i class="fas fa-comments text-3xl mb-3 text-gray-300"></i>
-                            <p class="text-sm">No hay comentarios aún</p>
-                        </div>
-                    `;
-                }
+                // Guardar comentarios originales en el modal para uso posterior
+                modal.dataset.comentariosJson = dataset.comentarios;
+                
+                renderComments(comentariosContainer, comentarios);
+
+                // Marcar como vistos los comentarios (si aplica) y actualizar la UI
+                fetch(`/reportes/${dataset.publicationId}/comentarios/mark-seen`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                    }
+                })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success && Array.isArray(data.updated_ids) && data.updated_ids.length > 0) {
+                        // Marcar en la estructura local y re-renderizar (per-user flag)
+                        comentarios.forEach(c => {
+                            if (data.updated_ids.includes(c.id)) c.seen_by_current_user = true;
+                        });
+                        
+                        // Actualizar también el dataset
+                        modal.dataset.comentariosJson = JSON.stringify(comentarios);
+                        
+                        renderComments(comentariosContainer, comentarios);
+
+                        // Also hide the unread dot on the publication card for this user
+                        try {
+                            const card = document.querySelector(`.publication-card[data-publication-id="${dataset.publicationId}"]`);
+                            if (card) {
+                                const dot = card.querySelector('.absolute.-top-0\.5.-right-0\.5');
+                                if (dot) dot.remove();
+                            }
+                        } catch (e) {
+                            // ignore
+                        }
+                    }
+                })
+                .catch(err => console.error('Error marcando comentarios como vistos:', err));
             } catch (e) {
                 console.error('Error parsing comentarios:', e);
             }
+        }
+
+        // Guardar el publication ID en el modal para envío de comentarios
+        modal.dataset.publicationId = dataset.publicationId;
+
+        // Mostrar/ocultar formulario de comentarios según permisos
+        const comentarioForm = modal.querySelector('.comentario-form-container');
+        const isOwner = dataset.isOwner === 'true';
+        const userRole = '<?php echo e(auth()->user()->role->name ?? ""); ?>';
+        
+        // Admin/Coordinador siempre pueden comentar, Operador solo en sus propias publicaciones
+        if (comentarioForm) {
+            if (userRole === 'Administrador' || userRole === 'Coordinador' || (userRole === 'Operador' && isOwner)) {
+                comentarioForm.style.display = 'block';
+            } else {
+                comentarioForm.style.display = 'none';
+            }
+        }
+    }
+
+    // Función para renderizar comentarios
+    function renderComments(container, comentarios) {
+        container.innerHTML = '';
+        
+        if (comentarios.length > 0) {
+                comentarios.forEach(comentario => {
+                    // Prefer an ISO timestamp from the server and format it in the user's local timezone in the browser.
+                    let dateStr = comentario.date || '';
+                    let timeStr = comentario.time || '';
+                    if (comentario.created_at_iso) {
+                        try {
+                            const dt = new Date(comentario.created_at_iso);
+                            if (!isNaN(dt.getTime())) {
+                                const d = String(dt.getDate()).padStart(2, '0');
+                                const m = String(dt.getMonth() + 1).padStart(2, '0');
+                                const y = dt.getFullYear();
+                                const hh = String(dt.getHours()).padStart(2, '0');
+                                const mm = String(dt.getMinutes()).padStart(2, '0');
+                                dateStr = `${d}/${m}/${y}`;
+                                timeStr = `${hh}:${mm}`;
+                            }
+                        } catch (e) {
+                            // fallback to server-provided date/time
+                        }
+                    }
+
+                    const tickHtml = (comentario.user && comentario.user.id == CURRENT_USER_ID)
+                        ? (comentario.seen_by_current_user ? '<i class="fas fa-check-double text-blue-500 ml-2" title="Visto"></i>' : '<i class="fas fa-check text-gray-400 ml-2" title="Enviado"></i>')
+                        : '';
+
+                    container.innerHTML += `
+                        <div class="bg-white border border-[#404041] rounded-lg p-3" data-comment-id="${comentario.id}" data-user-id="${comentario.user?.id}">
+                            <div class="flex justify-between items-start mb-2">
+                                <div>
+                                    <div class="font-semibold text-[#404041] font-lora">
+                                        ${comentario.user.name}
+                                    </div>
+                                    <div class="text-xs text-gray-500 font-lora">
+                                        ${comentario.user.position}
+                                    </div>
+                                </div>
+                                <div class="flex items-center">
+                                    <div class="text-xs text-gray-500 font-lora whitespace-nowrap text-right">
+                                        <div>${dateStr}</div>
+                                        <div class="text-sm">${timeStr}</div>
+                                    </div>
+                                    ${tickHtml}
+                                </div>
+                            </div>
+                            <p class="text-gray-700 text-sm break-words font-lora">
+                                ${comentario.comment}
+                            </p>
+                        </div>
+                    `;
+            });
+        } else {
+            container.innerHTML = `
+                <div class="text-center py-8 text-gray-500 font-lora">
+                    <i class="fas fa-comments text-3xl mb-3 text-gray-300"></i>
+                    <p class="text-sm">No hay comentarios aún</p>
+                </div>
+            `;
         }
     }
     
@@ -641,6 +791,150 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     
     console.log('=== SISTEMA DE FILTRADO INICIALIZADO ===');
+
+    // === SISTEMA DE COMENTARIOS ===
+    document.addEventListener('click', function(e) {
+        // Enviar comentario
+        if (e.target.closest('.enviar-comentario')) {
+            e.preventDefault();
+            console.log('🔔 Click en enviar comentario');
+            
+            const button = e.target.closest('.enviar-comentario');
+            const modal = button.closest('[id^="modal"]');
+            
+            if (!modal) {
+                console.error('❌ No se encontró el modal');
+                return;
+            }
+            
+            const textarea = modal.querySelector('.nuevo-comentario');
+            const publicationId = modal.dataset.publicationId;
+            const comment = textarea.value.trim();
+
+            console.log('📝 Datos:', { publicationId, comment: comment.substring(0, 50) });
+
+            if (!comment) {
+                alert('Por favor escribe un comentario');
+                return;
+            }
+            
+            if (!publicationId) {
+                alert('Error: ID de publicación no encontrado');
+                return;
+            }
+
+            // Deshabilitar botón mientras se envía
+            button.disabled = true;
+            button.innerHTML = '<i class="fas fa-spinner fa-spin text-xs"></i> Enviando...';
+
+            fetch(`/reportes/${publicationId}/comentarios`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({ comment })
+            })
+            .then(response => {
+                console.log('📡 Respuesta recibida:', response.status, response.statusText);
+                // Si no es OK, leer el body como texto para más detalles y lanzar error
+                if (!response.ok) {
+                    return response.text().then(text => {
+                        const short = text.length > 100 ? text.substring(0, 100) + '...' : text;
+                        throw new Error(`HTTP ${response.status}: ${short}`);
+                    });
+                }
+
+                // Intentar parsear JSON, pero si el content-type no es JSON, leer como texto y fallar con mensaje claro
+                const contentType = response.headers.get('content-type') || '';
+                if (contentType.indexOf('application/json') === -1) {
+                    return response.text().then(text => {
+                        try {
+                            return JSON.parse(text);
+                        } catch (e) {
+                            throw new Error('Respuesta inválida del servidor: ' + (text || response.statusText));
+                        }
+                    });
+                }
+
+                return response.json();
+            })
+            .then(data => {
+                console.log('✅ Datos recibidos:', data);
+                
+                if (data.success) {
+                    // Limpiar textarea
+                    textarea.value = '';
+                    textarea.style.height = 'auto';
+                    
+                    // Obtener el contenedor de comentarios
+                    const comentariosContainer = modal.querySelector('.modal-comentarios');
+                    
+                    // Obtener los comentarios actuales almacenados en el modal
+                    // (los almacenamos cuando se abre el modal en fillFilesAndComments)
+                    let comentariosActuales = [];
+                    try {
+                        const comentariosData = modal.dataset.comentariosJson;
+                        if (comentariosData) {
+                            comentariosActuales = JSON.parse(comentariosData);
+                        }
+                    } catch (e) {
+                        console.warn('No se pudieron cargar comentarios previos del dataset, continuando...');
+                        comentariosActuales = [];
+                    }
+
+                    // Agregar el nuevo comentario al final (nueva entrada = más reciente)
+                    comentariosActuales.push(data.comment);
+                    
+                    // Actualizar el dataset con los nuevos comentarios
+                    modal.dataset.comentariosJson = JSON.stringify(comentariosActuales);
+
+                    // Re-renderizar todos los comentarios
+                    renderComments(comentariosContainer, comentariosActuales);
+                    
+                    // Remove unread dot for this publication (author has read their own comment)
+                    try {
+                        const card = document.querySelector(`.publication-card[data-publication-id="${publicationId}"]`);
+                        if (card) {
+                            const dot = card.querySelector('.absolute.-top-0\\.5.-right-0\\.5');
+                            if (dot) dot.remove();
+                        }
+                    } catch (e) {
+                        // ignore
+                    }
+                    
+                    console.log('✅ Comentario agregado exitosamente');
+                } else {
+                    alert(data.message || 'Error al enviar el comentario');
+                }
+            })
+            .catch(error => {
+                console.error('❌ Error enviando comentario:', error);
+                // Mostrar mensaje más informativo al usuario cuando sea posible
+                alert('Error al enviar el comentario. ' + (error.message || 'Por favor, intenta de nuevo.'));
+            })
+            .finally(() => {
+                button.disabled = false;
+                button.innerHTML = '<i class="fas fa-paper-plane text-xs"></i> Enviar';
+            });
+        }
+
+        // Nota: la opción de eliminar comentarios está deshabilitada en la interfaz por ahora.
+    });
+
+    // Auto-resize textarea y habilitar/deshabilitar botón
+    document.querySelectorAll('.nuevo-comentario').forEach(textarea => {
+        textarea.addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = Math.min(this.scrollHeight, 120) + 'px';
+            
+            const button = this.closest('.flex').querySelector('.enviar-comentario');
+            button.disabled = !this.value.trim();
+        });
+    });
+
+    console.log('=== SISTEMA DE COMENTARIOS INICIALIZADO ===');
 });
 </script>
 

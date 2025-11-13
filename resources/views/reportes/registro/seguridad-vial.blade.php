@@ -194,14 +194,6 @@
                                                 <ion-icon name="trash-outline" class="text-lg"></ion-icon>
                                             </button>
                                         </li>
-                                        <!-- Form oculto para eliminar archivo -->
-                                        <form id="delete-file-{{ $file->id }}" 
-                                              method="POST" 
-                                              action="{{ route('reportes.file.delete', $file) }}" 
-                                              class="hidden">
-                                            @csrf
-                                            @method('DELETE')
-                                        </form>
                                     @endforeach
                                 </ul>
                             </div>
@@ -474,62 +466,88 @@
             }
             
             // Interceptar el envío del formulario para agregar los archivos
-            document.querySelector('form').addEventListener('submit', function(e) {
-                // Contar archivos por tipo
-                let pdfCount = 0;
-                let excelCount = 0;
-                let photoCount = 0;
-                
-                selectedFiles.forEach(file => {
-                    const extension = file.name.split('.').pop().toLowerCase();
-                    if (extension === 'pdf') pdfCount++;
-                    else if (extension === 'xlsx' || extension === 'xls') excelCount++;
-                    else if (['jpg', 'jpeg', 'png'].includes(extension)) photoCount++;
+            const mainForm = document.querySelector('form[action*="seguridad-vial"][method="POST"]:not([id^="delete-file"])');
+            if (mainForm) {
+                mainForm.addEventListener('submit', function(e) {
+                    console.log('Form submit interceptado, action:', this.action);
+                    console.log('Form method:', this.method);
+                    
+                    // Solo validar archivos en modo CREACIÓN (no en modo EDICIÓN)
+                    const isEditMode = this.action.includes('/edit') || this.querySelector('input[name="_method"][value="PUT"]');
+                    console.log('Is edit mode:', isEditMode);
+                    
+                    if (!isEditMode && selectedFiles.length === 0) {
+                        e.preventDefault();
+                        alert('Debe seleccionar al menos un archivo antes de enviar el formulario.');
+                        return false;
+                    }
+                    
+                    // Contar archivos por tipo solo si hay archivos seleccionados
+                    if (selectedFiles.length > 0) {
+                        let pdfCount = 0;
+                        let excelCount = 0;
+                        let photoCount = 0;
+                        
+                        selectedFiles.forEach(file => {
+                            const extension = file.name.split('.').pop().toLowerCase();
+                            if (extension === 'pdf') pdfCount++;
+                            else if (extension === 'xlsx' || extension === 'xls') excelCount++;
+                            else if (['jpg', 'jpeg', 'png'].includes(extension)) photoCount++;
+                        });
+                        
+                        // Validar solo en modo creación
+                        if (!isEditMode) {
+                            if (pdfCount < 1) {
+                                e.preventDefault();
+                                alert('Debe incluir al menos 1 archivo PDF.');
+                                return false;
+                            }
+                            
+                            if (excelCount < 1) {
+                                e.preventDefault();
+                                alert('Debe incluir al menos 1 archivo Excel (XLSX).');
+                                return false;
+                            }
+                            
+                            if (photoCount < 4) {
+                                e.preventDefault();
+                                alert(`Debe incluir 4 fotografías. Actualmente tiene ${photoCount} foto(s).`);
+                                return false;
+                            }
+                        }
+                        
+                        // Crear un DataTransfer para poder asignar múltiples archivos al input
+                        const dataTransfer = new DataTransfer();
+                        selectedFiles.forEach(file => {
+                            dataTransfer.items.add(file);
+                        });
+                        
+                        // Crear un input hidden con todos los archivos
+                        const hiddenInput = document.createElement('input');
+                        hiddenInput.type = 'file';
+                        hiddenInput.name = 'archivos[]';
+                        hiddenInput.multiple = true;
+                        hiddenInput.files = dataTransfer.files;
+                        hiddenInput.style.display = 'none';
+                        
+                        this.appendChild(hiddenInput);
+                    }
+                    
+                    console.log('Form va a ser enviado normalmente');
                 });
-                
-                // Validar que se cumplan los requisitos
-                if (selectedFiles.length === 0) {
-                    e.preventDefault();
-                    alert('Debe seleccionar al menos un archivo antes de enviar el formulario.');
-                    return false;
-                }
-                
-                if (pdfCount < 1) {
-                    e.preventDefault();
-                    alert('Debe incluir al menos 1 archivo PDF.');
-                    return false;
-                }
-                
-                if (excelCount < 1) {
-                    e.preventDefault();
-                    alert('Debe incluir al menos 1 archivo Excel (XLSX).');
-                    return false;
-                }
-                
-                if (photoCount < 4) {
-                    e.preventDefault();
-                    alert(`Debe incluir 4 fotografías. Actualmente tiene ${photoCount} foto(s).`);
-                    return false;
-                }
-                
-                // Crear un DataTransfer para poder asignar múltiples archivos al input
-                const dataTransfer = new DataTransfer();
-                selectedFiles.forEach(file => {
-                    dataTransfer.items.add(file);
-                });
-                
-                // Crear un input hidden con todos los archivos
-                const hiddenInput = document.createElement('input');
-                hiddenInput.type = 'file';
-                hiddenInput.name = 'archivos[]';
-                hiddenInput.multiple = true;
-                hiddenInput.files = dataTransfer.files;
-                hiddenInput.style.display = 'none';
-                
-                this.appendChild(hiddenInput);
-            });
+            }
         });
     </script>
+
+    {{-- Formularios ocultos para eliminar archivos (renderizados fuera del form principal para evitar MethodOverride en el PUT) --}}
+    @if(isset($publication) && $publication->files->count() > 0)
+        @foreach($publication->files as $file)
+            <form id="delete-file-{{ $file->id }}" method="POST" action="{{ route('reportes.file.delete', $file) }}" class="hidden">
+                @csrf
+                @method('DELETE')
+            </form>
+        @endforeach
+    @endif
 
     <!-- Incluir Ionicons -->
     <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>

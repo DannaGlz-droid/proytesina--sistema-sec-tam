@@ -11,6 +11,9 @@
     // badge classes (bg and left border) to allow different colors per tipo
     'badgeClass' => 'bg-[#4C8CC4] text-white',
     'badgeBorderClass' => 'border-[#13264F]',
+    // show small red dot when the publication has comments (boolean)
+    'hasComments' => false,
+    'hasUnread' => false,
 ])
 
 <div {{ $attributes->merge(['class' => 'border border-[#404041] rounded-lg p-5 bg-white transition-all duration-300 hover:-translate-y-1 hover:shadow-lg group flex flex-col h-full relative publication-card']) }}>
@@ -20,7 +23,9 @@
             <div class="relative">
                 <div class="relative w-5 h-5 flex items-center justify-center text-gray-500">
                     <i class="fas fa-comment-alt text-sm"></i>
-                    <div class="absolute -top-0.5 -right-0.5 w-2 h-2 bg-red-500 rounded-full border border-white"></div>
+                    @if(($hasUnread ?? false) || ($hasComments && !isset($hasUnread)))
+                        <div class="absolute -top-0.5 -right-0.5 w-2 h-2 bg-red-500 rounded-full border border-white"></div>
+                    @endif
                 </div>
             </div>
         </div>

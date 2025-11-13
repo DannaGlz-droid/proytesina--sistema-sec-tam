@@ -28,8 +28,15 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerate();
 
-    // Redirect to the intended URL (if present), otherwise go to the statistics page
-    return redirect()->intended(route('statistic.data', absolute: false));
+        // Redirect based on user role
+        $user = Auth::user();
+        
+        if ($user->hasAnyRole(['Administrador', 'Coordinador'])) {
+            return redirect()->intended(route('statistic.data', absolute: false));
+        }
+        
+        // Operador e Invitado van a reportes
+        return redirect()->intended(route('reportes.index', absolute: false));
     }
 
     /**

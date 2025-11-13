@@ -141,14 +141,7 @@
                                                 <ion-icon name="trash-outline" class="text-lg"></ion-icon>
                                             </button>
                                         </li>
-                                        <!-- Form oculto para eliminar archivo -->
-                                        <form id="delete-file-{{ $file->id }}" 
-                                              method="POST" 
-                                              action="{{ route('reportes.file.delete', $file) }}" 
-                                              class="hidden">
-                                            @csrf
-                                            @method('DELETE')
-                                        </form>
+                                                                                <!-- Form oculto para eliminar archivo (moverá los formularios fuera del form principal) -->
                                     @endforeach
                                 </ul>
                             </div>
@@ -222,6 +215,17 @@
             />
         </div>
         </form>
+
+    {{-- Formularios ocultos para eliminar archivos (renderizados fuera del form principal para evitar MethodOverride en el PUT) --}}
+    @if(isset($publication) && $publication->files->count() > 0)
+        @foreach($publication->files as $file)
+            <form id="delete-file-{{ $file->id }}" method="POST" action="{{ route('reportes.file.delete', $file) }}" class="hidden">
+                @csrf
+                @method('DELETE')
+            </form>
+        @endforeach
+    @endif
+
     </div>
 
     <!-- Script para manejo de archivos -->

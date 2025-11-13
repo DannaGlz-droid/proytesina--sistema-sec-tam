@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Publication;
 use App\Models\PublicationFile;
+use App\Models\PublicationComment;
 use App\Models\RoadSafetyReport;
 use App\Models\InjuryObservatoryReport;
 use App\Models\BreathalyzerReport;
@@ -23,17 +24,67 @@ class ReportController extends Controller
      */
     public function index()
     {
-        $publications = Publication::with([
+        $query = Publication::with([
             'user',
             'files',
+            'comments.user.position',
             'roadSafetyReports.activityType',
             'injuryObservatoryReports.municipality',
             'injuryObservatoryReports.jurisdiction',
             'breathalyzerReports'
-        ])
-    // Ordenar por fecha de creación de la publicación (más reciente primero)
-    ->orderBy('created_at', 'desc')
-        ->get();
+        ]);
+
+        // Filtrar según el rol del usuario
+        $user = Auth::user();
+        if ($user->isOperator()) {
+            // Operadores solo ven sus propias publicaciones
+            $query->where('user_id', $user->id);
+        }
+        // Admin, Coordinador e Invitado ven todas las publicaciones
+
+        $publications = $query->orderBy('created_at', 'desc')->get();
+
+        // Preparar comentarios en formato JSON para cada publicación
+        $publications->each(function ($pub) use ($user) {
+            // Ensure comments are ordered chronologically (oldest first)
+            $orderedComments = $pub->comments->sortBy('created_at')->values();
+
+            // For now, force presentation timezone to Victoria, Tamaulipas (central Mexico)
+            // This will show all comment dates/times in the same timezone.
+            $viewerTz = 'America/Mexico_City';
+
+            $pub->comentarios_json = $orderedComments->map(function ($c) use ($user, $viewerTz) {
+                return [
+                    'id' => $c->id,
+                    'comment' => $c->comment,
+                    // Provide separate date and time fields formatted to the viewer's timezone
+                    'date' => $c->created_at->setTimezone($viewerTz)->format('d/m/Y'),
+                    'time' => $c->created_at->setTimezone($viewerTz)->format('H:i'),
+                    'created_at' => $c->created_at->locale('es')->isoFormat('D [de] MMMM [de] YYYY, h:mm A'),
+                    // ISO timestamp (includes timezone) so the frontend can format to the user's/local timezone
+                    'created_at_iso' => $c->created_at->toIso8601String(),
+                    'user' => [
+                        'id' => $c->user->id,
+                        'name' => $c->user->name,
+                        'position' => optional($c->user->position)->name ?? 'Sin cargo'
+                    ],
+                    // Per-user seen flag
+                    // - If the current viewer is the author, show whether OTHER users have read this comment
+                    //   (this yields WhatsApp-like double-check for the author when others have seen it).
+                    // - Otherwise, show whether the current viewer has read it.
+                    'seen_by_current_user' => (
+                        $c->user_id === $user->id
+                        ? (
+                            \Schema::hasTable('comment_reads')
+                            ? $c->reads()->where('user_id', '!=', $user->id)->exists()
+                            : false
+                        )
+                        : $c->isReadByUser($user->id)
+                    ),
+                    'can_delete' => Auth::id() === $c->user_id || Auth::user()->isAdmin()
+                ];
+            });
+        });
         
         return view('reportes.publicaciones', compact('publications'));
     }
@@ -601,6 +652,122 @@ class ReportController extends Controller
             'file_path' => $path,
             'file_type' => $file->getMimeType(),
             'file_size' => $file->getSize(),
+        ]);
+    }
+
+    /**
+     * Guardar un nuevo comentario
+     * - Admin/Coordinador: pueden comentar en cualquier publicación
+     * - Operador: solo puede comentar en sus propias publicaciones (para responder)
+     */
+    public function storeComment(Request $request, Publication $publication)
+    {
+        $request->validate([
+            'comment' => 'required|string|max:1000',
+        ]);
+
+        $user = Auth::user();
+
+        // Verificar permisos: Admin/Coordinador pueden comentar en todo
+        // Operador solo puede comentar en sus propias publicaciones
+        if ($user->isOperator() && $publication->user_id !== $user->id) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Solo puedes comentar en tus propias publicaciones.',
+            ], 403);
+        }
+
+        $comment = PublicationComment::create([
+            'publication_id' => $publication->id,
+            'user_id' => Auth::id(),
+            'comment' => $request->comment,
+            'seen' => false,
+        ]);
+
+        // Cargar relaciones para devolver al frontend
+        $comment->load('user.position');
+
+    // For now, force comment response timezone to Victoria, Tamaulipas
+    $userTz = 'America/Mexico_City';
+
+        // DO NOT mark the comment as read for the author yet
+        // The author should see their own comment as "sent" (single check), not "seen" (double check)
+        // It will only show double check when OTHER users have read it
+
+        return response()->json([
+            'success' => true,
+            'comment' => [
+                'id' => $comment->id,
+                'comment' => $comment->comment,
+                // Return separate date and time for client-side display (formatted to author's timezone)
+                'date' => $comment->created_at->setTimezone($userTz)->format('d/m/Y'),
+                'time' => $comment->created_at->setTimezone($userTz)->format('H:i'),
+                'created_at' => $comment->created_at->locale('es')->isoFormat('D [de] MMMM [de] YYYY, h:mm A'),
+                // Provide ISO timestamp for client-side timezone-correct formatting
+                'created_at_iso' => $comment->created_at->toIso8601String(),
+                'user' => [
+                    'id' => $comment->user->id,
+                    'name' => $comment->user->name,
+                    'position' => $comment->user->position->name ?? 'Sin cargo',
+                ],
+                // Author sees their own comment as NOT seen yet (will show single check)
+                'seen_by_current_user' => false,
+                'can_delete' => Auth::id() === $comment->user_id || Auth::user()->isAdmin(),
+            ],
+        ]);
+    }
+
+    /**
+     * Eliminar un comentario (solo el autor o Admin)
+     */
+    public function destroyComment(PublicationComment $comment)
+    {
+        // Verificar que el usuario sea el autor o un administrador
+        if (Auth::id() !== $comment->user_id && !Auth::user()->isAdmin()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No tienes permiso para eliminar este comentario.',
+            ], 403);
+        }
+
+        $comment->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Comentario eliminado correctamente.',
+        ]);
+    }
+
+    /**
+     * Marcar como vistos los comentarios de una publicación cuando un usuario abre la publicación.
+     * Marca como seen = true todos los comentarios de la publicación que NO fueron escritos por el usuario actual.
+     */
+    public function markCommentsSeen(Publication $publication)
+    {
+        $user = Auth::user();
+        // For per-user reads, create entries in comment_reads for comments not authored by the current user
+        $comments = PublicationComment::where('publication_id', $publication->id)
+            ->where('user_id', '!=', $user->id)
+            ->get();
+
+        $updatedIds = [];
+        foreach ($comments as $c) {
+            $created = \App\Models\CommentRead::firstOrCreate([
+                'publication_comment_id' => $c->id,
+                'user_id' => $user->id,
+            ], [
+                'seen_at' => now(),
+            ]);
+
+            // If the record was just created (fresh), include in updated ids
+            if ($created->wasRecentlyCreated) {
+                $updatedIds[] = $c->id;
+            }
+        }
+
+        return response()->json([
+            'success' => true,
+            'updated_ids' => $updatedIds,
         ]);
     }
 }

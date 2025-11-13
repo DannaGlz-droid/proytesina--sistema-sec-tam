@@ -27,7 +27,8 @@ class Role extends Model
      * Asignación masiva
      */
     protected $fillable = [
-        'name'
+        'name',
+        'description'
     ];
 
     /* Campos protegidos
