@@ -11,13 +11,34 @@
     <div class="flex items-center">
        
         <!-- Notificaciones con dropdown -->
-        <div class="relative flex items-center mr-3 lg:mr-4" x-data="{ openNotifications: false }">
+        <div class="relative flex items-center mr-3 lg:mr-4" x-data="{ openNotifications: false, notifications: [], unreadCount: 0 }" 
+             x-init="
+                 // Cargar notificaciones al iniciar
+                 fetch('/notificaciones')
+                     .then(res => res.json())
+                     .then(data => {
+                         notifications = data.notifications;
+                         unreadCount = data.unread_count;
+                     });
+                 
+                 // Recargar cada 30 segundos
+                 setInterval(() => {
+                     fetch('/notificaciones')
+                         .then(res => res.json())
+                         .then(data => {
+                             notifications = data.notifications;
+                             unreadCount = data.unread_count;
+                         });
+                 }, 30000);
+             ">
             <!-- Botón de notificaciones -->
             <button @click="openNotifications = !openNotifications" 
                     class="relative p-1 lg:p-1 text-gray-300 hover:text-white transition-colors flex items-center justify-center">
                 <ion-icon name="notifications" class="text-xl lg:text-2xl"></ion-icon>
                 <!-- Indicador de notificaciones nuevas -->
-                <span class="absolute -top-1 -right-1 bg-red-500 text-xs text-white rounded-full h-3 w-3 lg:h-4 lg:w-4 flex items-center justify-center text-[8px] lg:text-[10px]">3</span>
+                <span x-show="unreadCount > 0" 
+                      x-text="unreadCount > 9 ? '9+' : unreadCount"
+                      class="absolute -top-1 -right-1 bg-red-500 text-xs text-white rounded-full h-3 w-3 lg:h-4 lg:w-4 flex items-center justify-center text-[8px] lg:text-[10px]"></span>
             </button>
 
             <!-- Menú desplegable de notificaciones responsive -->
@@ -33,45 +54,88 @@
                  style="display: none;">
                  
                 <!-- Encabezado de notificaciones -->
-                <div class="px-3 lg:px-4 py-2 lg:py-3 border-b border-gray-200 bg-gray-50">
-                    <h3 class="text-sm lg:text-base font-semibold text-gray-800">Notificaciones</h3>
-                    <p class="text-xs lg:text-sm text-gray-600 mt-1">Tienes 3 notificaciones nuevas</p>
+                <div class="px-3 lg:px-4 py-2 lg:py-3 border-b border-gray-200 bg-gray-50 flex justify-between items-center">
+                    <div>
+                        <h3 class="text-sm lg:text-base font-semibold text-gray-800">Notificaciones</h3>
+                        <p class="text-xs lg:text-sm text-gray-600 mt-1" x-text="unreadCount > 0 ? 'Tienes ' + unreadCount + ' notificación' + (unreadCount !== 1 ? 'es' : '') + ' nueva' + (unreadCount !== 1 ? 's' : '') : 'No hay notificaciones nuevas'"></p>
+                    </div>
+                    <button @click="
+                        fetch('/notificaciones/marcar-todas-leidas', { method: 'POST', headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}' } })
+                            .then(() => {
+                                notifications.forEach(n => n.read = true);
+                                unreadCount = 0;
+                            });
+                    " x-show="unreadCount > 0" class="text-xs text-blue-600 hover:text-blue-800 font-medium">
+                        Marcar todas
+                    </button>
                 </div>
 
                 <!-- Lista de notificaciones -->
                 <div class="max-h-60 lg:max-h-80 overflow-y-auto">
-                    <!-- Notificación 1 -->
-                    <a href="#" class="block px-3 lg:px-4 py-2 lg:py-3 hover:bg-blue-50 border-b border-gray-100 transition-colors">
-                        <div class="flex justify-between items-start mb-1">
-                            <p class="text-sm lg:text-base font-medium text-gray-900">Nuevo registro pendiente</p>
-                            <span class="text-xs lg:text-sm text-gray-500 whitespace-nowrap">Hace 5 min</span>
+                    <template x-if="notifications.length === 0">
+                        <div class="px-3 lg:px-4 py-6 text-center text-gray-500 text-sm">
+                            No tienes notificaciones
                         </div>
-                        <p class="text-xs lg:text-sm text-gray-700">Juan Pérez ha registrado una nueva defunción</p>
-                    </a>
+                    </template>
+                    
+                    <template x-for="notif in notifications" :key="notif.id">
+                        <div x-data="{ 
+                            expanded: false, 
+                            get isLong() { 
+                                return ((notif.message && notif.message.length > 120) || (notif.publication_title && notif.publication_title.length > 50)); 
+                            } 
+                        }" class="block px-3 lg:px-4 py-2 lg:py-3 border-b border-gray-100 transition-colors" :class="!notif.read ? 'bg-blue-50 hover:bg-blue-100' : 'hover:bg-blue-100'">
+                            <div class="flex justify-between items-start mb-1">
+                                <a :href="'/reportes/publicaciones?publication=' + notif.publication_id" class="text-sm lg:text-sm font-medium text-gray-900 max-w-[18rem] hover:underline"
+                                   @click="
+                                       if (!notif.read) {
+                                           fetch('/notificaciones/' + notif.id + '/marcar-leida', { method: 'POST', headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}' } })
+                                               .then(() => {
+                                                   notif.read = true;
+                                                   unreadCount = Math.max(0, unreadCount - 1);
+                                               });
+                                       }
+                                   " x-text="notif.title"></a>
+                                <span class="text-xs lg:text-sm text-gray-500 whitespace-nowrap ml-2" x-text="notif.time_ago"></span>
+                            </div>
 
-                    <!-- Notificación 2 -->
-                    <a href="#" class="block px-3 lg:px-4 py-2 lg:py-3 hover:bg-blue-50 border-b border-gray-100 transition-colors">
-                        <div class="flex justify-between items-start mb-1">
-                            <p class="text-sm lg:text-base font-medium text-gray-900">Solicitud de certificado</p>
-                            <span class="text-xs lg:text-sm text-gray-500 whitespace-nowrap">Hace 1 hora</span>
-                        </div>
-                        <p class="text-xs lg:text-sm text-gray-700">María García solicitó un certificado de nacimiento</p>
-                    </a>
+                            <div class="mb-1">
+                                <p class="text-xs lg:text-sm text-gray-700 font-medium max-w-[18rem]" :class="expanded ? '' : 'truncate'" x-text="notif.publication_title"></p>
+                            </div>
 
-                    <!-- Notificación 3 -->
-                    <a href="#" class="block px-3 lg:px-4 py-2 lg:py-3 hover:bg-blue-50 transition-colors">
-                        <div class="flex justify-between items-start mb-1">
-                            <p class="text-sm lg:text-base font-medium text-gray-900">Actualización del sistema</p>
-                            <span class="text-xs lg:text-sm text-gray-500 whitespace-nowrap">Ayer</span>
+                            <div>
+                                <p class="text-xs lg:text-sm text-gray-600" :class="expanded ? '' : 'line-clamp-2'" x-text="notif.message"></p>
+                            </div>
+
+                            <div class="mt-1">
+                                <button x-show="isLong" @click.stop.prevent="expanded = !expanded" class="text-xs text-slate-600 hover:text-slate-800 inline">
+                                    <span x-text="expanded ? 'Ver menos' : 'Ver más'"></span>
+                                </button>
+                                          <a href="#" class="text-xs text-blue-500 hover:text-blue-700 inline"
+                                              :class="isLong ? 'ml-3' : ''"
+                                   @click.prevent="
+                                       if (!notif.read) {
+                                           fetch('/notificaciones/' + notif.id + '/marcar-leida', { method: 'POST', headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}' } })
+                                               .then(() => {
+                                                   notif.read = true;
+                                                   unreadCount = Math.max(0, unreadCount - 1);
+                                               });
+                                       }
+                                       if (typeof window.openPublicationFromNotification === 'function') {
+                                           window.openPublicationFromNotification(notif.publication_id, notif.comment_id);
+                                       } else {
+                                           window.location = '/reportes/publicaciones?publication=' + notif.publication_id + '&comment=' + (notif.comment_id || '');
+                                       }
+                                   ">Ir a reporte</a>
+                            </div>
                         </div>
-                        <p class="text-xs lg:text-sm text-gray-700">El sistema se actualizará este sábado</p>
-                    </a>
+                    </template>
                 </div>
 
                 <!-- Pie del menú de notificaciones -->
                 <div class="px-3 lg:px-4 py-2 lg:py-3 border-t border-gray-200 bg-gray-50">
-                    <a href="/notificaciones" class="text-xs lg:text-sm text-blue-600 hover:text-blue-800 font-medium transition-colors">
-                        Ver todas las notificaciones →
+                    <a href="/reportes/publicaciones" class="text-xs lg:text-sm text-blue-600 hover:text-blue-800 font-medium transition-colors">
+                        Ver todas las publicaciones →
                     </a>
                 </div>
             </div>

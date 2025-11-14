@@ -11,6 +11,7 @@ use App\Models\BreathalyzerReport;
 use App\Models\Municipality;
 use App\Models\Jurisdiction;
 use App\Models\ActivityType;
+use App\Models\Notification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -687,6 +688,70 @@ class ReportController extends Controller
         // Cargar relaciones para devolver al frontend
         $comment->load('user.position');
 
+        // Crear notificaciones para todos los usuarios involucrados en la publicación
+        // (dueño de la publicación + otros comentaristas), excepto quien comenta.
+        $senderName = Auth::user()->name;
+
+        // Obtener ids de usuarios que han comentado en esta publicación
+        $commenterIds = PublicationComment::where('publication_id', $publication->id)
+            ->pluck('user_id')
+            ->toArray();
+
+        // Incluir al dueño de la publicación
+        $recipientIds = array_unique(array_merge($commenterIds, [$publication->user_id]));
+
+        // Excluir al autor del comentario
+        $recipientIds = array_filter($recipientIds, function ($id) {
+            return $id != Auth::id();
+        });
+
+        // Crear una notificación por receptor (evitar duplicados gracias a array_unique)
+        // Incluir el título (topic) de la publicación para identificarla en la notificación
+        // Truncar el título en la propia notificación para evitar desbordes en la UI,
+        // pero conservar el título completo en la respuesta API (`publication_title`).
+        $fullTitle = $publication->topic ?? 'Publicación';
+        // Limitar a 80 caracteres para el título en la notificación
+        $pubTitle = Str::limit($fullTitle, 80);
+        // Preparar un extracto del comentario para incluir en la notificación
+        $commentExcerpt = Str::limit(strip_tags($comment->comment), 120);
+
+        foreach ($recipientIds as $recipientId) {
+            // Diferenciar mensajes según el receptor:
+            // - Si es el dueño de la publicación: notificar "Nuevo comentario en tu publicación" y mostrar extracto
+            // - Si es otro comentarista: notificar que alguien respondió en la publicación que comentaste
+            // - En otros casos (por seguridad), usar el formato genérico con título de publicación
+            $isOwner = $recipientId == $publication->user_id;
+            $isOtherCommenter = in_array($recipientId, $commenterIds) && !$isOwner;
+
+            // Normalizar extracto (sin comillas) y fallback si está vacío
+            $excerpt = trim($commentExcerpt);
+            if ($excerpt === '') {
+                $excerpt = null;
+            }
+
+            if ($isOwner) {
+                $nTitle = 'Nuevo comentario en tu publicación';
+                $nMessage = $excerpt ? "{$senderName} comentó: {$excerpt}" : "{$senderName} comentó";
+            } elseif ($isOtherCommenter) {
+                $nTitle = "{$senderName} respondió en una publicación que comentaste";
+                $nMessage = $excerpt ? "{$senderName} respondió: {$excerpt}" : "{$senderName} respondió";
+            } else {
+                $nTitle = "Nuevo comentario: {$pubTitle}";
+                $nMessage = $excerpt ? "{$senderName} comentó: {$excerpt}" : "{$senderName} comentó en: {$pubTitle}";
+            }
+
+            Notification::create([
+                'recipient_user_id' => $recipientId,
+                'sender_user_id' => Auth::id(),
+                'publication_id' => $publication->id,
+                'publication_comment_id' => $comment->id,
+                'type' => 'comment',
+                'title' => $nTitle,
+                'message' => $nMessage,
+                'read' => false,
+            ]);
+        }
+
     // For now, force comment response timezone to Victoria, Tamaulipas
     $userTz = 'America/Mexico_City';
 
@@ -769,5 +834,133 @@ class ReportController extends Controller
             'success' => true,
             'updated_ids' => $updatedIds,
         ]);
+    }
+
+    /**
+     * Get notifications for the current user
+     */
+    public function getNotifications()
+    {
+        $notifications = Notification::where('recipient_user_id', Auth::id())
+            ->with(['sender', 'publication'])
+            ->orderBy('created_at', 'desc')
+            ->take(10)
+            ->get();
+
+        $unreadCount = Notification::where('recipient_user_id', Auth::id())
+            ->where('read', false)
+            ->count();
+
+        return response()->json([
+            'success' => true,
+            'notifications' => $notifications->map(function ($n) {
+                return [
+                    'id' => $n->id,
+                    'type' => $n->type,
+                    'title' => $n->title,
+                    'message' => $n->message,
+                    'read' => $n->read,
+                    'time_ago' => $n->created_at->diffForHumans(),
+                    'created_at' => $n->created_at->toIso8601String(),
+                    'sender_name' => $n->sender ? $n->sender->name : 'Sistema',
+                    'publication_id' => $n->publication_id,
+                        'comment_id' => $n->publication_comment_id,
+                    'publication_title' => $n->publication ? ($n->publication->topic ?? null) : null,
+                ];
+            }),
+            'unread_count' => $unreadCount,
+        ]);
+    }
+
+    /**
+     * Mark notification as read
+     */
+    public function markNotificationRead($id)
+    {
+        $notification = Notification::where('id', $id)
+            ->where('recipient_user_id', Auth::id())
+            ->first();
+
+        if ($notification) {
+            $notification->update(['read' => true]);
+            return response()->json(['success' => true]);
+        }
+
+        return response()->json(['success' => false], 404);
+    }
+
+    /**
+     * Mark all notifications as read
+     */
+    public function markAllNotificationsRead()
+    {
+        Notification::where('recipient_user_id', Auth::id())
+            ->where('read', false)
+            ->update(['read' => true]);
+
+        return response()->json(['success' => true]);
+    }
+
+    /**
+     * Download a single file
+     */
+    public function downloadFile(PublicationFile $file)
+    {
+        // Verificar que el archivo existe
+        $fullPath = storage_path('app/public/' . $file->file_path);
+        
+        if (!file_exists($fullPath)) {
+            abort(404, 'Archivo no encontrado');
+        }
+
+        // Descargar el archivo con su nombre original
+        return response()->download($fullPath, $file->original_name);
+    }
+
+    /**
+     * Download all files from a publication as a ZIP
+     */
+    public function downloadAllFiles(Publication $publication)
+    {
+        $files = $publication->files;
+
+        if ($files->isEmpty()) {
+            return redirect()->back()->with('error', 'No hay archivos para descargar');
+        }
+
+        // Si solo hay un archivo, descargarlo directamente
+        if ($files->count() === 1) {
+            $file = $files->first();
+            $fullPath = storage_path('app/public/' . $file->file_path);
+            
+            if (!file_exists($fullPath)) {
+                abort(404, 'Archivo no encontrado');
+            }
+            
+            return response()->download($fullPath, $file->original_name);
+        }
+
+        // Crear un ZIP con todos los archivos
+        $zipFileName = 'reportes_' . Str::slug($publication->topic) . '_' . now()->format('Ymd_His') . '.zip';
+        $zipPath = storage_path('app/temp/' . $zipFileName);
+
+        // Crear directorio temporal si no existe
+        if (!file_exists(storage_path('app/temp'))) {
+            mkdir(storage_path('app/temp'), 0755, true);
+        }
+
+        $zip = new \ZipArchive();
+        if ($zip->open($zipPath, \ZipArchive::CREATE | \ZipArchive::OVERWRITE) === true) {
+            foreach ($files as $file) {
+                $filePath = storage_path('app/public/' . $file->file_path);
+                if (file_exists($filePath)) {
+                    $zip->addFile($filePath, $file->original_name);
+                }
+            }
+            $zip->close();
+        }
+
+        // Descargar y eliminar el archivo temporal
+        return response()->download($zipPath, $zipFileName)->deleteFileAfterSend(true);
     }
 }

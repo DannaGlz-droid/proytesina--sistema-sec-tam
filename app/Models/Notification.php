@@ -18,6 +18,7 @@ class Notification extends Model
         'recipient_user_id',
         'sender_user_id',
         'publication_id',
+        'publication_comment_id',
         'type',
         'title',
         'message',
@@ -28,6 +29,7 @@ class Notification extends Model
         'recipient_user_id',  // FK sensible
         'sender_user_id',     // FK sensible  
         'publication_id',     // FK sensible
+        'publication_comment_id',
         'read'                // Estado interno del sistema
     ];
 
@@ -44,6 +46,11 @@ class Notification extends Model
     public function publication()
     {
         return $this->belongsTo(Publication::class);
+    }
+
+    public function comment()
+    {
+        return $this->belongsTo(\App\Models\PublicationComment::class, 'publication_comment_id');
     }
 
     /**

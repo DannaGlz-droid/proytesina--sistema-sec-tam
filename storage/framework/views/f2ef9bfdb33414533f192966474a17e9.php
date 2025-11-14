@@ -177,8 +177,13 @@
                                 }
                             }
                             
-                            // Archivos JSON
-                            $archivosArray = $pub->files->pluck('original_name')->toArray();
+                            // Archivos JSON - incluir ID y nombre original
+                            $archivosArray = $pub->files->map(function($file) {
+                                return [
+                                    'id' => $file->id,
+                                    'name' => $file->original_name
+                                ];
+                            })->toArray();
                             $archivosJson = json_encode($archivosArray);
                         ?>
 
@@ -543,8 +548,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 const archivos = JSON.parse(dataset.archivos);
                 archivosContainer.innerHTML = '';
                 
-                archivos.forEach(archivo => {
-                    const extension = archivo.split('.').pop().toLowerCase();
+                // Guardar lista de archivos en el modal para el botón "Descargar Todos"
+                modal.dataset.archivosJson = dataset.archivos;
+                
+                archivos.forEach((archivo) => {
+                    const fileName = archivo.name || archivo; // Soporte para formato antiguo y nuevo
+                    const fileId = archivo.id || null;
+                    const extension = fileName.split('.').pop().toLowerCase();
                     const { icono, color } = obtenerEstiloArchivo(extension);
                     
                     archivosContainer.innerHTML += `
@@ -553,13 +563,13 @@ document.addEventListener('DOMContentLoaded', function() {
                                 <i class="${icono} text-3xl text-white"></i>
                             </div>
                             <div class="p-4">
-                                <p class="text-sm font-semibold text-[#404041] font-lora truncate mb-1">
-                                    ${archivo}
+                                <p class="text-sm font-semibold text-[#404041] font-lora truncate mb-1" title="${fileName}">
+                                    ${fileName}
                                 </p>
                                 <p class="text-xs text-gray-500 font-lora mb-3">
                                     ${extension.toUpperCase()} • ${obtenerTamañoAleatorio()}
                                 </p>
-                                <button class="w-full px-3 py-2 bg-[#404041] text-white text-xs font-semibold rounded-lg hover:bg-[#2a2a2a] transition-all duration-200 flex items-center justify-center gap-2">
+                                <button class="descargar-archivo w-full px-3 py-2 bg-[#404041] text-white text-xs font-semibold rounded-lg hover:bg-[#2a2a2a] transition-all duration-200 flex items-center justify-center gap-2" data-file-id="${fileId}">
                                     <i class="fas fa-download text-xs"></i>
                                     Descargar
                                 </button>
@@ -567,6 +577,16 @@ document.addEventListener('DOMContentLoaded', function() {
                         </div>
                     `;
                 });
+                
+                // Configurar botón "Descargar Todos" si existe
+                const btnDescargarTodos = modal.querySelector('.descargar-todos-archivos');
+                if (btnDescargarTodos) {
+                    btnDescargarTodos.replaceWith(btnDescargarTodos.cloneNode(true));
+                    const newBtn = modal.querySelector('.descargar-todos-archivos');
+                    newBtn.addEventListener('click', function() {
+                        window.location.href = `/reportes/${dataset.publicationId}/download-all`;
+                    });
+                }
             } catch (e) {
                 console.error('Error parsing archivos:', e);
             }
@@ -727,6 +747,42 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     console.log('=== SISTEMA DE MODALES INICIALIZADO ===');
+    
+    // Función utilitaria para abrir un modal de publicación y navegar al comentario
+    window.openPublicationFromNotification = function(publicationId, commentId) {
+        try {
+            const btn = document.querySelector(`button[data-publication-id="${publicationId}"]`);
+            if (btn) {
+                // Click the existing button to fill and show the modal
+                btn.click();
+
+                // Wait for modal to render comments and then scroll to the comment
+                let tries = 0;
+                const iv = setInterval(() => {
+                    tries += 1;
+                    // Find currently visible modal (not hidden)
+                    const modal = Array.from(document.querySelectorAll('[id^="modal"]')).find(m => !m.classList.contains('hidden'));
+                    if (modal) {
+                        const commentEl = modal.querySelector(`[data-comment-id="${commentId}"]`);
+                        if (commentEl) {
+                            commentEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                            commentEl.style.transition = 'box-shadow 0.3s ease';
+                            commentEl.style.boxShadow = '0 0 0 3px rgba(59,130,246,0.25)';
+                            setTimeout(() => { commentEl.style.boxShadow = 'none'; }, 3500);
+                            clearInterval(iv);
+                        }
+                    }
+                    if (tries > 30) clearInterval(iv);
+                }, 200);
+                return;
+            }
+        } catch (e) {
+            console.error('openPublicationFromNotification error:', e);
+        }
+
+        // Fallback: navigate to page with query params
+        window.location = '/reportes/publicaciones?publication=' + publicationId + (commentId ? ('&comment=' + commentId) : '');
+    }
     
     // === SISTEMA DE FILTRADO POR PESTAÑAS ===
     const tabButtons = document.querySelectorAll('.tab-filter');
@@ -934,7 +990,23 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    console.log('=== SISTEMA DE COMENTARIOS INICIALIZADO ===');
+    // === SISTEMA DE DESCARGA DE ARCHIVOS ===
+    document.addEventListener('click', function(e) {
+        // Descargar archivo individual
+        if (e.target.closest('.descargar-archivo')) {
+            e.preventDefault();
+            const button = e.target.closest('.descargar-archivo');
+            const fileId = button.dataset.fileId;
+            
+            if (fileId && fileId !== 'null') {
+                window.location.href = `/reportes/file/${fileId}/download`;
+            } else {
+                alert('No se pudo identificar el archivo para descargar');
+            }
+        }
+    });
+
+    console.log('=== SISTEMA DE COMENTARIOS Y DESCARGAS INICIALIZADO ===');
 });
 </script>
 

@@ -83,6 +83,10 @@ Route::middleware('auth')->group(function () {
         // Eliminar reportes y archivos
         Route::delete('reportes/{publication}', [App\Http\Controllers\ReportController::class, 'destroy'])->name('reportes.destroy');
         Route::delete('reportes/file/{file}', [App\Http\Controllers\ReportController::class, 'destroyFile'])->name('reportes.file.delete');
+        
+        // Descargar archivos
+        Route::get('reportes/file/{file}/download', [App\Http\Controllers\ReportController::class, 'downloadFile'])->name('reportes.file.download');
+        Route::get('reportes/{publication}/download-all', [App\Http\Controllers\ReportController::class, 'downloadAllFiles'])->name('reportes.download-all');
     });
 
     // ========== COMENTARIOS (Administrador, Coordinador y Operador en sus propias publicaciones) ==========
@@ -91,6 +95,11 @@ Route::middleware('auth')->group(function () {
         Route::post('reportes/{publication}/comentarios/mark-seen', [App\Http\Controllers\ReportController::class, 'markCommentsSeen'])->name('reportes.comentarios.mark-seen');
         Route::delete('reportes/comentarios/{comment}', [App\Http\Controllers\ReportController::class, 'destroyComment'])->name('reportes.comentarios.destroy');
     });
+
+    // ========== NOTIFICACIONES (Todos los usuarios autenticados) ==========
+    Route::get('notificaciones', [App\Http\Controllers\ReportController::class, 'getNotifications'])->name('notificaciones.get');
+    Route::post('notificaciones/{id}/marcar-leida', [App\Http\Controllers\ReportController::class, 'markNotificationRead'])->name('notificaciones.mark-read');
+    Route::post('notificaciones/marcar-todas-leidas', [App\Http\Controllers\ReportController::class, 'markAllNotificationsRead'])->name('notificaciones.mark-all-read');
 
     // ========== PERFIL Y UTILIDADES (Todos los usuarios autenticados) ==========
     Route::view('usuario/miperfil', 'usuarios.miperfil')->name('usuario.miperfil');
