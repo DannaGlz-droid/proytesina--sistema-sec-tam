@@ -3,9 +3,12 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Publication extends Model
 {
+    use SoftDeletes;
+
      /**
      * The table associated with the model.
      */
@@ -22,6 +25,11 @@ class Publication extends Model
         'publication_date',
         'activity_date',
         'status',
+        'approved_by',
+        'approved_at',
+        'rejected_by',
+        'rejected_at',
+        'rejection_reason',
     ];
 
     protected $hidden = [ // Protege datos sensibles en respuestas API
@@ -34,6 +42,8 @@ class Publication extends Model
     protected $casts = [
         'publication_date' => 'date',
         'activity_date' => 'date',
+        'approved_at' => 'datetime',
+        'rejected_at' => 'datetime',
     ];
 
     /**
@@ -42,6 +52,22 @@ class Publication extends Model
     public function user()
     {
         return $this->belongsTo(User::class);
+    }
+
+    /**
+     * Relationship: User who approved the publication
+     */
+    public function approver()
+    {
+        return $this->belongsTo(User::class, 'approved_by');
+    }
+
+    /**
+     * Relationship: User who rejected the publication
+     */
+    public function rejector()
+    {
+        return $this->belongsTo(User::class, 'rejected_by');
     }
 
     /**
@@ -90,5 +116,52 @@ class Publication extends Model
     public function breathalyzerReports()
     {
         return $this->hasMany(BreathalyzerReport::class);
+    }
+
+    /**
+     * Check if the publication can be edited by the given user
+     */
+    public function canBeEditedBy($userId)
+    {
+        // El autor puede editar si está rechazado o pendiente
+        if ($this->user_id === $userId) {
+            return in_array($this->status, ['pendiente', 'rechazado']);
+        }
+        
+        // Admin/Coordinador pueden editar cualquiera
+        $user = User::find($userId);
+        return $user && ($user->isAdmin() || $user->isCoordinator());
+    }
+
+    /**
+     * Check if the publication can be resubmitted
+     */
+    public function canBeResubmitted()
+    {
+        return $this->status === 'rechazado';
+    }
+
+    /**
+     * Check if the publication is pending review
+     */
+    public function isPending()
+    {
+        return $this->status === 'pendiente';
+    }
+
+    /**
+     * Check if the publication is approved
+     */
+    public function isApproved()
+    {
+        return $this->status === 'aprobado';
+    }
+
+    /**
+     * Check if the publication is rejected
+     */
+    public function isRejected()
+    {
+        return $this->status === 'rechazado';
     }
 }

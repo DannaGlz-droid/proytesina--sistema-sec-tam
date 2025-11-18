@@ -10,6 +10,7 @@ use App\Models\Death;
 use App\Models\DeathCause;
 use App\Models\DeathLocation;
 use App\Models\Municipality;
+use App\Models\Jurisdiction;
 use Carbon\Carbon;
 use Maatwebsite\Excel\Facades\Excel;
 use PhpOffice\PhpSpreadsheet\Shared\Date as ExcelDate;
@@ -79,6 +80,7 @@ class DeathImportController extends Controller
         $rowsTotal = 0;
         $rowsImported = 0;
         $rowsFailed = 0;
+        $rowsConvertedMonths = 0;
         $failedRows = [];
 
         foreach ($sheets as $sheetIndex => $sheet) {
@@ -108,12 +110,34 @@ class DeathImportController extends Controller
                     $rowAssoc[$key] = isset($row[$i]) ? $row[$i] : null;
                 }
 
+                // If the entire row is empty (all mapped values blank/null), skip it silently
+                $allEmpty = true;
+                foreach ($rowAssoc as $v) {
+                    if (!is_null($v) && trim((string)$v) !== '') { $allEmpty = false; break; }
+                }
+                if ($allEmpty) {
+                    // we incremented rowsTotal earlier for the loop; subtract it back and skip
+                    $rowsTotal--;
+                    continue;
+                }
+
                 // Normalize and map expected fields
                 $name = trim((string)($rowAssoc['nombre'] ?? '')) ?: null;
+                // government folio may appear under various header names; also accept first column when header missing
+                $folio = null;
+                $possibleFolioKeys = ['folio','folio_gob','folio_gubernamental','folio_gobierno','id','numero','nfolio','no_folio'];
+                foreach ($possibleFolioKeys as $k) {
+                    if (isset($rowAssoc[$k]) && trim((string)$rowAssoc[$k]) !== '') { $folio = trim((string)$rowAssoc[$k]); break; }
+                }
+                // if still null, attempt to use the raw first cell of the $row array (index 0)
+                if (is_null($folio) && isset($row[0]) && trim((string)$row[0]) !== '') {
+                    $folio = trim((string)$row[0]);
+                }
                 // Accept both correct header names and older/mistyped ones for backwards compatibility
                 $first = trim((string)(($rowAssoc['primerapellido'] ?? $rowAssoc['primerapellid'] ?? ''))) ?: null;
                 $second = trim((string)(($rowAssoc['segundoapellido'] ?? $rowAssoc['segundoapellid'] ?? ''))) ?: null;
                 $age = isset($rowAssoc['edad']) ? (int)$rowAssoc['edad'] : null;
+                $claveEdad = isset($rowAssoc['claveedadd']) ? trim((string)$rowAssoc['claveedadd']) : null;
                 $sex = isset($rowAssoc['sexod']) ? strtoupper(trim((string)$rowAssoc['sexod'])) : null;
                 $dateRaw = $rowAssoc['fechadefuncion'] ?? ($rowAssoc['fechadefuncion'] ?? null);
                 $residenceMunicipalityName = trim((string)($rowAssoc['municipioresidenciad'] ?? '')) ?: null;
@@ -153,7 +177,9 @@ class DeathImportController extends Controller
                         if ($best) {
                             $residenceMunicipality = $best['model'];
                         } else {
-                            $errors[] = 'Municipio residencia no encontrado: ' . $residenceMunicipalityName;
+                            // If municipality not found, use/create a generic 'OTRO' municipality so import doesn't fail
+                            $otherJur = Jurisdiction::firstOrCreate(['name' => 'OTRO']);
+                            $residenceMunicipality = Municipality::firstOrCreate(['name' => 'OTRO'], ['jurisdiction_id' => $otherJur->id]);
                         }
                     }
                 }
@@ -168,7 +194,9 @@ class DeathImportController extends Controller
                         if ($best) {
                             $deathMunicipality = $best['model'];
                         } else {
-                            $errors[] = 'Municipio defunción no encontrado: ' . $deathMunicipalityName;
+                            // If municipality not found, use/create a generic 'OTRO' municipality so import doesn't fail
+                            $otherJur = Jurisdiction::firstOrCreate(['name' => 'OTRO']);
+                            $deathMunicipality = Municipality::firstOrCreate(['name' => 'OTRO'], ['jurisdiction_id' => $otherJur->id]);
                         }
                     }
                 }
@@ -193,29 +221,87 @@ class DeathImportController extends Controller
                     $deathLocation = DeathLocation::firstOrCreate(['name' => $siteName]);
                 }
 
-                // skip duplicates by name + date + municipality
-                $exists = Death::where('name', $name)
-                    ->where('death_date', $deathDate->format('Y-m-d'))
-                    ->where('death_municipality_id', $deathMunicipality->id)
-                    ->exists();
-
-                if ($exists) {
-                    $rowsFailed++;
-                    $failedRows[] = array_merge(['sheet' => $causeName, 'row' => $rowNum + 2, 'errors' => 'Duplicado detectado'], $rowAssoc);
-                    continue;
+                // Deduplication: if a government folio is provided, upsert by folio.
+                // Otherwise fall back to previous duplicate check (name + date + death municipality).
+                $existingDeath = null;
+                if ($folio) {
+                    $existingDeath = Death::where('gov_folio', $folio)->first();
                 }
 
-                // create death
-                $d = new Death();
+                if (!$existingDeath) {
+                    // old duplicate heuristic
+                    $exists = Death::where('name', $name)
+                        ->where('death_date', $deathDate->format('Y-m-d'))
+                        ->where('death_municipality_id', $deathMunicipality->id)
+                        ->exists();
+
+                    if ($exists) {
+                        $rowsFailed++;
+                        $failedRows[] = array_merge(['sheet' => $causeName, 'row' => $rowNum + 2, 'errors' => 'Duplicado detectado'], $rowAssoc);
+                        continue;
+                    }
+                }
+
+                // Determine normalized age fields: age_years / age_months
+                $ageYears = null;
+                $ageMonths = null;
+                // If CLAVEEDADD exists, use it to interpret EDAD
+                if ($claveEdad) {
+                    $claveNorm = mb_strtolower($claveEdad);
+                    // remove accents to match 'años' -> 'anos'
+                    $claveNormAscii = iconv('UTF-8', 'ASCII//TRANSLIT', $claveNorm) ?: $claveNorm;
+                    if (strpos($claveNormAscii, 'mes') !== false) {
+                        $ageYears = 0;
+                        $ageMonths = is_null($age) ? null : (int)$age;
+                    } elseif (strpos($claveNormAscii, 'ano') !== false || strpos($claveNormAscii, 'año') !== false) {
+                        $ageYears = is_null($age) ? null : (int)$age;
+                        $ageMonths = null;
+                    } else {
+                        // Unknown unit — fallback to legacy behavior (treat as years)
+                        $ageYears = is_null($age) ? null : (int)$age;
+                        $ageMonths = null;
+                    }
+                } else {
+                    // No unit provided; fallback to legacy 'age' as years
+                    $ageYears = is_null($age) ? null : (int)$age;
+                    $ageMonths = null;
+                }
+
+                // If months are >= 12, convert to years (automatic conversion)
+                if (!is_null($ageMonths) && $ageMonths >= 12) {
+                    $convertedYears = intdiv($ageMonths, 12);
+                    // if there is remainder months, we drop them to keep the "only years or months" rule
+                    $ageYears = $convertedYears > 0 ? $convertedYears : 0;
+                    $ageMonths = null;
+                    $rowsConvertedMonths++;
+                }
+
+                // create or update death (prefer gov_folio upsert)
+                if ($existingDeath) {
+                    $d = $existingDeath;
+                } else {
+                    $d = new Death();
+                }
                 $d->name = $name;
+                if ($folio) $d->gov_folio = (string)$folio;
                 $d->first_last_name = $first;
                 $d->second_last_name = $second;
-                $d->age = $age;
+                // keep legacy age as years when available (for compatibility)
+                $d->age = $ageYears ?? $age;
+                $d->age_years = $ageYears;
+                $d->age_months = $ageMonths;
                 $d->sex = $sex;
                 $d->death_date = $deathDate ? $deathDate->format('Y-m-d') : null;
                 $d->residence_municipality_id = $residenceMunicipality ? $residenceMunicipality->id : null;
                 $d->death_municipality_id = $deathMunicipality->id;
-                $d->jurisdiction_id = $deathMunicipality->jurisdiction_id;
+                // Derive jurisdiction from municipality of residence when possible.
+                // If residence municipality is not available, assign a default "NO ENCONTRADA" jurisdiction
+                if ($residenceMunicipality && $residenceMunicipality->jurisdiction_id) {
+                    $d->jurisdiction_id = $residenceMunicipality->jurisdiction_id;
+                } else {
+                    $defaultJur = Jurisdiction::firstOrCreate(['name' => 'NO ENCONTRADA']);
+                    $d->jurisdiction_id = $defaultJur->id;
+                }
                 $d->death_location_id = $deathLocation ? $deathLocation->id : null;
                 $d->death_cause_id = $deathCause->id;
                 $d->save();
@@ -259,6 +345,7 @@ class DeathImportController extends Controller
             'total' => $rowsTotal,
             'imported' => $rowsImported,
             'failed' => $rowsFailed,
+            'converted_months' => $rowsConvertedMonths,
             'errors_file' => $errorCsvPath ? Storage::url($errorCsvPath) : null,
         ]);
         } catch (\Throwable $e) {

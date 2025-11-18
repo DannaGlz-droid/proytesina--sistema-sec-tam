@@ -96,6 +96,17 @@ Route::middleware('auth')->group(function () {
         Route::delete('reportes/comentarios/{comment}', [App\Http\Controllers\ReportController::class, 'destroyComment'])->name('reportes.comentarios.destroy');
     });
 
+    // ========== APROBACIÓN/RECHAZO DE REPORTES (Solo Administrador y Coordinador) ==========
+    Route::middleware('role:Administrador,Coordinador')->group(function () {
+        Route::post('reportes/{publication}/aprobar', [App\Http\Controllers\ReportController::class, 'approve'])->name('reportes.approve');
+        Route::post('reportes/{publication}/rechazar', [App\Http\Controllers\ReportController::class, 'reject'])->name('reportes.reject');
+    });
+
+    // ========== REENVIAR REPORTES RECHAZADOS (Operador puede reenviar sus propios reportes) ==========
+    Route::middleware('role:Administrador,Coordinador,Operador')->group(function () {
+        Route::post('reportes/{publication}/reenviar', [App\Http\Controllers\ReportController::class, 'resubmit'])->name('reportes.resubmit');
+    });
+
     // ========== NOTIFICACIONES (Todos los usuarios autenticados) ==========
     Route::get('notificaciones', [App\Http\Controllers\ReportController::class, 'getNotifications'])->name('notificaciones.get');
     Route::post('notificaciones/{id}/marcar-leida', [App\Http\Controllers\ReportController::class, 'markNotificationRead'])->name('notificaciones.mark-read');

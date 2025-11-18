@@ -12,6 +12,7 @@ use App\Models\Municipality;
 use App\Models\Jurisdiction;
 use App\Models\ActivityType;
 use App\Models\Notification;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -23,10 +24,12 @@ class ReportController extends Controller
     /**
      * Mostrar todas las publicaciones/reportes
      */
-    public function index()
+    public function index(Request $request)
     {
         $query = Publication::with([
             'user',
+            'approver',
+            'rejector',
             'files',
             'comments.user.position',
             'roadSafetyReports.activityType',
@@ -43,7 +46,76 @@ class ReportController extends Controller
         }
         // Admin, Coordinador e Invitado ven todas las publicaciones
 
-        $publications = $query->orderBy('created_at', 'desc')->get();
+        // Filtro por estado (status)
+        if ($request->filled('status')) {
+            $status = $request->input('status');
+            if ($status === 'pendiente') {
+                $query->whereNull('approved_at')->whereNull('rejected_at');
+            } elseif ($status === 'aprobado') {
+                $query->whereNotNull('approved_at');
+            } elseif ($status === 'rechazado') {
+                $query->whereNotNull('rejected_at');
+            }
+        }
+
+        // Filtro por tipo de reporte
+        if ($request->filled('tipo') && $request->input('tipo') !== 'todos') {
+            $query->where('publication_type', $request->input('tipo'));
+        }
+
+        // Filtro por fechas predefinidas (usar `publication_date` visible)
+        if ($request->filled('date_filter')) {
+            $dateFilter = $request->input('date_filter');
+
+            switch ($dateFilter) {
+                case 'hoy':
+                    $query->whereDate('publication_date', now()->toDateString());
+                    break;
+                case 'semana':
+                    $start = now()->startOfWeek();
+                    $end = now()->endOfWeek();
+                    $query->whereBetween('publication_date', [$start, $end]);
+                    break;
+                case 'mes':
+                    $query->whereMonth('publication_date', now()->month)
+                          ->whereYear('publication_date', now()->year);
+                    break;
+                case '3meses':
+                    $query->where('publication_date', '>=', now()->subMonths(3));
+                    break;
+                case 'anio':
+                    $query->whereYear('publication_date', now()->year);
+                    break;
+            }
+        }
+
+        // Ordenar
+        // Ahora el parámetro `order_by` puede venir en formato `campo:dir` (ej. created_at:desc)
+        $orderParam = $request->input('order_by', 'created_at:desc');
+        $orderBy = $orderParam;
+        $orderDir = 'desc';
+
+        if (str_contains($orderParam, ':')) {
+            [$orderBy, $orderDir] = explode(':', $orderParam, 2);
+        } else {
+            $orderBy = $orderParam;
+            $orderDir = $request->input('order_dir', 'desc');
+        }
+
+        // Mapear valores lógicos a columnas reales
+        if ($orderBy === 'titulo') {
+            $query->orderBy('topic', $orderDir);
+        } elseif ($orderBy === 'usuario') {
+            // ordenar por nombre de usuario (join)
+            $query->join('users', 'publications.user_id', '=', 'users.id')
+                  ->orderBy('users.name', $orderDir)
+                  ->select('publications.*');
+        } else {
+            // Por defecto: created_at
+            $query->orderBy($orderBy, $orderDir);
+        }
+
+        $publications = $query->get();
 
         // Preparar comentarios en formato JSON para cada publicación
         $publications->each(function ($pub) use ($user) {
@@ -96,7 +168,35 @@ class ReportController extends Controller
     public function destroy(Publication $publication)
     {
         try {
+            $user = Auth::user();
+            
+            // Verificar permisos: solo el autor o Admin pueden eliminar
+            if ($publication->user_id !== $user->id && !$user->isAdmin()) {
+                return redirect()
+                    ->route('reportes.index')
+                    ->with('error', 'No tienes permisos para eliminar esta publicación.');
+            }
+
             DB::beginTransaction();
+
+            // Crear registro de auditoría antes de borrar
+            DB::table('publication_audits')->insert([
+                'publication_id' => $publication->id,
+                'action' => 'deleted',
+                'actor_user_id' => $user->id,
+                'reason' => request('deletion_reason'),
+                'snapshot' => json_encode([
+                    'id' => $publication->id,
+                    'topic' => $publication->topic,
+                    'publication_type' => $publication->publication_type,
+                    'status' => $publication->status,
+                    'user_id' => $publication->user_id,
+                    'created_at' => $publication->created_at,
+                    'files_count' => $publication->files->count(),
+                ]),
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
 
             // Borrar archivos físicos y registros en publication_files
             foreach ($publication->files as $file) {
@@ -110,7 +210,7 @@ class ReportController extends Controller
             InjuryObservatoryReport::where('publication_id', $publication->id)->delete();
             BreathalyzerReport::where('publication_id', $publication->id)->delete();
 
-            // Finalmente borrar la publicación
+            // Soft delete de la publicación
             $publication->delete();
 
             DB::commit();
@@ -962,5 +1062,159 @@ class ReportController extends Controller
 
         // Descargar y eliminar el archivo temporal
         return response()->download($zipPath, $zipFileName)->deleteFileAfterSend(true);
+    }
+
+    /**
+     * Aprobar una publicación/reporte
+     * Solo Admin y Coordinador pueden aprobar
+     */
+    public function approve(Publication $publication)
+    {
+        $user = Auth::user();
+
+        // Verificar permisos
+        if (!$user->isAdmin() && !$user->isCoordinator()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No tienes permisos para aprobar reportes.',
+            ], 403);
+        }
+
+        // Verificar que no esté ya aprobada
+        if ($publication->status === 'aprobado') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Este reporte ya está aprobado.',
+            ], 400);
+        }
+
+        // Aprobar
+        $publication->update([
+            'status' => 'aprobado',
+            'approved_by' => $user->id,
+            'approved_at' => now(),
+            'rejected_by' => null,
+            'rejected_at' => null,
+            'rejection_reason' => null,
+        ]);
+
+        // Crear notificación concisa para el autor
+        Notification::create([
+            'recipient_user_id' => $publication->user_id,
+            'sender_user_id' => $user->id,
+            'publication_id' => $publication->id,
+            'type' => 'approval',
+            'title' => 'Reporte aprobado',
+            'message' => "{$user->name} aprobó tu reporte",
+            'read' => false,
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Reporte aprobado exitosamente.',
+        ]);
+    }
+
+    /**
+     * Rechazar una publicación/reporte
+     * Solo Admin y Coordinador pueden rechazar
+     */
+    public function reject(Request $request, Publication $publication)
+    {
+        $user = Auth::user();
+
+        // Verificar permisos
+        if (!$user->isAdmin() && !$user->isCoordinator()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No tienes permisos para rechazar reportes.',
+            ], 403);
+        }
+
+        // Validar razón de rechazo
+        $request->validate([
+            'rejection_reason' => 'required|string|max:500',
+        ]);
+
+        // Rechazar
+        $publication->update([
+            'status' => 'rechazado',
+            'rejected_by' => $user->id,
+            'rejected_at' => now(),
+            'rejection_reason' => $request->rejection_reason,
+            'approved_by' => null,
+            'approved_at' => null,
+        ]);
+
+        // Crear notificación concisa para el autor (incluir motivo)
+        Notification::create([
+            'recipient_user_id' => $publication->user_id,
+            'sender_user_id' => $user->id,
+            'publication_id' => $publication->id,
+            'type' => 'rejection',
+            'title' => 'Reporte rechazado',
+            'message' => "{$user->name} rechazó tu reporte. Motivo: {$request->rejection_reason}",
+            'read' => false,
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Reporte rechazado.',
+        ]);
+    }
+
+    /**
+     * Reenviar un reporte rechazado para revisión
+     * Solo el autor puede reenviar su propio reporte
+     */
+    public function resubmit(Publication $publication)
+    {
+        $user = Auth::user();
+
+        // Verificar que el usuario sea el autor del reporte
+        if ($publication->user_id !== $user->id) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Solo puedes reenviar tus propios reportes.',
+            ], 403);
+        }
+
+        // Verificar que el reporte esté rechazado
+        if ($publication->status !== 'rechazado') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Solo se pueden reenviar reportes rechazados.',
+            ], 400);
+        }
+
+        // Resetear a estado pendiente
+        $publication->update([
+            'status' => 'pendiente',
+            'rejected_by' => null,
+            'rejected_at' => null,
+            'rejection_reason' => null,
+        ]);
+
+        // Notificar a todos los admins y coordinadores
+        $adminsAndCoordinators = User::whereHas('role', function($query) {
+            $query->whereIn('name', ['Administrador', 'Coordinador']);
+        })->get();
+
+        foreach ($adminsAndCoordinators as $admin) {
+            Notification::create([
+                'recipient_user_id' => $admin->id,
+                'sender_user_id' => $user->id,
+                'publication_id' => $publication->id,
+                'type' => 'resubmission',
+                'title' => 'Reporte reenviado para revisión',
+                'message' => "{$user->name} ha corregido y reenviado el reporte: {$publication->topic}",
+                'read' => false,
+            ]);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Reporte reenviado para revisión exitosamente.',
+        ]);
     }
 }

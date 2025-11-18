@@ -81,7 +81,7 @@
                             <table class="w-full text-sm text-left text-gray-500">
                                 <thead class="text-xs text-gray-700 uppercase bg-gray-50 border-b border-[#404041]">
                                     <tr>
-                                        <th scope="col" class="px-3 py-2 font-lora whitespace-nowrap text-xs">ID</th>
+                                        <th scope="col" class="px-3 py-2 font-lora whitespace-nowrap text-xs">Folio</th>
                                         <th scope="col" class="px-3 py-2 font-lora whitespace-nowrap text-xs">Nombre</th>
                                         <th scope="col" class="px-3 py-2 font-lora whitespace-nowrap text-xs">A. Paterno</th>
                                         <th scope="col" class="px-3 py-2 font-lora whitespace-nowrap text-xs">A. Materno</th>
@@ -90,8 +90,7 @@
                                         <th scope="col" class="px-3 py-2 font-lora whitespace-nowrap text-xs">Fecha Def.</th>
                                         <th scope="col" class="px-3 py-2 font-lora whitespace-nowrap text-xs">Municipio Res.</th>
                                         <th scope="col" class="px-3 py-2 font-lora whitespace-nowrap text-xs">Municipio Def.</th>
-                                        <th scope="col" class="px-3 py-2 font-lora whitespace-nowrap text-xs">Jurisd.</th>
-                                        <th scope="col" class="px-3 py-2 font-lora whitespace-nowrap text-xs">Lugar</th>
+                                        <th scope="col" class="px-3 py-3 font-lora whitespace-nowrap text-xs">Jurisdicción (residencia)</th>
                                         <th scope="col" class="px-3 py-2 font-lora whitespace-nowrap text-xs">Causa</th>
                                         <th scope="col" class="px-3 py-2 font-lora whitespace-nowrap text-xs text-right w-24">Acciones</th>
                                     </tr>
@@ -100,11 +99,11 @@
                                     @if(isset($deaths) && $deaths->isNotEmpty())
                                         @foreach($deaths as $death)
                                             <tr class="border-b hover:bg-gray-50 {{ $loop->even ? 'bg-gray-50' : 'bg-white' }}">
-                                                <td class="px-3 py-3 font-medium text-gray-900 whitespace-nowrap">{{ $death->id }}</td>
+                                                <td class="px-3 py-3 whitespace-nowrap">{{ optional($death)->gov_folio ?? '—' }}</td>
                                                 <td class="px-3 py-3 whitespace-nowrap">{{ $death->name ?? '—' }}</td>
                                                 <td class="px-3 py-3 whitespace-nowrap">{{ $death->first_last_name ?? '—' }}</td>
                                                 <td class="px-3 py-3 whitespace-nowrap">{{ $death->second_last_name ?? '—' }}</td>
-                                                <td class="px-3 py-3 whitespace-nowrap">{{ $death->age ?? '—' }}</td>
+                                                <td class="px-3 py-3 whitespace-nowrap">{{ $death->pretty_age ?? '—' }}</td>
                                                 <td class="px-3 py-3 whitespace-nowrap">{{ $death->sex ?? '—' }}</td>
                                                 <td class="px-3 py-3 whitespace-nowrap">{{ $death->death_date ? $death->death_date->format('d/m/Y') : '—' }}</td>
                                                 <td class="px-3 py-3 whitespace-nowrap">{{ optional($death->residenceMunicipality)->name ?? '—' }}</td>

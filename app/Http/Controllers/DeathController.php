@@ -218,10 +218,14 @@ class DeathController extends Controller
     public function store(Request $request)
     {
         $data = $request->validate([
+            'gov_folio' => ['required','string','max:191','unique:deaths,gov_folio'],
             'name' => ['required','string','max:191'],
             'first_last_name' => ['required','string','max:191'],
             'second_last_name' => ['nullable','string','max:191'],
+            // Accept either the legacy 'age' or the new composite fields
             'age' => ['nullable','integer','min:0','max:150'],
+            'edad_valor' => ['nullable','integer','min:0','max:150'],
+            'edad_unidad' => ['nullable','string','in:anos,meses'],
             'sex' => ['required','in:masculino,femenino,hombre,mujer,M,F,male,female'],
             'residence_municipality_id' => ['nullable','integer','exists:municipalities,id'],
             'death_municipality_id' => ['nullable','integer','exists:municipalities,id'],
@@ -237,22 +241,70 @@ class DeathController extends Controller
         elseif (in_array($sex, ['femenino','mujer','f'])) $data['sex'] = 'F';
         else $data['sex'] = strtoupper(substr($sex,0,1));
 
+        // Determine age_years/age_months from composite inputs if provided
+        $ageYears = null;
+        $ageMonths = null;
+        $ageForLegacy = $data['age'] ?? null;
+
+        if (!empty($data['edad_valor']) && !empty($data['edad_unidad'])) {
+            $valor = (int) $data['edad_valor'];
+            $unidad = $data['edad_unidad'];
+            if ($unidad === 'meses') {
+                $ageYears = 0;
+                $ageMonths = $valor;
+                $ageForLegacy = 0;
+            } else {
+                // 'anos'
+                $ageYears = $valor;
+                $ageMonths = null;
+                $ageForLegacy = $valor;
+            }
+        } else {
+            // Fallback: use legacy 'age' field if present
+            if (!is_null($ageForLegacy)) {
+                $ageYears = (int) $ageForLegacy;
+                $ageMonths = null;
+            }
+        }
+
+        // For manual registration: do not accept 12 or more months — ask user to use years
+        if (!is_null($ageMonths) && $ageMonths >= 12) {
+            return Redirect::back()->withInput()->withErrors(['edad_valor' => 'Si la unidad es "meses", el valor debe ser menor a 12; para 12 o más use años.']);
+        }
+        // Determine jurisdiction: derive from residence municipality when possible
+        // If not found, use explicit `jurisdiction_id` from the form; otherwise assign a default 'NO ENCONTRADA'
+        $jurisdictionId = null;
+        if (!empty($data['residence_municipality_id'])) {
+            $resMun = Municipality::find($data['residence_municipality_id']);
+            if ($resMun && $resMun->jurisdiction_id) $jurisdictionId = $resMun->jurisdiction_id;
+        }
+        if (is_null($jurisdictionId) && !empty($data['jurisdiction_id'])) {
+            $jurisdictionId = $data['jurisdiction_id'];
+        }
+        if (is_null($jurisdictionId)) {
+            $defaultJur = Jurisdiction::firstOrCreate(['name' => 'NO ENCONTRADA']);
+            $jurisdictionId = $defaultJur->id;
+        }
+
         // Create record
         $death = Death::create([
+            'gov_folio' => $data['gov_folio'],
             'name' => $data['name'],
             'first_last_name' => $data['first_last_name'],
             'second_last_name' => $data['second_last_name'] ?? null,
-            'age' => $data['age'] ?? null,
+            'age' => $ageForLegacy ?? null,
+            'age_years' => $ageYears,
+            'age_months' => $ageMonths,
             'sex' => $data['sex'],
             'death_date' => $data['death_date'],
             'residence_municipality_id' => $data['residence_municipality_id'] ?? null,
             'death_municipality_id' => $data['death_municipality_id'] ?? null,
-            'jurisdiction_id' => $data['jurisdiction_id'] ?? null,
+            'jurisdiction_id' => $jurisdictionId,
             'death_location_id' => $data['death_location_id'] ?? null,
             'death_cause_id' => $data['death_cause_id'],
         ]);
 
-    return Redirect::route('statistic.data')->with('success', 'Registro de defunción creado correctamente.');
+        return Redirect::route('statistic.data')->with('success', 'Registro de defunción creado correctamente.');
     }
 
     /**
@@ -261,10 +313,14 @@ class DeathController extends Controller
     public function update(Request $request, Death $death)
     {
         $data = $request->validate([
+            'gov_folio' => ['required','string','max:191','unique:deaths,gov_folio,' . $death->id],
             'name' => ['required','string','max:191'],
             'first_last_name' => ['required','string','max:191'],
             'second_last_name' => ['nullable','string','max:191'],
+            // Accept either the legacy 'age' or the new composite fields
             'age' => ['nullable','integer','min:0','max:150'],
+            'edad_valor' => ['nullable','integer','min:0','max:150'],
+            'edad_unidad' => ['nullable','string','in:anos,meses'],
             'sex' => ['required','in:M,F,masculino,femenino,hombre,mujer,m,f'],
             'residence_municipality_id' => ['nullable','integer','exists:municipalities,id'],
             'death_municipality_id' => ['nullable','integer','exists:municipalities,id'],
@@ -280,17 +336,63 @@ class DeathController extends Controller
         elseif (in_array($sex, ['femenino','mujer','f'])) $data['sex'] = 'F';
         else $data['sex'] = strtoupper(substr($sex,0,1));
 
+        // Determine age_years/age_months from composite inputs if provided
+        $ageYears = null;
+        $ageMonths = null;
+        $ageForLegacy = $data['age'] ?? null;
+
+        if (!empty($data['edad_valor']) && !empty($data['edad_unidad'])) {
+            $valor = (int) $data['edad_valor'];
+            $unidad = $data['edad_unidad'];
+            if ($unidad === 'meses') {
+                $ageYears = 0;
+                $ageMonths = $valor;
+                $ageForLegacy = 0;
+            } else {
+                $ageYears = $valor;
+                $ageMonths = null;
+                $ageForLegacy = $valor;
+            }
+        } else {
+            if (!is_null($ageForLegacy)) {
+                $ageYears = (int) $ageForLegacy;
+                $ageMonths = null;
+            }
+        }
+
+        // For manual update: do not accept 12 or more months — ask user to use years
+        if (!is_null($ageMonths) && $ageMonths >= 12) {
+            return Redirect::back()->withInput()->withErrors(['edad_valor' => 'Si la unidad es "meses", el valor debe ser menor a 12; para 12 o más use años.']);
+        }
+        // Determine jurisdiction: derive from residence municipality when possible
+        // If not found, use explicit `jurisdiction_id` from the form; otherwise assign a default 'NO ENCONTRADA'
+        $jurisdictionId = null;
+        if (!empty($data['residence_municipality_id'])) {
+            $resMun = Municipality::find($data['residence_municipality_id']);
+            if ($resMun && $resMun->jurisdiction_id) $jurisdictionId = $resMun->jurisdiction_id;
+        }
+        if (is_null($jurisdictionId) && !empty($data['jurisdiction_id'])) {
+            $jurisdictionId = $data['jurisdiction_id'];
+        }
+        if (is_null($jurisdictionId)) {
+            $defaultJur = Jurisdiction::firstOrCreate(['name' => 'NO ENCONTRADA']);
+            $jurisdictionId = $defaultJur->id;
+        }
+
         // Update record
         $death->update([
+            'gov_folio' => $data['gov_folio'],
             'name' => $data['name'],
             'first_last_name' => $data['first_last_name'],
             'second_last_name' => $data['second_last_name'] ?? null,
-            'age' => $data['age'] ?? null,
+            'age' => $ageForLegacy ?? null,
+            'age_years' => $ageYears,
+            'age_months' => $ageMonths,
             'sex' => $data['sex'],
             'death_date' => $data['death_date'],
             'residence_municipality_id' => $data['residence_municipality_id'] ?? null,
             'death_municipality_id' => $data['death_municipality_id'] ?? null,
-            'jurisdiction_id' => $data['jurisdiction_id'] ?? null,
+            'jurisdiction_id' => $jurisdictionId,
             'death_location_id' => $data['death_location_id'] ?? null,
             'death_cause_id' => $data['death_cause_id'],
         ]);

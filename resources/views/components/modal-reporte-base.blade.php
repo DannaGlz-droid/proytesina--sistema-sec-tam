@@ -57,6 +57,24 @@
                 <!-- LÍNEA SEPARADORA -->
                 <div class="h-px bg-gray-300 mb-6"></div>
 
+                <!-- ESTADO DE APROBACIÓN (visible para todos) -->
+                <div class="mb-6">
+                    <h4 class="font-semibold text-[#404041] mb-3 text-lg font-lora">Estado de Aprobación</h4>
+                    <div class="bg-white rounded-lg border border-[#404041] p-4">
+                        <div class="flex items-center gap-3 modal-status-container">
+                            <!-- Se llenará dinámicamente con JavaScript -->
+                            <div class="flex items-center gap-2">
+                                <span class="px-3 py-1 bg-yellow-100 text-yellow-700 text-sm font-semibold rounded-lg border border-yellow-300">
+                                    <i class="fas fa-clock mr-1"></i>Pendiente de revisión
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- LÍNEA SEPARADORA -->
+                <div class="h-px bg-gray-300 mb-6"></div>
+
                 <!-- ARCHIVOS ADJUNTOS -->
                 <div class="mb-6">
                     <div class="flex justify-between items-center mb-4">
@@ -107,13 +125,16 @@
             </div>
 
             <!-- FOOTER -->
-            <div class="bg-gray-50 px-6 py-4 border-t border-gray-300 flex justify-end gap-3 flex-shrink-0">
-                <button class="eliminar-reporte px-4 py-2 border border-[#AB1A1A] text-[#AB1A1A] rounded-lg text-sm font-medium hover:bg-[#AB1A1A] hover:text-white transition-all duration-300 font-lora whitespace-nowrap">
-                    <i class="fas fa-trash mr-2"></i>Eliminar
-                </button>
-                <button class="editar-reporte px-4 py-2 border border-[#C08400] text-[#C08400] rounded-lg text-sm font-medium hover:bg-[#C08400] hover:text-white transition-all duration-300 font-lora whitespace-nowrap">
-                    <i class="fas fa-edit mr-2"></i>Editar
-                </button>
+            <div class="bg-gray-50 px-6 py-4 border-t border-gray-300 flex items-center">
+                <!-- Botones de aprobación/rechazo (solo Admin y Coordinador) -->
+                <div class="approval-buttons-container ml-auto flex gap-3" style="display: none;">
+                    <button class="aprobar-reporte px-6 py-2.5 bg-[#75A84E] text-white rounded-lg text-sm font-semibold hover:bg-[#5a8339] transition-all duration-300 font-lora whitespace-nowrap shadow-md hover:shadow-lg">
+                        <i class="fas fa-check-circle mr-2"></i>Aprobar
+                    </button>
+                    <button class="rechazar-reporte px-6 py-2.5 bg-[#9D2449] text-white rounded-lg text-sm font-semibold hover:bg-[#7a1c38] transition-all duration-300 font-lora whitespace-nowrap shadow-md hover:shadow-lg">
+                        <i class="fas fa-times-circle mr-2"></i>Rechazar
+                    </button>
+                </div>
             </div>
         </div>
     </div>

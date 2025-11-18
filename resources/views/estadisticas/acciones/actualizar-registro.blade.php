@@ -23,57 +23,92 @@
                     <div class="flex-1 h-px bg-[#404041] ml-3"></div>
                 </div>
                 
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-3 lg:gap-4">
-                    <div class="space-y-3">
-                        <div>
-                            <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Nombre(s) *</label>
-                            <input name="name" type="text" 
-                                   class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora" 
-                                   placeholder="Ej: Juan Diego"
-                                   value="{{ old('name', $defuncion->name ?? '') }}">
-                            @error('name') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
-                        </div>
-                        <div>
-                            <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Apellido paterno *</label>
-                            <input name="first_last_name" type="text" 
-                                   class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora" 
-                                   placeholder="Ej: Nava"
-                                   value="{{ old('first_last_name', $defuncion->first_last_name ?? '') }}">
-                            @error('first_last_name') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
-                        </div>
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-3 lg:gap-4 items-start">
+                    <!-- Row 1: Folio | Nombre | Ap. paterno -->
+                    <div>
+                        <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Folio *</label>
+                        <input name="gov_folio" type="text" 
+                               class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora" 
+                               placeholder="Ej: 230787888"
+                               value="{{ old('gov_folio', $defuncion->gov_folio ?? '') }}" required>
+                        @error('gov_folio') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
                     </div>
-                    
-                    <div class="space-y-3">
-                        <div>
-                            <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Apellido materno *</label>
-                            <input name="second_last_name" type="text" 
-                                   class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora" 
-                                   placeholder="Ej: Reyes"
-                                   value="{{ old('second_last_name', $defuncion->second_last_name ?? '') }}">
-                            @error('second_last_name') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
-                        </div>
-                        <div>
-                            <div class="grid grid-cols-2 gap-3">
-                                <div>
-                                    <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Sexo *</label>
-                                    <select name="sex" class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora">
-                                        <option value="">Seleccione una opción</option>
-                                        <option value="M" {{ old('sex', $defuncion->sex ?? '') == 'M' ? 'selected' : '' }}>Masculino</option>
-                                        <option value="F" {{ old('sex', $defuncion->sex ?? '') == 'F' ? 'selected' : '' }}>Femenino</option>
-                                    </select>
-                                    @error('sex') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
-                                </div>
 
-                                <div>
-                                    <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Edad *</label>
-                                    <input name="age" type="number" min="0" max="150"
-                                           class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora" 
-                                           placeholder="Ej: 34"
-                                           value="{{ old('age', $defuncion->age ?? '') }}">
-                                    @error('age') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
-                                </div>
-                            </div>
+                    <div>
+                        <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Nombre(s) *</label>
+                        <input name="name" type="text" 
+                               class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora" 
+                               placeholder="Ej: Juan Diego"
+                               value="{{ old('name', $defuncion->name ?? '') }}">
+                        @error('name') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
+                    </div>
+
+                    <div>
+                        <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Apellido paterno *</label>
+                        <input name="first_last_name" type="text" 
+                               class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora" 
+                               placeholder="Ej: Nava"
+                               value="{{ old('first_last_name', $defuncion->first_last_name ?? '') }}">
+                        @error('first_last_name') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
+                    </div>
+
+                    <!-- Row 2: Apellido materno | Sexo | Edad (valor + unidad) -->
+                    <div>
+                        <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Apellido materno *</label>
+                        <input name="second_last_name" type="text" 
+                               class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora" 
+                               placeholder="Ej: Reyes"
+                               value="{{ old('second_last_name', $defuncion->second_last_name ?? '') }}">
+                        @error('second_last_name') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
+                    </div>
+
+                    <div>
+                        <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Sexo *</label>
+                        <select name="sex" class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora">
+                            <option value="">Seleccione una opción</option>
+                            <option value="M" {{ old('sex', $defuncion->sex ?? '') == 'M' ? 'selected' : '' }}>Masculino</option>
+                            <option value="F" {{ old('sex', $defuncion->sex ?? '') == 'F' ? 'selected' : '' }}>Femenino</option>
+                        </select>
+                        @error('sex') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
+                    </div>
+
+                    <div>
+                        <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Edad *</label>
+                        @php
+                            $defaultValor = old('edad_valor');
+                            $defaultUnidad = old('edad_unidad');
+                            if (is_null($defaultValor)) {
+                                if (isset($defuncion->age_years) && $defuncion->age_years !== null) {
+                                    if ($defuncion->age_years >= 1) {
+                                        $defaultValor = $defuncion->age_years;
+                                        $defaultUnidad = $defaultUnidad ?? 'anos';
+                                    } else {
+                                        if (isset($defuncion->age_months) && $defuncion->age_months !== null) {
+                                            $defaultValor = $defuncion->age_months;
+                                            $defaultUnidad = $defaultUnidad ?? 'meses';
+                                        } else {
+                                            $defaultValor = $defuncion->age ?? '';
+                                            $defaultUnidad = $defaultUnidad ?? 'anos';
+                                        }
+                                    }
+                                } else {
+                                    $defaultValor = $defuncion->age ?? '';
+                                    $defaultUnidad = $defaultUnidad ?? 'anos';
+                                }
+                            }
+                        @endphp
+                        <div class="flex gap-2">
+                            <input name="edad_valor" type="number" min="0" max="150" value="{{ $defaultValor }}"
+                                   class="w-1/2 px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora"
+                                   placeholder="Ej: 34">
+                            <select name="edad_unidad" required aria-required="true" class="w-1/2 px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora">
+                                <option value="">Unidad</option>
+                                <option value="anos" {{ $defaultUnidad === 'anos' ? 'selected' : '' }}>Años</option>
+                                <option value="meses" {{ $defaultUnidad === 'meses' ? 'selected' : '' }}>Meses</option>
+                            </select>
                         </div>
+                        @error('edad_valor') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
+                        @error('edad_unidad') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
                     </div>
                 </div>
             </div>
@@ -115,7 +150,7 @@
                     
                     <div class="space-y-3">
                         <div>
-                            <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Jurisdicción</label>
+                            <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Jurisdicción de residencia</label>
                 {{-- Hidden input to submit jurisdiction id; visible input is readonly/display only --}}
                 <input type="hidden" id="jurisdiction_input" name="jurisdiction_id" value="{{ old('jurisdiction_id', $defuncion->jurisdiction_id ?? '') }}">
                 <input type="text" id="jurisdiction" 
@@ -220,6 +255,7 @@
             const muniToJur = @isset($municipalities) @json($municipalities->mapWithKeys(function($m){ return [$m->id => $m->jurisdiction_id, mb_strtolower($m->name) => $m->jurisdiction_id]; })) @else {} @endisset;
             const jurIdToName = @isset($jurisdictions) @json($jurisdictions->mapWithKeys(function($j){ return [$j->id => $j->name]; })) @else {} @endisset;
 
+            const residenceMuni = document.getElementById('residence_municipality_select');
             const deathMuni = document.getElementById('death_municipality_select');
             const jurisdictionVisible = document.getElementById('jurisdiction');
             const hiddenJur = document.getElementById('jurisdiction_input');
@@ -248,7 +284,8 @@
             applyPlaceholderStyle();
 
             function setJurisdictionBasedOnMunicipality() {
-                const mid = deathMuni?.value || '';
+                // Prefer residence municipality to determine jurisdiction; fallback to death municipality
+                const mid = (residenceMuni?.value) ? residenceMuni.value : (deathMuni?.value || '');
                 let jid = null;
                 if (mid && muniToJur[mid]) jid = muniToJur[mid];
                 else if (mid && muniToJur[mid.toLowerCase?.()]) jid = muniToJur[mid.toLowerCase?.()];
@@ -263,10 +300,11 @@
                 applyPlaceholderStyle();
             }
 
-            if (deathMuni) {
-                deathMuni.addEventListener('change', setJurisdictionBasedOnMunicipality);
-                setJurisdictionBasedOnMunicipality();
+            if (residenceMuni) {
+                residenceMuni.addEventListener('change', setJurisdictionBasedOnMunicipality);
             }
+            // initialize on load
+            setJurisdictionBasedOnMunicipality();
         });
     </script>
     <script>

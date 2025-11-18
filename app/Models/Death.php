@@ -19,6 +19,9 @@ class Death extends Model
         'first_last_name',
         'second_last_name',
         'age',
+        'age_years',
+        'age_months',
+        'gov_folio',
         'sex',
         'death_date',
         'residence_municipality_id',
@@ -48,6 +51,7 @@ class Death extends Model
         'name_formatted',
         'first_last_name_formatted',
         'second_last_name_formatted',
+        'pretty_age',
     ];
 
     /**
@@ -56,8 +60,37 @@ class Death extends Model
     protected $casts = [
         'death_date' => 'date',
         'age' => 'integer',
+        'age_years' => 'integer',
+        'age_months' => 'integer',
+        'gov_folio' => 'string',
         // 'sex' no necesita cast - enum se maneja como string automáticamente
     ];
+
+    /**
+     * Accessor: pretty age string following the rule:
+     * - if age_years >= 1 show "N años"
+     * - else if age_months > 0 show "M meses"
+     * - else fall back to age (if present) or null
+     */
+    public function getPrettyAgeAttribute()
+    {
+        $years = $this->age_years;
+        $months = $this->age_months;
+
+        if (!is_null($years) && $years >= 1) {
+            return $years . ' años';
+        }
+
+        if (!is_null($months) && $months > 0) {
+            return $months . ' meses';
+        }
+
+        if (!is_null($this->age) && $this->age > 0) {
+            return $this->age . ' años';
+        }
+
+        return null;
+    }
 
     /**
      * Relationship: Death belongs to Residence Municipality

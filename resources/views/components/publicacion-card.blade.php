@@ -5,6 +5,10 @@
     'usuario' => '',
     'usuario_full' => '',
     'descripcion' => '',
+    'status' => 'publicado',
+    'approvedBy' => null,
+    'rejectedBy' => null,
+    'rejectionReason' => null,
     // archivos: can be an array or JSON string; archivosCount is a simple count fallback
     'archivos' => null,
     'archivosCount' => 0,
@@ -20,12 +24,30 @@
     <div class="flex-grow">
         <div class="flex justify-between items-start mb-4">
             <div class="text-gray-600 text-sm font-medium font-lora">{{ $fecha }}</div>
-            <div class="relative">
-                <div class="relative w-5 h-5 flex items-center justify-center text-gray-500">
-                    <i class="fas fa-comment-alt text-sm"></i>
-                    @if(($hasUnread ?? false) || ($hasComments && !isset($hasUnread)))
-                        <div class="absolute -top-0.5 -right-0.5 w-2 h-2 bg-red-500 rounded-full border border-white"></div>
-                    @endif
+            <div class="flex items-center gap-2">
+                {{-- Badge de estado --}}
+                @if($status === 'aprobado')
+                    <span class="px-2 py-1 bg-green-100 text-green-700 text-xs font-semibold rounded-lg border border-green-300" title="Aprobado por: {{ $approvedBy }}">
+                        <i class="fas fa-check-circle mr-1"></i>Aprobado
+                    </span>
+                @elseif($status === 'rechazado')
+                    <span class="px-2 py-1 bg-red-100 text-red-700 text-xs font-semibold rounded-lg border border-red-300" title="Rechazado por: {{ $rejectedBy }}">
+                        <i class="fas fa-times-circle mr-1"></i>Rechazado
+                    </span>
+                @else
+                    <span class="px-2 py-1 bg-yellow-100 text-yellow-700 text-xs font-semibold rounded-lg border border-yellow-300">
+                        <i class="fas fa-clock mr-1"></i>Pendiente
+                    </span>
+                @endif
+                
+                {{-- Ícono de comentarios --}}
+                <div class="relative">
+                    <button type="button" class="open-comments relative w-5 h-5 flex items-center justify-center text-gray-500">
+                        <i class="fas fa-comment-alt text-sm"></i>
+                        @if(($hasUnread ?? false) || ($hasComments && !isset($hasUnread)))
+                            <div class="absolute -top-0.5 -right-0.5 w-2 h-2 bg-red-500 rounded-full border border-white"></div>
+                        @endif
+                    </button>
                 </div>
             </div>
         </div>
@@ -72,7 +94,7 @@
 
     @if($count > 0)
         <div class="flex-none">
-            <div class="bg-gray-50 p-4 rounded-lg border border-[#404041] cursor-pointer transition-all duration-300 hover:bg-gray-100 hover:translate-x-1">
+            <div class="bg-gray-50 p-4 rounded-lg border border-[#404041] cursor-pointer transition-all duration-300 hover:bg-gray-100 archivos-open">
                 <div class="flex items-center gap-3">
                     <div class="w-10 h-10 flex items-center justify-center rounded-lg bg-[#BC955C] text-white">
                         <i class="fas fa-copy text-sm"></i>
@@ -81,7 +103,7 @@
                         <div class="font-semibold text-[#404041] text-sm font-lora">Archivos adjuntos</div>
                         <div class="text-gray-500 text-xs font-lora mt-1">{{ $count }} {{ \Illuminate\Support\Str::plural('archivo', $count) }} adjunto{{ $count>1 ? 's' : '' }}</div>
                     </div>
-                    <div class="text-gray-500 transition-all duration-300 group-hover:translate-x-1 group-hover:text-[#404041]">
+                    <div class="text-gray-500 transition-all duration-300 group-hover:text-[#404041]">
                         <i class="fas fa-chevron-right text-sm"></i>
                     </div>
                 </div>

@@ -51,50 +51,62 @@
 
             <!-- CONTENIDO INTERIOR DEL CONTENEDOR -->
             <div class="p-4 lg:p-6">
-                <!-- FILTROS MEJORADOS - ORDEN UX OPTIMIZADO -->
-                <div class="flex flex-col lg:flex-row gap-3 lg:gap-3 items-start lg:items-end mb-6">
-                    <!-- Búsqueda por texto - PRIMERO (más importante) -->
-                    <div class="flex-1 min-w-0 lg:max-w-[280px]">
-                        <label class="block text-xs font-semibold text-[#404041] mb-1 font-lora">Buscar</label>
-                        <div class="relative">
-                            <input type="text" placeholder="Títulos, usuarios..." class="w-full border border-[#404041] rounded-lg px-3 py-1.5 pl-9 text-xs focus:outline-none focus:ring-1 focus:ring-[#611132] focus:border-transparent">
-                            <i class="fas fa-search absolute left-3 top-2.5 text-gray-400 text-xs"></i>
+                <!-- FILTROS MEJORADOS - SERVER SIDE -->
+                <form method="GET" action="{{ route('reportes.index') }}" class="mb-6">
+                    <div class="flex flex-col lg:flex-row gap-3 items-start lg:items-end">
+                        <!-- Estado -->
+                        <div class="flex-1 min-w-0 lg:max-w-[200px]">
+                            <label class="block text-xs font-semibold text-[#404041] mb-1 font-lora">Estado</label>
+                            <select name="status" class="w-full border border-[#404041] rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-[#611132] focus:border-transparent">
+                                <option value="">Todos los estados</option>
+                                <option value="pendiente" {{ request('status') === 'pendiente' ? 'selected' : '' }}>Pendiente</option>
+                                <option value="aprobado" {{ request('status') === 'aprobado' ? 'selected' : '' }}>Aprobado</option>
+                                <option value="rechazado" {{ request('status') === 'rechazado' ? 'selected' : '' }}>Rechazado</option>
+                            </select>
+                        </div>
+
+                        <!-- Periodo de fechas predefinido -->
+                        <div class="flex-1 min-w-0 lg:max-w-[220px]">
+                            <label class="block text-xs font-semibold text-[#404041] mb-1 font-lora">Periodo</label>
+                            <select name="date_filter" class="w-full border border-[#404041] rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-[#611132] focus:border-transparent">
+                                <option value="">Todas las fechas</option>
+                                <option value="hoy" {{ request('date_filter') === 'hoy' ? 'selected' : '' }}>Hoy</option>
+                                <option value="semana" {{ request('date_filter') === 'semana' ? 'selected' : '' }}>Esta semana</option>
+                                <option value="mes" {{ request('date_filter') === 'mes' ? 'selected' : '' }}>Este mes</option>
+                                <option value="3meses" {{ request('date_filter') === '3meses' ? 'selected' : '' }}>Últimos 3 meses</option>
+                                <option value="anio" {{ request('date_filter') === 'anio' ? 'selected' : '' }}>Este año</option>
+                            </select>
+                        </div>
+
+                        <!-- Ordenar (incluye dirección) -->
+                        <div class="flex-1 min-w-0 lg:max-w-[260px]">
+                            <label class="block text-xs font-semibold text-[#404041] mb-1 font-lora">Ordenar</label>
+                            <select name="order_by" class="w-full border border-[#404041] rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-[#611132] focus:border-transparent">
+                                <option value="created_at:desc" {{ request('order_by', 'created_at:desc') === 'created_at:desc' ? 'selected' : '' }}>Fecha (más recientes)</option>
+                                <option value="created_at:asc" {{ request('order_by') === 'created_at:asc' ? 'selected' : '' }}>Fecha (más antiguos)</option>
+                                <option value="titulo:asc" {{ request('order_by') === 'titulo:asc' ? 'selected' : '' }}>Título (A → Z)</option>
+                                <option value="titulo:desc" {{ request('order_by') === 'titulo:desc' ? 'selected' : '' }}>Título (Z → A)</option>
+                                <option value="usuario:asc" {{ request('order_by') === 'usuario:asc' ? 'selected' : '' }}>Usuario (A → Z)</option>
+                                <option value="usuario:desc" {{ request('order_by') === 'usuario:desc' ? 'selected' : '' }}>Usuario (Z → A)</option>
+                            </select>
+                        </div>
+
+                        <!-- Botones de acción -->
+                        <div class="flex gap-2 mt-2 lg:mt-0">
+                            <button type="submit" class="bg-[#611132] text-white px-4 py-1.5 rounded-lg text-xs font-semibold hover:bg-[#4a0e26] transition-all duration-300 font-lora flex items-center gap-1 whitespace-nowrap">
+                                <i class="fas fa-filter text-xs"></i>
+                                Aplicar
+                            </button>
+                            <a href="{{ route('reportes.index') }}" class="border border-[#404041] text-[#404041] px-3 py-1.5 rounded-lg text-xs font-semibold hover:bg-gray-50 transition-all duration-300 font-lora flex items-center gap-1 whitespace-nowrap">
+                                <i class="fas fa-redo text-xs"></i>
+                                Limpiar
+                            </a>
                         </div>
                     </div>
 
-                    <!-- Rango de fechas compacto -->
-                    <div class="flex-1 min-w-0 lg:max-w-[300px]">
-                        <label class="block text-xs font-semibold text-[#404041] mb-1 font-lora">Rango de fechas</label>
-                        <div class="flex gap-2">
-                            <input type="date" class="flex-1 border border-[#404041] rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-[#611132] focus:border-transparent">
-                            <span class="flex items-center text-gray-500 text-xs">a</span>
-                            <input type="date" class="flex-1 border border-[#404041] rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-[#611132] focus:border-transparent">
-                        </div>
-                    </div>
-
-                    <!-- Ordenar por compacto -->
-                    <div class="flex-1 min-w-0 lg:max-w-[180px]">
-                        <label class="block text-xs font-semibold text-[#404041] mb-1 font-lora">Ordenar</label>
-                        <select class="w-full border border-[#404041] rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-[#611132] focus:border-transparent">
-                            <option value="fecha-desc">Más recientes</option>
-                            <option value="fecha-asc">Más antiguos</option>
-                            <option value="titulo">Título A-Z</option>
-                            <option value="usuario">Usuario</option>
-                        </select>
-                    </div>
-
-                    <!-- Botones de acción compactos -->
-                    <div class="flex gap-2 mt-2 lg:mt-0">
-                        <button class="bg-[#611132] text-white px-4 py-1.5 rounded-lg text-xs font-semibold hover:bg-[#4a0e26] transition-all duration-300 font-lora flex items-center gap-1 whitespace-nowrap">
-                            <i class="fas fa-filter text-xs"></i>
-                            Aplicar
-                        </button>
-                        <button class="border border-[#404041] text-[#404041] px-3 py-1.5 rounded-lg text-xs font-semibold hover:bg-gray-50 transition-all duration-300 font-lora flex items-center gap-1 whitespace-nowrap">
-                            <i class="fas fa-redo text-xs"></i>
-                            Limpiar
-                        </button>
-                    </div>
-                </div>
+                    <!-- Campo oculto para mantener el tipo seleccionado en pestañas -->
+                    <input type="hidden" name="tipo" id="filter-tipo-input" value="{{ request('tipo', 'todos') }}">
+                </form>
 
                 <!-- CONTADOR DE RESULTADOS -->
                 <div class="flex justify-between items-center mb-6">
@@ -257,6 +269,10 @@
                             :badgeBorderClass="$badgeBorderClass"
                             :has-comments="count($pub->comentarios_json ?? []) > 0"
                             :has-unread="$hasUnread"
+                            :status="$pub->status"
+                            :approvedBy="optional($pub->approver)->name"
+                            :rejectedBy="optional($pub->rejector)->name"
+                            :rejectionReason="$pub->rejection_reason"
                             data-publication-tipo="{{ $pub->publication_type }}">
 
                             <div class="flex justify-end gap-2">
@@ -273,22 +289,35 @@
                                         data-comentarios='@json($pub->comentarios_json)'
                                         data-publication-id="{{ $pub->id }}"
                                         data-is-owner="{{ auth()->id() === $pub->user_id ? 'true' : 'false' }}"
+                                        data-status="{{ $pub->status }}"
+                                        data-approved-by="{{ optional($pub->approver)->name }}"
+                                        data-rejected-by="{{ optional($pub->rejector)->name }}"
+                                        data-rejection-reason="{{ $pub->rejection_reason }}"
                                         @foreach($dataAttributes as $key => $value)
                                             {{ $key }}="{{ $value }}"
                                         @endforeach>
                                     <i class="fas fa-eye text-sm"></i>
                                 </button>
-                                <a href="{{ $editRoute }}" class="w-8 h-8 flex items-center justify-center rounded-lg border border-[#C08400] text-[#C08400] transition-all duration-300 hover:bg-[#C08400] hover:text-white" title="Editar">
-                                    <i class="fas fa-edit text-sm"></i>
-                                </a>
-                                <form method="POST" action="{{ route('reportes.destroy', $pub) }}" onsubmit="return false;">
-                                    @csrf
-                                    @method('DELETE')
-                                    <button type="button" class="w-8 h-8 flex items-center justify-center rounded-lg border border-[#AB1A1A] text-[#AB1A1A] transition-all duration-300 hover:bg-[#AB1A1A] hover:text-white" title="Eliminar"
-                                        onclick="if(confirm('¿Eliminar esta publicación? Esta acción no se puede deshacer.')) { this.closest('form').submit(); }">
+                                @php
+                                    $canEdit = $pub->canBeEditedBy(auth()->id());
+                                    $isApproved = $pub->status === 'aprobado';
+                                    $canDelete = (auth()->id() === $pub->user_id) || auth()->user()->isAdmin();
+                                @endphp
+                                @if($canEdit)
+                                    <a href="{{ $editRoute }}" class="w-8 h-8 flex items-center justify-center rounded-lg border border-[#C08400] text-[#C08400] transition-all duration-300 hover:bg-[#C08400] hover:text-white" title="Editar">
+                                        <i class="fas fa-edit text-sm"></i>
+                                    </a>
+                                @endif
+                                @if($canDelete)
+                                    <button type="button" 
+                                            class="eliminar-reporte w-8 h-8 flex items-center justify-center rounded-lg border border-[#AB1A1A] text-[#AB1A1A] transition-all duration-300 hover:bg-[#AB1A1A] hover:text-white" 
+                                            title="Eliminar"
+                                            data-publication-id="{{ $pub->id }}"
+                                            data-publication-title="{{ $pub->topic }}"
+                                            data-delete-url="{{ route('reportes.destroy', $pub) }}">
                                         <i class="fas fa-trash text-sm"></i>
                                     </button>
-                                </form>
+                                @endif
                             </div>
 
                         </x-publicacion-card>
@@ -323,6 +352,98 @@
 <!-- AL FINAL DEL ARCHIVO hola.blade.php, DESPUÉS de incluir los modales -->
 
     <!-- INCLUIR TODOS LOS COMPONENTES DE MODALES -->
+<!-- Modal de rechazo -->
+<div id="reject-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-xl shadow-2xl max-w-md w-full p-6">
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="text-xl font-bold text-[#404041] font-lora">Rechazar Reporte</h3>
+            <button onclick="closeRejectModal()" class="text-gray-400 hover:text-gray-600">
+                <i class="fas fa-times text-xl"></i>
+            </button>
+        </div>
+        
+        <input type="hidden" id="reject-modal-publication-id">
+        
+        <p class="text-sm text-gray-600 mb-2 font-lora">Reporte: <span id="reject-modal-title" class="font-semibold"></span></p>
+        
+        <div class="mb-4">
+            <label class="block text-sm font-medium text-[#404041] mb-2 font-lora">Motivo del rechazo *</label>
+            <textarea 
+                id="rejection-reason"
+                rows="4"
+                class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent font-lora"
+                placeholder="Explique brevemente por qué se rechaza este reporte..."
+                maxlength="500"
+                required></textarea>
+            <p class="text-xs text-gray-500 mt-1">Máximo 500 caracteres</p>
+        </div>
+        
+        <div class="flex gap-3">
+            <button onclick="closeRejectModal()" 
+                    class="flex-1 px-4 py-2 bg-gray-200 text-gray-700 rounded-lg font-semibold hover:bg-gray-300 transition-all duration-300 font-lora">
+                Cancelar
+            </button>
+            <button onclick="submitRejection()" 
+                    class="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg font-semibold hover:bg-red-700 transition-all duration-300 font-lora">
+                <i class="fas fa-times mr-2"></i>Rechazar
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de eliminación -->
+<div id="delete-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-xl shadow-2xl max-w-md w-full p-6">
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="text-xl font-bold text-[#404041] font-lora">Eliminar Publicación</h3>
+            <button onclick="closeDeleteModal()" class="text-gray-400 hover:text-gray-600">
+                <i class="fas fa-times text-xl"></i>
+            </button>
+        </div>
+        
+        <form id="delete-form" method="POST" action="">
+            @csrf
+            @method('DELETE')
+            
+            <input type="hidden" id="delete-modal-publication-id">
+            
+            <div class="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+                <p class="text-sm text-red-700 font-lora">
+                    <i class="fas fa-exclamation-triangle mr-2"></i>
+                    ¿Estás seguro de eliminar esta publicación? Esta acción no se puede deshacer fácilmente.
+                </p>
+            </div>
+            
+            <p class="text-sm text-gray-600 mb-4 font-lora">
+                Publicación: <span id="delete-modal-title" class="font-semibold"></span>
+            </p>
+            
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-[#404041] mb-2 font-lora">Motivo de eliminación (opcional)</label>
+                <textarea 
+                    id="deletion-reason"
+                    name="deletion_reason"
+                    rows="3"
+                    class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent font-lora"
+                    placeholder="Opcionalmente, explica por qué eliminas esta publicación..."
+                    maxlength="500"></textarea>
+                <p class="text-xs text-gray-500 mt-1">Máximo 500 caracteres</p>
+            </div>
+            
+            <div class="flex gap-3">
+                <button type="button" onclick="closeDeleteModal()" 
+                        class="flex-1 px-4 py-2 bg-gray-200 text-gray-700 rounded-lg font-semibold hover:bg-gray-300 transition-all duration-300 font-lora">
+                    Cancelar
+                </button>
+                <button type="submit" 
+                        class="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg font-semibold hover:bg-red-700 transition-all duration-300 font-lora">
+                    <i class="fas fa-trash mr-2"></i>Eliminar
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
   <!-- INCLUIR TODOS LOS COMPONENTES DE MODALES -->
 @include('components.modal-alcoholimetria')
 @include('components.modal-seguridad-vial') 
@@ -531,6 +652,112 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         } catch (e) {
             // ignore
+        }
+
+        // Llenar información de estado de aprobación
+        const statusContainer = modal.querySelector('.modal-status-container');
+        if (statusContainer) {
+            const status = dataset.status || 'publicado';
+            let statusHTML = '';
+            
+            if (status === 'aprobado') {
+                const approvedBy = dataset.approvedBy || 'Administrador';
+                statusHTML = `
+                    <div class="flex items-center gap-2">
+                        <span class="px-3 py-1 bg-green-100 text-green-700 text-sm font-semibold rounded-lg border border-green-300">
+                            <i class="fas fa-check-circle mr-1"></i>Aprobado
+                        </span>
+                        <span class="text-sm text-gray-600 font-lora">por ${approvedBy}</span>
+                    </div>
+                `;
+            } else if (status === 'rechazado') {
+                const rejectedBy = dataset.rejectedBy || 'Administrador';
+                const rejectionReason = dataset.rejectionReason || 'No se proporcionó motivo';
+                statusHTML = `
+                    <div class="flex flex-col gap-2">
+                        <div class="flex items-center gap-2">
+                            <span class="px-3 py-1 bg-red-100 text-red-700 text-sm font-semibold rounded-lg border border-red-300">
+                                <i class="fas fa-times-circle mr-1"></i>Rechazado
+                            </span>
+                            <span class="text-sm text-gray-600 font-lora">por ${rejectedBy}</span>
+                        </div>
+                        <div class="bg-red-50 border border-red-200 rounded-lg p-3">
+                            <p class="text-sm text-gray-700 font-lora"><strong>Motivo:</strong> ${rejectionReason}</p>
+                        </div>
+                    </div>
+                `;
+            } else {
+                statusHTML = `
+                    <div class="flex items-center gap-2">
+                        <span class="px-3 py-1 bg-yellow-100 text-yellow-700 text-sm font-semibold rounded-lg border border-yellow-300">
+                            <i class="fas fa-clock mr-1"></i>Pendiente de revisión
+                        </span>
+                    </div>
+                `;
+            }
+            
+            statusContainer.innerHTML = statusHTML;
+        }
+
+        // Configurar botones de aprobación/rechazo
+        const approvalContainer = modal.querySelector('.approval-buttons-container');
+        const aprobarBtn = modal.querySelector('.aprobar-reporte');
+        const rechazarBtn = modal.querySelector('.rechazar-reporte');
+        
+        if (approvalContainer && aprobarBtn && rechazarBtn) {
+            const userIsAdminOrCoord = {{ auth()->user()->isAdmin() || auth()->user()->isCoordinator() ? 'true' : 'false' }};
+            const status = dataset.status || 'publicado';
+            const publicationId = dataset.publicationId;
+            const isOwner = dataset.isOwner === 'true';
+            
+            // Limpiar contenido previo del contenedor
+            approvalContainer.innerHTML = '';
+            
+            // Si es rechazado y el usuario es el autor, mostrar botón de reenvío
+            if (status === 'rechazado' && isOwner) {
+                approvalContainer.style.display = 'flex';
+                approvalContainer.innerHTML = `
+                    <button onclick="resubmitReport(${publicationId})" class="reenviar-reporte px-6 py-2.5 bg-[#611132] text-white rounded-lg text-sm font-semibold hover:bg-[#4a0e26] transition-all duration-300 font-lora whitespace-nowrap shadow-md hover:shadow-lg">
+                        <i class="fas fa-paper-plane mr-2"></i>Reenviar para revisión
+                    </button>
+                `;
+            }
+            // Si es pendiente o rechazado y el usuario es Admin/Coordinador, mostrar botones de aprobar/rechazar
+            else if (userIsAdminOrCoord && status !== 'aprobado') {
+                approvalContainer.style.display = 'flex';
+                approvalContainer.innerHTML = `
+                    <button class="aprobar-reporte px-6 py-2.5 bg-[#75A84E] text-white rounded-lg text-sm font-semibold hover:bg-[#5a8339] transition-all duration-300 font-lora whitespace-nowrap shadow-md hover:shadow-lg">
+                        <i class="fas fa-check-circle mr-2"></i>Aprobar
+                    </button>
+                    <button class="rechazar-reporte px-6 py-2.5 bg-[#9D2449] text-white rounded-lg text-sm font-semibold hover:bg-[#7a1c38] transition-all duration-300 font-lora whitespace-nowrap shadow-md hover:shadow-lg">
+                        <i class="fas fa-times-circle mr-2"></i>Rechazar
+                    </button>
+                `;
+                
+                // Re-attach event handlers
+                const newAprobarBtn = approvalContainer.querySelector('.aprobar-reporte');
+                const newRechazarBtn = approvalContainer.querySelector('.rechazar-reporte');
+                
+                if (newAprobarBtn) {
+                    newAprobarBtn.onclick = function() {
+                        approveReport(publicationId);
+                    };
+                }
+                
+                if (newRechazarBtn) {
+                    newRechazarBtn.onclick = function() {
+                        const titulo = dataset.titulo || 'este reporte';
+                        showRejectModal(publicationId, titulo);
+                    };
+                }
+                
+                // Ocultar botón de aprobar si ya está aprobado
+                aprobarBtn.style.display = status === 'aprobado' ? 'none' : 'inline-flex';
+                // Ocultar botón de rechazar si ya está rechazado
+                rechazarBtn.style.display = status === 'rechazado' ? 'none' : 'inline-flex';
+            } else {
+                approvalContainer.style.display = 'none';
+            }
         }
     }
     
@@ -779,47 +1006,13 @@ document.addEventListener('DOMContentLoaded', function() {
         window.location = '/reportes/publicaciones?publication=' + publicationId + (commentId ? ('&comment=' + commentId) : '');
     }
     
-    // === SISTEMA DE FILTRADO POR PESTAÑAS ===
+    // === SISTEMA DE FILTRADO POR PESTAÑAS (SERVER-SIDE) ===
     const tabButtons = document.querySelectorAll('.tab-filter');
-    const publicationCards = document.querySelectorAll('.publication-card');
-    
-    // Función para actualizar contador de resultados
-    function updateResultsCounter() {
-        const visibleCards = document.querySelectorAll('.publication-card:not([style*="display: none"])');
-        const counterElement = document.querySelector('.text-xs.text-gray-600.font-lora');
-        if (counterElement) {
-            const countSpan = counterElement.querySelector('.font-semibold');
-            if (countSpan) {
-                countSpan.textContent = visibleCards.length;
-            }
-        }
-    }
-    
-    // Función para filtrar publicaciones
-    function filterPublications(tipo) {
-        console.log('🔍 Filtrando por tipo:', tipo);
-        
-        publicationCards.forEach(card => {
-            const cardTipo = card.getAttribute('data-publication-tipo');
-            
-            if (tipo === 'todos') {
-                card.style.display = '';
-            } else {
-                if (cardTipo === tipo) {
-                    card.style.display = '';
-                } else {
-                    card.style.display = 'none';
-                }
-            }
-        });
-        
-        // Actualizar contador
-        updateResultsCounter();
-    }
+    const filterForm = document.querySelector('form[action*="publicaciones"]');
+    const tipoInput = document.getElementById('filter-tipo-input');
     
     // Función para actualizar estilos de pestañas activas
     function updateActiveTab(activeButton) {
-        // Definir clases exactas para estado activo/inactivo para evitar mezclas de hover conflictivos
         const activeClasses = 'tab-filter px-4 py-2 text-sm font-medium font-lora rounded-t-lg bg-[#404041] text-white border border-b-0 border-gray-300 transition-all duration-200 hover:bg-[#2a2a2a]';
         const inactiveClasses = 'tab-filter px-4 py-2 text-sm font-medium font-lora rounded-t-lg bg-white text-[#404041] border border-b-0 border-gray-300 transition-all duration-200 hover:bg-gray-100';
 
@@ -832,16 +1025,27 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
+    // Inicializar pestaña activa según parámetro URL
+    const currentTipo = new URLSearchParams(window.location.search).get('tipo') || 'todos';
+    tabButtons.forEach(btn => {
+        if (btn.getAttribute('data-tipo') === currentTipo) {
+            updateActiveTab(btn);
+        }
+    });
+    
     // Agregar event listeners a las pestañas
     tabButtons.forEach(button => {
-        button.addEventListener('click', function() {
+        button.addEventListener('click', function(e) {
+            e.preventDefault();
             const tipo = this.getAttribute('data-tipo');
-            filterPublications(tipo);
-            updateActiveTab(this);
+            
+            // Actualizar input oculto y enviar formulario
+            tipoInput.value = tipo;
+            filterForm.submit();
         });
     });
     
-    console.log('=== SISTEMA DE FILTRADO INICIALIZADO ===');
+    console.log('=== SISTEMA DE FILTRADO SERVER-SIDE INICIALIZADO ===');
 
     // === SISTEMA DE COMENTARIOS ===
     document.addEventListener('click', function(e) {
@@ -1002,6 +1206,214 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     console.log('=== SISTEMA DE COMENTARIOS Y DESCARGAS INICIALIZADO ===');
+
+    // === SISTEMA DE APROBACIÓN/RECHAZO DE REPORTES ===
+    window.approveReport = function(publicationId) {
+        if (!confirm('¿Aprobar este reporte?')) return;
+        
+        fetch(`/reportes/${publicationId}/aprobar`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert(data.message || 'Reporte aprobado exitosamente');
+                location.reload();
+            } else {
+                alert(data.message || 'Error al aprobar el reporte');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error al aprobar el reporte');
+        });
+    };
+
+    // Variable para guardar el modal anterior
+    let previousModalId = null;
+
+    window.showRejectModal = function(publicationId, publicationTitle) {
+        // Guardar cuál modal de detalles estaba abierto
+        document.querySelectorAll('[id^="modal"]').forEach(modal => {
+            if (modal.id !== 'reject-modal' && modal.id !== 'delete-modal' && !modal.classList.contains('hidden')) {
+                previousModalId = modal.id;
+                closeModal(modal.id);
+            }
+        });
+        
+        // Pequeño delay para que se cierre el modal anterior antes de abrir el de rechazo
+        setTimeout(() => {
+            document.getElementById('reject-modal-publication-id').value = publicationId;
+            document.getElementById('reject-modal-title').textContent = publicationTitle;
+            document.getElementById('reject-modal').classList.remove('hidden');
+        }, 350);
+    };
+
+    window.closeRejectModal = function(returnToPrevious = true) {
+        document.getElementById('reject-modal').classList.add('hidden');
+        document.getElementById('rejection-reason').value = '';
+        
+        // Si se cancela, regresar al modal anterior
+        if (returnToPrevious && previousModalId) {
+            setTimeout(() => {
+                showModal(previousModalId);
+                previousModalId = null;
+            }, 350);
+        } else {
+            previousModalId = null;
+        }
+    };
+
+    window.submitRejection = function() {
+        const publicationId = document.getElementById('reject-modal-publication-id').value;
+        const reason = document.getElementById('rejection-reason').value.trim();
+        
+        if (!reason) {
+            alert('Por favor ingrese una razón de rechazo');
+            return;
+        }
+        
+        fetch(`/reportes/${publicationId}/rechazar`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+            },
+            body: JSON.stringify({ rejection_reason: reason })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert(data.message || 'Reporte rechazado');
+                closeRejectModal(false); // No regresar al anterior porque vamos a recargar
+                location.reload();
+            } else {
+                alert(data.message || 'Error al rechazar el reporte');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error al rechazar el reporte');
+        });
+    };
+
+    window.resubmitReport = function(publicationId) {
+        if (!confirm('¿Reenviar este reporte para revisión? Asegúrate de haber corregido los problemas mencionados.')) return;
+        
+        fetch(`/reportes/${publicationId}/reenviar`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert(data.message || 'Reporte reenviado para revisión exitosamente');
+                location.reload();
+            } else {
+                alert(data.message || 'Error al reenviar el reporte');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error al reenviar el reporte');
+        });
+    };
+
+    // === SISTEMA DE ELIMINACIÓN CON MODAL ===
+    document.addEventListener('click', function(e) {
+        if (e.target.closest('.eliminar-reporte')) {
+            e.preventDefault();
+            const button = e.target.closest('.eliminar-reporte');
+            const publicationId = button.dataset.publicationId;
+            const publicationTitle = button.dataset.publicationTitle;
+            const deleteUrl = button.dataset.deleteUrl;
+            
+            showDeleteModal(publicationId, publicationTitle, deleteUrl);
+        }
+    });
+
+    window.showDeleteModal = function(publicationId, publicationTitle, deleteUrl) {
+        // Guardar cuál modal de detalles estaba abierto
+        document.querySelectorAll('[id^="modal"]').forEach(modal => {
+            if (modal.id !== 'reject-modal' && modal.id !== 'delete-modal' && !modal.classList.contains('hidden')) {
+                previousModalId = modal.id;
+                closeModal(modal.id);
+            }
+        });
+        
+        // Pequeño delay para que se cierre el modal anterior antes de abrir el de eliminación
+        setTimeout(() => {
+            document.getElementById('delete-modal-publication-id').value = publicationId;
+            document.getElementById('delete-modal-title').textContent = publicationTitle;
+            document.getElementById('delete-form').action = deleteUrl;
+            document.getElementById('delete-modal').classList.remove('hidden');
+        }, 350);
+    };
+
+    window.closeDeleteModal = function(returnToPrevious = true) {
+        document.getElementById('delete-modal').classList.add('hidden');
+        document.getElementById('deletion-reason').value = '';
+        
+        // Si se cancela, regresar al modal anterior
+        if (returnToPrevious && previousModalId) {
+            setTimeout(() => {
+                showModal(previousModalId);
+                previousModalId = null;
+            }, 350);
+        } else {
+            previousModalId = null;
+        }
+    };
+
+    // === Abrir modal desde área de archivos o icono de comentarios ===
+    document.addEventListener('click', function(e) {
+        // Si se hace click en el bloque de archivos, abrir el modal de detalles
+        const archivosEl = e.target.closest('.archivos-open');
+        if (archivosEl) {
+            e.preventDefault();
+            const card = archivosEl.closest('.publication-card');
+            if (card) {
+                const eyeBtn = card.querySelector('button[title="Ver detalles"]');
+                if (eyeBtn) eyeBtn.click();
+            }
+            return;
+        }
+
+        // Si se hace click en el icono de comentarios, abrir modal y llevar a la sección de comentarios
+        const commentsBtn = e.target.closest('.open-comments');
+        if (commentsBtn) {
+            e.preventDefault();
+            const card = commentsBtn.closest('.publication-card');
+            if (card) {
+                const eyeBtn = card.querySelector('button[title="Ver detalles"]');
+                if (eyeBtn) {
+                    eyeBtn.click();
+                    // Después de abrir el modal, desplazar/focar la sección de comentarios
+                    setTimeout(() => {
+                        const visibleModal = document.querySelector('[id^="modal"]:not(.hidden)');
+                        if (visibleModal) {
+                            const comentariosContainer = visibleModal.querySelector('.modal-comentarios');
+                            const textarea = visibleModal.querySelector('.nuevo-comentario');
+                            if (comentariosContainer) comentariosContainer.scrollTop = comentariosContainer.scrollHeight;
+                            if (textarea) {
+                                textarea.focus();
+                                textarea.style.height = 'auto';
+                                textarea.style.height = Math.min(textarea.scrollHeight, 120) + 'px';
+                            }
+                        }
+                    }, 450);
+                }
+            }
+            return;
+        }
+    });
 });
 </script>
 

@@ -22,8 +22,17 @@
                     <div class="flex-1 h-px bg-[#404041] ml-3"></div>
                 </div>
                 
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-3 lg:gap-4">
-                        <div class="space-y-3">
+                <!-- Mantener solo una versión del grid principal; la versión final aparece más abajo. -->
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-3 lg:gap-4 items-start">
+                        <!-- Row 1: Folio | Nombre | Ap. paterno -->
+                        <div>
+                            <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Folio</label>
+                            <input name="gov_folio" type="text" value="{{ old('gov_folio') }}" required
+                                   class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora" 
+                                   placeholder="Ej: 230787888">
+                            @error('gov_folio') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
+                        </div>
+
                         <div>
                             <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Nombre(s)</label>
                             <input name="name" type="text" value="{{ old('name') }}"
@@ -31,6 +40,7 @@
                                    placeholder="Ej: Juan Diego">
                             @error('name') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
                         </div>
+
                         <div>
                             <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Apellido paterno</label>
                             <input name="first_last_name" type="text" value="{{ old('first_last_name') }}"
@@ -38,10 +48,8 @@
                                    placeholder="Ej: Nava">
                             @error('first_last_name') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
                         </div>
-                        
-                    </div>
-                    
-                        <div class="space-y-3">
+
+                        <!-- Row 2: Apellido materno | Sexo | Edad (valor + unidad) -->
                         <div>
                             <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Apellido materno</label>
                             <input name="second_last_name" type="text" value="{{ old('second_last_name') }}"
@@ -49,29 +57,33 @@
                                    placeholder="Ej: Reyes">
                             @error('second_last_name') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
                         </div>
-                        <div>
-                            <div class="grid grid-cols-2 gap-3">
-                                <div>
-                                    <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Sexo</label>
-                                    <select name="sex" class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora">
-                                        <option value="">Seleccione una opción</option>
-                                        <option value="masculino" {{ old('sex') === 'masculino' ? 'selected' : '' }}>Masculino</option>
-                                        <option value="femenino" {{ old('sex') === 'femenino' ? 'selected' : '' }}>Femenino</option>
-                                    </select>
-                                    @error('sex') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
-                                </div>
 
-                                <div>
-                                    <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Edad</label>
-                                    <input name="age" type="number" min="0" max="150" value="{{ old('age') }}"
-                                           class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora"
-                                           placeholder="Ej: 34">
-                                    @error('age') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
-                                </div>
+                        <div>
+                            <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Sexo</label>
+                            <select name="sex" class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora">
+                                <option value="">Seleccione una opción</option>
+                                <option value="masculino" {{ old('sex') === 'masculino' ? 'selected' : '' }}>Masculino</option>
+                                <option value="femenino" {{ old('sex') === 'femenino' ? 'selected' : '' }}>Femenino</option>
+                            </select>
+                            @error('sex') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
+                        </div>
+
+                        <div>
+                            <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Edad</label>
+                            <div class="flex gap-2">
+                                <input name="edad_valor" type="number" min="0" max="150" value="{{ old('edad_valor') }}"
+                                       class="w-1/2 px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora"
+                                       placeholder="Ej: 34">
+                                <select name="edad_unidad" required aria-required="true" class="w-1/2 px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora">
+                                    <option value="">Unidad</option>
+                                    <option value="anos" {{ old('edad_unidad') === 'anos' ? 'selected' : '' }}>Años</option>
+                                    <option value="meses" {{ old('edad_unidad') === 'meses' ? 'selected' : '' }}>Meses</option>
+                                </select>
                             </div>
+                            @error('edad_valor') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
+                            @error('edad_unidad') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
                         </div>
                     </div>
-                </div>
             </div>
 
             <!-- Línea separadora -->
@@ -102,21 +114,6 @@
                         </div>
 
                         <div>
-                            <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Jurisdicción de defunción</label>
-                            {{-- Hidden input that will be submitted. The visible select is disabled so users can't change it directly. --}}
-                            <input type="hidden" id="jurisdiction_input" name="jurisdiction_id" value="{{ old('jurisdiction_id') ?? '' }}">
-                            <!-- Visible, readable jurisdiction display (readonly) to improve accessibility. The hidden input still submits the id. -->
-                            <input id="jurisdiction_display" type="text" class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora" value="Pendiente (seleccione municipio)" readonly aria-describedby="jurisdiction-help">
-                            <span id="jurisdiction-help" class="sr-only">La jurisdicción se determina automáticamente según el municipio seleccionado</span>
-                            @error('jurisdiction_id') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
-                        </div>
-                        
-                    </div>
-                    
-                        <div class="space-y-3">
-                    
-                        
-                        <div>
                             <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Municipio de defunción</label>
                             <select id="death_municipality_select" name="death_municipality_id" class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora tomselect-select">
                                 <option value="">Seleccione un municipio</option>
@@ -128,6 +125,20 @@
                                 @endif
                             </select>
                             @error('death_municipality_id') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
+                        </div>
+                        
+                    </div>
+                    
+                        <div class="space-y-3">
+                        
+                        <div>
+                            <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Jurisdicción de residencia</label>
+                            {{-- Hidden input that will be submitted. The visible select is disabled so users can't change it directly. --}}
+                            <input type="hidden" id="jurisdiction_input" name="jurisdiction_id" value="{{ old('jurisdiction_id') ?? '' }}">
+                            <!-- Visible, readable jurisdiction display (readonly) to improve accessibility. The hidden input still submits the id. -->
+                            <input id="jurisdiction_display" type="text" class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora" value="Pendiente (seleccione municipio)" readonly aria-describedby="jurisdiction-help">
+                            <span id="jurisdiction-help" class="sr-only">La jurisdicción se determina automáticamente según el municipio seleccionado</span>
+                            @error('jurisdiction_id') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
                         </div>
                         <div>
                             <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Lugar específico</label>
@@ -364,6 +375,7 @@
             // Map jurisdiction_id -> jurisdiction name (for display)
             const jurisNames = @json($jurisdictions->mapWithKeys(function($j){ return [$j->id => $j->name]; }));
 
+            const residenceMuni = document.getElementById('residence_municipality_select');
             const deathMuni = document.getElementById('death_municipality_select');
             const jurisdictionDisplay = document.getElementById('jurisdiction_display');
             const hiddenJur = document.getElementById('jurisdiction_input');
@@ -395,13 +407,14 @@
             applyPlaceholderStyle();
 
             function setJurisdictionBasedOnMunicipality() {
-                const mid = deathMuni?.value || '';
+                // Prefer the residence municipality to determine jurisdiction
+                const mid = (residenceMuni?.value) ? residenceMuni.value : (deathMuni?.value || '');
                 if (mid && muniToJur[mid]) {
                     const jid = muniToJur[mid];
                     if (hiddenJur) hiddenJur.value = jid;
                     if (jurisdictionDisplay) jurisdictionDisplay.value = jurisNames[jid] || '';
                 } else {
-                    // No mapping: clear value (user cannot change it)
+                    // No mapping: set to pendiente and clear hidden (we'll let server assign 'NO ENCONTRADA' if needed)
                     if (hiddenJur) hiddenJur.value = '';
                     if (jurisdictionDisplay) jurisdictionDisplay.value = 'Pendiente (seleccione municipio)';
                 }
@@ -409,10 +422,11 @@
                 applyPlaceholderStyle();
             }
 
-            if (deathMuni) {
-                deathMuni.addEventListener('change', setJurisdictionBasedOnMunicipality);
-                setJurisdictionBasedOnMunicipality();
+            if (residenceMuni) {
+                residenceMuni.addEventListener('change', setJurisdictionBasedOnMunicipality);
             }
+            // also initialize on load using residence (or death as fallback)
+            setJurisdictionBasedOnMunicipality();
 
             window.clearDeathForm = function(e) {
                 try { e.preventDefault(); } catch (err) {}

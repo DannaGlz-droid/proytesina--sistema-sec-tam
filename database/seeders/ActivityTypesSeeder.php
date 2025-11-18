@@ -16,7 +16,7 @@ class ActivityTypesSeeder extends Seeder
         $activityTypes = [
             ['id' => 1, 'name' => 'Capacitación', 'created_at' => now(), 'updated_at' => now()],
             ['id' => 2, 'name' => 'Taller', 'created_at' => now(), 'updated_at' => now()],
-            ['id' => 3, 'name' => 'Conferencia', 'created_at' => now(), 'updated_at' => now()],
+            ['id' => 3, 'name' => 'Platica de sensibilizacion', 'created_at' => now(), 'updated_at' => now()],
             ['id' => 4, 'name' => 'Reunión', 'created_at' => now(), 'updated_at' => now()],
             ['id' => 5, 'name' => 'Evento especial', 'created_at' => now(), 'updated_at' => now()],
         ];

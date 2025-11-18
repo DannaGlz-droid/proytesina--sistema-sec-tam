@@ -95,7 +95,7 @@
                                 @endphp
                                 <option value="1" {{ $selectedActivity == '1' ? 'selected' : '' }}>Capacitación</option>
                                 <option value="2" {{ $selectedActivity == '2' ? 'selected' : '' }}>Taller</option>
-                                <option value="3" {{ $selectedActivity == '3' ? 'selected' : '' }}>Conferencia</option>
+                                <option value="3" {{ $selectedActivity == '3' ? 'selected' : '' }}>Platica de sensibilizacion</option>
                                 <option value="4" {{ $selectedActivity == '4' ? 'selected' : '' }}>Reunión</option>
                                 <option value="5" {{ $selectedActivity == '5' ? 'selected' : '' }}>Evento especial</option>
                             </select>
