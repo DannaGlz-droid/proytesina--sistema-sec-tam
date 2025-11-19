@@ -1,22 +1,23 @@
-@extends('layouts.principal')
-@section('title', isset($publication) ? 'Editar Observatorio de Lesiones' : 'Registro de Observatorio de Lesiones')
-@section('content')
 
-    @include('components.header-admin')
-    @include('components.nav-reportes')
+<?php $__env->startSection('title', isset($publication) ? 'Editar Observatorio de Lesiones' : 'Registro de Observatorio de Lesiones'); ?>
+<?php $__env->startSection('content'); ?>
+
+    <?php echo $__env->make('components.header-admin', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?>
+    <?php echo $__env->make('components.nav-reportes', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?>
 
     <div class="px-4 lg:pl-10 pt-6 lg:pt-10 pb-8 lg:pb-12">
         <h1 class="text-2xl lg:text-3xl font-lora font-bold text-[#404041] mb-3">
-            {{ isset($publication) ? 'Editar observatorio de lesiones' : 'Registro de observatorio de lesiones' }}
+            <?php echo e(isset($publication) ? 'Editar observatorio de lesiones' : 'Registro de observatorio de lesiones'); ?>
+
         </h1>
-        <p class="text-sm lg:text-base text-[#404041] font-lora mb-6">Complete el formulario para {{ isset($publication) ? 'actualizar' : 'registrar' }} los datos del observatorio de lesiones.</p>
+        <p class="text-sm lg:text-base text-[#404041] font-lora mb-6">Complete el formulario para <?php echo e(isset($publication) ? 'actualizar' : 'registrar'); ?> los datos del observatorio de lesiones.</p>
 
         <!-- Cuadro del formulario responsive -->
-        <form action="{{ isset($publication) ? route('reportes.observatorio.update', $publication) : route('reportes.observatorio.store') }}" method="POST" enctype="multipart/form-data">
-            @csrf
-            @if(isset($publication))
-                @method('PUT')
-            @endif
+        <form action="<?php echo e(isset($publication) ? route('reportes.observatorio.update', $publication) : route('reportes.observatorio.store')); ?>" method="POST" enctype="multipart/form-data">
+            <?php echo csrf_field(); ?>
+            <?php if(isset($publication)): ?>
+                <?php echo method_field('PUT'); ?>
+            <?php endif; ?>
             
         <div class="border border-[#404041] rounded-lg lg:rounded-xl p-4 lg:p-6 bg-white bg-opacity-95 max-w-7xl shadow-md">
             
@@ -36,22 +37,22 @@
                                    name="tema"
                                    class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora" 
                                    placeholder="Ej: Análisis de lesiones por accidentes"
-                                   value="{{ old('tema', isset($publication) ? $publication->topic : '') }}"
+                                   value="<?php echo e(old('tema', isset($publication) ? $publication->topic : '')); ?>"
                                    required>
                         </div>
                         <div>
                             <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Municipio *</label>
                             <select id="death_municipality_select" name="municipio" class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora tomselect-select" required>
                                 <option value="">Seleccione un municipio</option>
-                                @php
+                                <?php
                                     $selectedMunicipio = old('municipio', isset($report) ? $report->municipality_id : '');
-                                @endphp
-                                @if($selectedMunicipio)
-                                    @php $m = $municipalities->firstWhere('id', $selectedMunicipio) @endphp
-                                    @if($m)
-                                        <option value="{{ $m->id }}" selected>{{ $m->name }}</option>
-                                    @endif
-                                @endif
+                                ?>
+                                <?php if($selectedMunicipio): ?>
+                                    <?php $m = $municipalities->firstWhere('id', $selectedMunicipio) ?>
+                                    <?php if($m): ?>
+                                        <option value="<?php echo e($m->id); ?>" selected><?php echo e($m->name); ?></option>
+                                    <?php endif; ?>
+                                <?php endif; ?>
                             </select>
                         </div>
                     </div>
@@ -62,13 +63,13 @@
                             <input type="date" 
                                    name="fecha"
                                    class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora"
-                                   value="{{ old('fecha', isset($publication) ? $publication->activity_date->format('Y-m-d') : '') }}"
+                                   value="<?php echo e(old('fecha', isset($publication) ? $publication->activity_date->format('Y-m-d') : '')); ?>"
                                    required>
                         </div>
                         <div>
                             <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Jurisdicción *</label>
-                            <input type="hidden" id="jurisdiction_input" name="jurisdiccion" value="{{ old('jurisdiccion', isset($report) ? $report->jurisdiction_id : '') }}" required>
-                            <input id="jurisdiction_display" type="text" class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora" value="{{ isset($report) && $report->jurisdiction ? $report->jurisdiction->name : 'Pendiente (seleccione municipio)' }}" readonly>
+                            <input type="hidden" id="jurisdiction_input" name="jurisdiccion" value="<?php echo e(old('jurisdiccion', isset($report) ? $report->jurisdiction_id : '')); ?>" required>
+                            <input id="jurisdiction_display" type="text" class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora" value="<?php echo e(isset($report) && $report->jurisdiction ? $report->jurisdiction->name : 'Pendiente (seleccione municipio)'); ?>" readonly>
                         </div>
                     </div>
                 </div>
@@ -88,7 +89,7 @@
                 <div class="space-y-3">
                     <div>
                         <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Descripción *</label>
-                        <textarea id="descripcion" name="descripcion" class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora" rows="4" placeholder="Describa los detalles...">{{ old('descripcion', isset($publication) ? $publication->description : '') }}</textarea>
+                        <textarea id="descripcion" name="descripcion" class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora" rows="4" placeholder="Describa los detalles..."><?php echo e(old('descripcion', isset($publication) ? $publication->description : '')); ?></textarea>
                     </div>
                 </div>
             </div>
@@ -106,18 +107,18 @@
                 
                 <div class="space-y-4">
                     <!-- Archivos existentes (solo en modo edición) -->
-                    @if(isset($publication) && $publication->files->count() > 0)
+                    <?php if(isset($publication) && $publication->files->count() > 0): ?>
                         <div class="mb-4">
                             <div class="bg-gray-50 border border-gray-200 rounded-lg p-4">
                                 <p class="font-medium mb-3 font-lora text-sm text-[#404041] flex items-center">
                                     <ion-icon name="folder-open-outline" class="text-lg mr-2"></ion-icon>
-                                    Archivos actuales ({{ $publication->files->count() }})
+                                    Archivos actuales (<?php echo e($publication->files->count()); ?>)
                                 </p>
                                 <ul class="space-y-2">
-                                    @foreach($publication->files as $file)
+                                    <?php $__currentLoopData = $publication->files; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $file): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                                         <li class="flex items-center justify-between py-2 px-3 hover:bg-white rounded-lg border border-gray-200 transition-all duration-200 font-lora bg-white shadow-sm">
                                             <div class="flex items-center flex-1 min-w-0">
-                                                @php
+                                                <?php
                                                     $extension = pathinfo($file->original_name, PATHINFO_EXTENSION);
                                                     $iconConfig = match(strtolower($extension)) {
                                                         'pdf' => ['icon' => 'document-text-outline', 'color' => 'text-blue-500', 'bg' => 'bg-blue-50'],
@@ -125,28 +126,28 @@
                                                         'jpg', 'jpeg', 'png' => ['icon' => 'image-outline', 'color' => 'text-purple-500', 'bg' => 'bg-purple-50'],
                                                         default => ['icon' => 'document-outline', 'color' => 'text-gray-400', 'bg' => 'bg-gray-50']
                                                     };
-                                                @endphp
-                                                <div class="flex-shrink-0 w-10 h-10 flex items-center justify-center rounded-lg {{ $iconConfig['bg'] }}">
-                                                    <ion-icon name="{{ $iconConfig['icon'] }}" class="{{ $iconConfig['color'] }} text-xl"></ion-icon>
+                                                ?>
+                                                <div class="flex-shrink-0 w-10 h-10 flex items-center justify-center rounded-lg <?php echo e($iconConfig['bg']); ?>">
+                                                    <ion-icon name="<?php echo e($iconConfig['icon']); ?>" class="<?php echo e($iconConfig['color']); ?> text-xl"></ion-icon>
                                                 </div>
                                                 <div class="ml-3 flex-1 min-w-0">
-                                                    <p class="text-sm font-medium text-[#404041] truncate">{{ $file->original_name }}</p>
-                                                    <p class="text-xs text-gray-500">{{ number_format($file->file_size / 1024 / 1024, 2) }} MB</p>
+                                                    <p class="text-sm font-medium text-[#404041] truncate"><?php echo e($file->original_name); ?></p>
+                                                    <p class="text-xs text-gray-500"><?php echo e(number_format($file->file_size / 1024 / 1024, 2)); ?> MB</p>
                                                 </div>
                                             </div>
                                             <button type="button" 
-                                                    onclick="if(confirm('¿Eliminar este archivo?')) { document.getElementById('delete-file-{{ $file->id }}').submit(); }"
+                                                    onclick="if(confirm('¿Eliminar este archivo?')) { document.getElementById('delete-file-<?php echo e($file->id); ?>').submit(); }"
                                                     class="ml-3 flex-shrink-0 w-8 h-8 flex items-center justify-center rounded-lg text-red-500 hover:bg-red-50 hover:text-red-700 transition-all duration-200" 
                                                     title="Eliminar archivo">
                                                 <ion-icon name="trash-outline" class="text-lg"></ion-icon>
                                             </button>
                                         </li>
                                                                                 <!-- Form oculto para eliminar archivo (moverá los formularios fuera del form principal) -->
-                                    @endforeach
+                                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                                 </ul>
                             </div>
                         </div>
-                    @endif
+                    <?php endif; ?>
 
                     <!-- Cuadro para archivo Excel que abarca todo el ancho -->
                     <div class="p-4 border border-gray-300 rounded-lg bg-white">
@@ -156,16 +157,18 @@
                                 <span class="text-sm font-medium text-[#404041] font-lora">Hoja de Cálculo</span>
                             </div>
                             <span id="excel-status" class="text-xs px-2 py-1 bg-yellow-100 text-yellow-800 rounded font-lora">
-                                {{ isset($publication) ? 'Opcional (agregar nuevo)' : 'Pendiente' }}
+                                <?php echo e(isset($publication) ? 'Opcional (agregar nuevo)' : 'Pendiente'); ?>
+
                             </span>
                         </div>
-                        <p class="text-xs text-gray-600 font-lora">Formato: XLSX {{ isset($publication) ? '(opcional - se agregará a los existentes)' : '(obligatorio)' }}</p>
+                        <p class="text-xs text-gray-600 font-lora">Formato: XLSX <?php echo e(isset($publication) ? '(opcional - se agregará a los existentes)' : '(obligatorio)'); ?></p>
                     </div>
 
                     <!-- Área de carga de archivo -->
                     <div>
                         <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-2 font-lora">
-                            {{ isset($publication) ? 'Agregar nuevo archivo (opcional)' : 'Subir archivo *' }}
+                            <?php echo e(isset($publication) ? 'Agregar nuevo archivo (opcional)' : 'Subir archivo *'); ?>
+
                         </label>
                         
                         <!-- Cuadro punteado para arrastrar y soltar -->
@@ -206,37 +209,61 @@
             <div class="h-[1px] bg-gray-300 my-4 lg:my-6"></div>
 
             <!-- USAR COMPONENTE DE BOTONES -->
-            @if(isset($publication) || request()->is('reportes/*/*/edit'))
-                <x-form-buttons
-                    primaryText="Actualizar registro"
-                    secondaryText=""
-                    tertiaryText="Volver al listado"
-                    tertiaryHref="{{ route('reportes.index') }}"
-                    primaryType="submit"
-                />
-            @else
-                <x-form-buttons 
-                    primaryText="Guardar registro"
-                    secondaryText="Limpiar formulario"
-                    primaryType="submit"
-                    secondaryType="button"
-                    secondaryOnclick="clearObservatorioLesionesForm()"
-                    tertiaryText="Volver al listado"
-                    tertiaryHref="{{ route('reportes.index') }}"
-                />
-            @endif
+            <?php if(isset($publication) || request()->is('reportes/*/*/edit')): ?>
+                <?php if (isset($component)) { $__componentOriginal4472fe0a558b38a919fed94c8472a9fd = $component; } ?>
+<?php if (isset($attributes)) { $__attributesOriginal4472fe0a558b38a919fed94c8472a9fd = $attributes; } ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.form-buttons','data' => ['primaryText' => 'Actualizar registro','secondaryText' => '','tertiaryText' => 'Volver al listado','tertiaryHref' => ''.e(route('reportes.index')).'','primaryType' => 'submit']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component->withName('form-buttons'); ?>
+<?php if ($component->shouldRender()): ?>
+<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
+<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
+<?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
+<?php endif; ?>
+<?php $component->withAttributes(['primaryText' => 'Actualizar registro','secondaryText' => '','tertiaryText' => 'Volver al listado','tertiaryHref' => ''.e(route('reportes.index')).'','primaryType' => 'submit']); ?>
+<?php echo $__env->renderComponent(); ?>
+<?php endif; ?>
+<?php if (isset($__attributesOriginal4472fe0a558b38a919fed94c8472a9fd)): ?>
+<?php $attributes = $__attributesOriginal4472fe0a558b38a919fed94c8472a9fd; ?>
+<?php unset($__attributesOriginal4472fe0a558b38a919fed94c8472a9fd); ?>
+<?php endif; ?>
+<?php if (isset($__componentOriginal4472fe0a558b38a919fed94c8472a9fd)): ?>
+<?php $component = $__componentOriginal4472fe0a558b38a919fed94c8472a9fd; ?>
+<?php unset($__componentOriginal4472fe0a558b38a919fed94c8472a9fd); ?>
+<?php endif; ?>
+            <?php else: ?>
+                <?php if (isset($component)) { $__componentOriginal4472fe0a558b38a919fed94c8472a9fd = $component; } ?>
+<?php if (isset($attributes)) { $__attributesOriginal4472fe0a558b38a919fed94c8472a9fd = $attributes; } ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.form-buttons','data' => ['primaryText' => 'Guardar registro','secondaryText' => 'Limpiar formulario','primaryType' => 'submit','secondaryType' => 'button','secondaryOnclick' => 'clearObservatorioLesionesForm()','tertiaryText' => 'Volver al listado','tertiaryHref' => ''.e(route('reportes.index')).'']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component->withName('form-buttons'); ?>
+<?php if ($component->shouldRender()): ?>
+<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
+<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
+<?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
+<?php endif; ?>
+<?php $component->withAttributes(['primaryText' => 'Guardar registro','secondaryText' => 'Limpiar formulario','primaryType' => 'submit','secondaryType' => 'button','secondaryOnclick' => 'clearObservatorioLesionesForm()','tertiaryText' => 'Volver al listado','tertiaryHref' => ''.e(route('reportes.index')).'']); ?>
+<?php echo $__env->renderComponent(); ?>
+<?php endif; ?>
+<?php if (isset($__attributesOriginal4472fe0a558b38a919fed94c8472a9fd)): ?>
+<?php $attributes = $__attributesOriginal4472fe0a558b38a919fed94c8472a9fd; ?>
+<?php unset($__attributesOriginal4472fe0a558b38a919fed94c8472a9fd); ?>
+<?php endif; ?>
+<?php if (isset($__componentOriginal4472fe0a558b38a919fed94c8472a9fd)): ?>
+<?php $component = $__componentOriginal4472fe0a558b38a919fed94c8472a9fd; ?>
+<?php unset($__componentOriginal4472fe0a558b38a919fed94c8472a9fd); ?>
+<?php endif; ?>
+            <?php endif; ?>
         </div>
         </form>
 
-    {{-- Formularios ocultos para eliminar archivos (renderizados fuera del form principal para evitar MethodOverride en el PUT) --}}
-    @if(isset($publication) && $publication->files->count() > 0)
-        @foreach($publication->files as $file)
-            <form id="delete-file-{{ $file->id }}" method="POST" action="{{ route('reportes.file.delete', $file) }}" class="hidden">
-                @csrf
-                @method('DELETE')
+    
+    <?php if(isset($publication) && $publication->files->count() > 0): ?>
+        <?php $__currentLoopData = $publication->files; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $file): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+            <form id="delete-file-<?php echo e($file->id); ?>" method="POST" action="<?php echo e(route('reportes.file.delete', $file)); ?>" class="hidden">
+                <?php echo csrf_field(); ?>
+                <?php echo method_field('DELETE'); ?>
             </form>
-        @endforeach
-    @endif
+        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+    <?php endif; ?>
 
     </div>
 
@@ -404,8 +431,8 @@
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             // Map municipality_id -> jurisdiction_id
-            const muniToJur = @json($municipalities->mapWithKeys(function($m){ return [$m->id => $m->jurisdiction_id]; }));
-            const jurisNames = @json($jurisdictions->mapWithKeys(function($j){ return [$j->id => $j->name]; }));
+            const muniToJur = <?php echo json_encode($municipalities->mapWithKeys(function($m){ return [$m->id => $m->jurisdiction_id]; }), 15, 512) ?>;
+            const jurisNames = <?php echo json_encode($jurisdictions->mapWithKeys(function($j){ return [$j->id => $j->name]; }), 15, 512) ?>;
 
             const deathMuni = document.getElementById('death_municipality_select');
             const jurisdictionDisplay = document.getElementById('jurisdiction_display');
@@ -468,4 +495,5 @@
             }
         });
     </script>
-@endsection
+<?php $__env->stopSection(); ?>
+<?php echo $__env->make('layouts.principal', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH C:\Proyectos Laravel\sistema-sec-tam\resources\views/reportes/registro/observatorio-de-lesiones.blade.php ENDPATH**/ ?>

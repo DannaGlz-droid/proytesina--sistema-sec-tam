@@ -25,7 +25,7 @@
             @endif
             {{ $secondaryText }}
         </a>
-    @elseif($secondaryText)
+    @elseif($secondaryText && !request()->is('reportes/*/*/edit'))
         <button type="{{ $secondaryType }}" 
                 @if($secondaryOnclick) onclick="{!! $secondaryOnclick !!}" @endif
                 class="border border-[#404041] text-[#404041] px-4 lg:px-6 py-2 rounded-lg text-xs lg:text-sm font-semibold hover:bg-gray-50 transition-all duration-300 font-lora flex items-center gap-1 whitespace-nowrap">

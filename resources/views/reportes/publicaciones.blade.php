@@ -54,8 +54,20 @@
                 <!-- FILTROS MEJORADOS - SERVER SIDE -->
                 <form method="GET" action="{{ route('reportes.index') }}" class="mb-6">
                     <div class="flex flex-col lg:flex-row gap-3 items-start lg:items-end">
+                        <!-- Buscar (misma línea que los filtros) -->
+                        <div class="flex-1 min-w-0 lg:max-w-[320px]">
+                            <label class="block text-xs font-semibold text-[#404041] mb-1 font-lora">Buscar</label>
+                            <div class="relative">
+                                <input type="text" name="q" id="search" value="{{ request('q') }}" placeholder="Buscar por título o autor..." class="w-full border border-[#404041] rounded-lg pl-10 pr-3 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-[#611132] focus:border-transparent">
+                                <div class="absolute inset-y-0 left-3 flex items-center pointer-events-none">
+                                    <svg class="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                                    </svg>
+                                </div>
+                            </div>
+                        </div>
                         <!-- Estado -->
-                        <div class="flex-1 min-w-0 lg:max-w-[200px]">
+                        <div class="flex-1 min-w-0 lg:max-w-[160px]">
                             <label class="block text-xs font-semibold text-[#404041] mb-1 font-lora">Estado</label>
                             <select name="status" class="w-full border border-[#404041] rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-[#611132] focus:border-transparent">
                                 <option value="">Todos los estados</option>
@@ -66,7 +78,7 @@
                         </div>
 
                         <!-- Periodo de fechas predefinido -->
-                        <div class="flex-1 min-w-0 lg:max-w-[220px]">
+                        <div class="flex-1 min-w-0 lg:max-w-[160px]">
                             <label class="block text-xs font-semibold text-[#404041] mb-1 font-lora">Periodo</label>
                             <select name="date_filter" class="w-full border border-[#404041] rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-[#611132] focus:border-transparent">
                                 <option value="">Todas las fechas</option>
@@ -79,7 +91,7 @@
                         </div>
 
                         <!-- Ordenar (incluye dirección) -->
-                        <div class="flex-1 min-w-0 lg:max-w-[260px]">
+                        <div class="flex-1 min-w-0 lg:max-w-[180px]">
                             <label class="block text-xs font-semibold text-[#404041] mb-1 font-lora">Ordenar</label>
                             <select name="order_by" class="w-full border border-[#404041] rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-[#611132] focus:border-transparent">
                                 <option value="created_at:desc" {{ request('order_by', 'created_at:desc') === 'created_at:desc' ? 'selected' : '' }}>Fecha (más recientes)</option>
@@ -111,7 +123,10 @@
                 <!-- CONTADOR DE RESULTADOS -->
                 <div class="flex justify-between items-center mb-6">
                     <div class="text-xs text-gray-600 font-lora">
-                        <span class="font-semibold text-[#404041]">{{ $publications->count() }}</span> resultados encontrados
+                        <span class="font-semibold text-[#404041]">{{ $publications->total() }}</span> resultados encontrados
+                        @if($publications->hasPages())
+                            <span class="text-gray-500">• Mostrando {{ $publications->firstItem() }}-{{ $publications->lastItem() }}</span>
+                        @endif
                     </div>
                     <div class="text-xs text-gray-500 font-lora">
                         <!-- Espacio para filtros adicionales si se necesitan -->
@@ -335,17 +350,11 @@
         </div>
 
         <!-- Paginación -->
-        <div class="flex justify-center gap-2 mt-8">
-            <button class="px-3 py-2 border border-[#404041] bg-white rounded-lg opacity-50 cursor-not-allowed">
-                <i class="fas fa-chevron-left text-sm"></i>
-            </button>
-            <button class="px-3 py-2 border border-[#404041] bg-[#404041] text-white rounded-lg font-lora">1</button>
-            <button class="px-3 py-2 border border-[#404041] bg-white rounded-lg transition-all duration-300 hover:bg-[#404041] hover:text-white font-lora">2</button>
-            <button class="px-3 py-2 border border-[#404041] bg-white rounded-lg transition-all duration-300 hover:bg-[#404041] hover:text-white font-lora">3</button>
-            <button class="px-3 py-2 border border-[#404041] bg-white rounded-lg transition-all duration-300 hover:bg-[#404041] hover:text-white">
-                <i class="fas fa-chevron-right text-sm"></i>
-            </button>
-        </div>
+        @if($publications->hasPages())
+            <div class="flex justify-center mt-8">
+                {{ $publications->onEachSide(1)->links('vendor.pagination.custom') }}
+            </div>
+        @endif
     </div>
 
     <!-- INCLUIR EL COMPONENTE DEL MODAL DE ALCOHOLIMETRÍA -->

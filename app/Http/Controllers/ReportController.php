@@ -63,6 +63,17 @@ class ReportController extends Controller
             $query->where('publication_type', $request->input('tipo'));
         }
 
+        // Filtro por búsqueda de texto (título o autor)
+        if ($request->filled('q')) {
+            $search = $request->input('q');
+            $query->where(function($q) use ($search) {
+                $q->where('topic', 'LIKE', "%{$search}%")
+                  ->orWhereHas('user', function($q) use ($search) {
+                      $q->where('name', 'LIKE', "%{$search}%");
+                  });
+            });
+        }
+
         // Filtro por fechas predefinidas (usar `publication_date` visible)
         if ($request->filled('date_filter')) {
             $dateFilter = $request->input('date_filter');
@@ -115,7 +126,7 @@ class ReportController extends Controller
             $query->orderBy($orderBy, $orderDir);
         }
 
-        $publications = $query->get();
+        $publications = $query->paginate(12)->withQueryString();
 
         // Preparar comentarios en formato JSON para cada publicación
         $publications->each(function ($pub) use ($user) {
