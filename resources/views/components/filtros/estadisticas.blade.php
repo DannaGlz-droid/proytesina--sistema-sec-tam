@@ -135,7 +135,7 @@
     <!-- Ubicación -->
     <x-filtros.seccion icono="map-marker-alt" titulo="Ubicación">
         <div class="filter-group">
-            <label class="block text-xs text-gray-600 font-lora mb-1">Jurisdicción:</label>
+            <label class="block text-xs text-gray-600 font-lora mb-1">Jurisdicción de residencia:</label>
             <select id="jurisdiccion" class="w-full border border-[#404041] rounded-lg px-3 py-1.5 text-xs">
                 <option value="">Todas</option>
                 @isset($jurisdictions)

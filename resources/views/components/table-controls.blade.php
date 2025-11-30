@@ -4,7 +4,7 @@
     'action' => request()->url(),
     // Default sort value used when the 'sort' query param is missing
     'defaultSort' => 'registration_date_desc',
-    'perPageOptions' => [10,20,50,100],
+    'perPageOptions' => [10,25,50,100],
     'sortOptions' => null,
     'searchPlaceholder' => 'Buscar...'
 ])
@@ -68,7 +68,7 @@
                     <span class="text-sm text-gray-700 font-lora">Mostrar</span>
                     <select name="per_page" onchange="this.form.submit()" class="bg-gray-50 border border-[#404041] text-gray-900 text-sm rounded-lg focus:ring-[#611132] focus:border-[#611132] block w-24 p-2">
                         @foreach($perPageOptions as $opt)
-                            <option value="{{ $opt }}" {{ (int)request('per_page', 10) === (int)$opt ? 'selected' : '' }}>{{ $opt }}</option>
+                            <option value="{{ $opt }}" {{ (int)request('per_page', 25) === (int)$opt ? 'selected' : '' }}>{{ $opt }}</option>
                         @endforeach
                     </select>
                 </div>

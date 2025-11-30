@@ -13,6 +13,8 @@ use App\Models\Jurisdiction;
 use App\Models\ActivityType;
 use App\Models\Notification;
 use App\Models\User;
+use App\Http\Requests\RoadSafetyReportRequest;
+use App\Http\Requests\InjuryObservatoryReportRequest;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -181,11 +183,21 @@ class ReportController extends Controller
         try {
             $user = Auth::user();
             
-            // Verificar permisos: solo el autor o Admin pueden eliminar
-            if ($publication->user_id !== $user->id && !$user->isAdmin()) {
-                return redirect()
-                    ->route('reportes.index')
-                    ->with('error', 'No tienes permisos para eliminar esta publicación.');
+            // Verificar permisos de eliminación
+            // - Si la publicación está aprobada: solo Admin o Coordinador pueden eliminar
+            // - Si no está aprobada: el autor o Admin pueden eliminar
+            if ($publication->status === 'aprobado') {
+                if (! $user->isAdmin() && ! $user->isCoordinator()) {
+                    return redirect()
+                        ->route('reportes.index')
+                        ->with('error', 'No tienes permisos para eliminar una publicación aprobada.');
+                }
+            } else {
+                if ($publication->user_id !== $user->id && ! $user->isAdmin()) {
+                    return redirect()
+                        ->route('reportes.index')
+                        ->with('error', 'No tienes permisos para eliminar esta publicación.');
+                }
             }
 
             DB::beginTransaction();
@@ -295,7 +307,7 @@ class ReportController extends Controller
     /**
      * Almacenar un reporte de Seguridad Vial
      */
-    public function storeSeguridadVial(Request $request)
+    public function storeSeguridadVial(RoadSafetyReportRequest $request)
     {
         // Obtener user_id (autenticado o usuario por defecto)
         $userId = Auth::id() ?? \App\Models\User::first()->id;
@@ -309,16 +321,8 @@ class ReportController extends Controller
             'archivos_count' => $request->hasFile('archivos') ? count($request->file('archivos')) : 0,
         ]);
 
-        // Validación
-        $validated = $request->validate([
-            'tema' => 'required|string|max:255',
-            'fecha' => 'required|date',
-            'activity_type_id' => 'required|exists:activity_types,id',
-            'participantes' => 'required|integer|min:1',
-            'lugar' => 'required|string|max:255',
-            'promotor' => 'required|string|max:255',
-            'archivos.*' => 'required|file|mimes:pdf,xlsx,xls,jpg,jpeg,png|max:10240', // 10MB por archivo
-        ]);
+        // Los datos ya están validados por RoadSafetyReportRequest
+        $validated = $request->validated();
 
         try {
             DB::beginTransaction();
@@ -328,7 +332,7 @@ class ReportController extends Controller
                 'user_id' => $userId,
                 'publication_type' => 'seguridad_vial',
                 'topic' => $validated['tema'],
-                'description' => $request->descripcion,
+                'description' => $validated['descripcion'] ?? 'Sin descripción adicional.',
                 'publication_date' => now(),
                 'activity_date' => $validated['fecha'],
                 'status' => 'publicado',
@@ -378,6 +382,14 @@ class ReportController extends Controller
                 ->with('error', 'Esta publicación no es de tipo Seguridad Vial');
         }
 
+        // Permitir edición solo al autor
+        $user = Auth::user();
+        if ($publication->user_id !== $user->id) {
+            return redirect()
+                ->route('reportes.index')
+                ->with('error', 'No tienes permisos para editar esta publicación.');
+        }
+
         $report = $publication->roadSafetyReports->first();
         $activityTypes = \App\Models\ActivityType::all();
         
@@ -387,18 +399,18 @@ class ReportController extends Controller
     /**
      * Actualizar un reporte de Seguridad Vial
      */
-    public function updateSeguridadVial(Request $request, Publication $publication)
+    public function updateSeguridadVial(RoadSafetyReportRequest $request, Publication $publication)
     {
-        // Validación
-        $validated = $request->validate([
-            'tema' => 'required|string|max:255',
-            'fecha' => 'required|date',
-            'activity_type_id' => 'required|exists:activity_types,id',
-            'participantes' => 'required|integer|min:1',
-            'lugar' => 'required|string|max:255',
-            'promotor' => 'required|string|max:255',
-            'archivos.*' => 'nullable|file|mimes:pdf,xlsx,xls,jpg,jpeg,png|max:10240',
-        ]);
+        // Los datos ya están validados por RoadSafetyReportRequest
+        $validated = $request->validated();
+
+        // Permitir actualización solo al autor
+        $user = Auth::user();
+        if ($publication->user_id !== $user->id) {
+            return redirect()
+                ->route('reportes.index')
+                ->with('error', 'No tienes permisos para actualizar esta publicación.');
+        }
 
         try {
             DB::beginTransaction();
@@ -406,7 +418,7 @@ class ReportController extends Controller
             // 1. Actualizar la publicación
             $publication->update([
                 'topic' => $validated['tema'],
-                'description' => $request->descripcion,
+                'description' => $validated['descripcion'] ?? 'Sin descripción adicional.',
                 'activity_date' => $validated['fecha'],
             ]);
 
@@ -447,29 +459,36 @@ class ReportController extends Controller
     /**
      * Almacenar un reporte de Observatorio de Lesiones
      */
-    public function storeObservatorio(Request $request)
+    public function storeObservatorio(InjuryObservatoryReportRequest $request)
     {
-        // Obtener user_id (autenticado o usuario por defecto)
         $userId = Auth::id() ?? \App\Models\User::first()->id;
-        
-        // Validación
-        $validated = $request->validate([
-            'tema' => 'required|string|max:255',
-            'fecha' => 'required|date',
-            'municipio' => 'required|exists:municipalities,id',
-            'jurisdiccion' => 'required|exists:jurisdictions,id',
-            'archivo' => 'nullable|file|mimes:xlsx,xls|max:10240', // 10MB
-        ]);
+        $validated = $request->validated();
 
         try {
             DB::beginTransaction();
+
+            // Server-side: if the user has a jurisdiction, ensure the municipality (and/or submitted jurisdiction)
+            // belongs to the same jurisdiction to avoid manipulating the request client-side.
+            $user = Auth::user();
+            $userJur = optional($user)->jurisdiction_id;
+            if ($userJur) {
+                $mun = Municipality::find($validated['municipio']);
+                if (!$mun || $mun->jurisdiction_id != $userJur) {
+                    return redirect()->back()->withInput()->with('error', 'El municipio seleccionado no pertenece a su jurisdicción.');
+                }
+                if (isset($validated['jurisdiccion']) && $validated['jurisdiccion'] != $userJur) {
+                    return redirect()->back()->withInput()->with('error', 'La jurisdicción seleccionada no coincide con su jurisdicción.');
+                }
+                // Force the jurisdiction to the user's jurisdiction for safety
+                $validated['jurisdiccion'] = $userJur;
+            }
 
             // 1. Crear la publicación
             $publication = Publication::create([
                 'user_id' => $userId,
                 'publication_type' => 'observatorio',
                 'topic' => $validated['tema'],
-                'description' => $request->descripcion,
+                'description' => $validated['descripcion'] ?? 'Sin descripción adicional.',
                 'publication_date' => now(),
                 'activity_date' => $validated['fecha'],
                 'status' => 'publicado',
@@ -514,6 +533,14 @@ class ReportController extends Controller
                 ->with('error', 'Esta publicación no es de tipo Observatorio');
         }
 
+        // Permitir edición solo al autor
+        $user = Auth::user();
+        if ($publication->user_id !== $user->id) {
+            return redirect()
+                ->route('reportes.index')
+                ->with('error', 'No tienes permisos para editar esta publicación.');
+        }
+
         $report = $publication->injuryObservatoryReports->first();
         $municipalities = Municipality::with('jurisdiction')->orderBy('name')->get();
         $jurisdictions = Jurisdiction::orderBy('name')->get();
@@ -524,24 +551,40 @@ class ReportController extends Controller
     /**
      * Actualizar un reporte de Observatorio de Lesiones
      */
-    public function updateObservatorio(Request $request, Publication $publication)
+    public function updateObservatorio(InjuryObservatoryReportRequest $request, Publication $publication)
     {
-        // Validación
-        $validated = $request->validate([
-            'tema' => 'required|string|max:255',
-            'fecha' => 'required|date',
-            'municipio' => 'required|exists:municipalities,id',
-            'jurisdiccion' => 'required|exists:jurisdictions,id',
-            'archivo' => 'nullable|file|mimes:xlsx,xls|max:10240',
-        ]);
+        $validated = $request->validated();
+
+        // Permitir actualización solo al autor
+        $user = Auth::user();
+        if ($publication->user_id !== $user->id) {
+            return redirect()
+                ->route('reportes.index')
+                ->with('error', 'No tienes permisos para actualizar esta publicación.');
+        }
 
         try {
             DB::beginTransaction();
 
+            // Server-side jurisdiction check similar to storeObservatorio
+            $user = Auth::user();
+            $userJur = optional($user)->jurisdiction_id;
+            if ($userJur) {
+                $mun = Municipality::find($validated['municipio']);
+                if (!$mun || $mun->jurisdiction_id != $userJur) {
+                    return redirect()->back()->withInput()->with('error', 'El municipio seleccionado no pertenece a su jurisdicción.');
+                }
+                if (isset($validated['jurisdiccion']) && $validated['jurisdiccion'] != $userJur) {
+                    return redirect()->back()->withInput()->with('error', 'La jurisdicción seleccionada no coincide con su jurisdicción.');
+                }
+                // Force the jurisdiction to the user's jurisdiction for safety
+                $validated['jurisdiccion'] = $userJur;
+            }
+
             // 1. Actualizar la publicación
             $publication->update([
                 'topic' => $validated['tema'],
-                'description' => $request->descripcion,
+                'description' => $validated['descripcion'] ?? 'Sin descripción adicional.',
                 'activity_date' => $validated['fecha'],
             ]);
 
@@ -577,28 +620,13 @@ class ReportController extends Controller
     /**
      * Almacenar un reporte de Alcoholimetría
      */
-    public function storeAlcoholimetria(Request $request)
+    public function storeAlcoholimetria(\App\Http\Requests\BreathalyzerReportRequest $request)
     {
         // Obtener user_id (autenticado o usuario por defecto)
         $userId = Auth::id() ?? \App\Models\User::first()->id;
         
-        // Validación
-        $validated = $request->validate([
-            'tema' => 'required|string|max:255',
-            'fecha' => 'required|date',
-            'puntos_revision' => 'required|integer|min:0',
-            'pruebas_realizadas' => 'required|integer|min:0',
-            'conductores_no_aptos' => 'required|integer|min:0',
-            'mujeres_no_aptas' => 'required|integer|min:0',
-            'hombres_no_aptos' => 'required|integer|min:0',
-            'automoviles_camionetas' => 'required|integer|min:0',
-            'motocicletas' => 'required|integer|min:0',
-            'transporte_colectivo' => 'required|integer|min:0',
-            'transporte_individual' => 'required|integer|min:0',
-            'transporte_carga' => 'required|integer|min:0',
-            'vehiculos_emergencia' => 'required|integer|min:0',
-            'archivo' => 'nullable|file|mimes:xlsx,xls|max:10240', // 10MB
-        ]);
+        // Validated input from FormRequest
+        $validated = $request->validated();
 
         try {
             DB::beginTransaction();
@@ -663,32 +691,32 @@ class ReportController extends Controller
         }
 
         $report = $publication->breathalyzerReports->first();
-        
+        // Permitir edición solo al autor
+        $user = Auth::user();
+        if ($publication->user_id !== $user->id) {
+            return redirect()
+                ->route('reportes.index')
+                ->with('error', 'No tienes permisos para editar esta publicación.');
+        }
+
         return view('reportes.registro.alcoholimetria', compact('publication', 'report'));
     }
 
     /**
      * Actualizar un reporte de Alcoholimetría
      */
-    public function updateAlcoholimetria(Request $request, Publication $publication)
+    public function updateAlcoholimetria(\App\Http\Requests\BreathalyzerReportRequest $request, Publication $publication)
     {
-        // Validación
-        $validated = $request->validate([
-            'tema' => 'required|string|max:255',
-            'fecha' => 'required|date',
-            'puntos_revision' => 'required|integer|min:0',
-            'pruebas_realizadas' => 'required|integer|min:0',
-            'conductores_no_aptos' => 'required|integer|min:0',
-            'mujeres_no_aptas' => 'required|integer|min:0',
-            'hombres_no_aptos' => 'required|integer|min:0',
-            'automoviles_camionetas' => 'required|integer|min:0',
-            'motocicletas' => 'required|integer|min:0',
-            'transporte_colectivo' => 'required|integer|min:0',
-            'transporte_individual' => 'required|integer|min:0',
-            'transporte_carga' => 'required|integer|min:0',
-            'vehiculos_emergencia' => 'required|integer|min:0',
-            'archivo' => 'nullable|file|mimes:xlsx,xls|max:10240',
-        ]);
+        // Validated input from FormRequest
+        $validated = $request->validated();
+
+        // Permitir actualización solo al autor
+        $user = Auth::user();
+        if ($publication->user_id !== $user->id) {
+            return redirect()
+                ->route('reportes.index')
+                ->with('error', 'No tienes permisos para actualizar esta publicación.');
+        }
 
         try {
             DB::beginTransaction();

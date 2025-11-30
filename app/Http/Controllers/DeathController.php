@@ -12,6 +12,174 @@ use Illuminate\Support\Facades\Redirect;
 
 class DeathController extends Controller
 {
+    /**
+     * DataTables server-side endpoint for AJAX requests.
+     */
+    public function dataTable(Request $request)
+    {
+        // DataTables parameters
+        $draw = (int) $request->input('draw', 1);
+        $start = (int) $request->input('start', 0);
+        $length = (int) $request->input('length', 25);
+        $searchValue = $request->input('search.value', '');
+        
+        // Order parameters
+        $orderColumnIndex = $request->input('order.0.column', 0);
+        $orderDir = $request->input('order.0.dir', 'desc');
+        
+        // Column mapping (same order as table columns)
+        $columns = ['gov_folio', 'name', 'first_last_name', 'second_last_name', 'age', 'sex', 'death_date', 'residence_municipality_id', 'death_municipality_id', 'jurisdiction_id', 'death_location_id', 'death_cause_id'];
+        $orderColumn = $columns[$orderColumnIndex] ?? 'id';
+        
+        // Build query
+        $query = Death::query();
+        
+        // Apply search
+        if (!empty($searchValue)) {
+            $query->where(function ($q) use ($searchValue) {
+                $q->where('gov_folio', 'like', "%{$searchValue}%")
+                  ->orWhere('name', 'like', "%{$searchValue}%")
+                  ->orWhere('first_last_name', 'like', "%{$searchValue}%")
+                  ->orWhere('second_last_name', 'like', "%{$searchValue}%");
+                if (is_numeric($searchValue)) {
+                    $q->orWhere('age', (int) $searchValue);
+                }
+            });
+        }
+        
+        // Apply existing filters from form (same as index method)
+        $dateRange = $request->input('dateRange');
+        if ($dateRange && $dateRange !== 'custom') {
+            if (is_numeric($dateRange)) {
+                $days = (int) $dateRange;
+                $query->whereDate('death_date', '>=', now()->subDays($days));
+            } elseif ($dateRange === 'year') {
+                $year = $request->input('year') ? (int) $request->input('year') : now()->year;
+                $query->whereYear('death_date', $year);
+            } elseif ($dateRange === 'month') {
+                $year = $request->input('year') ? (int) $request->input('year') : now()->year;
+                $month = $request->input('month');
+                if ($month) {
+                    $query->whereYear('death_date', $year)->whereMonth('death_date', $month);
+                }
+            } elseif ($dateRange === 'multiple-months') {
+                $year = $request->input('year') ? (int) $request->input('year') : now()->year;
+                $months = $request->input('selectedMonths', []);
+                if (!empty($months)) {
+                    $query->whereYear('death_date', $year)
+                          ->whereIn(\DB::raw('MONTH(death_date)'), array_map('intval', $months));
+                }
+            } elseif ($dateRange === 'quarter') {
+                $year = $request->input('year') ? (int) $request->input('year') : now()->year;
+                $quarter = (int) $request->input('quarter');
+                if ($quarter >= 1 && $quarter <= 4) {
+                    $startMonth = ($quarter - 1) * 3 + 1;
+                    $endMonth = $startMonth + 2;
+                    $query->whereYear('death_date', $year)
+                          ->whereBetween(\DB::raw('MONTH(death_date)'), [$startMonth, $endMonth]);
+                }
+            }
+        } elseif ($dateRange === 'custom') {
+            if ($request->filled('startDate')) {
+                $query->whereDate('death_date', '>=', $request->input('startDate'));
+            }
+            if ($request->filled('endDate')) {
+                $query->whereDate('death_date', '<=', $request->input('endDate'));
+            }
+        }
+        
+        if ($request->filled('jurisdiccion')) {
+            $val = $request->input('jurisdiccion');
+            $query->whereHas('jurisdiction', function ($qj) use ($val) {
+                $qj->whereRaw('LOWER(name) = ?', [strtolower($val)])
+                   ->orWhere('name', 'like', "%{$val}%");
+            });
+        }
+        
+        if ($request->filled('municipio')) {
+            $val = $request->input('municipio');
+            $query->whereHas('residenceMunicipality', function ($qm) use ($val) {
+                $qm->whereRaw('LOWER(name) = ?', [strtolower($val)])
+                   ->orWhere('name', 'like', "%{$val}%");
+            });
+        }
+        
+        if ($request->filled('municipioDefuncion')) {
+            $val = $request->input('municipioDefuncion');
+            $query->whereHas('deathMunicipality', function ($qm) use ($val) {
+                $qm->whereRaw('LOWER(name) = ?', [strtolower($val)])
+                   ->orWhere('name', 'like', "%{$val}%");
+            });
+        }
+        
+        if ($request->filled('sexo')) {
+            $val = $request->input('sexo');
+            $query->whereRaw('LOWER(sex) = ?', [strtolower($val)]);
+        }
+        
+        if ($request->filled('edad')) {
+            $edad = trim($request->input('edad'));
+            if (strpos($edad, '-') !== false) {
+                [$min, $max] = array_map('intval', explode('-', $edad, 2));
+                $query->whereBetween('age', [$min, $max]);
+            } elseif (strpos($edad, ',') !== false) {
+                $vals = array_map('intval', array_filter(array_map('trim', explode(',', $edad))));
+                $query->whereIn('age', $vals);
+            } elseif (is_numeric($edad)) {
+                $query->where('age', (int) $edad);
+            }
+        }
+        
+        if ($request->filled('causa')) {
+            $val = $request->input('causa');
+            if (is_numeric($val)) {
+                $query->where('death_cause_id', (int) $val);
+            } else {
+                $query->whereHas('deathCause', function ($qc) use ($val) {
+                    $qc->whereRaw('LOWER(name) = ?', [strtolower($val)])
+                       ->orWhere('name', 'like', "%{$val}%");
+                });
+            }
+        }
+        
+        // Get total count
+        $recordsTotal = Death::count();
+        $recordsFiltered = $query->count();
+        
+        // Apply ordering and pagination
+        $deaths = $query->with(['deathCause', 'deathMunicipality', 'residenceMunicipality', 'jurisdiction', 'deathLocation'])
+                        ->orderBy($orderColumn, $orderDir)
+                        ->skip($start)
+                        ->take($length)
+                        ->get();
+        
+        // Format data for DataTables
+        $data = $deaths->map(function ($death) {
+            return [
+                'gov_folio' => optional($death)->gov_folio ?? '—',
+                'name' => $death->name ?? '—',
+                'first_last_name' => $death->first_last_name ?? '—',
+                'second_last_name' => $death->second_last_name ?? '—',
+                'age' => $death->pretty_age ?? '—',
+                'sex' => $death->sex ?? '—',
+                'death_date' => $death->death_date ? $death->death_date->format('d/m/Y') : '—',
+                'residence_municipality' => optional($death->residenceMunicipality)->name ?? '—',
+                'death_municipality' => optional($death->deathMunicipality)->name ?? '—',
+                'jurisdiction' => optional($death->jurisdiction)->name ?? '—',
+                'death_location' => optional($death->deathLocation)->name ?? '—',
+                'death_cause' => optional($death->deathCause)->name ?? '—',
+                'actions' => view('estadisticas.partials.table-actions', compact('death'))->render(),
+            ];
+        });
+        
+        return response()->json([
+            'draw' => $draw,
+            'recordsTotal' => $recordsTotal,
+            'recordsFiltered' => $recordsFiltered,
+            'data' => $data,
+        ]);
+    }
+
     //
     public function index(Request $request)
     {
@@ -218,19 +386,28 @@ class DeathController extends Controller
     public function store(Request $request)
     {
         $data = $request->validate([
-            'gov_folio' => ['required','string','max:191','unique:deaths,gov_folio'],
+            // gov_folio: expect exactly 9 numeric characters (government folio)
+            'gov_folio' => ['required','string','regex:/^[0-9]{9}$/','unique:deaths,gov_folio'],
             'name' => ['required','string','max:191'],
             'first_last_name' => ['required','string','max:191'],
             'second_last_name' => ['nullable','string','max:191'],
             // Accept either the legacy 'age' or the new composite fields
             'age' => ['nullable','integer','min:0','max:150'],
-            'edad_valor' => ['nullable','integer','min:0','max:150'],
-            'edad_unidad' => ['nullable','string','in:anos,meses'],
+            'edad_valor' => ['required','integer','min:0','max:150'],
+            'edad_unidad' => ['required','string','in:anos,meses'],
             'sex' => ['required','in:masculino,femenino,hombre,mujer,M,F,male,female'],
-            'residence_municipality_id' => ['nullable','integer','exists:municipalities,id'],
-            'death_municipality_id' => ['nullable','integer','exists:municipalities,id'],
+            'residence_municipality_id' => ['required','integer',function($attribute, $value, $fail) {
+                if ($value != 0 && !\DB::table('municipalities')->where('id', $value)->exists()) {
+                    $fail('El municipio seleccionado no es válido.');
+                }
+            }],
+            'death_municipality_id' => ['required','integer',function($attribute, $value, $fail) {
+                if ($value != 0 && !\DB::table('municipalities')->where('id', $value)->exists()) {
+                    $fail('El municipio seleccionado no es válido.');
+                }
+            }],
             'jurisdiction_id' => ['nullable','integer','exists:jurisdictions,id'],
-            'death_location_id' => ['nullable','integer','exists:death_locations,id'],
+            'death_location_id' => ['required','integer','exists:death_locations,id'],
             'death_cause_id' => ['required','integer','exists:death_causes,id'],
             'death_date' => ['required','date'],
         ]);
@@ -240,6 +417,14 @@ class DeathController extends Controller
         if (in_array($sex, ['masculino','hombre','m'])) $data['sex'] = 'M';
         elseif (in_array($sex, ['femenino','mujer','f'])) $data['sex'] = 'F';
         else $data['sex'] = strtoupper(substr($sex,0,1));
+
+        // Convert "No encontrado" (id=0) to NULL for foreign keys
+        if ($data['residence_municipality_id'] == 0) {
+            $data['residence_municipality_id'] = null;
+        }
+        if ($data['death_municipality_id'] == 0) {
+            $data['death_municipality_id'] = null;
+        }
 
         // Determine age_years/age_months from composite inputs if provided
         $ageYears = null;
@@ -313,19 +498,28 @@ class DeathController extends Controller
     public function update(Request $request, Death $death)
     {
         $data = $request->validate([
-            'gov_folio' => ['required','string','max:191','unique:deaths,gov_folio,' . $death->id],
+            // gov_folio: expect exactly 9 numeric characters (government folio)
+            'gov_folio' => ['required','string','regex:/^[0-9]{9}$/','unique:deaths,gov_folio,' . $death->id],
             'name' => ['required','string','max:191'],
             'first_last_name' => ['required','string','max:191'],
             'second_last_name' => ['nullable','string','max:191'],
             // Accept either the legacy 'age' or the new composite fields
             'age' => ['nullable','integer','min:0','max:150'],
-            'edad_valor' => ['nullable','integer','min:0','max:150'],
-            'edad_unidad' => ['nullable','string','in:anos,meses'],
+            'edad_valor' => ['required','integer','min:0','max:150'],
+            'edad_unidad' => ['required','string','in:anos,meses'],
             'sex' => ['required','in:M,F,masculino,femenino,hombre,mujer,m,f'],
-            'residence_municipality_id' => ['nullable','integer','exists:municipalities,id'],
-            'death_municipality_id' => ['nullable','integer','exists:municipalities,id'],
+            'residence_municipality_id' => ['required','integer',function($attribute, $value, $fail) {
+                if ($value != 0 && !\DB::table('municipalities')->where('id', $value)->exists()) {
+                    $fail('El municipio seleccionado no es válido.');
+                }
+            }],
+            'death_municipality_id' => ['required','integer',function($attribute, $value, $fail) {
+                if ($value != 0 && !\DB::table('municipalities')->where('id', $value)->exists()) {
+                    $fail('El municipio seleccionado no es válido.');
+                }
+            }],
             'jurisdiction_id' => ['nullable','integer','exists:jurisdictions,id'],
-            'death_location_id' => ['nullable','integer','exists:death_locations,id'],
+            'death_location_id' => ['required','integer','exists:death_locations,id'],
             'death_cause_id' => ['required','integer','exists:death_causes,id'],
             'death_date' => ['required','date'],
         ]);
@@ -335,6 +529,14 @@ class DeathController extends Controller
         if (in_array($sex, ['masculino','hombre','m'])) $data['sex'] = 'M';
         elseif (in_array($sex, ['femenino','mujer','f'])) $data['sex'] = 'F';
         else $data['sex'] = strtoupper(substr($sex,0,1));
+
+        // Convert "No encontrado" (id=0) to NULL for foreign keys
+        if ($data['residence_municipality_id'] == 0) {
+            $data['residence_municipality_id'] = null;
+        }
+        if ($data['death_municipality_id'] == 0) {
+            $data['death_municipality_id'] = null;
+        }
 
         // Determine age_years/age_months from composite inputs if provided
         $ageYears = null;

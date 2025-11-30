@@ -1,0 +1,7 @@
+gov_folio,nombre,apellido_paterno,apellido_materno,fecha_defuncion,anos,meses,dias,municipio_defuncion,municipio_residencia,causa,sitio,sexo
+123456780,Valeria,Ríos,Suárez,2024-04-01,28,0,0,Tampico,Tampico,Enfermedad,Hogar,Femenino
+BADFOLIO,Jose,Ramos,Lopez,2024-04-02,35,0,0,Matamoros,Matamoros,Accidente,Carretera,Masculino
+444444444,Pedro,Hernández,Mendoza,2021-06-10,30,0,0,ValleHermoso,ValleHermoso,,Carretera,Masculino
+333333335,Test,Meses,Invalidos,2020-02-02,0,12,0,Tampico,Tampico,Caída,Pavimento,Masculino
+111111112,Dup,Within,File,2023-11-12,70,0,0,Burgos,Burgos,Infarto,Hogar,Masculino
+111111112,Dup,Within,File,2023-11-12,70,0,0,Burgos,Burgos,Infarto,Hogar,Masculino

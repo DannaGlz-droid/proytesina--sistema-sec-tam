@@ -21,7 +21,7 @@
 ])
 
 <div {{ $attributes->merge(['class' => 'border border-[#404041] rounded-lg p-5 bg-white transition-all duration-300 hover:-translate-y-1 hover:shadow-lg group flex flex-col h-full relative publication-card']) }}>
-    <div class="flex-grow">
+    <div class="flex-grow min-w-0">
         <div class="flex justify-between items-start mb-4">
             <div class="text-gray-600 text-sm font-medium font-lora">{{ $fecha }}</div>
             <div class="flex items-center gap-2">
@@ -56,7 +56,7 @@
             {{ $tipo }}
         </div>
 
-        <h3 class="text-lg font-semibold text-[#404041] mb-3 leading-tight font-lora">{{ $titulo }}</h3>
+        <h3 class="text-lg font-semibold text-[#404041] mb-3 leading-tight font-lora truncate" title="{{ $titulo }}">{{ $titulo }}</h3>
 
         <div class="min-h-[3rem]">
             @if(!empty($descripcion))

@@ -8,7 +8,7 @@
             <div class="flex justify-between items-start mb-2">
                 <div class="flex-1">
                     <div class="flex items-center gap-3 mb-1">
-                        <h2 class="text-xl font-lora font-bold text-[#404041] modal-titulo">{{ $titulo }}</h2>
+                        <h2 class="text-xl font-lora font-bold text-[#404041] modal-titulo" title="{{ $titulo }}" style="display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; word-break:break-word; overflow-wrap:break-word;">{{ $titulo }}</h2>
                         <div class="inline-block {{ $colorBadge }} text-white px-3 py-1 rounded-lg text-xs font-semibold font-lora border-l-4 {{ $colorBorder }}">
                             {{ ucwords(str_replace('_', ' ', $tipo)) }}
                         </div>
@@ -26,7 +26,7 @@
         <div class="px-6 py-2 border-b border-gray-300 flex-shrink-0">
             <div class="flex flex-col md:flex-row justify-between items-center gap-0">
                 <div class="w-full md:w-auto">
-                    <p class="text-sm text-gray-600 font-lora text-center md:text-left">Subido por: <span class="modal-usuario font-semibold">Usuario</span><span class="modal-usuario-cargo text-gray-500 ml-2"></span></p>
+                    <p class="text-sm text-gray-600 font-lora text-center md:text-left">Subido por: <span class="modal-usuario font-semibold">Usuario</span></p>
                 </div>
                 <div class="w-full md:w-auto">
                     <p class="text-sm text-gray-600 font-lora text-center md:text-right">Fecha de publicación: <span class="modal-fecha-publicacion font-semibold">Usuario</span></p>

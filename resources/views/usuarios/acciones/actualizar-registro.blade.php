@@ -27,49 +27,49 @@
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-3 lg:gap-4">
                     <div class="space-y-3">
                         <div>
-                            <label name="name" class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Nombre(s)</label>
-                            <input name="name" type="text" 
+                            <label for="name" class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Nombre(s) <span class="text-red-600">*</span></label>
+                            <input id="name" name="name" type="text" required minlength="2" maxlength="191"
                                    class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora" 
                                    placeholder="Ej: María Elena"
-                                   value="{{ old('name', $user->name) }}">
+                                value="{{ old('name', $user->name) }}">
                             @error('name') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
                         </div>
                         <div>
-                            <label name="first_last_name" class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Apellido paterno</label>
-                            <input name="first_last_name" type="text" 
+                            <label for="first_last_name" class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Apellido paterno <span class="text-red-600">*</span></label>
+                            <input id="first_last_name" name="first_last_name" type="text" required minlength="2" maxlength="191"
                                    class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora" 
                                    placeholder="Ej: García"
-                                   value="{{ old('first_last_name', $user->first_last_name) }}">
+                                value="{{ old('first_last_name', $user->first_last_name) }}">
                             @error('first_last_name') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
                         </div>
                     </div>
                     
                     <div class="space-y-3">
                         <div>
-                            <label name="second_last_name" class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Apellido materno</label>
-                            <input name="second_last_name" type="text" 
+                            <label for="second_last_name" class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Apellido materno</label>
+                            <input id="second_last_name" name="second_last_name" type="text" minlength="2" maxlength="191"
                                    class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora" 
                                    placeholder="Ej: López"
-                                   value="{{ old('second_last_name', $user->second_last_name) }}">
+                                value="{{ old('second_last_name', $user->second_last_name) }}">
                             @error('second_last_name') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
                         </div>
                         <div>
                             <div class="grid grid-cols-2 gap-3">
                                 <div>
-                                    <label name="email" class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Correo electrónico</label>
-                                    <input name="email" type="email" autocomplete="email"
-                                           class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora"
-                                           placeholder="Ej: usuario@ejemplo.com"
-                                           value="{{ old('email', $user->email) }}">
-                                    @error('email') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
+                                     <label for="email" class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Correo electrónico <span class="text-red-600">*</span></label>
+                                     <input id="email" name="email" type="email" autocomplete="email" required maxlength="255"
+                                         class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora"
+                                         placeholder="Ej: usuario@ejemplo.com"
+                                         value="{{ old('email', $user->email) }}">
+                                     @error('email') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
                                 </div>
                                 <div>
-                                    <label name="phone" class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Teléfono</label>
-                                    <input name="phone" type="tel" inputmode="tel" autocomplete="tel"
-                                           class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora"
-                                           placeholder="Ej: 8123456789"
-                                           value="{{ old('phone', $user->phone) }}">
-                                    @error('phone') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
+                                     <label for="phone" class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Teléfono</label>
+                                     <input id="phone" name="phone" type="tel" inputmode="tel" autocomplete="tel" maxlength="20" pattern="[0-9+\-\(\)\s]{8,20}"
+                                         class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora"
+                                         placeholder="Ej: 8123456789"
+                                         value="{{ old('phone', $user->phone) }}">
+                                     @error('phone') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
                                 </div>
                             </div>
                         </div>
@@ -91,7 +91,7 @@
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-3 lg:gap-4">
                     <div class="space-y-3">
                         <div>
-                            <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Cargo *</label>
+                            <label for="position_select" class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Cargo *</label>
                             <select id="position_select" class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora tomselect-select" name="position_id">
                                 <option value="">Seleccione un cargo</option>
                                 @if(isset($positions))
@@ -106,8 +106,8 @@
                     
                     <div class="space-y-3">
                         <div>
-                            <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Jurisdicción *</label>
-                            <select class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora" name="jurisdiction_id">
+                            <label for="jurisdiction_id" class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Jurisdicción *</label>
+                            <select id="jurisdiction_id" class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora" name="jurisdiction_id" required>
                                 <option value="">Seleccione una jurisdicción</option>
                                 @if(isset($jurisdictions))
                                     @foreach($jurisdictions as $j)
@@ -115,6 +115,7 @@
                                     @endforeach
                                 @endif
                             </select>
+                            @error('jurisdiction_id') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
                         </div>
                     </div>
                 </div>
@@ -134,8 +135,8 @@
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-3 lg:gap-4">
                     <div class="space-y-3">
                         <div>
-                            <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Usuario *</label>
-                <input name="username" type="text" 
+                            <label for="username" class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Usuario *</label>
+                <input id="username" name="username" type="text" required minlength="3" maxlength="50" pattern="[a-zA-Z0-9_.-]+"
                                    class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora" 
                                    placeholder="Ej: mgarcia"
                     value="{{ old('username', $user->username ?? '') }}">
@@ -165,8 +166,8 @@
                     
                     <div class="space-y-3">
                         <div>
-                            <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Rol *</label>
-                            <select class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora" name="role_id">
+                            <label for="role_id" class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Rol *</label>
+                            <select id="role_id" class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora" name="role_id" required>
                                 <option value="">Seleccione un rol</option>
                                 @if(isset($roles))
                                     @foreach($roles as $r)
@@ -178,6 +179,61 @@
                     </div>
                 </div>
             </div>
+
+    <!-- Script para convertir errores de Laravel en tooltips HTML5 (igual que en registro) -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            @if($errors->any())
+                const errors = @json($errors->messages());
+                
+                // Mapear nombres de campos a sus IDs en el DOM
+                const fieldMap = {
+                    'name': 'name',
+                    'first_last_name': 'first_last_name',
+                    'second_last_name': 'second_last_name',
+                    'email': 'email',
+                    'phone': 'phone',
+                    'username': 'username',
+                    'password': 'password',
+                    'password_confirmation': 'password_confirmation',
+                    'role_id': 'role_id',
+                    'position_id': 'position_select',
+                    'jurisdiction_id': 'jurisdiction_id'
+                };
+
+                // Aplicar setCustomValidity a cada campo con error
+                Object.keys(errors).forEach(fieldName => {
+                    const fieldId = fieldMap[fieldName];
+                    if (fieldId) {
+                        const field = document.getElementById(fieldId);
+                        if (field && errors[fieldName][0]) {
+                            field.setCustomValidity(errors[fieldName][0]);
+                            // Hacer que el campo muestre el tooltip
+                            field.reportValidity();
+                        }
+                    }
+                });
+
+                // Scroll al primer campo con error
+                const firstErrorField = Object.keys(errors)[0];
+                if (firstErrorField && fieldMap[firstErrorField]) {
+                    const field = document.getElementById(fieldMap[firstErrorField]);
+                    if (field) {
+                        field.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        field.focus();
+                    }
+                }
+            @endif
+
+            // Limpiar validación personalizada cuando el usuario empieza a escribir
+            const allInputs = document.querySelectorAll('input, select');
+            allInputs.forEach(input => {
+                input.addEventListener('input', function() {
+                    this.setCustomValidity('');
+                });
+            });
+        });
+    </script>
 
             <!-- Sección de advertencia para usuarios inactivos -->
             <div id="advertenciaInactivo" class="mb-6 p-4 border border-yellow-300 bg-yellow-50 rounded-lg {{ (old('is_active', $user->is_active ?? 1) == 1) ? 'hidden' : '' }}">

@@ -150,13 +150,13 @@
             <!-- Botones responsive - ESTILOS CONSISTENTES CON "APLICAR" Y "LIMPIAR" -->
             <div class="flex flex-col sm:flex-row justify-end gap-3 lg:gap-4">
                 <!-- Botón Limpiar formulario - Mismo estilo que "Limpiar" -->
-                <button class="border border-[#404041] text-[#404041] px-4 lg:px-6 py-2 rounded-lg text-xs lg:text-sm font-semibold hover:bg-gray-50 transition-all duration-300 font-lora flex items-center gap-1 whitespace-nowrap">
+                <button class="border border-[#404041] text-[#404041] px-4 lg:px-6 py-2 rounded-lg text-xs lg:text-sm font-semibold hover:bg-gray-50 transition-all duration-300 font-lora flex items-center justify-center gap-1 whitespace-nowrap">
                     <i class="fas fa-redo text-xs"></i>
                     Limpiar formulario
                 </button>
                 
                 <!-- Botón Guardar registro - Mismo estilo que "Aplicar" -->
-                <button class="bg-[#611132] text-white px-4 lg:px-6 py-2 rounded-lg text-xs lg:text-sm font-semibold hover:bg-[#4a0e26] transition-all duration-300 font-lora flex items-center gap-1 whitespace-nowrap">
+                <button class="bg-[#611132] text-white px-4 lg:px-6 py-2 rounded-lg text-xs lg:text-sm font-semibold hover:bg-[#4a0e26] transition-all duration-300 font-lora flex items-center justify-center gap-1 whitespace-nowrap">
                     <i class="fas fa-save text-xs"></i>
                     Guardar registro
                 </button>

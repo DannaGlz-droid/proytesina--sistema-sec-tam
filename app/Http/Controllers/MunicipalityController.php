@@ -13,14 +13,19 @@ class MunicipalityController extends Controller
     public function search(Request $request)
     {
         $q = $request->get('q', '');
+        $jurisdictionId = $request->get('jurisdiction_id');
         $items = Municipality::when($q, function($query) use ($q) {
                     $query->where('name', 'like', "%{$q}%");
+                })
+                ->when($jurisdictionId, function($query) use ($jurisdictionId) {
+                    $query->where('jurisdiction_id', $jurisdictionId);
                 })
                 ->orderBy('name')
                 ->limit(20)
                 ->get(['id', 'name']);
 
-        return response()->json($items);
+        // Return results as array (do NOT append a "No encontrado" option)
+        return response()->json($items->toArray());
     }
 
     /**

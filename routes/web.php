@@ -30,6 +30,7 @@ Route::middleware('auth')->group(function () {
     // ========== GESTIÓN DE USUARIOS (Solo Administrador) ==========
     Route::middleware('role:Administrador')->group(function () {
         Route::get('usuario/gestion-de-usuarios', [UserController::class, 'index'])->name('user.user-gestion');
+        Route::post('usuario/gestion-de-usuarios/datatable', [UserController::class, 'dataTable'])->name('user.datatable');
         Route::get('usuario/gestion-de-usuarios/registro', [UserController::class, 'create'])->name('user.create');
         Route::post('/usuario/gestion-de-usuarios/store', [UserController::class, 'store'])->name('user.store');
         Route::get('/usuario/gestion-de-usuarios/actualizar-registro/{user}', [UserController::class, 'edit'])->name('user.edit');
@@ -44,6 +45,7 @@ Route::middleware('auth')->group(function () {
     // ========== ESTADÍSTICAS (Administrador y Coordinador) ==========
     Route::middleware('role:Administrador,Coordinador')->group(function () {
         Route::get('estadisticas/datos', [App\Http\Controllers\DeathController::class, 'datos'])->name('statistic.data');
+        Route::post('estadisticas/datos/datatable', [App\Http\Controllers\DeathController::class, 'dataTable'])->name('statistic.datatable');
         Route::get('estadisticas/datos/export', [App\Http\Controllers\DeathExportController::class, 'export'])->name('statistic.export');
         Route::post('estadisticas/import', [App\Http\Controllers\DeathImportController::class, 'import'])->name('statistic.import');
         Route::get('estadisticas/registro', [App\Http\Controllers\DeathController::class, 'create'])->name('statistic.create');

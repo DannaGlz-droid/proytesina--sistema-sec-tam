@@ -123,14 +123,10 @@ class Publication extends Model
      */
     public function canBeEditedBy($userId)
     {
-        // El autor puede editar si está rechazado o pendiente
-        if ($this->user_id === $userId) {
-            return in_array($this->status, ['pendiente', 'rechazado']);
-        }
-        
-        // Admin/Coordinador pueden editar cualquiera
-        $user = User::find($userId);
-        return $user && ($user->isAdmin() || $user->isCoordinator());
+        // El autor puede editar la publicación mientras NO esté aprobada.
+        // Normalizar estado y usar comparación laxa para evitar fallos por tipo.
+        $status = strtolower(trim((string) $this->status));
+        return $this->user_id == $userId && $status !== 'aprobado';
     }
 
     /**

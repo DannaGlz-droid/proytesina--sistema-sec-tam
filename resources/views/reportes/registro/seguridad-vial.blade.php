@@ -38,7 +38,7 @@
         @endif
 
         <!-- Cuadro del formulario responsive -->
-        <form action="{{ isset($publication) ? route('reportes.seguridad-vial.update', $publication) : route('reportes.seguridad-vial.store') }}" method="POST" enctype="multipart/form-data">
+        <form id="seguridadVialForm" action="{{ isset($publication) ? route('reportes.seguridad-vial.update', $publication) : route('reportes.seguridad-vial.store') }}" method="POST" enctype="multipart/form-data">
             @csrf
             @if(isset($publication))
                 @method('PUT')
@@ -57,38 +57,38 @@
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-3 lg:gap-4">
                     <div class="space-y-3">
                         <div>
-                            <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Tema *</label>
-                            <input type="text" 
+                            <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Tema <span class="text-red-600">*</span></label>
+                            <input id="tema" type="text" 
                                    name="tema"
                                    class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora" 
-                                   placeholder="Ej: Prevención de enfermedades"
+                                   placeholder="Ej: Prevención de accidentes viales"
                                    value="{{ old('tema', isset($publication) ? $publication->topic : '') }}"
-                                   required>
+                                   required minlength="3" maxlength="255">
                         </div>
 
                         <div>
-                            <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Fecha de la actividad *</label>
-                            <input type="date" 
+                            <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Fecha de la actividad <span class="text-red-600">*</span></label>
+                            <input id="fecha" type="date" 
                                    name="fecha"
                                    class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora"
                                    value="{{ old('fecha', isset($publication) ? $publication->activity_date->format('Y-m-d') : '') }}"
-                                   required>
+                                   required max="{{ date('Y-m-d') }}">
                         </div>
                         <div>
-                            <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Lugar *</label>
-                            <input type="text" 
+                            <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Lugar <span class="text-red-600">*</span></label>
+                            <input id="lugar" type="text" 
                                    name="lugar"
                                    class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora" 
                                    placeholder="Ej: Salón de usos múltiples"
                                    value="{{ old('lugar', isset($report) ? $report->location : '') }}"
-                                   required>
+                                   required minlength="3" maxlength="255">
                         </div>
                     </div>
                     
                     <div class="space-y-3">
                          <div>
-                            <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Tipo de actividad *</label>
-                            <select class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora" name="activity_type_id" required>
+                            <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Tipo de actividad <span class="text-red-600">*</span></label>
+                            <select id="activity_type_id" class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora" name="activity_type_id" required>
                                 <option value="">Seleccione el tipo de actividad</option>
                                 @php
                                     $selectedActivity = old('activity_type_id', isset($report) ? $report->activity_type_id : '');
@@ -101,22 +101,22 @@
                             </select>
                         </div>
                         <div>
-                            <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Participantes *</label>
-                            <input type="number" 
+                            <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Participantes <span class="text-red-600">*</span></label>
+                            <input id="participantes" type="number" 
                                    name="participantes"
                                    class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora" 
                                    placeholder="Ej: 25"
                                    value="{{ old('participantes', isset($report) ? $report->participants : '') }}"
-                                   required>
+                                   required min="1" max="9999">
                         </div>
                         <div>
-                            <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Promotor *</label>
-                            <input type="text" 
+                            <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Promotor <span class="text-red-600">*</span></label>
+                            <input id="promotor" type="text" 
                                    name="promotor"
                                    class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora" 
                                    placeholder="Ej: Departamento de Salud"
                                    value="{{ old('promotor', isset($report) ? $report->promoter : '') }}"
-                                   required>
+                                   required minlength="3" maxlength="255">
                         </div>
                     </div>
                 </div>
@@ -135,12 +135,14 @@
                 
                 <div class="space-y-3">
                     <div>
-                        <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Descripción de la actividad *</label>
+                        <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Descripción de la actividad</label>
                         <textarea 
+                            id="descripcion"
                             name="descripcion"
                             class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora" 
                             rows="4"
-                            placeholder="Describa los detalles de la actividad, objetivos, desarrollo y resultados..."
+                            placeholder="Describa los detalles, contexto, objetivos, resultados, etc. (opcional)"
+                            maxlength="5000"
                         >{{ old('descripcion', isset($publication) ? $publication->description : '') }}</textarea>
                     </div>
                 </div>
@@ -247,7 +249,13 @@
 
                     <!-- Área de carga de archivos -->
                     <div>
-                        <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-2 font-lora">Subir archivos (selección múltiple) *</label>
+                        <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-2 font-lora">
+                            @if(isset($publication))
+                                Agregar nuevos archivos (opcional)
+                            @else
+                                Subir archivos (selección múltiple) <span class="text-red-600">*</span>
+                            @endif
+                        </label>
                         
                         <!-- Cuadro punteado para arrastrar y soltar -->
                         <div class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-[#404041] transition-colors duration-200 bg-gray-50">
@@ -264,7 +272,8 @@
                                     Haga clic o arrastre archivos aquí para subirlos
                                 </p>
                                 <p class="text-xs text-gray-500 font-lora">
-                                    Formatos permitidos: PDF, XLSX, XLS, JPG, JPEG, PNG
+                                    Formatos permitidos: PDF, XLSX, XLS, JPG, JPEG, PNG<br>
+                                    <span class="text-xs text-gray-500">Tamaño máximo por archivo: 10 MB</span>
                                 </p>
                                 <p class="text-xs text-blue-600 font-lora mt-2">
                                     Puede seleccionar múltiples archivos a la vez
@@ -311,6 +320,44 @@
             @endif
         </div>
         </form>
+
+        @if($errors->any())
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                const fieldMap = {
+                    'tema': 'tema',
+                    'fecha': 'fecha',
+                    'lugar': 'lugar',
+                    'activity_type_id': 'activity_type_id',
+                    'participantes': 'participantes',
+                    'promotor': 'promotor',
+                    'descripcion': 'descripcion'
+                };
+
+                let firstErrorField = null;
+
+                @foreach($errors->keys() as $field)
+                    @php $errorMessage = $errors->first($field); @endphp
+                    if (fieldMap['{{ $field }}']) {
+                        const element = document.getElementById(fieldMap['{{ $field }}']);
+                        if (element) {
+                            element.setCustomValidity('{{ addslashes($errorMessage) }}');
+                            if (!firstErrorField) {
+                                firstErrorField = element;
+                            }
+                            element.addEventListener('input', function() {
+                                this.setCustomValidity('');
+                            });
+                        }
+                    }
+                @endforeach
+
+                if (firstErrorField) {
+                    firstErrorField.reportValidity();
+                }
+            });
+        </script>
+        @endif
     </div>
 
     <!-- Script para manejo de archivos -->

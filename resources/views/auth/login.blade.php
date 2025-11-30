@@ -27,8 +27,8 @@
       @csrf
 
       <div>
-        <label for="email">Correo electrónico</label>
-        <input id="email" type="email" name="email" value="{{ old('email') }}" required autofocus>
+        <label for="login">Usuario o correo</label>
+        <input id="login" type="text" name="login" value="{{ old('login') }}" required autofocus placeholder="Usuario o correo">
       </div>
 
       <div>

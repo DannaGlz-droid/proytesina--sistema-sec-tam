@@ -68,13 +68,23 @@ class DeathImportController extends Controller
                 throw new \Exception('No se pudo leer el archivo de importación: ' . $e->getMessage());
             }
 
-        // Prepare municipalities lookup with normalized keys for fuzzy/alias matching
+        // Prepare municipalities lookup with normalized keys for matching (STRICT mode: do not create fallback)
         $municipalityLookup = [];
         $municipalities = Municipality::all();
         foreach ($municipalities as $m) {
             $key = $this->normalizeMunicipalityName($m->name);
-            // if collision, prefer existing (first) — municipalities list should be unique
             if (!isset($municipalityLookup[$key])) $municipalityLookup[$key] = $m;
+        }
+
+        // Prepare death locations and causes lookup (require existing entries for strict import)
+        $deathLocationLookup = [];
+        foreach (DeathLocation::all() as $loc) {
+            $deathLocationLookup[mb_strtolower(trim($loc->name))] = $loc;
+        }
+
+        $deathCauseLookup = [];
+        foreach (DeathCause::all() as $c) {
+            $deathCauseLookup[mb_strtolower(trim($c->name))] = $c;
         }
 
         $rowsTotal = 0;
@@ -98,10 +108,21 @@ class DeathImportController extends Controller
                 $map[$i] = $h; // keep normalized header
             }
 
-            // determine cause from sheet name if available
-            $causeName = isset($sheetNames[$sheetIndex]) ? $sheetNames[$sheetIndex] : ('Causa ' . ($sheetIndex + 1));
+                // Determine cause from sheet name if available and require it exists (strict)
+                $causeName = isset($sheetNames[$sheetIndex]) ? trim($sheetNames[$sheetIndex]) : ('Causa ' . ($sheetIndex + 1));
+                $normCause = mb_strtolower($causeName);
 
-            $deathCause = DeathCause::firstOrCreate(['name' => $causeName]);
+                // Detect default sheet names (Sheet1, Hoja1, Worksheet) — if so, require per-row 'causa' column
+                $isDefaultSheetName = false;
+                if ($causeName === '' || preg_match('/^(sheet|hoja|worksheet)\d*$/i', $causeName)) {
+                    $isDefaultSheetName = true;
+                }
+
+                $deathCause = null;
+                if (! $isDefaultSheetName) {
+                    $deathCause = $deathCauseLookup[$normCause] ?? null;
+                    // if not found, we'll create it later if needed
+                }
 
             foreach ($sheet as $rowNum => $row) {
                 $rowsTotal++;
@@ -144,12 +165,11 @@ class DeathImportController extends Controller
                 $deathMunicipalityName = trim((string)($rowAssoc['municipiodefunciond'] ?? '')) ?: null;
                 $siteName = trim((string)($rowAssoc['sitiodefunciond'] ?? '')) ?: null;
 
-                // basic validations
+                // basic validations (STRICT: require gov_folio; municipalities outside Tamaulipas map to 'OTRO')
                 $errors = [];
                 if (!$name) $errors[] = 'Nombre vacío';
                 if (!$first) $errors[] = 'Primer apellido vacío';
                 if (!$dateRaw) $errors[] = 'Fecha de defunción vacía';
-                if (!$deathMunicipalityName) $errors[] = 'Municipio de defunción vacío';
 
                 // parse date
                 $deathDate = null;
@@ -165,38 +185,96 @@ class DeathImportController extends Controller
                     }
                 }
 
-                // lookup municipalities using normalized exact match first, then fuzzy matching
+                // lookup municipalities using normalized exact match first.
+                // If not found (likely outside Tamaulipas), use/create a generic 'OTRO' municipality and jurisdiction.
                 $residenceMunicipality = null;
+                $deathMunicipality = null;
+
+                $otherJur = Jurisdiction::firstOrCreate(['name' => 'OTRO']);
+
                 if ($residenceMunicipalityName) {
                     $norm = $this->normalizeMunicipalityName($residenceMunicipalityName);
                     if (isset($municipalityLookup[$norm])) {
                         $residenceMunicipality = $municipalityLookup[$norm];
                     } else {
-                        // fuzzy match: find best candidate
-                        $best = $this->findBestMunicipalityMatch($norm, $municipalityLookup);
-                        if ($best) {
-                            $residenceMunicipality = $best['model'];
-                        } else {
-                            // If municipality not found, use/create a generic 'OTRO' municipality so import doesn't fail
-                            $otherJur = Jurisdiction::firstOrCreate(['name' => 'OTRO']);
-                            $residenceMunicipality = Municipality::firstOrCreate(['name' => 'OTRO'], ['jurisdiction_id' => $otherJur->id]);
-                        }
+                        // municipality not found in Tamaulipas -> map to OTRO
+                        $residenceMunicipality = Municipality::firstOrCreate([
+                            'name' => 'OTRO'
+                        ], [
+                            'jurisdiction_id' => $otherJur->id
+                        ]);
+                        $municipalityLookup[$this->normalizeMunicipalityName($residenceMunicipality->name)] = $residenceMunicipality;
                     }
+                } else {
+                    // No residence municipality provided -> set to OTRO
+                    $residenceMunicipality = Municipality::firstOrCreate([
+                        'name' => 'OTRO'
+                    ], [
+                        'jurisdiction_id' => $otherJur->id
+                    ]);
+                    $municipalityLookup[$this->normalizeMunicipalityName($residenceMunicipality->name)] = $residenceMunicipality;
                 }
 
-                $deathMunicipality = null;
                 if ($deathMunicipalityName) {
                     $normD = $this->normalizeMunicipalityName($deathMunicipalityName);
                     if (isset($municipalityLookup[$normD])) {
                         $deathMunicipality = $municipalityLookup[$normD];
                     } else {
-                        $best = $this->findBestMunicipalityMatch($normD, $municipalityLookup);
-                        if ($best) {
-                            $deathMunicipality = $best['model'];
-                        } else {
-                            // If municipality not found, use/create a generic 'OTRO' municipality so import doesn't fail
-                            $otherJur = Jurisdiction::firstOrCreate(['name' => 'OTRO']);
-                            $deathMunicipality = Municipality::firstOrCreate(['name' => 'OTRO'], ['jurisdiction_id' => $otherJur->id]);
+                        // municipality not found in Tamaulipas -> map to OTRO
+                        $deathMunicipality = Municipality::firstOrCreate([
+                            'name' => 'OTRO'
+                        ], [
+                            'jurisdiction_id' => $otherJur->id
+                        ]);
+                        $municipalityLookup[$this->normalizeMunicipalityName($deathMunicipality->name)] = $deathMunicipality;
+                    }
+                } else {
+                    // No death municipality provided -> set to OTRO
+                    $deathMunicipality = Municipality::firstOrCreate([
+                        'name' => 'OTRO'
+                    ], [
+                        'jurisdiction_id' => $otherJur->id
+                    ]);
+                    $municipalityLookup[$this->normalizeMunicipalityName($deathMunicipality->name)] = $deathMunicipality;
+                }
+
+                // Validate gov_folio strictly: require and format 9 digits
+                if (is_null($folio) || !preg_match('/^[0-9]{9}$/', (string)$folio)) {
+                    $errors[] = 'Folio gubernamental inválido o ausente (se requieren 9 dígitos)';
+                }
+
+                // map or create death location: use existing or create new if missing
+                $deathLocation = null;
+                if ($siteName) {
+                    $normSite = mb_strtolower(trim($siteName));
+                    $deathLocation = $deathLocationLookup[$normSite] ?? null;
+                    if (!$deathLocation) {
+                        // create new DeathLocation and add to lookup
+                        $deathLocation = DeathLocation::firstOrCreate(['name' => $siteName]);
+                        $deathLocationLookup[mb_strtolower(trim($deathLocation->name))] = $deathLocation;
+                    }
+                } else {
+                    $errors[] = 'Lugar de defunción vacío';
+                }
+
+                // map or create cause: prefer per-row 'causa' column.
+                // If sheet name is default (Sheet1/Hoja1) and no per-row causa, reject the row.
+                if (!empty($rowAssoc['causa']) && trim((string)$rowAssoc['causa']) !== '') {
+                    $rowCauseName = trim((string)$rowAssoc['causa']);
+                    $dcNorm = mb_strtolower($rowCauseName);
+                    $deathCause = $deathCauseLookup[$dcNorm] ?? null;
+                    if (!$deathCause) {
+                        $deathCause = DeathCause::firstOrCreate(['name' => $rowCauseName]);
+                        $deathCauseLookup[mb_strtolower(trim($deathCause->name))] = $deathCause;
+                    }
+                } else {
+                    if ($isDefaultSheetName) {
+                        $errors[] = 'Causa no indicada en la hoja ni en la fila (hoja con nombre por defecto).';
+                    } else {
+                        // Sheet has a meaningful name — create or reuse sheet-level cause
+                        if (empty($deathCause)) {
+                            $deathCause = DeathCause::firstOrCreate(['name' => $causeName]);
+                            $deathCauseLookup[mb_strtolower(trim($deathCause->name))] = $deathCause;
                         }
                     }
                 }
@@ -215,40 +293,22 @@ class DeathImportController extends Controller
                     else $sex = strtoupper(substr($sex,0,1));
                 }
 
-                // lookup or create location
-                $deathLocation = null;
-                if ($siteName) {
-                    $deathLocation = DeathLocation::firstOrCreate(['name' => $siteName]);
-                }
+                // deathLocation was mapped earlier in strict mode; $deathLocation is set
 
-                // Deduplication: if a government folio is provided, upsert by folio.
-                // Otherwise fall back to previous duplicate check (name + date + death municipality).
+                // Deduplication: DO NOT update an existing record when a government folio is provided.
                 $existingDeath = null;
-                if ($folio) {
-                    $existingDeath = Death::where('gov_folio', $folio)->first();
+                $existsByFolio = Death::where('gov_folio', $folio)->exists();
+                if ($existsByFolio) {
+                    $rowsFailed++;
+                    $failedRows[] = array_merge(['sheet' => $causeName, 'row' => $rowNum + 2, 'errors' => 'Duplicado detectado: folio existente'], $rowAssoc);
+                    continue;
                 }
 
-                if (!$existingDeath) {
-                    // old duplicate heuristic
-                    $exists = Death::where('name', $name)
-                        ->where('death_date', $deathDate->format('Y-m-d'))
-                        ->where('death_municipality_id', $deathMunicipality->id)
-                        ->exists();
-
-                    if ($exists) {
-                        $rowsFailed++;
-                        $failedRows[] = array_merge(['sheet' => $causeName, 'row' => $rowNum + 2, 'errors' => 'Duplicado detectado'], $rowAssoc);
-                        continue;
-                    }
-                }
-
-                // Determine normalized age fields: age_years / age_months
+                // Determine normalized age fields: age_years / age_months (STRICT: reject months >= 12)
                 $ageYears = null;
                 $ageMonths = null;
-                // If CLAVEEDADD exists, use it to interpret EDAD
                 if ($claveEdad) {
                     $claveNorm = mb_strtolower($claveEdad);
-                    // remove accents to match 'años' -> 'anos'
                     $claveNormAscii = iconv('UTF-8', 'ASCII//TRANSLIT', $claveNorm) ?: $claveNorm;
                     if (strpos($claveNormAscii, 'mes') !== false) {
                         $ageYears = 0;
@@ -257,23 +317,18 @@ class DeathImportController extends Controller
                         $ageYears = is_null($age) ? null : (int)$age;
                         $ageMonths = null;
                     } else {
-                        // Unknown unit — fallback to legacy behavior (treat as years)
                         $ageYears = is_null($age) ? null : (int)$age;
                         $ageMonths = null;
                     }
                 } else {
-                    // No unit provided; fallback to legacy 'age' as years
                     $ageYears = is_null($age) ? null : (int)$age;
                     $ageMonths = null;
                 }
 
-                // If months are >= 12, convert to years (automatic conversion)
                 if (!is_null($ageMonths) && $ageMonths >= 12) {
-                    $convertedYears = intdiv($ageMonths, 12);
-                    // if there is remainder months, we drop them to keep the "only years or months" rule
-                    $ageYears = $convertedYears > 0 ? $convertedYears : 0;
-                    $ageMonths = null;
-                    $rowsConvertedMonths++;
+                    $rowsFailed++;
+                    $failedRows[] = array_merge(['sheet' => $causeName, 'row' => $rowNum + 2, 'errors' => 'Edad inválida: meses debe ser menor a 12'], $rowAssoc);
+                    continue;
                 }
 
                 // create or update death (prefer gov_folio upsert)
@@ -295,9 +350,13 @@ class DeathImportController extends Controller
                 $d->residence_municipality_id = $residenceMunicipality ? $residenceMunicipality->id : null;
                 $d->death_municipality_id = $deathMunicipality->id;
                 // Derive jurisdiction from municipality of residence when possible.
-                // If residence municipality is not available, assign a default "NO ENCONTRADA" jurisdiction
+                // If residence municipality is the generic 'OTRO', explicitly set jurisdiction to 'OTRO'.
                 if ($residenceMunicipality && $residenceMunicipality->jurisdiction_id) {
                     $d->jurisdiction_id = $residenceMunicipality->jurisdiction_id;
+                } elseif ($residenceMunicipality && mb_strtolower(trim($residenceMunicipality->name)) === 'otro') {
+                    // Ensure 'OTRO' jurisdiction exists and assign it
+                    $otroJur = Jurisdiction::firstOrCreate(['name' => 'OTRO']);
+                    $d->jurisdiction_id = $otroJur->id;
                 } else {
                     $defaultJur = Jurisdiction::firstOrCreate(['name' => 'NO ENCONTRADA']);
                     $d->jurisdiction_id = $defaultJur->id;

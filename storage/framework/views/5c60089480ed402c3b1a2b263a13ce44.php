@@ -7,11 +7,11 @@
 
     <!-- Botones y usuario a la derecha -->
     <div class="flex items-center">
-        <!-- Botones que se ocultan en mobile -->
-        <div class="hidden lg:flex items-center">
+        <!-- Botones del header: mostrarlos siempre para evitar que se oculten por breakpoints -->
+        <div class="flex items-center space-x-2">
             
             <?php if(!auth()->user()->isGuest()): ?>
-                <a href="<?php echo e(route('reportes.index')); ?>" class="text-sm lg:text-base bg-header hover:bg-[#B23A6E] text-white py-1 lg:py-1 px-3 lg:px-4 rounded-md transition duration-200 ease-in-out mr-3 lg:mr-4 inline-flex items-center justify-center">
+                <a href="<?php echo e(route('reportes.index')); ?>" class="text-sm lg:text-base bg-header hover:bg-[#9B4D6E] hover:text-[#E8CA8B] text-white py-1 lg:py-1 px-3 lg:px-4 rounded-md transition duration-200 ease-in-out mr-3 lg:mr-4 inline-flex items-center justify-center">
                     Reportes
                 </a>
             <?php endif; ?>

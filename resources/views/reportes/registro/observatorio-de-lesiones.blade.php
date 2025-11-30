@@ -12,7 +12,7 @@
         <p class="text-sm lg:text-base text-[#404041] font-lora mb-6">Complete el formulario para {{ isset($publication) ? 'actualizar' : 'registrar' }} los datos del observatorio de lesiones.</p>
 
         <!-- Cuadro del formulario responsive -->
-        <form action="{{ isset($publication) ? route('reportes.observatorio.update', $publication) : route('reportes.observatorio.store') }}" method="POST" enctype="multipart/form-data">
+        <form id="observatorioForm" action="{{ isset($publication) ? route('reportes.observatorio.update', $publication) : route('reportes.observatorio.store') }}" method="POST" enctype="multipart/form-data">
             @csrf
             @if(isset($publication))
                 @method('PUT')
@@ -31,16 +31,16 @@
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-3 lg:gap-4">
                     <div class="space-y-3">
                         <div>
-                            <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Tema *</label>
-                            <input type="text" 
+                            <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Tema <span class="text-red-600">*</span></label>
+                            <input id="tema" type="text" 
                                    name="tema"
                                    class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora" 
                                    placeholder="Ej: Análisis de lesiones por accidentes"
                                    value="{{ old('tema', isset($publication) ? $publication->topic : '') }}"
-                                   required>
+                                   required minlength="3" maxlength="255">
                         </div>
                         <div>
-                            <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Municipio *</label>
+                            <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Municipio <span class="text-red-600">*</span></label>
                             <select id="death_municipality_select" name="municipio" class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora tomselect-select" required>
                                 <option value="">Seleccione un municipio</option>
                                 @php
@@ -58,15 +58,15 @@
                     
                     <div class="space-y-3">
                         <div>
-                            <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Fecha *</label>
-                            <input type="date" 
+                            <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Fecha <span class="text-red-600">*</span></label>
+                            <input id="fecha" type="date" 
                                    name="fecha"
                                    class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora"
                                    value="{{ old('fecha', isset($publication) ? $publication->activity_date->format('Y-m-d') : '') }}"
-                                   required>
+                                   required max="{{ date('Y-m-d') }}">
                         </div>
                         <div>
-                            <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Jurisdicción *</label>
+                            <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Jurisdicción <span class="text-red-600">*</span></label>
                             <input type="hidden" id="jurisdiction_input" name="jurisdiccion" value="{{ old('jurisdiccion', isset($report) ? $report->jurisdiction_id : '') }}" required>
                             <input id="jurisdiction_display" type="text" class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora" value="{{ isset($report) && $report->jurisdiction ? $report->jurisdiction->name : 'Pendiente (seleccione municipio)' }}" readonly>
                         </div>
@@ -87,8 +87,8 @@
                 
                 <div class="space-y-3">
                     <div>
-                        <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Descripción *</label>
-                        <textarea id="descripcion" name="descripcion" class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora" rows="4" placeholder="Describa los detalles...">{{ old('descripcion', isset($publication) ? $publication->description : '') }}</textarea>
+                        <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Descripción</label>
+                        <textarea id="descripcion" name="descripcion" class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora" rows="4" placeholder="Describa los detalles, contexto, objetivos, resultados, etc. (opcional)" maxlength="5000">{{ old('descripcion', isset($publication) ? $publication->description : '') }}</textarea>
                     </div>
                 </div>
             </div>
@@ -165,17 +165,21 @@
                     <!-- Área de carga de archivo -->
                     <div>
                         <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-2 font-lora">
-                            {{ isset($publication) ? 'Agregar nuevo archivo (opcional)' : 'Subir archivo *' }}
+                            @if(isset($publication))
+                                Agregar nuevo archivo (opcional)
+                            @else
+                                Subir archivo <span class="text-red-600">*</span>
+                            @endif
                         </label>
                         
                         <!-- Cuadro punteado para arrastrar y soltar -->
                         <div class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-[#404041] transition-colors duration-200 bg-gray-50">
                             <input type="file" 
-                                   id="file-input"
-                                   name="archivo"
-                                   class="hidden"
-                                   accept=".xlsx,.xls"
-                                   onchange="updateFileStatus()">
+                                id="file-input"
+                                name="archivo"
+                                class="hidden"
+                                accept=".xlsx,.xls"
+                                onchange="updateFileStatus()">
                             
                             <div class="cursor-pointer" onclick="document.getElementById('file-input').click()">
                                 <ion-icon name="cloud-upload-outline" class="text-4xl text-gray-400 mb-3"></ion-icon>
@@ -183,9 +187,11 @@
                                     Haga clic o arrastre el archivo aquí para subirlo
                                 </p>
                                 <p class="text-xs text-gray-500 font-lora">
-                                    Formatos permitidos: XLSX, XLS
+                                    Formatos permitidos: XLSX, XLS<br>
+                                    <span class="text-xs text-gray-500">Tamaño máximo: 10 MB</span>
                                 </p>
                             </div>
+                            <div id="file-error" class="mt-2 text-xs text-red-600 font-lora hidden"></div>
                         </div>
                         
                         <!-- Información del archivo seleccionado -->
@@ -242,123 +248,98 @@
 
     <!-- Script para manejo de archivos -->
     <script>
-        function updateFileStatus() {
-            const fileInput = document.getElementById('file-input');
-            const files = fileInput.files;
-            const fileList = document.getElementById('file-list');
-            const fileNames = document.getElementById('file-names');
-            
-            // Limpiar lista anterior
-            fileNames.innerHTML = '';
-            
-            // Verificar archivo seleccionado
-            if (files.length > 0) {
-                const file = files[0];
-                const extension = file.name.split('.').pop().toLowerCase();
-                
-                // Validar que sea archivo Excel
-                if (extension === 'xlsx' || extension === 'xls') {
-                    // Crear card estilizada para el archivo
-                    const fileCard = document.createElement('li');
-                    fileCard.className = 'bg-white border border-gray-200 rounded-lg p-3 flex items-center justify-between';
-                    fileCard.innerHTML = `
-                        <div class="flex items-center flex-1 min-w-0">
-                            <div class="w-10 h-10 bg-green-50 rounded-lg flex items-center justify-center flex-shrink-0">
-                                <ion-icon name="stats-chart" class="text-xl text-green-600"></ion-icon>
-                            </div>
-                            <div class="ml-3 flex-1 min-w-0">
-                                <p class="text-sm font-medium text-gray-900 truncate">${file.name}</p>
-                                <p class="text-xs text-gray-500">${(file.size / 1024 / 1024).toFixed(2)} MB</p>
-                            </div>
+    function updateFileStatus() {
+        const fileInput = document.getElementById('file-input');
+        const files = fileInput.files;
+        const fileList = document.getElementById('file-list');
+        const fileNames = document.getElementById('file-names');
+        fileNames.innerHTML = '';
+        if (files.length > 0) {
+            const file = files[0];
+            const extension = file.name.split('.').pop().toLowerCase();
+            if (extension === 'xlsx' || extension === 'xls') {
+                const fileCard = document.createElement('li');
+                fileCard.className = 'bg-white border border-gray-200 rounded-lg p-3 flex items-center justify-between';
+                fileCard.innerHTML = `
+                    <div class="flex items-center flex-1 min-w-0">
+                        <div class="w-10 h-10 bg-green-50 rounded-lg flex items-center justify-center flex-shrink-0">
+                            <ion-icon name="stats-chart" class="text-xl text-green-600"></ion-icon>
                         </div>
-                        <button type="button" onclick="clearSelectedFile()" class="ml-3 text-red-600 hover:text-red-800 transition-colors flex-shrink-0">
-                            <ion-icon name="trash-outline" class="text-xl"></ion-icon>
-                        </button>
-                    `;
-                    fileNames.appendChild(fileCard);
-                    
-                    // Actualizar estado
-                    document.getElementById('excel-status').textContent = 'Completado';
-                    document.getElementById('excel-status').className = 'text-xs px-2 py-1 bg-green-100 text-green-800 rounded font-lora';
-                    
-                    fileList.classList.remove('hidden');
-                } else {
-                    // Archivo no válido
-                    alert('Por favor seleccione un archivo Excel (XLSX o XLS)');
-                    fileInput.value = '';
-                    document.getElementById('excel-status').textContent = 'Pendiente';
-                    document.getElementById('excel-status').className = 'text-xs px-2 py-1 bg-yellow-100 text-yellow-800 rounded font-lora';
-                    fileList.classList.add('hidden');
-                }
+                        <div class="ml-3 flex-1 min-w-0">
+                            <p class="text-sm font-medium text-gray-900 truncate">${file.name}</p>
+                            <p class="text-xs text-gray-500">${(file.size / 1024 / 1024).toFixed(2)} MB</p>
+                        </div>
+                    </div>
+                    <button type="button" onclick="clearSelectedFile()" class="ml-3 text-red-600 hover:text-red-800 transition-colors flex-shrink-0">
+                        <ion-icon name="trash-outline" class="text-xl"></ion-icon>
+                    </button>
+                `;
+                fileNames.appendChild(fileCard);
+                document.getElementById('excel-status').textContent = 'Completado';
+                document.getElementById('excel-status').className = 'text-xs px-2 py-1 bg-green-100 text-green-800 rounded font-lora';
+                fileList.classList.remove('hidden');
             } else {
-                // No hay archivo seleccionado
+                alert('Por favor seleccione un archivo Excel (XLSX o XLS)');
+                fileInput.value = '';
                 document.getElementById('excel-status').textContent = 'Pendiente';
                 document.getElementById('excel-status').className = 'text-xs px-2 py-1 bg-yellow-100 text-yellow-800 rounded font-lora';
                 fileList.classList.add('hidden');
             }
+        } else {
+            document.getElementById('excel-status').textContent = 'Pendiente';
+            document.getElementById('excel-status').className = 'text-xs px-2 py-1 bg-yellow-100 text-yellow-800 rounded font-lora';
+            fileList.classList.add('hidden');
         }
+    }
 
-        function clearSelectedFile() {
-            const fileInput = document.getElementById('file-input');
-            fileInput.value = '';
-            updateFileStatus();
+    function clearSelectedFile() {
+        document.getElementById('file-input').value = '';
+        updateFileStatus();
+    }
+
+    function clearObservatorioLesionesForm() {
+        if (confirm('¿Está seguro de que desea limpiar todos los campos del formulario?')) {
+            document.querySelector('form').reset();
+            const desc = document.getElementById('descripcion');
+            if (desc) desc.value = '';
+            const jurisdictionDisplay = document.getElementById('jurisdiction_display');
+            const hiddenJur = document.getElementById('jurisdiction_input');
+            if (jurisdictionDisplay) jurisdictionDisplay.value = 'Pendiente (seleccione municipio)';
+            if (hiddenJur) hiddenJur.value = '';
+            document.getElementById('excel-status').textContent = 'Pendiente';
+            document.getElementById('excel-status').className = 'text-xs px-2 py-1 bg-yellow-100 text-yellow-800 rounded font-lora';
+            document.getElementById('file-list').classList.add('hidden');
         }
-        
-        function clearObservatorioLesionesForm() {
-            if (confirm('¿Está seguro de que desea limpiar todos los campos del formulario?')) {
-                document.querySelector('form').reset();
-                // Resetear estado del archivo
-                document.getElementById('excel-status').textContent = 'Pendiente';
-                document.getElementById('excel-status').className = 'text-xs px-2 py-1 bg-yellow-100 text-yellow-800 rounded font-lora';
-                document.getElementById('file-list').classList.add('hidden');
-            }
-        }
-        
-        // Funcionalidad de arrastrar y soltar
-        document.addEventListener('DOMContentLoaded', function() {
-            const dropArea = document.querySelector('.border-dashed');
-            const fileInput = document.getElementById('file-input');
-            
-            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
-                dropArea.addEventListener(eventName, preventDefaults, false);
-            });
-            
-            function preventDefaults(e) {
-                e.preventDefault();
-                e.stopPropagation();
-            }
-            
-            ['dragenter', 'dragover'].forEach(eventName => {
-                dropArea.addEventListener(eventName, highlight, false);
-            });
-            
-            ['dragleave', 'drop'].forEach(eventName => {
-                dropArea.addEventListener(eventName, unhighlight, false);
-            });
-            
-            function highlight() {
-                dropArea.classList.add('border-[#404041]', 'bg-blue-50');
-            }
-            
-            function unhighlight() {
-                dropArea.classList.remove('border-[#404041]', 'bg-blue-50');
-            }
-            
-            dropArea.addEventListener('drop', handleDrop, false);
-            
-            function handleDrop(e) {
-                const dt = e.dataTransfer;
-                const files = dt.files;
-                
-                // Solo permitir un archivo
-                if (files.length === 1) {
-                    fileInput.files = files;
-                    updateFileStatus();
-                } else if (files.length > 1) {
-                    alert('Solo se permite subir un archivo a la vez');
-                }
-            }
+    }
+
+    // Drag & drop
+    document.addEventListener('DOMContentLoaded', function() {
+        const dropArea = document.querySelector('.border-dashed');
+        const fileInput = document.getElementById('file-input');
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            dropArea.addEventListener(eventName, preventDefaults, false);
         });
+        function preventDefaults(e) { e.preventDefault(); e.stopPropagation(); }
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropArea.addEventListener(eventName, highlight, false);
+        });
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropArea.addEventListener(eventName, unhighlight, false);
+        });
+        function highlight() { dropArea.classList.add('border-[#404041]', 'bg-blue-50'); }
+        function unhighlight() { dropArea.classList.remove('border-[#404041]', 'bg-blue-50'); }
+        dropArea.addEventListener('drop', handleDrop, false);
+        function handleDrop(e) {
+            const dt = e.dataTransfer;
+            const files = dt.files;
+            if (files.length === 1) {
+                fileInput.files = files;
+                updateFileStatus();
+            } else if (files.length > 1) {
+                alert('Solo se permite subir un archivo a la vez');
+            }
+        }
+    });
     </script>
 
     <!-- Incluir Ionicons -->
@@ -406,6 +387,8 @@
             // Map municipality_id -> jurisdiction_id
             const muniToJur = @json($municipalities->mapWithKeys(function($m){ return [$m->id => $m->jurisdiction_id]; }));
             const jurisNames = @json($jurisdictions->mapWithKeys(function($j){ return [$j->id => $j->name]; }));
+            // Jurisdicción del usuario (puede ser null)
+            const currentJurisdiction = @json(optional(auth()->user())->jurisdiction_id);
 
             const deathMuni = document.getElementById('death_municipality_select');
             const jurisdictionDisplay = document.getElementById('jurisdiction_display');
@@ -444,7 +427,11 @@
 
             // Initialize Tom Select for municipality
             function fetchMunicipalities(q) {
-                return fetch('/api/municipalities/search?q=' + encodeURIComponent(q)).then(r => r.json());
+                let url = '/api/municipalities/search?q=' + encodeURIComponent(q);
+                if (currentJurisdiction) {
+                    url += '&jurisdiction_id=' + encodeURIComponent(currentJurisdiction);
+                }
+                return fetch(url).then(r => r.json());
             }
 
             if (deathMuni) {
@@ -465,6 +452,52 @@
                     }
                 });
                 try { deathMuni.style.display = 'none'; } catch (e) {}
+            }
+
+            // Si el usuario tiene una jurisdicción asignada, establecerla en el campo oculto y en el display
+            if (currentJurisdiction) {
+                if (hiddenJur && !hiddenJur.value) hiddenJur.value = currentJurisdiction;
+                if (jurisdictionDisplay && (!jurisdictionDisplay.value || jurisdictionDisplay.value.includes('Pendiente'))) {
+                    jurisdictionDisplay.value = jurisNames[currentJurisdiction] || jurisdictionDisplay.value;
+                }
+            }
+
+            // Validación en el cliente: si estamos en modo creación, exigir archivo Excel
+            const mainForm = document.getElementById('observatorioForm') || document.querySelector('form[action*="observatorio"][method="POST"]');
+            const fileInput = document.getElementById('file-input');
+            const isEditMode = {{ isset($publication) ? 'true' : 'false' }};
+
+            if (mainForm) {
+                mainForm.addEventListener('submit', function(e) {
+                    // Solo validar en modo CREACIÓN
+                    if (!isEditMode) {
+                        // Si no hay archivo seleccionado, evitar envío y mostrar mensaje
+                        if (!fileInput || fileInput.files.length === 0) {
+                            e.preventDefault();
+                            // Mensaje uniforme con Seguridad Vial
+                            alert('Debe incluir al menos 1 archivo Excel (XLSX).');
+                            try { document.getElementById('file-input').focus(); } catch (err) {}
+                            return false;
+                        }
+                        // Validar extensión y tamaño de forma básica (cliente)
+                        if (fileInput && fileInput.files.length > 0) {
+                            const f = fileInput.files[0];
+                            const ext = f.name.split('.').pop().toLowerCase();
+                            const allowed = ['xlsx','xls'];
+                            if (!allowed.includes(ext)) {
+                                e.preventDefault();
+                                alert('Formato no válido. Solo se permiten archivos XLSX o XLS.');
+                                return false;
+                            }
+                            const maxBytes = 10 * 1024 * 1024; // 10 MB
+                            if (f.size > maxBytes) {
+                                e.preventDefault();
+                                alert('El archivo excede el tamaño máximo permitido (10 MB).');
+                                return false;
+                            }
+                        }
+                    }
+                });
             }
         });
     </script>

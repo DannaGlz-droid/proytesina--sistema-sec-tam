@@ -31,10 +31,12 @@
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-3 lg:gap-4">
                     <div class="space-y-3">
                         <div>
-                            <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Tema *</label>
-                            <input type="text" 
+                            <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Tema <span class="text-red-600">*</span></label>
+                            <input type="text"
                                    name="tema"
-                                   class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora" 
+                                   minlength="3"
+                                   maxlength="255"
+                                   class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora"
                                    placeholder="Ej: Operativo alcoholimetría fin de semana"
                                    value="{{ old('tema', isset($publication) ? $publication->topic : '') }}"
                                    required>
@@ -43,9 +45,10 @@
                     
                     <div class="space-y-3">
                         <div>
-                            <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Fecha *</label>
-                            <input type="date" 
+                            <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Fecha <span class="text-red-600">*</span></label>
+                            <input type="date"
                                    name="fecha"
+                                   max="{{ date('Y-m-d') }}"
                                    class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora"
                                    value="{{ old('fecha', isset($publication) ? $publication->activity_date->format('Y-m-d') : '') }}"
                                    required>
@@ -66,15 +69,16 @@
                 </div>
                 
                 <div class="space-y-3">
-                    <div>
-                        <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Puntos de revisión instalados *</label>
-                        <input type="number" 
-                               name="puntos_revision"
-                               class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora" 
-                               placeholder="Ej: 15"
-                               value="{{ old('puntos_revision', isset($report) ? $report->checkpoints : '') }}"
-                               required>
-                    </div>
+                        <div>
+                            <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Puntos de revisión instalados <span class="text-red-600">*</span></label>
+                            <input type="number"
+                                   name="puntos_revision"
+                                   min="0" max="9999"
+                                   class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora"
+                                   placeholder="Ej: 15"
+                                   value="{{ old('puntos_revision', isset($report) ? $report->checkpoints : '') }}"
+                                   required>
+                        </div>
                 </div>
             </div>
 
@@ -92,10 +96,11 @@
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-3 lg:gap-4">
                     <div class="space-y-3">
                         <div>
-                            <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Pruebas realizadas *</label>
-                            <input type="number" 
+                            <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Pruebas realizadas <span class="text-red-600">*</span></label>
+                            <input type="number"
                                    name="pruebas_realizadas"
-                                   class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora" 
+                                   min="0" max="999999"
+                                   class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora"
                                    placeholder="Ej: 250"
                                    value="{{ old('pruebas_realizadas', isset($report) ? $report->tests_performed : '') }}"
                                    required>
@@ -104,10 +109,11 @@
                     
                     <div class="space-y-3">
                         <div>
-                            <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Conductores no aptos *</label>
-                            <input type="number" 
+                            <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Conductores no aptos <span class="text-red-600">*</span></label>
+                            <input type="number"
                                    name="conductores_no_aptos"
-                                   class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora" 
+                                   min="0" max="999999"
+                                   class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora"
                                    placeholder="Ej: 12"
                                    value="{{ old('conductores_no_aptos', isset($report) ? $report->drivers_not_fit : '') }}"
                                    required>
@@ -130,10 +136,11 @@
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-3 lg:gap-4">
                     <div class="space-y-3">
                         <div>
-                            <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Mujeres *</label>
-                            <input type="number" 
+                            <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Mujeres <span class="text-red-600">*</span></label>
+                            <input type="number"
                                    name="mujeres_no_aptas"
-                                   class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora" 
+                                   min="0" max="999999"
+                                   class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora"
                                    placeholder="Ej: 3"
                                    value="{{ old('mujeres_no_aptas', isset($report) ? $report->women : '') }}"
                                    required>
@@ -142,10 +149,11 @@
                     
                     <div class="space-y-3">
                         <div>
-                            <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Hombres *</label>
-                            <input type="number" 
+                            <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Hombres <span class="text-red-600">*</span></label>
+                            <input type="number"
                                    name="hombres_no_aptos"
-                                   class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora" 
+                                   min="0" max="999999"
+                                   class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora"
                                    placeholder="Ej: 9"
                                    value="{{ old('hombres_no_aptos', isset($report) ? $report->men : '') }}"
                                    required>
@@ -168,61 +176,67 @@
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-3 lg:gap-4">
                     <div class="space-y-3">
                         <div>
-                            <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Automóviles y camionetas *</label>
+                            <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Automóviles y camionetas <span class="text-red-600">*</span></label>
                             <input type="number" 
-                                   name="automoviles_camionetas"
-                                   class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora" 
-                                   placeholder="Ej: 8"
-                                   value="{{ old('automoviles_camionetas', isset($report) ? $report->cars_trucks : '') }}"
-                                   required>
+                                name="automoviles_camionetas"
+                                min="0" max="999999"
+                                class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora" 
+                                placeholder="Ej: 8"
+                                value="{{ old('automoviles_camionetas', isset($report) ? $report->cars_trucks : '') }}"
+                                required>
                         </div>
                         <div>
-                            <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Motocicletas *</label>
+                            <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Motocicletas <span class="text-red-600">*</span></label>
                             <input type="number" 
-                                   name="motocicletas"
-                                   class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora" 
-                                   placeholder="Ej: 2"
-                                   value="{{ old('motocicletas', isset($report) ? $report->motorcycles : '') }}"
-                                   required>
+                                name="motocicletas"
+                                min="0" max="999999"
+                                class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora" 
+                                placeholder="Ej: 2"
+                                value="{{ old('motocicletas', isset($report) ? $report->motorcycles : '') }}"
+                                required>
                         </div>
                         <div>
-                            <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Transporte público colectivo *</label>
+                            <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Transporte público colectivo <span class="text-red-600">*</span></label>
                             <input type="number" 
-                                   name="transporte_colectivo"
-                                   class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora" 
-                                   placeholder="Ej: 1"
-                                   value="{{ old('transporte_colectivo', isset($report) ? $report->public_transport_collective : '') }}"
-                                   required>
+                                name="transporte_colectivo"
+                                min="0" max="999999"
+                                class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora" 
+                                placeholder="Ej: 1"
+                                value="{{ old('transporte_colectivo', isset($report) ? $report->public_transport_collective : '') }}"
+                                required>
                         </div>
                     </div>
                     
                     <div class="space-y-3">
                         <div>
-                            <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Transporte público individual *</label>
+                            <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Transporte público individual <span class="text-red-600">*</span></label>
                             <input type="number" 
-                                   name="transporte_individual"
-                                   class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora" 
-                                   placeholder="Ej: 0"
-                                   value="{{ old('transporte_individual', isset($report) ? $report->public_transport_individual : '') }}"
-                                   required>
+                                name="transporte_individual"
+                                min="0" max="999999"
+                                class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora" 
+                                placeholder="Ej: 0"
+                                value="{{ old('transporte_individual', isset($report) ? $report->public_transport_individual : '') }}"
+                                required>
                         </div>
                         <div>
-                            <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Transporte de carga *</label>
+                            <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Transporte de carga <span class="text-red-600">*</span></label>
                             <input type="number" 
-                                   name="transporte_carga"
-                                   class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora" 
-                                   placeholder="Ej: 1"
-                                   value="{{ old('transporte_carga', isset($report) ? $report->cargo_transport : '') }}"
-                                   required>
+                                name="transporte_carga"
+                                min="0" max="999999"
+                                class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora" 
+                                placeholder="Ej: 1"
+                                value="{{ old('transporte_carga', isset($report) ? $report->cargo_transport : '') }}"
+                                required>
                         </div>
                         <div>
-                            <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Vehículos de emergencia *</label>
+                            <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Vehículos de emergencia <span class="text-red-600">*</span></label>
                             <input type="number" 
-                                   name="vehiculos_emergencia"
-                                   class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora" 
-                                   placeholder="Ej: 0"
-                                   value="{{ old('vehiculos_emergencia', isset($report) ? $report->emergency_vehicles : '') }}"
-                                   required>
+                                name="vehiculos_emergencia"
+                                min="0" max="999999"
+                                class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora" 
+                                placeholder="Ej: 0"
+                                value="{{ old('vehiculos_emergencia', isset($report) ? $report->emergency_vehicles : '') }}"
+                                required>
                         </div>
                     </div>
                 </div>
@@ -240,9 +254,9 @@
                 </div>
                 
                 <div class="space-y-3">
-                    <div>
-                        <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Descripción *</label>
-                        <textarea id="descripcion" name="descripcion" class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora" rows="4" placeholder="Describa los detalles...">{{ old('descripcion', isset($publication) ? $publication->description : '') }}</textarea>
+                        <div>
+                            <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Descripción</label>
+                        <textarea id="descripcion" name="descripcion" maxlength="5000" class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora" rows="4" placeholder="Describa los detalles, contexto, objetivos, resultados, etc. (opcional)">{{ old('descripcion', isset($publication) ? $publication->description : '') }}</textarea>
                     </div>
                 </div>
             </div>
@@ -318,7 +332,11 @@
                     <!-- Área de carga de archivo -->
                     <div>
                         <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-2 font-lora">
-                            {{ isset($publication) ? 'Agregar nuevo archivo (opcional)' : 'Subir archivo *' }}
+                            @if(isset($publication))
+                                Agregar nuevo archivo (opcional)
+                            @else
+                                Subir archivo <span class="text-red-600">*</span>
+                            @endif
                         </label>
                         
                         <!-- Cuadro punteado para arrastrar y soltar -->
@@ -336,9 +354,11 @@
                                     Haga clic o arrastre el archivo aquí para subirlo
                                 </p>
                                 <p class="text-xs text-gray-500 font-lora">
-                                    Formatos permitidos: XLSX, XLS
+                                    Formatos permitidos: XLSX, XLS<br>
+                                    <span class="text-xs text-gray-500">Tamaño máximo: 10 MB</span>
                                 </p>
                             </div>
+                            <div id="file-error" class="mt-2 text-xs text-red-600 font-lora hidden"></div>
                         </div>
                         
                         <!-- Información del archivo seleccionado -->
@@ -403,6 +423,9 @@
             
             // Limpiar lista anterior
             fileNames.innerHTML = '';
+            // Limpiar mensaje de error
+            const fileErrorEl = document.getElementById('file-error');
+            if (fileErrorEl) { fileErrorEl.classList.add('hidden'); fileErrorEl.textContent = ''; }
             
             // Verificar archivo seleccionado
             if (files.length > 0) {
@@ -411,6 +434,23 @@
                 
                 // Validar que sea archivo Excel
                 if (extension === 'xlsx' || extension === 'xls') {
+                    // Validar tamaño (10 MB)
+                    const maxBytes = 10 * 1024 * 1024;
+                    if (file.size > maxBytes) {
+                        // Archivo demasiado grande
+                        const fileError = document.getElementById('file-error');
+                        if (fileError) {
+                            fileError.textContent = 'El archivo excede el tamaño máximo permitido (10 MB).';
+                            fileError.classList.remove('hidden');
+                        } else {
+                            alert('El archivo excede el tamaño máximo permitido (10 MB).');
+                        }
+                        fileInput.value = '';
+                        document.getElementById('excel-status').textContent = 'Pendiente';
+                        document.getElementById('excel-status').className = 'text-xs px-2 py-1 bg-yellow-100 text-yellow-800 rounded font-lora';
+                        fileList.classList.add('hidden');
+                        return;
+                    }
                     // Crear card estilizada para el archivo
                     const fileCard = document.createElement('li');
                     fileCard.className = 'bg-white border border-gray-200 rounded-lg p-3 flex items-center justify-between';
@@ -437,7 +477,13 @@
                     fileList.classList.remove('hidden');
                 } else {
                     // Archivo no válido
-                    alert('Por favor seleccione un archivo Excel (XLSX o XLS)');
+                    const fileError = document.getElementById('file-error');
+                    if (fileError) {
+                        fileError.textContent = 'Formato no válido. Solo se permiten archivos XLSX o XLS.';
+                        fileError.classList.remove('hidden');
+                    } else {
+                        alert('Por favor seleccione un archivo Excel (XLSX o XLS)');
+                    }
                     fileInput.value = '';
                     document.getElementById('excel-status').textContent = 'Pendiente';
                     document.getElementById('excel-status').className = 'text-xs px-2 py-1 bg-yellow-100 text-yellow-800 rounded font-lora';
@@ -466,6 +512,8 @@
                 document.getElementById('excel-status').textContent = 'Pendiente';
                 document.getElementById('excel-status').className = 'text-xs px-2 py-1 bg-yellow-100 text-yellow-800 rounded font-lora';
                 document.getElementById('file-list').classList.add('hidden');
+                const fileError = document.getElementById('file-error');
+                if (fileError) { fileError.classList.add('hidden'); fileError.textContent = ''; }
             }
         }
         
@@ -512,6 +560,37 @@
                 } else if (files.length > 1) {
                     alert('Solo se permite subir un archivo a la vez');
                 }
+            }
+
+            // Interceptar el envío del formulario para validar archivo en cliente (solo en creación)
+            const mainForm = document.querySelector('form[action*="alcoholimetria"][method="POST"]');
+            const isEditMode = {{ isset($publication) ? 'true' : 'false' }};
+            if (mainForm) {
+                mainForm.addEventListener('submit', function(e) {
+                    if (!isEditMode) {
+                        if (!fileInput || fileInput.files.length === 0) {
+                            e.preventDefault();
+                            alert('Debe incluir al menos 1 archivo Excel (XLSX).');
+                            try { fileInput.focus(); } catch (err) {}
+                            return false;
+                        }
+                        // Validar extensión y tamaño
+                        const f = fileInput.files[0];
+                        const ext = f.name.split('.').pop().toLowerCase();
+                        const allowed = ['xlsx','xls'];
+                        if (!allowed.includes(ext)) {
+                            e.preventDefault();
+                            alert('Formato no válido. Solo se permiten archivos XLSX o XLS.');
+                            return false;
+                        }
+                        const maxBytes = 10 * 1024 * 1024; // 10 MB
+                        if (f.size > maxBytes) {
+                            e.preventDefault();
+                            alert('El archivo excede el tamaño máximo permitido (10 MB).');
+                            return false;
+                        }
+                    }
+                });
             }
         });
     </script>

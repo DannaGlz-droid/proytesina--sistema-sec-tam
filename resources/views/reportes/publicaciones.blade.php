@@ -53,9 +53,9 @@
             <div class="p-4 lg:p-6">
                 <!-- FILTROS MEJORADOS - SERVER SIDE -->
                 <form method="GET" action="{{ route('reportes.index') }}" class="mb-6">
-                    <div class="flex flex-col lg:flex-row gap-3 items-start lg:items-end">
+                    <div class="flex flex-col sm:flex-row sm:flex-wrap gap-3 items-start sm:items-end">
                         <!-- Buscar (misma línea que los filtros) -->
-                        <div class="flex-1 min-w-0 lg:max-w-[320px]">
+                        <div class="flex-1 min-w-0 w-full sm:w-1/2 md:w-1/3 lg:max-w-[320px]">
                             <label class="block text-xs font-semibold text-[#404041] mb-1 font-lora">Buscar</label>
                             <div class="relative">
                                 <input type="text" name="q" id="search" value="{{ request('q') }}" placeholder="Buscar por título o autor..." class="w-full border border-[#404041] rounded-lg pl-10 pr-3 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-[#611132] focus:border-transparent">
@@ -67,7 +67,7 @@
                             </div>
                         </div>
                         <!-- Estado -->
-                        <div class="flex-1 min-w-0 lg:max-w-[160px]">
+                        <div class="flex-1 min-w-0 w-full sm:w-auto sm:flex-1 sm:max-w-[160px]">
                             <label class="block text-xs font-semibold text-[#404041] mb-1 font-lora">Estado</label>
                             <select name="status" class="w-full border border-[#404041] rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-[#611132] focus:border-transparent">
                                 <option value="">Todos los estados</option>
@@ -78,7 +78,7 @@
                         </div>
 
                         <!-- Periodo de fechas predefinido -->
-                        <div class="flex-1 min-w-0 lg:max-w-[160px]">
+                        <div class="flex-1 min-w-0 w-full sm:w-auto sm:flex-1 sm:max-w-[160px]">
                             <label class="block text-xs font-semibold text-[#404041] mb-1 font-lora">Periodo</label>
                             <select name="date_filter" class="w-full border border-[#404041] rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-[#611132] focus:border-transparent">
                                 <option value="">Todas las fechas</option>
@@ -91,7 +91,7 @@
                         </div>
 
                         <!-- Ordenar (incluye dirección) -->
-                        <div class="flex-1 min-w-0 lg:max-w-[180px]">
+                        <div class="flex-1 min-w-0 w-full sm:w-auto sm:flex-1 sm:max-w-[180px]">
                             <label class="block text-xs font-semibold text-[#404041] mb-1 font-lora">Ordenar</label>
                             <select name="order_by" class="w-full border border-[#404041] rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-[#611132] focus:border-transparent">
                                 <option value="created_at:desc" {{ request('order_by', 'created_at:desc') === 'created_at:desc' ? 'selected' : '' }}>Fecha (más recientes)</option>
@@ -104,7 +104,7 @@
                         </div>
 
                         <!-- Botones de acción -->
-                        <div class="flex gap-2 mt-2 lg:mt-0">
+                        <div class="flex gap-2 mt-2 sm:mt-0 sm:self-end flex-none">
                             <button type="submit" class="bg-[#611132] text-white px-4 py-1.5 rounded-lg text-xs font-semibold hover:bg-[#4a0e26] transition-all duration-300 font-lora flex items-center gap-1 whitespace-nowrap">
                                 <i class="fas fa-filter text-xs"></i>
                                 Aplicar
@@ -316,7 +316,10 @@
                                 @php
                                     $canEdit = $pub->canBeEditedBy(auth()->id());
                                     $isApproved = $pub->status === 'aprobado';
-                                    $canDelete = (auth()->id() === $pub->user_id) || auth()->user()->isAdmin();
+                                    // Autor puede eliminar solo si NO está aprobado. Admin y Coordinador pueden eliminar siempre.
+                                    $canDelete = ((auth()->id() === $pub->user_id) && ! $isApproved)
+                                                 || auth()->user()->isAdmin()
+                                                 || auth()->user()->isCoordinator();
                                 @endphp
                                 @if($canEdit)
                                     <a href="{{ $editRoute }}" class="w-8 h-8 flex items-center justify-center rounded-lg border border-[#C08400] text-[#C08400] transition-all duration-300 hover:bg-[#C08400] hover:text-white" title="Editar">
@@ -649,19 +652,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
 
-        // Mostrar cargo del usuario (si se proporcionó)
-        try {
-            const usuarioCargoEl = modal.querySelector('.modal-usuario-cargo');
-            if (usuarioCargoEl) {
-                if (dataset.position && dataset.position.trim()) {
-                    usuarioCargoEl.textContent = ` — ${dataset.position}`;
-                } else {
-                    usuarioCargoEl.textContent = '';
-                }
-            }
-        } catch (e) {
-            // ignore
-        }
+        // Nota: ya no mostramos el cargo del usuario en el modal (solo nombre)
 
         // Llenar información de estado de aprobación
         const statusContainer = modal.querySelector('.modal-status-container');
@@ -1335,16 +1326,51 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     };
 
-    // === SISTEMA DE ELIMINACIÓN CON MODAL ===
+    // === SISTEMA DE ELIMINACIÓN (confirm simple) ===
+    // Reemplaza el modal por un confirm() nativo: si el usuario confirma, se envía el formulario de eliminación.
     document.addEventListener('click', function(e) {
         if (e.target.closest('.eliminar-reporte')) {
             e.preventDefault();
             const button = e.target.closest('.eliminar-reporte');
-            const publicationId = button.dataset.publicationId;
-            const publicationTitle = button.dataset.publicationTitle;
             const deleteUrl = button.dataset.deleteUrl;
-            
-            showDeleteModal(publicationId, publicationTitle, deleteUrl);
+
+            const message = '¿Estás seguro de eliminar esta publicación? Esta acción no se puede deshacer fácilmente.';
+            if (!confirm(message)) {
+                return;
+            }
+
+            // Intentar reutilizar el formulario #delete-form que ya existe en la página
+            const deleteForm = document.getElementById('delete-form');
+            if (deleteForm) {
+                deleteForm.action = deleteUrl;
+                // limpiar motivo si existe
+                const reasonEl = deleteForm.querySelector('[name="deletion_reason"]');
+                if (reasonEl) reasonEl.value = '';
+                deleteForm.submit();
+                return;
+            }
+
+            // Fallback: crear y enviar un formulario POST con _method=DELETE y CSRF
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = deleteUrl;
+            const tokenMeta = document.querySelector('meta[name="csrf-token"]');
+            const token = tokenMeta ? tokenMeta.getAttribute('content') : '';
+
+            const tokenInput = document.createElement('input');
+            tokenInput.type = 'hidden';
+            tokenInput.name = '_token';
+            tokenInput.value = token;
+            form.appendChild(tokenInput);
+
+            const methodInput = document.createElement('input');
+            methodInput.type = 'hidden';
+            methodInput.name = '_method';
+            methodInput.value = 'DELETE';
+            form.appendChild(methodInput);
+
+            document.body.appendChild(form);
+            form.submit();
         }
     });
 

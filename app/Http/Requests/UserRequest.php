@@ -29,19 +29,21 @@ class UserRequest extends FormRequest
         $passwordRule = $userId ? ['nullable', 'string', 'confirmed', 'min:6'] : ['required', 'string', 'confirmed', 'min:6'];
 
         return [
-            'name' => 'required|string|max:255',
-            'first_last_name' => 'nullable|string|max:255',
-            'second_last_name' => 'nullable|string|max:255',
+            'name' => 'required|string|min:2|max:191',
+            'first_last_name' => 'required|string|min:2|max:191',
+            'second_last_name' => 'nullable|string|min:2|max:191',
             'email' => ['required','email','max:255', Rule::unique('users','email')->ignore($userId)],
-            'phone' => 'nullable|string|max:50',
-            'username' => ['required','string','max:50', Rule::unique('users','username')->ignore($userId)],
+            'phone' => 'nullable|string|regex:/^[0-9+\-\(\)\s]{8,20}$/',
+            'username' => ['required','string','min:3','max:50','regex:/^[a-zA-Z0-9_.-]+$/', Rule::unique('users','username')->ignore($userId)],
             'password' => $passwordRule,
             'is_active' => 'nullable|boolean',
-            'registration_date' => 'nullable|date',
-            'last_session' => 'nullable|date',
-            'position_id' => 'nullable|exists:positions,id',
-            'jurisdiction_id' => 'nullable|exists:jurisdictions,id',
-            'role_id' => 'nullable|exists:roles,id',
+            'position_id' => ['required', function ($attribute, $value, $fail) {
+                if ($value != 0 && !\App\Models\Position::where('id', $value)->exists()) {
+                    $fail('El cargo seleccionado no es válido.');
+                }
+            }],
+            'jurisdiction_id' => 'required|exists:jurisdictions,id',
+            'role_id' => 'required|exists:roles,id',
         ];
     }
 }

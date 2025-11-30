@@ -177,7 +177,7 @@
                     <div class="flex justify-between items-center mb-4">
                         <h4 class="font-semibold text-[#404041] text-lg font-lora">Archivos Adjuntos</h4>
                         <!-- Botón Descargar Todos los Archivos - MÁS COMPACTO -->
-                        <button class="descargar-todos-archivos px-3 py-1.5 bg-[#611132] text-white rounded-lg text-xs font-medium hover:bg-[#4a0e26] transition-all duration-300 font-lora whitespace-nowrap flex items-center gap-1">
+                        <button class="descargar-todos-archivos px-3 py-1.5 bg-[#611132] text-white rounded-lg text-xs font-medium hover:bg-[#4a0e26] transition-all duration-300 font-lora whitespace-nowrap flex items-center justify-center gap-1">
                             <i class="fas fa-download text-xs"></i>
                             Descargar Todos
                         </button>
@@ -217,7 +217,7 @@
                         <!-- Botón de enviar - PERFECTAMENTE ALINEADO -->
                         <button 
                             id="enviarComentario"
-                            class="px-4 bg-[#611132] text-white text-xs font-semibold rounded-lg hover:bg-[#4a0e26] transition-all duration-200 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed h-[42px] whitespace-nowrap mt-0"
+                            class="px-4 bg-[#611132] text-white text-xs font-semibold rounded-lg hover:bg-[#4a0e26] transition-all duration-200 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed h-[42px] whitespace-nowrap mt-0"
                             disabled
                         >
                             <i class="fas fa-paper-plane text-xs"></i>

@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Hash;
 use App\Models\Role;
 use App\Models\Position;
 use App\Models\Jurisdiction;
+use App\Models\Notification;
 use Illuminate\Support\Facades\Redirect;
 use App\Http\Requests\UserRequest;
 
@@ -16,12 +17,145 @@ class UserController extends Controller
 {
     //
 
+    /**
+     * DataTables server-side endpoint for AJAX requests.
+     */
+    public function dataTable(Request $request)
+    {
+        // DataTables parameters
+        $draw = (int) $request->input('draw', 1);
+        $start = (int) $request->input('start', 0);
+        $length = (int) $request->input('length', 25);
+        $searchValue = $request->input('search.value', '');
+        
+        // Order parameters
+        $orderColumnIndex = $request->input('order.0.column', 0);
+        $orderDir = $request->input('order.0.dir', 'desc');
+        
+        // Column mapping (same order as table columns)
+        $columns = ['id', 'username', 'name', 'first_last_name', 'second_last_name', 'email', 'phone', 'position_id', 'jurisdiction_id', 'registration_date', 'role_id', 'is_active', 'last_session'];
+        $orderColumn = $columns[$orderColumnIndex] ?? 'id';
+        
+        // Build query with filters from request
+        $query = User::query();
+        
+        // Apply search
+        if (!empty($searchValue)) {
+            $query->where(function ($q) use ($searchValue) {
+                $q->where('id', 'like', "%{$searchValue}%")
+                  ->orWhere('username', 'like', "%{$searchValue}%")
+                  ->orWhere('name', 'like', "%{$searchValue}%")
+                  ->orWhere('first_last_name', 'like', "%{$searchValue}%")
+                  ->orWhere('second_last_name', 'like', "%{$searchValue}%")
+                  ->orWhere('email', 'like', "%{$searchValue}%")
+                  ->orWhere('phone', 'like', "%{$searchValue}%");
+            });
+        }
+        
+        // Apply existing filters from form
+        if ($request->filled('is_active')) {
+            $query->where('is_active', (int) $request->input('is_active'));
+        }
+        if ($request->filled('role_id')) {
+            $query->where('role_id', $request->input('role_id'));
+        }
+        if ($request->filled('position_id')) {
+            $query->where('position_id', $request->input('position_id'));
+        }
+        if ($request->filled('jurisdiction_id')) {
+            $query->where('jurisdiction_id', $request->input('jurisdiction_id'));
+        }
+        if ($request->filled('last_session')) {
+            $ls = $request->input('last_session');
+            if ($ls === 'today') {
+                $query->whereDate('last_session', now()->toDateString());
+            } elseif (is_numeric($ls)) {
+                $days = (int) $ls;
+                $query->where('last_session', '>=', now()->subDays($days));
+            } elseif ($ls === 'never') {
+                $query->whereNull('last_session');
+            }
+        }
+        if ($request->filled('date_range') && $request->input('date_range') !== 'custom') {
+            $dr = $request->input('date_range');
+            if (is_numeric($dr)) {
+                $days = (int) $dr;
+                $query->whereDate('registration_date', '>=', now()->subDays($days));
+            } elseif ($dr === 'year') {
+                $query->whereYear('registration_date', now()->year);
+            }
+        } elseif ($request->input('date_range') === 'custom') {
+            if ($request->filled('date_from')) {
+                $query->whereDate('registration_date', '>=', $request->input('date_from'));
+            }
+            if ($request->filled('date_to')) {
+                $query->whereDate('registration_date', '<=', $request->input('date_to'));
+            }
+        }
+        
+        // Get total count before pagination
+        $recordsTotal = User::count();
+        $recordsFiltered = $query->count();
+        
+        // Apply ordering and pagination
+        $users = $query->with(['role', 'position', 'jurisdiction'])
+                       ->orderBy($orderColumn, $orderDir)
+                       ->skip($start)
+                       ->take($length)
+                       ->get();
+        
+        // Format data for DataTables
+        $data = $users->map(function ($user) {
+            $roleName = optional($user->role)->name ?? '—';
+            $roleLower = strtolower($roleName);
+            if (in_array($roleLower, ['administrador', 'admin'])) {
+                $roleClasses = 'bg-red-100 text-red-800';
+            } elseif (in_array($roleLower, ['usuario', 'user'])) {
+                $roleClasses = 'bg-green-100 text-green-800';
+            } elseif ($roleLower === 'invitado') {
+                $roleClasses = 'bg-gray-100 text-gray-800';
+            } elseif ($roleLower === 'operador') {
+                $roleClasses = 'bg-blue-100 text-blue-800';
+            } else {
+                $roleClasses = 'bg-yellow-100 text-yellow-800';
+            }
+            
+            $isActive = (bool) $user->is_active;
+            $statusText = $isActive ? 'Activo' : 'Inactivo';
+            $statusDot = $isActive ? 'bg-emerald-500' : 'bg-rose-500';
+            
+            return [
+                'id' => $user->id,
+                'username' => $user->username,
+                'name' => $user->name,
+                'first_last_name' => $user->first_last_name,
+                'second_last_name' => $user->second_last_name,
+                'email' => $user->email,
+                'phone' => $user->phone,
+                'position' => optional($user->position)->name ?? '—',
+                'jurisdiction' => optional($user->jurisdiction)->name ?? '—',
+                'registration_date' => $user->formatted_registration_date ?? '—',
+                'role' => "<span class='{$roleClasses} text-xs font-medium px-2 py-0.5 rounded-full'>{$roleName}</span>",
+                'status' => "<div class='flex items-center gap-1'><span class='w-2 h-2 rounded-full {$statusDot}'></span><span class='text-xs'>{$statusText}</span></div>",
+                'last_session' => $user->last_session_diff ?? '—',
+                'actions' => view('usuarios.partials.table-actions', compact('user'))->render(),
+            ];
+        });
+        
+        return response()->json([
+            'draw' => $draw,
+            'recordsTotal' => $recordsTotal,
+            'recordsFiltered' => $recordsFiltered,
+            'data' => $data,
+        ]);
+    }
+
     public function index(Request $request)
     {
         // Validar y normalizar parámetros de entrada: búsqueda, paginación y filtros
         $validated = $request->validate([
             'q' => ['nullable', 'string', 'max:255'],
-            'per_page' => ['nullable', 'in:10,20,50,100'],
+            'per_page' => ['nullable', 'in:10,25,50,100'],
             'sort' => ['nullable', 'string'],
             'is_active' => ['nullable', 'in:0,1','numeric'],
             'last_session' => ['nullable', 'string'],
@@ -33,7 +167,7 @@ class UserController extends Controller
             'role_id' => ['nullable','integer','exists:roles,id'],
         ]);
 
-    $perPage = isset($validated['per_page']) ? (int) $validated['per_page'] : 10;
+    $perPage = isset($validated['per_page']) ? (int) $validated['per_page'] : 25;
         $q = $validated['q'] ?? null;
     $sort = $validated['sort'] ?? $request->input('sort', 'registration_date_desc');
 
@@ -148,8 +282,12 @@ class UserController extends Controller
     {
 
         $positions = Position::all();
-        $jurisdictions = Jurisdiction::all();
-        $roles = Role::all();
+        // Solo mostrar jurisdicciones numeradas (I - XII), excluir opciones genéricas
+        $jurisdictions = Jurisdiction::whereNotIn('name', ['OTRO', 'Sin jurisdicción', 'NO ENCONTRADA', 'No encontrada', 'Otra', 'otra'])
+                                      ->orderBy('name')
+                                      ->get();
+        // Solo mostrar: Administrador, Operador, Coordinador (usar nombres canónicos en español)
+        $roles = Role::whereIn('name', ['Administrador', 'Operador', 'Coordinador', 'administrador', 'operador', 'coordinador'])->get();
 
         // Render the registration view (controller provides lookup data)
         return view('usuarios.acciones.registro', compact('positions', 'jurisdictions', 'roles'));
@@ -165,6 +303,11 @@ class UserController extends Controller
          // hash password (even if User has 'password' => 'hashed' cast)
          $data['password'] = Hash::make($data['password']);
 
+         // Convert position_id = 0 to NULL (No definido)
+         if (isset($data['position_id']) && $data['position_id'] == 0) {
+             $data['position_id'] = null;
+         }
+
          // Ensure registration_date is set: prefer submitted value, otherwise default to today
          if (empty($data['registration_date'])) {
              $data['registration_date'] = now()->toDateString();
@@ -179,8 +322,12 @@ class UserController extends Controller
     public function edit(User $user)
     {
         $positions = Position::all();
-        $jurisdictions = Jurisdiction::all();
-        $roles = Role::all();
+        // Solo mostrar jurisdicciones numeradas (I - XII), excluir opciones genéricas
+        $jurisdictions = Jurisdiction::whereNotIn('name', ['OTRO', 'Sin jurisdicción', 'NO ENCONTRADA', 'No encontrada', 'Otra', 'otra'])
+                                      ->orderBy('name')
+                                      ->get();
+        // Solo mostrar: Administrador, Operador, Coordinador (usar nombres canónicos en español)
+        $roles = Role::whereIn('name', ['Administrador', 'Operador', 'Coordinador', 'administrador', 'operador', 'coordinador'])->get();
 
         return view('usuarios.acciones.actualizar-registro', compact('user', 'positions', 'jurisdictions', 'roles'));
       }
@@ -190,6 +337,11 @@ class UserController extends Controller
         $data = $request->validated();
 
         $data['is_active'] = $request->has('is_active') ? (bool) $request->input('is_active') : false;
+
+        // Convert position_id = 0 to NULL (No definido)
+        if (isset($data['position_id']) && $data['position_id'] == 0) {
+            $data['position_id'] = null;
+        }
 
         if (!empty($data['password'])) {
             $data['password'] = Hash::make($data['password']);
@@ -238,6 +390,13 @@ class UserController extends Controller
 
     public function destroy(Request $request, User $user)
     {
+        // Remove related notifications that reference this user to avoid FK constraint errors.
+        // We delete both notifications where the user is recipient or sender.
+        Notification::where('recipient_user_id', $user->id)->orWhere('sender_user_id', $user->id)->delete();
+
+        // Optionally: if you want to remove other dependent data (comments, sessions, etc.),
+        // handle them here before deleting the user.
+
         $user->delete();
 
         return redirect()->route('user.user-gestion')->with('success', 'User deleted successfully.');

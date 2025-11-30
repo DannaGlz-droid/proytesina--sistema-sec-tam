@@ -12,7 +12,7 @@
         <!-- Cuadro del formulario responsive -->
         <div class="border border-[#404041] rounded-lg lg:rounded-xl p-4 lg:p-6 bg-white bg-opacity-95 max-w-7xl shadow-md">
 
-            <form action="{{ route('user.store') }}" method="POST">
+            <form action="{{ route('user.store') }}" method="POST" id="userRegistroForm">
                     
                 @csrf
                     <!-- Sección 1: Información del usuario -->
@@ -26,49 +26,44 @@
                         <div class="grid grid-cols-1 lg:grid-cols-2 gap-3 lg:gap-4">
                             <div class="space-y-3">
                                 <div>
-                                    <label name="name" class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Nombre(s)</label>
-                                    <input name="name" type="text" 
+                                    <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Nombre(s) <span class="text-red-600">*</span></label>
+                                    <input id="name" name="name" type="text" required minlength="2" maxlength="191"
                                         class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora" 
                                         placeholder="Ej: María Elena"
                                         value="{{ old('name') }}">
-                                    @error('name') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
                                 </div>
                                 <div>
-                                    <label name="first_last_name" class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Apellido paterno</label>
-                                    <input name="first_last_name" type="text" 
+                                    <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Apellido materno</label>
+                                    <input id="second_last_name" name="second_last_name" type="text" minlength="2" maxlength="191"
                                         class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora" 
-                                        placeholder="Ej: García"
-                                        value="{{ old('first_last_name') }}">
-                                    @error('first_last_name') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
+                                        placeholder="Ej: López"
+                                        value="{{ old('second_last_name') }}">
                                 </div>
                             </div>
                             
                             <div class="space-y-3">
                                 <div>
-                                    <label name="second_last_name" class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Apellido materno</label>
-                                    <input name="second_last_name" type="text" 
+                                    <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Apellido paterno <span class="text-red-600">*</span></label>
+                                    <input id="first_last_name" name="first_last_name" type="text" required minlength="2" maxlength="191"
                                         class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora" 
-                                        placeholder="Ej: López"
-                                        value="{{ old('second_last_name') }}">
-                                    @error('second_last_name') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
+                                        placeholder="Ej: García"
+                                        value="{{ old('first_last_name') }}">
                                 </div>
                                 <div>
                                     <div class="grid grid-cols-2 gap-3">
                                         <div>
-                                            <label name="email" class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Correo electrónico</label>
-                                            <input name="email" type="email" autocomplete="email"
+                                            <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Correo electrónico <span class="text-red-600">*</span></label>
+                                            <input id="email" name="email" type="email" required maxlength="255" autocomplete="email"
                                                 class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora"
                                                 placeholder="Ej: usuario@ejemplo.com"
                                                 value="{{ old('email') }}">
-                                            @error('email') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
                                         </div>
                                         <div>
-                                            <label name="phone" class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Teléfono</label>
-                                            <input name="phone" type="tel" inputmode="tel" autocomplete="tel"
+                                            <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Teléfono</label>
+                                            <input id="phone" name="phone" type="tel" maxlength="20" pattern="[0-9+\-\(\)\s]{8,20}" inputmode="tel" autocomplete="tel"
                                                 class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora"
                                                 placeholder="Ej: 8123456789"
                                                 value="{{ old('phone') }}">
-                                            @error('phone') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
                                         </div>
                                     </div>
                                 </div>
@@ -90,22 +85,23 @@
                         <div class="grid grid-cols-1 lg:grid-cols-2 gap-3 lg:gap-4">
                             <div class="space-y-3">
                                 <div>
-                                    <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Cargo</label>
-                                    <select id="position_select" class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora tomselect-select" name="position_id">
+                                    <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Cargo <span class="text-red-600">*</span></label>
+                                    <select id="position_select" class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora tomselect-select" name="position_id" required>
                                         <option value="">Seleccione un cargo</option>
                                         @if(isset($positions))
                                             @foreach($positions as $p)
                                                 <option value="{{ $p->id }}" {{ old('position_id') == $p->id ? 'selected' : '' }}>{{ $p->name }}</option>
                                             @endforeach
                                         @endif
+                                        <option value="0">No definido</option>
                                     </select>
                                 </div>
                             </div>
                             
                             <div class="space-y-3">
                                 <div>
-                                    <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Jurisdicción</label>
-                                    <select class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora" name="jurisdiction_id">
+                                    <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Jurisdicción <span class="text-red-600">*</span></label>
+                                    <select id="jurisdiction_id" class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora" name="jurisdiction_id" required>
                                         <option value="">Seleccione una jurisdicción</option>
                                         @if(isset($jurisdictions))
                                             @foreach($jurisdictions as $j)
@@ -132,16 +128,16 @@
                         <div class="grid grid-cols-1 lg:grid-cols-2 gap-3 lg:gap-4">
                             <div class="space-y-3">
                                 <div>
-                                    <label name="username" class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Usuario</label>
-                                    <input name="username" type="text" 
+                                    <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Usuario <span class="text-red-600">*</span></label>
+                                    <input id="username" name="username" type="text" required minlength="3" maxlength="50" pattern="[a-zA-Z0-9_.-]+"
                                         class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora" 
                                         placeholder="Ej: mgarcia"
                                         value="{{ old('username') }}">
                                 </div>
                                 <div>
-                                    <label name="password" class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Contraseña</label>
+                                    <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Contraseña <span class="text-red-600">*</span></label>
                                     <div class="relative">
-                                        <input name="password" type="password" 
+                                        <input name="password" type="password" required minlength="6"
                                             id="password"
                                             class="w-full px-3 py-2 pr-10 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora" 
                                             placeholder="Ingrese su contraseña">
@@ -156,8 +152,8 @@
                             
                             <div class="space-y-3">
                                 <div>
-                                    <label  class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Rol</label>
-                                    <select class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora" name="role_id">
+                                    <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Rol <span class="text-red-600">*</span></label>
+                                    <select id="role_id" class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora" name="role_id" required>
                                         <option value="">Seleccione un rol</option>
                                         @if(isset($roles))
                                             @foreach($roles as $r)
@@ -167,9 +163,9 @@
                                     </select>
                                 </div>
                                 <div>
-                                    <label name="password_confirmation" class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Confirmar contraseña</label>
+                                    <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Confirmar contraseña <span class="text-red-600">*</span></label>
                                     <div class="relative">
-                                        <input name="password_confirmation" type="password" 
+                                        <input name="password_confirmation" type="password" required minlength="6"
                                             id="password_confirmation"
                                             class="w-full px-3 py-2 pr-10 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora" 
                                             placeholder="Confirme su contraseña">
@@ -550,6 +546,82 @@
                 } catch (e) {
                     console.warn('TomSelect init failed for #position_select', e);
                 }
+            }
+        });
+    </script>
+
+    <!-- Script para convertir errores de Laravel en tooltips HTML5 -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            @if($errors->any())
+                const errors = @json($errors->messages());
+                
+                // Mapear nombres de campos a sus IDs en el DOM
+                const fieldMap = {
+                    'name': 'name',
+                    'first_last_name': 'first_last_name',
+                    'second_last_name': 'second_last_name',
+                    'email': 'email',
+                    'phone': 'phone',
+                    'username': 'username',
+                    'password': 'password',
+                    'password_confirmation': 'password_confirmation',
+                    'role_id': 'role_id',
+                    'position_id': 'position_select',
+                    'jurisdiction_id': 'jurisdiction_id'
+                };
+
+                // Aplicar setCustomValidity a cada campo con error
+                Object.keys(errors).forEach(fieldName => {
+                    const fieldId = fieldMap[fieldName];
+                    if (fieldId) {
+                        const field = document.getElementById(fieldId);
+                        if (field && errors[fieldName][0]) {
+                            field.setCustomValidity(errors[fieldName][0]);
+                            // Hacer que el campo muestre el tooltip
+                            field.reportValidity();
+                        }
+                    }
+                });
+
+                // Scroll al primer campo con error
+                const firstErrorField = Object.keys(errors)[0];
+                if (firstErrorField && fieldMap[firstErrorField]) {
+                    const field = document.getElementById(fieldMap[firstErrorField]);
+                    if (field) {
+                        field.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        field.focus();
+                    }
+                }
+            @endif
+
+            // Limpiar validación personalizada cuando el usuario empieza a escribir
+            const allInputs = document.querySelectorAll('input, select');
+            allInputs.forEach(input => {
+                input.addEventListener('input', function() {
+                    this.setCustomValidity('');
+                });
+            });
+
+            // Validación personalizada: coincidencia de contraseñas
+            const passwordField = document.getElementById('password');
+            const confirmPasswordField = document.getElementById('password_confirmation');
+            
+            if (passwordField && confirmPasswordField) {
+                confirmPasswordField.addEventListener('input', function() {
+                    if (this.value !== passwordField.value) {
+                        this.setCustomValidity('Las contraseñas no coinciden');
+                    } else {
+                        this.setCustomValidity('');
+                    }
+                });
+
+                passwordField.addEventListener('input', function() {
+                    // Re-validar confirmación cuando se cambia la contraseña
+                    if (confirmPasswordField.value) {
+                        confirmPasswordField.dispatchEvent(new Event('input'));
+                    }
+                });
             }
         });
     </script>
