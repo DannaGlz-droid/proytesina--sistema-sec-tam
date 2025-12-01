@@ -91,11 +91,13 @@
                         </div>
 
                         <!-- Ordenar (incluye dirección) -->
-                        <div class="flex-1 min-w-0 w-full sm:w-auto sm:flex-1 sm:max-w-[180px]">
+                        <div class="flex-1 min-w-0 w-full sm:w-auto sm:flex-1 sm:max-w-[280px]">
                             <label class="block text-xs font-semibold text-[#404041] mb-1 font-lora">Ordenar</label>
                             <select name="order_by" class="w-full border border-[#404041] rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-[#611132] focus:border-transparent">
-                                <option value="created_at:desc" {{ request('order_by', 'created_at:desc') === 'created_at:desc' ? 'selected' : '' }}>Fecha (más recientes)</option>
-                                <option value="created_at:asc" {{ request('order_by') === 'created_at:asc' ? 'selected' : '' }}>Fecha (más antiguos)</option>
+                                <option value="updated_at:desc" {{ request('order_by', 'updated_at:desc') === 'updated_at:desc' ? 'selected' : '' }}>Última actualización (recientes)</option>
+                                <option value="updated_at:asc" {{ request('order_by') === 'updated_at:asc' ? 'selected' : '' }}>Última actualización (antiguos)</option>
+                                <option value="created_at:desc" {{ request('order_by') === 'created_at:desc' ? 'selected' : '' }}>Fecha creación (recientes)</option>
+                                <option value="created_at:asc" {{ request('order_by') === 'created_at:asc' ? 'selected' : '' }}>Fecha creación (antiguos)</option>
                                 <option value="titulo:asc" {{ request('order_by') === 'titulo:asc' ? 'selected' : '' }}>Título (A → Z)</option>
                                 <option value="titulo:desc" {{ request('order_by') === 'titulo:desc' ? 'selected' : '' }}>Título (Z → A)</option>
                                 <option value="usuario:asc" {{ request('order_by') === 'usuario:asc' ? 'selected' : '' }}>Usuario (A → Z)</option>
@@ -316,10 +318,11 @@
                                 @php
                                     $canEdit = $pub->canBeEditedBy(auth()->id());
                                     $isApproved = $pub->status === 'aprobado';
-                                    // Autor puede eliminar solo si NO está aprobado. Admin y Coordinador pueden eliminar siempre.
-                                    $canDelete = ((auth()->id() === $pub->user_id) && ! $isApproved)
-                                                 || auth()->user()->isAdmin()
-                                                 || auth()->user()->isCoordinator();
+                                    // Autor puede eliminar solo si NO está aprobado (sin importar su rol).
+                                    // Si está aprobado, solo Admin puede eliminar.
+                                    $canDelete = $isApproved
+                                                 ? auth()->user()->isAdmin()
+                                                 : ((auth()->id() === $pub->user_id) || auth()->user()->isAdmin());
                                 @endphp
                                 @if($canEdit)
                                     <a href="{{ $editRoute }}" class="w-8 h-8 flex items-center justify-center rounded-lg border border-[#C08400] text-[#C08400] transition-all duration-300 hover:bg-[#C08400] hover:text-white" title="Editar">

@@ -161,15 +161,23 @@
             <label class="block text-xs text-gray-600 font-lora mb-1">Tipo:</label>
             <select name="role_id" class="w-full border border-[#404041] rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-[#611132] focus:border-[#611132]" id="rol">
                 <option value="" {{ request('role_id') === null || request('role_id') === '' ? 'selected' : '' }}>Todos</option>
-                @if(isset($roles) && $roles->isNotEmpty())
-                    @foreach($roles as $r)
+                @php
+                    // Only show canonical roles used by the application. This prevents showing
+                    // lookup values such as 'Invitado' or generic 'Usuario' if they exist.
+                    $allowed = ['Administrador', 'Coordinador', 'Operador'];
+                    $filteredRoles = collect($roles ?? [])->filter(function($r) use ($allowed) {
+                        return in_array(trim((string)($r->name ?? '')), $allowed, true);
+                    });
+                @endphp
+
+                @if($filteredRoles->isNotEmpty())
+                    @foreach($filteredRoles as $r)
                         <option value="{{ $r->id }}" {{ (string) request('role_id') === (string) $r->id ? 'selected' : '' }}>{{ $r->name }}</option>
                     @endforeach
                 @else
                     <option>Administrador</option>
-                    <option>Editor</option>
-                    <option>Usuario</option>
-                    <option>Invitado</option>
+                    <option>Coordinador</option>
+                    <option>Operador</option>
                 @endif
             </select>
         </div>

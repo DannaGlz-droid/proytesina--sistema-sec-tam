@@ -20,7 +20,7 @@ class DeathImportController extends Controller
     public function import(Request $request)
     {
         $request->validate([
-            'file' => 'required|file|mimes:xlsx,xls,csv|max:10240', // 10MB
+            'file' => 'required|file|mimes:xlsx,xls|max:10240', // 10MB, only Excel
         ]);
         // wrap entire import in try/catch so the frontend always receives JSON on error
         try {
@@ -66,6 +66,42 @@ class DeathImportController extends Controller
             } catch (\Throwable $e) {
                 Log::error('Failed loading spreadsheet for import', ['path' => $readPath, 'error' => $e->getMessage()]);
                 throw new \Exception('No se pudo leer el archivo de importación: ' . $e->getMessage());
+            }
+
+            // Preliminary pass: count occurrences of gov_folio across all sheets
+            $folioCounts = [];
+            $possibleFolioKeys = ['folio','folio_gob','folio_gubernamental','folio_gobierno','id','numero','nfolio','no_folio'];
+            foreach ($sheets as $sheet) {
+                if (empty($sheet)) continue;
+                $tmp = $sheet; // keep original intact
+                $headerRow = $tmp[0] ?? [];
+                $headers = array_map(function ($h) {
+                    return strtolower(trim(str_replace([' ', '_'], '', (string)$h)));
+                }, $headerRow ?: []);
+                // map index => header key
+                $map = [];
+                foreach ($headers as $i => $h) $map[$i] = $h;
+
+                // iterate rows (starting at index 1)
+                for ($r = 1; $r < count($tmp); $r++) {
+                    $row = $tmp[$r];
+                    // build assoc for this row minimally to find folio
+                    $rowAssoc = [];
+                    foreach ($map as $i => $key) {
+                        $rowAssoc[$key] = isset($row[$i]) ? $row[$i] : null;
+                    }
+                    // attempt to find folio using known keys
+                    $folio = null;
+                    foreach ($possibleFolioKeys as $k) {
+                        if (isset($rowAssoc[$k]) && trim((string)$rowAssoc[$k]) !== '') { $folio = trim((string)$rowAssoc[$k]); break; }
+                    }
+                    if (is_null($folio) && isset($row[0]) && trim((string)$row[0]) !== '') {
+                        $folio = trim((string)$row[0]);
+                    }
+                    if ($folio !== null && $folio !== '') {
+                        $folioCounts[$folio] = ($folioCounts[$folio] ?? 0) + 1;
+                    }
+                }
             }
 
         // Prepare municipalities lookup with normalized keys for matching (STRICT mode: do not create fallback)
@@ -185,6 +221,24 @@ class DeathImportController extends Controller
                     }
                 }
 
+                // Validate that death date is not in the future
+                if ($deathDate) {
+                    try {
+                        // Ensure we have a Carbon instance for comparison
+                        if (!($deathDate instanceof \Carbon\Carbon)) {
+                            $deathDate = Carbon::instance($deathDate);
+                        }
+                        $today = Carbon::today();
+                        // compare date portion only
+                        if ($deathDate->startOfDay()->gt($today->startOfDay())) {
+                            $errors[] = 'Fecha futura: la fecha de defunción no puede ser mayor a hoy';
+                        }
+                    } catch (\Throwable $__e) {
+                        // If anything goes wrong comparing dates, treat as invalid date
+                        $errors[] = 'Fecha inválida: error al validar fecha';
+                    }
+                }
+
                 // lookup municipalities using normalized exact match first.
                 // If not found (likely outside Tamaulipas), use/create a generic 'OTRO' municipality and jurisdiction.
                 $residenceMunicipality = null;
@@ -279,7 +333,14 @@ class DeathImportController extends Controller
                     }
                 }
 
-                // if errors, mark failed
+                // If the folio is duplicated inside the uploaded file, reject ALL its occurrences
+                if (!is_null($folio) && isset($folioCounts[$folio]) && $folioCounts[$folio] > 1) {
+                    $rowsFailed++;
+                    $failedRows[] = array_merge(['sheet' => $causeName, 'row' => $rowNum + 2, 'errors' => 'Folio duplicado en el archivo (todas las ocurrencias rechazadas)'], $rowAssoc);
+                    continue;
+                }
+
+                // If errors, mark failed
                 if (!empty($errors)) {
                     $rowsFailed++;
                     $failedRows[] = array_merge(['sheet' => $causeName, 'row' => $rowNum + 2, 'errors' => implode('; ', $errors)], $rowAssoc);
@@ -304,31 +365,79 @@ class DeathImportController extends Controller
                     continue;
                 }
 
-                // Determine normalized age fields: age_years / age_months (STRICT: reject months >= 12)
+                // Determine normalized age fields: age_years / age_months / age_days
+                // Note: DB does not currently store age_days; we validate it and keep age fields compatible.
                 $ageYears = null;
                 $ageMonths = null;
+                $ageDays = null;
                 if ($claveEdad) {
-                    $claveNorm = mb_strtolower($claveEdad);
+                    // Normalize unit string: trim, uppercase, remove accents and non-alphanumerics
+                    $claveNorm = mb_strtoupper(trim($claveEdad));
                     $claveNormAscii = iconv('UTF-8', 'ASCII//TRANSLIT', $claveNorm) ?: $claveNorm;
-                    if (strpos($claveNormAscii, 'mes') !== false) {
+                    // collapse to letters/numbers only to simplify matching (e.g. 'DÍAS' -> 'DIAS')
+                    $claveNormAscii = preg_replace('/[^A-Z0-9]/', '', $claveNormAscii);
+
+                    if (strpos($claveNormAscii, 'MES') !== false) {
                         $ageYears = 0;
                         $ageMonths = is_null($age) ? null : (int)$age;
-                    } elseif (strpos($claveNormAscii, 'ano') !== false || strpos($claveNormAscii, 'año') !== false) {
+                    } elseif (strpos($claveNormAscii, 'DIA') !== false || strpos($claveNormAscii, 'DIAS') !== false) {
+                        // Unit in days: validate days but DB doesn't store separate days field.
+                        $ageYears = 0;
+                        $ageMonths = 0;
+                        $ageDays = is_null($age) ? null : (int)$age;
+                    } elseif (strpos($claveNormAscii, 'ANO') !== false || strpos($claveNormAscii, 'ANOS') !== false || strpos($claveNormAscii, 'A') === 0) {
                         $ageYears = is_null($age) ? null : (int)$age;
                         $ageMonths = null;
                     } else {
+                        // Unknown unit: keep as years by default (backwards-compatible)
                         $ageYears = is_null($age) ? null : (int)$age;
                         $ageMonths = null;
                     }
                 } else {
+                    // No unit provided: keep existing behavior (treat as years)
                     $ageYears = is_null($age) ? null : (int)$age;
                     $ageMonths = null;
                 }
+                // Validate months
+                if (!is_null($ageMonths)) {
+                    if ($ageMonths < 0) {
+                        $rowsFailed++;
+                        $failedRows[] = array_merge(['sheet' => $causeName, 'row' => $rowNum + 2, 'errors' => 'Edad inválida: meses debe ser mayor o igual a 0'], $rowAssoc);
+                        continue;
+                    }
+                    if ($ageMonths >= 12) {
+                        $rowsFailed++;
+                        $failedRows[] = array_merge(['sheet' => $causeName, 'row' => $rowNum + 2, 'errors' => 'Edad inválida: meses debe ser menor a 12'], $rowAssoc);
+                        continue;
+                    }
+                }
 
-                if (!is_null($ageMonths) && $ageMonths >= 12) {
-                    $rowsFailed++;
-                    $failedRows[] = array_merge(['sheet' => $causeName, 'row' => $rowNum + 2, 'errors' => 'Edad inválida: meses debe ser menor a 12'], $rowAssoc);
-                    continue;
+                // Validate days (we don't persist days separately yet) — require 0..30 so it doesn't roll into a month
+                if (!is_null($ageDays)) {
+                    if ($ageDays < 0) {
+                        $rowsFailed++;
+                        $failedRows[] = array_merge(['sheet' => $causeName, 'row' => $rowNum + 2, 'errors' => 'Edad inválida: días debe ser mayor o igual a 0'], $rowAssoc);
+                        continue;
+                    }
+                    if ($ageDays > 30) {
+                        $rowsFailed++;
+                        $failedRows[] = array_merge(['sheet' => $causeName, 'row' => $rowNum + 2, 'errors' => 'Edad inválida: días debe ser menor o igual a 30'], $rowAssoc);
+                        continue;
+                    }
+                }
+
+                // Validate years maximum and non-negative
+                if (!is_null($ageYears)) {
+                    if ($ageYears < 0) {
+                        $rowsFailed++;
+                        $failedRows[] = array_merge(['sheet' => $causeName, 'row' => $rowNum + 2, 'errors' => 'Edad inválida: años debe ser mayor o igual a 0'], $rowAssoc);
+                        continue;
+                    }
+                    if ($ageYears > 150) {
+                        $rowsFailed++;
+                        $failedRows[] = array_merge(['sheet' => $causeName, 'row' => $rowNum + 2, 'errors' => 'Edad inválida: años debe ser menor o igual a 150'], $rowAssoc);
+                        continue;
+                    }
                 }
 
                 // create or update death (prefer gov_folio upsert)
@@ -345,6 +454,12 @@ class DeathImportController extends Controller
                 $d->age = $ageYears ?? $age;
                 $d->age_years = $ageYears;
                 $d->age_months = $ageMonths;
+                // Persist days when provided (we added age_days column)
+                if (!is_null($ageDays)) {
+                    $d->age_days = $ageDays;
+                } else {
+                    $d->age_days = null;
+                }
                 $d->sex = $sex;
                 $d->death_date = $deathDate ? $deathDate->format('Y-m-d') : null;
                 $d->residence_municipality_id = $residenceMunicipality ? $residenceMunicipality->id : null;

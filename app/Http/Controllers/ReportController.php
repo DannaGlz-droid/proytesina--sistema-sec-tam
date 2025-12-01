@@ -103,8 +103,9 @@ class ReportController extends Controller
         }
 
         // Ordenar
-        // Ahora el parámetro `order_by` puede venir en formato `campo:dir` (ej. created_at:desc)
-        $orderParam = $request->input('order_by', 'created_at:desc');
+        // Ahora el parámetro `order_by` puede venir en formato `campo:dir` (ej. updated_at:desc)
+        // Por defecto ordenamos por `updated_at` para que las publicaciones editadas suban al inicio.
+        $orderParam = $request->input('order_by', 'updated_at:desc');
         $orderBy = $orderParam;
         $orderDir = 'desc';
 
@@ -124,7 +125,7 @@ class ReportController extends Controller
                   ->orderBy('users.name', $orderDir)
                   ->select('publications.*');
         } else {
-            // Por defecto: created_at
+            // Por defecto: usar la columna solicitada (p. ej. updated_at)
             $query->orderBy($orderBy, $orderDir);
         }
 
@@ -184,13 +185,13 @@ class ReportController extends Controller
             $user = Auth::user();
             
             // Verificar permisos de eliminación
-            // - Si la publicación está aprobada: solo Admin o Coordinador pueden eliminar
+            // - Si la publicación está aprobada: solo Admin puede eliminar (el autor no puede, sin importar su rol)
             // - Si no está aprobada: el autor o Admin pueden eliminar
             if ($publication->status === 'aprobado') {
-                if (! $user->isAdmin() && ! $user->isCoordinator()) {
+                if (! $user->isAdmin()) {
                     return redirect()
                         ->route('reportes.index')
-                        ->with('error', 'No tienes permisos para eliminar una publicación aprobada.');
+                        ->with('error', 'Solo los administradores pueden eliminar publicaciones aprobadas.');
                 }
             } else {
                 if ($publication->user_id !== $user->id && ! $user->isAdmin()) {
@@ -382,12 +383,18 @@ class ReportController extends Controller
                 ->with('error', 'Esta publicación no es de tipo Seguridad Vial');
         }
 
-        // Permitir edición solo al autor
+        // Permitir edición solo al autor Y que NO esté aprobada
         $user = Auth::user();
         if ($publication->user_id !== $user->id) {
             return redirect()
                 ->route('reportes.index')
                 ->with('error', 'No tienes permisos para editar esta publicación.');
+        }
+
+        if ($publication->status === 'aprobado') {
+            return redirect()
+                ->route('reportes.index')
+                ->with('error', 'No puedes editar una publicación aprobada.');
         }
 
         $report = $publication->roadSafetyReports->first();
@@ -404,12 +411,18 @@ class ReportController extends Controller
         // Los datos ya están validados por RoadSafetyReportRequest
         $validated = $request->validated();
 
-        // Permitir actualización solo al autor
+        // Permitir actualización solo al autor Y que NO esté aprobada
         $user = Auth::user();
         if ($publication->user_id !== $user->id) {
             return redirect()
                 ->route('reportes.index')
                 ->with('error', 'No tienes permisos para actualizar esta publicación.');
+        }
+
+        if ($publication->status === 'aprobado') {
+            return redirect()
+                ->route('reportes.index')
+                ->with('error', 'No puedes actualizar una publicación aprobada.');
         }
 
         try {
@@ -533,12 +546,18 @@ class ReportController extends Controller
                 ->with('error', 'Esta publicación no es de tipo Observatorio');
         }
 
-        // Permitir edición solo al autor
+        // Permitir edición solo al autor Y que NO esté aprobada
         $user = Auth::user();
         if ($publication->user_id !== $user->id) {
             return redirect()
                 ->route('reportes.index')
                 ->with('error', 'No tienes permisos para editar esta publicación.');
+        }
+
+        if ($publication->status === 'aprobado') {
+            return redirect()
+                ->route('reportes.index')
+                ->with('error', 'No puedes editar una publicación aprobada.');
         }
 
         $report = $publication->injuryObservatoryReports->first();
@@ -555,12 +574,18 @@ class ReportController extends Controller
     {
         $validated = $request->validated();
 
-        // Permitir actualización solo al autor
+        // Permitir actualización solo al autor Y que NO esté aprobada
         $user = Auth::user();
         if ($publication->user_id !== $user->id) {
             return redirect()
                 ->route('reportes.index')
                 ->with('error', 'No tienes permisos para actualizar esta publicación.');
+        }
+
+        if ($publication->status === 'aprobado') {
+            return redirect()
+                ->route('reportes.index')
+                ->with('error', 'No puedes actualizar una publicación aprobada.');
         }
 
         try {
@@ -690,14 +715,21 @@ class ReportController extends Controller
                 ->with('error', 'Esta publicación no es de tipo Alcoholimetría');
         }
 
-        $report = $publication->breathalyzerReports->first();
-        // Permitir edición solo al autor
+        // Permitir edición solo al autor Y que NO esté aprobada
         $user = Auth::user();
         if ($publication->user_id !== $user->id) {
             return redirect()
                 ->route('reportes.index')
                 ->with('error', 'No tienes permisos para editar esta publicación.');
         }
+
+        if ($publication->status === 'aprobado') {
+            return redirect()
+                ->route('reportes.index')
+                ->with('error', 'No puedes editar una publicación aprobada.');
+        }
+
+        $report = $publication->breathalyzerReports->first();
 
         return view('reportes.registro.alcoholimetria', compact('publication', 'report'));
     }
@@ -710,12 +742,18 @@ class ReportController extends Controller
         // Validated input from FormRequest
         $validated = $request->validated();
 
-        // Permitir actualización solo al autor
+        // Permitir actualización solo al autor Y que NO esté aprobada
         $user = Auth::user();
         if ($publication->user_id !== $user->id) {
             return redirect()
                 ->route('reportes.index')
                 ->with('error', 'No tienes permisos para actualizar esta publicación.');
+        }
+
+        if ($publication->status === 'aprobado') {
+            return redirect()
+                ->route('reportes.index')
+                ->with('error', 'No puedes actualizar una publicación aprobada.');
         }
 
         try {

@@ -4,8 +4,11 @@ use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\UserController;
 
+// Raíz: si está autenticado redirige al panel de reportes, si no al login
 Route::get('/', function () {
-    return view('welcome');
+    return auth()->check()
+        ? redirect()->route('reportes.index')
+        : redirect()->route('login');
 });
 
 // Dashboard predeterminado de Laravel (comentado - no se usa)
@@ -31,6 +34,7 @@ Route::middleware('auth')->group(function () {
     Route::middleware('role:Administrador')->group(function () {
         Route::get('usuario/gestion-de-usuarios', [UserController::class, 'index'])->name('user.user-gestion');
         Route::post('usuario/gestion-de-usuarios/datatable', [UserController::class, 'dataTable'])->name('user.datatable');
+        Route::post('usuario/gestion-de-usuarios/mass-delete', [UserController::class, 'massDelete'])->name('user.massDelete');
         Route::get('usuario/gestion-de-usuarios/registro', [UserController::class, 'create'])->name('user.create');
         Route::post('/usuario/gestion-de-usuarios/store', [UserController::class, 'store'])->name('user.store');
         Route::get('/usuario/gestion-de-usuarios/actualizar-registro/{user}', [UserController::class, 'edit'])->name('user.edit');
@@ -48,6 +52,7 @@ Route::middleware('auth')->group(function () {
         Route::post('estadisticas/datos/datatable', [App\Http\Controllers\DeathController::class, 'dataTable'])->name('statistic.datatable');
         Route::get('estadisticas/datos/export', [App\Http\Controllers\DeathExportController::class, 'export'])->name('statistic.export');
         Route::post('estadisticas/import', [App\Http\Controllers\DeathImportController::class, 'import'])->name('statistic.import');
+        Route::post('estadisticas/datos/mass-delete', [App\Http\Controllers\DeathController::class, 'massDelete'])->name('statistic.massDelete');
         Route::get('estadisticas/registro', [App\Http\Controllers\DeathController::class, 'create'])->name('statistic.create');
         Route::post('estadisticas/store', [App\Http\Controllers\DeathController::class, 'store'])->name('statistic.store');
         Route::get('estadisticas/actualizar-registro/{death}', [App\Http\Controllers\DeathController::class, 'edit'])->name('statistic.edit');

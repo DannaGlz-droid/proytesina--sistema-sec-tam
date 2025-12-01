@@ -9,6 +9,8 @@ use App\Models\Municipality;
 use App\Models\Jurisdiction;
 use App\Models\DeathLocation;
 use Illuminate\Support\Facades\Redirect;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class DeathController extends Controller
 {
@@ -27,9 +29,16 @@ class DeathController extends Controller
         $orderColumnIndex = $request->input('order.0.column', 0);
         $orderDir = $request->input('order.0.dir', 'desc');
         
-        // Column mapping (same order as table columns)
+        // Column mapping (same order as table columns shown to server-side, NOT including the client-side checkbox column)
+        // Note: DataTables on the client will include a leading checkbox column (index 0). When DataTables sends an order column index,
+        // we need to map it to our $columns array. If the requested column is 0 (the checkbox), default to 'id'. Otherwise subtract 1.
         $columns = ['gov_folio', 'name', 'first_last_name', 'second_last_name', 'age', 'sex', 'death_date', 'residence_municipality_id', 'death_municipality_id', 'jurisdiction_id', 'death_location_id', 'death_cause_id'];
-        $orderColumn = $columns[$orderColumnIndex] ?? 'id';
+        if ($orderColumnIndex == 0) {
+            $orderColumn = 'id';
+        } else {
+            $mappedIndex = $orderColumnIndex - 1;
+            $orderColumn = $columns[$mappedIndex] ?? 'id';
+        }
         
         // Build query
         $query = Death::query();
@@ -153,9 +162,10 @@ class DeathController extends Controller
                         ->take($length)
                         ->get();
         
-        // Format data for DataTables
+        // Format data for DataTables. Include `id` so the client can build checkboxes for bulk operations.
         $data = $deaths->map(function ($death) {
             return [
+                'id' => $death->id,
                 'gov_folio' => optional($death)->gov_folio ?? '—',
                 'name' => $death->name ?? '—',
                 'first_last_name' => $death->first_last_name ?? '—',
@@ -171,6 +181,8 @@ class DeathController extends Controller
                 'actions' => view('estadisticas.partials.table-actions', compact('death'))->render(),
             ];
         });
+
+        // End format
         
         return response()->json([
             'draw' => $draw,
@@ -394,7 +406,7 @@ class DeathController extends Controller
             // Accept either the legacy 'age' or the new composite fields
             'age' => ['nullable','integer','min:0','max:150'],
             'edad_valor' => ['required','integer','min:0','max:150'],
-            'edad_unidad' => ['required','string','in:anos,meses'],
+            'edad_unidad' => ['required','string','in:anos,meses,dias'],
             'sex' => ['required','in:masculino,femenino,hombre,mujer,M,F,male,female'],
             'residence_municipality_id' => ['required','integer',function($attribute, $value, $fail) {
                 if ($value != 0 && !\DB::table('municipalities')->where('id', $value)->exists()) {
@@ -409,7 +421,7 @@ class DeathController extends Controller
             'jurisdiction_id' => ['nullable','integer','exists:jurisdictions,id'],
             'death_location_id' => ['required','integer','exists:death_locations,id'],
             'death_cause_id' => ['required','integer','exists:death_causes,id'],
-            'death_date' => ['required','date'],
+            'death_date' => ['required','date','before_or_equal:today'],
         ]);
 
         // Normalize sex values to short form if possible
@@ -429,6 +441,7 @@ class DeathController extends Controller
         // Determine age_years/age_months from composite inputs if provided
         $ageYears = null;
         $ageMonths = null;
+        $ageDays = null;
         $ageForLegacy = $data['age'] ?? null;
 
         if (!empty($data['edad_valor']) && !empty($data['edad_unidad'])) {
@@ -437,6 +450,11 @@ class DeathController extends Controller
             if ($unidad === 'meses') {
                 $ageYears = 0;
                 $ageMonths = $valor;
+                $ageForLegacy = 0;
+            } elseif ($unidad === 'dias') {
+                $ageYears = 0;
+                $ageMonths = 0;
+                $ageDays = $valor;
                 $ageForLegacy = 0;
             } else {
                 // 'anos'
@@ -455,6 +473,16 @@ class DeathController extends Controller
         // For manual registration: do not accept 12 or more months — ask user to use years
         if (!is_null($ageMonths) && $ageMonths >= 12) {
             return Redirect::back()->withInput()->withErrors(['edad_valor' => 'Si la unidad es "meses", el valor debe ser menor a 12; para 12 o más use años.']);
+        }
+
+        // For manual registration: days must be between 0 and 30
+        if (!is_null($ageDays)) {
+            if ($ageDays < 0) {
+                return Redirect::back()->withInput()->withErrors(['edad_valor' => 'Si la unidad es "días", el valor debe ser mayor o igual a 0.']);
+            }
+            if ($ageDays > 30) {
+                return Redirect::back()->withInput()->withErrors(['edad_valor' => 'Si la unidad es "días", el valor debe ser menor o igual a 30.']);
+            }
         }
         // Determine jurisdiction: derive from residence municipality when possible
         // If not found, use explicit `jurisdiction_id` from the form; otherwise assign a default 'NO ENCONTRADA'
@@ -480,6 +508,7 @@ class DeathController extends Controller
             'age' => $ageForLegacy ?? null,
             'age_years' => $ageYears,
             'age_months' => $ageMonths,
+            'age_days' => $ageDays ?? null,
             'sex' => $data['sex'],
             'death_date' => $data['death_date'],
             'residence_municipality_id' => $data['residence_municipality_id'] ?? null,
@@ -506,7 +535,7 @@ class DeathController extends Controller
             // Accept either the legacy 'age' or the new composite fields
             'age' => ['nullable','integer','min:0','max:150'],
             'edad_valor' => ['required','integer','min:0','max:150'],
-            'edad_unidad' => ['required','string','in:anos,meses'],
+            'edad_unidad' => ['required','string','in:anos,meses,dias'],
             'sex' => ['required','in:M,F,masculino,femenino,hombre,mujer,m,f'],
             'residence_municipality_id' => ['required','integer',function($attribute, $value, $fail) {
                 if ($value != 0 && !\DB::table('municipalities')->where('id', $value)->exists()) {
@@ -521,7 +550,7 @@ class DeathController extends Controller
             'jurisdiction_id' => ['nullable','integer','exists:jurisdictions,id'],
             'death_location_id' => ['required','integer','exists:death_locations,id'],
             'death_cause_id' => ['required','integer','exists:death_causes,id'],
-            'death_date' => ['required','date'],
+            'death_date' => ['required','date','before_or_equal:today'],
         ]);
 
         // Normalize sex values to short form if possible
@@ -541,6 +570,7 @@ class DeathController extends Controller
         // Determine age_years/age_months from composite inputs if provided
         $ageYears = null;
         $ageMonths = null;
+        $ageDays = null;
         $ageForLegacy = $data['age'] ?? null;
 
         if (!empty($data['edad_valor']) && !empty($data['edad_unidad'])) {
@@ -549,6 +579,11 @@ class DeathController extends Controller
             if ($unidad === 'meses') {
                 $ageYears = 0;
                 $ageMonths = $valor;
+                $ageForLegacy = 0;
+            } elseif ($unidad === 'dias') {
+                $ageYears = 0;
+                $ageMonths = 0;
+                $ageDays = $valor;
                 $ageForLegacy = 0;
             } else {
                 $ageYears = $valor;
@@ -565,6 +600,16 @@ class DeathController extends Controller
         // For manual update: do not accept 12 or more months — ask user to use years
         if (!is_null($ageMonths) && $ageMonths >= 12) {
             return Redirect::back()->withInput()->withErrors(['edad_valor' => 'Si la unidad es "meses", el valor debe ser menor a 12; para 12 o más use años.']);
+        }
+
+        // For manual update: days must be between 0 and 30
+        if (!is_null($ageDays)) {
+            if ($ageDays < 0) {
+                return Redirect::back()->withInput()->withErrors(['edad_valor' => 'Si la unidad es "días", el valor debe ser mayor o igual a 0.']);
+            }
+            if ($ageDays > 30) {
+                return Redirect::back()->withInput()->withErrors(['edad_valor' => 'Si la unidad es "días", el valor debe ser menor o igual a 30.']);
+            }
         }
         // Determine jurisdiction: derive from residence municipality when possible
         // If not found, use explicit `jurisdiction_id` from the form; otherwise assign a default 'NO ENCONTRADA'
@@ -590,6 +635,7 @@ class DeathController extends Controller
             'age' => $ageForLegacy ?? null,
             'age_years' => $ageYears,
             'age_months' => $ageMonths,
+            'age_days' => $ageDays ?? null,
             'sex' => $data['sex'],
             'death_date' => $data['death_date'],
             'residence_municipality_id' => $data['residence_municipality_id'] ?? null,
@@ -627,6 +673,31 @@ class DeathController extends Controller
         $death->delete();
 
         return Redirect::route('statistic.data')->with('success', 'Registro de defunción eliminado correctamente.');
+    }
+
+    /**
+     * Mass delete deaths by ids (AJAX)
+     */
+    public function massDelete(Request $request)
+    {
+        $data = $request->validate([
+            'ids' => ['required', 'array'],
+            'ids.*' => ['integer']
+        ]);
+
+        $ids = $data['ids'];
+
+        try {
+            DB::beginTransaction();
+            $deleted = Death::whereIn('id', $ids)->delete();
+            DB::commit();
+
+            return response()->json(['ok' => true, 'deleted' => $deleted]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('massDelete deaths error: ' . $e->getMessage());
+            return response()->json(['ok' => false, 'message' => 'Error al eliminar registros de defunción'], 500);
+        }
     }
 
 }

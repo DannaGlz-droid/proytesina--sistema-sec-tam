@@ -63,7 +63,7 @@
                     </div>
 
                     <div>
-                        <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Sexo *</label>
+                        <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Sexo <span class="text-red-600">*</span></label>
                         <select name="sex" class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora">
                             <option value="">Seleccione una opción</option>
                             <option value="M" {{ old('sex', $defuncion->sex ?? '') == 'M' ? 'selected' : '' }}>Masculino</option>
@@ -73,24 +73,21 @@
                     </div>
 
                     <div>
-                        <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Edad *</label>
+                        <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Edad <span class="text-red-600">*</span></label>
                         @php
                             $defaultValor = old('edad_valor');
                             $defaultUnidad = old('edad_unidad');
                             if (is_null($defaultValor)) {
-                                if (isset($defuncion->age_years) && $defuncion->age_years !== null) {
-                                    if ($defuncion->age_years >= 1) {
-                                        $defaultValor = $defuncion->age_years;
-                                        $defaultUnidad = $defaultUnidad ?? 'anos';
-                                    } else {
-                                        if (isset($defuncion->age_months) && $defuncion->age_months !== null) {
-                                            $defaultValor = $defuncion->age_months;
-                                            $defaultUnidad = $defaultUnidad ?? 'meses';
-                                        } else {
-                                            $defaultValor = $defuncion->age ?? '';
-                                            $defaultUnidad = $defaultUnidad ?? 'anos';
-                                        }
-                                    }
+                                // Prefer explicit day value if present
+                                if (isset($defuncion->age_days) && $defuncion->age_days !== null) {
+                                    $defaultValor = $defuncion->age_days;
+                                    $defaultUnidad = $defaultUnidad ?? 'dias';
+                                } elseif (isset($defuncion->age_months) && $defuncion->age_months !== null) {
+                                    $defaultValor = $defuncion->age_months;
+                                    $defaultUnidad = $defaultUnidad ?? 'meses';
+                                } elseif (isset($defuncion->age_years) && $defuncion->age_years !== null) {
+                                    $defaultValor = $defuncion->age_years;
+                                    $defaultUnidad = $defaultUnidad ?? 'anos';
                                 } else {
                                     $defaultValor = $defuncion->age ?? '';
                                     $defaultUnidad = $defaultUnidad ?? 'anos';
@@ -105,6 +102,7 @@
                                 <option value="">Unidad</option>
                                 <option value="anos" {{ $defaultUnidad === 'anos' ? 'selected' : '' }}>Años</option>
                                 <option value="meses" {{ $defaultUnidad === 'meses' ? 'selected' : '' }}>Meses</option>
+                                <option value="dias" {{ $defaultUnidad === 'dias' ? 'selected' : '' }}>Días</option>
                             </select>
                         </div>
                         @error('edad_valor') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
@@ -162,7 +160,7 @@
                     value="{{ old('jurisdiction_id') ? ($jurisdictions->firstWhere('id', old('jurisdiction_id'))->name ?? '') : (optional($defuncion->jurisdiction)->name ?? '') }}">
                         </div>
                         <div>
-                            <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Lugar específico *</label>
+                            <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Lugar específico <span class="text-red-600">*</span></label>
                             <select id="death_municipality_location" name="death_location_id" class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora">
                                 <option value="">Seleccione lugar</option>
                                 @foreach($locations as $loc)
@@ -190,7 +188,7 @@
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-3 lg:gap-4">
                     <div class="space-y-3">
                         <div>
-                            <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Causa de la defunción *</label>
+                            <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Causa de la defunción <span class="text-red-600">*</span></label>
                             <select id="death_cause" name="death_cause_id" class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora">
                                 <option value="">Seleccione una causa</option>
                                 @foreach($causes as $c)
@@ -203,7 +201,7 @@
                     
                     <div class="space-y-3">
                         <div>
-                            <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Fecha de defunción *</label>
+                            <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Fecha de defunción <span class="text-red-600">*</span></label>
                             <input name="death_date" type="date" 
                                    class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora"
                                    value="{{ old('death_date', optional($defuncion)->death_date ? \Carbon\Carbon::parse(optional($defuncion)->death_date)->format('Y-m-d') : '') }}">
@@ -371,16 +369,26 @@
                 const unidad = edadUnidad.value;
 
                 if (valor !== '' && !unidad) {
-                    edadUnidad.setCustomValidity('Debe seleccionar la unidad (años o meses)');
+                    edadUnidad.setCustomValidity('Debe seleccionar la unidad (años, meses o días)');
                     return false;
                 }
+
                 if (unidad === 'meses' && valor !== '') {
                     const valorNum = parseInt(valor);
-                    if (valorNum >= 12) {
-                        edadValor.setCustomValidity('Si la unidad es "meses", el valor debe ser menor a 12. Para 12 o más use años.');
+                    if (isNaN(valorNum) || valorNum < 0 || valorNum >= 12) {
+                        edadValor.setCustomValidity('Si la unidad es "meses", el valor debe ser un número entre 0 y 11. Para 12 o más use años.');
                         return false;
                     }
                 }
+
+                if (unidad === 'dias' && valor !== '') {
+                    const valorNum = parseInt(valor);
+                    if (isNaN(valorNum) || valorNum < 0 || valorNum > 30) {
+                        edadValor.setCustomValidity('Si la unidad es "días", el valor debe ser un número entre 0 y 30.');
+                        return false;
+                    }
+                }
+
                 edadValor.setCustomValidity('');
                 edadUnidad.setCustomValidity('');
                 return true;

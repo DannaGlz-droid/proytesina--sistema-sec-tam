@@ -91,7 +91,7 @@
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-3 lg:gap-4">
                     <div class="space-y-3">
                         <div>
-                            <label for="position_select" class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Cargo *</label>
+                            <label for="position_select" class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Cargo <span class="text-red-600">*</span></label>
                             <select id="position_select" class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora tomselect-select" name="position_id">
                                 <option value="">Seleccione un cargo</option>
                                 @if(isset($positions))
@@ -106,7 +106,7 @@
                     
                     <div class="space-y-3">
                         <div>
-                            <label for="jurisdiction_id" class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Jurisdicción *</label>
+                            <label for="jurisdiction_id" class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Jurisdicción <span class="text-red-600">*</span></label>
                             <select id="jurisdiction_id" class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora" name="jurisdiction_id" required>
                                 <option value="">Seleccione una jurisdicción</option>
                                 @if(isset($jurisdictions))
@@ -135,7 +135,7 @@
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-3 lg:gap-4">
                     <div class="space-y-3">
                         <div>
-                            <label for="username" class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Usuario *</label>
+                            <label for="username" class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Usuario <span class="text-red-600">*</span></label>
                 <input id="username" name="username" type="text" required minlength="3" maxlength="50" pattern="[a-zA-Z0-9_.-]+"
                                    class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora" 
                                    placeholder="Ej: mgarcia"
@@ -166,7 +166,7 @@
                     
                     <div class="space-y-3">
                         <div>
-                            <label for="role_id" class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Rol *</label>
+                            <label for="role_id" class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Rol <span class="text-red-600">*</span></label>
                             <select id="role_id" class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora" name="role_id" required>
                                 <option value="">Seleccione un rol</option>
                                 @if(isset($roles))

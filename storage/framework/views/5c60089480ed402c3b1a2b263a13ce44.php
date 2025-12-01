@@ -1,9 +1,15 @@
 <div class="bg-header text-white p-2 lg:p-3 w-full h-14 lg:h-16 font-sans flex items-center justify-between">
-    <!-- Logo del admin a la izquierda (reemplaza el punto) -->
-    <div class="flex items-center space-x-3 ml-3 lg:ml-6">
-        <!-- Logo admin: coloque el archivo en public/images/logo-admin.png -->
-        <img src="<?php echo e(asset('images/logo-secretaria.png')); ?>" alt="Logo Administración" class="h-7 lg:h-9 object-contain">
-    </div>
+    <!-- Logos a la izquierda: Tamaulipas | Separador | Secretaría de Salud -->
+    <a href="<?php echo e(auth()->check() ? (auth()->user()->hasAnyRole(['Administrador','Coordinador']) ? route('statistic.data') : route('reportes.index')) : route('login')); ?>" class="flex items-center ml-3 lg:ml-6">
+        <!-- Logo Tamaulipas Gobierno del Estado (más grande) -->
+        <img src="<?php echo e(asset('images/tam_logo.png')); ?>" alt="Tamaulipas Gobierno del Estado" class="h-10 lg:h-13 object-contain">
+        
+        <!-- Línea separadora vertical (color dorado similar a los iconos) -->
+        <div class="h-9 lg:h-12 w-px bg-[#b7862a] mx-3 lg:mx-4"></div>
+        
+        <!-- Logo Secretaría de Salud (más pequeño) -->
+        <img src="<?php echo e(asset('images/logo-secretaria.png')); ?>" alt="Secretaría de Salud" class="h-6 lg:h-8 object-contain">
+    </a>
 
     <!-- Botones y usuario a la derecha -->
     <div class="flex items-center">

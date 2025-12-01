@@ -396,6 +396,28 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
+    // Build a query string from the current filter controls so it can be reflected in the URL
+    function buildFiltersQuery() {
+        const params = new URLSearchParams();
+        const dateRange = document.getElementById('dateRange')?.value;
+        if (dateRange) params.set('dateRange', dateRange);
+        const year = document.getElementById('year')?.value; if (year) params.set('year', year);
+        const month = document.getElementById('month')?.value; if (month) params.set('month', month);
+        const selectedMonths = Array.from(document.querySelectorAll('.month-checkbox:checked')).map(i => i.value);
+        if (selectedMonths.length) selectedMonths.forEach(m => params.append('selectedMonths[]', m));
+        const quarter = document.getElementById('quarter')?.value; if (quarter) params.set('quarter', quarter);
+        const startDate = document.getElementById('startDate')?.value; if (startDate) params.set('startDate', startDate);
+        const endDate = document.getElementById('endDate')?.value; if (endDate) params.set('endDate', endDate);
+        const jurisdiccion = document.getElementById('jurisdiccion')?.value; if (jurisdiccion) params.set('jurisdiccion', jurisdiccion);
+        const municipio = document.getElementById('municipio')?.value; if (municipio) params.set('municipio', municipio);
+        const municipioDefuncion = document.getElementById('municipioDefuncion')?.value; if (municipioDefuncion) params.set('municipioDefuncion', municipioDefuncion);
+        const sexo = document.getElementById('sexo')?.value; if (sexo) params.set('sexo', sexo);
+        const edad = document.getElementById('edad')?.value; if (edad) params.set('edad', edad);
+        const causa = document.getElementById('causa')?.value; if (causa) params.set('causa', causa);
+        const chartLimit = document.getElementById('chartLimit')?.value; if (chartLimit) params.set('chartLimit', chartLimit);
+        return params.toString();
+    }
+
     // Limpiar filtros: usa lógica simple (como en demo)
     document.getElementById('limpiarFiltros')?.addEventListener('click', function() {
         if (dateRange) dateRange.selectedIndex = 0;
@@ -424,24 +446,42 @@ document.addEventListener('DOMContentLoaded', function() {
         });
 
         // Llamar a la función de reinicio de gráficos si existe
-        if (typeof window.resetChartsToDefault === 'function') {
-            window.resetChartsToDefault();
-        }
+        if (typeof window.resetChartsToDefault === 'function') window.resetChartsToDefault();
+
+        // Update the URL to remove filter querystring (behave like datos: filters reflected in URL)
+        try {
+            const newUrl = window.location.pathname + ('' ? '' : '');
+            window.history.replaceState({}, '', newUrl);
+        } catch (e) { /* ignore */ }
 
         // Cargar gráficos con filtros limpiados (todos los datos)
-        if (typeof window.loadCharts === 'function') {
-            setTimeout(() => window.loadCharts(), 150);
+        if (typeof window.loadChartsDebounced === 'function') {
+            window.loadChartsDebounced();
+        } else if (typeof window.loadCharts === 'function') {
+            window.loadCharts();
+        } else {
+            // fallback: trigger the aplicar button click to run any attached handlers
+            document.getElementById('aplicarFiltros')?.click();
         }
-
         console.log('Filtros y gráficos limpiados');
     });
 
     // Aplicar filtros (colección simple)
     document.getElementById('aplicarFiltros')?.addEventListener('click', function() {
+        // Update URL querystring to reflect current filters (so behavior matches /estadisticas/datos)
+        try {
+            const qs = buildFiltersQuery();
+            const newUrl = window.location.pathname + (qs ? ('?' + qs) : '');
+            window.history.replaceState({}, '', newUrl);
+        } catch (e) { /* ignore */ }
+
         // Disparar carga de gráficos usando la función global expuesta desde la vista de gráficos
-        if (typeof window.loadCharts === 'function') {
+        if (typeof window.loadChartsDebounced === 'function') {
+            window.loadChartsDebounced();
+        } else if (typeof window.loadCharts === 'function') {
             window.loadCharts();
         } else {
+            // fallback: log current filters
             const filtros = {
                 dateRange: dateRange?.value,
                 year: document.getElementById('year')?.value,

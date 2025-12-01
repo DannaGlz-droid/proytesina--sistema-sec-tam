@@ -78,6 +78,7 @@
                                     <option value="">Unidad</option>
                                     <option value="anos" {{ old('edad_unidad') === 'anos' ? 'selected' : '' }}>Años</option>
                                     <option value="meses" {{ old('edad_unidad') === 'meses' ? 'selected' : '' }}>Meses</option>
+                                    <option value="dias" {{ old('edad_unidad') === 'dias' ? 'selected' : '' }}>Días</option>
                                 </select>
                             </div>
                             @error('edad_valor') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
@@ -454,7 +455,7 @@
                 
                 // If valor is provided, unidad is required
                 if (valor !== '' && !unidad) {
-                    edadUnidad.setCustomValidity('Debe seleccionar la unidad (años o meses)');
+                    edadUnidad.setCustomValidity('Debe seleccionar la unidad (años, meses o días)');
                     return false;
                 }
                 
@@ -463,6 +464,19 @@
                     const valorNum = parseInt(valor);
                     if (valorNum >= 12) {
                         edadValor.setCustomValidity('Si la unidad es "meses", el valor debe ser menor a 12. Para 12 o más use años.');
+                        return false;
+                    }
+                }
+
+                // If unidad is 'dias', valor must be between 0 and 30 (inclusive)
+                if (unidad === 'dias' && valor !== '') {
+                    const valorNum = parseInt(valor);
+                    if (valorNum < 0) {
+                        edadValor.setCustomValidity('Si la unidad es "días", el valor debe ser mayor o igual a 0.');
+                        return false;
+                    }
+                    if (valorNum > 30) {
+                        edadValor.setCustomValidity('Si la unidad es "días", el valor debe ser menor o igual a 30.');
                         return false;
                     }
                 }

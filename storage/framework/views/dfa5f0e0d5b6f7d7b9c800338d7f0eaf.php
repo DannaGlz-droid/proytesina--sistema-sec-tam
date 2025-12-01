@@ -1,9 +1,9 @@
-@extends('layouts.principal')
-@section('title', 'Gestión de Usuarios')
-@section('content')
 
-    @include('components.header-admin')
-    @include('components.nav-usuario')
+<?php $__env->startSection('title', 'Gestión de Usuarios'); ?>
+<?php $__env->startSection('content'); ?>
+
+    <?php echo $__env->make('components.header-admin', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?>
+    <?php echo $__env->make('components.nav-usuario', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?>
 
     <div class="px-4 lg:pl-10 pt-6 lg:pt-10 pb-8 lg:pb-12">
         <!-- HEADER CON TÍTULO Y BOTÓN -->
@@ -16,14 +16,33 @@
             </div>
             
             <!-- BOTÓN CREAR USUARIO -->
-                <a href="{{ route('user.create') }}" class="bg-[#611132] text-white px-4 py-2.5 rounded-lg text-xs font-semibold hover:bg-[#4a0e26] transition-all duration-300 font-lora flex items-center gap-2 whitespace-nowrap shadow-sm self-start lg:self-auto" title="Crear Usuario">
+                <a href="<?php echo e(route('user.create')); ?>" class="bg-[#611132] text-white px-4 py-2.5 rounded-lg text-xs font-semibold hover:bg-[#4a0e26] transition-all duration-300 font-lora flex items-center gap-2 whitespace-nowrap shadow-sm self-start lg:self-auto" title="Crear Usuario">
                 <i class="fas fa-plus text-xs"></i>
                 Crear Usuario
                 </a>
             </div>
                 <div class="flex flex-col lg:flex-row gap-6">
                     <div class="lg:w-80 flex-shrink-0">
-                        <x-filtros.usuarios :positions="$positions" :jurisdictions="$jurisdictions" :roles="$roles" />
+                        <?php if (isset($component)) { $__componentOriginaldfb34dbd9e2a4c0448d6497003ff47d0 = $component; } ?>
+<?php if (isset($attributes)) { $__attributesOriginaldfb34dbd9e2a4c0448d6497003ff47d0 = $attributes; } ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.filtros.usuarios','data' => ['positions' => $positions,'jurisdictions' => $jurisdictions,'roles' => $roles]] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component->withName('filtros.usuarios'); ?>
+<?php if ($component->shouldRender()): ?>
+<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
+<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
+<?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
+<?php endif; ?>
+<?php $component->withAttributes(['positions' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($positions),'jurisdictions' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($jurisdictions),'roles' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($roles)]); ?>
+<?php echo $__env->renderComponent(); ?>
+<?php endif; ?>
+<?php if (isset($__attributesOriginaldfb34dbd9e2a4c0448d6497003ff47d0)): ?>
+<?php $attributes = $__attributesOriginaldfb34dbd9e2a4c0448d6497003ff47d0; ?>
+<?php unset($__attributesOriginaldfb34dbd9e2a4c0448d6497003ff47d0); ?>
+<?php endif; ?>
+<?php if (isset($__componentOriginaldfb34dbd9e2a4c0448d6497003ff47d0)): ?>
+<?php $component = $__componentOriginaldfb34dbd9e2a4c0448d6497003ff47d0; ?>
+<?php unset($__componentOriginaldfb34dbd9e2a4c0448d6497003ff47d0); ?>
+<?php endif; ?>
                     </div>
                     <div class="flex-1 min-w-0">
                         <!-- Custom controls wrapper styled like the site -->
@@ -170,7 +189,7 @@
                 lengthChange: false, // Disable DataTables length (use custom)
                 dom: 't', // Only show table
                 ajax: {
-                    url: '{{ route('user.datatable') }}',
+                    url: '<?php echo e(route('user.datatable')); ?>',
                     type: 'POST',
                     data: function(d) {
                         // Build live filters from the form at request time so changes
@@ -296,7 +315,7 @@
                 if (!confirm('¿Confirmas eliminar ' + ids.length + ' usuario(s)? Esta acción no se puede deshacer.')) return;
 
                 $.ajax({
-                    url: '{{ route('user.massDelete') }}',
+                    url: '<?php echo e(route('user.massDelete')); ?>',
                     method: 'POST',
                     data: { ids: ids },
                     success: function(res) {
@@ -426,4 +445,5 @@
             });
         });
     </script>
-@endsection
+<?php $__env->stopSection(); ?>
+<?php echo $__env->make('layouts.principal', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH C:\Proyectos Laravel\sistema-sec-tam\resources\views/usuarios/gestion-de-usuarios.blade.php ENDPATH**/ ?>

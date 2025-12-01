@@ -19,6 +19,7 @@ class Death extends Model
         'first_last_name',
         'second_last_name',
         'age',
+        'age_days',
         'age_years',
         'age_months',
         'gov_folio',
@@ -62,6 +63,7 @@ class Death extends Model
         'age' => 'integer',
         'age_years' => 'integer',
         'age_months' => 'integer',
+        'age_days' => 'integer',
         'gov_folio' => 'string',
         // 'sex' no necesita cast - enum se maneja como string automáticamente
     ];
@@ -76,6 +78,7 @@ class Death extends Model
     {
         $years = $this->age_years;
         $months = $this->age_months;
+        $days = $this->age_days;
 
         if (!is_null($years) && $years >= 1) {
             return $years . ' años';
@@ -83,6 +86,10 @@ class Death extends Model
 
         if (!is_null($months) && $months > 0) {
             return $months . ' meses';
+        }
+
+        if (!is_null($days) && $days > 0) {
+            return $days . ' días';
         }
 
         if (!is_null($this->age) && $this->age > 0) {

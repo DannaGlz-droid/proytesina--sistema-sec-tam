@@ -398,6 +398,11 @@ document.addEventListener('DOMContentLoaded', function() {
         });
 
         console.log('Filtros limpiados');
+        // After cleaning, submit the form so the listing updates immediately
+        const filtersForm = document.getElementById('filters-form');
+        if (filtersForm) {
+            setTimeout(() => filtersForm.submit(), 50);
+        }
     });
 
     // Aplicar filtros (colección simple)

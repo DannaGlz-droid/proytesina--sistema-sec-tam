@@ -11,7 +11,7 @@
             <div>
                 <h1 class="text-2xl lg:text-3xl font-lora font-bold text-[#404041] mb-2">Datos de Defunciones</h1>
                 <p class="text-sm lg:text-base text-[#404041] font-lora">
-                    En esta sección puede cargar archivos (Excel o CSV), aplicar filtros y consultar los registros en la tabla.
+                    En esta sección puede cargar archivos Excel (.xlsx, .xls), aplicar filtros y consultar los registros en la tabla.
                 </p>
             </div>
 
@@ -36,12 +36,12 @@
                     <div class="space-y-3">
                         <!-- Compact Drag & Drop area (unified style with reportes, simpler) -->
                         <div id="deaths-drop-area" class="border-2 border-dashed border-gray-300 rounded-lg px-4 py-3 text-center cursor-pointer bg-white">
-                            <input id="fileInput" type="file" name="file" accept=".xlsx,.xls,.csv" class="hidden" />
+                            <input id="fileInput" type="file" name="file" accept=".xlsx,.xls" class="hidden" />
                             <div class="flex items-center justify-center gap-3">
                                 <i class="fas fa-cloud-upload-alt text-lg text-gray-400"></i>
                                 <div class="text-left">
                                     <p class="text-sm text-gray-700 font-lora mb-0">Arrastre el archivo aquí o haga clic para seleccionar</p>
-                                    <p class="text-xs text-gray-500">Excel / CSV · Máx. 10MB</p>
+                                    <p class="text-xs text-gray-500">Solo Excel (.xlsx, .xls) · Máx. 10MB</p>
                                 </div>
                             </div>
                         </div>
@@ -94,6 +94,7 @@
                     <table id="deaths-table" class="min-w-full w-full text-sm text-left text-gray-500">
                         <thead class="text-xs text-gray-700 uppercase bg-gray-50 border-b border-[#404041]">
                             <tr>
+                                <th scope="col" class="px-3 py-2 font-lora whitespace-nowrap text-xs"><input id="select-all-deaths" type="checkbox" /></th>
                                 <th scope="col" class="px-3 py-2 font-lora whitespace-nowrap text-xs">Folio</th>
                                 <th scope="col" class="px-3 py-2 font-lora whitespace-nowrap text-xs">Nombre(s)</th>
                                 <th scope="col" class="px-3 py-2 font-lora whitespace-nowrap text-xs">Apellido P.</th>
@@ -114,7 +115,10 @@
                         </tbody>
                     </table>
                     </div>
-
+                            <button id="bulk-delete-deaths" type="button" class="h-8 px-3 bg-red-600 text-white rounded-lg text-xs font-semibold hover:bg-red-700 transition-all duration-150" title="Eliminar seleccionados" style="display:none">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        
                     <!-- Custom pagination -->
                     <nav class="flex flex-row flex-wrap items-center justify-between gap-3 p-4 border-t border-[#404041]">
                         <span class="text-sm font-normal text-gray-500 font-lora flex-1 min-w-0" id="dt-info-deaths">
@@ -255,7 +259,24 @@ document.addEventListener('DOMContentLoaded', function () {
     // Get current URL parameters for filters
     const urlParams = new URLSearchParams(window.location.search);
     const filterData = {};
-    for (const [key, value] of urlParams.entries()) {
+    // Normalize repeated params like selectedMonths[] into arrays and strip bracket notation
+    for (const [rawKey, value] of urlParams.entries()) {
+        let key = rawKey;
+        if (key.endsWith('[]')) {
+            key = key.slice(0, -2);
+            if (!Array.isArray(filterData[key])) filterData[key] = [];
+            filterData[key].push(value);
+            continue;
+        }
+        // handle keys like selectedMonths[0]=01
+        const bracketIndex = key.indexOf('[');
+        if (bracketIndex !== -1) {
+            key = key.substring(0, bracketIndex);
+            if (!Array.isArray(filterData[key])) filterData[key] = [];
+            filterData[key].push(value);
+            continue;
+        }
+        // single value
         filterData[key] = value;
     }
 
@@ -288,6 +309,7 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         },
         columns: [
+            { data: 'id', name: 'id', orderable: false, searchable: false, render: function(data, type, row) { return '<input class="row-check" data-id="'+data+'" type="checkbox" />'; } },
             { data: 'gov_folio', name: 'gov_folio' },
             { data: 'name', name: 'name' },
             { data: 'first_last_name', name: 'first_last_name' },
@@ -303,7 +325,9 @@ document.addEventListener('DOMContentLoaded', function () {
             { data: 'actions', name: 'actions', orderable: false, searchable: false }
         ],
         pageLength: 25,
-        order: [[6, 'desc']], // Default: death_date desc
+        // Default: death_date desc — death_date is the 8th column (index 7) because
+        // the table includes a leading checkbox column at index 0.
+        order: [[7, 'desc']],
         language: {
             emptyTable: 'No hay datos disponibles',
             loadingRecords: 'Cargando...',
@@ -313,8 +337,15 @@ document.addEventListener('DOMContentLoaded', function () {
         drawCallback: function(settings) {
             updateCustomInfoDeaths(this.api());
             updateCustomPaginationDeaths(this.api());
+            // Ensure bulk-delete visibility is refreshed after each draw
+            try { toggleBulkDeleteButton(); } catch (e) { console.error('toggleBulkDeleteButton error', e); }
+            // Uncheck header select-all when page changes (to avoid stale state)
+            try { $('#select-all-deaths').prop('checked', false); } catch (e) {}
         }
     });
+
+    // Ensure button state is correct after initialization
+    try { toggleBulkDeleteButton(); } catch (e) {}
 
     // Custom search functionality
     $('#dt-search-deaths').on('keyup', function(e) {
@@ -329,6 +360,63 @@ document.addEventListener('DOMContentLoaded', function () {
         const val = $('#dt-search-deaths').val();
         window.deathsTable.search(val).draw();
         $('#dt-clear-deaths-btn').toggleClass('hidden', !val);
+    });
+
+    // Checkbox selection: select-all for visible page
+    $('#select-all-deaths').on('change', function() {
+        const checked = $(this).is(':checked');
+        $('#deaths-table tbody .row-check').prop('checked', checked);
+        toggleBulkDeleteButton();
+    });
+
+    // Delegate click for row checkboxes (as they are rendered by DataTables)
+    $('#deaths-table tbody').on('change', '.row-check', function() {
+        // If any checkbox unchecked, uncheck select-all header
+        if (!$(this).is(':checked')) {
+            $('#select-all-deaths').prop('checked', false);
+        }
+        toggleBulkDeleteButton();
+    });
+
+    function toggleBulkDeleteButton() {
+        const any = $('#deaths-table tbody .row-check:checked').length > 0;
+        $('#bulk-delete-deaths').toggle(any);
+    }
+
+    // Bulk delete action
+    $('#bulk-delete-deaths').on('click', function() {
+        const ids = [];
+        $('#deaths-table tbody .row-check:checked').each(function() {
+            const id = $(this).data('id');
+            if (id) ids.push(id);
+        });
+        if (!ids.length) { alert('Selecciona al menos un registro.'); return; }
+        if (!confirm('¿Confirmas eliminar ' + ids.length + ' registro(s)? Esta acción no se puede deshacer.')) return;
+
+        $.ajax({
+            url: '{{ route('statistic.massDelete') }}',
+            method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+            },
+            data: { ids: ids },
+            success: function(res) {
+                if (res && res.ok) {
+                    alert('Eliminados: ' + (res.deleted || 0));
+                    // reload current page of table
+                    window.deathsTable.ajax.reload(null, false);
+                    // reset header checkbox
+                    $('#select-all-deaths').prop('checked', false);
+                } else {
+                    alert('Error al eliminar. Revisa la consola.');
+                    console.error(res);
+                }
+            },
+            error: function(xhr) {
+                console.error(xhr);
+                alert('Error del servidor: ' + (xhr.responseText || xhr.statusText));
+            }
+        });
     });
 
     $('#dt-clear-deaths-btn').on('click', function() {
@@ -347,8 +435,13 @@ document.addEventListener('DOMContentLoaded', function () {
         const info = api.page.info();
         const start = info.recordsDisplay === 0 ? 0 : info.start + 1;
         const end = info.end;
-        const total = info.recordsTotal;
-        $('#dt-info-deaths').html(`Mostrando <span class="font-semibold text-gray-900">${start}-${end}</span> de <span class="font-semibold text-gray-900">${total}</span> entradas`);
+        const filteredTotal = info.recordsDisplay; // number of records after filtering
+        const totalAll = info.recordsTotal; // total records without filtering
+        let text = `Mostrando <span class="font-semibold text-gray-900">${start}-${end}</span> de <span class="font-semibold text-gray-900">${filteredTotal}</span> entradas`;
+        if (filteredTotal !== totalAll) {
+            text += ` <span class="text-sm text-gray-500">(de ${totalAll} totales)</span>`;
+        }
+        $('#dt-info-deaths').html(text);
     }
 
     // Function to build custom pagination
