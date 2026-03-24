@@ -62,6 +62,24 @@ Route::middleware('auth')->group(function () {
         Route::get('estadisticas/charts-data', [App\Http\Controllers\StatisticsController::class, 'chartsData'])->name('estadisticas.charts-data');
     });
 
+    // ========== HISTORIAL DE IMPORTACIONES (Solo Administrador) ==========
+    Route::middleware('role:Administrador')->group(function () {
+        Route::get('estadisticas/historial-importaciones', function () {
+            return view('estadisticas.import-history');
+        })->name('statistic.import-history-view');
+        Route::get('estadisticas/importaciones/{importId}/registros-fallidos', function ($importId) {
+            return view('estadisticas.failed-imports', ['importId' => $importId]);
+        })->name('statistic.failed-imports-view');
+        Route::get('api/estadisticas/historial-importaciones', [App\Http\Controllers\DeathImportController::class, 'getImportHistory'])->name('statistic.import-history');
+        Route::post('api/estadisticas/revertir-importacion/{importId}', [App\Http\Controllers\DeathImportController::class, 'reverseImport'])->name('statistic.reverse-import');
+        
+        // Failed records management
+        Route::get('api/estadisticas/importaciones/{importId}/registros-fallidos', [App\Http\Controllers\DeathImportController::class, 'getFailedRecords'])->name('statistic.failed-records');
+        Route::post('api/estadisticas/registros-fallidos/{recordId}/corregir', [App\Http\Controllers\DeathImportController::class, 'saveFailedRecordCorrection'])->name('statistic.save-correction');
+        Route::post('api/estadisticas/registros-fallidos/{recordId}/reintentar', [App\Http\Controllers\DeathImportController::class, 'retryFailedRecord'])->name('statistic.retry-failed');
+        Route::post('api/estadisticas/registros-fallidos/{recordId}/descartar', [App\Http\Controllers\DeathImportController::class, 'discardFailedRecord'])->name('statistic.discard-failed');
+    });
+
     // ========== REPORTES - VER PUBLICACIONES (Todos los roles autenticados) ==========
     Route::get('reportes/publicaciones', [App\Http\Controllers\ReportController::class, 'index'])->name('reportes.index');
 

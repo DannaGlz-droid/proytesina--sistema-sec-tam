@@ -370,7 +370,12 @@ class DeathController extends Controller
         $jurisdictions = Jurisdiction::all();
         $municipalities = Municipality::all();
 
-        return view('estadisticas.datos', compact('deaths', 'causes', 'jurisdictions', 'municipalities'));
+        // Get count of unresolved import failures
+        $unresolvedFailures = DB::table('import_failures')
+            ->where('is_resolved', false)
+            ->count();
+
+        return view('estadisticas.datos', compact('deaths', 'causes', 'jurisdictions', 'municipalities', 'unresolvedFailures'));
     }
 
     /**

@@ -6,7 +6,7 @@
     @include('components.nav-estadisticas')
 
     <div class="px-4 lg:pl-10 pt-6 lg:pt-10 pb-8 lg:pb-12">
-        <!-- HEADER CON TÍTULO Y BOTÓN -->
+        <!-- HEADER CON TÍTULO Y BOTONES -->
         <div class="flex flex-col lg:flex-row lg:justify-between lg:items-center gap-4 mb-6">
             <div>
                 <h1 class="text-2xl lg:text-3xl font-lora font-bold text-[#404041] mb-2">Datos de Defunciones</h1>
@@ -15,10 +15,16 @@
                 </p>
             </div>
 
-            <a href="{{ route('statistic.create') }}" class="bg-[#611132] text-white px-4 py-2.5 rounded-lg text-xs font-semibold hover:bg-[#4a0e26] transition-all duration-300 font-lora flex items-center gap-2 whitespace-nowrap shadow-sm self-start lg:self-auto">
-                <i class="fas fa-plus text-xs"></i>
-                Reg. Def.
-            </a>
+            <div class="flex flex-col sm:flex-row gap-2 self-start lg:self-auto">
+                <a href="{{ route('statistic.import-history-view') }}" class="bg-[#404041] text-white px-4 py-2.5 rounded-lg text-xs font-semibold hover:bg-[#2a2a2a] transition-all duration-300 font-lora flex items-center gap-2 whitespace-nowrap shadow-sm">
+                    <i class="fas fa-history text-xs"></i>
+                    Historial
+                </a>
+                <a href="{{ route('statistic.create') }}" class="bg-[#611132] text-white px-4 py-2.5 rounded-lg text-xs font-semibold hover:bg-[#4a0e26] transition-all duration-300 font-lora flex items-center gap-2 whitespace-nowrap shadow-sm">
+                    <i class="fas fa-plus text-xs"></i>
+                    Reg. Def.
+                </a>
+            </div>
            
         </div>
 
@@ -237,8 +243,8 @@ document.addEventListener('DOMContentLoaded', function () {
                 var imported = typeof json.imported !== 'undefined' ? json.imported : 0;
                 var failed = typeof json.failed !== 'undefined' ? json.failed : 0;
 
-                var msg = 'Importación finalizada:\nTotal filas: ' + total + '\nImportadas: ' + imported + '\nFallidas: ' + failed;
-                if (json.errors_file) msg += '\nArchivo de errores: ' + json.errors_file;
+                var msg = 'Importación completa: ' + imported + '/' + total + ' importadas — ' + failed + ' fallidas.';
+                if (failed > 0) msg += ' Ver historial.';
                 alert(msg);
                 // Reload DataTables instead of full page reload
                 if (window.deathsTable) {

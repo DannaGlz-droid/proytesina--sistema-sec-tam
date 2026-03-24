@@ -11,6 +11,7 @@ use App\Models\DeathCause;
 use App\Models\DeathLocation;
 use App\Models\Municipality;
 use App\Models\Jurisdiction;
+use App\Models\FailedImportRecord;
 use Carbon\Carbon;
 use Maatwebsite\Excel\Facades\Excel;
 use PhpOffice\PhpSpreadsheet\Shared\Date as ExcelDate;
@@ -336,14 +337,30 @@ class DeathImportController extends Controller
                 // If the folio is duplicated inside the uploaded file, reject ALL its occurrences
                 if (!is_null($folio) && isset($folioCounts[$folio]) && $folioCounts[$folio] > 1) {
                     $rowsFailed++;
-                    $failedRows[] = array_merge(['sheet' => $causeName, 'row' => $rowNum + 2, 'errors' => 'Folio duplicado en el archivo (todas las ocurrencias rechazadas)'], $rowAssoc);
+                    $rowData = array_merge(['sheet' => $causeName, 'row' => $rowNum + 2], $rowAssoc);
+                    $failedRows[] = $rowData;
+                    // Save to failed_import_records table for manual correction
+                    FailedImportRecord::create([
+                        'import_id' => $importId,
+                        'original_row_data' => $rowData,
+                        'error_message' => 'Folio duplicado en el archivo (todas las ocurrencias rechazadas)',
+                        'status' => 'pending',
+                    ]);
                     continue;
                 }
 
                 // If errors, mark failed
                 if (!empty($errors)) {
                     $rowsFailed++;
-                    $failedRows[] = array_merge(['sheet' => $causeName, 'row' => $rowNum + 2, 'errors' => implode('; ', $errors)], $rowAssoc);
+                    $rowData = array_merge(['sheet' => $causeName, 'row' => $rowNum + 2], $rowAssoc);
+                    $failedRows[] = $rowData;
+                    // Save to failed_import_records table for manual correction
+                    FailedImportRecord::create([
+                        'import_id' => $importId,
+                        'original_row_data' => $rowData,
+                        'error_message' => implode('; ', $errors),
+                        'status' => 'pending',
+                    ]);
                     continue;
                 }
 
@@ -361,7 +378,15 @@ class DeathImportController extends Controller
                 $existsByFolio = Death::where('gov_folio', $folio)->exists();
                 if ($existsByFolio) {
                     $rowsFailed++;
-                    $failedRows[] = array_merge(['sheet' => $causeName, 'row' => $rowNum + 2, 'errors' => 'Duplicado detectado: folio existente'], $rowAssoc);
+                    $rowData = array_merge(['sheet' => $causeName, 'row' => $rowNum + 2], $rowAssoc);
+                    $failedRows[] = $rowData;
+                    // Save to failed_import_records table for manual correction
+                    FailedImportRecord::create([
+                        'import_id' => $importId,
+                        'original_row_data' => $rowData,
+                        'error_message' => 'Duplicado detectado: folio existente',
+                        'status' => 'pending',
+                    ]);
                     continue;
                 }
 
@@ -402,12 +427,26 @@ class DeathImportController extends Controller
                 if (!is_null($ageMonths)) {
                     if ($ageMonths < 0) {
                         $rowsFailed++;
-                        $failedRows[] = array_merge(['sheet' => $causeName, 'row' => $rowNum + 2, 'errors' => 'Edad inválida: meses debe ser mayor o igual a 0'], $rowAssoc);
+                        $rowData = array_merge(['sheet' => $causeName, 'row' => $rowNum + 2], $rowAssoc);
+                        $failedRows[] = $rowData;
+                        FailedImportRecord::create([
+                            'import_id' => $importId,
+                            'original_row_data' => $rowData,
+                            'error_message' => 'Edad inválida: meses debe ser mayor o igual a 0',
+                            'status' => 'pending',
+                        ]);
                         continue;
                     }
                     if ($ageMonths >= 12) {
                         $rowsFailed++;
-                        $failedRows[] = array_merge(['sheet' => $causeName, 'row' => $rowNum + 2, 'errors' => 'Edad inválida: meses debe ser menor a 12'], $rowAssoc);
+                        $rowData = array_merge(['sheet' => $causeName, 'row' => $rowNum + 2], $rowAssoc);
+                        $failedRows[] = $rowData;
+                        FailedImportRecord::create([
+                            'import_id' => $importId,
+                            'original_row_data' => $rowData,
+                            'error_message' => 'Edad inválida: meses debe ser menor a 12',
+                            'status' => 'pending',
+                        ]);
                         continue;
                     }
                 }
@@ -416,12 +455,26 @@ class DeathImportController extends Controller
                 if (!is_null($ageDays)) {
                     if ($ageDays < 0) {
                         $rowsFailed++;
-                        $failedRows[] = array_merge(['sheet' => $causeName, 'row' => $rowNum + 2, 'errors' => 'Edad inválida: días debe ser mayor o igual a 0'], $rowAssoc);
+                        $rowData = array_merge(['sheet' => $causeName, 'row' => $rowNum + 2], $rowAssoc);
+                        $failedRows[] = $rowData;
+                        FailedImportRecord::create([
+                            'import_id' => $importId,
+                            'original_row_data' => $rowData,
+                            'error_message' => 'Edad inválida: días debe ser mayor o igual a 0',
+                            'status' => 'pending',
+                        ]);
                         continue;
                     }
                     if ($ageDays > 30) {
                         $rowsFailed++;
-                        $failedRows[] = array_merge(['sheet' => $causeName, 'row' => $rowNum + 2, 'errors' => 'Edad inválida: días debe ser menor o igual a 30'], $rowAssoc);
+                        $rowData = array_merge(['sheet' => $causeName, 'row' => $rowNum + 2], $rowAssoc);
+                        $failedRows[] = $rowData;
+                        FailedImportRecord::create([
+                            'import_id' => $importId,
+                            'original_row_data' => $rowData,
+                            'error_message' => 'Edad inválida: días debe ser menor o igual a 30',
+                            'status' => 'pending',
+                        ]);
                         continue;
                     }
                 }
@@ -430,12 +483,26 @@ class DeathImportController extends Controller
                 if (!is_null($ageYears)) {
                     if ($ageYears < 0) {
                         $rowsFailed++;
-                        $failedRows[] = array_merge(['sheet' => $causeName, 'row' => $rowNum + 2, 'errors' => 'Edad inválida: años debe ser mayor o igual a 0'], $rowAssoc);
+                        $rowData = array_merge(['sheet' => $causeName, 'row' => $rowNum + 2], $rowAssoc);
+                        $failedRows[] = $rowData;
+                        FailedImportRecord::create([
+                            'import_id' => $importId,
+                            'original_row_data' => $rowData,
+                            'error_message' => 'Edad inválida: años debe ser mayor o igual a 0',
+                            'status' => 'pending',
+                        ]);
                         continue;
                     }
                     if ($ageYears > 150) {
                         $rowsFailed++;
-                        $failedRows[] = array_merge(['sheet' => $causeName, 'row' => $rowNum + 2, 'errors' => 'Edad inválida: años debe ser menor o igual a 150'], $rowAssoc);
+                        $rowData = array_merge(['sheet' => $causeName, 'row' => $rowNum + 2], $rowAssoc);
+                        $failedRows[] = $rowData;
+                        FailedImportRecord::create([
+                            'import_id' => $importId,
+                            'original_row_data' => $rowData,
+                            'error_message' => 'Edad inválida: años debe ser menor o igual a 150',
+                            'status' => 'pending',
+                        ]);
                         continue;
                     }
                 }
@@ -478,6 +545,8 @@ class DeathImportController extends Controller
                 }
                 $d->death_location_id = $deathLocation ? $deathLocation->id : null;
                 $d->death_cause_id = $deathCause->id;
+                // Track which import batch this record came from
+                $d->import_id = $importId;
                 $d->save();
 
                 $rowsImported++;
@@ -541,6 +610,430 @@ class DeathImportController extends Controller
             try { if (isset($path)) Storage::delete($path); } catch (\Throwable $__) {}
 
             return response()->json(['ok' => false, 'message' => $e->getMessage(), 'total' => 0, 'imported' => 0, 'failed' => 0], 500);
+        }
+    }
+
+    /**
+     * Reverse/undo an import: delete all deaths that were imported in this batch
+     * and mark the import as reversed, tracking who did it and when
+     */
+    public function reverseImport(Request $request, $importId)
+    {
+        try {
+            $user = $request->user();
+
+            // Only admins can reverse imports
+            if (!$user) {
+                return response()->json(['ok' => false, 'message' => 'No autenticado'], 403);
+            }
+            
+            // El rol puede ser un objeto o un string, obtener el nombre
+            $roleName = is_object($user->role) ? $user->role->name : $user->role;
+            
+            \Log::info("Intento de reversión - Usuario: {$user->name}, Rol: {$roleName}");
+            
+            if ($roleName !== 'Administrador') {
+                return response()->json(['ok' => false, 'message' => "No tienes permiso. Tu rol es: '{$roleName}' (se requiere 'Administrador')"], 403);
+            }
+
+            // Get import record
+            $import = DB::table('imports')->where('id', $importId)->first();
+            if (!$import) {
+                return response()->json(['ok' => false, 'message' => 'Importación no encontrada'], 404);
+            }
+
+            // Check if already reversed
+            if ($import->is_reversed) {
+                return response()->json(['ok' => false, 'message' => 'Esta importación ya fue revertida'], 400);
+            }
+
+            // Start transaction
+            DB::beginTransaction();
+
+            try {
+                // Get all deaths imported with this import_id
+                // We assume Death model has import_id field to track source
+                $deathsToDelete = Death::where('import_id', $importId)->get();
+                $deathCount = $deathsToDelete->count();
+
+                // Delete all deaths from this import
+                Death::where('import_id', $importId)->delete();
+
+                // Mark import as reversed
+                DB::table('imports')->where('id', $importId)->update([
+                    'is_reversed' => true,
+                    'reversed_at' => now(),
+                    'reversed_by_user_id' => $user->id,
+                    'updated_at' => now(),
+                ]);
+
+                DB::commit();
+
+                Log::info("Import reversed successfully", [
+                    'import_id' => $importId,
+                    'reversed_by' => $user->id,
+                    'deaths_deleted' => $deathCount,
+                ]);
+
+                return response()->json([
+                    'ok' => true,
+                    'message' => "Importación revertida correctamente. Se eliminaron {$deathCount} registros.",
+                    'deaths_deleted' => $deathCount,
+                ]);
+
+            } catch (\Throwable $e) {
+                DB::rollBack();
+                Log::error("Failed to reverse import: " . $e->getMessage(), ['import_id' => $importId]);
+                return response()->json(['ok' => false, 'message' => 'Error al revertir: ' . $e->getMessage()], 500);
+            }
+
+        } catch (\Throwable $e) {
+            Log::error("Reverse import error: " . $e->getMessage());
+            return response()->json(['ok' => false, 'message' => $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * Get list of all imports with their reversal status
+     */
+    public function getImportHistory()
+    {
+        try {
+            $imports = DB::table('imports')
+                ->leftJoin('users as creator', 'imports.user_id', '=', 'creator.id')
+                ->leftJoin('users as reverser', 'imports.reversed_by_user_id', '=', 'reverser.id')
+                ->select([
+                    'imports.id',
+                    'imports.original_name',
+                    'imports.status',
+                    'imports.rows_total',
+                    'imports.rows_imported',
+                    'imports.rows_failed',
+                    'imports.is_reversed',
+                    'imports.created_at',
+                    'imports.updated_at',
+                    'imports.reversed_at',
+                    'creator.name as created_by',
+                    'reverser.name as reversed_by',
+                ])
+                ->orderBy('imports.created_at', 'desc')
+                ->paginate(25);
+
+            return response()->json(['ok' => true, 'data' => $imports]);
+        } catch (\Throwable $e) {
+            Log::error("Error fetching import history: " . $e->getMessage());
+            return response()->json(['ok' => false, 'message' => $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * Get failed records for a specific import, with pagination
+     */
+    public function getFailedRecords($importId)
+    {
+        try {
+            $failedRecords = FailedImportRecord::where('import_id', $importId)
+                ->where('status', 'pending')
+                ->orderBy('created_at', 'desc')
+                ->paginate(25);
+
+            return response()->json(['ok' => true, 'data' => $failedRecords]);
+        } catch (\Throwable $e) {
+            Log::error("Error fetching failed records: " . $e->getMessage());
+            return response()->json(['ok' => false, 'message' => $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * Save corrections to a failed record
+     */
+    public function saveFailedRecordCorrection(Request $request, $recordId)
+    {
+        try {
+            $request->validate([
+                'corrected_data' => 'required|array',
+            ]);
+
+            $failedRecord = FailedImportRecord::findOrFail($recordId);
+
+            // Update with corrected data
+            $failedRecord->corrected_data = $request->input('corrected_data');
+            $failedRecord->status = 'corrected';
+            $failedRecord->save();
+
+            return response()->json([
+                'ok' => true,
+                'message' => 'Correcciones guardadas exitosamente',
+                'data' => $failedRecord,
+            ]);
+        } catch (\Throwable $e) {
+            Log::error("Error saving correction: " . $e->getMessage());
+            return response()->json(['ok' => false, 'message' => $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * Retry a failed record with corrected data
+     */
+    public function retryFailedRecord(Request $request, $recordId)
+    {
+        try {
+            $failedRecord = FailedImportRecord::findOrFail($recordId);
+
+            if ($failedRecord->status === 'discarded') {
+                return response()->json(['ok' => false, 'message' => 'Este registro fue descartado y no puede ser reintentado'], 400);
+            }
+
+            // Use corrected data if available, otherwise use original
+            $rowData = $failedRecord->corrected_data ?? $failedRecord->original_row_data;
+
+            // Validate and import the corrected record
+            $errors = [];
+
+            $name = trim((string)($rowData['nombre'] ?? '')) ?: null;
+            $first = trim((string)(($rowData['primerapellido'] ?? $rowData['primerapellid'] ?? ''))) ?: null;
+            
+            // Extract folio - try multiple possible keys and be flexible
+            $folio = null;
+            $possibleFolioKeys = ['folio', 'folio_gob', 'folio_gubernamental', 'folio_gobierno', 'id', 'numero', 'nfolio', 'no_folio'];
+            foreach ($possibleFolioKeys as $k) {
+                if (isset($rowData[$k]) && !is_null($rowData[$k]) && trim((string)$rowData[$k]) !== '') { 
+                    $folio = trim((string)$rowData[$k]); 
+                    break; 
+                }
+            }
+
+            // Additional cleanup: remove any non-numeric characters if any slipped through
+            if ($folio) {
+                $folioClean = preg_replace('/[^0-9]/', '', $folio);
+                if (strlen($folioClean) === 9) {
+                    $folio = $folioClean;
+                }
+            }
+
+            // Validate basic required fields
+            if (!$name) $errors[] = 'Nombre vacío';
+            if (!$first) $errors[] = 'Primer apellido vacío';
+            if (is_null($folio) || !preg_match('/^[0-9]{9}$/', (string)$folio)) {
+                $errors[] = 'Folio gubernamental inválido o ausente (se requieren 9 dígitos). Folio recibido: ' . ($folio ?? 'vacío');
+            }
+
+            // Validate sex is present and valid
+            $sex = isset($rowData['sexod']) ? strtoupper(trim((string)$rowData['sexod'])) : null;
+            // Accept both M/F and HOMBRE/MUJER
+            if ($sex === 'HOMBRE') $sex = 'M';
+            elseif ($sex === 'MUJER') $sex = 'F';
+            
+            if (!$sex || !in_array($sex, ['M', 'F'])) {
+                $errors[] = 'Sexo inválido o ausente (debe ser M, F, HOMBRE o MUJER)';
+            }
+
+            // Check if folio already exists in database
+            if (!empty($folio) && Death::where('gov_folio', $folio)->exists()) {
+                $errors[] = 'Folio duplicado detectado en la base de datos';
+            }
+
+            if (!empty($errors)) {
+                return response()->json([
+                    'ok' => false,
+                    'message' => 'El registro aún tiene errores de validación',
+                    'errors' => $errors,
+                ], 422);
+            }
+
+            // Import the corrected record following the import() logic
+            // For now, we'll create a simplified death record
+            $dateRaw = $rowData['fechadefuncion'] ?? null;
+            $deathDate = null;
+            if ($dateRaw) {
+                try {
+                    if (is_numeric($dateRaw)) {
+                        $deathDate = ExcelDate::excelToDateTimeObject($dateRaw);
+                    } else {
+                        $deathDate = Carbon::parse($dateRaw);
+                    }
+                    if (!($deathDate instanceof \Carbon\Carbon)) {
+                        $deathDate = Carbon::instance($deathDate);
+                    }
+                } catch (\Throwable $e) {
+                    return response()->json(['ok' => false, 'message' => 'Fecha inválida: ' . $dateRaw], 422);
+                }
+            }
+
+            // Validate date is not in future
+            if ($deathDate && $deathDate->startOfDay()->gt(Carbon::today()->startOfDay())) {
+                return response()->json(['ok' => false, 'message' => 'La fecha de defunción no puede ser mayor a hoy'], 422);
+            }
+
+            // Check if folio already exists (excluding the current failed record if it was partially created)
+            if (!empty($folio)) {
+                $existingDeath = Death::where('gov_folio', $folio)
+                    ->where('id', '!=', $failedRecord->id)
+                    ->exists();
+                if ($existingDeath) {
+                    $errors[] = 'El folio ya existe en la base de datos';
+                }
+            }
+
+            if (!empty($errors)) {
+                return response()->json([
+                    'ok' => false,
+                    'message' => 'El registro aún tiene errores de validación',
+                    'errors' => $errors,
+                ], 422);
+            }
+
+            DB::beginTransaction();
+
+            try {
+                // Create death record with full validation
+                $death = new Death();
+                $death->import_id = $failedRecord->import_id;
+                $death->name = $name;
+                $death->gov_folio = (string)$folio;
+                $death->first_last_name = $first;
+                $death->second_last_name = trim((string)(($rowData['segundoapellido'] ?? $rowData['segundoapellid'] ?? ''))) ?: null;
+                
+                // Handle age fields
+                $age = isset($rowData['edad']) ? (int)$rowData['edad'] : null;
+                $death->age = $age;
+                $death->age_years = $age;
+                
+                $sex = isset($rowData['sexod']) ? strtoupper(trim((string)$rowData['sexod'])) : null;
+                if ($sex && in_array($sex, ['F','FEM','FEMENINO','MUJER'])) $sex = 'F';
+                elseif ($sex && in_array($sex, ['M','MAS','MASC','MASCULINO','HOMBRE'])) $sex = 'M';
+                // Sex is already validated above, so this should always be M or F
+                $death->sex = $sex;
+                
+                $death->death_date = $deathDate ? $deathDate->format('Y-m-d') : null;
+                
+                // Try to find location if provided, otherwise use default
+                $siteName = trim((string)($rowData['sitiodefunciond'] ?? '')) ?: null;
+                $deathLocation = null;
+                if ($siteName) {
+                    $deathLocation = DeathLocation::where('name', $siteName)->first();
+                    if (!$deathLocation) {
+                        $deathLocation = DeathLocation::firstOrCreate(['name' => $siteName]);
+                    }
+                } else {
+                    $deathLocation = DeathLocation::firstOrCreate(['name' => 'NO ESPECIFICADO']);
+                }
+                $death->death_location_id = $deathLocation->id;
+                
+                // Try to find cause using the sheet name (like the main import does)
+                // Sheet name was stored as 'sheet' key in original data
+                $sheetCauseName = trim((string)($rowData['sheet'] ?? '')) ?: null;
+                
+                // If no sheet name, try to use code or full description
+                $causeCode = trim((string)($rowData['ciecausabasica'] ?? '')) ?: null;
+                $causeName = trim((string)($rowData['causa'] ?? $rowData['ciecausabasicad'] ?? '')) ?: null;
+                
+                $deathCause = null;
+                
+                // First, try to find by sheet name (like main import does)
+                if ($sheetCauseName && $sheetCauseName !== 'Causa ') {
+                    $deathCause = DeathCause::where('name', 'like', '%' . trim($sheetCauseName) . '%')->first();
+                }
+                
+                // If not found by sheet name, try by code
+                if (!$deathCause && $causeCode) {
+                    $deathCause = DeathCause::where('code', $causeCode)->first();
+                }
+                
+                // If not found by code, try by full name description
+                if (!$deathCause && $causeName) {
+                    $deathCause = DeathCause::where('name', 'like', '%' . $causeName . '%')->first();
+                }
+                
+                // If still not found, create one with sheet name if available
+                if (!$deathCause) {
+                    $createName = $sheetCauseName ?: ($causeName ?: 'NO ESPECIFICADA');
+                    $deathCause = DeathCause::firstOrCreate(
+                        ['name' => $createName],
+                        ['code' => $causeCode]
+                    );
+                }
+                
+                $death->death_cause_id = $deathCause->id;
+                
+                // Set municipalities (try to find them, use OTRO as default)
+                $residenceMunicipalityName = trim((string)($rowData['municipioresidenciad'] ?? '')) ?: null;
+                $deathMunicipalityName = trim((string)($rowData['municipiodefunciond'] ?? '')) ?: null;
+                $otherJur = Jurisdiction::firstOrCreate(['name' => 'OTRO']);
+                $otherMuni = Municipality::firstOrCreate(['name' => 'OTRO'], ['jurisdiction_id' => $otherJur->id]);
+                
+                if ($residenceMunicipalityName) {
+                    $residenceMuni = Municipality::where('name', 'like', '%' . $residenceMunicipalityName . '%')->first();
+                    $death->residence_municipality_id = $residenceMuni ? $residenceMuni->id : $otherMuni->id;
+                } else {
+                    $death->residence_municipality_id = $otherMuni->id;
+                }
+                
+                if ($deathMunicipalityName) {
+                    $deathMuni = Municipality::where('name', 'like', '%' . $deathMunicipalityName . '%')->first();
+                    $death->death_municipality_id = $deathMuni ? $deathMuni->id : $otherMuni->id;
+                } else {
+                    $death->death_municipality_id = $otherMuni->id;
+                }
+                
+                $death->jurisdiction_id = $otherJur->id;
+                $death->import_id = $failedRecord->import_id;
+                $death->save();
+
+                // Mark the failed record as imported
+                $failedRecord->status = 'imported';
+                $failedRecord->save();
+
+                // Update import stats
+                $import = DB::table('imports')->where('id', $failedRecord->import_id)->first();
+                if ($import) {
+                    DB::table('imports')->where('id', $failedRecord->import_id)->update([
+                        'rows_imported' => $import->rows_imported + 1,
+                        'rows_failed' => max(0, $import->rows_failed - 1),
+                        'updated_at' => now(),
+                    ]);
+                }
+
+                DB::commit();
+
+                Log::info("Failed record imported successfully", [
+                    'failed_record_id' => $recordId,
+                    'import_id' => $failedRecord->import_id,
+                ]);
+
+                return response()->json([
+                    'ok' => true,
+                    'message' => 'Registro importado exitosamente',
+                    'data' => $death,
+                ]);
+            } catch (\Throwable $e) {
+                DB::rollBack();
+                Log::error("Error saving corrected record: " . $e->getMessage());
+                return response()->json(['ok' => false, 'message' => 'Error al guardar: ' . $e->getMessage()], 500);
+            }
+        } catch (\Throwable $e) {
+            Log::error("Error retrying failed record: " . $e->getMessage());
+            return response()->json(['ok' => false, 'message' => $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * Discard a failed record
+     */
+    public function discardFailedRecord($recordId)
+    {
+        try {
+            $failedRecord = FailedImportRecord::findOrFail($recordId);
+            $failedRecord->status = 'discarded';
+            $failedRecord->save();
+
+            return response()->json([
+                'ok' => true,
+                'message' => 'Registro descartado',
+            ]);
+        } catch (\Throwable $e) {
+            Log::error("Error discarding failed record: " . $e->getMessage());
+            return response()->json(['ok' => false, 'message' => $e->getMessage()], 500);
         }
     }
 

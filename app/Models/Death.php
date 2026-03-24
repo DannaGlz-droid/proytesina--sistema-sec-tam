@@ -15,6 +15,7 @@ class Death extends Model
      * The attributes that are mass assignable.
      */
     protected $fillable = [
+        'import_id',
         'name',
         'first_last_name',
         'second_last_name',
