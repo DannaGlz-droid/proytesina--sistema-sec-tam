@@ -1,21 +1,21 @@
-@extends('layouts.principal')
-@section('title', 'Registros Fallidos de Importación')
-@section('content')
 
-    @include('components.header-admin')
-    @include('components.nav-estadisticas')
+<?php $__env->startSection('title', 'Registros Fallidos de Importación'); ?>
+<?php $__env->startSection('content'); ?>
+
+    <?php echo $__env->make('components.header-admin', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?>
+    <?php echo $__env->make('components.nav-estadisticas', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?>
 
     <div class="px-4 lg:pl-10 pt-6 lg:pt-10 pb-8 lg:pb-12">
         <!-- HEADER CON TÍTULO Y BOTONES -->
         <div class="flex flex-col lg:flex-row lg:justify-between lg:items-center gap-4 mb-6">
             <div>
-                <h1 class="text-2xl lg:text-3xl font-lora font-bold text-[#404041] mb-2">Registros Fallidos - "{{ $importFileName }}"</h1>
+                <h1 class="text-2xl lg:text-3xl font-lora font-bold text-[#404041] mb-2">Registros Fallidos - "<?php echo e($importFileName); ?>"</h1>
                 <p class="text-sm lg:text-base text-[#404041] font-lora">
                     Revise y corrija los registros que fallaron durante la importación para reintentar su guardado.
                 </p>
             </div>
 
-            <a href="{{ route('statistic.import-history-view') }}" class="bg-[#611132] text-white px-4 py-2.5 rounded-lg text-xs font-semibold hover:bg-[#4a0e26] transition-all duration-300 font-lora flex items-center gap-2 whitespace-nowrap shadow-sm self-start lg:self-auto">
+            <a href="<?php echo e(route('statistic.import-history-view')); ?>" class="bg-[#611132] text-white px-4 py-2.5 rounded-lg text-xs font-semibold hover:bg-[#4a0e26] transition-all duration-300 font-lora flex items-center gap-2 whitespace-nowrap shadow-sm self-start lg:self-auto">
                 <i class="fas fa-arrow-left text-xs"></i>
                 Volver
             </a>
@@ -58,7 +58,7 @@
         </div>
     </div>
 
-@endsection
+<?php $__env->stopSection(); ?>
 
 <!-- Template for failed record card -->
 <template id="record-template">
@@ -430,7 +430,7 @@
 <!-- Font Awesome -->
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
-@push('scripts')
+<?php $__env->startPush('scripts'); ?>
 <style>
     .view-mode { display: block; }
     .edit-mode { display: none; }
@@ -541,17 +541,17 @@ function parseDateForInput(dateStr) {
 }
 
 // Build a map municipality name -> jurisdiction name (for lookup)
-const muniToJurName = @json(
+const muniToJurName = <?php echo json_encode(
     $municipalities->mapWithKeys(function($m) use ($jurisdictions) {
         $jur = $jurisdictions->find($m->jurisdiction_id);
         return [$m->name => $jur ? $jur->name : ''];
     })
-);
+, 15, 512) ?>;
 
 console.log('Municipality to Jurisdiction map:', muniToJurName);
 
 document.addEventListener('DOMContentLoaded', function() {
-    const importId = {{ $importId }};
+    const importId = <?php echo e($importId); ?>;
     let currentPage = 1;
 
     function loadFailedRecords(page = 1) {
@@ -938,7 +938,7 @@ document.addEventListener('DOMContentLoaded', function() {
             ? `/api/estadisticas/registros-fallidos/${recordId}/reintentar`
             : `/api/estadisticas/registros-fallidos/${recordId}/corregir`;
 
-        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '{{ csrf_token() }}';
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '<?php echo e(csrf_token()); ?>';
 
         fetch(endpoint, {
             method: 'POST',
@@ -1002,7 +1002,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function discardRecord(recordId, card) {
-        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '{{ csrf_token() }}';
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '<?php echo e(csrf_token()); ?>';
 
         fetch(`/api/estadisticas/registros-fallidos/${recordId}/descartar`, {
             method: 'POST',
@@ -1111,4 +1111,6 @@ document.addEventListener('DOMContentLoaded', function() {
     loadFailedRecords(1);
 });
 </script>
-@endpush
+<?php $__env->stopPush(); ?>
+
+<?php echo $__env->make('layouts.principal', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH C:\Proyectos Laravel\sistema-sec-tam\resources\views/estadisticas/failed-imports.blade.php ENDPATH**/ ?>

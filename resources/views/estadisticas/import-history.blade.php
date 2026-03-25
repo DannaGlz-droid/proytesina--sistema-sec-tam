@@ -11,7 +11,7 @@
             <div>
                 <h1 class="text-2xl lg:text-3xl font-lora font-bold text-[#404041] mb-2">Historial de Importaciones</h1>
                 <p class="text-sm lg:text-base text-[#404041] font-lora">
-                    Visualiza todas las importaciones realizadas y revierte las que desees deshacer.
+                    Visualiza todas las importaciones realizadas, filtra por fecha y estado, y revierte las que desees deshacer.
                 </p>
             </div>
             <a href="{{ route('statistic.data') }}" class="bg-[#611132] text-white px-4 py-2.5 rounded-lg text-xs font-semibold hover:bg-[#4a0e26] transition-all duration-300 font-lora flex items-center gap-2 whitespace-nowrap shadow-sm self-start lg:self-auto">
@@ -20,60 +20,80 @@
             </a>
         </div>
 
-        <!-- TABLA DE IMPORTACIONES -->
-        <div class="bg-white shadow-md sm:rounded-lg overflow-hidden border border-[#404041]">
-            <!-- Custom search and controls -->
-            <div class="flex flex-row flex-wrap items-center justify-between gap-3 p-4">
-                <div class="flex-1 min-w-0 sm:w-1/3">
-                    <div class="relative w-full min-w-0">
-                        <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                            <i class="fas fa-search text-gray-400 text-sm"></i>
+        <!-- Layout principal: Filtros + Tabla -->
+        <div class="flex flex-col lg:flex-row gap-6">
+            
+            <!-- Columna Izquierda - Filtros -->
+            <div class="lg:w-80 flex-shrink-0">
+                <x-filtros.importaciones />
+            </div>
+
+            <!-- Columna Derecha - Tabla -->
+            <div class="flex-1 min-w-0">
+                <div class="bg-white relative shadow-md sm:rounded-lg overflow-hidden border border-[#404041]">
+                    <!-- Custom search, per-page controls -->
+                    <div class="flex flex-row flex-wrap items-center justify-between gap-3 p-4">
+                        <div class="flex-1 min-w-0 sm:w-1/3 lg:w-1/2">
+                            <div class="relative w-full max-w-xl min-w-0">
+                                <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                                    <i class="fas fa-search text-gray-400 text-sm"></i>
+                                </div>
+                                <input type="text" id="search-imports" class="bg-gray-50 border border-[#404041] text-gray-900 text-sm rounded-lg focus:ring-[#611132] focus:border-[#611132] block w-full pl-10 pr-24 p-2.5" placeholder="Buscar en importaciones...">
+                                <div class="absolute inset-y-0 right-0 flex items-center pr-2 space-x-1">
+                                    <button type="button" id="search-imports-btn" class="h-8 px-3 bg-[#611132] text-white rounded-lg text-xs font-semibold hover:bg-[#4a0e26] transition-all duration-150" title="Buscar">
+                                        <i class="fas fa-search text-xs"></i>
+                                    </button>
+                                    <button type="button" id="clear-imports-btn" class="h-8 px-2 bg-white border border-[#404041] text-gray-700 rounded-lg text-xs hover:bg-gray-100 hidden" title="Limpiar búsqueda">
+                                        <i class="fas fa-times text-xs"></i>
+                                    </button>
+                                </div>
+                            </div>
                         </div>
-                        <input type="text" id="search-imports" class="bg-gray-50 border border-[#404041] text-gray-900 text-sm rounded-lg focus:ring-[#611132] focus:border-[#611132] block w-full pl-10 p-2.5" placeholder="Buscar importación...">
+
+                        <div class="ml-0 sm:ml-auto flex items-center space-x-3">
+                            <div class="flex items-center space-x-2">
+                                <span class="text-sm text-gray-700 font-lora">Mostrar</span>
+                                <select id="per-page-imports" class="bg-gray-50 border border-[#404041] text-gray-900 text-sm rounded-lg focus:ring-[#611132] focus:border-[#611132] block w-24 p-2">
+                                    <option value="10" selected>10</option>
+                                    <option value="25">25</option>
+                                    <option value="50">50</option>
+                                    <option value="100">100</option>
+                                </select>
+                            </div>
+                        </div>
                     </div>
-                </div>
 
-                <div class="flex items-center space-x-2">
-                    <span class="text-sm text-gray-700 font-lora">Mostrar</span>
-                    <select id="per-page-imports" class="bg-gray-50 border border-[#404041] text-gray-900 text-sm rounded-lg focus:ring-[#611132] focus:border-[#611132] block w-24 p-2">
-                        <option value="10" selected>10</option>
-                        <option value="25">25</option>
-                        <option value="50">50</option>
-                        <option value="100">100</option>
-                    </select>
+                    <!-- Table wrapper -->
+                    <div class="overflow-x-auto min-w-0">
+                        <table id="imports-table" class="min-w-full w-full text-sm text-left text-gray-500">
+                            <thead class="text-xs text-gray-700 uppercase bg-gray-50 border-b border-[#404041]">
+                                <tr>
+                                    <th scope="col" class="px-3 py-2 font-lora whitespace-nowrap text-xs">Archivo</th>
+                                    <th scope="col" class="px-3 py-2 font-lora whitespace-nowrap text-xs">Cargado por</th>
+                                    <th scope="col" class="px-3 py-2 font-lora whitespace-nowrap text-xs">Fecha</th>
+                                    <th scope="col" class="px-3 py-2 font-lora whitespace-nowrap text-xs">Total</th>
+                                    <th scope="col" class="px-3 py-2 font-lora whitespace-nowrap text-xs">Importados</th>
+                                    <th scope="col" class="px-3 py-2 font-lora whitespace-nowrap text-xs">Fallidos</th>
+                                    <th scope="col" class="px-3 py-2 font-lora whitespace-nowrap text-xs">Estado</th>
+                                    <th scope="col" class="px-3 py-2 font-lora whitespace-nowrap text-xs">Revertido</th>
+                                    <th scope="col" class="px-3 py-2 font-lora whitespace-nowrap text-xs text-right w-32" data-orderable="false">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="imports-tbody">
+                                <!-- Se llena con JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Pagination -->
+                    <nav class="flex flex-row flex-wrap items-center justify-between gap-3 p-4 border-t border-[#404041]">
+                        <span class="text-sm font-normal text-gray-500 font-lora flex-1 min-w-0" id="info-imports">
+                            Mostrando <span class="font-semibold text-gray-900">0-0</span> de <span class="font-semibold text-gray-900">0</span> entradas
+                        </span>
+                        <div id="pagination-imports" class="flex-none"></div>
+                    </nav>
                 </div>
             </div>
-
-            <!-- Table wrapper -->
-            <div class="overflow-x-auto min-w-0">
-                <table id="imports-table" class="min-w-full w-full text-sm text-left text-gray-500">
-                    <thead class="text-xs text-gray-700 uppercase bg-gray-50 border-b border-[#404041]">
-                        <tr>
-                            <th scope="col" class="px-3 py-2 font-lora whitespace-nowrap text-xs">Archivo</th>
-                            <th scope="col" class="px-3 py-2 font-lora whitespace-nowrap text-xs">Cargado por</th>
-                            <th scope="col" class="px-3 py-2 font-lora whitespace-nowrap text-xs">Fecha</th>
-                            <th scope="col" class="px-3 py-2 font-lora whitespace-nowrap text-xs">Total</th>
-                            <th scope="col" class="px-3 py-2 font-lora whitespace-nowrap text-xs">Importados</th>
-                            <th scope="col" class="px-3 py-2 font-lora whitespace-nowrap text-xs">Fallidos</th>
-                            <th scope="col" class="px-3 py-2 font-lora whitespace-nowrap text-xs">Estado</th>
-                            <th scope="col" class="px-3 py-2 font-lora whitespace-nowrap text-xs">Revertido</th>
-                            <th scope="col" class="px-3 py-2 font-lora whitespace-nowrap text-xs">Revertido por</th>
-                            <th scope="col" class="px-3 py-2 font-lora whitespace-nowrap text-xs text-right w-32" data-orderable="false">Acciones</th>
-                        </tr>
-                    </thead>
-                    <tbody id="imports-tbody">
-                        <!-- Se llena con JavaScript -->
-                    </tbody>
-                </table>
-            </div>
-
-            <!-- Pagination -->
-            <nav class="flex flex-row flex-wrap items-center justify-between gap-3 p-4 border-t border-[#404041]">
-                <span class="text-sm font-normal text-gray-500 font-lora flex-1 min-w-0" id="info-imports">
-                    Cargando...
-                </span>
-                <div id="pagination-imports" class="flex-none"></div>
-            </nav>
         </div>
     </div>
 
@@ -84,9 +104,9 @@
         .status-badge {
             display: inline-block;
             padding: 0.25rem 0.75rem;
-            border-radius: 0.375rem;
+            border-radius: 9999px;
             font-size: 0.75rem;
-            font-weight: 600;
+            font-weight: 500;
         }
 
         .status-completed {
@@ -109,41 +129,42 @@
             color: #3730a3;
         }
 
-        .action-btn {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-            padding: 0.5rem 0.75rem;
-            border-radius: 0.375rem;
-            font-size: 0.75rem;
-            font-weight: 600;
-            border: 1px solid #d1d5db;
-            background-color: white;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .action-btn:hover {
-            background-color: #f3f4f6;
-        }
-
-        .action-btn-danger {
-            background-color: #fee2e2;
-            color: #991b1b;
-            border-color: #fca5a5;
-        }
-
-        .action-btn-danger:hover {
-            background-color: #fecaca;
-        }
-
         .action-btn-disabled {
             opacity: 0.5;
-            cursor: not-allowed;
+            cursor: not-allowed !important;
+            pointer-events: none !important;
         }
 
         .action-btn-disabled:hover {
-            background-color: white;
+            background-color: white !important;
+            color: inherit !important;
+        }
+
+        /* Table alternating rows */
+        #imports-tbody tr { transition: background-color .15s ease; }
+        #imports-tbody tr:hover { background-color: #f9fafb; }
+        #imports-tbody tr:nth-child(even) { background-color: #f9fafb; }
+        #imports-tbody tr:nth-child(odd) { background-color: white; }
+
+        /* Hide ALL DataTables native controls */
+        .dataTables_wrapper .dataTables_length,
+        .dataTables_wrapper .dataTables_filter,
+        .dataTables_wrapper .dataTables_info,
+        .dataTables_wrapper .dataTables_paginate {
+            display: none !important;
+        }
+
+        #imports-table.dataTable tbody tr { 
+            transition: background-color .15s ease; 
+        }
+        #imports-table.dataTable tbody tr:hover { 
+            background-color: #f9fafb; 
+        }
+        #imports-table.dataTable tbody tr:nth-child(even) { 
+            background-color: #f9fafb; 
+        }
+        #imports-table.dataTable tbody tr:nth-child(odd) { 
+            background-color: white; 
         }
     </style>
 
@@ -160,16 +181,61 @@ document.addEventListener('DOMContentLoaded', function () {
     // Load imports on page load
     loadImports();
 
-    // Search functionality
-    document.getElementById('search-imports').addEventListener('keyup', function () {
+    // Event listeners for filters
+    document.getElementById('search-imports').addEventListener('keyup', debounce(() => {
+        filterImports();
+        currentPage = 1;
+        renderTable();
+    }, 300));
+
+    document.getElementById('search-imports-btn').addEventListener('click', () => {
         filterImports();
         currentPage = 1;
         renderTable();
     });
 
-    // Per-page selector
+    document.getElementById('clear-imports-btn').addEventListener('click', () => {
+        document.getElementById('search-imports').value = '';
+        filterImports();
+        currentPage = 1;
+        renderTable();
+    });
+
+    document.getElementById('dateRangeImports').addEventListener('change', () => {
+        filterImports();
+        currentPage = 1;
+        renderTable();
+    });
+
+    document.querySelectorAll('.status-checkbox, #conFallidos').forEach(el => {
+        el.addEventListener('change', () => {
+            filterImports();
+            currentPage = 1;
+            renderTable();
+        });
+    });
+
+    document.getElementById('usuarioImports').addEventListener('keyup', debounce(() => {
+        filterImports();
+        currentPage = 1;
+        renderTable();
+    }, 300));
+
     document.getElementById('per-page-imports').addEventListener('change', function (e) {
         perPage = parseInt(e.target.value);
+        currentPage = 1;
+        renderTable();
+    });
+
+    // Date pickers for custom range
+    document.getElementById('startDateImports').addEventListener('change', () => {
+        filterImports();
+        currentPage = 1;
+        renderTable();
+    });
+
+    document.getElementById('endDateImports').addEventListener('change', () => {
+        filterImports();
         currentPage = 1;
         renderTable();
     });
@@ -198,23 +264,84 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    function filterImports() {
+    window.filterImports = function() {
         const searchTerm = document.getElementById('search-imports').value.toLowerCase();
+        const dateRange = document.getElementById('dateRangeImports').value;
+        const selectedStatuses = Array.from(document.querySelectorAll('.status-checkbox:checked')).map(cb => cb.value);
+        const usuario = document.getElementById('usuarioImports').value.toLowerCase();
+        const conFallidos = document.getElementById('conFallidos').checked;
+        const startDate = document.getElementById('startDateImports').value;
+        const endDate = document.getElementById('endDateImports').value;
+
         filteredImports = allImports.filter(imp => {
-            return (
-                (imp.original_name && imp.original_name.toLowerCase().includes(searchTerm)) ||
-                (imp.created_by && imp.created_by.toLowerCase().includes(searchTerm)) ||
-                (imp.status && imp.status.toLowerCase().includes(searchTerm))
-            );
+            // Búsqueda en nombre de archivo
+            if (searchTerm && !(imp.original_name && imp.original_name.toLowerCase().includes(searchTerm))) {
+                return false;
+            }
+
+            // Filtro por usuario
+            if (usuario && !(imp.created_by && imp.created_by.toLowerCase().includes(usuario))) {
+                return false;
+            }
+
+            // Filtro por estado
+            if (selectedStatuses.length > 0) {
+                const isReversed = imp.is_reversed;
+                const status = isReversed ? 'reversed' : imp.status;
+                if (!selectedStatuses.includes(status)) {
+                    return false;
+                }
+            }
+
+            // Filtro por fecha
+            if (dateRange !== 'all') {
+                const impDate = new Date(imp.created_at);
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                
+                switch (dateRange) {
+                    case 'today':
+                        const impDateStart = new Date(impDate);
+                        impDateStart.setHours(0, 0, 0, 0);
+                        if (impDateStart.getTime() !== today.getTime()) return false;
+                        break;
+                    case 'week':
+                        const weekAgo = new Date(today);
+                        weekAgo.setDate(weekAgo.getDate() - 7);
+                        if (impDate < weekAgo) return false;
+                        break;
+                    case 'month':
+                        const monthAgo = new Date(today);
+                        monthAgo.setDate(monthAgo.getDate() - 30);
+                        if (impDate < monthAgo) return false;
+                        break;
+                    case 'year':
+                        const yearAgo = new Date(today);
+                        yearAgo.setFullYear(yearAgo.getFullYear() - 1);
+                        if (impDate < yearAgo) return false;
+                        break;
+                    case 'custom':
+                        if (startDate && new Date(startDate) > impDate) return false;
+                        if (endDate && new Date(endDate) < impDate) return false;
+                        break;
+                }
+            }
+
+            // Filtro por registros fallidos
+            if (conFallidos && imp.rows_failed === 0) {
+                return false;
+            }
+
+            return true;
         });
-    }
+    };
 
     function renderTable() {
         const tbody = document.getElementById('imports-tbody');
         tbody.innerHTML = '';
 
         if (filteredImports.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="10" class="text-center py-4 text-gray-500">No hay importaciones registradas</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="9" class="text-center py-4 text-gray-500">No hay importaciones que cumplan los filtros</td></tr>';
             updatePaginationInfo();
             return;
         }
@@ -228,7 +355,6 @@ document.addEventListener('DOMContentLoaded', function () {
             row.className = 'border-b border-gray-200 hover:bg-gray-50 transition-colors';
 
             const createdDate = new Date(imp.created_at);
-            const reversedDate = imp.reversed_at ? new Date(imp.reversed_at) : null;
             
             const statusClass = imp.is_reversed ? 'status-reversed' : `status-${imp.status}`;
             const statusText = imp.is_reversed ? 'Revertido' : (imp.status === 'completed' ? 'Completado' : imp.status === 'processing' ? 'Procesando' : 'Fallido');
@@ -238,23 +364,22 @@ document.addEventListener('DOMContentLoaded', function () {
             row.innerHTML = `
                 <td class="px-3 py-2 font-semibold text-gray-900">${escapeHtml(imp.original_name)}</td>
                 <td class="px-3 py-2">${imp.created_by || 'Sistema'}</td>
-                <td class="px-3 py-2 whitespace-nowrap">${createdDate.toLocaleDateString('es-ES')} ${createdDate.toLocaleTimeString('es-ES', {hour: '2-digit', minute: '2-digit'})}</td>
-                <td class="px-3 py-2 text-center">${imp.rows_total}</td>
+                <td class="px-3 py-2 whitespace-nowrap text-xs">${createdDate.toLocaleDateString('es-ES')} ${createdDate.toLocaleTimeString('es-ES', {hour: '2-digit', minute: '2-digit'})}</td>
+                <td class="px-3 py-2 text-center font-semibold">${imp.rows_total}</td>
                 <td class="px-3 py-2 text-center"><span class="text-green-600 font-semibold">${imp.rows_imported}</span></td>
-                <td class="px-3 py-2 text-center"><span class="text-red-600 font-semibold">${imp.rows_failed}</span></td>
+                <td class="px-3 py-2 text-center"><span class="${imp.rows_failed > 0 ? 'text-red-600 font-semibold' : 'text-gray-500'}">${imp.rows_failed > 0 ? imp.rows_failed : 'N/A'}</span></td>
                 <td class="px-3 py-2"><span class="status-badge ${statusClass}">${statusText}</span></td>
-                <td class="px-3 py-2">${imp.is_reversed ? '✓ Sí' : 'No'}</td>
-                <td class="px-3 py-2">${imp.reversed_by ? imp.reversed_by : '-'}</td>
-                <td class="px-3 py-2 text-right flex gap-1 justify-end">
+                <td class="px-3 py-2 text-center">${imp.is_reversed ? '<i class="fas fa-check-circle text-green-600" title="Revertido" aria-label="Revertido"></i>' : '<i class="fas fa-times-circle text-red-600" title="No revertido" aria-label="No revertido"></i>'}</td>
+                <td class="px-3 py-2 text-right flex gap-2 justify-end">
                     ${imp.rows_failed > 0 ? `
                         <a href="/estadisticas/importaciones/${imp.id}/registros-fallidos" 
-                           class="action-btn ${canReverse ? '' : 'action-btn-disabled'}" 
+                           class="inline-flex items-center justify-center gap-1 w-20 px-2 py-1 rounded text-xs font-semibold border border-[#404041] text-[#404041] hover:bg-[#404041] hover:text-white transition-all duration-200 ${canReverse ? '' : 'action-btn-disabled'}" 
                            ${canReverse ? '' : 'onclick="return false;" style="pointer-events: none; cursor: not-allowed;"'}
                            title="${canReverse ? 'Ver registros fallidos' : 'No disponible (importación revertida)'}">
-                            <i class="fas fa-exclamation-circle text-xs"></i> Fallidos (${imp.rows_failed})
+                            <i class="fas fa-exclamation-circle text-xs"></i> Fallidos
                         </a>
-                    ` : ''}
-                    <button class="action-btn ${canReverse ? 'action-btn-danger' : 'action-btn-disabled'}" 
+                    ` : `<div class="w-20"></div>`}
+                    <button class="inline-flex items-center justify-center gap-1 w-20 px-2 py-1 rounded text-xs font-semibold border border-[#AB1A1A] text-[#AB1A1A] hover:bg-[#AB1A1A] hover:text-white transition-all duration-200 ${canReverse ? '' : 'action-btn-disabled'}" 
                             onclick="reverseImport(${imp.id})" 
                             ${canReverse ? '' : 'disabled'} 
                             title="${canReverse ? 'Revertir esta importación' : 'No se puede revertir'}">
@@ -267,6 +392,18 @@ document.addEventListener('DOMContentLoaded', function () {
 
         updatePaginationInfo();
         renderPagination();
+        updateSearchButton();
+    }
+
+    function updateSearchButton() {
+        const searchInput = document.getElementById('search-imports');
+        const clearBtn = document.getElementById('clear-imports-btn');
+        
+        if (searchInput.value) {
+            clearBtn.style.display = 'block';
+        } else {
+            clearBtn.style.display = 'none';
+        }
     }
 
     function updatePaginationInfo() {
@@ -274,7 +411,7 @@ document.addEventListener('DOMContentLoaded', function () {
         const start = total === 0 ? 0 : (currentPage - 1) * perPage + 1;
         const end = Math.min(currentPage * perPage, total);
         
-        document.getElementById('info-imports').textContent = `Mostrando ${start}-${end} de ${total} importaciones`;
+        document.getElementById('info-imports').innerHTML = `Mostrando <span class="font-semibold text-gray-900">${start}-${end}</span> de <span class="font-semibold text-gray-900">${total}</span> entradas`;
     }
 
     function renderPagination() {
@@ -326,6 +463,14 @@ document.addEventListener('DOMContentLoaded', function () {
     function showError(msg) {
         alert(msg);
     }
+
+    function debounce(func, delay) {
+        let timeoutId;
+        return function (...args) {
+            clearTimeout(timeoutId);
+            timeoutId = setTimeout(() => func(...args), delay);
+        };
+    }
 });
 
 function reverseImport(importId) {
@@ -348,7 +493,7 @@ function reverseImport(importId) {
     .then(json => {
         if (json.ok) {
             alert(json.message);
-            location.reload(); // Reload to refresh data
+            location.reload();
         } else {
             alert('Error: ' + (json.message || 'Error desconocido'));
         }
@@ -360,3 +505,4 @@ function reverseImport(importId) {
 }
 </script>
 @endpush
+

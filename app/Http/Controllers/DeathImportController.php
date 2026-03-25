@@ -735,7 +735,7 @@ class DeathImportController extends Controller
             $failedRecords = FailedImportRecord::where('import_id', $importId)
                 ->where('status', 'pending')
                 ->orderBy('created_at', 'desc')
-                ->paginate(25);
+                ->paginate(10);
 
             return response()->json(['ok' => true, 'data' => $failedRecords]);
         } catch (\Throwable $e) {
@@ -817,6 +817,12 @@ class DeathImportController extends Controller
             if (is_null($folio) || !preg_match('/^[0-9]{9}$/', (string)$folio)) {
                 $errors[] = 'Folio gubernamental inválido o ausente (se requieren 9 dígitos). Folio recibido: ' . ($folio ?? 'vacío');
             }
+            
+            // Validate age is present (required field)
+            $age = isset($rowData['edad_valor']) ? (int)$rowData['edad_valor'] : (isset($rowData['edad']) ? (int)$rowData['edad'] : null);
+            if (is_null($age)) {
+                $errors[] = 'Edad vacía o inválida';
+            }
 
             // Validate sex is present and valid
             $sex = isset($rowData['sexod']) ? strtoupper(trim((string)$rowData['sexod'])) : null;
@@ -894,8 +900,8 @@ class DeathImportController extends Controller
                 $death->first_last_name = $first;
                 $death->second_last_name = trim((string)(($rowData['segundoapellido'] ?? $rowData['segundoapellid'] ?? ''))) ?: null;
                 
-                // Handle age fields
-                $age = isset($rowData['edad']) ? (int)$rowData['edad'] : null;
+                // Handle age fields - check both 'edad' (original) and 'edad_valor' (corrected form)
+                // Age was already validated to not be null above
                 $death->age = $age;
                 $death->age_years = $age;
                 
@@ -1026,6 +1032,15 @@ class DeathImportController extends Controller
             $failedRecord = FailedImportRecord::findOrFail($recordId);
             $failedRecord->status = 'discarded';
             $failedRecord->save();
+
+            // Update import stats: decrement rows_failed
+            $import = DB::table('imports')->where('id', $failedRecord->import_id)->first();
+            if ($import) {
+                DB::table('imports')->where('id', $failedRecord->import_id)->update([
+                    'rows_failed' => max(0, $import->rows_failed - 1),
+                    'updated_at' => now(),
+                ]);
+            }
 
             return response()->json([
                 'ok' => true,

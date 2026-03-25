@@ -68,7 +68,16 @@ Route::middleware('auth')->group(function () {
             return view('estadisticas.import-history');
         })->name('statistic.import-history-view');
         Route::get('estadisticas/importaciones/{importId}/registros-fallidos', function ($importId) {
-            return view('estadisticas.failed-imports', ['importId' => $importId]);
+            $municipalities = \App\Models\Municipality::all();
+            $jurisdictions = \App\Models\Jurisdiction::all();
+            $import = \Illuminate\Support\Facades\DB::table('imports')->find($importId);
+            $importFileName = $import->original_name ?? 'Importación #' . $importId;
+            return view('estadisticas.failed-imports', [
+                'importId' => $importId,
+                'importFileName' => $importFileName,
+                'municipalities' => $municipalities,
+                'jurisdictions' => $jurisdictions,
+            ]);
         })->name('statistic.failed-imports-view');
         Route::get('api/estadisticas/historial-importaciones', [App\Http\Controllers\DeathImportController::class, 'getImportHistory'])->name('statistic.import-history');
         Route::post('api/estadisticas/revertir-importacion/{importId}', [App\Http\Controllers\DeathImportController::class, 'reverseImport'])->name('statistic.reverse-import');
