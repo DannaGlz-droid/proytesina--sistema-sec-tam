@@ -160,16 +160,18 @@
                         <div class="space-y-3">
                             <div>
                                 <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Municipio de residencia <span class="text-red-600">*</span></label>
-                                <input name="municipioresidenciad" type="text" value="" disabled
-                                       class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg bg-gray-100 text-gray-700 font-lora" 
-                                       placeholder="Municipio de residencia">
+                                <select name="municipioresidenciad" disabled
+                                       class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg bg-gray-100 text-gray-700 font-lora tomselect-select">
+                                    <option value="">Seleccione un municipio</option>
+                                </select>
                             </div>
 
                             <div>
                                 <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Municipio de defunción <span class="text-red-600">*</span></label>
-                                <input name="municipiodefunciond" type="text" value="" disabled
-                                       class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg bg-gray-100 text-gray-700 font-lora" 
-                                       placeholder="Municipio de defunción">
+                                <select name="municipiodefunciond" disabled
+                                       class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg bg-gray-100 text-gray-700 font-lora tomselect-select">
+                                    <option value="">Seleccione un municipio</option>
+                                </select>
                             </div>
                         </div>
 
@@ -178,15 +180,16 @@
                             <div>
                                 <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Jurisdicción de residencia</label>
                                 <input name="jurisdiccion" type="text" value="" disabled
-                                       class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg bg-gray-100 text-gray-700 font-lora" 
+                                       class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg bg-gray-100 text-gray-700 font-lora cursor-not-allowed" 
                                        placeholder="Jurisdicción">
                             </div>
 
                             <div>
                                 <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Lugar específico <span class="text-red-600">*</span></label>
-                                <input name="sitiodefunciond" type="text" value="" disabled
-                                       class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg bg-gray-100 text-gray-700 font-lora" 
-                                       placeholder="Lugar de defunción">
+                                <select name="sitiodefunciond" required disabled
+                                       class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg bg-gray-100 text-gray-700 font-lora tomselect-select">
+                                    <option value="">Seleccione lugar</option>
+                                </select>
                             </div>
                         </div>
                     </div>
@@ -208,9 +211,10 @@
                         <div class="space-y-3">
                             <div>
                                 <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Causa de la defunción <span class="text-red-600">*</span></label>
-                                <input name="sheet" type="text" value="" disabled
-                                       class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg bg-gray-100 text-gray-700 font-lora" 
-                                       placeholder="Ej: Accidente Vial">
+                                <select name="sheet" disabled
+                                       class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg bg-gray-100 text-gray-700 font-lora tomselect-select">
+                                    <option value="">Seleccione una causa</option>
+                                </select>
                             </div>
                         </div>
 
@@ -219,7 +223,6 @@
                             <div>
                                 <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Fecha de defunción <span class="text-red-600">*</span></label>
                                 <input name="fechadefuncion" type="date" value="" disabled
-                                       style="background-color: #f3f4f6 !important; color: #6b7280 !important;"
                                        class="fecha-input w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg text-gray-700 font-lora" 
                                        placeholder="dd/mm/yyyy">
                             </div>
@@ -230,25 +233,26 @@
                 <!-- Línea separadora para botones -->
                 <div class="h-px bg-gray-300 my-4 lg:my-6"></div>
 
-                <!-- Action Buttons -->
-                <div class="action-buttons-view flex flex-wrap gap-2">
-                    <button type="button" class="btn-toggle-edit bg-[#404041] text-white px-3 py-2 text-xs lg:px-4 lg:py-2 lg:text-sm rounded-lg font-semibold hover:bg-[#2a2a2a] transition-all duration-200 flex items-center gap-2">
-                        <i class="fas fa-edit text-xs"></i> Editar
-                    </button>
-                    <button type="button" class="btn-discard text-[#AB1A1A] border border-[#AB1A1A] px-3 py-2 text-xs lg:px-4 lg:py-2 lg:text-sm rounded-lg font-semibold hover:bg-[#AB1A1A] hover:text-white transition-all duration-200 flex items-center gap-2">
+                <!-- Action Buttons - View Mode -->
+                <div class="action-buttons-view flex flex-col sm:flex-row justify-end gap-3 lg:gap-4">
+                    <button type="button" class="btn-discard border border-[#404041] text-[#404041] px-4 lg:px-6 py-2 rounded-lg text-xs lg:text-sm font-semibold hover:bg-gray-50 transition-all duration-300 font-lora flex items-center justify-center gap-2 whitespace-nowrap">
                         <i class="fas fa-trash text-xs"></i> Descartar
+                    </button>
+                    <button type="button" class="btn-toggle-edit bg-[#611132] text-white px-4 lg:px-6 py-2 rounded-lg text-xs lg:text-sm font-semibold hover:bg-[#4a0e26] transition-all duration-300 font-lora flex items-center justify-center gap-2 whitespace-nowrap">
+                        <i class="fas fa-edit text-xs"></i> Editar
                     </button>
                 </div>
 
-                <div class="action-buttons-edit hidden flex flex-wrap gap-2">
-                    <button type="button" class="btn-save-correction bg-[#404041] text-white px-3 py-2 text-xs lg:px-4 lg:py-2 lg:text-sm rounded-lg font-semibold hover:bg-[#2a2a2a] transition-all duration-200 flex items-center gap-2">
+                <!-- Action Buttons - Edit Mode -->
+                <div class="action-buttons-edit hidden flex flex-col sm:flex-row justify-end gap-3 lg:gap-4">
+                    <button type="button" class="btn-cancel-edit border border-[#404041] text-[#404041] px-4 lg:px-6 py-2 rounded-lg text-xs lg:text-sm font-semibold hover:bg-gray-50 transition-all duration-300 font-lora flex items-center justify-center gap-2 whitespace-nowrap">
+                        <i class="fas fa-times text-xs"></i> Cancelar
+                    </button>
+                    <button type="button" class="btn-save-correction border border-[#404041] text-[#404041] px-4 lg:px-6 py-2 rounded-lg text-xs lg:text-sm font-semibold hover:bg-gray-50 transition-all duration-300 font-lora flex items-center justify-center gap-2 whitespace-nowrap">
                         <i class="fas fa-save text-xs"></i> Guardar
                     </button>
-                    <button type="button" class="btn-retry bg-[#611132] text-white px-3 py-2 text-xs lg:px-4 lg:py-2 lg:text-sm rounded-lg font-semibold hover:bg-[#4a0d27] transition-all duration-200 flex items-center gap-2">
-                        <i class="fas fa-redo-alt text-xs"></i> Importar
-                    </button>
-                    <button type="button" class="btn-cancel-edit text-gray-600 border border-gray-300 px-3 py-2 text-xs lg:px-4 lg:py-2 lg:text-sm rounded-lg font-semibold hover:bg-gray-100 transition-all duration-200 flex items-center gap-2">
-                        <i class="fas fa-times text-xs"></i> Cancelar
+                    <button type="button" class="btn-retry bg-[#611132] text-white px-4 lg:px-6 py-2 rounded-lg text-xs lg:text-sm font-semibold hover:bg-[#4a0e26] transition-all duration-300 font-lora flex items-center justify-center gap-2 whitespace-nowrap">
+                        <i class="fas fa-check text-xs"></i> Importar
                     </button>
                 </div>
             </form>
@@ -338,16 +342,18 @@
                         <div class="space-y-3">
                             <div>
                                 <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Municipio de residencia <span class="text-red-600">*</span></label>
-                                <input name="municipioresidenciad" type="text" value="" required
-                                       class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora" 
-                                       placeholder="Municipio de residencia">
+                                <select name="municipioresidenciad" required
+                                       class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora tomselect-select">
+                                    <option value="">Seleccione un municipio</option>
+                                </select>
                             </div>
 
                             <div>
                                 <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Municipio de defunción <span class="text-red-600">*</span></label>
-                                <input name="municipiodefunciond" type="text" value="" required
-                                       class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora" 
-                                       placeholder="Municipio de defunción">
+                                <select name="municipiodefunciond" required
+                                       class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora tomselect-select">
+                                    <option value="">Seleccione un municipio</option>
+                                </select>
                             </div>
                         </div>
 
@@ -362,9 +368,10 @@
 
                             <div>
                                 <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Lugar específico <span class="text-red-600">*</span></label>
-                                <input name="sitiodefunciond" type="text" value="" required
-                                       class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora" 
-                                       placeholder="Lugar de defunción">
+                                <select name="sitiodefunciond" required
+                                       class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora tomselect-select">
+                                    <option value="">Seleccione lugar</option>
+                                </select>
                             </div>
                         </div>
                     </div>
@@ -386,9 +393,10 @@
                         <div class="space-y-3">
                             <div>
                                 <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Causa de la defunción <span class="text-red-600">*</span></label>
-                                <input name="sheet" type="text" value="" required
-                                       class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora" 
-                                       placeholder="Ej: Accidente Vial">
+                                <select name="sheet" required
+                                       class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora tomselect-select">
+                                    <option value="">Seleccione una causa</option>
+                                </select>
                             </div>
                         </div>
 
@@ -406,18 +414,7 @@
                 <!-- Línea separadora para botones -->
                 <div class="h-px bg-gray-300 my-4 lg:my-6"></div>
 
-                <!-- Action Buttons - Edit Mode -->
-                <div class="flex flex-wrap gap-2">
-                    <button type="button" class="btn-save-correction bg-[#404041] text-white px-3 py-2 text-xs lg:px-4 lg:py-2 lg:text-sm rounded-lg font-semibold hover:bg-[#2a2a2a] transition-all duration-200 flex items-center gap-2">
-                        <i class="fas fa-save text-xs"></i> Guardar
-                    </button>
-                    <button type="button" class="btn-retry bg-[#611132] text-white px-3 py-2 text-xs lg:px-4 lg:py-2 lg:text-sm rounded-lg font-semibold hover:bg-[#4a0e26] transition-all duration-200 flex items-center gap-2">
-                        <i class="fas fa-check text-xs"></i> Importar
-                    </button>
-                    <button type="button" class="btn-cancel-edit text-gray-700 border border-gray-300 px-3 py-2 text-xs lg:px-4 lg:py-2 lg:text-sm rounded-lg font-semibold hover:bg-gray-100 transition-all duration-200 flex items-center gap-2">
-                        <i class="fas fa-times text-xs"></i> Cancelar
-                    </button>
-                </div>
+
             </form>
         </div>
     </div>
@@ -430,8 +427,134 @@
 <!-- Font Awesome -->
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
+<!-- Tom Select CDN (single-select, styled to match inputs) -->
+<link href="https://cdn.jsdelivr.net/npm/tom-select/dist/css/tom-select.default.min.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/tom-select/dist/js/tom-select.complete.min.js"></script>
+
 <?php $__env->startPush('scripts'); ?>
 <style>
+    /* Tom Select styling - match input styles */
+    .ts-wrapper {
+        border: none !important;
+        padding: 0 !important;
+        background: transparent !important;
+    }
+
+    select.tomselect-select {
+        position: absolute !important;
+        left: -9999px !important;
+        width: 1px !important;
+        height: 1px !important;
+        overflow: hidden !important;
+        opacity: 0 !important;
+        pointer-events: none !important;
+        border: 0 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        background: transparent !important;
+        -webkit-appearance: none !important;
+        -moz-appearance: none !important;
+        appearance: none !important;
+    }
+
+    select.tomselect-select::-ms-expand { display: none !important; }
+    select.tomselect-select { background-image: none !important; }
+
+    .ts-wrapper { display: block; width: 100%; }
+
+    .ts-control {
+        border: 1px solid #d1d5db !important;
+        border-radius: 0.5rem !important;
+        padding: 8px 12px !important;
+        background: #ffffff !important;
+        font-family: inherit;
+        font-size: 0.875rem;
+        line-height: 1.25rem !important;
+        display: flex;
+        align-items: center;
+        justify-content: flex-start;
+        position: relative;
+        box-sizing: border-box;
+        margin: 0 !important;
+        box-shadow: none !important;
+        height: auto !important;
+        min-height: 36px !important;
+        transition: all 0.2s ease;
+    }
+
+    .ts-control:focus-within {
+        border-color: #404041 !important;
+        box-shadow: 0 0 0 2px rgba(64, 64, 65, 0.1) !important;
+        outline: 2px solid transparent !important;
+        outline-offset: 2px !important;
+    }
+
+    .ts-control .item, .ts-control input {
+        padding: 0 !important;
+        margin: 0 !important;
+        height: auto !important;
+        line-height: 1.25rem !important;
+        font-size: inherit;
+        font-family: inherit;
+    }
+
+    .ts-control .dropdown-toggle,
+    .ts-control .ts-dropdown-toggle,
+    .ts-control .dropdown_toggle,
+    .ts-control .ts-clear {
+        display: none !important;
+    }
+
+    .ts-dropdown {
+        border: 1px solid #d1d5db;
+        border-radius: 0.5rem;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+        max-height: 240px;
+        overflow: auto;
+    }
+
+    .ts-dropdown .ts-option {
+        padding: 0.5rem 0.75rem;
+    }
+
+    .tomselect-caret {
+        display: none !important;
+        position: absolute;
+        right: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #6b7280;
+        pointer-events: none;
+        font-size: 0.9rem;
+    }
+
+    .ts-control::after {
+        content: "";
+        position: absolute;
+        right: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 18px;
+        height: 18px;
+        background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'/></svg>");
+        background-repeat: no-repeat;
+        background-position: center;
+        background-size: 12px 12px;
+        pointer-events: none;
+        opacity: 0.92;
+    }
+
+    .ts-wrapper, .ts-control { vertical-align: middle; }
+
+    /* Disabled Tom Select styling */
+    select.tomselect-select:disabled ~ .ts-control,
+    .ts-wrapper.disabled .ts-control {
+        background-color: #f3f4f6 !important;
+        color: #6b7280 !important;
+        opacity: 1 !important;
+        cursor: not-allowed !important;
+    }
+
     .view-mode { display: block; }
     .edit-mode { display: none; }
     
@@ -548,7 +671,43 @@ const muniToJurName = <?php echo json_encode(
     })
 , 15, 512) ?>;
 
-console.log('Municipality to Jurisdiction map:', muniToJurName);
+console.log('Municipality to Jurisdiction map (' + Object.keys(muniToJurName).length + ' entries):');
+Object.entries(muniToJurName).slice(0, 10).forEach(([k, v]) => {
+    console.log('  ' + k + ' -> ' + v);
+});
+
+// Build data for Tom Select
+const municipalitiesData = <?php echo json_encode($municipalities, 15, 512) ?>;
+const locationsData = <?php echo json_encode($locations, 15, 512) ?>;
+const causesData = <?php echo json_encode($causes, 15, 512) ?>;
+
+console.log('Municipalities available:', municipalitiesData.length);
+console.log('Locations available:', locationsData.length);
+console.log('Causes available:', causesData.length);
+
+// Function to initialize Tom Select for a specific select element
+function initializeTomSelect(selector, data, labelField = 'name', valueField = 'id') {
+    const elements = document.querySelectorAll(selector);
+    elements.forEach(el => {
+        if (el.tomselect) return; // Already initialized
+        
+        new TomSelect(el, {
+            options: data.map(item => ({
+                [valueField]: item[valueField],
+                [labelField]: item[labelField],
+                text: item[labelField]
+            })),
+            items: el.value ? [el.value] : [],
+            valueField: valueField,
+            labelField: labelField,
+            searchField: labelField,
+            create: false,
+            placeholder: el.getAttribute('data-placeholder') || 'Seleccione una opción',
+            maxItems: 1,
+            closeAfterSelect: true
+        });
+    });
+}
 
 document.addEventListener('DOMContentLoaded', function() {
     const importId = <?php echo e($importId); ?>;
@@ -559,18 +718,10 @@ document.addEventListener('DOMContentLoaded', function() {
         const recordsContainer = document.getElementById('records-container');
         const recordsList = document.getElementById('records-list');
         
-        // Check if this is the first load (loading state should be visible)
-        const isFirstLoad = !recordsContainer.classList.contains('hidden');
-        
-        // Only show loading state on first load
-        if (!isFirstLoad) {
-            loadingState.classList.remove('hidden');
-            recordsContainer.classList.add('hidden');
-        } else {
-            // On pagination, fade out records list smoothly
-            recordsList.style.transition = 'opacity 0.2s ease-out';
-            recordsList.style.opacity = '0';
-        }
+        // Always fade out records smoothly without showing loading state
+        loadingState.classList.add('hidden');
+        recordsList.style.transition = 'opacity 0.2s ease-out';
+        recordsList.style.opacity = '0';
 
         console.log('Loading failed records for import:', importId, 'page:', page);
 
@@ -671,6 +822,104 @@ document.addEventListener('DOMContentLoaded', function() {
             });
     }
 
+    function findMatchingItemId(textValue, data) {
+        if (!textValue || !data || data.length === 0) return '';
+        
+        const trimmed = String(textValue).trim();
+        
+        // Exact match first
+        let item = data.find(d => String(d.name).trim() === trimmed);
+        if (item) {
+            console.log('✓ Exact match: "' + textValue + '" -> ID:', item.id);
+            return String(item.id);
+        }
+        
+        // Case-insensitive match
+        const upper = trimmed.toUpperCase();
+        item = data.find(d => String(d.name).trim().toUpperCase() === upper);
+        if (item) {
+            console.log('✓ Case-insensitive match: "' + textValue + '" -> ID:', item.id);
+            return String(item.id);
+        }
+        
+        // Partial match (for longer names with potential variations)
+        item = data.find(d => {
+            const dName = String(d.name).trim().toUpperCase();
+            return dName.includes(upper) || upper.includes(dName);
+        });
+        if (item) {
+            console.log('✓ Partial match: "' + textValue + '" -> ID:', item.id);
+            return String(item.id);
+        }
+        
+        // Debug: show what we have
+        console.warn('✗ NO MATCH for "' + textValue + '". Available:', data.slice(0, 3).map(d => d.name).join(' | ') + '...');
+        return '';
+    }
+
+    function initializeTomSelectField(el, data) {
+        const name = el.getAttribute('name');
+        const textValue = el.dataset.originalText || el.value || '';
+        
+        if (!data || data.length === 0) {
+            console.log('No data available for', name);
+            return;
+        }
+        
+        console.log('Initializing Tom Select:', name, '- text value:', textValue);
+        
+        // Find matching ID
+        const selectedId = findMatchingItemId(textValue, data);
+        
+        // Create Tom Select options
+        const options = data.map(item => ({
+            id: String(item.id),
+            name: item.name,
+            text: item.name
+        }));
+        
+        const config = {
+            options: options,
+            items: selectedId ? [selectedId] : [],
+            valueField: 'id',
+            labelField: 'name',
+            searchField: 'name',
+            create: false,
+            placeholder: 'Seleccione una opción',
+            maxItems: 1,
+            closeAfterSelect: true,
+            disable: el.disabled
+        };
+        
+        const ts = new TomSelect(el, config);
+        
+        // Ensure value is set after initialization
+        if (selectedId) {
+            ts.setValue(selectedId);
+            // Update the data attribute with the mapped name for consistency
+            const item = data.find(d => String(d.id) === selectedId);
+            if (item) {
+                el.dataset.originalText = item.name;
+                console.log('Set originalText to:', item.name);
+            }
+        }
+        
+        // Apply disabled styling if needed
+        if (el.disabled) {
+            const wrapper = el.closest('.ts-wrapper');
+            if (wrapper) {
+                wrapper.classList.add('disabled');
+                const control = wrapper.querySelector('.ts-control');
+                if (control) {
+                    control.style.backgroundColor = '#f3f4f6';
+                    control.style.cursor = 'not-allowed';
+                }
+            }
+        }
+        
+        return ts;
+    }
+
     function renderRecords(records) {
         const container = document.getElementById('records-list');
         container.innerHTML = '';
@@ -746,34 +995,59 @@ document.addEventListener('DOMContentLoaded', function() {
                     
                     // Si no existe, calcularla basada en el municipio de residencia
                     if (!value) {
-                        const muniResidencia = formData.municipioresidenciad || originalData.municipioresidenciad || '';
+                        const muniResidencia = (formData.municipioresidenciad || originalData.municipioresidenciad || '').trim();
+                        console.log('DEBUG: Buscando jurisdicción para municipio:', JSON.stringify(muniResidencia));
+                        
                         if (muniResidencia) {
-                            // Búsqueda exacta primero
-                            if (muniToJurName[muniResidencia]) {
-                                value = muniToJurName[muniResidencia];
-                                console.log('Exact match: "' + muniResidencia + '" -> "' + value + '"');
-                            } else {
-                                // Búsqueda case-insensitive y parcial
-                                const normalizedMuni = muniResidencia.toUpperCase().trim();
+                            // Helper function para buscar jurisdicción
+                            const findJurisdiction = (muni) => {
+                                const muniUpper = muni.toUpperCase().trim();
+                                
+                                // 1. Búsqueda exacta
                                 for (const [key, jur] of Object.entries(muniToJurName)) {
-                                    if (key.toUpperCase().trim() === normalizedMuni) {
-                                        value = jur;
-                                        console.log('Normalized match: "' + muniResidencia + '" -> "' + value + '"');
-                                        break;
+                                    if (key.trim() === muni) {
+                                        console.log('✓ EXACT MATCH: "' + muni + '" -> "' + jur + '"');
+                                        return jur;
                                     }
                                 }
                                 
-                                // Si aún no hay resultado, log para debugging
-                                if (!value) {
-                                    console.log('No jurisdiction found for municipality: "' + muniResidencia + '". Available municipalities:', Object.keys(muniToJurName));
+                                // 2. Búsqueda case-insensitive
+                                for (const [key, jur] of Object.entries(muniToJurName)) {
+                                    if (key.toUpperCase().trim() === muniUpper) {
+                                        console.log('✓ CASE-INSENSITIVE: "' + muni + '" -> "' + jur + '"');
+                                        return jur;
+                                    }
                                 }
-                            }
+                                
+                                // 3. Búsqueda parcial (si muni contiene key o key contiene muni)
+                                for (const [key, jur] of Object.entries(muniToJurName)) {
+                                    const keyUpper = key.toUpperCase().trim();
+                                    if (muniUpper.includes(keyUpper) || keyUpper.includes(muniUpper)) {
+                                        console.log('✓ PARTIAL MATCH: "' + muni + '" vs "' + key + '" -> "' + jur + '"');
+                                        return jur;
+                                    }
+                                }
+                                
+                                console.warn('✗ NO MATCH for "' + muni + '". Need to search all ' + Object.keys(muniToJurName).length + ' municipalities');
+                                console.warn('   Sample municipalities:', Object.keys(muniToJurName).slice(0, 10).join(', '));
+                                return '';
+                            };
+                            
+                            value = findJurisdiction(muniResidencia);
+                            console.log('DEBUG: Resultado jurisdicción:', JSON.stringify(value));
+                        } else {
+                            console.log('DEBUG: Municipio residencia vacío');
                         }
                     }
                 }
                 
                 if (value !== undefined && value !== null && value !== '') {
                     field.value = value;
+                    
+                    // For Tom Select fields, store the text value temporarily so we can map to ID later
+                    if (field.classList.contains('tomselect-select')) {
+                        field.dataset.originalText = value;
+                    }
                 }
             });
 
@@ -788,15 +1062,60 @@ document.addEventListener('DOMContentLoaded', function() {
                 deathDateInput.max = todayString;
             }
 
-            const originalFormData = {};
-            form.querySelectorAll('[name]').forEach(field => {
-                originalFormData[field.getAttribute('name')] = field.value;
-            });
-            card.dataset.originalFormData = JSON.stringify(originalFormData);
+            // Don't save originalFormData yet - we'll do it after Tom Select initialization
+            // This prevents saving IDs instead of the text values we need for restoration
 
             attachRecordListeners(clone, record.id);
             container.appendChild(clone);
         });
+
+        // Initialize Tom Select for all select elements in the new records
+        setTimeout(() => {
+            const allSelects = container.querySelectorAll('select.tomselect-select');
+            console.log('Tom Select: Found', allSelects.length, 'selects to initialize');
+            allSelects.forEach((el) => {
+                if (!el.tomselect) {
+                    const name = el.getAttribute('name');
+                    let data = [];
+                    
+                    // Determine which data to use based on the field name
+                    if (name === 'municipioresidenciad' || name === 'municipiodefunciond') {
+                        data = municipalitiesData;
+                    } else if (name === 'sitiodefunciond') {
+                        data = locationsData;
+                    } else if (name === 'sheet') {
+                        data = causesData;
+                    }
+                    
+                    initializeTomSelectField(el, data);
+                }
+            });
+            
+            // NOW save originalFormData after Tom Select is initialized
+            // Use originalText for Tom Select fields instead of the ID value
+            container.querySelectorAll('.record-card').forEach(card => {
+                const form = card.querySelector('.correction-form');
+                const originalFormData = {};
+                form.querySelectorAll('[name]').forEach(field => {
+                    if (field.classList.contains('tomselect-select')) {
+                        // For Tom Select fields, use the originalText (the name) not the value (the ID)
+                        originalFormData[field.getAttribute('name')] = field.dataset.originalText || '';
+                    } else {
+                        originalFormData[field.getAttribute('name')] = field.value;
+                    }
+                });
+                card.dataset.originalFormData = JSON.stringify(originalFormData);
+                
+                // Debug log important fields
+                console.group('Record #' + card.dataset.recordId + ' - Saved Data');
+                console.log('Municipio Residencia:', originalFormData.municipioresidenciad);
+                console.log('Jurisdicción:', originalFormData.jurisdiccion);
+                console.log('Municipio Defunción:', originalFormData.municipiodefunciond);
+                console.log('Lugar Específico:', originalFormData.sitiodefunciond);
+                console.log('Causa Defunción:', originalFormData.sheet);
+                console.groupEnd();
+            });
+        }, 50);
     }
 
     function attachRecordListeners(cardElement, recordId) {
@@ -825,21 +1144,88 @@ document.addEventListener('DOMContentLoaded', function() {
                 form.querySelectorAll('[name]').forEach(field => {
                     field.disabled = false;
                 });
+                
+                // Destroy existing Tom Select instances and recreate with edit mode
+                setTimeout(() => {
+                    const editSelects = form.querySelectorAll('select.tomselect-select');
+                    editSelects.forEach(el => {
+                        // Destroy existing Tom Select if it exists
+                        if (el.tomselect) {
+                            el.tomselect.destroy();
+                        }
+                        
+                        let data = [];
+                        const name = el.getAttribute('name');
+                        
+                        if (name === 'municipioresidenciad' || name === 'municipiodefunciond') {
+                            data = municipalitiesData;
+                        } else if (name === 'sitiodefunciond') {
+                            data = locationsData;
+                        } else if (name === 'sheet') {
+                            data = causesData;
+                        }
+                        
+                        if (data.length > 0) {
+                            el.disabled = false;
+                            initializeTomSelectField(el, data);
+                        }
+                    });
+                }, 50);
+                
                 actionButtonsView.classList.add('hidden');
                 actionButtonsEdit.classList.remove('hidden');
             });
         }
 
-        // Cancel Edit: Disable inputs, restore original values, show view buttons
+        // Cancel Edit: Disable inputs, restore original values, destroy Tom Select, show view buttons
         if (btnCancelEdit) {
             btnCancelEdit.addEventListener('click', (e) => {
                 e.preventDefault();
+                
+                // First, restore original form data
                 const originalData = JSON.parse(card.dataset.originalFormData || '{}');
                 form.querySelectorAll('[name]').forEach(field => {
                     const fieldName = field.getAttribute('name');
-                    field.value = originalData[fieldName] || '';
+                    const originalValue = originalData[fieldName] || '';
+                    
+                    // Restore the original value
+                    field.value = originalValue;
+                    
+                    // For Tom Select fields, also restore the originalText
+                    if (field.classList.contains('tomselect-select')) {
+                        field.dataset.originalText = originalValue;
+                    }
+                    
                     field.disabled = true;
                 });
+                
+                // Then destroy and recreate Tom Select instances with restored values
+                setTimeout(() => {
+                    const editSelects = form.querySelectorAll('select.tomselect-select');
+                    editSelects.forEach(el => {
+                        // Destroy existing Tom Select if it exists
+                        if (el.tomselect) {
+                            el.tomselect.destroy();
+                        }
+                        
+                        let data = [];
+                        const name = el.getAttribute('name');
+                        
+                        if (name === 'municipioresidenciad' || name === 'municipiodefunciond') {
+                            data = municipalitiesData;
+                        } else if (name === 'sitiodefunciond') {
+                            data = locationsData;
+                        } else if (name === 'sheet') {
+                            data = causesData;
+                        }
+                        
+                        if (data.length > 0) {
+                            el.disabled = true;
+                            initializeTomSelectField(el, data);
+                        }
+                    });
+                }, 50);
+                
                 actionButtonsEdit.classList.add('hidden');
                 actionButtonsView.classList.remove('hidden');
             });
@@ -975,7 +1361,29 @@ document.addEventListener('DOMContentLoaded', function() {
                         const fieldName = field.getAttribute('name');
                         const displayElement = card.querySelector(`.original-${fieldName}`);
                         if (displayElement) {
-                            displayElement.textContent = field.value || '-';
+                            let displayValue = field.value || '-';
+                            
+                            // For Tom Select fields, convert ID back to name for display
+                            if (field.classList.contains('tomselect-select')) {
+                                let data = [];
+                                if (fieldName === 'municipioresidenciad' || fieldName === 'municipiodefunciond') {
+                                    data = municipalitiesData;
+                                } else if (fieldName === 'sitiodefunciond') {
+                                    data = locationsData;
+                                } else if (fieldName === 'sheet') {
+                                    data = causesData;
+                                }
+                                
+                                if (data && data.length > 0 && field.value) {
+                                    const item = data.find(i => String(i.id) === String(field.value));
+                                    if (item) {
+                                        displayValue = item.name;
+                                        field.dataset.originalText = item.name;
+                                    }
+                                }
+                            }
+                            
+                            displayElement.textContent = displayValue;
                         }
                     });
                     alert('✓ Correcciones guardadas');

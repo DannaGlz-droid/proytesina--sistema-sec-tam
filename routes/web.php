@@ -70,6 +70,8 @@ Route::middleware('auth')->group(function () {
         Route::get('estadisticas/importaciones/{importId}/registros-fallidos', function ($importId) {
             $municipalities = \App\Models\Municipality::all();
             $jurisdictions = \App\Models\Jurisdiction::all();
+            $locations = \App\Models\DeathLocation::all();
+            $causes = \App\Models\DeathCause::all();
             $import = \Illuminate\Support\Facades\DB::table('imports')->find($importId);
             $importFileName = $import->original_name ?? 'Importación #' . $importId;
             return view('estadisticas.failed-imports', [
@@ -77,6 +79,8 @@ Route::middleware('auth')->group(function () {
                 'importFileName' => $importFileName,
                 'municipalities' => $municipalities,
                 'jurisdictions' => $jurisdictions,
+                'locations' => $locations,
+                'causes' => $causes,
             ]);
         })->name('statistic.failed-imports-view');
         Route::get('api/estadisticas/historial-importaciones', [App\Http\Controllers\DeathImportController::class, 'getImportHistory'])->name('statistic.import-history');
