@@ -253,7 +253,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 if (!json) { alert('Error inesperado'); return; }
                 if (json.ok === false) {
                     var serverMsg = json.message || (json.error_message ? json.error_message : 'Error en el servidor');
-                    alert('Importación fallida:\n' + serverMsg + '\n\nRevisa la consola o el log en el servidor para más detalles.');
+                    alert('Importación fallida:\n' + serverMsg);
                     if (json.errors_file) console.info('Archivo de errores:', json.errors_file);
                     return;
                 }
@@ -272,7 +272,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     window.location.reload();
                 }
             })
-            .catch(function (err) { console.error(err); alert('Error al subir o procesar el archivo. Revisa la consola.'); });
+            .catch(function (err) { console.error(err); alert('Error al subir o procesar el archivo.'); });
     });
 
     // Initialize DataTables

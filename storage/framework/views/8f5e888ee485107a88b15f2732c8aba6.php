@@ -440,36 +440,81 @@ document.addEventListener('DOMContentLoaded', function () {
         const totalPages = Math.ceil(filteredImports.length / perPage);
         if (totalPages <= 1) return;
 
-        const createPageBtn = (page, label, active = false) => {
-            const btn = document.createElement('button');
-            btn.textContent = label;
-            btn.className = `px-3 py-1 mx-1 text-sm rounded-lg font-semibold transition-all ${
-                active 
-                    ? 'bg-[#611132] text-white' 
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-            }`;
-            btn.onclick = () => {
-                currentPage = page;
-                renderTable();
-            };
-            btn.disabled = active;
-            return btn;
-        };
+        let html = '<ul class="inline-flex items-stretch -space-x-px">';
 
         // Previous button
-        if (currentPage > 1) {
-            paginationContainer.appendChild(createPageBtn(currentPage - 1, '← Anterior'));
+        if (currentPage === 1) {
+            html += '<li><span class="flex items-center justify-center h-full py-1.5 px-3 ml-0 text-gray-500 bg-white rounded-l-lg border border-gray-300 cursor-default"><i class="fas fa-chevron-left text-xs"></i></span></li>';
+        } else {
+            html += `<li><a href="#" data-page="${currentPage - 1}" class="pagination-link-imports flex items-center justify-center h-full py-1.5 px-3 ml-0 text-gray-500 bg-white rounded-l-lg border border-gray-300 hover:bg-gray-100 hover:text-gray-700"><i class="fas fa-chevron-left text-xs"></i></a></li>`;
         }
 
         // Page numbers
-        for (let i = Math.max(1, currentPage - 1); i <= Math.min(totalPages, currentPage + 1); i++) {
-            paginationContainer.appendChild(createPageBtn(i, i.toString(), i === currentPage));
+        const maxButtons = 5;
+        if (totalPages <= maxButtons) {
+            for (let i = 1; i <= totalPages; i++) {
+                if (i === currentPage) {
+                    html += `<li><span class="flex items-center justify-center text-sm py-2 px-3 leading-tight text-[#611132] bg-[#f8f1f4] border border-[#611132]">${i}</span></li>`;
+                } else {
+                    html += `<li><a href="#" data-page="${i}" class="pagination-link-imports flex items-center justify-center text-sm py-2 px-3 leading-tight text-gray-500 bg-white border border-gray-300 hover:bg-gray-100 hover:text-gray-700">${i}</a></li>`;
+                }
+            }
+        } else {
+            // Complex pagination with ellipsis
+            if (currentPage <= 3) {
+                for (let i = 1; i <= 5; i++) {
+                    if (i === currentPage) {
+                        html += `<li><span class="flex items-center justify-center text-sm py-2 px-3 leading-tight text-[#611132] bg-[#f8f1f4] border border-[#611132]">${i}</span></li>`;
+                    } else {
+                        html += `<li><a href="#" data-page="${i}" class="pagination-link-imports flex items-center justify-center text-sm py-2 px-3 leading-tight text-gray-500 bg-white border border-gray-300 hover:bg-gray-100 hover:text-gray-700">${i}</a></li>`;
+                    }
+                }
+                html += '<li><span class="flex items-center justify-center text-sm py-2 px-3 leading-tight text-gray-500 bg-white border border-gray-300">&hellip;</span></li>';
+                html += `<li><a href="#" data-page="${totalPages}" class="pagination-link-imports flex items-center justify-center text-sm py-2 px-3 leading-tight text-gray-500 bg-white border border-gray-300 hover:bg-gray-100 hover:text-gray-700">${totalPages}</a></li>`;
+            } else if (currentPage >= totalPages - 2) {
+                html += `<li><a href="#" data-page="1" class="pagination-link-imports flex items-center justify-center text-sm py-2 px-3 leading-tight text-gray-500 bg-white border border-gray-300 hover:bg-gray-100 hover:text-gray-700">1</a></li>`;
+                html += '<li><span class="flex items-center justify-center text-sm py-2 px-3 leading-tight text-gray-500 bg-white border border-gray-300">&hellip;</span></li>';
+                for (let i = totalPages - 4; i <= totalPages; i++) {
+                    if (i === currentPage) {
+                        html += `<li><span class="flex items-center justify-center text-sm py-2 px-3 leading-tight text-[#611132] bg-[#f8f1f4] border border-[#611132]">${i}</span></li>`;
+                    } else {
+                        html += `<li><a href="#" data-page="${i}" class="pagination-link-imports flex items-center justify-center text-sm py-2 px-3 leading-tight text-gray-500 bg-white border border-gray-300 hover:bg-gray-100 hover:text-gray-700">${i}</a></li>`;
+                    }
+                }
+            } else {
+                html += `<li><a href="#" data-page="1" class="pagination-link-imports flex items-center justify-center text-sm py-2 px-3 leading-tight text-gray-500 bg-white border border-gray-300 hover:bg-gray-100 hover:text-gray-700">1</a></li>`;
+                html += '<li><span class="flex items-center justify-center text-sm py-2 px-3 leading-tight text-gray-500 bg-white border border-gray-300">&hellip;</span></li>';
+                for (let i = currentPage - 2; i <= currentPage + 2; i++) {
+                    if (i === currentPage) {
+                        html += `<li><span class="flex items-center justify-center text-sm py-2 px-3 leading-tight text-[#611132] bg-[#f8f1f4] border border-[#611132]">${i}</span></li>`;
+                    } else {
+                        html += `<li><a href="#" data-page="${i}" class="pagination-link-imports flex items-center justify-center text-sm py-2 px-3 leading-tight text-gray-500 bg-white border border-gray-300 hover:bg-gray-100 hover:text-gray-700">${i}</a></li>`;
+                    }
+                }
+                html += '<li><span class="flex items-center justify-center text-sm py-2 px-3 leading-tight text-gray-500 bg-white border border-gray-300">&hellip;</span></li>';
+                html += `<li><a href="#" data-page="${totalPages}" class="pagination-link-imports flex items-center justify-center text-sm py-2 px-3 leading-tight text-gray-500 bg-white border border-gray-300 hover:bg-gray-100 hover:text-gray-700">${totalPages}</a></li>`;
+            }
         }
 
         // Next button
-        if (currentPage < totalPages) {
-            paginationContainer.appendChild(createPageBtn(currentPage + 1, 'Siguiente →'));
+        if (currentPage === totalPages || totalPages === 0) {
+            html += '<li><span class="flex items-center justify-center h-full py-1.5 px-3 leading-tight text-gray-500 bg-white rounded-r-lg border border-gray-300 cursor-default"><i class="fas fa-chevron-right text-xs"></i></span></li>';
+        } else {
+            html += `<li><a href="#" data-page="${currentPage + 1}" class="pagination-link-imports flex items-center justify-center h-full py-1.5 px-3 leading-tight text-gray-500 bg-white rounded-r-lg border border-gray-300 hover:bg-gray-100 hover:text-gray-700"><i class="fas fa-chevron-right text-xs"></i></a></li>`;
         }
+
+        html += '</ul>';
+        paginationContainer.innerHTML = html;
+
+        // Attach click handlers to pagination links
+        document.querySelectorAll('.pagination-link-imports').forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                const page = parseInt(link.dataset.page);
+                currentPage = page;
+                renderTable();
+            });
+        });
     }
 
     function escapeHtml(text) {

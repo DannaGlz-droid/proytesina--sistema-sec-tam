@@ -179,8 +179,8 @@
                         <div class="space-y-3">
                             <div>
                                 <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Jurisdicción de residencia</label>
-                                <input name="jurisdiccion" type="text" value="" disabled
-                                       class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg bg-gray-100 text-gray-700 font-lora cursor-not-allowed" 
+                                <input name="jurisdiccion" type="text" value="" readonly
+                                       class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg bg-gray-50 text-gray-700 font-lora" 
                                        placeholder="Jurisdicción">
                             </div>
 
@@ -546,13 +546,24 @@
 
     .ts-wrapper, .ts-control { vertical-align: middle; }
 
-    /* Disabled Tom Select styling */
-    select.tomselect-select:disabled ~ .ts-control,
+    /* Disabled Tom Select styling - VERY STRONG */
+    select.tomselect-select:disabled ~ .ts-wrapper,
+    select.tomselect-select:disabled ~ .ts-wrapper .ts-control,
+    .ts-wrapper.disabled,
     .ts-wrapper.disabled .ts-control {
         background-color: #f3f4f6 !important;
         color: #6b7280 !important;
         opacity: 1 !important;
         cursor: not-allowed !important;
+    }
+
+    .view-mode select.tomselect-select:disabled {
+        background-color: #f3f4f6 !important;
+    }
+
+    .view-mode .ts-wrapper .ts-control {
+        background-color: #f3f4f6 !important;
+        color: #6b7280 !important;
     }
 
     .view-mode { display: block; }
@@ -610,6 +621,41 @@
     input[type="date"]::-webkit-inner-spin-button,
     input[type="date"]::-webkit-clear-button {
         display: none;
+    }
+
+    /* Super aggressive date input styling for view mode */
+    .view-mode input[type="date"],
+    .view-mode input[type="date"]:disabled {
+        background-color: #f3f4f6 !important;
+        color: #6b7280 !important;
+        border: 1px solid #d1d5db !important;
+        cursor: not-allowed !important;
+    }
+
+    /* Readonly input styling (e.g., jurisdiction field) */
+    input[readonly] {
+        background: #f3f4f6 !important; /* gray-100 */
+        color: #6b7280 !important; /* gray-500 */
+        border: 1px solid #d1d5db !important;
+        cursor: not-allowed !important;
+        opacity: 1 !important;
+    }
+
+    input:disabled,
+    select:disabled {
+        background: #f3f4f6 !important;
+        color: #6b7280 !important;
+        border: 1px solid #d1d5db !important;
+        cursor: not-allowed !important;
+        opacity: 1 !important;
+    }
+
+    /* Override to ensure readonly/disabled fields are always gray */
+    .correction-form input:disabled,
+    .correction-form input[readonly],
+    .correction-form select:disabled {
+        background-color: #f3f4f6 !important;
+        color: #6b7280 !important;
     }
 </style>
 
@@ -859,7 +905,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function initializeTomSelectField(el, data) {
         const name = el.getAttribute('name');
-        const textValue = el.dataset.originalText || el.value || '';
+        // Use originalValue if available (the original text from server), otherwise originalText
+        const textValue = el.dataset.originalValue || el.dataset.originalText || el.value || '';
         
         if (!data || data.length === 0) {
             console.log('No data available for', name);
@@ -904,18 +951,59 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
         
-        // Apply disabled styling if needed
-        if (el.disabled) {
+        // Function to apply/reapply styling
+        const applyDisabledStyle = () => {
             const wrapper = el.closest('.ts-wrapper');
             if (wrapper) {
-                wrapper.classList.add('disabled');
                 const control = wrapper.querySelector('.ts-control');
                 if (control) {
-                    control.style.backgroundColor = '#f3f4f6';
-                    control.style.cursor = 'not-allowed';
+                    if (el.disabled) {
+                        wrapper.classList.add('disabled');
+                        control.classList.add('disabled');
+                        control.style.setProperty('background-color', '#f3f4f6', 'important');
+                        control.style.setProperty('color', '#6b7280', 'important');
+                        control.style.setProperty('cursor', 'not-allowed', 'important');
+                        control.style.setProperty('opacity', '1', 'important');
+                        
+                        // Also style the input inside
+                        const input = control.querySelector('input');
+                        if (input) {
+                            input.style.setProperty('background-color', 'transparent', 'important');
+                            input.style.setProperty('cursor', 'not-allowed', 'important');
+                        }
+                    } else {
+                        wrapper.classList.remove('disabled');
+                        control.classList.remove('disabled');
+                        control.style.setProperty('background-color', '#ffffff', 'important');
+                        control.style.setProperty('color', '#000000', 'important');
+                        control.style.setProperty('cursor', 'pointer', 'important');
+                        control.style.setProperty('opacity', '1', 'important');
+                        
+                        // Also style the input inside
+                        const input = control.querySelector('input');
+                        if (input) {
+                            input.style.setProperty('background-color', 'transparent', 'important');
+                            input.style.setProperty('cursor', 'pointer', 'important');
+                        }
+                    }
                 }
             }
-        }
+        };
+        
+        // Apply styling immediately after Tom Select initialization
+        applyDisabledStyle();
+        
+        // Reapply styling after a longer delay to ensure Tom Select is fully rendered
+        setTimeout(applyDisabledStyle, 100);
+        
+        // Keep reapplying every time disabled status changes
+        const originalDisabled = el.disabled;
+        const observer = new MutationObserver(() => {
+            if (el.disabled !== originalDisabled) {
+                applyDisabledStyle();
+            }
+        });
+        observer.observe(el, { attributes: true, attributeFilter: ['disabled'] });
         
         return ts;
     }
@@ -1044,9 +1132,39 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (value !== undefined && value !== null && value !== '') {
                     field.value = value;
                     
-                    // For Tom Select fields, store the text value temporarily so we can map to ID later
+                    // Para Tom Select fields, guardar el valor original ANTES de que Tom Select lo modifique
                     if (field.classList.contains('tomselect-select')) {
+                        const fieldName = field.getAttribute('name');
+                        let assignedData = [];
+                        
+                        // Determine which data to use based on field name
+                        if (fieldName === 'municipioresidenciad' || fieldName === 'municipiodefunciond') {
+                            assignedData = municipalitiesData;
+                        } else if (fieldName === 'sitiodefunciond') {
+                            assignedData = locationsData;
+                        } else if (fieldName === 'sheet') {
+                            assignedData = causesData;
+                        }
+                        
+                        // Check if this value exists in the available data
+                        let valueExists = false;
+                        if (assignedData.length > 0) {
+                            const valUpper = String(value).toUpperCase().trim();
+                            valueExists = assignedData.some(item => 
+                                String(item.name).toUpperCase().trim() === valUpper
+                            );
+                        }
+                        
+                        // If value doesn't exist in data, set to "OTRO" for municipios
+                        if (!valueExists && (fieldName === 'municipioresidenciad' || fieldName === 'municipiodefunciond')) {
+                            value = 'OTRO';
+                            field.value = value;
+                            console.log('Value "' + field.dataset.originalValue + '" not found in data, setting to OTRO');
+                        }
+                        
+                        // Guardar en dataset para recuperar más tarde
                         field.dataset.originalText = value;
+                        field.dataset.originalValue = value;
                     }
                 }
             });
@@ -1092,14 +1210,14 @@ document.addEventListener('DOMContentLoaded', function() {
             });
             
             // NOW save originalFormData after Tom Select is initialized
-            // Use originalText for Tom Select fields instead of the ID value
+            // Use originalValue (the original text from server) for Tom Select fields instead of the ID
             container.querySelectorAll('.record-card').forEach(card => {
                 const form = card.querySelector('.correction-form');
                 const originalFormData = {};
                 form.querySelectorAll('[name]').forEach(field => {
                     if (field.classList.contains('tomselect-select')) {
-                        // For Tom Select fields, use the originalText (the name) not the value (the ID)
-                        originalFormData[field.getAttribute('name')] = field.dataset.originalText || '';
+                        // For Tom Select fields, use the ORIGINAL value from server (before any mapping)
+                        originalFormData[field.getAttribute('name')] = field.dataset.originalValue || '';
                     } else {
                         originalFormData[field.getAttribute('name')] = field.value;
                     }
@@ -1168,6 +1286,19 @@ document.addEventListener('DOMContentLoaded', function() {
                         if (data.length > 0) {
                             el.disabled = false;
                             initializeTomSelectField(el, data);
+                            
+                            // Add change listener to update originalText when user changes the value
+                            el.addEventListener('change', function() {
+                                // Get the selected item's name from the data array
+                                const selectedId = this.value;
+                                if (selectedId && data.length > 0) {
+                                    const item = data.find(d => String(d.id) === String(selectedId));
+                                    if (item) {
+                                        this.dataset.originalText = item.name;
+                                        console.log('Updated originalText to:', item.name);
+                                    }
+                                }
+                            });
                         }
                     });
                 }, 50);
@@ -1191,8 +1322,9 @@ document.addEventListener('DOMContentLoaded', function() {
                     // Restore the original value
                     field.value = originalValue;
                     
-                    // For Tom Select fields, also restore the originalText
+                    // For Tom Select fields, also restore the originalValue and originalText for later lookup
                     if (field.classList.contains('tomselect-select')) {
+                        field.dataset.originalValue = originalValue;
                         field.dataset.originalText = originalValue;
                     }
                     
@@ -1314,7 +1446,15 @@ document.addEventListener('DOMContentLoaded', function() {
         const correctedData = {};
         form.querySelectorAll('[name]').forEach(field => {
             const fieldName = field.getAttribute('name');
-            const value = field.value ? field.value.trim() : '';
+            let value = '';
+            
+            // For Tom Select fields, use originalText (the name) instead of value (the ID)
+            if (field.classList.contains('tomselect-select')) {
+                value = field.dataset.originalText ? field.dataset.originalText.trim() : '';
+            } else {
+                value = field.value ? field.value.trim() : '';
+            }
+            
             if (value !== '') {
                 correctedData[fieldName] = value;
             }

@@ -69,6 +69,48 @@ class DeathImportController extends Controller
                 throw new \Exception('No se pudo leer el archivo de importación: ' . $e->getMessage());
             }
 
+            // VALIDATION: Check that at least the first sheet has the required columns
+            // This prevents processing files with completely wrong structure (e.g., disease tables instead of deaths)
+            // Use flexible matching to handle variations in column names (e.g., "SEXO" vs "SEXOD", spaces, underscores)
+            $hasValidColumns = false;
+            foreach ($sheets as $sheetIndex => $sheet) {
+                if (empty($sheet)) continue;
+                
+                $headerRow = $sheet[0] ?? [];
+                $headers = array_map(function ($h) {
+                    return strtolower(trim(str_replace([' ', '_'], '', (string)$h)));
+                }, $headerRow ?: []);
+                
+                // Check if all critical required columns exist (flexible matching)
+                $hasNombre = in_array('nombre', $headers);
+                $hasPrimerApellido = in_array('primerapellido', $headers);
+                $hasFecha = in_array('fechadefuncion', $headers);
+                
+                // Check if at least one of the municipality columns exists (flexible matching)
+                $hasMunicipio = false;
+                foreach ($headers as $h) {
+                    if (strpos($h, 'municipio') !== false) {
+                        $hasMunicipio = true;
+                        break;
+                    }
+                }
+                
+                if ($hasNombre && $hasPrimerApellido && $hasFecha && $hasMunicipio) {
+                    $hasValidColumns = true;
+                    break;
+                }
+            }
+            
+            if (!$hasValidColumns) {
+                // Delete the temporary file and import record
+                Storage::delete($path);
+                DB::table('imports')->where('id', $importId)->update(['status' => 'failed']);
+                
+                throw new \Exception(
+                    'El archivo no contiene los datos necesarios.'
+                );
+            }
+
             // Preliminary pass: count occurrences of gov_folio across all sheets
             $folioCounts = [];
             $possibleFolioKeys = ['folio','folio_gob','folio_gubernamental','folio_gobierno','id','numero','nfolio','no_folio'];
@@ -104,6 +146,38 @@ class DeathImportController extends Controller
                     }
                 }
             }
+
+        // Pre-scan: Check if most records are duplicates (already exist in database)
+        // If >90% are duplicates, reject the entire import to avoid cluttering failed_import_records
+        $duplicateCount = 0;
+        $totalRecordsInFile = array_sum($folioCounts); // sum of all record counts
+        
+        if ($totalRecordsInFile > 0) {
+            // Get all existing folios from database
+            $existingFolios = Death::whereNotNull('gov_folio')
+                ->pluck('gov_folio')
+                ->toArray();
+            $existingFoliosSet = array_flip($existingFolios); // flip for O(1) lookup
+            
+            // Count how many records from the file already exist
+            foreach ($folioCounts as $folio => $count) {
+                if (isset($existingFoliosSet[$folio])) {
+                    $duplicateCount += $count;
+                }
+            }
+            
+            // If >90% are duplicates, reject entirely
+            $duplicatePercentage = ($totalRecordsInFile > 0) ? ($duplicateCount / $totalRecordsInFile) * 100 : 0;
+            if ($duplicatePercentage > 90) {
+                // Delete the temporary file and mark import as failed
+                Storage::delete($path);
+                DB::table('imports')->where('id', $importId)->update(['status' => 'failed']);
+                
+                throw new \Exception(
+                    'Este archivo ya ha sido importado. No se procesarán los datos.'
+                );
+            }
+        }
 
         // Prepare municipalities lookup with normalized keys for matching (STRICT mode: do not create fallback)
         $municipalityLookup = [];
@@ -982,7 +1056,15 @@ class DeathImportController extends Controller
                     $death->death_municipality_id = $otherMuni->id;
                 }
                 
-                $death->jurisdiction_id = $otherJur->id;
+                // Set jurisdiction based on residence municipality
+                $residenceMuni = Municipality::where('name', 'like', '%' . ($residenceMunicipalityName ?? '') . '%')->first();
+                if ($residenceMuni && $residenceMuni->jurisdiction_id) {
+                    $death->jurisdiction_id = $residenceMuni->jurisdiction_id;
+                } else {
+                    // Fallback to OTRO jurisdiction if municipality not found
+                    $death->jurisdiction_id = $otherJur->id;
+                }
+                
                 $death->import_id = $failedRecord->import_id;
                 $death->save();
 
