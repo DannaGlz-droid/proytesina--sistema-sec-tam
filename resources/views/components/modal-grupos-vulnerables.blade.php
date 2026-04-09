@@ -1,10 +1,10 @@
 @php
     $config = [
-        'tipo' => 'seguridad_vial',
-        'titulo' => 'Reporte de Seguridad Vial', 
-        'colorBadge' => 'bg-[#4C8CC4]',
-        'colorBorder' => 'border-[#13264F]',
-        'modalId' => 'modalSeguridadVial'
+        'tipo' => 'grupos_vulnerables',
+        'titulo' => 'Reporte de Grupos Vulnerables', 
+        'colorBadge' => 'bg-[#6B4C8A]',
+        'colorBorder' => 'border-[#2D1B47]',
+        'modalId' => 'modalGruposVulnerables'
     ];
 @endphp
 
@@ -15,7 +15,7 @@
     :colorBorder="$config['colorBorder']"
     :modalId="$config['modalId']">
     
-    <!-- SECCIÓN ESPECÍFICA DE SEGURIDAD VIAL -->
+    <!-- SECCIÓN ESPECÍFICA DE GRUPOS VULNERABLES -->
     
     <!-- INFORMACIÓN GEOGRÁFICA -->
     <div class="mb-6">
@@ -61,7 +61,7 @@
                     <i class="fas fa-map-marker-alt text-[#404041] text-xl"></i>
                     <h5 class="font-semibold text-[#404041] font-lora">Lugar</h5>
                 </div>
-                <div class="text-lg font-bold text-[#404041] font-lora modal-lugar">Centro Comunitario Norte</div>
+                <div class="text-lg font-bold text-[#404041] font-lora modal-lugar">-</div>
                 <p class="text-xs text-gray-600 font-lora mt-1">Ubicación del evento</p>
             </div>
         </div>
@@ -72,7 +72,7 @@
                     <i class="fas fa-user-tie text-[#404041] text-xl"></i>
                     <h5 class="font-semibold text-[#404041] font-lora">Promotor</h5>
                 </div>
-                <div class="text-lg font-bold text-[#404041] font-lora modal-promotor">María González López</div>
+                <div class="text-lg font-bold text-[#404041] font-lora modal-promotor">-</div>
                 <p class="text-xs text-gray-600 font-lora mt-1">Responsable de la actividad</p>
             </div>
             
@@ -81,7 +81,7 @@
                     <i class="fas fa-users text-[#404041] text-xl"></i>
                     <h5 class="font-semibold text-[#404041] font-lora">Participantes</h5>
                 </div>
-                <div class="text-lg font-bold text-[#404041] font-lora modal-participantes">45</div>
+                <div class="text-lg font-bold text-[#404041] font-lora modal-participantes">-</div>
                 <p class="text-xs text-gray-600 font-lora mt-1">Asistentes registrados</p>
             </div>
         </div>

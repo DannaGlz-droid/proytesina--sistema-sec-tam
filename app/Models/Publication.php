@@ -119,6 +119,14 @@ class Publication extends Model
     }
 
     /**
+     * Relationship: Publication has one Grupos Vulnerables Report
+     */
+    public function gruposVulnerablesReport()
+    {
+        return $this->hasOne(GruposVulnerablesReport::class);
+    }
+
+    /**
      * Check if the publication can be edited by the given user
      */
     public function canBeEditedBy($userId)

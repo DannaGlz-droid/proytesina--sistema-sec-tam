@@ -104,11 +104,13 @@ Route::middleware('auth')->group(function () {
         Route::get('reportes/registro/seguridad-vial', [App\Http\Controllers\ReportController::class, 'createSeguridadVial'])->name('reportes.seguridad-vial');
         Route::get('reportes/registro/observatorio-de-lesiones', [App\Http\Controllers\ReportController::class, 'createObservatorio'])->name('reportes.observatorio-de-lesiones');
         Route::view('reportes/registro/alcoholimetria', 'reportes.registro.alcoholimetria')->name('reportes.alcoholimetria');
+        Route::get('reportes/registro/grupos-vulnerables', [App\Http\Controllers\ReportController::class, 'createGruposVulnerables'])->name('reportes.grupos-vulnerables');
 
         // Guardar reportes
         Route::post('reportes/seguridad-vial/store', [App\Http\Controllers\ReportController::class, 'storeSeguridadVial'])->name('reportes.seguridad-vial.store');
         Route::post('reportes/observatorio/store', [App\Http\Controllers\ReportController::class, 'storeObservatorio'])->name('reportes.observatorio.store');
         Route::post('reportes/alcoholimetria/store', [App\Http\Controllers\ReportController::class, 'storeAlcoholimetria'])->name('reportes.alcoholimetria.store');
+        Route::post('reportes/grupos-vulnerables/store', [App\Http\Controllers\ReportController::class, 'storeGruposVulnerables'])->name('reportes.grupos-vulnerables.store');
 
         // Editar reportes
         Route::get('reportes/seguridad-vial/{publication}/edit', [App\Http\Controllers\ReportController::class, 'editSeguridadVial'])->name('reportes.seguridad-vial.edit');
@@ -117,6 +119,8 @@ Route::middleware('auth')->group(function () {
         Route::put('reportes/observatorio/{publication}', [App\Http\Controllers\ReportController::class, 'updateObservatorio'])->name('reportes.observatorio.update');
         Route::get('reportes/alcoholimetria/{publication}/edit', [App\Http\Controllers\ReportController::class, 'editAlcoholimetria'])->name('reportes.alcoholimetria.edit');
         Route::put('reportes/alcoholimetria/{publication}', [App\Http\Controllers\ReportController::class, 'updateAlcoholimetria'])->name('reportes.alcoholimetria.update');
+        Route::get('reportes/grupos-vulnerables/{publication}/edit', [App\Http\Controllers\ReportController::class, 'editGruposVulnerables'])->name('reportes.grupos-vulnerables.edit');
+        Route::put('reportes/grupos-vulnerables/{publication}', [App\Http\Controllers\ReportController::class, 'updateGruposVulnerables'])->name('reportes.grupos-vulnerables.update');
 
         // Eliminar reportes y archivos
         Route::delete('reportes/{publication}', [App\Http\Controllers\ReportController::class, 'destroy'])->name('reportes.destroy');
@@ -159,6 +163,7 @@ Route::middleware('auth')->group(function () {
         Route::post('api/municipalities', [App\Http\Controllers\MunicipalityController::class, 'store'])->name('api.municipalities.store');
         Route::get('api/causes/search', [App\Http\Controllers\LookupController::class, 'searchCauses'])->name('api.causes.search');
         Route::get('api/locations/search', [App\Http\Controllers\LookupController::class, 'searchLocations'])->name('api.locations.search');
+        Route::get('api/reportes/grupos-vulnerables/{publication}', [App\Http\Controllers\ReportController::class, 'getGruposVulnerablesData'])->name('api.reportes.grupos-vulnerables');
     });
 });
 

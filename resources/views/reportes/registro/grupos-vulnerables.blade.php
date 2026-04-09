@@ -1,5 +1,5 @@
 @extends('layouts.principal')
-@section('title', isset($publication) ? 'Editar Actividad' : 'Registro de Actividades')
+@section('title', isset($publication) ? 'Editar Grupos Vulnerables' : 'Registro de Grupos Vulnerables')
 @section('content')
 
     @include('components.header-admin')
@@ -7,9 +7,9 @@
 
     <div class="px-4 lg:pl-10 pt-6 lg:pt-10 pb-8 lg:pb-12">
         <h1 class="text-2xl lg:text-3xl font-lora font-bold text-[#404041] mb-3">
-            {{ isset($publication) ? 'Editar actividad' : 'Registro de actividades' }}
+            {{ isset($publication) ? 'Editar grupos vulnerables' : 'Registro de grupos vulnerables' }}
         </h1>
-        <p class="text-sm lg:text-base text-[#404041] font-lora mb-6">Complete el formulario para {{ isset($publication) ? 'actualizar' : 'registrar' }} las actividades correspondientes.</p>
+        <p class="text-sm lg:text-base text-[#404041] font-lora mb-6">Complete el formulario para {{ isset($publication) ? 'actualizar' : 'registrar' }} la información de grupos vulnerables.</p>
 
         <!-- Mensajes de error -->
         @if(session('error'))
@@ -38,7 +38,7 @@
         @endif
 
         <!-- Cuadro del formulario responsive -->
-        <form id="seguridadVialForm" action="{{ isset($publication) ? route('reportes.seguridad-vial.update', $publication) : route('reportes.seguridad-vial.store') }}" method="POST" enctype="multipart/form-data">
+        <form id="gruposVulnerablesForm" action="{{ isset($publication) ? route('reportes.grupos-vulnerables.update', $publication) : route('reportes.grupos-vulnerables.store') }}" method="POST" enctype="multipart/form-data">
             @csrf
             @if(isset($publication))
                 @method('PUT')
@@ -85,7 +85,7 @@
                         </div>
                         <div>
                             <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Municipio <span class="text-red-600">*</span></label>
-                            <select id="seguridad_municipality_select" name="municipio" class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora tomselect-select" required>
+                            <select id="grupos_municipality_select" name="municipio" class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora tomselect-select" required>
                                 <option value="">Seleccione un municipio</option>
                                 @php
                                     $selectedMunicipio = old('municipio', isset($report) ? $report->municipality_id : '');
@@ -135,8 +135,8 @@
                         </div>
                         <div>
                             <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Jurisdicción <span class="text-red-600">*</span></label>
-                            <input type="hidden" id="jurisdiction_input_vial" name="jurisdiccion" value="{{ old('jurisdiccion', isset($report) ? $report->jurisdiction_id : '') }}" required>
-                            <input id="jurisdiction_display_vial" type="text" class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora" value="{{ isset($report) && $report->jurisdiction ? $report->jurisdiction->name : 'Pendiente (seleccione municipio)' }}" readonly>
+                            <input type="hidden" id="jurisdiction_input_gv" name="jurisdiccion" value="{{ old('jurisdiccion', isset($report) ? $report->jurisdiction_id : '') }}" required>
+                            <input id="jurisdiction_display_gv" type="text" class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora" value="{{ isset($report) && $report->jurisdiction ? $report->jurisdiction->name : 'Pendiente (seleccione municipio)' }}" readonly>
                         </div>
                     </div>
                 </div>
@@ -333,7 +333,7 @@
                     secondaryText="Limpiar formulario"
                     primaryType="submit"
                     secondaryType="button"
-                    secondaryOnclick="clearSeguridadVialForm()"
+                    secondaryOnclick="clearGruposVulnerablesForm()"
                     tertiaryText="Volver al listado"
                     tertiaryHref="{{ route('reportes.index') }}"
                 />
@@ -489,7 +489,7 @@
             }
         }
         
-        function clearSeguridadVialForm() {
+        function clearGruposVulnerablesForm() {
             if (confirm('¿Está seguro de que desea limpiar todos los campos del formulario?')) {
                 document.querySelector('form').reset();
                 // Limpiar archivos seleccionados
@@ -545,7 +545,7 @@
             }
             
             // Interceptar el envío del formulario para agregar los archivos
-            const mainForm = document.querySelector('form[action*="seguridad-vial"][method="POST"]:not([id^="delete-file"])');
+            const mainForm = document.querySelector('form[action*="grupos-vulnerables"][method="POST"]:not([id^="delete-file"])');  
             if (mainForm) {
                 mainForm.addEventListener('submit', function(e) {
                     console.log('Form submit interceptado, action:', this.action);
@@ -672,12 +672,12 @@
             // Jurisdicción del usuario (puede ser null)
             const currentJurisdiction = @json(optional(auth()->user())->jurisdiction_id);
 
-            const seguridadMuni = document.getElementById('seguridad_municipality_select');
-            const jurisdictionDisplay = document.getElementById('jurisdiction_display_vial');
-            const hiddenJur = document.getElementById('jurisdiction_input_vial');
+            const gruposMuni = document.getElementById('grupos_municipality_select');
+            const jurisdictionDisplay = document.getElementById('jurisdiction_display_gv');
+            const hiddenJur = document.getElementById('jurisdiction_input_gv');
 
             function setJurisdictionBasedOnMunicipality() {
-                const mid = seguridadMuni?.value || '';
+                const mid = gruposMuni?.value || '';
                 if (mid && muniToJur[mid]) {
                     const jid = muniToJur[mid];
                     if (hiddenJur) hiddenJur.value = jid;
@@ -688,8 +688,8 @@
                 }
             }
 
-            if (seguridadMuni) {
-                seguridadMuni.addEventListener('change', setJurisdictionBasedOnMunicipality);
+            if (gruposMuni) {
+                gruposMuni.addEventListener('change', setJurisdictionBasedOnMunicipality);
                 setJurisdictionBasedOnMunicipality();
             }
 
@@ -702,8 +702,8 @@
                 return fetch(url).then(r => r.json());
             }
 
-            if (seguridadMuni) {
-                const ts = new TomSelect(seguridadMuni, {
+            if (gruposMuni) {
+                const ts = new TomSelect(gruposMuni, {
                     valueField: 'id',
                     labelField: 'name',
                     searchField: 'name',
@@ -716,10 +716,10 @@
                     },
                     onChange: function(value) {
                         const evt = new Event('change');
-                        seguridadMuni.dispatchEvent(evt);
+                        gruposMuni.dispatchEvent(evt);
                     }
                 });
-                try { seguridadMuni.style.display = 'none'; } catch (e) {}
+                try { gruposMuni.style.display = 'none'; } catch (e) {}
             }
 
             // Si el usuario tiene una jurisdicción asignada, establecerla en el campo oculto y en el display

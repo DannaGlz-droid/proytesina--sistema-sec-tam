@@ -30,9 +30,13 @@
                         <i class="fas fa-chart-bar mr-2 w-4 text-center"></i>
                         Observatorio
                     </a>
-                    <a href="{{ route('reportes.alcoholimetria') }}" class="block px-4 py-3 text-sm text-[#404041] hover:bg-[#611132] hover:text-white transition-all duration-200">
+                    <a href="{{ route('reportes.alcoholimetria') }}" class="block px-4 py-3 text-sm text-[#404041] hover:bg-[#611132] hover:text-white transition-all duration-200 border-b border-gray-100">
                         <i class="fas fa-vial mr-2 w-4 text-center"></i>
                         Alcoholimetría
+                    </a>
+                    <a href="{{ route('reportes.grupos-vulnerables') }}" class="block px-4 py-3 text-sm text-[#404041] hover:bg-[#611132] hover:text-white transition-all duration-200">
+                        <i class="fas fa-users mr-2 w-4 text-center"></i>
+                        Grupos Vulnerables
                     </a>
                 </div>
             </div>

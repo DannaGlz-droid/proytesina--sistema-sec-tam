@@ -46,6 +46,9 @@
                     <button data-tipo="alcoholimetria" class="tab-filter px-4 py-2 text-sm font-medium font-lora rounded-t-lg bg-white text-[#404041] border border-b-0 border-gray-300 transition-all duration-200 hover:bg-gray-100">
                         Alcoholimetría
                     </button>
+                    <button data-tipo="grupos-vulnerables" class="tab-filter px-4 py-2 text-sm font-medium font-lora rounded-t-lg bg-white text-[#404041] border border-b-0 border-gray-300 transition-all duration-200 hover:bg-gray-100">
+                        Grupos Vulnerables
+                    </button>
                 </nav>
             </div>
 
@@ -163,6 +166,8 @@
                                         'data-promotor' => $reporte->promoter ?? '',
                                         'data-participantes' => $reporte->participants ?? '',
                                         'data-actividad' => $reporte->activityType->name ?? '',
+                                        'data-municipio' => $reporte->municipality->name ?? '',
+                                        'data-jurisdiccion' => $reporte->jurisdiction->name ?? '',
                                     ];
                                 }
                             } elseif ($pub->publication_type === 'observatorio') {
@@ -203,6 +208,27 @@
                                         'data-transporte-carga-no-apto' => $reporte->cargo_transport ?? '',
                                         'data-emergencia-no-apto' => $reporte->emergency_vehicles ?? '',
                                     ];
+                                }
+                            } elseif ($pub->publication_type === 'grupos-vulnerables') {
+                                $tipoDisplay = 'Grupos Vulnerables';
+                                $badgeClass = 'bg-[#6B4C8A] text-white';
+                                $badgeBorderClass = 'border-[#2D1B47]';
+                                $claseModal = 'ver-detalle-grupos-vulnerables';
+                                $editRoute = route('reportes.grupos-vulnerables.edit', $pub);
+                                $reporte = $pub->gruposVulnerablesReport;
+                                if ($reporte) {
+                                    $activityInfo = 'Actividad: ' . ($reporte->activityType->name ?? 'No especificado');
+                                    $dataAttributes = [
+                                        'data-lugar' => $reporte->location ?? '',
+                                        'data-promotor' => $reporte->promoter ?? '',
+                                        'data-participantes' => $reporte->participants ?? '',
+                                        'data-actividad' => $reporte->activityType->name ?? '',
+                                        'data-municipio' => $reporte->municipality->name ?? '',
+                                        'data-jurisdiccion' => $reporte->jurisdiction->name ?? '',
+                                    ];
+                                } else {
+                                    $activityInfo = '';
+                                    $dataAttributes = [];
                                 }
                             }
                             
@@ -463,6 +489,7 @@
 @include('components.modal-alcoholimetria')
 @include('components.modal-seguridad-vial') 
 @include('components.modal-observatorio')
+@include('components.modal-grupos-vulnerables')
 
     <!-- JAVASCRIPT SIMPLIFICADO Y FUNCIONAL -->
     <script>
@@ -470,8 +497,8 @@ document.addEventListener('DOMContentLoaded', function() {
     console.log('=== INICIANDO SISTEMA DE MODALES ===');
     const CURRENT_USER_ID = {{ auth()->id() ?? 'null' }};
     
-    // Función simple para mostrar modal
-    function showModal(modalId) {
+    // Función simple para mostrar modal - GLOBAL
+    window.showModal = function(modalId) {
         console.log('Intentando mostrar modal:', modalId);
         const modal = document.getElementById(modalId);
         
@@ -495,8 +522,8 @@ document.addEventListener('DOMContentLoaded', function() {
         return true;
     }
     
-    // Función para cerrar modal
-    function closeModal(modalId) {
+    // Función para cerrar modal - GLOBAL
+    window.closeModal = function(modalId) {
         const modal = document.getElementById(modalId);
         if (modal) {
             const content = modal.querySelector('div > div');
@@ -587,7 +614,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 fillBasicData(modal, this.dataset);
                 
                 // Datos específicos de seguridad vial
-                const specificFields = ['lugar', 'promotor', 'participantes', 'actividad'];
+                const specificFields = ['lugar', 'promotor', 'participantes', 'actividad', 'municipio', 'jurisdiccion'];
                 specificFields.forEach(field => {
                     const element = modal.querySelector(`.modal-${field}`);
                     if (element && this.dataset[field]) {
@@ -634,6 +661,33 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
     
+    // Grupos Vulnerables
+    document.querySelectorAll('.ver-detalle-grupos-vulnerables').forEach(btn => {
+        btn.addEventListener('click', function() {
+            console.log('🎯 Click en botón Grupos Vulnerables');
+            
+            const modal = document.getElementById('modalGruposVulnerables');
+            if (modal) {
+                // Datos básicos (título, usuario, fecha, descripción, etc)
+                fillBasicData(modal, this.dataset);
+                
+                // Datos específicos de Grupos Vulnerables (desde data attributes)
+                const specificFields = ['lugar', 'promotor', 'participantes', 'actividad', 'municipio', 'jurisdiccion'];
+                specificFields.forEach(field => {
+                    const element = modal.querySelector(`.modal-${field}`);
+                    if (element && this.dataset[field]) {
+                        element.textContent = this.dataset[field];
+                    }
+                });
+                
+                // Llenar archivos y comentarios
+                fillFilesAndComments(modal, this.dataset);
+            }
+            
+            showModal('modalGruposVulnerables');
+        });
+    });
+    
     // Función para llenar datos básicos
     function fillBasicData(modal, dataset) {
         // Datos básicos comunes
@@ -645,7 +699,7 @@ document.addEventListener('DOMContentLoaded', function() {
             'modal-fecha-publicacion': dataset.fecha,
             'modal-usuario': dataset.usuario,
             // Mostrar texto por defecto cuando no exista descripción o sólo contenga espacios
-            'modal-descripcion': (dataset.descripcion && dataset.descripcion.trim()) ? dataset.descripcion : 'Sin descripción proporcionada.'
+            'modal-descripcion': (dataset.descripcion && dataset.descripcion.trim()) ? dataset.descripcion : 'Sin descripción adicional.'
         };
         
         Object.entries(basicFields).forEach(([className, value]) => {

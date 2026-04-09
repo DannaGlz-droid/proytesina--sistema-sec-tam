@@ -264,11 +264,11 @@
             <!-- Línea separadora -->
             <div class="h-[1px] bg-gray-300 my-4 lg:my-6"></div>
 
-            <!-- Sección 6: Carga de archivo -->
+            <!-- Sección 6: Carga de archivos -->
             <div class="mb-6 lg:mb-8">
                 <div class="flex items-center mb-4">
                     <ion-icon name="cloud-upload-outline" class="text-xl lg:text-xl text-[#404041] mr-2"></ion-icon>
-                    <h2 class="text-lg lg:text-xl font-lora font-bold text-[#404041]">Carga de archivo</h2>
+                    <h2 class="text-lg lg:text-xl font-lora font-bold text-[#404041]">Carga de archivos</h2>
                     <div class="flex-1 h-[1px] bg-[#404041] ml-3"></div>
                 </div>
                 
@@ -315,27 +315,44 @@
                         </div>
                     @endif
 
-                    <!-- Cuadro para archivo Excel que abarca todo el ancho -->
-                    <div class="p-4 border border-gray-300 rounded-lg bg-white">
-                        <div class="flex items-center justify-between mb-3">
-                            <div class="flex items-center">
-                                <ion-icon name="stats-chart-outline" class="text-green-500 mr-2 text-lg"></ion-icon>
-                                <span class="text-sm font-medium text-[#404041] font-lora">Hoja de Cálculo</span>
+                    <!-- Dos cuadros en una fila horizontal -->
+                    <div class="flex flex-col lg:flex-row gap-4 mb-4">
+                        <!-- (1) Documento Excel -->
+                        <div class="flex-1 p-4 border border-gray-300 rounded-lg bg-white">
+                            <div class="flex items-center justify-between mb-3">
+                                <div class="flex items-center">
+                                    <ion-icon name="stats-chart-outline" class="text-green-500 mr-2 text-lg"></ion-icon>
+                                    <span class="text-sm font-medium text-[#404041] font-lora">Hoja de Cálculo</span>
+                                </div>
+                                <span id="excel-status" class="text-xs px-2 py-1 bg-yellow-100 text-yellow-800 rounded font-lora">
+                                    {{ isset($publication) ? 'Opcional' : 'Pendiente' }}
+                                </span>
                             </div>
-                            <span id="excel-status" class="text-xs px-2 py-1 bg-yellow-100 text-yellow-800 rounded font-lora">
-                                {{ isset($publication) ? 'Opcional (agregar nuevo)' : 'Pendiente' }}
-                            </span>
+                            <p class="text-xs text-gray-600 font-lora">Formato: XLSX {{ isset($publication) ? '(opcional)' : '(obligatorio)' }}</p>
                         </div>
-                        <p class="text-xs text-gray-600 font-lora">Formato: XLSX {{ isset($publication) ? '(opcional - se agregará a los existentes)' : '(obligatorio)' }}</p>
+
+                        <!-- (2) Fotografía -->
+                        <div class="flex-1 p-4 border border-gray-300 rounded-lg bg-white">
+                            <div class="flex items-center justify-between mb-3">
+                                <div class="flex items-center">
+                                    <ion-icon name="image-outline" class="text-purple-500 mr-2 text-lg"></ion-icon>
+                                    <span class="text-sm font-medium text-[#404041] font-lora">Fotografía</span>
+                                </div>
+                                <span id="photo-status" class="text-xs px-2 py-1 bg-yellow-100 text-yellow-800 rounded font-lora">
+                                    {{ isset($publication) ? 'Opcional' : '0/1' }}
+                                </span>
+                            </div>
+                            <p class="text-xs text-gray-600 font-lora">Formatos: JPG, JPEG, PNG {{ isset($publication) ? '(opcional)' : '(1 foto obligatoria)' }}</p>
+                        </div>
                     </div>
 
-                    <!-- Área de carga de archivo -->
+                    <!-- Área de carga de archivos (múltiples) -->
                     <div>
                         <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-2 font-lora">
                             @if(isset($publication))
-                                Agregar nuevo archivo (opcional)
+                                Agregar nuevos archivos (opcional)
                             @else
-                                Subir archivo <span class="text-red-600">*</span>
+                                Subir archivos <span class="text-red-600">*</span>
                             @endif
                         </label>
                         
@@ -343,25 +360,27 @@
                         <div class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-[#404041] transition-colors duration-200 bg-gray-50">
                             <input type="file" 
                                    id="file-input"
-                                   name="archivo"
                                    class="hidden"
-                                   accept=".xlsx,.xls"
-                                   onchange="updateFileStatus()">
+                                   accept=".xlsx,.xls,.jpg,.jpeg,.png"
+                                   multiple
+                                   onchange="addFiles(this.files)">
                             
                             <div class="cursor-pointer" onclick="document.getElementById('file-input').click()">
                                 <ion-icon name="cloud-upload-outline" class="text-4xl text-gray-400 mb-3"></ion-icon>
                                 <p class="text-sm font-medium text-[#404041] mb-1 font-lora">
-                                    Haga clic o arrastre el archivo aquí para subirlo
+                                    Haga clic o arrastre archivos aquí para subirlos
                                 </p>
                                 <p class="text-xs text-gray-500 font-lora">
-                                    Formatos permitidos: XLSX, XLS<br>
-                                    <span class="text-xs text-gray-500">Tamaño máximo: 10 MB</span>
+                                    Formatos permitidos: XLSX, XLS, JPG, JPEG, PNG<br>
+                                    <span class="text-xs text-gray-500">Tamaño máximo por archivo: 10 MB</span>
+                                </p>
+                                <p class="text-xs text-blue-600 font-lora mt-2">
+                                    Puede seleccionar múltiples archivos a la vez
                                 </p>
                             </div>
-                            <div id="file-error" class="mt-2 text-xs text-red-600 font-lora hidden"></div>
                         </div>
                         
-                        <!-- Información del archivo seleccionado -->
+                        <!-- Información de archivos seleccionados -->
                         <div id="file-list" class="mt-4 hidden">
                             <div class="bg-gray-50 border border-gray-200 rounded-lg p-4">
                                 <p class="font-medium mb-3 font-lora text-sm text-[#404041] flex items-center">
@@ -415,105 +434,89 @@
 
     <!-- Script para manejo de archivos -->
     <script>
-        function updateFileStatus() {
-            const fileInput = document.getElementById('file-input');
-            const files = fileInput.files;
+        let selectedFiles = [];
+
+        function addFiles(files) {
+            // Agregar nuevos archivos al array
+            for (let file of files) {
+                selectedFiles.push(file);
+            }
+            updateFileDisplay();
+        }
+
+        function updateFileDisplay() {
             const fileList = document.getElementById('file-list');
             const fileNames = document.getElementById('file-names');
             
-            // Limpiar lista anterior
+            // Limpiar lista
             fileNames.innerHTML = '';
-            // Limpiar mensaje de error
-            const fileErrorEl = document.getElementById('file-error');
-            if (fileErrorEl) { fileErrorEl.classList.add('hidden'); fileErrorEl.textContent = ''; }
             
-            // Verificar archivo seleccionado
-            if (files.length > 0) {
-                const file = files[0];
-                const extension = file.name.split('.').pop().toLowerCase();
-                
-                // Validar que sea archivo Excel
-                if (extension === 'xlsx' || extension === 'xls') {
-                    // Validar tamaño (10 MB)
-                    const maxBytes = 10 * 1024 * 1024;
-                    if (file.size > maxBytes) {
-                        // Archivo demasiado grande
-                        const fileError = document.getElementById('file-error');
-                        if (fileError) {
-                            fileError.textContent = 'El archivo excede el tamaño máximo permitido (10 MB).';
-                            fileError.classList.remove('hidden');
-                        } else {
-                            alert('El archivo excede el tamaño máximo permitido (10 MB).');
-                        }
-                        fileInput.value = '';
-                        document.getElementById('excel-status').textContent = 'Pendiente';
-                        document.getElementById('excel-status').className = 'text-xs px-2 py-1 bg-yellow-100 text-yellow-800 rounded font-lora';
-                        fileList.classList.add('hidden');
-                        return;
-                    }
-                    // Crear card estilizada para el archivo
-                    const fileCard = document.createElement('li');
-                    fileCard.className = 'bg-white border border-gray-200 rounded-lg p-3 flex items-center justify-between';
-                    fileCard.innerHTML = `
-                        <div class="flex items-center flex-1 min-w-0">
-                            <div class="w-10 h-10 bg-green-50 rounded-lg flex items-center justify-center flex-shrink-0">
-                                <ion-icon name="stats-chart" class="text-xl text-green-600"></ion-icon>
-                            </div>
-                            <div class="ml-3 flex-1 min-w-0">
-                                <p class="text-sm font-medium text-gray-900 truncate">${file.name}</p>
-                                <p class="text-xs text-gray-500">${(file.size / 1024 / 1024).toFixed(2)} MB</p>
-                            </div>
-                        </div>
-                        <button type="button" onclick="clearSelectedFile()" class="ml-3 text-red-600 hover:text-red-800 transition-colors flex-shrink-0">
-                            <ion-icon name="trash-outline" class="text-xl"></ion-icon>
-                        </button>
-                    `;
-                    fileNames.appendChild(fileCard);
-                    
-                    // Actualizar estado
-                    document.getElementById('excel-status').textContent = 'Completado';
-                    document.getElementById('excel-status').className = 'text-xs px-2 py-1 bg-green-100 text-green-800 rounded font-lora';
-                    
-                    fileList.classList.remove('hidden');
-                } else {
-                    // Archivo no válido
-                    const fileError = document.getElementById('file-error');
-                    if (fileError) {
-                        fileError.textContent = 'Formato no válido. Solo se permiten archivos XLSX o XLS.';
-                        fileError.classList.remove('hidden');
-                    } else {
-                        alert('Por favor seleccione un archivo Excel (XLSX o XLS)');
-                    }
-                    fileInput.value = '';
-                    document.getElementById('excel-status').textContent = 'Pendiente';
-                    document.getElementById('excel-status').className = 'text-xs px-2 py-1 bg-yellow-100 text-yellow-800 rounded font-lora';
-                    fileList.classList.add('hidden');
-                }
-            } else {
-                // No hay archivo seleccionado
+            if (selectedFiles.length === 0) {
+                fileList.classList.add('hidden');
                 document.getElementById('excel-status').textContent = 'Pendiente';
                 document.getElementById('excel-status').className = 'text-xs px-2 py-1 bg-yellow-100 text-yellow-800 rounded font-lora';
-                fileList.classList.add('hidden');
+                document.getElementById('photo-status').textContent = '0/1';
+                document.getElementById('photo-status').className = 'text-xs px-2 py-1 bg-yellow-100 text-yellow-800 rounded font-lora';
+                return;
             }
+
+            let excelCount = 0;
+            let photoCount = 0;
+
+            // Crear elemento para cada archivo
+            selectedFiles.forEach((file, index) => {
+                const extension = file.name.split('.').pop().toLowerCase();
+                let iconConfig = {};
+
+                if (extension === 'xlsx' || extension === 'xls') {
+                    iconConfig = { icon: 'stats-chart-outline', color: 'text-green-500', bg: 'bg-green-50' };
+                    excelCount++;
+                } else if (['jpg', 'jpeg', 'png'].includes(extension)) {
+                    iconConfig = { icon: 'image-outline', color: 'text-purple-500', bg: 'bg-purple-50' };
+                    photoCount++;
+                } else {
+                    iconConfig = { icon: 'document-outline', color: 'text-gray-400', bg: 'bg-gray-50' };
+                }
+
+                const fileCard = document.createElement('li');
+                fileCard.className = 'bg-white border border-gray-200 rounded-lg p-3 flex items-center justify-between';
+                fileCard.innerHTML = `
+                    <div class="flex items-center flex-1 min-w-0">
+                        <div class="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${iconConfig.bg}">
+                            <ion-icon name="${iconConfig.icon}" class="text-xl ${iconConfig.color}"></ion-icon>
+                        </div>
+                        <div class="ml-3 flex-1 min-w-0">
+                            <p class="text-sm font-medium text-gray-900 truncate">${file.name}</p>
+                            <p class="text-xs text-gray-500">${(file.size / 1024 / 1024).toFixed(2)} MB</p>
+                        </div>
+                    </div>
+                    <button type="button" onclick="removeFile(${index})" class="ml-3 text-red-600 hover:text-red-800 transition-colors flex-shrink-0">
+                        <ion-icon name="trash-outline" class="text-xl"></ion-icon>
+                    </button>
+                `;
+                fileNames.appendChild(fileCard);
+            });
+
+            fileList.classList.remove('hidden');
+            
+            // Actualizar estados
+            document.getElementById('excel-status').textContent = excelCount > 0 ? 'Completado' : 'Pendiente';
+            document.getElementById('excel-status').className = excelCount > 0 ? 'text-xs px-2 py-1 bg-green-100 text-green-800 rounded font-lora' : 'text-xs px-2 py-1 bg-yellow-100 text-yellow-800 rounded font-lora';
+            
+            document.getElementById('photo-status').textContent = photoCount > 0 ? 'Completado' : '0/1';
+            document.getElementById('photo-status').className = photoCount > 0 ? 'text-xs px-2 py-1 bg-green-100 text-green-800 rounded font-lora' : 'text-xs px-2 py-1 bg-yellow-100 text-yellow-800 rounded font-lora';
         }
 
-        function clearSelectedFile() {
-            const fileInput = document.getElementById('file-input');
-            fileInput.value = '';
-            updateFileStatus();
+        function removeFile(index) {
+            selectedFiles.splice(index, 1);
+            updateFileDisplay();
         }
-        
+
         function clearAlcoholimetriaForm() {
             if (confirm('¿Está seguro de que desea limpiar todos los campos del formulario?')) {
                 document.querySelector('form').reset();
-                // Resetear estado del archivo
-                const desc = document.getElementById('descripcion');
-                if (desc) desc.value = '';
-                document.getElementById('excel-status').textContent = 'Pendiente';
-                document.getElementById('excel-status').className = 'text-xs px-2 py-1 bg-yellow-100 text-yellow-800 rounded font-lora';
-                document.getElementById('file-list').classList.add('hidden');
-                const fileError = document.getElementById('file-error');
-                if (fileError) { fileError.classList.add('hidden'); fileError.textContent = ''; }
+                selectedFiles = [];
+                updateFileDisplay();
             }
         }
         
@@ -552,43 +555,79 @@
             function handleDrop(e) {
                 const dt = e.dataTransfer;
                 const files = dt.files;
-                
-                // Solo permitir un archivo
-                if (files.length === 1) {
-                    fileInput.files = files;
-                    updateFileStatus();
-                } else if (files.length > 1) {
-                    alert('Solo se permite subir un archivo a la vez');
-                }
+                addFiles(files);
             }
 
-            // Interceptar el envío del formulario para validar archivo en cliente (solo en creación)
+            // Interceptar el envío del formulario para validar archivos en cliente (solo en creación)
             const mainForm = document.querySelector('form[action*="alcoholimetria"][method="POST"]');
             const isEditMode = {{ isset($publication) ? 'true' : 'false' }};
+            
             if (mainForm) {
                 mainForm.addEventListener('submit', function(e) {
+                    // Solo validar en modo CREACIÓN
                     if (!isEditMode) {
-                        if (!fileInput || fileInput.files.length === 0) {
+                        if (selectedFiles.length === 0) {
+                            e.preventDefault();
+                            alert('Debe incluir al menos 1 archivo Excel y 1 fotografía.');
+                            return false;
+                        }
+                        
+                        let excelCount = 0;
+                        let photoCount = 0;
+                        
+                        selectedFiles.forEach(file => {
+                            const extension = file.name.split('.').pop().toLowerCase();
+                            if (extension === 'xlsx' || extension === 'xls') excelCount++;
+                            else if (['jpg', 'jpeg', 'png'].includes(extension)) photoCount++;
+                        });
+                        
+                        if (excelCount < 1) {
                             e.preventDefault();
                             alert('Debe incluir al menos 1 archivo Excel (XLSX).');
-                            try { fileInput.focus(); } catch (err) {}
                             return false;
                         }
-                        // Validar extensión y tamaño
-                        const f = fileInput.files[0];
-                        const ext = f.name.split('.').pop().toLowerCase();
-                        const allowed = ['xlsx','xls'];
-                        if (!allowed.includes(ext)) {
+                        
+                        if (photoCount < 1) {
                             e.preventDefault();
-                            alert('Formato no válido. Solo se permiten archivos XLSX o XLS.');
+                            alert('Debe incluir 1 fotografía (JPG, JPEG o PNG).');
                             return false;
                         }
-                        const maxBytes = 10 * 1024 * 1024; // 10 MB
-                        if (f.size > maxBytes) {
-                            e.preventDefault();
-                            alert('El archivo excede el tamaño máximo permitido (10 MB).');
-                            return false;
-                        }
+                        
+                        // Validar tamaño y formato
+                        selectedFiles.forEach(file => {
+                            const ext = file.name.split('.').pop().toLowerCase();
+                            const allowedExcel = ['xlsx','xls'];
+                            const allowedPhoto = ['jpg','jpeg','png'];
+                            const maxBytes = 10 * 1024 * 1024;
+                            
+                            if (!allowedExcel.includes(ext) && !allowedPhoto.includes(ext)) {
+                                e.preventDefault();
+                                alert('Formato no válido. Solo se permiten Excel (XLSX, XLS) y fotos (JPG, JPEG, PNG).');
+                                return false;
+                            }
+                            
+                            if (file.size > maxBytes) {
+                                e.preventDefault();
+                                alert('El archivo ' + file.name + ' excede el tamaño máximo permitido (10 MB).');
+                                return false;
+                            }
+                        });
+                        
+                        // Crear un DataTransfer para poder asignar múltiples archivos al input
+                        const dataTransfer = new DataTransfer();
+                        selectedFiles.forEach(file => {
+                            dataTransfer.items.add(file);
+                        });
+                        
+                        // Crear un input hidden con todos los archivos
+                        const hiddenInput = document.createElement('input');
+                        hiddenInput.type = 'file';
+                        hiddenInput.name = 'archivos[]';
+                        hiddenInput.multiple = true;
+                        hiddenInput.files = dataTransfer.files;
+                        hiddenInput.style.display = 'none';
+                        
+                        this.appendChild(hiddenInput);
                     }
                 });
             }

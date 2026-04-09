@@ -4,12 +4,12 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class RoadSafetyReport extends Model
+class GruposVulnerablesReport extends Model
 {
-     /**
+    /**
      * The table associated with the model.
      */
-    protected $table = 'road_safety_reports';
+    protected $table = 'grupos_vulnerables_reports';
 
     /**
      * The attributes that are mass assignable.
@@ -38,7 +38,7 @@ class RoadSafetyReport extends Model
     ];
 
     /**
-     * Relationship: RoadSafetyReport belongs to Publication
+     * Relationship: GruposVulnerablesReport belongs to Publication
      */
     public function publication()
     {
@@ -46,7 +46,7 @@ class RoadSafetyReport extends Model
     }
 
     /**
-     * Relationship: RoadSafetyReport belongs to ActivityType
+     * Relationship: GruposVulnerablesReport belongs to ActivityType
      */
     public function activityType()
     {
@@ -54,7 +54,7 @@ class RoadSafetyReport extends Model
     }
 
     /**
-     * Relationship: RoadSafetyReport belongs to Municipality
+     * Relationship: GruposVulnerablesReport belongs to Municipality
      */
     public function municipality()
     {
@@ -62,7 +62,7 @@ class RoadSafetyReport extends Model
     }
 
     /**
-     * Relationship: RoadSafetyReport belongs to Jurisdiction
+     * Relationship: GruposVulnerablesReport belongs to Jurisdiction
      */
     public function jurisdiction()
     {

@@ -37,7 +37,8 @@ class BreathalyzerReportRequest extends FormRequest
             'transporte_carga' => 'required|integer|min:0|max:999999',
             'vehiculos_emergencia' => 'required|integer|min:0|max:999999',
             'descripcion' => 'nullable|string|max:5000',
-            'archivo' => $isUpdate ? 'nullable|file|mimes:xlsx,xls|max:10240' : 'required|file|mimes:xlsx,xls|max:10240',
+            'archivos' => $isUpdate ? 'nullable|array' : 'required|array|min:1',
+            'archivos.*' => 'file|mimes:xlsx,xls,jpg,jpeg,png|max:10240',
         ];
     }
 
@@ -60,10 +61,12 @@ class BreathalyzerReportRequest extends FormRequest
             'conductores_no_aptos.integer' => 'El número de conductores no aptos debe ser un número entero.',
             'conductores_no_aptos.min' => 'El número de conductores no aptos no puede ser negativo.',
             'descripcion.max' => 'La descripción no puede exceder 5000 caracteres.',
-            'archivo.required' => 'Debe subir un archivo Excel.',
-            'archivo.file' => 'Debe subir un archivo válido.',
-            'archivo.mimes' => 'El archivo debe ser Excel (XLSX, XLS).',
-            'archivo.max' => 'El archivo no debe exceder 10 MB.',
+            'archivos.required' => 'Debe subir al menos un archivo (Excel y fotografía).',
+            'archivos.array' => 'Los archivos deben ser un conjunto válido.',
+            'archivos.min' => 'Debe subir al menos un archivo.',
+            'archivos.*.file' => 'Todos los elementos deben ser archivos válidos.',
+            'archivos.*.mimes' => 'Los archivos deben ser Excel (XLSX, XLS) o imágenes (JPG, JPEG, PNG).',
+            'archivos.*.max' => 'Cada archivo no debe exceder 10 MB.',
         ];
     }
 
@@ -76,7 +79,7 @@ class BreathalyzerReportRequest extends FormRequest
             'pruebas_realizadas' => 'pruebas realizadas',
             'conductores_no_aptos' => 'conductores no aptos',
             'descripcion' => 'descripción',
-            'archivo' => 'archivo',
+            'archivos' => 'archivos',
         ];
     }
 }

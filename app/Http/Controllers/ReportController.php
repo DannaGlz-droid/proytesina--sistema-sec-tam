@@ -18,6 +18,8 @@ use App\Http\Requests\InjuryObservatoryReportRequest;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use App\Http\Requests\GruposVulnerablesReportRequest;
+use App\Models\GruposVulnerablesReport;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
@@ -35,6 +37,8 @@ class ReportController extends Controller
             'files',
             'comments.user.position',
             'roadSafetyReports.activityType',
+            'roadSafetyReports.municipality',
+            'roadSafetyReports.jurisdiction',
             'injuryObservatoryReports.municipality',
             'injuryObservatoryReports.jurisdiction',
             'breathalyzerReports'
@@ -301,8 +305,10 @@ class ReportController extends Controller
     public function createSeguridadVial()
     {
         $activityTypes = ActivityType::all();
+        $municipalities = Municipality::all();
+        $jurisdictions = Jurisdiction::all();
         
-        return view('reportes.registro.seguridad-vial', compact('activityTypes'));
+        return view('reportes.registro.seguridad-vial', compact('activityTypes', 'municipalities', 'jurisdictions'));
     }
 
     /**
@@ -328,6 +334,22 @@ class ReportController extends Controller
         try {
             DB::beginTransaction();
 
+            // Server-side: if the user has a jurisdiction, ensure the municipality (and/or submitted jurisdiction)
+            // belongs to the same jurisdiction to avoid manipulating the request client-side.
+            $user = Auth::user();
+            $userJur = optional($user)->jurisdiction_id;
+            if ($userJur) {
+                $mun = Municipality::find($validated['municipio'] ?? null);
+                if (!$mun || $mun->jurisdiction_id != $userJur) {
+                    return redirect()->back()->withInput()->with('error', 'El municipio seleccionado no pertenece a su jurisdicción.');
+                }
+                if (isset($validated['jurisdiccion']) && $validated['jurisdiccion'] != $userJur) {
+                    return redirect()->back()->withInput()->with('error', 'La jurisdicción seleccionada no coincide con su jurisdicción.');
+                }
+                // Force the jurisdiction to the user's jurisdiction for safety
+                $validated['jurisdiccion'] = $userJur;
+            }
+
             // 1. Crear la publicación
             $publication = Publication::create([
                 'user_id' => $userId,
@@ -346,6 +368,8 @@ class ReportController extends Controller
                 'participants' => $validated['participantes'],
                 'location' => $validated['lugar'],
                 'promoter' => $validated['promotor'],
+                'municipality_id' => $validated['municipio'] ?? null,
+                'jurisdiction_id' => $validated['jurisdiccion'] ?? null,
             ]);
 
             // 3. Guardar archivos si existen (soporte para múltiples archivos)
@@ -399,8 +423,10 @@ class ReportController extends Controller
 
         $report = $publication->roadSafetyReports->first();
         $activityTypes = \App\Models\ActivityType::all();
+        $municipalities = Municipality::all();
+        $jurisdictions = Jurisdiction::all();
         
-        return view('reportes.registro.seguridad-vial', compact('publication', 'report', 'activityTypes'));
+        return view('reportes.registro.seguridad-vial', compact('publication', 'report', 'activityTypes', 'municipalities', 'jurisdictions'));
     }
 
     /**
@@ -428,6 +454,21 @@ class ReportController extends Controller
         try {
             DB::beginTransaction();
 
+            // Server-side: if the user has a jurisdiction, ensure the municipality (and/or submitted jurisdiction)
+            // belongs to the same jurisdiction to avoid manipulating the request client-side.
+            $userJur = optional($user)->jurisdiction_id;
+            if ($userJur) {
+                $mun = Municipality::find($validated['municipio'] ?? null);
+                if (!$mun || $mun->jurisdiction_id != $userJur) {
+                    return redirect()->back()->withInput()->with('error', 'El municipio seleccionado no pertenece a su jurisdicción.');
+                }
+                if (isset($validated['jurisdiccion']) && $validated['jurisdiccion'] != $userJur) {
+                    return redirect()->back()->withInput()->with('error', 'La jurisdicción seleccionada no coincide con su jurisdicción.');
+                }
+                // Force the jurisdiction to the user's jurisdiction for safety
+                $validated['jurisdiccion'] = $userJur;
+            }
+
             // 1. Actualizar la publicación
             $publication->update([
                 'topic' => $validated['tema'],
@@ -443,6 +484,8 @@ class ReportController extends Controller
                     'participants' => $validated['participantes'],
                     'location' => $validated['lugar'],
                     'promoter' => $validated['promotor'],
+                    'municipality_id' => $validated['municipio'] ?? null,
+                    'jurisdiction_id' => $validated['jurisdiccion'] ?? null,
                 ]);
             }
 
@@ -683,9 +726,12 @@ class ReportController extends Controller
                 'emergency_vehicles' => $validated['vehiculos_emergencia'],
             ]);
 
-            // 3. Guardar archivo si existe
-            if ($request->hasFile('archivo')) {
-                $this->storeFile($request->file('archivo'), $publication, 'alcoholimetria');
+            // 3. Guardar archivos si existen (soporte para múltiples archivos)
+            if ($request->hasFile('archivos')) {
+                $files = $request->file('archivos');
+                foreach ($files as $file) {
+                    $this->storeFile($file, $publication, 'alcoholimetria');
+                }
             }
 
             DB::commit();
@@ -784,9 +830,12 @@ class ReportController extends Controller
                 ]);
             }
 
-            // 3. Guardar nuevo archivo si existe
-            if ($request->hasFile('archivo')) {
-                $this->storeFile($request->file('archivo'), $publication, 'alcoholimetria');
+            // 3. Guardar nuevos archivos si existen (soporte para múltiples archivos)
+            if ($request->hasFile('archivos')) {
+                $files = $request->file('archivos');
+                foreach ($files as $file) {
+                    $this->storeFile($file, $publication, 'alcoholimetria');
+                }
             }
 
             DB::commit();
@@ -802,6 +851,184 @@ class ReportController extends Controller
                 ->withInput()
                 ->with('error', 'Error al actualizar el reporte: ' . $e->getMessage());
         }
+    }
+
+    public function createGruposVulnerables()
+    {
+        $municipalities = Municipality::orderBy('name')->get();
+        $activityTypes = ActivityType::orderBy('name')->get();
+        $jurisdictions = Jurisdiction::orderBy('name')->get();
+        $publication = null;
+        $report = null;
+
+        return view('reportes.registro.grupos-vulnerables', compact('municipalities', 'activityTypes', 'jurisdictions', 'publication', 'report'));
+    }
+
+    public function storeGruposVulnerables(GruposVulnerablesReportRequest $request)
+    {
+        // FormRequest valida automáticamente
+        $validated = $request->validated();
+        $userId = Auth::id() ?? \App\Models\User::first()->id;
+
+        try {
+            DB::beginTransaction();
+
+            // 1. Crear la publicación
+            $publication = Publication::create([
+                'user_id' => $userId,
+                'publication_type' => 'grupos-vulnerables',
+                'topic' => $validated['tema'],
+                'description' => $validated['descripcion'],
+                'publication_date' => now(),
+                'activity_date' => $validated['fecha'],
+                'status' => 'publicado',
+            ]);
+
+            // 2. Crear el reporte de Grupos Vulnerables
+            GruposVulnerablesReport::create([
+                'publication_id' => $publication->id,
+                'activity_type_id' => $validated['activity_type_id'],
+                'participants' => $validated['participantes'],
+                'location' => $validated['lugar'],
+                'promoter' => $validated['promotor'],
+                'municipality_id' => $validated['municipio'] ?? null,
+                'jurisdiction_id' => $validated['jurisdiccion'] ?? null,
+            ]);
+
+            // 3. Guardar archivos si existen
+            if ($request->hasFile('archivos')) {
+                $files = $request->file('archivos');
+                foreach ($files as $file) {
+                    $this->storeFile($file, $publication, 'grupos-vulnerables');
+                }
+            }
+
+            DB::commit();
+
+            return redirect()
+                ->route('reportes.index')
+                ->with('success', 'Reporte de Grupos Vulnerables registrado exitosamente');
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return redirect()
+                ->back()
+                ->withInput()
+                ->with('error', 'Error al registrar el reporte: ' . $e->getMessage());
+        }
+    }
+
+    public function editGruposVulnerables(Publication $publication)
+    {
+        // Verificar que sea del tipo correcto
+        if ($publication->publication_type !== 'grupos-vulnerables') {
+            return redirect()->route('reportes.index')->with('error', 'Publicación no encontrada.');
+        }
+
+        $report = $publication->gruposVulnerablesReport;
+        $municipalities = Municipality::orderBy('name')->get();
+        $activityTypes = ActivityType::orderBy('name')->get();
+        $jurisdictions = Jurisdiction::orderBy('name')->get();
+
+        return view('reportes.registro.grupos-vulnerables', compact('publication', 'report', 'municipalities', 'activityTypes', 'jurisdictions'));
+    }
+
+    public function updateGruposVulnerables(GruposVulnerablesReportRequest $request, Publication $publication)
+    {
+        // Verificar que sea del tipo correcto
+        if ($publication->publication_type !== 'grupos-vulnerables') {
+            return redirect()->route('reportes.index')->with('error', 'Publicación no encontrada.');
+        }
+
+        // Permitir actualización solo al autor Y que NO esté aprobada
+        $user = Auth::user();
+        if ($publication->user_id !== $user->id) {
+            return redirect()
+                ->route('reportes.index')
+                ->with('error', 'No tienes permisos para actualizar esta publicación.');
+        }
+
+        if ($publication->status === 'aprobado') {
+            return redirect()
+                ->route('reportes.index')
+                ->with('error', 'No puedes actualizar una publicación aprobada.');
+        }
+
+        $validated = $request->validated();
+
+        try {
+            DB::beginTransaction();
+
+            // 1. Actualizar la publicación
+            $publication->update([
+                'topic' => $validated['tema'],
+                'description' => $validated['descripcion'],
+                'activity_date' => $validated['fecha'],
+            ]);
+
+            // 2. Actualizar el reporte de Grupos Vulnerables
+            $publication->gruposVulnerablesReport()->updateOrCreate(
+                ['publication_id' => $publication->id],
+                [
+                    'activity_type_id' => $validated['activity_type_id'],
+                    'participants' => $validated['participantes'],
+                    'location' => $validated['lugar'],
+                    'promoter' => $validated['promotor'],
+                    'municipality_id' => $validated['municipio'] ?? null,
+                    'jurisdiction_id' => $validated['jurisdiccion'] ?? null,
+                ]
+            );
+
+            // 3. Guardar nuevos archivos si existen
+            if ($request->hasFile('archivos')) {
+                $files = $request->file('archivos');
+                foreach ($files as $file) {
+                    $this->storeFile($file, $publication, 'grupos-vulnerables');
+                }
+            }
+
+            DB::commit();
+
+            return redirect()
+                ->route('reportes.index')
+                ->with('success', 'Reporte de Grupos Vulnerables actualizado exitosamente');
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return redirect()
+                ->back()
+                ->withInput()
+                ->with('error', 'Error al actualizar el reporte: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * API: Cargar datos de Grupos Vulnerables para el modal
+     */
+    public function getGruposVulnerablesData(Publication $publication)
+    {
+        // Verificar que sea del tipo correcto
+        if ($publication->publication_type !== 'grupos-vulnerables') {
+            return response()->json(['success' => false, 'message' => 'Publicación no encontrada'], 404);
+        }
+
+        $report = $publication->gruposVulnerablesReport;
+        
+        if (!$report) {
+            return response()->json(['success' => false, 'message' => 'Reporte no encontrado'], 404);
+        }
+
+        return response()->json([
+            'success' => true,
+            'report' => [
+                'activity_type' => $report->activityType?->name ?? '-',
+                'location' => $report->location ?? '-',
+                'promoter' => $report->promoter ?? '-',
+                'participants' => $report->participants ?? '-',
+                'municipality' => $report->municipality?->name ?? '-',
+                'jurisdiction' => $report->jurisdiction?->name ?? '-',
+            ]
+        ]);
     }
 
     /**
