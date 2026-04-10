@@ -17,21 +17,21 @@
         <div class="flex items-center space-x-2">
             {{-- Reportes: Todos menos Invitado --}}
             @if(!auth()->user()->isGuest())
-                <a href="{{ route('reportes.index') }}" class="text-sm lg:text-base bg-header hover:bg-[#9B4D6E] hover:text-[#E8CA8B] text-white py-1 lg:py-1 px-3 lg:px-4 rounded-md transition duration-200 ease-in-out mr-3 lg:mr-4 inline-flex items-center justify-center">
+                <a href="{{ route('reportes.index') }}" class="text-base lg:text-base font-semibold hover:underline text-white py-1 lg:py-1 px-3 lg:px-4 rounded-md transition-all ease-in-out mr-3 lg:mr-4 inline-flex items-center justify-center whitespace-nowrap">
                     Reportes
                 </a>
             @endif
             
             {{-- Estadísticas: Solo Administrador y Coordinador --}}
             @if(auth()->user()->hasAnyRole(['Administrador', 'Coordinador']))
-                <a href="{{ route('statistic.data') }}" class="text-sm lg:text-base bg-header hover:bg-[#9B4D6E] hover:text-[#E8CA8B] text-white py-1 lg:py-1 px-3 lg:px-4 rounded-md transition duration-200 ease-in-out mr-3 lg:mr-4 inline-flex items-center justify-center">
+                <a href="{{ route('statistic.data') }}" class="text-base lg:text-base font-semibold hover:underline text-white py-1 lg:py-1 px-3 lg:px-4 rounded-md transition-all ease-in-out mr-3 lg:mr-4 inline-flex items-center justify-center whitespace-nowrap">
                     Estadísticas
                 </a>
             @endif
         </div>
         
         <!-- Notificaciones con dropdown -->
-        <div class="relative flex items-center mr-3 lg:mr-4" x-data="{ openNotifications: false, notifications: [], unreadCount: 0 }" 
+        <div class="relative flex items-center ml-3 lg:ml-4 mr-3 lg:mr-4" x-data="{ openNotifications: false, notifications: [], unreadCount: 0 }" 
              x-init="
                  // Cargar notificaciones al iniciar
                  fetch('/notificaciones')
@@ -170,7 +170,7 @@
                     <ion-icon name="person-circle" class="text-white text-4xl lg:text-[44px]"></ion-icon>
                 </div>
                 <!-- Nombre y cargo - se oculta en mobile -->
-                <div class="text-left hidden lg:block">
+                <div class="text-left hidden lg:block min-w-0 w-40">
                     <p class="text-sm font-semibold">{{ auth()->user()->name }}</p>
                     <p class="text-xs text-gray-300">{{ auth()->user()->position->name ?? 'Sin cargo' }}</p>
                 </div>

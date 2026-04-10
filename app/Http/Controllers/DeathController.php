@@ -156,21 +156,42 @@ class DeathController extends Controller
         $recordsFiltered = $query->count();
         
         // Apply ordering and pagination
-        $deaths = $query->with(['deathCause', 'deathMunicipality', 'residenceMunicipality', 'jurisdiction', 'deathLocation'])
-                        ->orderBy($orderColumn, $orderDir)
+        $deaths = $query->with(['deathCause', 'deathMunicipality', 'residenceMunicipality', 'jurisdiction', 'deathLocation']);
+        
+        // Special handling for age ordering: calculate total days
+        if ($orderColumn === 'age') {
+            $deaths->orderByRaw("(COALESCE(age_years, 0) * 365 + COALESCE(age_months, 0) * 30 + COALESCE(age_days, 0)) {$orderDir}");
+        } else {
+            $deaths->orderBy($orderColumn, $orderDir);
+        }
+        
+        $deaths = $deaths
                         ->skip($start)
                         ->take($length)
                         ->get();
         
         // Format data for DataTables. Include `id` so the client can build checkboxes for bulk operations.
         $data = $deaths->map(function ($death) {
+            // Calcular edad total en días para ordenamiento numérico
+            $ageDaysTotal = 0;
+            if ($death->age_years) {
+                $ageDaysTotal += $death->age_years * 365;
+            }
+            if ($death->age_months) {
+                $ageDaysTotal += $death->age_months * 30;
+            }
+            if ($death->age_days) {
+                $ageDaysTotal += $death->age_days;
+            }
+            
             return [
                 'id' => $death->id,
                 'gov_folio' => optional($death)->gov_folio ?? '—',
                 'name' => $death->name ?? '—',
                 'first_last_name' => $death->first_last_name ?? '—',
                 'second_last_name' => $death->second_last_name ?? '—',
-                'age' => $death->pretty_age ?? '—',
+                'age' => $ageDaysTotal,  // Valor numérico en días para ordenamiento
+                'age_display' => $death->pretty_age ?? '—',  // Valor formateado para mostrar
                 'sex' => $death->sex ?? '—',
                 'death_date' => $death->death_date ? $death->death_date->format('d/m/Y') : '—',
                 'residence_municipality' => optional($death->residenceMunicipality)->name ?? '—',

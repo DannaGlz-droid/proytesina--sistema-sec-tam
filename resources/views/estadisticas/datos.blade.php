@@ -92,6 +92,11 @@
                                     <option value="250">250</option>
                                 </select>
                             </div>
+                            <!-- Botón eliminar seleccionados - integrado en header -->
+                            <button id="bulk-delete-deaths" type="button" class="bg-[#AB1A1A] text-white px-4 py-2.5 rounded-lg text-xs font-semibold hover:bg-[#8B1515] transition-all duration-300 font-lora items-center gap-2 whitespace-nowrap shadow-sm" title="Eliminar seleccionados" style="display: none;">
+                                <i class="fas fa-trash text-xs"></i>
+                                <span>Eliminar</span>
+                            </button>
                         </div>
                     </div>
 
@@ -121,9 +126,6 @@
                         </tbody>
                     </table>
                     </div>
-                            <button id="bulk-delete-deaths" type="button" class="h-8 px-3 bg-red-600 text-white rounded-lg text-xs font-semibold hover:bg-red-700 transition-all duration-150" title="Eliminar seleccionados" style="display:none">
-                                <i class="fas fa-trash"></i>
-                            </button>
                         
                     <!-- Custom pagination -->
                     <nav class="flex flex-row flex-wrap items-center justify-between gap-3 p-4 border-t border-[#404041]">
@@ -320,7 +322,7 @@ document.addEventListener('DOMContentLoaded', function () {
             { data: 'name', name: 'name' },
             { data: 'first_last_name', name: 'first_last_name' },
             { data: 'second_last_name', name: 'second_last_name' },
-            { data: 'age', name: 'age' },
+            { data: 'age', name: 'age', render: function(data, type, row) { return type === 'sort' ? data : row.age_display; } },
             { data: 'sex', name: 'sex' },
             { data: 'death_date', name: 'death_date' },
             { data: 'residence_municipality', name: 'residence_municipality_id', orderable: false },
@@ -386,7 +388,11 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function toggleBulkDeleteButton() {
         const any = $('#deaths-table tbody .row-check:checked').length > 0;
-        $('#bulk-delete-deaths').toggle(any);
+        if (any) {
+            $('#bulk-delete-deaths').css('display', 'flex');
+        } else {
+            $('#bulk-delete-deaths').css('display', 'none');
+        }
     }
 
     // Bulk delete action

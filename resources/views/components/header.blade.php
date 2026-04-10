@@ -1,6 +1,6 @@
-<div class="bg-header text-white p-2 lg:p-3 w-full h-14 lg:h-16 font-sans flex items-center justify-between">
+<div class="bg-header text-white p-2 lg:p-3 w-full h-14 lg:h-16 font-sans flex items-center justify-start gap-4 lg:gap-6">
     <!-- Logos a la izquierda: Tamaulipas | Separador | Secretaría de Salud -->
-    <a href="{{ auth()->check() ? (auth()->user()->hasAnyRole(['Administrador','Coordinador']) ? route('statistic.data') : route('reportes.index')) : route('login') }}" class="flex items-center ml-3 lg:ml-6">
+    <a href="{{ auth()->check() ? (auth()->user()->hasAnyRole(['Administrador','Coordinador']) ? route('statistic.data') : route('reportes.index')) : route('login') }}" class="flex items-center flex-shrink-0">
         <!-- Logo Tamaulipas Gobierno del Estado (más grande) -->
         <img src="{{ asset('images/tam_logo.png') }}" alt="Tamaulipas Gobierno del Estado" class="h-10 lg:h-13 object-contain">
         
@@ -10,14 +10,23 @@
         <!-- Logo Secretaría de Salud (más pequeño) -->
         <img src="{{ asset('images/logo-secretaria.png') }}" alt="Secretaría de Salud" class="h-6 lg:h-8 object-contain">
         <!-- Texto opcional (oculto en pantallas pequeñas) -->
-        <span class="hidden lg:inline text-lg lg:text-xl font-semibold ml-3">Sistema SEC-TAM</span>
+        <span class="hidden lg:inline text-lg lg:text-xl font-semibold ml-3 whitespace-nowrap">Sistema SEC-TAM</span>
     </a>
 
+    <!-- Centro: Navegación (Reportes, Estadísticas) - oculto en mobile -->
+    <div class="hidden md:flex items-center gap-8 lg:gap-12">
+        <a href="{{ route('reportes.index') }}" class="text-base lg:text-base font-semibold hover:underline transition-all whitespace-nowrap">Reportes</a>
+        <a href="{{ route('statistic.data') }}" class="text-base lg:text-base font-semibold hover:underline transition-all whitespace-nowrap">Estadísticas</a>
+    </div>
+
+    <!-- Espaciador flexible para empujar los botones a la derecha -->
+    <div class="flex-1 ml-4 lg:ml-6"></div>
+
     <!-- Botones y usuario a la derecha -->
-    <div class="flex items-center">
+    <div class="flex items-center gap-3 lg:gap-4 flex-shrink-0">
        
         <!-- Notificaciones con dropdown -->
-        <div class="relative flex items-center mr-3 lg:mr-4" x-data="{ openNotifications: false, notifications: [], unreadCount: 0 }" 
+        <div class="relative flex items-center ml-3 lg:ml-4" x-data="{ openNotifications: false, notifications: [], unreadCount: 0 }" 
              x-init="
                  // Cargar notificaciones al iniciar
                  fetch('/notificaciones')
@@ -39,7 +48,7 @@
              ">
             <!-- Botón de notificaciones -->
             <button @click="openNotifications = !openNotifications" 
-                    class="relative p-1 lg:p-1 text-gray-300 hover:text-white transition-colors flex items-center justify-center">
+                    class="relative p-1.5 lg:p-2 text-gray-300 hover:text-white transition-colors flex items-center justify-center hover:bg-white/10 rounded-lg">
                 <ion-icon name="notifications" class="text-xl lg:text-2xl"></ion-icon>
                 <!-- Indicador de notificaciones nuevas -->
                 <span x-show="unreadCount > 0" 
@@ -148,22 +157,22 @@
         </div>
 
         <!-- Avatar y nombre del usuario con dropdown responsive -->
-        <div class="relative flex items-center" x-data="{ openProfile: false }">
-            <!-- Área clickeable SOLO para ir al perfil -->
-            <a href="/mi-perfil" class="flex items-center space-x-0 lg:space-x-1">
+        <div class="relative flex items-center gap-2 lg:gap-2" x-data="{ openProfile: false }">
+            <!-- Área clickeable para ir al perfil -->
+            <a href="/mi-perfil" class="flex items-center gap-2 lg:gap-2 flex-shrink-0">
                 <!-- Avatar circular más grande -->
-                <div class="w-9 h-9 lg:w-11 lg:h-11 rounded-full overflow-hidden">
-                    <ion-icon name="person-circle" class="text-white text-4xl lg:text-[44px]"></ion-icon>
+                <div class="w-9 h-9 lg:w-10 lg:h-10 rounded-full overflow-hidden flex-shrink-0">
+                    <ion-icon name="person-circle" class="text-white text-3xl lg:text-4xl"></ion-icon>
                 </div>
-                <!-- Nombre y cargo - se oculta en mobile -->
-                <div class="text-left hidden lg:block">
-                    <p class="text-sm font-semibold">Lic. Carlos Rodríguez</p>
-                    <p class="text-xs text-gray-300">Jefe de Jurisdicción</p>
+                <!-- Nombre y cargo - se oculta en mobile, ancho fijo -->
+                <div class="text-left hidden lg:block min-w-0 w-64">
+                    <p class="text-base font-semibold truncate">{{ auth()->user()->name ?? 'Usuario' }}</p>
+                    <p class="text-sm text-gray-300 truncate">{{ auth()->user()->position->name ?? 'Sin cargo' }}</p>
                 </div>
             </a>
 
             <!-- Botón separado SOLO para abrir el menú -->
-            <button @click="openProfile = !openProfile" class="p-1 text-gray-300 hover:text-white transition-colors ml-1">
+            <button @click="openProfile = !openProfile" class="p-1.5 lg:p-2 text-gray-300 hover:text-white transition-colors hover:bg-white/10 rounded-lg flex-shrink-0">
                 <ion-icon name="chevron-down" class="text-lg lg:text-xl"></ion-icon>
             </button>
 
@@ -182,7 +191,7 @@
                 <!-- Encabezado del menú -->
                 <div class="px-3 lg:px-4 py-2 lg:py-3 border-b border-gray-100 bg-gray-50">
                     <p class="text-xs lg:text-sm font-medium text-gray-600">Cuenta</p>
-                    <p class="text-xs text-gray-500 mt-1">Lic. Carlos Rodríguez</p>
+                    <p class="text-xs text-gray-500 mt-1 truncate">{{ auth()->user()->name ?? 'Usuario' }}</p>
                 </div>
 
                 <!-- Opciones del menú - SOLO Mi Perfil y Cerrar Sesión -->
