@@ -1,4 +1,4 @@
-<?php if($paginator->hasPages()): ?>
+<?php if($paginator->hasPages() || $paginator->total() > 0): ?>
     <nav role="navigation" aria-label="Pagination Navigation" class="flex items-center justify-center">
         <ul class="inline-flex items-center space-x-2">
             
@@ -17,27 +17,34 @@
             <?php endif; ?>
 
             
-            <?php $__currentLoopData = $elements; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $element): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                
-                <?php if(is_string($element)): ?>
-                    <li><span class="px-3 py-2 text-gray-500"><?php echo e($element); ?></span></li>
-                <?php endif; ?>
+            <?php if($paginator->hasPages()): ?>
+                <?php $__currentLoopData = $elements; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $element): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                    
+                    <?php if(is_string($element)): ?>
+                        <li><span class="px-3 py-2 text-gray-500"><?php echo e($element); ?></span></li>
+                    <?php endif; ?>
 
+                    
+                    <?php if(is_array($element)): ?>
+                        <?php $__currentLoopData = $element; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $page => $url): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                            <?php if($page == $paginator->currentPage()): ?>
+                                <li>
+                                    <span aria-current="page" class="px-3 py-2 rounded-md bg-[#404041] text-white font-lora"><?php echo e($page); ?></span>
+                                </li>
+                            <?php else: ?>
+                                <li>
+                                    <a href="<?php echo e($url); ?>" class="px-3 py-2 rounded-md bg-white border border-[#404041] text-gray-700 hover:bg-[#404041] hover:text-white transition font-lora"><?php echo e($page); ?></a>
+                                </li>
+                            <?php endif; ?>
+                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                    <?php endif; ?>
+                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+            <?php else: ?>
                 
-                <?php if(is_array($element)): ?>
-                    <?php $__currentLoopData = $element; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $page => $url): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                        <?php if($page == $paginator->currentPage()): ?>
-                            <li>
-                                <span aria-current="page" class="px-3 py-2 rounded-md bg-[#404041] text-white font-lora"><?php echo e($page); ?></span>
-                            </li>
-                        <?php else: ?>
-                            <li>
-                                <a href="<?php echo e($url); ?>" class="px-3 py-2 rounded-md bg-white border border-[#404041] text-gray-700 hover:bg-[#404041] hover:text-white transition font-lora"><?php echo e($page); ?></a>
-                            </li>
-                        <?php endif; ?>
-                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
-                <?php endif; ?>
-            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                <li>
+                    <span aria-current="page" class="px-3 py-2 rounded-md bg-[#404041] text-white font-lora">1</span>
+                </li>
+            <?php endif; ?>
 
             
             <?php if($paginator->hasMorePages()): ?>

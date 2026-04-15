@@ -256,6 +256,109 @@ class ReportController extends Controller
     }
 
     /**
+     * Eliminar múltiples publicaciones (eliminación masiva)
+     */
+    public function massDeleteReports(Request $request)
+    {
+        try {
+            $user = Auth::user();
+            $ids = $request->input('ids', []);
+            
+            if (empty($ids)) {
+                return response()->json(['ok' => false, 'error' => 'No se seleccionaron reportes.'], 400);
+            }
+            
+            // Validar que sean array de IDs
+            if (!is_array($ids)) {
+                return response()->json(['ok' => false, 'error' => 'IDs inválidos.'], 400);
+            }
+            
+            DB::beginTransaction();
+            
+            $deletedCount = 0;
+            $skippedCount = 0;
+            
+            // Obtener todas las publicaciones para eliminar
+            $publications = Publication::whereIn('id', $ids)->get();
+            
+            foreach ($publications as $publication) {
+                try {
+                    // Verificar permisos de eliminación
+                    // - Si la publicación está aprobada: solo Admin puede eliminar
+                    // - Si no está aprobada: el autor o Admin pueden eliminar
+                    if ($publication->status === 'aprobado') {
+                        if (!$user->isAdmin()) {
+                            $skippedCount++;
+                            continue;
+                        }
+                    } else {
+                        if ($publication->user_id !== $user->id && !$user->isAdmin()) {
+                            $skippedCount++;
+                            continue;
+                        }
+                    }
+                    
+                    // Crear registro de auditoría
+                    DB::table('publication_audits')->insert([
+                        'publication_id' => $publication->id,
+                        'action' => 'deleted',
+                        'actor_user_id' => $user->id,
+                        'reason' => 'Eliminación masiva',
+                        'snapshot' => json_encode([
+                            'id' => $publication->id,
+                            'topic' => $publication->topic,
+                            'publication_type' => $publication->publication_type,
+                            'status' => $publication->status,
+                            'user_id' => $publication->user_id,
+                            'created_at' => $publication->created_at,
+                            'files_count' => $publication->files->count(),
+                        ]),
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ]);
+                    
+                    // Borrar archivos físicos
+                    foreach ($publication->files as $file) {
+                        Storage::disk('public')->delete($file->file_path);
+                        $file->delete();
+                    }
+                    
+                    // Borrar reportes específicos asociados
+                    RoadSafetyReport::where('publication_id', $publication->id)->delete();
+                    InjuryObservatoryReport::where('publication_id', $publication->id)->delete();
+                    BreathalyzerReport::where('publication_id', $publication->id)->delete();
+                    GruposVulnerablesReport::where('publication_id', $publication->id)->delete();
+                    
+                    // Soft delete de la publicación
+                    $publication->delete();
+                    
+                    $deletedCount++;
+                } catch (\Exception $e) {
+                    $skippedCount++;
+                    \Log::error("Error deleting publication {$publication->id}: " . $e->getMessage());
+                }
+            }
+            
+            DB::commit();
+            
+            return response()->json([
+                'ok' => true,
+                'deleted' => $deletedCount,
+                'skipped' => $skippedCount,
+                'message' => "Se eliminaron $deletedCount reportes correctamente."
+            ]);
+            
+        } catch (\Exception $e) {
+            DB::rollBack();
+            \Log::error("Mass delete error: " . $e->getMessage());
+            return response()->json([
+                'ok' => false,
+                'error' => 'Error al eliminar los reportes: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
      * Eliminar un archivo individual de una publicación
      */
     public function destroyFile(PublicationFile $file)
@@ -1365,6 +1468,88 @@ class ReportController extends Controller
         }
 
         // Descargar y eliminar el archivo temporal
+        return response()->download($zipPath, $zipFileName)->deleteFileAfterSend(true);
+    }
+
+    /**
+     * Download files from multiple publications as a single ZIP
+     */
+    public function massDownloadFiles(Request $request)
+    {
+        $publicationIds = $request->input('publication_ids', []);
+
+        // Si viene como JSON string, decodificar
+        if (is_string($publicationIds)) {
+            $publicationIds = json_decode($publicationIds, true);
+        }
+
+        if (empty($publicationIds) || !is_array($publicationIds)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No hay reportes seleccionados.'
+            ], 400);
+        }
+
+        // Obtener todas las publicaciones con sus archivos
+        $publications = Publication::whereIn('id', $publicationIds)->with('files')->get();
+
+        if ($publications->isEmpty()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No se encontraron los reportes.'
+            ], 404);
+        }
+
+        // Recolectar todos los archivos
+        $allFiles = [];
+        $filesByPublication = [];
+
+        foreach ($publications as $publication) {
+            if ($publication->files->isNotEmpty()) {
+                $filesByPublication[$publication->id] = $publication->files;
+                foreach ($publication->files as $file) {
+                    $allFiles[] = $file;
+                }
+            }
+        }
+
+        // Si no hay archivos, retornar error
+        if (empty($allFiles)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Los reportes seleccionados no tienen archivos.'
+            ], 400);
+        }
+
+        // Crear ZIP con estructura de carpetas por reporte
+        $zipFileName = 'reportes_descarga_' . now()->format('d-m-Y_H-i-s') . '.zip';
+        $zipPath = storage_path('app/temp/' . $zipFileName);
+
+        // Crear directorio temporal si no existe
+        if (!file_exists(storage_path('app/temp'))) {
+            mkdir(storage_path('app/temp'), 0755, true);
+        }
+
+        $zip = new \ZipArchive();
+        if ($zip->open($zipPath, \ZipArchive::CREATE | \ZipArchive::OVERWRITE) === true) {
+            foreach ($publications as $publication) {
+                if (isset($filesByPublication[$publication->id])) {
+                    // Crear carpeta con el nombre/título del reporte
+                    $folderName = Str::slug(substr($publication->topic ?? 'Reporte', 0, 50));
+                    
+                    foreach ($filesByPublication[$publication->id] as $file) {
+                        $filePath = storage_path('app/public/' . $file->file_path);
+                        if (file_exists($filePath)) {
+                            // Agregar archivo en la carpeta del reporte
+                            $zip->addFile($filePath, $folderName . '/' . $file->original_name);
+                        }
+                    }
+                }
+            }
+            $zip->close();
+        }
+
+        // Descargar y eliminar archivo temporal
         return response()->download($zipPath, $zipFileName)->deleteFileAfterSend(true);
     }
 

@@ -124,11 +124,13 @@ Route::middleware('auth')->group(function () {
 
         // Eliminar reportes y archivos
         Route::delete('reportes/{publication}', [App\Http\Controllers\ReportController::class, 'destroy'])->name('reportes.destroy');
+        Route::post('reportes/mass-delete', [App\Http\Controllers\ReportController::class, 'massDeleteReports'])->name('reportes.massDelete');
         Route::delete('reportes/file/{file}', [App\Http\Controllers\ReportController::class, 'destroyFile'])->name('reportes.file.delete');
         
         // Descargar archivos
         Route::get('reportes/file/{file}/download', [App\Http\Controllers\ReportController::class, 'downloadFile'])->name('reportes.file.download');
         Route::get('reportes/{publication}/download-all', [App\Http\Controllers\ReportController::class, 'downloadAllFiles'])->name('reportes.download-all');
+        Route::post('reportes/mass-download-files', [App\Http\Controllers\ReportController::class, 'massDownloadFiles'])->name('reportes.massDownloadFiles');
     });
 
     // ========== COMENTARIOS (Administrador, Coordinador y Operador en sus propias publicaciones) ==========

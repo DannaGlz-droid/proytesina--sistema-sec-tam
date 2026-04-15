@@ -125,17 +125,36 @@
                     <input type="hidden" name="tipo" id="filter-tipo-input" value="<?php echo e(request('tipo', 'todos')); ?>">
                 </form>
 
-                <!-- CONTADOR DE RESULTADOS -->
-                <div class="flex justify-between items-center mb-6">
-                    <div class="text-xs text-gray-600 font-lora">
+                <!-- CONTADOR DE RESULTADOS Y BARRA DE HERRAMIENTAS -->
+                <div class="flex justify-between items-center mb-6 gap-4">
+                    <div class="text-sm text-gray-600 font-lora">
                         <span class="font-semibold text-[#404041]"><?php echo e($publications->total()); ?></span> resultados encontrados
-                        <?php if($publications->hasPages()): ?>
-                            <span class="text-gray-500">• Mostrando <?php echo e($publications->firstItem()); ?>-<?php echo e($publications->lastItem()); ?></span>
-                        <?php endif; ?>
+                        <span class="text-gray-500">• Mostrando <?php echo e($publications->currentPage() === 1 && !$publications->hasPages() ? 1 : $publications->firstItem() ?? 1); ?>-<?php echo e($publications->currentPage() === 1 && !$publications->hasPages() ? $publications->total() : $publications->lastItem() ?? $publications->total()); ?></span>
                     </div>
-                    <div class="text-xs text-gray-500 font-lora">
-                        <!-- Espacio para filtros adicionales si se necesitan -->
+                    <!-- Barra de herramientas de selección masiva -->
+                    <div id="bulk-toolbar" class="flex items-center gap-3 p-3 bg-gray-50 border border-gray-300 rounded-lg" style="display: none;">
+                        <span class="text-sm font-semibold text-[#404041] font-lora">
+                            <span id="selected-count">0</span> seleccionado(s)
+                        </span>
+                        <button id="bulk-download-files" type="button" class="bg-gray-600 text-white px-3 py-1.5 rounded-lg text-xs font-semibold hover:bg-gray-700 transition-all duration-300 font-lora flex items-center gap-2 whitespace-nowrap shadow-sm">
+                            <i class="fas fa-download text-xs"></i>
+                            <span>Descargar archivos</span>
+                        </button>
+                        <button id="bulk-delete-reports" type="button" class="bg-[#AB1A1A] text-white px-3 py-1.5 rounded-lg text-xs font-semibold hover:bg-[#8B1515] transition-all duration-300 font-lora flex items-center gap-2 whitespace-nowrap shadow-sm">
+                            <i class="fas fa-trash text-xs"></i>
+                            <span>Eliminar</span>
+                        </button>
+                        <button id="clear-selection" type="button" class="border border-[#404041] text-[#404041] px-3 py-1.5 rounded-lg text-xs font-semibold hover:bg-gray-50 transition-all duration-300 font-lora flex items-center gap-1 whitespace-nowrap">
+                            <i class="fas fa-times text-xs"></i>
+                            <span>Limpiar</span>
+                        </button>
                     </div>
+                </div>
+
+                <!-- Paginación Superior -->
+                <div class="flex justify-center mb-6 mt-6 pt-6 border-t border-gray-300">
+                    <?php echo e($publications->onEachSide(2)->links('vendor.pagination.custom')); ?>
+
                 </div>
 
                 <!-- Grid de reportes - 4 columnas -->
@@ -301,14 +320,14 @@
 
                         <?php if (isset($component)) { $__componentOriginale6927a94816a78ea3a8d4a0fc9fc3d88 = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginale6927a94816a78ea3a8d4a0fc9fc3d88 = $attributes; } ?>
-<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.publicacion-card','data' => ['dataPublicationId' => ''.e($pub->id).'','tipo' => $tipoDisplay,'titulo' => $pub->topic,'fecha' => $pub->publication_date->locale('es')->isoFormat('dddd, D [de] MMMM [de] YYYY'),'usuario' => $uShort,'usuarioFull' => $uFull,'descripcion' => $activityInfo,'archivosCount' => $pub->files->count(),'badgeClass' => $badgeClass,'badgeBorderClass' => $badgeBorderClass,'hasComments' => count($pub->comentarios_json ?? []) > 0,'hasUnread' => $hasUnread,'status' => $pub->status,'approvedBy' => optional($pub->approver)->name,'rejectedBy' => optional($pub->rejector)->name,'rejectionReason' => $pub->rejection_reason,'dataPublicationTipo' => ''.e($pub->publication_type).'']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.publicacion-card','data' => ['dataPublicationId' => ''.e($pub->id).'','tipo' => $tipoDisplay,'titulo' => $pub->topic,'fecha' => $pub->publication_date->locale('es')->isoFormat('dddd, D [de] MMMM [de] YYYY'),'usuario' => $uShort,'usuarioFull' => $uFull,'descripcion' => $activityInfo,'archivosCount' => $pub->files->count(),'badgeClass' => $badgeClass,'badgeBorderClass' => $badgeBorderClass,'hasComments' => count($pub->comentarios_json ?? []) > 0,'hasUnread' => $hasUnread,'status' => $pub->status,'approvedBy' => optional($pub->approver)->name,'rejectedBy' => optional($pub->rejector)->name,'rejectionReason' => $pub->rejection_reason,'dataPublicationTipo' => ''.e($pub->publication_type).'','class' => 'publication-card-wrapper']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
 <?php $component->withName('publicacion-card'); ?>
 <?php if ($component->shouldRender()): ?>
 <?php $__env->startComponent($component->resolveView(), $component->data()); ?>
 <?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
 <?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
 <?php endif; ?>
-<?php $component->withAttributes(['data-publication-id' => ''.e($pub->id).'','tipo' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($tipoDisplay),'titulo' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($pub->topic),'fecha' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($pub->publication_date->locale('es')->isoFormat('dddd, D [de] MMMM [de] YYYY')),'usuario' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($uShort),'usuario_full' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($uFull),'descripcion' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($activityInfo),'archivosCount' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($pub->files->count()),'badgeClass' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($badgeClass),'badgeBorderClass' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($badgeBorderClass),'has-comments' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute(count($pub->comentarios_json ?? []) > 0),'has-unread' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($hasUnread),'status' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($pub->status),'approvedBy' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute(optional($pub->approver)->name),'rejectedBy' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute(optional($pub->rejector)->name),'rejectionReason' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($pub->rejection_reason),'data-publication-tipo' => ''.e($pub->publication_type).'']); ?>
+<?php $component->withAttributes(['data-publication-id' => ''.e($pub->id).'','tipo' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($tipoDisplay),'titulo' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($pub->topic),'fecha' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($pub->publication_date->locale('es')->isoFormat('dddd, D [de] MMMM [de] YYYY')),'usuario' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($uShort),'usuario_full' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($uFull),'descripcion' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($activityInfo),'archivosCount' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($pub->files->count()),'badgeClass' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($badgeClass),'badgeBorderClass' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($badgeBorderClass),'has-comments' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute(count($pub->comentarios_json ?? []) > 0),'has-unread' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($hasUnread),'status' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($pub->status),'approvedBy' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute(optional($pub->approver)->name),'rejectedBy' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute(optional($pub->rejector)->name),'rejectionReason' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($pub->rejection_reason),'data-publication-tipo' => ''.e($pub->publication_type).'','class' => 'publication-card-wrapper']); ?>
 
                             <div class="flex justify-end gap-2">
                                 <button class="w-8 h-8 flex items-center justify-center rounded-lg border border-[#404041] text-[#404041] transition-all duration-300 hover:bg-[#404041] hover:text-white <?php echo e($claseModal); ?>" 
@@ -379,16 +398,14 @@
                         </div>
                     <?php endif; ?>
                 </div>
+
+                <!-- Paginación Inferior -->
+                <div class="flex justify-center mt-6 pt-6 border-t border-gray-300">
+                    <?php echo e($publications->onEachSide(2)->links('vendor.pagination.custom')); ?>
+
+                </div>
             </div>
         </div>
-
-        <!-- Paginación -->
-        <?php if($publications->hasPages()): ?>
-            <div class="flex justify-center mt-8">
-                <?php echo e($publications->onEachSide(1)->links('vendor.pagination.custom')); ?>
-
-            </div>
-        <?php endif; ?>
     </div>
 
     <!-- INCLUIR EL COMPONENTE DEL MODAL DE ALCOHOLIMETRÍA -->
@@ -492,6 +509,43 @@
 <?php echo $__env->make('components.modal-seguridad-vial', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?> 
 <?php echo $__env->make('components.modal-observatorio', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?>
 <?php echo $__env->make('components.modal-grupos-vulnerables', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?>
+
+    <!-- ESTILOS PARA SELECCIÓN MASIVA DE REPORTES -->
+    <style>
+        .publication-card-wrapper {
+            transition: all 0.3s ease;
+        }
+
+        .publication-card-wrapper.selected-card {
+            border: 2px solid #4C8CC4 !important;
+            background-color: rgba(76, 140, 196, 0.05);
+        }
+
+        .publication-card-wrapper.selected-card .archivos-open {
+            background-color: rgba(76, 140, 196, 0.1);
+            border-color: #4C8CC4 !important;
+        }
+
+        .publication-check-btn {
+            background-color: white;
+            transition: all 0.2s ease;
+        }
+
+        .publication-check-btn:hover {
+            border-color: #4C8CC4 !important;
+            background-color: rgba(76, 140, 196, 0.05);
+        }
+
+        .publication-check-btn.selected {
+            background-color: #4C8CC4;
+            border-color: #4C8CC4 !important;
+        }
+
+        .publication-check-btn.selected i {
+            display: inline !important;
+            color: white;
+        }
+    </style>
 
     <!-- JAVASCRIPT SIMPLIFICADO Y FUNCIONAL -->
     <script>
@@ -1507,6 +1561,123 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             return;
         }
+    });
+
+    // ========== MANEJO DE CHECKBOXES Y ELIMINACIÓN MASIVA DE REPORTES ==========
+    // Mark todas las tarjetas como no seleccionadas, luego marcar solo las seleccionadas
+    function toggleBulkToolbar() {
+        const checked = document.querySelectorAll('.publication-check-btn.selected');
+        const toolbar = document.getElementById('bulk-toolbar');
+        const counter = document.getElementById('selected-count');
+        
+        // Primero, remover la clase de TODAS las tarjetas
+        document.querySelectorAll('.publication-card-wrapper.selected-card').forEach(card => {
+            card.classList.remove('selected-card');
+        });
+        
+        if (checked.length > 0) {
+            toolbar.style.display = 'flex';
+            counter.textContent = checked.length;
+            // Resaltar SOLO las tarjetas seleccionadas
+            checked.forEach(btn => {
+                const card = btn.closest('.publication-card-wrapper');
+                if (card) {
+                    card.classList.add('selected-card');
+                }
+            });
+        } else {
+            toolbar.style.display = 'none';
+        }
+    }
+
+    // Event listeners para botones de checkbox
+    document.querySelectorAll('.publication-check-btn').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            this.classList.toggle('selected');
+            toggleBulkToolbar();
+        });
+    });
+
+    // Botón para limpiar selección
+    document.getElementById('clear-selection').addEventListener('click', function() {
+        document.querySelectorAll('.publication-check-btn.selected').forEach(btn => {
+            btn.classList.remove('selected');
+        });
+        toggleBulkToolbar();
+    });
+
+    // Botón de eliminación masiva
+    document.getElementById('bulk-delete-reports').addEventListener('click', function() {
+        const checked = document.querySelectorAll('.publication-check-btn.selected');
+        if (checked.length === 0) {
+            alert('Selecciona al menos un reporte.');
+            return;
+        }
+
+        const ids = Array.from(checked).map(btn => btn.dataset.publicationId);
+        
+        if (!confirm(`¿Confirmas eliminar ${ids.length} reporte(s)? Esta acción no se puede deshacer.`)) {
+            return;
+        }
+
+        fetch('<?php echo e(route("reportes.massDelete")); ?>', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+            },
+            body: JSON.stringify({ ids: ids })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.ok) {
+                alert(`Eliminados: ${data.deleted} reporte(s).${data.skipped > 0 ? ` ${data.skipped} no pudieron ser eliminados por permisos.` : ''}`);
+                window.location.reload();
+            } else {
+                alert(`Error al eliminar: ${data.error}`);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error al eliminar los reportes.');
+        });
+    });
+
+    // Descargar archivos de múltiples reportes
+    document.getElementById('bulk-download-files').addEventListener('click', function() {
+        const checked = document.querySelectorAll('.publication-check-btn.selected');
+        if (checked.length === 0) {
+            alert('Selecciona al menos un reporte.');
+            return;
+        }
+
+        const ids = Array.from(checked).map(btn => btn.dataset.publicationId);
+        
+        // Crear un formulario hidden para enviar el POST
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = '<?php echo e(route("reportes.massDownloadFiles")); ?>';
+        
+        // Agregar token CSRF
+        const csrfInput = document.createElement('input');
+        csrfInput.type = 'hidden';
+        csrfInput.name = '_token';
+        csrfInput.value = document.querySelector('meta[name="csrf-token"]').content;
+        form.appendChild(csrfInput);
+        
+        // Agregar IDs
+        const idsInput = document.createElement('input');
+        idsInput.type = 'hidden';
+        idsInput.name = 'publication_ids';
+        idsInput.value = JSON.stringify(ids);
+        form.appendChild(idsInput);
+        
+        // Enviar formulario
+        document.body.appendChild(form);
+        form.submit();
+        form.remove();
     });
 });
 </script>

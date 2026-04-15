@@ -23,23 +23,16 @@
 <div {{ $attributes->merge(['class' => 'border border-[#404041] rounded-lg p-5 bg-white transition-all duration-300 hover:-translate-y-1 hover:shadow-lg group flex flex-col h-full relative publication-card']) }}>
     <div class="flex-grow min-w-0">
         <div class="flex justify-between items-start mb-4">
-            <div class="text-gray-600 text-sm font-medium font-lora">{{ $fecha }}</div>
             <div class="flex items-center gap-2">
-                {{-- Badge de estado --}}
-                @if($status === 'aprobado')
-                    <span class="px-2 py-1 bg-green-100 text-green-700 text-xs font-semibold rounded-lg border border-green-300" title="Aprobado por: {{ $approvedBy }}">
-                        <i class="fas fa-check-circle mr-1"></i>Aprobado
-                    </span>
-                @elseif($status === 'rechazado')
-                    <span class="px-2 py-1 bg-red-100 text-red-700 text-xs font-semibold rounded-lg border border-red-300" title="Rechazado por: {{ $rejectedBy }}">
-                        <i class="fas fa-times-circle mr-1"></i>Rechazado
-                    </span>
-                @else
-                    <span class="px-2 py-1 bg-yellow-100 text-yellow-700 text-xs font-semibold rounded-lg border border-yellow-300">
-                        <i class="fas fa-clock mr-1"></i>Pendiente
-                    </span>
-                @endif
-                
+                {{-- Checkbox para selección masiva --}}
+                <button class="publication-check-btn w-5 h-5 flex items-center justify-center rounded border border-[#D1D5DB] hover:border-[#4C8CC4] transition-all duration-200" 
+                        data-publication-id="{{ $attributes['data-publication-id'] ?? '' }}" 
+                        title="Seleccionar para eliminación masiva">
+                    <i class="fas fa-check text-xs text-[#4C8CC4] hidden"></i>
+                </button>
+                <div class="text-gray-600 text-sm font-medium font-lora">{{ $fecha }}</div>
+            </div>
+            <div class="flex items-center gap-2">
                 {{-- Ícono de comentarios --}}
                 <div class="relative">
                     <button type="button" class="open-comments relative w-5 h-5 flex items-center justify-center text-gray-500">
@@ -49,6 +42,21 @@
                         @endif
                     </button>
                 </div>
+
+                {{-- Badge de estado - Solo icono con tooltip --}}
+                @if($status === 'aprobado')
+                    <div class="w-6 h-6 flex items-center justify-center rounded-full bg-green-100 text-green-700 cursor-help hover:bg-green-200 transition-colors duration-200" title="Aprobado por: {{ $approvedBy }}">
+                        <i class="fas fa-check-circle text-sm"></i>
+                    </div>
+                @elseif($status === 'rechazado')
+                    <div class="w-6 h-6 flex items-center justify-center rounded-full bg-red-100 text-red-700 cursor-help hover:bg-red-200 transition-colors duration-200" title="Rechazado por: {{ $rejectedBy }}">
+                        <i class="fas fa-times-circle text-sm"></i>
+                    </div>
+                @else
+                    <div class="w-6 h-6 flex items-center justify-center rounded-full bg-yellow-100 text-yellow-700 cursor-help hover:bg-yellow-200 transition-colors duration-200" title="Pendiente de aprobación">
+                        <i class="fas fa-clock text-sm"></i>
+                    </div>
+                @endif
             </div>
         </div>
 
@@ -94,10 +102,20 @@
 
     @if($count > 0)
         <div class="flex-none">
+            @php
+                // Determinar icono según cantidad de archivos
+                $iconoClase = 'fa-file';
+                
+                if ($count >= 4) {
+                    $iconoClase = 'fa-folder';
+                } elseif ($count >= 2) {
+                    $iconoClase = 'fa-copy';
+                }
+            @endphp
             <div class="bg-gray-50 p-4 rounded-lg border border-[#404041] cursor-pointer transition-all duration-300 hover:bg-gray-100 archivos-open">
                 <div class="flex items-center gap-3">
                     <div class="w-10 h-10 flex items-center justify-center rounded-lg bg-[#BC955C] text-white">
-                        <i class="fas fa-copy text-sm"></i>
+                        <i class="fas {{ $iconoClase }} text-sm"></i>
                     </div>
                     <div class="flex-1 min-w-0">
                         <div class="font-semibold text-[#404041] text-sm font-lora">Archivos adjuntos</div>
