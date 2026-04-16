@@ -839,11 +839,11 @@ document.addEventListener('DOMContentLoaded', function() {
             else if (userIsAdminOrCoord && status !== 'aprobado') {
                 approvalContainer.style.display = 'flex';
                 approvalContainer.innerHTML = `
-                    <button class="aprobar-reporte px-6 py-2.5 bg-[#75A84E] text-white rounded-lg text-sm font-semibold hover:bg-[#5a8339] transition-all duration-300 font-lora whitespace-nowrap shadow-md hover:shadow-lg">
-                        <i class="fas fa-check-circle mr-2"></i>Aprobar
+                    <button class="rechazar-reporte border border-[#AB1A1A] text-[#AB1A1A] px-4 lg:px-6 py-2 rounded-lg text-xs lg:text-sm font-semibold hover:bg-red-50 transition-all duration-300 font-lora whitespace-nowrap flex items-center gap-2">
+                        <i class="fas fa-times-circle"></i>Rechazar
                     </button>
-                    <button class="rechazar-reporte px-6 py-2.5 bg-[#9D2449] text-white rounded-lg text-sm font-semibold hover:bg-[#7a1c38] transition-all duration-300 font-lora whitespace-nowrap shadow-md hover:shadow-lg">
-                        <i class="fas fa-times-circle mr-2"></i>Rechazar
+                    <button class="aprobar-reporte bg-[#399e3b] text-white px-4 lg:px-6 py-2 rounded-lg text-xs lg:text-sm font-semibold hover:bg-[#2d7e2f] transition-all duration-300 font-lora whitespace-nowrap flex items-center gap-2">
+                        <i class="fas fa-check-circle"></i>Aprobar
                     </button>
                 `;
                 
@@ -929,6 +929,9 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Comentarios
         const comentariosContainer = modal.querySelector('.modal-comentarios');
+        const comentariosToggle = modal.querySelector('.comentarios-toggle');
+        const comentariosContainerDiv = modal.querySelector('.comentarios-container');
+        
         if (comentariosContainer && dataset.comentarios) {
             try {
                 const comentarios = JSON.parse(dataset.comentarios);
@@ -937,6 +940,43 @@ document.addEventListener('DOMContentLoaded', function() {
                 modal.dataset.comentariosJson = dataset.comentarios;
                 
                 renderComments(comentariosContainer, comentarios);
+                
+                // Mostrar el botón de toggle y actualizar contador
+                if (comentariosToggle) {
+                    comentariosToggle.style.display = 'flex';
+                    const contadorSpan = comentariosToggle.querySelector('.contador-comentarios');
+                    if (contadorSpan) {
+                        if (comentarios.length > 0) {
+                            contadorSpan.textContent = `${comentarios.length} comentario${comentarios.length !== 1 ? 's' : ''}`;
+                            // Si hay comentarios, expandir automáticamente
+                            comentariosContainerDiv.classList.add('expanded');
+                            const icono = comentariosToggle.querySelector('.icono-chevron');
+                            if (icono) {
+                                icono.style.transform = 'rotate(180deg)';
+                            }
+                        } else {
+                            contadorSpan.textContent = 'Sin comentarios';
+                        }
+                    }
+                    
+                    // Agregar evento de click al toggle
+                    comentariosToggle.onclick = function(e) {
+                        e.preventDefault();
+                        const isExpanded = comentariosContainerDiv.classList.contains('expanded');
+                        
+                        if (isExpanded) {
+                            comentariosContainerDiv.classList.remove('expanded');
+                        } else {
+                            comentariosContainerDiv.classList.add('expanded');
+                        }
+                        
+                        // Rotar el icono
+                        const icono = comentariosToggle.querySelector('.icono-chevron');
+                        if (icono) {
+                            icono.style.transform = isExpanded ? 'rotate(0deg)' : 'rotate(180deg)';
+                        }
+                    };
+                }
 
                 // Marcar como vistos los comentarios (si aplica) y actualizar la UI
                 fetch(`/reportes/${dataset.publicationId}/comentarios/mark-seen`, {
@@ -981,15 +1021,18 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // Mostrar/ocultar formulario de comentarios según permisos
         const comentarioForm = modal.querySelector('.comentario-form-container');
+        const comentarioNoPermisos = modal.querySelector('.comentario-no-permisos');
         const isOwner = dataset.isOwner === 'true';
         const userRole = '<?php echo e(auth()->user()->role->name ?? ""); ?>';
         
         // Admin/Coordinador siempre pueden comentar, Operador solo en sus propias publicaciones
-        if (comentarioForm) {
+        if (comentarioForm && comentarioNoPermisos) {
             if (userRole === 'Administrador' || userRole === 'Coordinador' || (userRole === 'Operador' && isOwner)) {
                 comentarioForm.style.display = 'block';
+                comentarioNoPermisos.style.display = 'none';
             } else {
                 comentarioForm.style.display = 'none';
+                comentarioNoPermisos.style.display = 'block';
             }
         }
     }
@@ -1035,17 +1078,19 @@ document.addEventListener('DOMContentLoaded', function() {
                                         ${comentario.user.position}
                                     </div>
                                 </div>
-                                <div class="flex items-center">
-                                    <div class="text-xs text-gray-500 font-lora whitespace-nowrap text-right">
-                                        <div>${dateStr}</div>
-                                        <div class="text-sm">${timeStr}</div>
-                                    </div>
+                                <div class="text-xs text-gray-500 font-lora whitespace-nowrap text-right">
+                                    ${dateStr}
+                                </div>
+                            </div>
+                            <div class="flex justify-between items-end gap-2">
+                                <p class="text-gray-700 text-sm break-words font-lora flex-1 min-w-0">
+                                    ${comentario.comment}
+                                </p>
+                                <div class="flex items-center gap-1 whitespace-nowrap flex-shrink-0 ml-auto">
+                                    <span class="text-xs text-gray-500 font-lora">${timeStr}</span>
                                     ${tickHtml}
                                 </div>
                             </div>
-                            <p class="text-gray-700 text-sm break-words font-lora">
-                                ${comentario.comment}
-                            </p>
                         </div>
                     `;
             });
@@ -1235,9 +1280,10 @@ document.addEventListener('DOMContentLoaded', function() {
                     // Limpiar textarea
                     textarea.value = '';
                     textarea.style.height = 'auto';
-                    
                     // Obtener el contenedor de comentarios
                     const comentariosContainer = modal.querySelector('.modal-comentarios');
+                    const comentariosToggle = modal.querySelector('.comentarios-toggle');
+                    const comentariosContainerDiv = modal.querySelector('.comentarios-container');
                     
                     // Obtener los comentarios actuales almacenados en el modal
                     // (los almacenamos cuando se abre el modal en fillFilesAndComments)
@@ -1260,6 +1306,23 @@ document.addEventListener('DOMContentLoaded', function() {
 
                     // Re-renderizar todos los comentarios
                     renderComments(comentariosContainer, comentariosActuales);
+                    
+                    // Actualizar el contador de comentarios y expandir si estaba contraído
+                    if (comentariosToggle) {
+                        const contadorSpan = comentariosToggle.querySelector('.contador-comentarios');
+                        if (contadorSpan) {
+                            contadorSpan.textContent = `${comentariosActuales.length} comentario${comentariosActuales.length !== 1 ? 's' : ''}`;
+                        }
+                        
+                        // Expandir la sección si estaba contraída
+                        if (comentariosContainerDiv && !comentariosContainerDiv.classList.contains('expanded')) {
+                            comentariosContainerDiv.classList.add('expanded');
+                            const icono = comentariosToggle.querySelector('.icono-chevron');
+                            if (icono) {
+                                icono.style.transform = 'rotate(180deg)';
+                            }
+                        }
+                    }
                     
                     // Remove unread dot for this publication (author has read their own comment)
                     try {

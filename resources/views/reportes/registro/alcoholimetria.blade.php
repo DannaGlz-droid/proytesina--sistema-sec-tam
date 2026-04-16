@@ -35,7 +35,7 @@
                             <input type="text"
                                    name="tema"
                                    minlength="3"
-                                   maxlength="255"
+                                   maxlength="146"
                                    class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora"
                                    placeholder="Ej: Operativo alcoholimetría fin de semana"
                                    value="{{ old('tema', isset($publication) ? $publication->topic : '') }}"

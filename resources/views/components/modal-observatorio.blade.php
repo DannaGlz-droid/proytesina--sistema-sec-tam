@@ -1,3 +1,23 @@
+<style>
+    .modal-content-scroll::-webkit-scrollbar {
+        width: 6px;
+    }
+    .modal-content-scroll::-webkit-scrollbar-track {
+        background: transparent;
+    }
+    .modal-content-scroll::-webkit-scrollbar-thumb {
+        background: #ccc;
+        border-radius: 3px;
+    }
+    .modal-content-scroll::-webkit-scrollbar-thumb:hover {
+        background: #999;
+    }
+    .modal-content-scroll {
+        scrollbar-width: thin;
+        scrollbar-color: #ccc transparent;
+    }
+</style>
+
 @php
     $config = [
         'tipo' => 'observatorio de lesiones',

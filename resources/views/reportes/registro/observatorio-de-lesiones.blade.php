@@ -37,7 +37,7 @@
                                    class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora" 
                                    placeholder="Ej: Análisis de lesiones por accidentes"
                                    value="{{ old('tema', isset($publication) ? $publication->topic : '') }}"
-                                   required minlength="3" maxlength="255">
+                                   required minlength="3" maxlength="146">
                         </div>
                         <div>
                             <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Municipio <span class="text-red-600">*</span></label>
