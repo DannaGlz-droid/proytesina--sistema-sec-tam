@@ -15,10 +15,12 @@ use App\Models\Notification;
 use App\Models\User;
 use App\Http\Requests\RoadSafetyReportRequest;
 use App\Http\Requests\InjuryObservatoryReportRequest;
+use App\Http\Requests\GruposVulnerablesReportRequest;
+use App\Http\Requests\BreathalyzerReportRequest;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use App\Http\Requests\GruposVulnerablesReportRequest;
+use App\Config\ReportFileRequirements;
 use App\Models\GruposVulnerablesReport;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -372,8 +374,30 @@ class ReportController extends Controller
                 'seguridad_vial' => route('reportes.seguridad-vial.edit', $publication),
                 'observatorio' => route('reportes.observatorio.edit', $publication),
                 'alcoholimetria' => route('reportes.alcoholimetria.edit', $publication),
+                'grupos_vulnerables' => route('reportes.grupos-vulnerables.edit', $publication),
                 default => route('reportes.index')
             };
+            
+            // Get remaining files after deletion
+            $remainingFiles = $publication->files()
+                ->where('id', '!=', $file->id)
+                ->get();
+
+            // Check if removal is allowed
+            $validation = ReportFileRequirements::validateFiles(
+                $publication->publication_type,
+                $remainingFiles
+            );
+
+            if (!$validation['valid']) {
+                $message = ReportFileRequirements::getMissingFilesMessage(
+                    $publication->publication_type,
+                    $remainingFiles
+                );
+                
+                return redirect($editRoute)
+                    ->with('error', 'No se puede eliminar este archivo. ' . $message);
+            }
 
             // Borrar archivo físico del disco
             Storage::disk('public')->delete($file->file_path);
@@ -572,14 +596,34 @@ class ReportController extends Controller
                 $validated['jurisdiccion'] = $userJur;
             }
 
-            // 1. Actualizar la publicación
+            // 1. Procesar eliminación de archivos marcados
+            if ($request->filled('files_to_delete')) {
+                $filesToDeleteIds = array_filter(
+                    explode(',', $request->input('files_to_delete')),
+                    fn($id) => !empty($id)
+                );
+                
+                foreach ($filesToDeleteIds as $fileId) {
+                    $file = PublicationFile::find($fileId);
+                    if ($file && $file->publication_id === $publication->id) {
+                        // Eliminar archivo del almacenamiento
+                        if (Storage::disk('public')->exists($file->file_path)) {
+                            Storage::disk('public')->delete($file->file_path);
+                        }
+                        // Eliminar registro
+                        $file->delete();
+                    }
+                }
+            }
+
+            // 2. Actualizar la publicación
             $publication->update([
                 'topic' => $validated['tema'],
                 'description' => $validated['descripcion'] ?? 'Sin descripción adicional.',
                 'activity_date' => $validated['fecha'],
             ]);
 
-            // 2. Actualizar el reporte específico
+            // 3. Actualizar el reporte específico
             $report = $publication->roadSafetyReports->first();
             if ($report) {
                 $report->update([
@@ -592,7 +636,7 @@ class ReportController extends Controller
                 ]);
             }
 
-            // 3. Guardar nuevos archivos si existen
+            // 4. Guardar nuevos archivos si existen
             if ($request->hasFile('archivos')) {
                 $files = $request->file('archivos');
                 foreach ($files as $file) {
@@ -660,9 +704,18 @@ class ReportController extends Controller
                 'jurisdiction_id' => $validated['jurisdiccion'],
             ]);
 
-            // 3. Guardar archivo si existe
-            if ($request->hasFile('archivo')) {
-                $this->storeFile($request->file('archivo'), $publication, 'observatorio');
+            // 3. Guardar archivos si existen
+            if ($request->hasFile('archivos')) {
+                $archivos = $request->file('archivos');
+                // Si archivos es un array, iterar sobre ellos
+                if (is_array($archivos)) {
+                    foreach ($archivos as $archivo) {
+                        $this->storeFile($archivo, $publication, 'observatorio');
+                    }
+                } else {
+                    // Si es un solo archivo
+                    $this->storeFile($archivos, $publication, 'observatorio');
+                }
             }
 
             DB::commit();
@@ -752,14 +805,34 @@ class ReportController extends Controller
                 $validated['jurisdiccion'] = $userJur;
             }
 
-            // 1. Actualizar la publicación
+            // 1. Procesar eliminación de archivos marcados
+            if ($request->filled('files_to_delete')) {
+                $filesToDeleteIds = array_filter(
+                    explode(',', $request->input('files_to_delete')),
+                    fn($id) => !empty($id)
+                );
+                
+                foreach ($filesToDeleteIds as $fileId) {
+                    $file = PublicationFile::find($fileId);
+                    if ($file && $file->publication_id === $publication->id) {
+                        // Eliminar archivo del almacenamiento
+                        if (Storage::disk('public')->exists($file->file_path)) {
+                            Storage::disk('public')->delete($file->file_path);
+                        }
+                        // Eliminar registro
+                        $file->delete();
+                    }
+                }
+            }
+
+            // 2. Actualizar la publicación
             $publication->update([
                 'topic' => $validated['tema'],
                 'description' => $validated['descripcion'] ?? 'Sin descripción adicional.',
                 'activity_date' => $validated['fecha'],
             ]);
 
-            // 2. Actualizar el reporte específico
+            // 3. Actualizar el reporte específico
             $report = $publication->injuryObservatoryReports->first();
             if ($report) {
                 $report->update([
@@ -768,9 +841,18 @@ class ReportController extends Controller
                 ]);
             }
 
-            // 3. Guardar nuevo archivo si existe
-            if ($request->hasFile('archivo')) {
-                $this->storeFile($request->file('archivo'), $publication, 'observatorio');
+            // 4. Guardar nuevos archivos si existen
+            if ($request->hasFile('archivos')) {
+                $archivos = $request->file('archivos');
+                // Si archivos es un array, iterar sobre ellos
+                if (is_array($archivos)) {
+                    foreach ($archivos as $archivo) {
+                        $this->storeFile($archivo, $publication, 'observatorio');
+                    }
+                } else {
+                    // Si es un solo archivo
+                    $this->storeFile($archivos, $publication, 'observatorio');
+                }
             }
 
             DB::commit();
@@ -908,14 +990,34 @@ class ReportController extends Controller
         try {
             DB::beginTransaction();
 
-            // 1. Actualizar la publicación
+            // 1. Procesar eliminación de archivos marcados
+            if ($request->filled('files_to_delete')) {
+                $filesToDeleteIds = array_filter(
+                    explode(',', $request->input('files_to_delete')),
+                    fn($id) => !empty($id)
+                );
+                
+                foreach ($filesToDeleteIds as $fileId) {
+                    $file = PublicationFile::find($fileId);
+                    if ($file && $file->publication_id === $publication->id) {
+                        // Eliminar archivo del almacenamiento
+                        if (Storage::disk('public')->exists($file->file_path)) {
+                            Storage::disk('public')->delete($file->file_path);
+                        }
+                        // Eliminar registro
+                        $file->delete();
+                    }
+                }
+            }
+
+            // 2. Actualizar la publicación
             $publication->update([
                 'topic' => $validated['tema'],
                 'description' => $request->descripcion,
                 'activity_date' => $validated['fecha'],
             ]);
 
-            // 2. Actualizar el reporte específico
+            // 3. Actualizar el reporte específico
             $report = $publication->breathalyzerReports->first();
             if ($report) {
                 $report->update([
@@ -933,7 +1035,7 @@ class ReportController extends Controller
                 ]);
             }
 
-            // 3. Guardar nuevos archivos si existen (soporte para múltiples archivos)
+            // 4. Guardar nuevos archivos si existen (soporte para múltiples archivos)
             if ($request->hasFile('archivos')) {
                 $files = $request->file('archivos');
                 foreach ($files as $file) {
@@ -1062,14 +1164,34 @@ class ReportController extends Controller
         try {
             DB::beginTransaction();
 
-            // 1. Actualizar la publicación
+            // 1. Procesar eliminación de archivos marcados
+            if ($request->filled('files_to_delete')) {
+                $filesToDeleteIds = array_filter(
+                    explode(',', $request->input('files_to_delete')),
+                    fn($id) => !empty($id)
+                );
+                
+                foreach ($filesToDeleteIds as $fileId) {
+                    $file = PublicationFile::find($fileId);
+                    if ($file && $file->publication_id === $publication->id) {
+                        // Eliminar archivo del almacenamiento
+                        if (Storage::disk('public')->exists($file->file_path)) {
+                            Storage::disk('public')->delete($file->file_path);
+                        }
+                        // Eliminar registro
+                        $file->delete();
+                    }
+                }
+            }
+
+            // 2. Actualizar la publicación
             $publication->update([
                 'topic' => $validated['tema'],
                 'description' => $validated['descripcion'],
                 'activity_date' => $validated['fecha'],
             ]);
 
-            // 2. Actualizar el reporte de Grupos Vulnerables
+            // 3. Actualizar el reporte de Grupos Vulnerables
             $publication->gruposVulnerablesReport()->updateOrCreate(
                 ['publication_id' => $publication->id],
                 [
@@ -1082,7 +1204,7 @@ class ReportController extends Controller
                 ]
             );
 
-            // 3. Guardar nuevos archivos si existen
+            // 4. Guardar nuevos archivos si existen
             if ($request->hasFile('archivos')) {
                 $files = $request->file('archivos');
                 foreach ($files as $file) {

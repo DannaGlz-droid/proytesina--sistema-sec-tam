@@ -3,6 +3,8 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use App\Config\ReportFileRequirements;
+use Closure;
 
 class RoadSafetyReportRequest extends FormRequest
 {
@@ -37,6 +39,76 @@ class RoadSafetyReportRequest extends FormRequest
             // En modo edición, los archivos son opcionales
             'archivos' => $isUpdate ? 'nullable|array' : 'required|array|min:1',
             'archivos.*' => 'file|mimes:pdf,xlsx,xls,jpg,jpeg,png|max:10240', // 10MB por archivo
+            'files_to_delete' => 'nullable|string', // IDs de archivos a eliminar separados por comas
+        ];
+    }
+
+    /**
+     * Get the "after" validation callbacks.
+     *
+     * @return array<int, (Closure(static): void)>
+     */
+    public function after(): array
+    {
+        return [
+            function ($validator) {
+                // Solo validar en modo actualización
+                if ($this->route('publication')) {
+                    $publication = $this->route('publication');
+                    
+                    // Obtener archivos a eliminar
+                    $filesToDeleteIds = [];
+                    if ($this->filled('files_to_delete')) {
+                        $filesToDeleteIds = array_filter(
+                            explode(',', $this->input('files_to_delete')),
+                            fn($id) => !empty($id)
+                        );
+                    }
+                    
+                    // Contar archivos existentes que NO van a ser eliminados
+                    $remainingFiles = $publication->files
+                        ->whereNotIn('id', $filesToDeleteIds)
+                        ->all();
+                    
+                    // Contar archivos nuevos por tipo
+                    $newFiles = $this->file('archivos', []);
+                    if (!is_array($newFiles)) {
+                        $newFiles = [];
+                    }
+                    
+                    // Contar existentes por tipo
+                    $pdfCount = count(array_filter($remainingFiles, fn($f) => 
+                        strtolower(pathinfo($f->original_name, PATHINFO_EXTENSION)) === 'pdf'
+                    ));
+                    $excelCount = count(array_filter($remainingFiles, fn($f) => 
+                        in_array(strtolower(pathinfo($f->original_name, PATHINFO_EXTENSION)), ['xlsx', 'xls'])
+                    ));
+                    $photosCount = count(array_filter($remainingFiles, fn($f) => 
+                        in_array(strtolower(pathinfo($f->original_name, PATHINFO_EXTENSION)), ['jpg', 'jpeg', 'png'])
+                    ));
+                    
+                    // Contar nuevos por tipo
+                    foreach ($newFiles as $file) {
+                        $ext = strtolower(pathinfo($file->getClientOriginalName(), PATHINFO_EXTENSION));
+                        if ($ext === 'pdf') $pdfCount++;
+                        elseif (in_array($ext, ['xlsx', 'xls'])) $excelCount++;
+                        elseif (in_array($ext, ['jpg', 'jpeg', 'png'])) $photosCount++;
+                    }
+                    
+                    // Validar contra requisitos
+                    $requirements = ReportFileRequirements::getRequirements('seguridad-vial');
+                    $missingMessage = ReportFileRequirements::getMissingFilesMessage('seguridad-vial', 
+                        collect($remainingFiles)->merge($newFiles));
+                    
+                    // Verificar que se cumplan los requisitos mínimos
+                    if ($pdfCount < $requirements['required_files']['pdf']['min'] ||
+                        $excelCount < $requirements['required_files']['excel']['min'] ||
+                        $photosCount < $requirements['required_files']['photos']['min']) {
+                        
+                        $validator->errors()->add('archivos', $missingMessage);
+                    }
+                }
+            },
         ];
     }
 

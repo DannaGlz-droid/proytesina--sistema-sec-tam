@@ -3,6 +3,8 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use App\Config\ReportFileRequirements;
+use Closure;
 
 class InjuryObservatoryReportRequest extends FormRequest
 {
@@ -30,8 +32,68 @@ class InjuryObservatoryReportRequest extends FormRequest
             'municipio' => 'required|exists:municipalities,id',
             'jurisdiccion' => 'required|exists:jurisdictions,id',
             'descripcion' => 'nullable|string|max:5000',
-            // En modo edición, el archivo es opcional
-            'archivo' => $isUpdate ? 'nullable|file|mimes:xlsx,xls|max:10240' : 'required|file|mimes:xlsx,xls|max:10240',
+            // En modo edición, los archivos son opcionales; en creación, obligatorio al menos 1
+            'archivos' => $isUpdate ? 'nullable|array' : 'required|array|min:1',
+            'archivos.*' => 'file|mimes:xlsx,xls|max:10240',
+            'files_to_delete' => 'nullable|string', // IDs de archivos a eliminar separados por comas
+        ];
+    }
+
+    /**
+     * Get the "after" validation callbacks.
+     *
+     * @return array<int, (Closure(static): void)>
+     */
+    public function after(): array
+    {
+        return [
+            function ($validator) {
+                // Solo validar en modo actualización
+                if ($this->route('publication')) {
+                    $publication = $this->route('publication');
+                    
+                    // Obtener archivos a eliminar
+                    $filesToDeleteIds = [];
+                    if ($this->filled('files_to_delete')) {
+                        $filesToDeleteIds = array_filter(
+                            explode(',', $this->input('files_to_delete')),
+                            fn($id) => !empty($id)
+                        );
+                    }
+                    
+                    // Contar archivos existentes que NO van a ser eliminados
+                    $remainingFiles = $publication->files
+                        ->whereNotIn('id', $filesToDeleteIds)
+                        ->all();
+                    
+                    // Contar archivos nuevos por tipo
+                    $newFiles = $this->file('archivos', []);
+                    if (!is_array($newFiles)) {
+                        $newFiles = [];
+                    }
+                    
+                    // Contar existentes Excel
+                    $excelCount = count(array_filter($remainingFiles, fn($f) => 
+                        in_array(strtolower(pathinfo($f->original_name, PATHINFO_EXTENSION)), ['xlsx', 'xls'])
+                    ));
+                    
+                    // Contar nuevos Excel
+                    foreach ($newFiles as $file) {
+                        $ext = strtolower(pathinfo($file->getClientOriginalName(), PATHINFO_EXTENSION));
+                        if (in_array($ext, ['xlsx', 'xls'])) $excelCount++;
+                    }
+                    
+                    // Validar contra requisitos (observatorio solo requiere 1 XLSX)
+                    $requirements = ReportFileRequirements::getRequirements('observatorio');
+                    $missingMessage = ReportFileRequirements::getMissingFilesMessage('observatorio', 
+                        collect($remainingFiles)->merge($newFiles));
+                    
+                    // Verificar que se cumplan los requisitos mínimos
+                    if ($excelCount < $requirements['required_files']['excel']['min']) {
+                        $validator->errors()->add('archivos', $missingMessage);
+                    }
+                }
+            },
         ];
     }
 
@@ -54,10 +116,12 @@ class InjuryObservatoryReportRequest extends FormRequest
             'jurisdiccion.required' => 'La jurisdicción es obligatoria.',
             'jurisdiccion.exists' => 'La jurisdicción seleccionada no es válida.',
             'descripcion.max' => 'La descripción no puede exceder 5000 caracteres.',
-            'archivo.required' => 'Debe subir un archivo Excel.',
-            'archivo.file' => 'Debe subir un archivo válido.',
-            'archivo.mimes' => 'El archivo debe ser Excel (XLSX, XLS).',
-            'archivo.max' => 'El archivo no debe exceder 10 MB.',
+            'archivos.required' => 'Debe subir al menos un archivo Excel.',
+            'archivos.array' => 'Los archivos deben ser un array válido.',
+            'archivos.min' => 'Debe subir al menos 1 archivo Excel.',
+            'archivos.*.file' => 'Debe subir un archivo válido.',
+            'archivos.*.mimes' => 'Los archivos deben ser Excel (XLSX, XLS).',
+            'archivos.*.max' => 'Cada archivo no debe exceder 10 MB.',
         ];
     }
 
@@ -74,7 +138,8 @@ class InjuryObservatoryReportRequest extends FormRequest
             'municipio' => 'municipio',
             'jurisdiccion' => 'jurisdicción',
             'descripcion' => 'descripción',
-            'archivo' => 'archivo',
+            'archivos' => 'archivos',
+            'archivos.*' => 'archivo',
         ];
     }
 }

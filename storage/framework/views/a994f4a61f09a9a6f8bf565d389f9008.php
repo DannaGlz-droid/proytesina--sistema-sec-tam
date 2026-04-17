@@ -73,11 +73,10 @@ unset($__defined_vars, $__key, $__value); ?>
         <div class="flex justify-between items-start mb-4">
             <div class="flex items-center gap-2">
                 
-                <button class="publication-check-btn w-5 h-5 flex items-center justify-center rounded border border-[#D1D5DB] hover:border-[#4C8CC4] transition-all duration-200" 
-                        data-publication-id="<?php echo e($attributes['data-publication-id'] ?? ''); ?>" 
-                        title="Seleccionar para eliminación masiva">
-                    <i class="fas fa-check text-xs text-[#4C8CC4] hidden"></i>
-                </button>
+                <input type="checkbox" 
+                       class="publication-check-btn w-4 h-4 cursor-pointer border border-gray-300 rounded accent-[#611132] focus:ring-2 focus:ring-[#611132] focus:ring-offset-1" 
+                       data-publication-id="<?php echo e($attributes['data-publication-id'] ?? ''); ?>" 
+                       title="Seleccionar para eliminación masiva">
                 <div class="text-gray-600 text-sm font-medium font-lora"><?php echo e($fecha); ?></div>
             </div>
             <div class="flex items-center gap-2">

@@ -523,26 +523,6 @@
             background-color: rgba(76, 140, 196, 0.1);
             border-color: #4C8CC4 !important;
         }
-
-        .publication-check-btn {
-            background-color: white;
-            transition: all 0.2s ease;
-        }
-
-        .publication-check-btn:hover {
-            border-color: #4C8CC4 !important;
-            background-color: rgba(76, 140, 196, 0.05);
-        }
-
-        .publication-check-btn.selected {
-            background-color: #4C8CC4;
-            border-color: #4C8CC4 !important;
-        }
-
-        .publication-check-btn.selected i {
-            display: inline !important;
-            color: white;
-        }
     </style>
 
     <!-- JAVASCRIPT SIMPLIFICADO Y FUNCIONAL -->
@@ -828,8 +808,8 @@ document.addEventListener('DOMContentLoaded', function() {
             if (status === 'rechazado' && isOwner) {
                 approvalContainer.style.display = 'flex';
                 approvalContainer.innerHTML = `
-                    <button onclick="resubmitReport(${publicationId})" class="reenviar-reporte px-6 py-2.5 bg-[#611132] text-white rounded-lg text-sm font-semibold hover:bg-[#4a0e26] transition-all duration-300 font-lora whitespace-nowrap shadow-md hover:shadow-lg">
-                        <i class="fas fa-paper-plane mr-2"></i>Reenviar para revisión
+                    <button onclick="resubmitReport(${publicationId})" class="reenviar-reporte border border-[#404041] text-[#404041] px-4 lg:px-6 py-2 rounded-lg text-xs lg:text-sm font-semibold hover:bg-gray-100 transition-all duration-300 font-lora whitespace-nowrap flex items-center gap-2">
+                        <i class="fas fa-paper-plane"></i>Reenviar para revisión
                     </button>
                 `;
             }
@@ -1625,14 +1605,14 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     // ========== MANEJO DE CHECKBOXES Y ELIMINACIÓN MASIVA DE REPORTES ==========
-    // Mark todas las tarjetas como no seleccionadas, luego marcar solo las seleccionadas
+    // Función para actualizar la barra de herramientas y el contador
     function toggleBulkToolbar() {
-        const checked = document.querySelectorAll('.publication-check-btn.selected');
         const toolbar = document.getElementById('bulk-toolbar');
         const counter = document.getElementById('selected-count');
+        const checked = document.querySelectorAll('.publication-check-btn:checked');
         
-        // Primero, remover la clase de TODAS las tarjetas
-        document.querySelectorAll('.publication-card-wrapper.selected-card').forEach(card => {
+        // Actualizar todas las tarjetas
+        document.querySelectorAll('.publication-card-wrapper').forEach(card => {
             card.classList.remove('selected-card');
         });
         
@@ -1640,8 +1620,8 @@ document.addEventListener('DOMContentLoaded', function() {
             toolbar.style.display = 'flex';
             counter.textContent = checked.length;
             // Resaltar SOLO las tarjetas seleccionadas
-            checked.forEach(btn => {
-                const card = btn.closest('.publication-card-wrapper');
+            checked.forEach(checkbox => {
+                const card = checkbox.closest('.publication-card-wrapper');
                 if (card) {
                     card.classList.add('selected-card');
                 }
@@ -1651,33 +1631,30 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // Event listeners para botones de checkbox
-    document.querySelectorAll('.publication-check-btn').forEach(btn => {
-        btn.addEventListener('click', function(e) {
-            e.preventDefault();
-            e.stopPropagation();
-            this.classList.toggle('selected');
+    // Event listeners para checkboxes
+    document.querySelectorAll('.publication-check-btn').forEach(checkbox => {
+        checkbox.addEventListener('change', function() {
             toggleBulkToolbar();
         });
     });
 
     // Botón para limpiar selección
     document.getElementById('clear-selection').addEventListener('click', function() {
-        document.querySelectorAll('.publication-check-btn.selected').forEach(btn => {
-            btn.classList.remove('selected');
+        document.querySelectorAll('.publication-check-btn:checked').forEach(checkbox => {
+            checkbox.checked = false;
         });
         toggleBulkToolbar();
     });
 
     // Botón de eliminación masiva
     document.getElementById('bulk-delete-reports').addEventListener('click', function() {
-        const checked = document.querySelectorAll('.publication-check-btn.selected');
+        const checked = document.querySelectorAll('.publication-check-btn:checked');
         if (checked.length === 0) {
             alert('Selecciona al menos un reporte.');
             return;
         }
 
-        const ids = Array.from(checked).map(btn => btn.dataset.publicationId);
+        const ids = Array.from(checked).map(checkbox => checkbox.dataset.publicationId);
         
         if (!confirm(`¿Confirmas eliminar ${ids.length} reporte(s)? Esta acción no se puede deshacer.`)) {
             return;
@@ -1708,13 +1685,13 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Descargar archivos de múltiples reportes
     document.getElementById('bulk-download-files').addEventListener('click', function() {
-        const checked = document.querySelectorAll('.publication-check-btn.selected');
+        const checked = document.querySelectorAll('.publication-check-btn:checked');
         if (checked.length === 0) {
             alert('Selecciona al menos un reporte.');
             return;
         }
 
-        const ids = Array.from(checked).map(btn => btn.dataset.publicationId);
+        const ids = Array.from(checked).map(checkbox => checkbox.dataset.publicationId);
         
         // Crear un formulario hidden para enviar el POST
         const form = document.createElement('form');

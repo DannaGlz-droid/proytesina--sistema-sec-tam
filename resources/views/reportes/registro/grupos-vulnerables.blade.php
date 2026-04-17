@@ -134,9 +134,9 @@
                                    required minlength="3" maxlength="255">
                         </div>
                         <div>
-                            <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Jurisdicción <span class="text-red-600">*</span></label>
+                            <label class="block text-xs lg:text-sm font-medium text-gray-500 mb-1 font-lora">Jurisdicción</label>
                             <input type="hidden" id="jurisdiction_input_gv" name="jurisdiccion" value="{{ old('jurisdiccion', isset($report) ? $report->jurisdiction_id : '') }}" required>
-                            <input id="jurisdiction_display_gv" type="text" class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora" value="{{ isset($report) && $report->jurisdiction ? $report->jurisdiction->name : 'Pendiente (seleccione municipio)' }}" readonly>
+                            <input id="jurisdiction_display_gv" type="text" class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-200 rounded-lg bg-gray-50 text-gray-600 focus:ring-2 focus:ring-gray-300 focus:border-transparent transition-all duration-200 font-lora" value="{{ isset($report) && $report->jurisdiction ? $report->jurisdiction->name : 'Pendiente (seleccione municipio)' }}" readonly>
                         </div>
                     </div>
                 </div>
@@ -188,82 +188,94 @@
                                     <ion-icon name="folder-open-outline" class="text-lg mr-2"></ion-icon>
                                     Archivos actuales ({{ $publication->files->count() }})
                                 </p>
-                                <ul class="space-y-2">
+                                @php
+                                    // Get file requirements and count files by type
+                                    $requirements = \App\Config\ReportFileRequirements::getRequirements('grupos-vulnerables');
+                                    $filesByType = [
+                                        'pdf' => $publication->files->filter(fn($f) => strtolower(pathinfo($f->original_name, PATHINFO_EXTENSION)) === 'pdf'),
+                                        'excel' => $publication->files->filter(fn($f) => in_array(strtolower(pathinfo($f->original_name, PATHINFO_EXTENSION)), ['xlsx', 'xls'])),
+                                        'photos' => $publication->files->filter(fn($f) => in_array(strtolower(pathinfo($f->original_name, PATHINFO_EXTENSION)), ['jpg', 'jpeg', 'png'])),
+                                    ];
+                                @endphp
+                                <ul class="space-y-2" id="existing-files-list">
                                     @foreach($publication->files as $file)
-                                        <li class="flex items-center justify-between py-2 px-3 hover:bg-white rounded-lg border border-gray-200 transition-all duration-200 font-lora bg-white shadow-sm">
+                                        @php
+                                            $extension = strtolower(pathinfo($file->original_name, PATHINFO_EXTENSION));
+                                            $fileType = \App\Config\ReportFileRequirements::getFileType($file->original_name);
+
+                                            $iconConfig = match($extension) {
+                                                'pdf' => ['icon' => 'document-text-outline', 'color' => 'text-white', 'bg' => 'bg-red-500'],
+                                                'xlsx', 'xls' => ['icon' => 'document-outline', 'color' => 'text-white', 'bg' => 'bg-green-500'],
+                                                'jpg', 'jpeg', 'png' => ['icon' => 'image-outline', 'color' => 'text-white', 'bg' => 'bg-purple-500'],
+                                                default => ['icon' => 'document-outline', 'color' => 'text-white', 'bg' => 'bg-gray-500']
+                                            };
+                                        @endphp
+                                        <li class="flex items-center justify-between py-2 px-3 rounded-lg border border-gray-200 transition-all duration-200 font-lora bg-white shadow-sm file-item" 
+                                            data-file-id="{{ $file->id }}" 
+                                            data-file-type="{{ $fileType }}">
                                             <div class="flex items-center flex-1 min-w-0">
-                                                @php
-                                                    $extension = pathinfo($file->original_name, PATHINFO_EXTENSION);
-                                                    $iconConfig = match(strtolower($extension)) {
-                                                        'pdf' => ['icon' => 'document-text-outline', 'color' => 'text-blue-500', 'bg' => 'bg-blue-50'],
-                                                        'xlsx', 'xls' => ['icon' => 'stats-chart-outline', 'color' => 'text-green-500', 'bg' => 'bg-green-50'],
-                                                        'jpg', 'jpeg', 'png' => ['icon' => 'image-outline', 'color' => 'text-purple-500', 'bg' => 'bg-purple-50'],
-                                                        default => ['icon' => 'document-outline', 'color' => 'text-gray-400', 'bg' => 'bg-gray-50']
-                                                    };
-                                                @endphp
+                                                <input type="checkbox" class="file-delete-checkbox mr-2 w-4 h-4 cursor-pointer border border-gray-300 rounded accent-[#611132] focus:ring-2 focus:ring-[#611132] focus:ring-offset-1" onchange="toggleFileStrikethrough(this)">
                                                 <div class="flex-shrink-0 w-10 h-10 flex items-center justify-center rounded-lg {{ $iconConfig['bg'] }}">
                                                     <ion-icon name="{{ $iconConfig['icon'] }}" class="{{ $iconConfig['color'] }} text-xl"></ion-icon>
                                                 </div>
-                                                <div class="ml-3 flex-1 min-w-0">
+                                                <div class="ml-3 flex-1 min-w-0 file-info">
                                                     <p class="text-sm font-medium text-[#404041] truncate">{{ $file->original_name }}</p>
                                                     <p class="text-xs text-gray-500">{{ number_format($file->file_size / 1024 / 1024, 2) }} MB</p>
                                                 </div>
                                             </div>
-                                            <button type="button" 
-                                                    onclick="if(confirm('¿Eliminar este archivo?')) { document.getElementById('delete-file-{{ $file->id }}').submit(); }"
-                                                    class="ml-3 flex-shrink-0 w-8 h-8 flex items-center justify-center rounded-lg text-red-500 hover:bg-red-50 hover:text-red-700 transition-all duration-200" 
-                                                    title="Eliminar archivo">
-                                                <ion-icon name="trash-outline" class="text-lg"></ion-icon>
-                                            </button>
                                         </li>
                                     @endforeach
                                 </ul>
+                                <div class="text-sm text-gray-600 font-lora mt-6 flex items-center">
+                                    <ion-icon name="checkbox-outline" class="mr-2 text-sm"></ion-icon>
+                                    Marca los archivos que deseas eliminar/reemplazar
+                                </div>
                             </div>
                         </div>
                     @endif
 
-                    <!-- Tres cuadros en una fila horizontal -->
+                    <!-- Tres cuadros en una fila horizontal - CON ESTADO ACTUALIZADO -->
                     <div class="flex flex-col lg:flex-row gap-4 mb-4">
                         <!-- (1) Documento PDF -->
                         <div class="flex-1 p-4 border border-gray-300 rounded-lg bg-white">
-                            <div class="flex items-center justify-between mb-3">
+                            <div class="flex items-center justify-between mb-2">
                                 <div class="flex items-center">
                                     <ion-icon name="document-outline" class="text-blue-500 mr-2 text-lg"></ion-icon>
                                     <span class="text-sm font-medium text-[#404041] font-lora">Documento PDF</span>
                                 </div>
-                                <span id="pdf-status" class="text-xs px-2 py-1 bg-yellow-100 text-yellow-800 rounded font-lora">
-                                    {{ isset($publication) ? 'Opcional' : 'Pendiente' }}
+                                <span id="pdf-status-badge" class="text-xs px-2 py-1 bg-yellow-100 text-yellow-800 rounded font-lora">
+                                    Pendiente
                                 </span>
                             </div>
-                            <p class="text-xs text-gray-600 font-lora">Formato: PDF {{ isset($publication) ? '(opcional)' : '(obligatorio)' }}</p>
+                            <p class="text-xs text-gray-600 font-lora">Formato: PDF (obligatorio)</p>
                         </div>
 
                         <!-- (2) Hoja de Cálculo -->
                         <div class="flex-1 p-4 border border-gray-300 rounded-lg bg-white">
-                            <div class="flex items-center justify-between mb-3">
+                            <div class="flex items-center justify-between mb-2">
                                 <div class="flex items-center">
                                     <ion-icon name="stats-chart-outline" class="text-green-500 mr-2 text-lg"></ion-icon>
                                     <span class="text-sm font-medium text-[#404041] font-lora">Hoja de Cálculo</span>
                                 </div>
-                                <span id="excel-status" class="text-xs px-2 py-1 bg-yellow-100 text-yellow-800 rounded font-lora">
-                                    {{ isset($publication) ? 'Opcional' : 'Pendiente' }}
+                                <span id="excel-status-badge" class="text-xs px-2 py-1 bg-yellow-100 text-yellow-800 rounded font-lora">
+                                    Pendiente
                                 </span>
                             </div>
-                            <p class="text-xs text-gray-600 font-lora">Formato: XLSX {{ isset($publication) ? '(opcional)' : '(obligatorio)' }}</p>
+                            <p class="text-xs text-gray-600 font-lora">Formato: XLSX (obligatorio)</p>
                         </div>
 
                         <!-- (3) Fotografías -->
                         <div class="flex-1 p-4 border border-gray-300 rounded-lg bg-white">
-                            <div class="flex items-center justify-between mb-3">
+                            <div class="flex items-center justify-between mb-2">
                                 <div class="flex items-center">
                                     <ion-icon name="images-outline" class="text-purple-500 mr-2 text-lg"></ion-icon>
                                     <span class="text-sm font-medium text-[#404041] font-lora">Fotografías</span>
                                 </div>
-                                <span id="photos-status" class="text-xs px-2 py-1 bg-yellow-100 text-yellow-800 rounded font-lora">
-                                    {{ isset($publication) ? 'Opcional' : '0/4' }}
+                                <span id="photos-status-badge" class="text-xs px-2 py-1 bg-yellow-100 text-yellow-800 rounded font-lora">
+                                    0/4
                                 </span>
                             </div>
-                            <p class="text-xs text-gray-600 font-lora">Formatos: JPG, JPEG, PNG {{ isset($publication) ? '(opcional)' : '(4 fotos obligatorias)' }}</p>
+                            <p class="text-xs text-gray-600 font-lora">Formatos: JPG, JPEG, PNG (4 fotos obligatorias)</p>
                         </div>
                     </div>
 
@@ -339,6 +351,11 @@
                 />
             @endif
         </div>
+
+        <!-- Input oculto para archivos a eliminar -->
+        @if(isset($publication))
+            <input type="hidden" id="files-to-delete" name="files_to_delete" value="">
+        @endif
         </form>
 
         @if($errors->any())
@@ -385,6 +402,9 @@
         // Array para almacenar todos los archivos seleccionados
         let selectedFiles = [];
         
+        // Track de archivos a eliminar
+        let filesToDelete = [];
+        
         function addFiles(newFiles) {
             // Agregar nuevos archivos al array
             for (let i = 0; i < newFiles.length; i++) {
@@ -398,6 +418,7 @@
             
             // Actualizar la visualización
             updateFileStatus();
+            updateFileCounters();
             
             // Limpiar el input para permitir seleccionar el mismo archivo de nuevo si se elimina
             document.getElementById('file-input').value = '';
@@ -406,6 +427,107 @@
         function removeFile(index) {
             selectedFiles.splice(index, 1);
             updateFileStatus();
+            updateFileCounters();
+        }
+        
+        function toggleFileStrikethrough(checkbox) {
+            const fileItem = checkbox.closest('.file-item');
+            const fileInfo = fileItem.querySelector('.file-info');
+            const fileId = fileItem.dataset.fileId;
+            
+            if (checkbox.checked) {
+                fileInfo.classList.add('line-through', 'opacity-50');
+                fileItem.classList.add('opacity-75');
+            } else {
+                fileInfo.classList.remove('line-through', 'opacity-50');
+                fileItem.classList.remove('opacity-75');
+            }
+            
+            // Actualizar contador y lista de archivos a eliminar
+            updateFileCounters();
+            
+            // Actualizar el input hidden con archivos a eliminar
+            const filesToDeleteIds = [];
+            document.querySelectorAll('#existing-files-list .file-delete-checkbox:checked').forEach(checkbox => {
+                const fileId = checkbox.closest('.file-item').dataset.fileId;
+                if (fileId) filesToDeleteIds.push(fileId);
+            });
+            document.getElementById('files-to-delete').value = filesToDeleteIds.join(',');
+        }
+        
+        function updateFileCounters() {
+            // Contar archivos existentes (no marcados para eliminar)
+            let existingPdfCount = 0;
+            let existingExcelCount = 0;
+            let existingPhotoCount = 0;
+            
+            // Contar archivos nuevos seleccionados
+            let newPdfCount = 0;
+            let newExcelCount = 0;
+            let newPhotoCount = 0;
+            
+            // Contar archivos existentes no marcados para eliminar
+            document.querySelectorAll('#existing-files-list .file-item').forEach(item => {
+                const checkbox = item.querySelector('.file-delete-checkbox');
+                const fileType = item.dataset.fileType;
+                
+                if (!checkbox.checked) { // Solo contar si NO está marcado para eliminar
+                    if (fileType === 'pdf') existingPdfCount++;
+                    else if (fileType === 'excel') existingExcelCount++;
+                    else if (fileType === 'photos') existingPhotoCount++;
+                }
+            });
+            
+            // Contar archivos nuevos por tipo
+            selectedFiles.forEach(file => {
+                const extension = file.name.split('.').pop().toLowerCase();
+                if (extension === 'pdf') newPdfCount++;
+                else if (extension === 'xlsx' || extension === 'xls') newExcelCount++;
+                else if (['jpg', 'jpeg', 'png'].includes(extension)) newPhotoCount++;
+            });
+            
+            // Total = existentes + nuevos
+            const totalPdf = existingPdfCount + newPdfCount;
+            const totalExcel = existingExcelCount + newExcelCount;
+            const totalPhotos = existingPhotoCount + newPhotoCount;
+            
+            // Actualizar los contadores de los tres cuadros
+            updateCounterDisplay('pdf', totalPdf, 1);
+            updateCounterDisplay('excel', totalExcel, 1);
+            updateCounterDisplay('photos', totalPhotos, 4);
+            
+            // Cambiar color de archivo para indicar que será eliminado
+            document.querySelectorAll('#existing-files-list .file-item').forEach(item => {
+                const checkbox = item.querySelector('.file-delete-checkbox');
+                if (checkbox.checked) {
+                    item.classList.add('opacity-50', 'line-through');
+                    item.style.backgroundColor = '#f5f5f5';
+                } else {
+                    item.classList.remove('opacity-50', 'line-through');
+                    item.style.backgroundColor = '#ffffff';
+                }
+            });
+        }
+        
+        function updateCounterDisplay(type, current, required) {
+            const statusBadge = document.getElementById(`${type}-status-badge`);
+            
+            let statusText = '';
+            let badgeClass = '';
+            
+            if (current >= required) {
+                statusText = current === required ? 'Completado' : `${current}/${required}`;
+                badgeClass = 'bg-green-100 text-green-800';
+            } else if (current > 0) {
+                statusText = type === 'photos' ? `${current}/${required}` : 'Incompleto';
+                badgeClass = 'bg-yellow-100 text-yellow-800';
+            } else {
+                statusText = type === 'photos' ? `${current}/${required}` : 'Pendiente';
+                badgeClass = 'bg-yellow-100 text-yellow-800';
+            }
+            
+            statusBadge.textContent = statusText;
+            statusBadge.className = `text-xs px-2 py-1 rounded font-lora ${badgeClass}`;
         }
         
         function updateFileStatus() {
@@ -425,20 +547,21 @@
                 
                 // Determinar icono y color según el tipo
                 let iconName = 'document-outline';
-                let iconColor = 'text-gray-400';
+                let bgColor = 'bg-gray-500';
+                let iconColor = 'text-white';
                 
                 if (extension === 'pdf') {
                     pdfCount++;
                     iconName = 'document-text-outline';
-                    iconColor = 'text-blue-500';
+                    bgColor = 'bg-red-500';
                 } else if (extension === 'xlsx' || extension === 'xls') {
                     excelCount++;
-                    iconName = 'stats-chart-outline';
-                    iconColor = 'text-green-500';
+                    iconName = 'document-outline';
+                    bgColor = 'bg-green-500';
                 } else if (['jpg', 'jpeg', 'png'].includes(extension)) {
                     photoCount++;
                     iconName = 'image-outline';
-                    iconColor = 'text-purple-500';
+                    bgColor = 'bg-purple-500';
                 }
                 
                 // Agregar a la lista con botón de eliminar
@@ -446,7 +569,7 @@
                 listItem.className = 'flex items-center justify-between py-2 px-3 hover:bg-white rounded-lg border border-gray-200 transition-all duration-200 font-lora bg-white shadow-sm';
                 listItem.innerHTML = `
                     <div class="flex items-center flex-1 min-w-0">
-                        <div class="flex-shrink-0 w-10 h-10 flex items-center justify-center rounded-lg ${iconColor === 'text-blue-500' ? 'bg-blue-50' : iconColor === 'text-green-500' ? 'bg-green-50' : 'bg-purple-50'}">
+                        <div class="flex-shrink-0 w-10 h-10 flex items-center justify-center rounded-lg ${bgColor}">
                             <ion-icon name="${iconName}" class="${iconColor} text-xl"></ion-icon>
                         </div>
                         <div class="ml-3 flex-1 min-w-0">
@@ -467,47 +590,78 @@
             } else {
                 fileList.classList.add('hidden');
             }
-            
-            // Actualizar estados
-            updateStatus('pdf-status', pdfCount, 1, 'Documento PDF');
-            updateStatus('excel-status', excelCount, 1, 'Hoja de Cálculo');
-            updateStatus('photos-status', photoCount, 4, 'Fotografías');
-        }
-        
-        function updateStatus(elementId, currentCount, requiredCount, typeName) {
-            const element = document.getElementById(elementId);
-            
-            if (currentCount >= requiredCount) {
-                element.textContent = currentCount === 1 ? 'Completado' : `${currentCount}/${requiredCount}`;
-                element.className = 'text-xs px-2 py-1 bg-green-100 text-green-800 rounded font-lora';
-            } else if (currentCount > 0) {
-                element.textContent = typeName === 'Fotografías' ? `${currentCount}/${requiredCount}` : 'Incompleto';
-                element.className = 'text-xs px-2 py-1 bg-yellow-100 text-yellow-800 rounded font-lora';
-            } else {
-                element.textContent = typeName === 'Fotografías' ? `0/${requiredCount}` : 'Pendiente';
-                element.className = 'text-xs px-2 py-1 bg-yellow-100 text-yellow-800 rounded font-lora';
-            }
         }
         
         function clearGruposVulnerablesForm() {
             if (confirm('¿Está seguro de que desea limpiar todos los campos del formulario?')) {
-                document.querySelector('form').reset();
+                const form = document.getElementById('gruposVulnerablesForm');
+                if (form) {
+                    form.reset();
+                }
                 // Limpiar archivos seleccionados
                 selectedFiles = [];
                 updateFileStatus();
                 // Resetear estados de archivos
-                document.getElementById('pdf-status').textContent = 'Pendiente';
-                document.getElementById('pdf-status').className = 'text-xs px-2 py-1 bg-yellow-100 text-yellow-800 rounded font-lora';
-                document.getElementById('excel-status').textContent = 'Pendiente';
-                document.getElementById('excel-status').className = 'text-xs px-2 py-1 bg-yellow-100 text-yellow-800 rounded font-lora';
-                document.getElementById('photos-status').textContent = '0/4';
-                document.getElementById('photos-status').className = 'text-xs px-2 py-1 bg-yellow-100 text-yellow-800 rounded font-lora';
+                document.getElementById('pdf-status-badge').textContent = 'Pendiente';
+                document.getElementById('pdf-status-badge').className = 'text-xs px-2 py-1 bg-yellow-100 text-yellow-800 rounded font-lora';
+                document.getElementById('excel-status-badge').textContent = 'Pendiente';
+                document.getElementById('excel-status-badge').className = 'text-xs px-2 py-1 bg-yellow-100 text-yellow-800 rounded font-lora';
+                document.getElementById('photos-status-badge').textContent = '0/4';
+                document.getElementById('photos-status-badge').className = 'text-xs px-2 py-1 bg-yellow-100 text-yellow-800 rounded font-lora';
                 document.getElementById('file-list').classList.add('hidden');
+                
+                // Reinicializar Tom Select para que cargue todos los municipios de nuevo
+                const gruposMuni = document.getElementById('grupos_municipality_select');
+                if (gruposMuni && gruposMuni.tomselect) {
+                    gruposMuni.tomselect.destroy();
+                    gruposMuni.tomselect = null;
+                    // Limpiar el valor
+                    gruposMuni.value = '';
+                    // Reinicializar Tom Select
+                    const currentJurisdiction = @json(optional(auth()->user())->jurisdiction_id);
+                    const ts = new TomSelect(gruposMuni, {
+                        valueField: 'id',
+                        labelField: 'name',
+                        searchField: 'name',
+                        maxOptions: 20,
+                        maxItems: 1,
+                        create: false,
+                        preload: true,
+                        load: function(query, callback) {
+                            let url = '/api/municipalities/search?q=' + encodeURIComponent(query);
+                            if (currentJurisdiction) {
+                                url += '&jurisdiction_id=' + encodeURIComponent(currentJurisdiction);
+                            }
+                            fetch(url).then(r => r.json()).then(items => callback(items)).catch(() => callback());
+                        },
+                        onChange: function(value) {
+                            const evt = new Event('change');
+                            gruposMuni.dispatchEvent(evt);
+                        }
+                    });
+                    try { gruposMuni.style.display = 'none'; } catch (e) {}
+                }
+                
+                // Restaurar la jurisdicción del usuario (es fija y no debe cambiar)
+                const jurisdictionDisplay = document.getElementById('jurisdiction_display_gv');
+                const hiddenJur = document.getElementById('jurisdiction_input_gv');
+                const currentJurisdiction = @json(optional(auth()->user())->jurisdiction_id);
+                const jurisNames = @json($jurisdictions->mapWithKeys(function($j){ return [$j->id => $j->name]; }));
+                if (currentJurisdiction) {
+                    if (hiddenJur) hiddenJur.value = currentJurisdiction;
+                    if (jurisdictionDisplay) jurisdictionDisplay.value = jurisNames[currentJurisdiction] || '';
+                } else {
+                    if (hiddenJur) hiddenJur.value = '';
+                    if (jurisdictionDisplay) jurisdictionDisplay.value = 'Pendiente (seleccione municipio)';
+                }
             }
         }
         
         // Funcionalidad de arrastrar y soltar
         document.addEventListener('DOMContentLoaded', function() {
+            // Inicializar contadores en modo edición
+            updateFileCounters();
+            
             const dropArea = document.querySelector('.border-dashed');
             const fileInput = document.getElementById('file-input');
             
@@ -728,6 +882,24 @@
                 if (jurisdictionDisplay && (!jurisdictionDisplay.value || jurisdictionDisplay.value.includes('Pendiente'))) {
                     jurisdictionDisplay.value = jurisNames[currentJurisdiction] || jurisdictionDisplay.value;
                 }
+            }
+
+            // Interceptar el envío del formulario para actualizar files_to_delete
+            const mainForm = document.getElementById('gruposVulnerablesForm');
+            const isEditMode = {{ isset($publication) ? 'true' : 'false' }};
+            
+            if (mainForm) {
+                mainForm.addEventListener('submit', function(e) {
+                    // Actualizar files_to_delete SIEMPRE (tanto en creación como en edición)
+                    if (isEditMode && document.getElementById('files-to-delete')) {
+                        const filesToDeleteIds = [];
+                        document.querySelectorAll('#existing-files-list .file-delete-checkbox:checked').forEach(checkbox => {
+                            const fileId = checkbox.closest('.file-item').dataset.fileId;
+                            if (fileId) filesToDeleteIds.push(fileId);
+                        });
+                        document.getElementById('files-to-delete').value = filesToDeleteIds.join(',');
+                    }
+                });
             }
         });
     </script>

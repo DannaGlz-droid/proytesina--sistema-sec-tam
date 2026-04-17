@@ -1,48 +1,49 @@
-@extends('layouts.principal')
-@section('title', isset($publication) ? 'Editar Actividad' : 'Registro de Actividades')
-@section('content')
 
-    @include('components.header-admin')
-    @include('components.nav-reportes')
+<?php $__env->startSection('title', isset($publication) ? 'Editar Grupos Vulnerables' : 'Registro de Grupos Vulnerables'); ?>
+<?php $__env->startSection('content'); ?>
+
+    <?php echo $__env->make('components.header-admin', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?>
+    <?php echo $__env->make('components.nav-reportes', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?>
 
     <div class="px-4 lg:pl-10 pt-6 lg:pt-10 pb-8 lg:pb-12">
         <h1 class="text-2xl lg:text-3xl font-lora font-bold text-[#404041] mb-3">
-            {{ isset($publication) ? 'Editar actividad' : 'Registro de actividades' }}
+            <?php echo e(isset($publication) ? 'Editar grupos vulnerables' : 'Registro de grupos vulnerables'); ?>
+
         </h1>
-        <p class="text-sm lg:text-base text-[#404041] font-lora mb-6">Complete el formulario para {{ isset($publication) ? 'actualizar' : 'registrar' }} las actividades correspondientes.</p>
+        <p class="text-sm lg:text-base text-[#404041] font-lora mb-6">Complete el formulario para <?php echo e(isset($publication) ? 'actualizar' : 'registrar'); ?> la información de grupos vulnerables.</p>
 
         <!-- Mensajes de error -->
-        @if(session('error'))
+        <?php if(session('error')): ?>
             <div class="mb-6 bg-red-50 border-l-4 border-red-500 p-4 rounded-lg shadow-sm">
                 <div class="flex items-center">
                     <i class="fas fa-exclamation-circle text-red-500 text-xl mr-3"></i>
-                    <p class="text-sm text-red-800 font-lora font-medium">{{ session('error') }}</p>
+                    <p class="text-sm text-red-800 font-lora font-medium"><?php echo e(session('error')); ?></p>
                 </div>
             </div>
-        @endif
+        <?php endif; ?>
 
-        @if($errors->any())
+        <?php if($errors->any()): ?>
             <div class="mb-6 bg-red-50 border-l-4 border-red-500 p-4 rounded-lg shadow-sm">
                 <div class="flex items-start">
                     <i class="fas fa-exclamation-circle text-red-500 text-xl mr-3 mt-0.5"></i>
                     <div>
                         <p class="text-sm text-red-800 font-lora font-semibold mb-2">Errores de validación:</p>
                         <ul class="list-disc list-inside text-sm text-red-700 font-lora space-y-1">
-                            @foreach($errors->all() as $error)
-                                <li>{{ $error }}</li>
-                            @endforeach
+                            <?php $__currentLoopData = $errors->all(); $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $error): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                <li><?php echo e($error); ?></li>
+                            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                         </ul>
                     </div>
                 </div>
             </div>
-        @endif
+        <?php endif; ?>
 
         <!-- Cuadro del formulario responsive -->
-        <form id="seguridadVialForm" action="{{ isset($publication) ? route('reportes.seguridad-vial.update', $publication) : route('reportes.seguridad-vial.store') }}" method="POST" enctype="multipart/form-data">
-            @csrf
-            @if(isset($publication))
-                @method('PUT')
-            @endif
+        <form id="gruposVulnerablesForm" action="<?php echo e(isset($publication) ? route('reportes.grupos-vulnerables.update', $publication) : route('reportes.grupos-vulnerables.store')); ?>" method="POST" enctype="multipart/form-data">
+            <?php echo csrf_field(); ?>
+            <?php if(isset($publication)): ?>
+                <?php echo method_field('PUT'); ?>
+            <?php endif; ?>
             
         <div class="border border-[#404041] rounded-lg lg:rounded-xl p-4 lg:p-6 bg-white bg-opacity-95 max-w-7xl shadow-md">
             
@@ -62,7 +63,7 @@
                                    name="tema"
                                    class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora" 
                                    placeholder="Ej: Prevención de accidentes viales"
-                                   value="{{ old('tema', isset($publication) ? $publication->topic : '') }}"
+                                   value="<?php echo e(old('tema', isset($publication) ? $publication->topic : '')); ?>"
                                    required minlength="3" maxlength="146">
                         </div>
 
@@ -71,8 +72,8 @@
                             <input id="fecha" type="date" 
                                    name="fecha"
                                    class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora"
-                                   value="{{ old('fecha', isset($publication) ? $publication->activity_date->format('Y-m-d') : '') }}"
-                                   required max="{{ date('Y-m-d') }}">
+                                   value="<?php echo e(old('fecha', isset($publication) ? $publication->activity_date->format('Y-m-d') : '')); ?>"
+                                   required max="<?php echo e(date('Y-m-d')); ?>">
                         </div>
                         <div>
                             <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Lugar <span class="text-red-600">*</span></label>
@@ -80,22 +81,22 @@
                                    name="lugar"
                                    class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora" 
                                    placeholder="Ej: Salón de usos múltiples"
-                                   value="{{ old('lugar', isset($report) ? $report->location : '') }}"
+                                   value="<?php echo e(old('lugar', isset($report) ? $report->location : '')); ?>"
                                    required minlength="3" maxlength="255">
                         </div>
                         <div>
                             <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Municipio <span class="text-red-600">*</span></label>
-                            <select id="seguridad_municipality_select" name="municipio" class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora tomselect-select" required>
+                            <select id="grupos_municipality_select" name="municipio" class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora tomselect-select" required>
                                 <option value="">Seleccione un municipio</option>
-                                @php
+                                <?php
                                     $selectedMunicipio = old('municipio', isset($report) ? $report->municipality_id : '');
-                                @endphp
-                                @if($selectedMunicipio)
-                                    @php $m = $municipalities->firstWhere('id', $selectedMunicipio) @endphp
-                                    @if($m)
-                                        <option value="{{ $m->id }}" selected>{{ $m->name }}</option>
-                                    @endif
-                                @endif
+                                ?>
+                                <?php if($selectedMunicipio): ?>
+                                    <?php $m = $municipalities->firstWhere('id', $selectedMunicipio) ?>
+                                    <?php if($m): ?>
+                                        <option value="<?php echo e($m->id); ?>" selected><?php echo e($m->name); ?></option>
+                                    <?php endif; ?>
+                                <?php endif; ?>
                             </select>
                         </div>
                     </div>
@@ -105,14 +106,14 @@
                             <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Tipo de actividad <span class="text-red-600">*</span></label>
                             <select id="activity_type_id" class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora" name="activity_type_id" required>
                                 <option value="">Seleccione el tipo de actividad</option>
-                                @php
+                                <?php
                                     $selectedActivity = old('activity_type_id', isset($report) ? $report->activity_type_id : '');
-                                @endphp
-                                <option value="1" {{ $selectedActivity == '1' ? 'selected' : '' }}>Capacitación</option>
-                                <option value="2" {{ $selectedActivity == '2' ? 'selected' : '' }}>Taller</option>
-                                <option value="3" {{ $selectedActivity == '3' ? 'selected' : '' }}>Platica de sensibilizacion</option>
-                                <option value="4" {{ $selectedActivity == '4' ? 'selected' : '' }}>Reunión</option>
-                                <option value="5" {{ $selectedActivity == '5' ? 'selected' : '' }}>Evento especial</option>
+                                ?>
+                                <option value="1" <?php echo e($selectedActivity == '1' ? 'selected' : ''); ?>>Capacitación</option>
+                                <option value="2" <?php echo e($selectedActivity == '2' ? 'selected' : ''); ?>>Taller</option>
+                                <option value="3" <?php echo e($selectedActivity == '3' ? 'selected' : ''); ?>>Platica de sensibilizacion</option>
+                                <option value="4" <?php echo e($selectedActivity == '4' ? 'selected' : ''); ?>>Reunión</option>
+                                <option value="5" <?php echo e($selectedActivity == '5' ? 'selected' : ''); ?>>Evento especial</option>
                             </select>
                         </div>
                         <div>
@@ -121,7 +122,7 @@
                                    name="participantes"
                                    class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora" 
                                    placeholder="Ej: 25"
-                                   value="{{ old('participantes', isset($report) ? $report->participants : '') }}"
+                                   value="<?php echo e(old('participantes', isset($report) ? $report->participants : '')); ?>"
                                    required min="1" max="9999">
                         </div>
                         <div>
@@ -130,13 +131,13 @@
                                    name="promotor"
                                    class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora" 
                                    placeholder="Ej: Departamento de Salud"
-                                   value="{{ old('promotor', isset($report) ? $report->promoter : '') }}"
+                                   value="<?php echo e(old('promotor', isset($report) ? $report->promoter : '')); ?>"
                                    required minlength="3" maxlength="255">
                         </div>
                         <div>
                             <label class="block text-xs lg:text-sm font-medium text-gray-500 mb-1 font-lora">Jurisdicción</label>
-                            <input type="hidden" id="jurisdiction_input_vial" name="jurisdiccion" value="{{ old('jurisdiccion', isset($report) ? $report->jurisdiction_id : '') }}" required>
-                            <input id="jurisdiction_display_vial" type="text" class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-200 rounded-lg bg-gray-50 text-gray-600 focus:ring-2 focus:ring-gray-300 focus:border-transparent transition-all duration-200 font-lora" value="{{ isset($report) && $report->jurisdiction ? $report->jurisdiction->name : 'Pendiente (seleccione municipio)' }}" readonly>
+                            <input type="hidden" id="jurisdiction_input_gv" name="jurisdiccion" value="<?php echo e(old('jurisdiccion', isset($report) ? $report->jurisdiction_id : '')); ?>" required>
+                            <input id="jurisdiction_display_gv" type="text" class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-200 rounded-lg bg-gray-50 text-gray-600 focus:ring-2 focus:ring-gray-300 focus:border-transparent transition-all duration-200 font-lora" value="<?php echo e(isset($report) && $report->jurisdiction ? $report->jurisdiction->name : 'Pendiente (seleccione municipio)'); ?>" readonly>
                         </div>
                     </div>
                 </div>
@@ -163,7 +164,7 @@
                             rows="4"
                             placeholder="Describa los detalles, contexto, objetivos, resultados, etc. (opcional)"
                             maxlength="5000"
-                        >{{ old('descripcion', isset($publication) ? $publication->description : '') }}</textarea>
+                        ><?php echo e(old('descripcion', isset($publication) ? $publication->description : '')); ?></textarea>
                     </div>
                 </div>
             </div>
@@ -181,25 +182,25 @@
                 
                 <div class="space-y-4">
                     <!-- Archivos existentes (solo en modo edición) -->
-                    @if(isset($publication) && $publication->files->count() > 0)
+                    <?php if(isset($publication) && $publication->files->count() > 0): ?>
                         <div class="mb-4">
                             <div class="bg-gray-50 border border-gray-200 rounded-lg p-4">
                                 <p class="font-medium mb-3 font-lora text-sm text-[#404041] flex items-center">
                                     <ion-icon name="folder-open-outline" class="text-lg mr-2"></ion-icon>
-                                    Archivos actuales ({{ $publication->files->count() }})
+                                    Archivos actuales (<?php echo e($publication->files->count()); ?>)
                                 </p>
-                                @php
+                                <?php
                                     // Get file requirements and count files by type
-                                    $requirements = \App\Config\ReportFileRequirements::getRequirements('seguridad-vial');
+                                    $requirements = \App\Config\ReportFileRequirements::getRequirements('grupos-vulnerables');
                                     $filesByType = [
                                         'pdf' => $publication->files->filter(fn($f) => strtolower(pathinfo($f->original_name, PATHINFO_EXTENSION)) === 'pdf'),
                                         'excel' => $publication->files->filter(fn($f) => in_array(strtolower(pathinfo($f->original_name, PATHINFO_EXTENSION)), ['xlsx', 'xls'])),
                                         'photos' => $publication->files->filter(fn($f) => in_array(strtolower(pathinfo($f->original_name, PATHINFO_EXTENSION)), ['jpg', 'jpeg', 'png'])),
                                     ];
-                                @endphp
+                                ?>
                                 <ul class="space-y-2" id="existing-files-list">
-                                    @foreach($publication->files as $file)
-                                        @php
+                                    <?php $__currentLoopData = $publication->files; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $file): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                        <?php
                                             $extension = strtolower(pathinfo($file->original_name, PATHINFO_EXTENSION));
                                             $fileType = \App\Config\ReportFileRequirements::getFileType($file->original_name);
 
@@ -209,22 +210,22 @@
                                                 'jpg', 'jpeg', 'png' => ['icon' => 'image-outline', 'color' => 'text-white', 'bg' => 'bg-purple-500'],
                                                 default => ['icon' => 'document-outline', 'color' => 'text-white', 'bg' => 'bg-gray-500']
                                             };
-                                        @endphp
+                                        ?>
                                         <li class="flex items-center justify-between py-2 px-3 rounded-lg border border-gray-200 transition-all duration-200 font-lora bg-white shadow-sm file-item" 
-                                            data-file-id="{{ $file->id }}" 
-                                            data-file-type="{{ $fileType }}">
+                                            data-file-id="<?php echo e($file->id); ?>" 
+                                            data-file-type="<?php echo e($fileType); ?>">
                                             <div class="flex items-center flex-1 min-w-0">
                                                 <input type="checkbox" class="file-delete-checkbox mr-2 w-4 h-4 cursor-pointer border border-gray-300 rounded accent-[#611132] focus:ring-2 focus:ring-[#611132] focus:ring-offset-1" onchange="toggleFileStrikethrough(this)">
-                                                <div class="flex-shrink-0 w-10 h-10 flex items-center justify-center rounded-lg {{ $iconConfig['bg'] }}">
-                                                    <ion-icon name="{{ $iconConfig['icon'] }}" class="{{ $iconConfig['color'] }} text-xl"></ion-icon>
+                                                <div class="flex-shrink-0 w-10 h-10 flex items-center justify-center rounded-lg <?php echo e($iconConfig['bg']); ?>">
+                                                    <ion-icon name="<?php echo e($iconConfig['icon']); ?>" class="<?php echo e($iconConfig['color']); ?> text-xl"></ion-icon>
                                                 </div>
                                                 <div class="ml-3 flex-1 min-w-0 file-info">
-                                                    <p class="text-sm font-medium text-[#404041] truncate">{{ $file->original_name }}</p>
-                                                    <p class="text-xs text-gray-500">{{ number_format($file->file_size / 1024 / 1024, 2) }} MB</p>
+                                                    <p class="text-sm font-medium text-[#404041] truncate"><?php echo e($file->original_name); ?></p>
+                                                    <p class="text-xs text-gray-500"><?php echo e(number_format($file->file_size / 1024 / 1024, 2)); ?> MB</p>
                                                 </div>
                                             </div>
                                         </li>
-                                    @endforeach
+                                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                                 </ul>
                                 <div class="text-sm text-gray-600 font-lora mt-6 flex items-center">
                                     <ion-icon name="checkbox-outline" class="mr-2 text-sm"></ion-icon>
@@ -232,7 +233,7 @@
                                 </div>
                             </div>
                         </div>
-                    @endif
+                    <?php endif; ?>
 
                     <!-- Tres cuadros en una fila horizontal - CON ESTADO ACTUALIZADO -->
                     <div class="flex flex-col lg:flex-row gap-4 mb-4">
@@ -282,11 +283,11 @@
                     <!-- Área de carga de archivos -->
                     <div>
                         <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-2 font-lora">
-                            @if(isset($publication))
+                            <?php if(isset($publication)): ?>
                                 Agregar nuevos archivos (opcional)
-                            @else
+                            <?php else: ?>
                                 Subir archivos (selección múltiple) <span class="text-red-600">*</span>
-                            @endif
+                            <?php endif; ?>
                         </label>
                         
                         <!-- Cuadro punteado para arrastrar y soltar -->
@@ -331,34 +332,58 @@
             <div class="h-[1px] bg-gray-300 my-4 lg:my-6"></div>
 
             <!-- USAR COMPONENTE DE BOTONES -->
-            @if(isset($publication) || request()->is('reportes/*/*/edit'))
-                <x-form-buttons
-                    primaryText="Actualizar registro"
-                    secondaryText=""
-                    tertiaryText="Volver al listado"
-                    tertiaryHref="{{ route('reportes.index') }}"
-                    primaryType="submit"
-                />
-            @else
-                <x-form-buttons 
-                    primaryText="Guardar registro"
-                    secondaryText="Limpiar formulario"
-                    primaryType="submit"
-                    secondaryType="button"
-                    secondaryOnclick="clearSeguridadVialForm()"
-                    tertiaryText="Volver al listado"
-                    tertiaryHref="{{ route('reportes.index') }}"
-                />
-            @endif
+            <?php if(isset($publication) || request()->is('reportes/*/*/edit')): ?>
+                <?php if (isset($component)) { $__componentOriginal4472fe0a558b38a919fed94c8472a9fd = $component; } ?>
+<?php if (isset($attributes)) { $__attributesOriginal4472fe0a558b38a919fed94c8472a9fd = $attributes; } ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.form-buttons','data' => ['primaryText' => 'Actualizar registro','secondaryText' => '','tertiaryText' => 'Volver al listado','tertiaryHref' => ''.e(route('reportes.index')).'','primaryType' => 'submit']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component->withName('form-buttons'); ?>
+<?php if ($component->shouldRender()): ?>
+<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
+<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
+<?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
+<?php endif; ?>
+<?php $component->withAttributes(['primaryText' => 'Actualizar registro','secondaryText' => '','tertiaryText' => 'Volver al listado','tertiaryHref' => ''.e(route('reportes.index')).'','primaryType' => 'submit']); ?>
+<?php echo $__env->renderComponent(); ?>
+<?php endif; ?>
+<?php if (isset($__attributesOriginal4472fe0a558b38a919fed94c8472a9fd)): ?>
+<?php $attributes = $__attributesOriginal4472fe0a558b38a919fed94c8472a9fd; ?>
+<?php unset($__attributesOriginal4472fe0a558b38a919fed94c8472a9fd); ?>
+<?php endif; ?>
+<?php if (isset($__componentOriginal4472fe0a558b38a919fed94c8472a9fd)): ?>
+<?php $component = $__componentOriginal4472fe0a558b38a919fed94c8472a9fd; ?>
+<?php unset($__componentOriginal4472fe0a558b38a919fed94c8472a9fd); ?>
+<?php endif; ?>
+            <?php else: ?>
+                <?php if (isset($component)) { $__componentOriginal4472fe0a558b38a919fed94c8472a9fd = $component; } ?>
+<?php if (isset($attributes)) { $__attributesOriginal4472fe0a558b38a919fed94c8472a9fd = $attributes; } ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.form-buttons','data' => ['primaryText' => 'Guardar registro','secondaryText' => 'Limpiar formulario','primaryType' => 'submit','secondaryType' => 'button','secondaryOnclick' => 'clearGruposVulnerablesForm()','tertiaryText' => 'Volver al listado','tertiaryHref' => ''.e(route('reportes.index')).'']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component->withName('form-buttons'); ?>
+<?php if ($component->shouldRender()): ?>
+<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
+<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
+<?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
+<?php endif; ?>
+<?php $component->withAttributes(['primaryText' => 'Guardar registro','secondaryText' => 'Limpiar formulario','primaryType' => 'submit','secondaryType' => 'button','secondaryOnclick' => 'clearGruposVulnerablesForm()','tertiaryText' => 'Volver al listado','tertiaryHref' => ''.e(route('reportes.index')).'']); ?>
+<?php echo $__env->renderComponent(); ?>
+<?php endif; ?>
+<?php if (isset($__attributesOriginal4472fe0a558b38a919fed94c8472a9fd)): ?>
+<?php $attributes = $__attributesOriginal4472fe0a558b38a919fed94c8472a9fd; ?>
+<?php unset($__attributesOriginal4472fe0a558b38a919fed94c8472a9fd); ?>
+<?php endif; ?>
+<?php if (isset($__componentOriginal4472fe0a558b38a919fed94c8472a9fd)): ?>
+<?php $component = $__componentOriginal4472fe0a558b38a919fed94c8472a9fd; ?>
+<?php unset($__componentOriginal4472fe0a558b38a919fed94c8472a9fd); ?>
+<?php endif; ?>
+            <?php endif; ?>
         </div>
 
         <!-- Input oculto para archivos a eliminar -->
-        @if(isset($publication))
+        <?php if(isset($publication)): ?>
             <input type="hidden" id="files-to-delete" name="files_to_delete" value="">
-        @endif
+        <?php endif; ?>
         </form>
 
-        @if($errors->any())
+        <?php if($errors->any()): ?>
         <script>
             document.addEventListener('DOMContentLoaded', function() {
                 const fieldMap = {
@@ -373,12 +398,12 @@
 
                 let firstErrorField = null;
 
-                @foreach($errors->keys() as $field)
-                    @php $errorMessage = $errors->first($field); @endphp
-                    if (fieldMap['{{ $field }}']) {
-                        const element = document.getElementById(fieldMap['{{ $field }}']);
+                <?php $__currentLoopData = $errors->keys(); $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $field): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                    <?php $errorMessage = $errors->first($field); ?>
+                    if (fieldMap['<?php echo e($field); ?>']) {
+                        const element = document.getElementById(fieldMap['<?php echo e($field); ?>']);
                         if (element) {
-                            element.setCustomValidity('{{ addslashes($errorMessage) }}');
+                            element.setCustomValidity('<?php echo e(addslashes($errorMessage)); ?>');
                             if (!firstErrorField) {
                                 firstErrorField = element;
                             }
@@ -387,14 +412,14 @@
                             });
                         }
                     }
-                @endforeach
+                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
 
                 if (firstErrorField) {
                     firstErrorField.reportValidity();
                 }
             });
         </script>
-        @endif
+        <?php endif; ?>
     </div>
 
     <!-- Script para manejo de archivos -->
@@ -495,28 +520,39 @@
             updateCounterDisplay('pdf', totalPdf, 1);
             updateCounterDisplay('excel', totalExcel, 1);
             updateCounterDisplay('photos', totalPhotos, 4);
+            
+            // Cambiar color de archivo para indicar que será eliminado
+            document.querySelectorAll('#existing-files-list .file-item').forEach(item => {
+                const checkbox = item.querySelector('.file-delete-checkbox');
+                if (checkbox.checked) {
+                    item.classList.add('opacity-50', 'line-through');
+                    item.style.backgroundColor = '#f5f5f5';
+                } else {
+                    item.classList.remove('opacity-50', 'line-through');
+                    item.style.backgroundColor = '#ffffff';
+                }
+            });
         }
         
-        function updateCounterDisplay(type, currentCount, requiredCount) {
-            const badgeId = type + '-status-badge';
-            const badge = document.getElementById(badgeId);
+        function updateCounterDisplay(type, current, required) {
+            const statusBadge = document.getElementById(`${type}-status-badge`);
             
             let statusText = '';
             let badgeClass = '';
             
-            if (currentCount >= requiredCount) {
-                statusText = currentCount === requiredCount ? 'Completado' : `${currentCount}/${requiredCount}`;
+            if (current >= required) {
+                statusText = current === required ? 'Completado' : `${current}/${required}`;
                 badgeClass = 'bg-green-100 text-green-800';
-            } else if (currentCount > 0) {
-                statusText = type === 'photos' ? `${currentCount}/${requiredCount}` : 'Incompleto';
+            } else if (current > 0) {
+                statusText = type === 'photos' ? `${current}/${required}` : 'Incompleto';
                 badgeClass = 'bg-yellow-100 text-yellow-800';
             } else {
-                statusText = type === 'photos' ? `${currentCount}/${requiredCount}` : 'Pendiente';
+                statusText = type === 'photos' ? `${current}/${required}` : 'Pendiente';
                 badgeClass = 'bg-yellow-100 text-yellow-800';
             }
             
-            badge.textContent = statusText;
-            badge.className = `text-xs px-2 py-1 rounded font-lora ${badgeClass}`;
+            statusBadge.textContent = statusText;
+            statusBadge.className = `text-xs px-2 py-1 rounded font-lora ${badgeClass}`;
         }
         
         function updateFileStatus() {
@@ -579,16 +615,11 @@
             } else {
                 fileList.classList.add('hidden');
             }
-            
-            // Actualizar estados
-            updateCounterDisplay('pdf', pdfCount, 1);
-            updateCounterDisplay('excel', excelCount, 1);
-            updateCounterDisplay('photos', photoCount, 4);
         }
         
-        function clearSeguridadVialForm() {
+        function clearGruposVulnerablesForm() {
             if (confirm('¿Está seguro de que desea limpiar todos los campos del formulario?')) {
-                const form = document.getElementById('seguridadVialForm');
+                const form = document.getElementById('gruposVulnerablesForm');
                 if (form) {
                     form.reset();
                 }
@@ -605,15 +636,15 @@
                 document.getElementById('file-list').classList.add('hidden');
                 
                 // Reinicializar Tom Select para que cargue todos los municipios de nuevo
-                const seguridadMuni = document.getElementById('seguridad_municipality_select');
-                if (seguridadMuni && seguridadMuni.tomselect) {
-                    seguridadMuni.tomselect.destroy();
-                    seguridadMuni.tomselect = null;
+                const gruposMuni = document.getElementById('grupos_municipality_select');
+                if (gruposMuni && gruposMuni.tomselect) {
+                    gruposMuni.tomselect.destroy();
+                    gruposMuni.tomselect = null;
                     // Limpiar el valor
-                    seguridadMuni.value = '';
+                    gruposMuni.value = '';
                     // Reinicializar Tom Select
-                    const currentJurisdiction = @json(optional(auth()->user())->jurisdiction_id);
-                    const ts = new TomSelect(seguridadMuni, {
+                    const currentJurisdiction = <?php echo json_encode(optional(auth()->user())->jurisdiction_id, 15, 512) ?>;
+                    const ts = new TomSelect(gruposMuni, {
                         valueField: 'id',
                         labelField: 'name',
                         searchField: 'name',
@@ -630,17 +661,17 @@
                         },
                         onChange: function(value) {
                             const evt = new Event('change');
-                            seguridadMuni.dispatchEvent(evt);
+                            gruposMuni.dispatchEvent(evt);
                         }
                     });
-                    try { seguridadMuni.style.display = 'none'; } catch (e) {}
+                    try { gruposMuni.style.display = 'none'; } catch (e) {}
                 }
                 
                 // Restaurar la jurisdicción del usuario (es fija y no debe cambiar)
-                const jurisdictionDisplay = document.getElementById('jurisdiction_display_vial');
-                const hiddenJur = document.getElementById('jurisdiction_input_vial');
-                const currentJurisdiction = @json(optional(auth()->user())->jurisdiction_id);
-                const jurisNames = @json($jurisdictions->mapWithKeys(function($j){ return [$j->id => $j->name]; }));
+                const jurisdictionDisplay = document.getElementById('jurisdiction_display_gv');
+                const hiddenJur = document.getElementById('jurisdiction_input_gv');
+                const currentJurisdiction = <?php echo json_encode(optional(auth()->user())->jurisdiction_id, 15, 512) ?>;
+                const jurisNames = <?php echo json_encode($jurisdictions->mapWithKeys(function($j){ return [$j->id => $j->name]; }), 15, 512) ?>;
                 if (currentJurisdiction) {
                     if (hiddenJur) hiddenJur.value = currentJurisdiction;
                     if (jurisdictionDisplay) jurisdictionDisplay.value = jurisNames[currentJurisdiction] || '';
@@ -653,6 +684,9 @@
         
         // Funcionalidad de arrastrar y soltar
         document.addEventListener('DOMContentLoaded', function() {
+            // Inicializar contadores en modo edición
+            updateFileCounters();
+            
             const dropArea = document.querySelector('.border-dashed');
             const fileInput = document.getElementById('file-input');
             
@@ -690,7 +724,7 @@
             }
             
             // Interceptar el envío del formulario para agregar los archivos
-            const mainForm = document.querySelector('form[action*="seguridad-vial"][method="POST"]:not([id^="delete-file"])');
+            const mainForm = document.querySelector('form[action*="grupos-vulnerables"][method="POST"]:not([id^="delete-file"])');  
             if (mainForm) {
                 mainForm.addEventListener('submit', function(e) {
                     console.log('Form submit interceptado, action:', this.action);
@@ -763,15 +797,15 @@
         });
     </script>
 
-    {{-- Formularios ocultos para eliminar archivos (renderizados fuera del form principal para evitar MethodOverride en el PUT) --}}
-    @if(isset($publication) && $publication->files->count() > 0)
-        @foreach($publication->files as $file)
-            <form id="delete-file-{{ $file->id }}" method="POST" action="{{ route('reportes.file.delete', $file) }}" class="hidden">
-                @csrf
-                @method('DELETE')
+    
+    <?php if(isset($publication) && $publication->files->count() > 0): ?>
+        <?php $__currentLoopData = $publication->files; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $file): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+            <form id="delete-file-<?php echo e($file->id); ?>" method="POST" action="<?php echo e(route('reportes.file.delete', $file)); ?>" class="hidden">
+                <?php echo csrf_field(); ?>
+                <?php echo method_field('DELETE'); ?>
             </form>
-        @endforeach
-    @endif
+        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+    <?php endif; ?>
 
     <!-- Tom Select -->
     <link href="https://cdn.jsdelivr.net/npm/tom-select/dist/css/tom-select.default.min.css" rel="stylesheet">
@@ -812,17 +846,17 @@
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             // Map municipality_id -> jurisdiction_id
-            const muniToJur = @json($municipalities->mapWithKeys(function($m){ return [$m->id => $m->jurisdiction_id]; }));
-            const jurisNames = @json($jurisdictions->mapWithKeys(function($j){ return [$j->id => $j->name]; }));
+            const muniToJur = <?php echo json_encode($municipalities->mapWithKeys(function($m){ return [$m->id => $m->jurisdiction_id]; }), 15, 512) ?>;
+            const jurisNames = <?php echo json_encode($jurisdictions->mapWithKeys(function($j){ return [$j->id => $j->name]; }), 15, 512) ?>;
             // Jurisdicción del usuario (puede ser null)
-            const currentJurisdiction = @json(optional(auth()->user())->jurisdiction_id);
+            const currentJurisdiction = <?php echo json_encode(optional(auth()->user())->jurisdiction_id, 15, 512) ?>;
 
-            const seguridadMuni = document.getElementById('seguridad_municipality_select');
-            const jurisdictionDisplay = document.getElementById('jurisdiction_display_vial');
-            const hiddenJur = document.getElementById('jurisdiction_input_vial');
+            const gruposMuni = document.getElementById('grupos_municipality_select');
+            const jurisdictionDisplay = document.getElementById('jurisdiction_display_gv');
+            const hiddenJur = document.getElementById('jurisdiction_input_gv');
 
             function setJurisdictionBasedOnMunicipality() {
-                const mid = seguridadMuni?.value || '';
+                const mid = gruposMuni?.value || '';
                 if (mid && muniToJur[mid]) {
                     const jid = muniToJur[mid];
                     if (hiddenJur) hiddenJur.value = jid;
@@ -833,8 +867,8 @@
                 }
             }
 
-            if (seguridadMuni) {
-                seguridadMuni.addEventListener('change', setJurisdictionBasedOnMunicipality);
+            if (gruposMuni) {
+                gruposMuni.addEventListener('change', setJurisdictionBasedOnMunicipality);
                 setJurisdictionBasedOnMunicipality();
             }
 
@@ -847,8 +881,8 @@
                 return fetch(url).then(r => r.json());
             }
 
-            if (seguridadMuni) {
-                const ts = new TomSelect(seguridadMuni, {
+            if (gruposMuni) {
+                const ts = new TomSelect(gruposMuni, {
                     valueField: 'id',
                     labelField: 'name',
                     searchField: 'name',
@@ -861,10 +895,10 @@
                     },
                     onChange: function(value) {
                         const evt = new Event('change');
-                        seguridadMuni.dispatchEvent(evt);
+                        gruposMuni.dispatchEvent(evt);
                     }
                 });
-                try { seguridadMuni.style.display = 'none'; } catch (e) {}
+                try { gruposMuni.style.display = 'none'; } catch (e) {}
             }
 
             // Si el usuario tiene una jurisdicción asignada, establecerla en el campo oculto y en el display
@@ -876,8 +910,8 @@
             }
 
             // Interceptar el envío del formulario para actualizar files_to_delete
-            const mainForm = document.getElementById('seguridadVialForm');
-            const isEditMode = {{ isset($publication) ? 'true' : 'false' }};
+            const mainForm = document.getElementById('gruposVulnerablesForm');
+            const isEditMode = <?php echo e(isset($publication) ? 'true' : 'false'); ?>;
             
             if (mainForm) {
                 mainForm.addEventListener('submit', function(e) {
@@ -898,4 +932,5 @@
     <!-- Incluir Ionicons -->
     <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
     <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
-@endsection
+<?php $__env->stopSection(); ?>
+<?php echo $__env->make('layouts.principal', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH C:\Proyectos Laravel\sistema-sec-tam\resources\views/reportes/registro/grupos-vulnerables.blade.php ENDPATH**/ ?>

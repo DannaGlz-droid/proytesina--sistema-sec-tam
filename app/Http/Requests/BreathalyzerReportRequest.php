@@ -3,6 +3,8 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use App\Config\ReportFileRequirements;
+use Closure;
 
 class BreathalyzerReportRequest extends FormRequest
 {
@@ -39,6 +41,7 @@ class BreathalyzerReportRequest extends FormRequest
             'descripcion' => 'nullable|string|max:5000',
             'archivos' => $isUpdate ? 'nullable|array' : 'required|array|min:1',
             'archivos.*' => 'file|mimes:xlsx,xls,jpg,jpeg,png|max:10240',
+            'files_to_delete' => 'nullable|string', // IDs de archivos a eliminar separados por comas
         ];
     }
 
@@ -80,6 +83,68 @@ class BreathalyzerReportRequest extends FormRequest
             'conductores_no_aptos' => 'conductores no aptos',
             'descripcion' => 'descripción',
             'archivos' => 'archivos',
+        ];
+    }
+
+    /**
+     * Get the "after" validation callables for the request.
+     */
+    public function after(): array
+    {
+        return [
+            function ($validator) {
+                // Solo validar en modo actualización
+                if ($this->route('publication')) {
+                    $publication = $this->route('publication');
+                    
+                    // Obtener archivos a eliminar
+                    $filesToDeleteIds = [];
+                    if ($this->filled('files_to_delete')) {
+                        $filesToDeleteIds = array_filter(
+                            explode(',', $this->input('files_to_delete')),
+                            fn($id) => !empty($id)
+                        );
+                    }
+                    
+                    // Contar archivos existentes que NO van a ser eliminados
+                    $remainingFiles = $publication->files
+                        ->whereNotIn('id', $filesToDeleteIds)
+                        ->all();
+                    
+                    // Contar archivos nuevos por tipo
+                    $newFiles = $this->file('archivos', []);
+                    if (!is_array($newFiles)) {
+                        $newFiles = [];
+                    }
+                    
+                    // Contar existentes por tipo
+                    $excelCount = count(array_filter($remainingFiles, fn($f) => 
+                        in_array(strtolower(pathinfo($f->original_name, PATHINFO_EXTENSION)), ['xlsx', 'xls'])
+                    ));
+                    $photosCount = count(array_filter($remainingFiles, fn($f) => 
+                        in_array(strtolower(pathinfo($f->original_name, PATHINFO_EXTENSION)), ['jpg', 'jpeg', 'png'])
+                    ));
+                    
+                    // Contar nuevos por tipo
+                    foreach ($newFiles as $file) {
+                        $ext = strtolower(pathinfo($file->getClientOriginalName(), PATHINFO_EXTENSION));
+                        if (in_array($ext, ['xlsx', 'xls'])) $excelCount++;
+                        elseif (in_array($ext, ['jpg', 'jpeg', 'png'])) $photosCount++;
+                    }
+                    
+                    // Validar contra requisitos
+                    $requirements = ReportFileRequirements::getRequirements('alcoholimetria');
+                    $missingMessage = ReportFileRequirements::getMissingFilesMessage('alcoholimetria', 
+                        collect($remainingFiles)->merge($newFiles));
+                    
+                    // Verificar que se cumplan los requisitos mínimos
+                    if ($excelCount < $requirements['required_files']['excel']['min'] ||
+                        $photosCount < $requirements['required_files']['photos']['min']) {
+                        
+                        $validator->errors()->add('archivos', $missingMessage);
+                    }
+                }
+            }
         ];
     }
 }
