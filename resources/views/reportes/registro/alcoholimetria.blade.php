@@ -2,6 +2,26 @@
 @section('title', isset($publication) ? 'Editar Alcoholimetría' : 'Registro de Alcoholimetría')
 @section('content')
 
+    <style>
+        .description-scroll::-webkit-scrollbar {
+            width: 6px;
+        }
+        .description-scroll::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .description-scroll::-webkit-scrollbar-thumb {
+            background: #ccc;
+            border-radius: 3px;
+        }
+        .description-scroll::-webkit-scrollbar-thumb:hover {
+            background: #999;
+        }
+        .description-scroll {
+            scrollbar-width: thin;
+            scrollbar-color: #ccc transparent;
+        }
+    </style>
+
     @include('components.header-admin')
     @include('components.nav-reportes')
 
@@ -256,7 +276,7 @@
                 <div class="space-y-3">
                         <div>
                             <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Descripción</label>
-                        <textarea id="descripcion" name="descripcion" maxlength="5000" class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora" rows="4" placeholder="Describa los detalles, contexto, objetivos, resultados, etc. (opcional)">{{ old('descripcion', isset($publication) ? $publication->description : '') }}</textarea>
+                        <textarea id="descripcion" name="descripcion" maxlength="5000" class="w-full px-3 py-2 text-xs lg:text-sm border border-[#404041] rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora break-words whitespace-normal description-scroll" rows="4" placeholder="Describa los detalles, contexto, objetivos, resultados, etc. (opcional)">{{ old('descripcion', isset($publication) ? $publication->description : '') }}</textarea>
                     </div>
                 </div>
             </div>
@@ -413,7 +433,7 @@
                     primaryText="Actualizar registro"
                     secondaryText=""
                     tertiaryText="Volver al listado"
-                    tertiaryHref="{{ route('reportes.index') }}"
+                    tertiaryHref="{{ route('reportes.index', ['tipo' => request('redirect_tipo', 'alcoholimetria')]) }}"
                     primaryType="submit"
                 />
             @else
@@ -424,7 +444,7 @@
                     secondaryType="button"
                     secondaryOnclick="clearAlcoholimetriaForm()"
                     tertiaryText="Volver al listado"
-                    tertiaryHref="{{ route('reportes.index') }}"
+                    tertiaryHref="{{ route('reportes.index', ['tipo' => request('redirect_tipo', 'alcoholimetria')]) }}"
                 />
             @endif
 
@@ -432,6 +452,8 @@
             @if(isset($publication))
                 <input type="hidden" id="files-to-delete" name="files_to_delete" value="">
             @endif
+            <!-- Input oculto para redirect_tipo -->
+            <input type="hidden" name="redirect_tipo" value="{{ request('redirect_tipo', 'alcoholimetria') }}">
         </div>
         </form>
 

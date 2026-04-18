@@ -189,6 +189,7 @@ class ReportController extends Controller
     {
         try {
             $user = Auth::user();
+            $redirectTipo = request('redirect_tipo', $publication->publication_type);
             
             // Verificar permisos de eliminación
             // - Si la publicación está aprobada: solo Admin puede eliminar (el autor no puede, sin importar su rol)
@@ -196,13 +197,13 @@ class ReportController extends Controller
             if ($publication->status === 'aprobado') {
                 if (! $user->isAdmin()) {
                     return redirect()
-                        ->route('reportes.index')
+                        ->route('reportes.index', ['tipo' => $redirectTipo])
                         ->with('error', 'Solo los administradores pueden eliminar publicaciones aprobadas.');
                 }
             } else {
                 if ($publication->user_id !== $user->id && ! $user->isAdmin()) {
                     return redirect()
-                        ->route('reportes.index')
+                        ->route('reportes.index', ['tipo' => $redirectTipo])
                         ->with('error', 'No tienes permisos para eliminar esta publicación.');
                 }
             }
@@ -246,13 +247,13 @@ class ReportController extends Controller
             DB::commit();
 
             return redirect()
-                ->route('reportes.index')
+                ->route('reportes.index', ['tipo' => $redirectTipo])
                 ->with('success', 'Publicación eliminada correctamente.');
 
         } catch (\Exception $e) {
             DB::rollBack();
             return redirect()
-                ->route('reportes.index')
+                ->route('reportes.index', ['tipo' => $redirectTipo])
                 ->with('error', 'Error al eliminar la publicación: ' . $e->getMessage());
         }
     }
@@ -647,7 +648,7 @@ class ReportController extends Controller
             DB::commit();
 
             return redirect()
-                ->route('reportes.index')
+                ->route('reportes.index', ['tipo' => request('redirect_tipo', 'seguridad_vial')])
                 ->with('success', 'Reporte de Seguridad Vial actualizado exitosamente');
 
         } catch (\Exception $e) {
@@ -858,7 +859,7 @@ class ReportController extends Controller
             DB::commit();
 
             return redirect()
-                ->route('reportes.index')
+                ->route('reportes.index', ['tipo' => request('redirect_tipo', 'observatorio')])
                 ->with('success', 'Reporte de Observatorio actualizado exitosamente');
 
         } catch (\Exception $e) {
@@ -1046,7 +1047,7 @@ class ReportController extends Controller
             DB::commit();
 
             return redirect()
-                ->route('reportes.index')
+                ->route('reportes.index', ['tipo' => request('redirect_tipo', 'alcoholimetria')])
                 ->with('success', 'Reporte de Alcoholimetría actualizado exitosamente');
 
         } catch (\Exception $e) {
@@ -1215,7 +1216,7 @@ class ReportController extends Controller
             DB::commit();
 
             return redirect()
-                ->route('reportes.index')
+                ->route('reportes.index', ['tipo' => request('redirect_tipo', 'grupos-vulnerables')])
                 ->with('success', 'Reporte de Grupos Vulnerables actualizado exitosamente');
 
         } catch (\Exception $e) {

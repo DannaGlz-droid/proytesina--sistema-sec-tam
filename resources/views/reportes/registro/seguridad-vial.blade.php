@@ -2,6 +2,26 @@
 @section('title', isset($publication) ? 'Editar Actividad' : 'Registro de Actividades')
 @section('content')
 
+    <style>
+        .description-scroll::-webkit-scrollbar {
+            width: 6px;
+        }
+        .description-scroll::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .description-scroll::-webkit-scrollbar-thumb {
+            background: #ccc;
+            border-radius: 3px;
+        }
+        .description-scroll::-webkit-scrollbar-thumb:hover {
+            background: #999;
+        }
+        .description-scroll {
+            scrollbar-width: thin;
+            scrollbar-color: #ccc transparent;
+        }
+    </style>
+
     @include('components.header-admin')
     @include('components.nav-reportes')
 
@@ -159,7 +179,7 @@
                         <textarea 
                             id="descripcion"
                             name="descripcion"
-                            class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora" 
+                            class="w-full px-3 py-2 text-xs lg:text-sm border border-[#404041] rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora break-words whitespace-normal description-scroll" 
                             rows="4"
                             placeholder="Describa los detalles, contexto, objetivos, resultados, etc. (opcional)"
                             maxlength="5000"
@@ -336,7 +356,7 @@
                     primaryText="Actualizar registro"
                     secondaryText=""
                     tertiaryText="Volver al listado"
-                    tertiaryHref="{{ route('reportes.index') }}"
+                    tertiaryHref="{{ route('reportes.index', ['tipo' => request('redirect_tipo', 'seguridad_vial')]) }}"
                     primaryType="submit"
                 />
             @else
@@ -347,7 +367,7 @@
                     secondaryType="button"
                     secondaryOnclick="clearSeguridadVialForm()"
                     tertiaryText="Volver al listado"
-                    tertiaryHref="{{ route('reportes.index') }}"
+                    tertiaryHref="{{ route('reportes.index', ['tipo' => request('redirect_tipo', 'seguridad_vial')]) }}"
                 />
             @endif
         </div>
@@ -356,6 +376,8 @@
         @if(isset($publication))
             <input type="hidden" id="files-to-delete" name="files_to_delete" value="">
         @endif
+        <!-- Input oculto para redirect_tipo -->
+        <input type="hidden" name="redirect_tipo" value="{{ request('redirect_tipo', 'seguridad_vial') }}">
         </form>
 
         @if($errors->any())

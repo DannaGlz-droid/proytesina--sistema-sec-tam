@@ -44,6 +44,24 @@
         max-height: 500px;
         opacity: 1;
     }
+    
+    .description-scroll::-webkit-scrollbar {
+        width: 6px;
+    }
+    .description-scroll::-webkit-scrollbar-track {
+        background: transparent;
+    }
+    .description-scroll::-webkit-scrollbar-thumb {
+        background: #ccc;
+        border-radius: 3px;
+    }
+    .description-scroll::-webkit-scrollbar-thumb:hover {
+        background: #999;
+    }
+    .description-scroll {
+        scrollbar-width: thin;
+        scrollbar-color: #ccc transparent;
+    }
 </style>
 
 <div id="{{ $modalId }}" class="fixed inset-0 bg-gray-900 bg-opacity-40 flex items-center justify-center z-50 hidden transition-opacity duration-200">
@@ -109,7 +127,7 @@
                 <div class="mb-6">
                     <h4 class="font-semibold text-[#404041] mb-3 text-lg font-lora">Descripción</h4>
                     <div class="bg-white rounded-lg border border-[#404041] p-4">
-                        <p class="text-gray-700 leading-relaxed max-h-48 overflow-y-auto font-lora w-full px-2 text-left modal-descripcion">
+                        <p class="text-gray-700 leading-relaxed font-lora w-full px-2 text-left modal-descripcion break-words whitespace-normal">
                             Descripción del reporte...
                         </p>
                     </div>
@@ -121,13 +139,12 @@
                 <!-- ESTADO DE APROBACIÓN (visible para todos) -->
                 <div class="mb-6">
                     <h4 class="font-semibold text-[#404041] mb-3 text-lg font-lora">Estado de Aprobación</h4>
-                    <div class="bg-white rounded-lg border border-[#404041] p-4">
-                        <div class="flex items-center gap-3 modal-status-container">
-                            <!-- Se llenará dinámicamente con JavaScript -->
-                            <div class="flex items-center gap-2">
-                                <span class="px-3 py-1 bg-yellow-100 text-yellow-700 text-sm font-semibold rounded-lg border border-yellow-300">
-                                    <i class="fas fa-clock mr-1"></i>Pendiente de revisión
-                                </span>
+                    <div class="modal-status-container">
+                        <!-- Se llenará dinámicamente con JavaScript -->
+                        <div class="rounded-lg border border-[#404041] p-4 bg-white">
+                            <div class="flex items-center gap-3">
+                                <i class="fas fa-clock text-yellow-600 text-lg"></i>
+                                <span class="text-sm font-semibold text-[#404041] font-lora">Pendiente de revisión</span>
                             </div>
                         </div>
                     </div>

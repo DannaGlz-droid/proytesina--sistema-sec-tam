@@ -34,19 +34,19 @@
             <!-- PESTAÑAS INTEGRADAS AL CONTENEDOR -->
             <div class="border-b border-gray-300 bg-gray-50 px-4 lg:px-6 pt-4">
                 <nav class="flex space-x-1" aria-label="Tabs">
-                    <button data-tipo="todos" class="tab-filter px-4 py-2 text-sm font-medium font-lora rounded-t-lg bg-[#404041] text-white border border-b-0 border-gray-300 transition-all duration-200 hover:bg-[#2a2a2a]">
+                    <button data-tipo="todos" class="tab-filter px-4 py-2 text-sm font-medium font-lora rounded-t-lg bg-[#404041] text-white border border-b-0 border-gray-300 transition-all duration-200 hover:bg-[#2a2a2a]" style="border-bottom: 4px solid #404041;">
                         Todos los tipos
                     </button>
-                    <button data-tipo="seguridad_vial" class="tab-filter px-4 py-2 text-sm font-medium font-lora rounded-t-lg bg-white text-[#404041] border border-b-0 border-gray-300 transition-all duration-200 hover:bg-gray-100">
+                    <button data-tipo="seguridad_vial" class="tab-filter px-4 py-2 text-sm font-medium font-lora rounded-t-lg bg-white text-[#404041] border border-b-0 border-gray-300 transition-all duration-200 hover:bg-gray-100" style="border-bottom: 4px solid #4C8CC4;">
                         Seguridad Vial
                     </button>
-                    <button data-tipo="observatorio" class="tab-filter px-4 py-2 text-sm font-medium font-lora rounded-t-lg bg-white text-[#404041] border border-b-0 border-gray-300 transition-all duration-200 hover:bg-gray-100">
+                    <button data-tipo="observatorio" class="tab-filter px-4 py-2 text-sm font-medium font-lora rounded-t-lg bg-white text-[#404041] border border-b-0 border-gray-300 transition-all duration-200 hover:bg-gray-100" style="border-bottom: 4px solid #75A84E;">
                         Observatorio
                     </button>
-                    <button data-tipo="alcoholimetria" class="tab-filter px-4 py-2 text-sm font-medium font-lora rounded-t-lg bg-white text-[#404041] border border-b-0 border-gray-300 transition-all duration-200 hover:bg-gray-100">
+                    <button data-tipo="alcoholimetria" class="tab-filter px-4 py-2 text-sm font-medium font-lora rounded-t-lg bg-white text-[#404041] border border-b-0 border-gray-300 transition-all duration-200 hover:bg-gray-100" style="border-bottom: 4px solid #9D2449;">
                         Alcoholimetría
                     </button>
-                    <button data-tipo="grupos-vulnerables" class="tab-filter px-4 py-2 text-sm font-medium font-lora rounded-t-lg bg-white text-[#404041] border border-b-0 border-gray-300 transition-all duration-200 hover:bg-gray-100">
+                    <button data-tipo="grupos-vulnerables" class="tab-filter px-4 py-2 text-sm font-medium font-lora rounded-t-lg bg-white text-[#404041] border border-b-0 border-gray-300 transition-all duration-200 hover:bg-gray-100" style="border-bottom: 4px solid #6B4C8A;">
                         Grupos Vulnerables
                     </button>
                 </nav>
@@ -175,7 +175,7 @@
                                 $badgeClass = 'bg-[#4C8CC4] text-white';
                                 $badgeBorderClass = 'border-[#13264F]';
                                 $claseModal = 'ver-detalle-seguridad';
-                                $editRoute = route('reportes.seguridad-vial.edit', $pub);
+                                $editRoute = route('reportes.seguridad-vial.edit', $pub) . '?redirect_tipo=' . (request('tipo') ?? 'todos');
                                 $reporte = $pub->roadSafetyReports->first();
                                 if ($reporte) {
                                     // Mostrar la línea de Actividad sólo para Seguridad Vial
@@ -194,7 +194,7 @@
                                 $badgeClass = 'bg-[#75A84E] text-white';
                                 $badgeBorderClass = 'border-[#184823]';
                                 $claseModal = 'ver-detalle-observatorio';
-                                $editRoute = route('reportes.observatorio.edit', $pub);
+                                $editRoute = route('reportes.observatorio.edit', $pub) . '?redirect_tipo=' . (request('tipo') ?? 'todos');
                                 $reporte = $pub->injuryObservatoryReports->first();
                                 if ($reporte) {
                                     // No mostrar línea de "Actividad" para observatorio; mantener sólo "Subido por"
@@ -209,7 +209,7 @@
                                 $badgeClass = 'bg-[#9D2449] text-white';
                                 $badgeBorderClass = 'border-[#470202]';
                                 $claseModal = 'ver-detalle-alcohol';
-                                $editRoute = route('reportes.alcoholimetria.edit', $pub);
+                                $editRoute = route('reportes.alcoholimetria.edit', $pub) . '?redirect_tipo=' . (request('tipo') ?? 'todos');
                                 $reporte = $pub->breathalyzerReports->first();
                                 if ($reporte) {
                                     // No mostrar línea de "Actividad" para alcoholimetría; mantener sólo "Subido por"
@@ -233,7 +233,7 @@
                                 $badgeClass = 'bg-[#6B4C8A] text-white';
                                 $badgeBorderClass = 'border-[#2D1B47]';
                                 $claseModal = 'ver-detalle-grupos-vulnerables';
-                                $editRoute = route('reportes.grupos-vulnerables.edit', $pub);
+                                $editRoute = route('reportes.grupos-vulnerables.edit', $pub) . '?redirect_tipo=' . (request('tipo') ?? 'todos');
                                 $reporte = $pub->gruposVulnerablesReport;
                                 if ($reporte) {
                                     $activityInfo = 'Actividad: ' . ($reporte->activityType->name ?? 'No especificado');
@@ -372,7 +372,8 @@
                                             title="Eliminar"
                                             data-publication-id="<?php echo e($pub->id); ?>"
                                             data-publication-title="<?php echo e($pub->topic); ?>"
-                                            data-delete-url="<?php echo e(route('reportes.destroy', $pub)); ?>">
+                                            data-delete-url="<?php echo e(route('reportes.destroy', $pub)); ?>"
+                                            data-redirect-tipo="<?php echo e(request('tipo', 'todos')); ?>">
                                         <i class="fas fa-trash text-sm"></i>
                                     </button>
                                 <?php endif; ?>
@@ -393,8 +394,13 @@
                             <div class="text-gray-400 mb-4">
                                 <i class="fas fa-inbox text-6xl"></i>
                             </div>
-                            <p class="text-lg font-lora text-gray-600">No hay publicaciones registradas</p>
-                            <p class="text-sm text-gray-500 font-lora mt-2">Comienza creando un nuevo reporte</p>
+                            <?php if(request('q') || request('status') === 'aprobado' || request('status') === 'rechazado'): ?>
+                                <p class="text-lg font-lora text-gray-600">No se encontraron reportes</p>
+                                <p class="text-sm text-gray-500 font-lora mt-2">Intenta ajustar los criterios de búsqueda</p>
+                            <?php else: ?>
+                                <p class="text-lg font-lora text-gray-600">No hay publicaciones registradas</p>
+                                <p class="text-sm text-gray-500 font-lora mt-2">Comienza creando un nuevo reporte</p>
+                            <?php endif; ?>
                         </div>
                     <?php endif; ?>
                 </div>
@@ -414,38 +420,37 @@
     <!-- INCLUIR TODOS LOS COMPONENTES DE MODALES -->
 <!-- Modal de rechazo -->
 <div id="reject-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-    <div class="bg-white rounded-xl shadow-2xl max-w-md w-full p-6">
-        <div class="flex items-center justify-between mb-4">
+    <div class="bg-white rounded-xl shadow-2xl max-w-2xl w-full p-6 border border-gray-200">
+        <div class="flex items-center justify-between mb-4 pb-4 border-b border-gray-300">
             <h3 class="text-xl font-bold text-[#404041] font-lora">Rechazar Reporte</h3>
-            <button onclick="closeRejectModal()" class="text-gray-400 hover:text-gray-600">
-                <i class="fas fa-times text-xl"></i>
+            <button onclick="closeRejectModal()" class="text-gray-500 hover:text-gray-700 transition-colors duration-200 w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-200">
+                <i class="fas fa-times text-lg"></i>
             </button>
         </div>
         
         <input type="hidden" id="reject-modal-publication-id">
         
-        <p class="text-sm text-gray-600 mb-2 font-lora">Reporte: <span id="reject-modal-title" class="font-semibold"></span></p>
-        
-        <div class="mb-4">
-            <label class="block text-sm font-medium text-[#404041] mb-2 font-lora">Motivo del rechazo *</label>
+        <div class="mb-6">
+            <p class="text-sm text-gray-600 mb-4 font-lora">Reporte: <span id="reject-modal-title" class="font-semibold"></span></p>
+            <label class="block text-sm font-medium text-[#404041] mb-2 font-lora">Motivo del rechazo <span class="text-red-600">*</span></label>
             <textarea 
                 id="rejection-reason"
-                rows="4"
-                class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent font-lora"
+                rows="6"
+                class="w-full px-3 py-2 text-sm border border-[#404041] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#611132] focus:border-transparent font-lora resize-none"
                 placeholder="Explique brevemente por qué se rechaza este reporte..."
                 maxlength="500"
                 required></textarea>
             <p class="text-xs text-gray-500 mt-1">Máximo 500 caracteres</p>
         </div>
         
-        <div class="flex gap-3">
+        <div class="flex gap-3 pt-4 border-t border-gray-300">
             <button onclick="closeRejectModal()" 
-                    class="flex-1 px-4 py-2 bg-gray-200 text-gray-700 rounded-lg font-semibold hover:bg-gray-300 transition-all duration-300 font-lora">
+                    class="flex-1 px-4 py-2 border border-[#404041] text-[#404041] rounded-lg font-semibold hover:bg-gray-50 transition-all duration-300 font-lora text-sm">
                 Cancelar
             </button>
             <button onclick="submitRejection()" 
-                    class="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg font-semibold hover:bg-red-700 transition-all duration-300 font-lora">
-                <i class="fas fa-times mr-2"></i>Rechazar
+                    class="flex-1 px-4 py-2 bg-[#AB1A1A] text-white rounded-lg font-semibold hover:bg-[#8b1515] transition-all duration-300 font-lora text-sm flex items-center justify-center gap-2">
+                <i class="fas fa-times-circle"></i>Rechazar
             </button>
         </div>
     </div>
@@ -453,11 +458,11 @@
 
 <!-- Modal de eliminación -->
 <div id="delete-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-    <div class="bg-white rounded-xl shadow-2xl max-w-md w-full p-6">
-        <div class="flex items-center justify-between mb-4">
+    <div class="bg-white rounded-xl shadow-2xl max-w-2xl w-full p-6 border border-gray-200">
+        <div class="flex items-center justify-between mb-4 pb-4 border-b border-gray-300">
             <h3 class="text-xl font-bold text-[#404041] font-lora">Eliminar Publicación</h3>
-            <button onclick="closeDeleteModal()" class="text-gray-400 hover:text-gray-600">
-                <i class="fas fa-times text-xl"></i>
+            <button onclick="closeDeleteModal()" class="text-gray-500 hover:text-gray-700 transition-colors duration-200 w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-200">
+                <i class="fas fa-times text-lg"></i>
             </button>
         </div>
         
@@ -466,8 +471,9 @@
             <?php echo method_field('DELETE'); ?>
             
             <input type="hidden" id="delete-modal-publication-id">
+            <input type="hidden" id="delete-modal-redirect-tipo" name="redirect_tipo">
             
-            <div class="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+            <div class="mb-4 p-4 bg-red-50 border border-[#404041] rounded-lg">
                 <p class="text-sm text-red-700 font-lora">
                     <i class="fas fa-exclamation-triangle mr-2"></i>
                     ¿Estás seguro de eliminar esta publicación? Esta acción no se puede deshacer fácilmente.
@@ -478,26 +484,26 @@
                 Publicación: <span id="delete-modal-title" class="font-semibold"></span>
             </p>
             
-            <div class="mb-4">
+            <div class="mb-6">
                 <label class="block text-sm font-medium text-[#404041] mb-2 font-lora">Motivo de eliminación (opcional)</label>
                 <textarea 
                     id="deletion-reason"
                     name="deletion_reason"
-                    rows="3"
-                    class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent font-lora"
+                    rows="4"
+                    class="w-full px-3 py-2 text-sm border border-[#404041] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#611132] focus:border-transparent font-lora resize-none"
                     placeholder="Opcionalmente, explica por qué eliminas esta publicación..."
                     maxlength="500"></textarea>
                 <p class="text-xs text-gray-500 mt-1">Máximo 500 caracteres</p>
             </div>
             
-            <div class="flex gap-3">
+            <div class="flex gap-3 pt-4 border-t border-gray-300">
                 <button type="button" onclick="closeDeleteModal()" 
-                        class="flex-1 px-4 py-2 bg-gray-200 text-gray-700 rounded-lg font-semibold hover:bg-gray-300 transition-all duration-300 font-lora">
+                        class="flex-1 px-4 py-2 border border-[#404041] text-[#404041] rounded-lg font-semibold hover:bg-gray-50 transition-all duration-300 font-lora text-sm">
                     Cancelar
                 </button>
                 <button type="submit" 
-                        class="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg font-semibold hover:bg-red-700 transition-all duration-300 font-lora">
-                    <i class="fas fa-trash mr-2"></i>Eliminar
+                        class="flex-1 px-4 py-2 bg-[#AB1A1A] text-white rounded-lg font-semibold hover:bg-[#8b1515] transition-all duration-300 font-lora text-sm flex items-center justify-center gap-2">
+                    <i class="fas fa-trash"></i>Eliminar
                 </button>
             </div>
         </form>
@@ -509,6 +515,23 @@
 <?php echo $__env->make('components.modal-seguridad-vial', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?> 
 <?php echo $__env->make('components.modal-observatorio', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?>
 <?php echo $__env->make('components.modal-grupos-vulnerables', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?>
+
+<!-- Navegación de Reportes (Flechas) -->
+<div id="report-nav-container" class="hidden fixed inset-0 z-50 pointer-events-none">
+    <!-- Flecha izquierda (posicionada a la izquierda) -->
+    <button id="report-nav-prev" 
+            class="pointer-events-auto absolute left-4 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-[#404041] text-white hover:bg-[#2a2a2a] transition-all duration-200 flex items-center justify-center shadow-lg hidden hover:shadow-xl cursor-pointer"
+            title="Reporte anterior (Flecha izquierda)">
+        <i class="fas fa-chevron-left text-xl pointer-events-none"></i>
+    </button>
+    
+    <!-- Flecha derecha (posicionada a la derecha) -->
+    <button id="report-nav-next" 
+            class="pointer-events-auto absolute right-4 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-[#404041] text-white hover:bg-[#2a2a2a] transition-all duration-200 flex items-center justify-center shadow-lg hidden hover:shadow-xl cursor-pointer"
+            title="Siguiente reporte (Flecha derecha)">
+        <i class="fas fa-chevron-right text-xl pointer-events-none"></i>
+    </button>
+</div>
 
     <!-- ESTILOS PARA SELECCIÓN MASIVA DE REPORTES -->
     <style>
@@ -533,8 +556,159 @@ document.addEventListener('DOMContentLoaded', function() {
     console.log('=== INICIANDO SISTEMA DE MODALES ===');
     const CURRENT_USER_ID = <?php echo e(auth()->id() ?? 'null'); ?>;
     
-    // Función simple para mostrar modal - GLOBAL
-    window.showModal = function(modalId) {
+    // ===== SISTEMA DE NAVEGACIÓN DE REPORTES =====
+    let allReportButtons = [];
+    let currentReportIndex = -1;
+    let currentPublicationId = null; // Agregar variable para rastrear el ID actual
+    let currentModalType = null;
+    window.isNavigating = false; // Flag para detectar si estamos navegando
+    
+    function collectAllReportButtons() {
+        // Recolectar todos los botones de reporte en orden
+        allReportButtons = [];
+        
+        // Recorrer el contenedor de publicaciones y recolectar todos los botones de "Ver detalles"
+        document.querySelectorAll('.publication-card-wrapper').forEach((card, idx) => {
+            const eyeBtn = card.querySelector('button[title="Ver detalles"]');
+            if (eyeBtn) {
+                allReportButtons.push(eyeBtn);
+                console.log(`📌 Botón ${idx}: ID=${eyeBtn.dataset.publicationId}, Tipo=${eyeBtn.dataset.tipo}`);
+            }
+        });
+        
+        console.log(`✅ Recolectados ${allReportButtons.length} reportes`);
+    }
+    
+    function updateNavigationArrows() {
+        const prevBtn = document.getElementById('report-nav-prev');
+        const nextBtn = document.getElementById('report-nav-next');
+        const navContainer = document.getElementById('report-nav-container');
+        
+        if (!prevBtn || !nextBtn || !navContainer) return;
+        
+        // Mostrar/ocultar el contenedor solo si hay un modal abierto
+        const openModal = document.querySelector('[id^="modal"]:not(.hidden)');
+        
+        if (!openModal || allReportButtons.length <= 1) {
+            navContainer.classList.add('hidden');
+            return;
+        }
+        
+        navContainer.classList.remove('hidden');
+        
+        console.log(`📍 Estado de navegación: currentReportIndex=${currentReportIndex}, total=${allReportButtons.length}, currentPublicationId=${currentPublicationId}`);
+        
+        // Mostrar/ocultar flecha anterior
+        if (currentReportIndex > 0) {
+            prevBtn.classList.remove('hidden');
+            console.log(`✅ Flecha anterior visible (index > 0: ${currentReportIndex} > 0)`);
+        } else {
+            prevBtn.classList.add('hidden');
+            console.log(`❌ Flecha anterior oculta (index = 0: ${currentReportIndex})`);
+        }
+        
+        // Mostrar/ocultar flecha siguiente
+        if (currentReportIndex < allReportButtons.length - 1) {
+            nextBtn.classList.remove('hidden');
+            console.log(`✅ Flecha siguiente visible (index < max: ${currentReportIndex} < ${allReportButtons.length - 1})`);
+        } else {
+            nextBtn.classList.add('hidden');
+            console.log('❌ Flecha siguiente oculta');
+        }
+    }
+    
+    function navigateToReport(index) {
+        if (index < 0 || index >= allReportButtons.length) {
+            console.warn(`❌ Índice inválido: ${index}`);
+            return;
+        }
+        
+        console.log(`🔄 Navegando de #${currentReportIndex + 1} a #${index + 1}`);
+        
+        // Actualizar índice
+        currentReportIndex = index;
+        const btn = allReportButtons[index];
+        
+        if (btn) {
+            console.log(`👆 Simulando click en reporte #${index + 1}`);
+            
+            // Determinar cuál modal es actualmente visible
+            const openModal = document.querySelector('[id^="modal"]:not(.hidden)');
+            
+            if (openModal) {
+                // Ocultar el modal anterior SIN animación
+                console.log('🔐 Cerrando modal anterior');
+                openModal.classList.add('hidden');
+                
+                // Hacer click INMEDIATAMENTE al botón del nuevo reporte
+                console.log('✅ Abriendo nuevo modal sin transición');
+                // Usar un flag para indicar que es navegación (sin animación)
+                window.isNavigating = true;
+                btn.click();
+                window.isNavigating = false;
+                
+                // Actualizar flechas de navegación
+                updateNavigationArrows();
+            } else {
+                // Si no hay modal abierto, abrir normalmente
+                btn.click();
+                updateNavigationArrows();
+            }
+        }
+    }
+    
+    window.navigateToPrevReport = function() {
+        console.log('🔙 Navegar al anterior - función llamada');
+        navigateToReport(currentReportIndex - 1);
+    };
+    
+    window.navigateToNextReport = function() {
+        console.log('🔜 Navegar al siguiente - función llamada');
+        navigateToReport(currentReportIndex + 1);
+    };
+    
+    // Usar delegación de eventos a nivel de documento para las flechas
+    document.addEventListener('click', function(e) {
+        // Verificar si el click es en alguna de las flechas
+        const prevBtn = e.target.closest('#report-nav-prev');
+        const nextBtn = e.target.closest('#report-nav-next');
+        
+        if (prevBtn) {
+            console.log('✅ Click en flecha anterior - evento capturado');
+            e.preventDefault();
+            e.stopPropagation();
+            window.navigateToPrevReport();
+            return false;
+        }
+        
+        if (nextBtn) {
+            console.log('✅ Click en flecha siguiente - evento capturado');
+            e.preventDefault();
+            e.stopPropagation();
+            window.navigateToNextReport();
+            return false;
+        }
+    }, true); // Captura = true para ejecutarse primero
+    
+    // Teclado: flechas izquierda/derecha
+    document.addEventListener('keydown', function(e) {
+        const openModal = document.querySelector('[id^="modal"]:not(.hidden)');
+        if (!openModal) return;
+        
+        if (e.key === 'ArrowLeft') {
+            e.preventDefault();
+            navigateToPrevReport();
+        } else if (e.key === 'ArrowRight') {
+            e.preventDefault();
+            navigateToNextReport();
+        }
+    });
+    
+    // Llamar inicialmente para recolectar botones
+    collectAllReportButtons();
+    
+    // Función simple para mostrar modal - GLOBAL (original)
+    window.showModalBase = function(modalId, skipAnimation = false) {
         console.log('Intentando mostrar modal:', modalId);
         const modal = document.getElementById(modalId);
         
@@ -544,18 +718,54 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         console.log('✅ Modal encontrado, mostrando...');
+        
+        // Desactivar scroll de la página principal
+        document.body.style.overflow = 'hidden';
+        
         modal.classList.remove('hidden');
         
-        // Pequeño delay para la animación
-        setTimeout(() => {
+        // Solo hacer animación si no es navegación
+        if (!skipAnimation) {
+            setTimeout(() => {
+                const content = modal.querySelector('div > div');
+                if (content) {
+                    content.style.transform = 'scale(1)';
+                    content.style.opacity = '1';
+                }
+            }, 50);
+        } else {
+            // Si es navegación, mostrar sin animación
             const content = modal.querySelector('div > div');
             if (content) {
                 content.style.transform = 'scale(1)';
                 content.style.opacity = '1';
             }
-        }, 50);
+        }
         
         return true;
+    }
+    
+    // Envoltura de showModal que incluye actualización de navegación
+    window.showModal = function(modalId) {
+        // Recolectar botones cuando se abre un modal
+        collectAllReportButtons();
+        
+        // Re-establecer el índice correcto basado en el currentPublicationId
+        if (currentPublicationId) {
+            currentReportIndex = allReportButtons.findIndex(btn => btn.dataset.publicationId === currentPublicationId);
+            console.log(`🔄 Índice actualizado: #${currentReportIndex + 1} de ${allReportButtons.length}`);
+        }
+        
+        // Si estamos navegando, no hacer animación
+        const skipAnimation = window.isNavigating || false;
+        
+        // Llamar a la función base
+        const result = showModalBase(modalId, skipAnimation);
+        
+        // Actualizar flechas
+        updateNavigationArrows();
+        
+        return result;
     }
     
     // Función para cerrar modal - GLOBAL
@@ -570,6 +780,18 @@ document.addEventListener('DOMContentLoaded', function() {
             
             setTimeout(() => {
                 modal.classList.add('hidden');
+                // Ocultar flechas cuando se cierra el modal
+                const navContainer = document.getElementById('report-nav-container');
+                if (navContainer) {
+                    navContainer.classList.add('hidden');
+                }
+                
+                // Restaurar scroll de la página si no hay más modales abiertos
+                const anyModalOpen = document.querySelector('[id^="modal"]:not(.hidden)') || 
+                                     document.getElementById('reject-modal')?.classList.contains('hidden') === false;
+                if (!anyModalOpen) {
+                    document.body.style.overflow = 'auto';
+                }
             }, 300);
         }
     }
@@ -585,7 +807,17 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Cerrar al hacer click fuera del contenido
         modal.addEventListener('click', (e) => {
+            // No cerrar si el click es en el contenedor de navegación
+            const navContainer = document.getElementById('report-nav-container');
+            if (navContainer && (navContainer === e.target || navContainer.contains(e.target))) {
+                console.log('❌ Click ignorado - pertenece al contenedor de navegación');
+                e.stopPropagation();
+                return false;
+            }
+            
+            // Solo cerrar si el click es directamente en el modal (el fondo)
             if (e.target === modal) {
+                console.log('✅ Cerrando modal - click en el fondo');
                 closeModal(modal.id);
             }
         });
@@ -598,12 +830,35 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
     
+    // Cerrar modal de rechazo con ESC
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            const rejectModal = document.getElementById('reject-modal');
+            if (rejectModal && !rejectModal.classList.contains('hidden')) {
+                closeRejectModal();
+            }
+        }
+    });
+    
     // === CONFIGURAR BOTONES DE APERTURA ===
     
     // Alcoholimetría
     document.querySelectorAll('.ver-detalle-alcohol').forEach(btn => {
         btn.addEventListener('click', function() {
             console.log('🎯 Click en botón Alcoholimetría');
+            
+            // Recolectar botones si no están recolectados
+            if (allReportButtons.length === 0) {
+                collectAllReportButtons();
+            }
+            
+            // Guardar el ID del reporte actual
+            currentPublicationId = this.dataset.publicationId;
+            console.log(`🔍 Buscando publicationId: ${currentPublicationId}`);
+            
+            // Establecer el índice basado en data-publication-id (más robusto)
+            currentReportIndex = allReportButtons.findIndex(btn => btn.dataset.publicationId === currentPublicationId);
+            console.log(`📍 Encontrado en índice: ${currentReportIndex}, mostrado como #${currentReportIndex + 1} de ${allReportButtons.length}`);
             
             const modal = document.getElementById('modalAlcoholimetria');
             if (modal) {
@@ -644,6 +899,19 @@ document.addEventListener('DOMContentLoaded', function() {
         btn.addEventListener('click', function() {
             console.log('🎯 Click en botón Seguridad Vial');
             
+            // Recolectar botones si no están recolectados
+            if (allReportButtons.length === 0) {
+                collectAllReportButtons();
+            }
+            
+            // Guardar el ID del reporte actual
+            currentPublicationId = this.dataset.publicationId;
+            console.log(`🔍 Buscando publicationId: ${currentPublicationId}`);
+            
+            // Establecer el índice basado en data-publication-id (más robusto)
+            currentReportIndex = allReportButtons.findIndex(btn => btn.dataset.publicationId === currentPublicationId);
+            console.log(`📍 Encontrado en índice: ${currentReportIndex}, mostrado como #${currentReportIndex + 1} de ${allReportButtons.length}`);
+            
             const modal = document.getElementById('modalSeguridadVial');
             if (modal) {
                 // Datos básicos
@@ -670,6 +938,19 @@ document.addEventListener('DOMContentLoaded', function() {
     document.querySelectorAll('.ver-detalle-observatorio').forEach(btn => {
         btn.addEventListener('click', function() {
             console.log('🎯 Click en botón Observatorio');
+            
+            // Recolectar botones si no están recolectados
+            if (allReportButtons.length === 0) {
+                collectAllReportButtons();
+            }
+            
+            // Guardar el ID del reporte actual
+            currentPublicationId = this.dataset.publicationId;
+            console.log(`🔍 Buscando publicationId: ${currentPublicationId}`);
+            
+            // Establecer el índice basado en data-publication-id (más robusto)
+            currentReportIndex = allReportButtons.findIndex(btn => btn.dataset.publicationId === currentPublicationId);
+            console.log(`📍 Encontrado en índice: ${currentReportIndex}, mostrado como #${currentReportIndex + 1} de ${allReportButtons.length}`);
             
             const modal = document.getElementById('modalObservatorio');
             if (modal) {
@@ -701,6 +982,19 @@ document.addEventListener('DOMContentLoaded', function() {
     document.querySelectorAll('.ver-detalle-grupos-vulnerables').forEach(btn => {
         btn.addEventListener('click', function() {
             console.log('🎯 Click en botón Grupos Vulnerables');
+            
+            // Recolectar botones si no están recolectados
+            if (allReportButtons.length === 0) {
+                collectAllReportButtons();
+            }
+            
+            // Guardar el ID del reporte actual
+            currentPublicationId = this.dataset.publicationId;
+            console.log(`🔍 Buscando publicationId: ${currentPublicationId}`);
+            
+            // Establecer el índice basado en data-publication-id (más robusto)
+            currentReportIndex = allReportButtons.findIndex(btn => btn.dataset.publicationId === currentPublicationId);
+            console.log(`📍 Encontrado en índice: ${currentReportIndex}, mostrado como #${currentReportIndex + 1} de ${allReportButtons.length}`);
             
             const modal = document.getElementById('modalGruposVulnerables');
             if (modal) {
@@ -756,35 +1050,37 @@ document.addEventListener('DOMContentLoaded', function() {
             if (status === 'aprobado') {
                 const approvedBy = dataset.approvedBy || 'Administrador';
                 statusHTML = `
-                    <div class="flex items-center gap-2">
-                        <span class="px-3 py-1 bg-green-100 text-green-700 text-sm font-semibold rounded-lg border border-green-300">
-                            <i class="fas fa-check-circle mr-1"></i>Aprobado
-                        </span>
-                        <span class="text-sm text-gray-600 font-lora">por ${approvedBy}</span>
+                    <div class="rounded-lg border border-[#404041] p-4 bg-white">
+                        <div class="flex items-center gap-3 mb-2">
+                            <i class="fas fa-check-circle text-green-600 text-lg"></i>
+                            <span class="text-base font-semibold text-[#404041] font-lora">Aprobado</span>
+                            <span class="text-sm text-gray-600 font-lora italic">por ${approvedBy}</span>
+                        </div>
                     </div>
                 `;
             } else if (status === 'rechazado') {
                 const rejectedBy = dataset.rejectedBy || 'Administrador';
                 const rejectionReason = dataset.rejectionReason || 'No se proporcionó motivo';
                 statusHTML = `
-                    <div class="flex flex-col gap-2">
-                        <div class="flex items-center gap-2">
-                            <span class="px-3 py-1 bg-red-100 text-red-700 text-sm font-semibold rounded-lg border border-red-300">
-                                <i class="fas fa-times-circle mr-1"></i>Rechazado
-                            </span>
-                            <span class="text-sm text-gray-600 font-lora">por ${rejectedBy}</span>
+                    <div class="rounded-lg border border-[#404041] p-4 bg-white">
+                        <div class="flex items-center gap-3 mb-3">
+                            <i class="fas fa-times-circle text-red-600 text-lg"></i>
+                            <span class="text-base font-semibold text-[#404041] font-lora">Rechazado</span>
+                            <span class="text-sm text-gray-600 font-lora italic">por ${rejectedBy}</span>
                         </div>
-                        <div class="bg-red-50 border border-red-200 rounded-lg p-3">
-                            <p class="text-sm text-gray-700 font-lora"><strong>Motivo:</strong> ${rejectionReason}</p>
+                        <div class="mt-3 pt-3 border-t border-gray-200">
+                            <p class="text-base font-semibold text-[#404041] uppercase tracking-wide mb-2 font-lora">Motivo</p>
+                            <p class="text-base text-gray-700 font-lora leading-relaxed">${rejectionReason}</p>
                         </div>
                     </div>
                 `;
             } else {
                 statusHTML = `
-                    <div class="flex items-center gap-2">
-                        <span class="px-3 py-1 bg-yellow-100 text-yellow-700 text-sm font-semibold rounded-lg border border-yellow-300">
-                            <i class="fas fa-clock mr-1"></i>Pendiente de revisión
-                        </span>
+                    <div class="rounded-lg border border-[#404041] p-4 bg-white">
+                        <div class="flex items-center gap-3">
+                            <i class="fas fa-clock text-yellow-600 text-lg"></i>
+                            <span class="text-base font-semibold text-[#404041] font-lora">Pendiente de revisión</span>
+                        </div>
                     </div>
                 `;
             }
@@ -1151,14 +1447,28 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Función para actualizar estilos de pestañas activas
     function updateActiveTab(activeButton) {
-        const activeClasses = 'tab-filter px-4 py-2 text-sm font-medium font-lora rounded-t-lg bg-[#404041] text-white border border-b-0 border-gray-300 transition-all duration-200 hover:bg-[#2a2a2a]';
-        const inactiveClasses = 'tab-filter px-4 py-2 text-sm font-medium font-lora rounded-t-lg bg-white text-[#404041] border border-b-0 border-gray-300 transition-all duration-200 hover:bg-gray-100';
+        const colorMap = {
+            'todos': '#404041',
+            'seguridad_vial': '#4C8CC4',
+            'observatorio': '#75A84E',
+            'alcoholimetria': '#9D2449',
+            'grupos-vulnerables': '#6B4C8A'
+        };
+        
+        const baseClasses = 'tab-filter px-4 py-2 text-sm font-medium font-lora rounded-t-lg border border-b-0 border-gray-300 transition-all duration-200';
 
         tabButtons.forEach(btn => {
+            const tipoData = btn.getAttribute('data-tipo');
+            const color = colorMap[tipoData] || '#404041';
+            
             if (btn === activeButton) {
-                btn.className = activeClasses;
+                btn.className = `${baseClasses} text-white`;
+                btn.style.backgroundColor = color;
+                btn.style.borderBottom = `4px solid ${color}`;
             } else {
-                btn.className = inactiveClasses;
+                btn.className = `${baseClasses} bg-white text-[#404041] hover:bg-gray-100`;
+                btn.style.backgroundColor = 'white';
+                btn.style.borderBottom = `4px solid ${color}`;
             }
         });
     }
@@ -1176,6 +1486,12 @@ document.addEventListener('DOMContentLoaded', function() {
         button.addEventListener('click', function(e) {
             e.preventDefault();
             const tipo = this.getAttribute('data-tipo');
+            
+            // Limpiar todos los filtros al cambiar de pestaña
+            document.getElementById('search').value = '';
+            document.querySelector('select[name="status"]').value = '';
+            document.querySelector('select[name="date_filter"]').value = '';
+            document.querySelector('select[name="order_by"]').value = 'updated_at:desc';
             
             // Actualizar input oculto y enviar formulario
             tipoInput.value = tipo;
@@ -1406,6 +1722,8 @@ document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('reject-modal-publication-id').value = publicationId;
             document.getElementById('reject-modal-title').textContent = publicationTitle;
             document.getElementById('reject-modal').classList.remove('hidden');
+            // Desactivar scroll de la página
+            document.body.style.overflow = 'hidden';
         }, 350);
     };
 
@@ -1415,11 +1733,12 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Si se cancela, regresar al modal anterior
         if (returnToPrevious && previousModalId) {
-            setTimeout(() => {
-                showModal(previousModalId);
-                previousModalId = null;
-            }, 350);
+            // showModal habilitará el overflow hidden nuevamente
+            showModal(previousModalId);
+            previousModalId = null;
         } else {
+            // Si no regresamos a un modal anterior, restaurar el scroll
+            document.body.style.overflow = 'auto';
             previousModalId = null;
         }
     };
@@ -1489,6 +1808,7 @@ document.addEventListener('DOMContentLoaded', function() {
             e.preventDefault();
             const button = e.target.closest('.eliminar-reporte');
             const deleteUrl = button.dataset.deleteUrl;
+            const redirectTipo = button.dataset.redirectTipo;
 
             const message = '¿Estás seguro de eliminar esta publicación? Esta acción no se puede deshacer fácilmente.';
             if (!confirm(message)) {
@@ -1499,6 +1819,9 @@ document.addEventListener('DOMContentLoaded', function() {
             const deleteForm = document.getElementById('delete-form');
             if (deleteForm) {
                 deleteForm.action = deleteUrl;
+                // Establecer el redirect_tipo
+                const redirectTipoInput = deleteForm.querySelector('[name="redirect_tipo"]');
+                if (redirectTipoInput) redirectTipoInput.value = redirectTipo;
                 // limpiar motivo si existe
                 const reasonEl = deleteForm.querySelector('[name="deletion_reason"]');
                 if (reasonEl) reasonEl.value = '';
@@ -1525,6 +1848,12 @@ document.addEventListener('DOMContentLoaded', function() {
             methodInput.value = 'DELETE';
             form.appendChild(methodInput);
 
+            const redirectTipoInput = document.createElement('input');
+            redirectTipoInput.type = 'hidden';
+            redirectTipoInput.name = 'redirect_tipo';
+            redirectTipoInput.value = redirectTipo;
+            form.appendChild(redirectTipoInput);
+
             document.body.appendChild(form);
             form.submit();
         }
@@ -1545,6 +1874,8 @@ document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('delete-modal-title').textContent = publicationTitle;
             document.getElementById('delete-form').action = deleteUrl;
             document.getElementById('delete-modal').classList.remove('hidden');
+            // Desactivar scroll de la página
+            document.body.style.overflow = 'hidden';
         }, 350);
     };
 
@@ -1554,11 +1885,12 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Si se cancela, regresar al modal anterior
         if (returnToPrevious && previousModalId) {
-            setTimeout(() => {
-                showModal(previousModalId);
-                previousModalId = null;
-            }, 350);
+            // showModal habilitará el overflow hidden nuevamente
+            showModal(previousModalId);
+            previousModalId = null;
         } else {
+            // Si no regresamos a un modal anterior, restaurar el scroll
+            document.body.style.overflow = 'auto';
             previousModalId = null;
         }
     };
