@@ -22,9 +22,14 @@
         </div>
 
         <!-- Loading State -->
-        <div id="loading-state" class="space-y-4">
-            <div class="bg-gray-100 rounded-lg p-8 text-center">
-                <p class="text-gray-600">Cargando registros fallidos...</p>
+        <div id="loading-state" class="space-y-6">
+            <div class="flex flex-col items-center justify-center min-h-80">
+                <div class="relative mb-8">
+                    <div class="w-16 h-16 border-4 border-gray-200 rounded-full"></div>
+                    <div class="absolute top-0 left-0 w-16 h-16 border-4 border-transparent border-t-[#611132] rounded-full animate-spin"></div>
+                </div>
+                <p class="text-lg text-gray-700 font-lora font-semibold mb-2">Cargando registros fallidos...</p>
+                <p class="text-sm text-gray-500 font-lora">Por favor espere mientras se cargan los datos</p>
             </div>
         </div>
 
@@ -33,7 +38,7 @@
             <!-- Contador de resultados y Paginación Superior -->
             <div id="top-section" class="hidden space-y-4">
                 <div class="flex justify-between items-center">
-                    <div id="results-counter" class="text-xs text-gray-600 font-lora">
+                    <div id="results-counter" class="text-sm text-gray-600 font-lora">
                         <span id="total-count" class="font-semibold text-[#404041]">0</span> resultados encontrados
                         <span id="showing-count" class="text-gray-500">• Mostrando 0-0</span>
                     </div>
@@ -758,16 +763,22 @@ function initializeTomSelect(selector, data, labelField = 'name', valueField = '
 document.addEventListener('DOMContentLoaded', function() {
     const importId = {{ $importId }};
     let currentPage = 1;
+    let isInitialLoad = true;
 
     function loadFailedRecords(page = 1) {
         const loadingState = document.getElementById('loading-state');
         const recordsContainer = document.getElementById('records-container');
         const recordsList = document.getElementById('records-list');
         
-        // Always fade out records smoothly without showing loading state
-        loadingState.classList.add('hidden');
-        recordsList.style.transition = 'opacity 0.2s ease-out';
-        recordsList.style.opacity = '0';
+        // Only show loading state on initial load
+        if (isInitialLoad) {
+            loadingState.classList.remove('hidden');
+            recordsContainer.classList.add('hidden');
+        } else {
+            // On pagination, add fade out transition
+            recordsList.style.opacity = '0';
+            recordsList.style.transition = 'opacity 0.2s ease-out';
+        }
 
         console.log('Loading failed records for import:', importId, 'page:', page);
 
@@ -796,6 +807,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 loadingState.classList.add('hidden');
                 recordsContainer.classList.remove('hidden');
+                
+                // On initial load, ensure opacity is 1 immediately
+                if (isInitialLoad) {
+                    recordsList.style.transition = 'none';
+                    recordsList.style.opacity = '1';
+                }
+                isInitialLoad = false;
 
                 // Check if response structure is valid
                 if (!data) {
@@ -818,16 +836,16 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 if (records.length > 0) {
                     console.log('Rendering', records.length, 'records');
-                    recordsList.style.opacity = '0';
-                    recordsList.style.transition = 'opacity 0.2s ease-out';
                     recordsList.innerHTML = '';
                     
                     renderRecords(records);
                     
-                    // Fade in the records list
-                    setTimeout(() => {
-                        recordsList.style.opacity = '1';
-                    }, 10);
+                    // Fade in the records list on pagination
+                    if (!isInitialLoad) {
+                        setTimeout(() => {
+                            recordsList.style.opacity = '1';
+                        }, 10);
+                    }
                     
                     // If it's a paginated response, use the pagination object; otherwise use the raw data
                     const paginationData = Array.isArray(data.data) ? null : data.data;
@@ -853,6 +871,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 console.error('Error loading failed records:', error);
                 loadingState.classList.add('hidden');
                 recordsContainer.classList.remove('hidden');
+                isInitialLoad = false;
                 recordsList.style.opacity = '1';
                 document.getElementById('records-list').innerHTML = `
                     <div class="bg-red-50 border border-red-300 rounded-lg p-6 text-center">

@@ -2051,6 +2051,50 @@ document.addEventListener('DOMContentLoaded', function() {
         form.submit();
         form.remove();
     });
+
+    // === ABRIR REPORTE DESDE PARÁMETROS DE URL (desde notificaciones) ===
+    const urlParams = new URLSearchParams(window.location.search);
+    const publicationIdFromUrl = urlParams.get('publication');
+    const commentIdFromUrl = urlParams.get('comment');
+    
+    if (publicationIdFromUrl) {
+        console.log('📌 Parámetros de URL detectados:', { publication: publicationIdFromUrl, comment: commentIdFromUrl });
+        
+        // Esperar a que los botones estén recolectados
+        setTimeout(() => {
+            const btn = document.querySelector(`button[data-publication-id="${publicationIdFromUrl}"]`);
+            if (btn) {
+                console.log('✅ Botón de reporte encontrado, abriendo...');
+                btn.click();
+                
+                // Si hay un comentario específico, scroll a él
+                if (commentIdFromUrl) {
+                    let tries = 0;
+                    const iv = setInterval(() => {
+                        tries += 1;
+                        const modal = Array.from(document.querySelectorAll('[id^="modal"]')).find(m => !m.classList.contains('hidden'));
+                        if (modal) {
+                            const commentEl = modal.querySelector(`[data-comment-id="${commentIdFromUrl}"]`);
+                            if (commentEl) {
+                                console.log('✅ Comentario encontrado, scroll...');
+                                commentEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                commentEl.style.transition = 'box-shadow 0.3s ease';
+                                commentEl.style.boxShadow = '0 0 0 3px rgba(59,130,246,0.25)';
+                                setTimeout(() => { commentEl.style.boxShadow = 'none'; }, 3500);
+                                clearInterval(iv);
+                            }
+                        }
+                        if (tries > 30) {
+                            console.warn('❌ Comentario no encontrado después de varios intentos');
+                            clearInterval(iv);
+                        }
+                    }, 200);
+                }
+            } else {
+                console.warn('❌ Botón de reporte no encontrado:', publicationIdFromUrl);
+            }
+        }, 500);
+    }
 });
 </script>
 

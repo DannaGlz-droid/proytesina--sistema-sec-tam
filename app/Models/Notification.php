@@ -3,9 +3,13 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Database\Eloquent\Prunable;
 
 class Notification extends Model
 {
+    use SoftDeletes, Prunable;
+
     /**
      * The table associated with the model.
      */
@@ -67,5 +71,14 @@ class Notification extends Model
     public function recipient()
     {
         return $this->belongsTo(User::class, 'recipient_user_id');
+    }
+
+    /**
+     * Definir qué registros deben ser prunados (eliminados permanentemente)
+     * Elimina notificaciones de más de 30 días
+     */
+    public function prunable()
+    {
+        return static::where('created_at', '<=', now()->subDays(30));
     }
 }

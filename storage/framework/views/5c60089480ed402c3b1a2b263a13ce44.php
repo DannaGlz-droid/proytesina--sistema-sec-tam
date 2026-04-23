@@ -105,8 +105,9 @@
                                 return ((notif.message && notif.message.length > 120) || (notif.publication_title && notif.publication_title.length > 50)); 
                             } 
                         }" class="block px-3 lg:px-4 py-2 lg:py-3 border-b border-gray-100 transition-colors" :class="!notif.read ? 'bg-blue-50 hover:bg-blue-100' : 'hover:bg-blue-100'">
-                            <div class="flex justify-between items-start mb-1">
-                                <a :href="'/reportes/publicaciones?publication=' + notif.publication_id" class="text-sm lg:text-sm font-medium text-gray-900 max-w-[18rem] hover:underline"
+                            <!-- Encabezado: Tipo de acción y tiempo -->
+                            <div class="flex justify-between items-start mb-2">
+                                <a :href="'/reportes/publicaciones?publication=' + notif.publication_id" class="text-xs lg:text-xs font-bold text-[#611132] uppercase tracking-wide max-w-[18rem] hover:underline"
                                    @click="
                                        if (!notif.read) {
                                            fetch('/notificaciones/' + notif.id + '/marcar-leida', { method: 'POST', headers: { 'X-CSRF-TOKEN': '<?php echo e(csrf_token()); ?>' } })
@@ -116,15 +117,19 @@
                                                });
                                        }
                                    " x-text="notif.title"></a>
-                                <span class="text-xs lg:text-sm text-gray-500 whitespace-nowrap ml-2" x-text="notif.time_ago"></span>
+                                <span class="text-xs text-gray-500 whitespace-nowrap ml-2 flex-shrink-0" x-text="notif.time_ago"></span>
                             </div>
 
-                            <div class="mb-1">
-                                <p class="text-xs lg:text-sm text-gray-700 font-medium max-w-[18rem]" :class="expanded ? '' : 'truncate'" x-text="notif.publication_title"></p>
+                            <!-- Título del reporte en itálica y entre comillas francesas -->
+                            <div class="mb-2">
+                                <p class="text-xs lg:text-sm text-gray-800 font-medium italic max-w-[18rem]" :class="expanded ? '' : 'truncate'">
+                                    « <span x-text="notif.publication_title"></span> »
+                                </p>
                             </div>
 
+                            <!-- Mensaje/Descripción -->
                             <div>
-                                <p class="text-xs lg:text-sm text-gray-600" :class="expanded ? '' : 'line-clamp-2'" x-text="notif.message"></p>
+                                <p class="text-xs lg:text-sm text-gray-600 leading-relaxed" :class="expanded ? '' : 'line-clamp-2'" x-text="notif.message"></p>
                             </div>
 
                             <div class="mt-1">

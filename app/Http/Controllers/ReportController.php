@@ -1361,13 +1361,13 @@ class ReportController extends Controller
 
             if ($isOwner) {
                 $nTitle = 'Nuevo comentario en tu publicación';
-                $nMessage = $excerpt ? "{$senderName} comentó: {$excerpt}" : "{$senderName} comentó";
+                $nMessage = $excerpt ? "{$senderName} comentó: « {$excerpt} »" : "{$senderName} comentó";
             } elseif ($isOtherCommenter) {
                 $nTitle = "{$senderName} respondió en una publicación que comentaste";
-                $nMessage = $excerpt ? "{$senderName} respondió: {$excerpt}" : "{$senderName} respondió";
+                $nMessage = $excerpt ? "{$senderName} respondió: « {$excerpt} »" : "{$senderName} respondió";
             } else {
-                $nTitle = "Nuevo comentario: {$pubTitle}";
-                $nMessage = $excerpt ? "{$senderName} comentó: {$excerpt}" : "{$senderName} comentó en: {$pubTitle}";
+                $nTitle = "Nuevo comentario";
+                $nMessage = $excerpt ? "{$senderName} comentó: « {$excerpt} »" : "{$senderName} comentó";
             }
 
             Notification::create([
@@ -1758,14 +1758,14 @@ class ReportController extends Controller
             'approved_at' => null,
         ]);
 
-        // Crear notificación concisa para el autor (incluir motivo)
+        // Crear notificación concisa para el autor (incluir motivo entre comillas francesas)
         Notification::create([
             'recipient_user_id' => $publication->user_id,
             'sender_user_id' => $user->id,
             'publication_id' => $publication->id,
             'type' => 'rejection',
             'title' => 'Reporte rechazado',
-            'message' => "{$user->name} rechazó tu reporte. Motivo: {$request->rejection_reason}",
+            'message' => "{$user->name} rechazó tu reporte. Motivo: « {$request->rejection_reason} »",
             'read' => false,
         ]);
 
@@ -1819,7 +1819,7 @@ class ReportController extends Controller
                 'publication_id' => $publication->id,
                 'type' => 'resubmission',
                 'title' => 'Reporte reenviado para revisión',
-                'message' => "{$user->name} ha corregido y reenviado el reporte: {$publication->topic}",
+                'message' => "{$user->name} ha realizado cambios y reenviado",
                 'read' => false,
             ]);
         }

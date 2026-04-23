@@ -17,7 +17,23 @@ use App\Http\Requests\UserRequest;
 
 class UserController extends Controller
 {
-    //
+    /**
+     * Search users by name (for AJAX autocomplete in filters)
+     */
+    public function search(Request $request)
+    {
+        $q = $request->get('q', '');
+        $items = User::when($q, function($query) use ($q) {
+                    $query->where('name', 'like', "%{$q}%")
+                          ->orWhere('email', 'like', "%{$q}%");
+                })
+                ->orderBy('name')
+                ->limit(20)
+                ->get(['id', 'name']);
+
+        // Return results as array
+        return response()->json($items->toArray());
+    }
 
     
 

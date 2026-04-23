@@ -161,6 +161,7 @@ Route::middleware('auth')->group(function () {
     
     // API endpoints for autocomplete (todos los roles con acceso a reportes)
     Route::middleware('role:Administrador,Coordinador,Operador')->group(function () {
+        Route::get('api/users/search', [App\Http\Controllers\UserController::class, 'search'])->name('api.users.search');
         Route::get('api/municipalities/search', [App\Http\Controllers\MunicipalityController::class, 'search'])->name('api.municipalities.search');
         Route::post('api/municipalities', [App\Http\Controllers\MunicipalityController::class, 'store'])->name('api.municipalities.store');
         Route::get('api/causes/search', [App\Http\Controllers\LookupController::class, 'searchCauses'])->name('api.causes.search');

@@ -115,7 +115,7 @@
                             </div>
 
                             <div class="mb-1">
-                                <p class="text-xs lg:text-sm text-gray-700 font-medium max-w-[18rem]" :class="expanded ? '' : 'truncate'" x-text="notif.publication_title"></p>
+                                <p style="font-style: italic;" class="text-xs lg:text-sm text-gray-700 font-medium max-w-[18rem]" :class="expanded ? '' : 'truncate'" x-text="'PRUEBA_COMILLAS_' + notif.publication_title + '_PRUEBA'" x-show="notif.publication_title"></p>
                             </div>
 
                             <div>

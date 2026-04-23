@@ -276,7 +276,7 @@
                 <div class="space-y-3">
                         <div>
                             <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Descripción</label>
-                        <textarea id="descripcion" name="descripcion" maxlength="5000" class="w-full px-3 py-2 text-xs lg:text-sm border border-[#404041] rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora break-words whitespace-normal description-scroll" rows="4" placeholder="Describa los detalles, contexto, objetivos, resultados, etc. (opcional)">{{ old('descripcion', isset($publication) ? $publication->description : '') }}</textarea>
+                        <textarea id="descripcion" name="descripcion" maxlength="5000" class="w-full px-3 py-2 text-xs lg:text-sm border border-[#404041] rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora break-words whitespace-normal description-scroll" rows="4" placeholder="Describa los detalles, contexto, objetivos, resultados, etc. (opcional)">{{ old('descripcion', isset($publication) && $publication->description !== 'Sin descripción adicional.' ? $publication->description : '') }}</textarea>
                     </div>
                 </div>
             </div>

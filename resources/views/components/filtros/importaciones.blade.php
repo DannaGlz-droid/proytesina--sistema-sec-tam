@@ -73,7 +73,9 @@
     <x-filtros.seccion icono="user-circle" titulo="Usuario">
         <div class="space-y-2">
             <div class="filter-group">
-                <input type="text" id="usuarioImports" name="usuarioImports" placeholder="Buscar usuario..." class="w-full border border-[#404041] rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-[#611132]">
+                <select id="usuarioImports" name="usuarioImports" class="w-full border border-[#404041] rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-[#611132] tomselect-usuario">
+                    <option value="">Seleccione un usuario...</option>
+                </select>
             </div>
         </div>
     </x-filtros.seccion>
@@ -116,6 +118,32 @@ document.addEventListener('DOMContentLoaded', function() {
     if (dateRangeImports) {
         dateRangeImports.addEventListener('change', function() {
             customRangeSelectorImports.style.display = this.value === 'custom' ? 'block' : 'none';
+        });
+    }
+
+    // Initialize TomSelect for usuario filter
+    const usuarioSelect = document.getElementById('usuarioImports');
+    if (usuarioSelect) {
+        new TomSelect(usuarioSelect, {
+            valueField: 'name',
+            labelField: 'name',
+            searchField: 'name',
+            maxOptions: 20,
+            maxItems: 1,
+            create: false,
+            preload: false,
+            placeholder: 'Seleccione un usuario',
+            load: function(query, callback) {
+                if (!query.length) {
+                    // Don't preload, wait for user to type
+                    callback([]);
+                    return;
+                }
+                fetch('/api/users/search?q=' + encodeURIComponent(query))
+                    .then(res => res.json())
+                    .then(items => callback(items))
+                    .catch(() => callback());
+            }
         });
     }
 

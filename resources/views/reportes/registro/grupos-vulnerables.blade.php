@@ -183,7 +183,7 @@
                             rows="4"
                             placeholder="Describa los detalles, contexto, objetivos, resultados, etc. (opcional)"
                             maxlength="5000"
-                        >{{ old('descripcion', isset($publication) ? $publication->description : '') }}</textarea>
+                        >{{ old('descripcion', isset($publication) && $publication->description !== 'Sin descripción adicional.' ? $publication->description : '') }}</textarea>
                     </div>
                 </div>
             </div>
