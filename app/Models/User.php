@@ -26,6 +26,7 @@ class User extends Authenticatable
         'username',
         'is_active',
         'registration_date',
+        'last_session',
         'position_id',
         'jurisdiction_id',
         'role_id',
@@ -153,23 +154,58 @@ class User extends Authenticatable
     }
 
     /**
-     * Accessor: human readable last session (diffForHumans) or null
+     * Accessor: human readable last session status
+     * - "En línea" if user has an ACTIVE session in the sessions table
+     * - "Desconectado hace X" if user logged out (last_session has a timestamp)
+     * - "Nunca" if user never logged in (last_session is NULL and no session record)
      */
     public function getLastSessionDiffAttribute()
     {
-        if (! $this->last_session) {
-            return null;
+        // Check if user has an ACTIVE session in the sessions table
+        $hasActiveSession = \DB::table('sessions')
+            ->where('user_id', $this->id)
+            ->where('last_activity', '>=', now()->subHours(24)->timestamp)
+            ->exists();
+        
+        if ($hasActiveSession) {
+            return '<span class="inline-block px-2.5 py-1 rounded border border-green-400 bg-green-50 text-green-700 text-xs font-medium">● En línea</span>';
         }
 
-        try {
-            if ($this->last_session instanceof \DateTimeInterface) {
-                return \Carbon\Carbon::instance($this->last_session)->diffForHumans();
+        // If no active session but has last_session timestamp, show disconnection time
+        if ($this->last_session) {
+            try {
+                $carbon = $this->last_session instanceof \DateTimeInterface 
+                    ? \Carbon\Carbon::instance($this->last_session)
+                    : \Carbon\Carbon::parse($this->last_session);
+                
+                // Calculate time difference manually for better Spanish translation
+                $now = \Carbon\Carbon::now();
+                $diff = $carbon->diff($now);
+                
+                // Build Spanish phrase based on the difference (abbreviated)
+                $phrase = '';
+                if ($diff->y > 0) {
+                    $phrase = 'hace ' . $diff->y . 'a';
+                } elseif ($diff->m > 0) {
+                    $phrase = 'hace ' . $diff->m . ' mes';
+                } elseif ($diff->d > 0) {
+                    $phrase = 'hace ' . $diff->d . 'd';
+                } elseif ($diff->h > 0) {
+                    $phrase = 'hace ' . $diff->h . 'h';
+                } elseif ($diff->i > 0) {
+                    $phrase = 'hace ' . $diff->i . ' min';
+                } else {
+                    $phrase = 'hace unos segundos';
+                }
+                
+                return '<span class="inline-block px-2.5 py-1 rounded border border-dashed border-gray-400 bg-gray-50 text-gray-700 text-xs">Desconectado ' . $phrase . '</span>';
+            } catch (\Throwable $e) {
+                return '<span class="inline-block px-2.5 py-1 rounded border border-gray-400 bg-gray-50 text-gray-700 text-xs">—</span>';
             }
-
-            return \Carbon\Carbon::parse($this->last_session)->diffForHumans();
-        } catch (\Throwable $e) {
-            return null;
         }
+
+        // User never logged in
+        return '<span class="inline-block px-2.5 py-1 rounded border border-gray-500 bg-gray-100 text-gray-600 text-xs">Nunca</span>';
     }
 
     /**

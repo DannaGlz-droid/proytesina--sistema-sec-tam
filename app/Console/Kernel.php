@@ -12,11 +12,7 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule): void
     {
-        // Ejecutar la poda de notificaciones diariamente a las 2 AM
-        // Elimina permanentemente notificaciones más antiguas de 30 días
-        $schedule->command('model:prune', [
-            '--model' => [\App\Models\Notification::class],
-        ])->daily()->at('02:00');
+        // Los comandos están configurados en routes/console.php
     }
 
     /**

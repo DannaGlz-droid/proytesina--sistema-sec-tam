@@ -28,8 +28,9 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerate();
 
-        // Redirect based on user role
+        // Reset last_session to NULL when user logs in (to indicate they're online)
         $user = Auth::user();
+        $user->update(['last_session' => null]);
         
         if ($user->hasAnyRole(['Administrador', 'Coordinador'])) {
             return redirect()->intended(route('statistic.data', absolute: false));
@@ -44,6 +45,12 @@ class AuthenticatedSessionController extends Controller
      */
     public function destroy(Request $request): RedirectResponse
     {
+        // Actualizar last_session ANTES de hacer logout
+        $user = Auth::user();
+        if ($user) {
+            $user->update(['last_session' => now()]);
+        }
+
         Auth::guard('web')->logout();
 
         $request->session()->invalidate();

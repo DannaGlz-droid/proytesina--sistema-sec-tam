@@ -8,6 +8,6 @@ Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
 })->purpose('Display an inspiring quote');
 
-// Scheduled tasks
-Schedule::command('notifications:prune')->dailyAt('03:00');
-Schedule::command('publications:delete-old')->everyMinute();
+// Scheduled tasks (ejecutar diariamente a las 2:00 AM)
+Schedule::command('notifications:prune')->dailyAt('02:00')->timezone('America/Mexico_City');
+Schedule::command('publications:delete-old')->dailyAt('02:00')->timezone('America/Mexico_City');

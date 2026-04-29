@@ -283,15 +283,22 @@ class UserController extends Controller
             $roleName = optional($user->role)->name ?? '—';
             $roleLower = strtolower($roleName);
             if (in_array($roleLower, ['administrador', 'admin'])) {
-                $roleClasses = 'bg-red-100 text-red-800';
-            } elseif (in_array($roleLower, ['usuario', 'user'])) {
-                $roleClasses = 'bg-green-100 text-green-800';
+                // Admin: Rojo institucional
+                $roleClasses = 'bg-[#762f2d] text-white font-bold';
+            } elseif (in_array($roleLower, ['coordinador'])) {
+                // Coordinador: Azul profesional
+                $roleClasses = 'bg-[#4f772d] text-white font-bold';
+            } elseif (in_array($roleLower, ['operador'])) {
+                // Operador: Verde profesional
+                $roleClasses = 'bg-[#2d4f76] text-white font-bold';
             } elseif ($roleLower === 'invitado') {
-                $roleClasses = 'bg-gray-100 text-gray-800';
-            } elseif ($roleLower === 'operador') {
-                $roleClasses = 'bg-blue-100 text-blue-800';
+                // Invitado: Gris
+                $roleClasses = 'bg-gray-600 text-white font-bold';
+            } elseif (in_array($roleLower, ['usuario', 'user'])) {
+                // Usuario: Azul (por defecto si no es coordinador)
+                $roleClasses = 'bg-blue-700 text-white font-bold';
             } else {
-                $roleClasses = 'bg-yellow-100 text-yellow-800';
+                $roleClasses = 'bg-slate-600 text-white font-bold'; // Gris por defecto para roles desconocidos
             }
 
             $isActive = (bool) $user->is_active;
@@ -309,7 +316,7 @@ class UserController extends Controller
                 'position' => optional($user->position)->name ?? '—',
                 'jurisdiction' => optional($user->jurisdiction)->name ?? '—',
                 'registration_date' => $user->formatted_registration_date ?? $user->registration_date,
-                'role' => "<span class='{$roleClasses} text-xs font-medium px-2 py-0.5 rounded-full'>{$roleName}</span>",
+                'role' => "<span class='{$roleClasses} text-xs font-semibold px-3 py-1 rounded-lg'>{$roleName}</span>",
                 'status' => "<div class='flex items-center gap-1'><span class='w-2 h-2 rounded-full {$statusDot}'></span><span class='text-xs'>{$statusText}</span></div>",
                 'last_session' => $user->last_session_diff ?? $user->last_session,
                 'actions' => view('usuarios.partials.table-actions', compact('user'))->render(),

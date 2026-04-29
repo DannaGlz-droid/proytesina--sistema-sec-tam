@@ -4,6 +4,7 @@
 
     <?php echo $__env->make('components.header-admin', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?>
     <?php echo $__env->make('components.nav-reportes', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?>
+    <?php echo $__env->make('components.toast', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?>
 
     <div class="px-4 lg:pl-10 pt-6 lg:pt-10 pb-8 lg:pb-12">
         <h1 class="text-2xl lg:text-3xl font-lora font-bold text-[#404041] mb-3">Centro de Control</h1>
@@ -1683,6 +1684,14 @@ document.addEventListener('DOMContentLoaded', function() {
     window.approveReport = function(publicationId) {
         if (!confirm('¿Aprobar este reporte?')) return;
         
+        // Buscar el modal abierto para extraer datos del reporte
+        const modal = Array.from(document.querySelectorAll('[id^="modal"]')).find(m => !m.classList.contains('hidden') && m.id !== 'reject-modal' && m.id !== 'delete-modal');
+        if (!modal) return;
+
+        // Obtener elemento del dataset
+        const dataElement = modal.querySelector('[data-status]');
+        const dataset = dataElement ? dataElement.dataset : {};
+
         fetch(`/reportes/${publicationId}/aprobar`, {
             method: 'POST',
             headers: {
@@ -1693,15 +1702,29 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                alert(data.message || 'Reporte aprobado exitosamente');
-                location.reload();
+                // Mostrar toast de éxito
+                showToast('✓ Reporte aprobado correctamente', 'success', 3000);
+                
+                // Actualizar estado en el modal sin recargar
+                if (dataElement) {
+                    dataElement.dataset.status = 'aprobado';
+                    dataElement.dataset.approvedBy = data.approved_by || '';
+                    dataElement.dataset.approvedAt = data.approved_at || '';
+                }
+
+                // Cerrar modal después de 1s para que se vea el toast
+                setTimeout(() => {
+                    if (modal && !modal.classList.contains('hidden')) {
+                        closeModal(modal.id);
+                    }
+                }, 1000);
             } else {
-                alert(data.message || 'Error al aprobar el reporte');
+                showToast(data.message || 'Error al aprobar el reporte', 'error', 3000);
             }
         })
         .catch(error => {
             console.error('Error:', error);
-            alert('Error al aprobar el reporte');
+            showToast('Error al aprobar el reporte', 'error', 3000);
         });
     };
 
@@ -1748,7 +1771,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const reason = document.getElementById('rejection-reason').value.trim();
         
         if (!reason) {
-            alert('Por favor ingrese una razón de rechazo');
+            showToast('Por favor ingrese una razón de rechazo', 'warning', 3000);
             return;
         }
         
@@ -1763,22 +1786,50 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                alert(data.message || 'Reporte rechazado');
-                closeRejectModal(false); // No regresar al anterior porque vamos a recargar
-                location.reload();
+                // Mostrar toast de éxito
+                showToast('✓ Reporte rechazado correctamente', 'success', 3000);
+                
+                // Actualizar estado en el modal sin recargar
+                const modal = Array.from(document.querySelectorAll('[id^="modal"]')).find(m => !m.classList.contains('hidden') && m.id !== 'reject-modal' && m.id !== 'delete-modal');
+                if (modal) {
+                    const dataElement = modal.querySelector('[data-status]');
+                    if (dataElement) {
+                        dataElement.dataset.status = 'rechazado';
+                        dataElement.dataset.rejectedBy = data.rejected_by || '';
+                        dataElement.dataset.rejectedAt = data.rejected_at || '';
+                    }
+                }
+
+                // Cerrar modal de rechazo
+                closeRejectModal(false);
+                
+                // Cerrar modal anterior después de 1s
+                setTimeout(() => {
+                    const mainModal = Array.from(document.querySelectorAll('[id^="modal"]')).find(m => !m.classList.contains('hidden') && m.id !== 'reject-modal' && m.id !== 'delete-modal');
+                    if (mainModal) {
+                        closeModal(mainModal.id);
+                    }
+                }, 1000);
             } else {
-                alert(data.message || 'Error al rechazar el reporte');
+                showToast(data.message || 'Error al rechazar el reporte', 'error', 3000);
             }
         })
         .catch(error => {
             console.error('Error:', error);
-            alert('Error al rechazar el reporte');
+            showToast('Error al rechazar el reporte', 'error', 3000);
         });
     };
 
     window.resubmitReport = function(publicationId) {
         if (!confirm('¿Reenviar este reporte para revisión? Asegúrate de haber corregido los problemas mencionados.')) return;
         
+        // Buscar el modal abierto
+        const modal = Array.from(document.querySelectorAll('[id^="modal"]')).find(m => !m.classList.contains('hidden') && m.id !== 'reject-modal' && m.id !== 'delete-modal');
+        if (!modal) return;
+
+        const dataElement = modal.querySelector('[data-status]');
+        const dataset = dataElement ? dataElement.dataset : {};
+
         fetch(`/reportes/${publicationId}/reenviar`, {
             method: 'POST',
             headers: {
@@ -1789,15 +1840,29 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                alert(data.message || 'Reporte reenviado para revisión exitosamente');
-                location.reload();
+                // Mostrar toast de éxito
+                showToast('✓ Reporte reenviado para revisión', 'success', 3000);
+                
+                // Actualizar estado en el modal
+                if (dataElement) {
+                    dataElement.dataset.status = 'pendiente';
+                    dataElement.dataset.rejectedBy = '';
+                    dataElement.dataset.rejectedAt = '';
+                }
+
+                // Cerrar modal después de 1s
+                setTimeout(() => {
+                    if (modal && !modal.classList.contains('hidden')) {
+                        closeModal(modal.id);
+                    }
+                }, 1000);
             } else {
-                alert(data.message || 'Error al reenviar el reporte');
+                showToast(data.message || 'Error al reenviar el reporte', 'error', 3000);
             }
         })
         .catch(error => {
             console.error('Error:', error);
-            alert('Error al reenviar el reporte');
+            showToast('Error al reenviar el reporte', 'error', 3000);
         });
     };
 

@@ -8,52 +8,32 @@ use Carbon\Carbon;
 
 class PruneNotifications extends Command
 {
-    /**
-     * The name and signature of the console command.
-     *
-     * @var string
-     */
-    protected $signature = 'notifications:prune {--days=90 : Number of days to keep notifications}';
+    protected $signature = 'notifications:prune {--days=30}';
+    protected $description = 'Elimina permanentemente notificaciones antiguas';
 
-    /**
-     * The console command description.
-     *
-     * @var string
-     */
-    protected $description = 'Delete notifications older than specified days (default: 90)';
-
-    /**
-     * Execute the console command.
-     */
     public function handle()
     {
         $days = (int) $this->option('days');
-        $cutoffDate = Carbon::now()->subDays($days);
+        $threshold = Carbon::now()->subDays($days);
 
-        $this->info("Deleting notifications older than {$days} days (before {$cutoffDate->toDateString()})...");
+        // Obtener notificaciones a eliminar
+        $toDelete = Notification::where('created_at', '<=', $threshold)
+            ->withoutGlobalScopes()
+            ->get();
 
-        // Eliminar en batches para no sobrecargar la base de datos
-        $totalDeleted = 0;
-        $batchSize = 1000;
+        $count = $toDelete->count();
 
-        do {
-            $deleted = Notification::where('created_at', '<', $cutoffDate)
-                ->limit($batchSize)
-                ->delete();
-            
-            $totalDeleted += $deleted;
-            
-            if ($deleted > 0) {
-                $this->line("Deleted {$deleted} notifications (total: {$totalDeleted})...");
-            }
-            
-            // Pequeña pausa para no saturar la DB
-            usleep(100000); // 0.1 segundos
-            
-        } while ($deleted > 0);
+        if ($count === 0) {
+            $this->info('No hay notificaciones para eliminar.');
+            return 0;
+        }
 
-        $this->info("✓ Completed! Total deleted: {$totalDeleted} notifications.");
-        
+        // Eliminar permanentemente (forzar, no soft delete)
+        foreach ($toDelete as $notification) {
+            $notification->forceDelete();
+        }
+
+        $this->info("✓ Eliminadas {$count} notificaciones con created_at <= {$threshold}.");
         return 0;
     }
 }

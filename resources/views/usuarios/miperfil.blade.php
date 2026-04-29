@@ -164,7 +164,24 @@
                                     
                                     <div>
                                         <label class="block text-xs text-gray-600 font-lora mb-1">Rol en el Sistema</label>
-                                        <span class="inline-block bg-green-100 text-green-800 text-xs font-medium px-2 py-1 rounded-full">{{ auth()->user()->role->name ?? 'Usuario' }}</span>
+                                        @php
+                                            $roleName = auth()->user()->role->name ?? 'Usuario';
+                                            $roleLower = strtolower($roleName);
+                                            if (in_array($roleLower, ['administrador', 'admin'])) {
+                                                $roleClasses = 'bg-[#762f2d] text-white font-bold';
+                                            } elseif (in_array($roleLower, ['coordinador'])) {
+                                                $roleClasses = 'bg-[#4f772d] text-white font-bold';
+                                            } elseif (in_array($roleLower, ['operador'])) {
+                                                $roleClasses = 'bg-[#2d4f76] text-white font-bold';
+                                            } elseif ($roleLower === 'invitado') {
+                                                $roleClasses = 'bg-gray-600 text-white font-bold';
+                                            } elseif (in_array($roleLower, ['usuario', 'user'])) {
+                                                $roleClasses = 'bg-blue-700 text-white font-bold';
+                                            } else {
+                                                $roleClasses = 'bg-slate-600 text-white font-bold';
+                                            }
+                                        @endphp
+                                        <span class="inline-block {{ $roleClasses }} text-xs font-semibold px-3 py-1 rounded-lg">{{ $roleName }}</span>
                                     </div>
                                 </div>
                             </div>
