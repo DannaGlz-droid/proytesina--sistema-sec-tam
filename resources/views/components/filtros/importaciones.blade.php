@@ -73,21 +73,9 @@
     <x-filtros.seccion icono="user-circle" titulo="Usuario">
         <div class="space-y-2">
             <div class="filter-group">
-                <select id="usuarioImports" name="usuarioImports" class="w-full border border-[#404041] rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-[#611132] tomselect-usuario">
+                <select id="usuarioImports" name="usuarioImports" class="tomselect-select">
                     <option value="">Seleccione un usuario...</option>
                 </select>
-            </div>
-        </div>
-    </x-filtros.seccion>
-
-    <!-- Con registros fallidos -->
-    <x-filtros.seccion icono="exclamation-circle" titulo="Registros fallidos">
-        <div class="space-y-2">
-            <div class="filter-group">
-                <label class="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-1 rounded">
-                    <input type="checkbox" id="conFallidos" name="conFallidos" class="rounded">
-                    <span class="text-xs text-gray-600 font-lora">Solo las que tienen fallidos</span>
-                </label>
             </div>
         </div>
     </x-filtros.seccion>
@@ -96,6 +84,7 @@
 <style>
     .filter-group {
         margin: 0;
+        padding: 0;
     }
 
     .filter-group input[type="text"],
@@ -106,6 +95,152 @@
 
     .filter-group input[type="checkbox"] {
         cursor: pointer;
+    }
+
+    /* Permitir que el dropdown de TomSelect aparezca fuera del contenedor */
+    #usuarioImports + .ts-wrapper {
+        position: relative;
+        z-index: 100;
+    }
+
+    /* Z-index dinámico para dropdowns */
+    .ts-wrapper.ts-dropdown-open {
+        z-index: 999999 !important;
+    }
+
+    .ts-wrapper:not(.ts-dropdown-open) {
+        z-index: 1 !important;
+    }
+
+    /* TomSelect Styles */
+    select.tomselect-select {
+        position: absolute !important;
+        left: -9999px !important;
+        width: 1px !important;
+        height: 1px !important;
+        overflow: hidden !important;
+        opacity: 0 !important;
+        pointer-events: none !important;
+        border: 0 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        background: transparent !important;
+        -webkit-appearance: none !important;
+        -moz-appearance: none !important;
+        appearance: none !important;
+        display: none !important;
+    }
+
+    select.tomselect-select::-ms-expand { display: none !important; }
+    select.tomselect-select { 
+        background-image: none !important;
+        visibility: hidden !important;
+    }
+
+    .ts-wrapper { 
+        display: block; 
+        width: 100%;
+        position: relative;
+        z-index: 9999 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+
+    .ts-control {
+        z-index: 9999 !important;
+        position: relative;
+        border: 1px solid #404041 !important;
+        border-radius: 0.5rem !important;
+        padding: 6px 12px !important;
+        background: #ffffff !important;
+        font-family: inherit;
+        font-size: 0.75rem;
+        line-height: 1.25rem !important;
+        display: flex;
+        align-items: center;
+        justify-content: flex-start;
+        box-sizing: border-box;
+        margin: 0 !important;
+        box-shadow: none !important;
+        height: auto !important;
+        min-height: 32px !important;
+        transition: all 0.2s ease;
+    }
+
+    .ts-control:focus-within {
+        border-color: #404041 !important;
+        outline: none !important;
+        box-shadow: 0 0 0 1px #611132 !important;
+    }
+
+    .ts-control .item, .ts-control input {
+        padding: 0 !important;
+        margin: 0 !important;
+        height: auto !important;
+        line-height: 1.25rem !important;
+        font-size: inherit;
+        font-family: inherit;
+    }
+
+    .ts-control .dropdown-toggle,
+    .ts-control .ts-dropdown-toggle,
+    .ts-control .dropdown_toggle,
+    .ts-control .ts-clear {
+        display: none !important;
+    }
+
+    .ts-dropdown {
+        border: 1px solid #404041;
+        border-radius: 0.5rem;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        max-height: 250px;
+        overflow-y: auto;
+        z-index: 999999 !important;
+        position: absolute !important;
+        top: 100% !important;
+        left: 0 !important;
+        right: 0 !important;
+        background: white;
+        margin-top: 2px;
+    }
+
+    .ts-dropdown .ts-option {
+        padding: 0.5rem 0.75rem;
+        cursor: pointer;
+        transition: background-color 0.15s ease;
+    }
+
+    .ts-dropdown .ts-option:hover {
+        background-color: #f3f4f6;
+    }
+
+    .ts-dropdown .ts-option.selected {
+        background-color: #e5e7eb;
+        color: #404041;
+    }
+
+    .ts-control::after {
+        content: "";
+        position: absolute;
+        right: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 18px;
+        height: 18px;
+        background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'/></svg>");
+        background-repeat: no-repeat;
+        background-position: center;
+        background-size: 12px 12px;
+        pointer-events: none;
+        opacity: 0.92;
+    }
+
+    .ts-wrapper, .ts-control { vertical-align: middle; }
+
+    /* Ajustar sección de usuario para permitir dropdown */
+    #usuarioImports ~ .ts-wrapper {
+        position: relative;
+        z-index: 100;
     }
 </style>
 
@@ -118,34 +253,112 @@ document.addEventListener('DOMContentLoaded', function() {
     if (dateRangeImports) {
         dateRangeImports.addEventListener('change', function() {
             customRangeSelectorImports.style.display = this.value === 'custom' ? 'block' : 'none';
-        });
-    }
-
-    // Initialize TomSelect for usuario filter
-    const usuarioSelect = document.getElementById('usuarioImports');
-    if (usuarioSelect) {
-        new TomSelect(usuarioSelect, {
-            valueField: 'name',
-            labelField: 'name',
-            searchField: 'name',
-            maxOptions: 20,
-            maxItems: 1,
-            create: false,
-            preload: false,
-            placeholder: 'Seleccione un usuario',
-            load: function(query, callback) {
-                if (!query.length) {
-                    // Don't preload, wait for user to type
-                    callback([]);
-                    return;
-                }
-                fetch('/api/users/search?q=' + encodeURIComponent(query))
-                    .then(res => res.json())
-                    .then(items => callback(items))
-                    .catch(() => callback());
+            
+            // Recalcular la altura de la sección padre cuando cambia la visibilidad
+            const sectionContent = dateRangeImports.closest('.filter-section')?.querySelector('.filter-section-content');
+            if (sectionContent && sectionContent.style.maxHeight && sectionContent.style.maxHeight !== '0px') {
+                setTimeout(() => {
+                    const scrollHeight = sectionContent.scrollHeight;
+                    
+                    // Si hay elementos TomSelect, agregar espacio extra para los dropdowns
+                    let maxHeight = scrollHeight;
+                    if (sectionContent.querySelector('.tomselect-select')) {
+                        maxHeight += 350;
+                    }
+                    
+                    sectionContent.style.maxHeight = maxHeight + 'px';
+                }, 50);
             }
         });
     }
+
+    // Initialize TomSelect for usuario filter - with fallback for timing issues
+    function initTomSelectUsuario() {
+        const usuarioSelect = document.getElementById('usuarioImports');
+        if (usuarioSelect && typeof TomSelect !== 'undefined') {
+            const tomSelectInstance = new TomSelect(usuarioSelect, {
+                valueField: 'id',
+                labelField: 'name',
+                searchField: 'name',
+                maxOptions: 20,
+                maxItems: 1,
+                create: false,
+                preload: 'focus',
+                placeholder: 'Seleccione un usuario...',
+                load: function(query, callback) {
+                    // Allow empty query so TomSelect can preload all users
+                    fetch('/api/users/search?q=' + encodeURIComponent(query))
+                        .then(res => {
+                            if (!res.ok) throw new Error('Network error');
+                            return res.json();
+                        })
+                        .then(items => {
+                            if (Array.isArray(items)) {
+                                callback(items);
+                            } else {
+                                callback([]);
+                            }
+                        })
+                        .catch(err => {
+                            console.error('Error loading usuarios:', err);
+                            callback([]);
+                        });
+                }
+            });
+            
+            // Guardar instancia globalmente para limpiar después
+            window.tomSelectUsuarioInstance = tomSelectInstance;
+        }
+    }
+
+    // Try to initialize immediately
+    if (typeof TomSelect !== 'undefined') {
+        initTomSelectUsuario();
+    } else {
+        // If TomSelect not available yet, wait for it
+        let attempts = 0;
+        const checkTomSelect = setInterval(() => {
+            if (typeof TomSelect !== 'undefined') {
+                clearInterval(checkTomSelect);
+                initTomSelectUsuario();
+            }
+            attempts++;
+            if (attempts > 50) { // Stop after 5 seconds (50 * 100ms)
+                clearInterval(checkTomSelect);
+                console.warn('TomSelect did not load in time');
+            }
+        }, 100);
+    }
+
+    // Manager para z-index dinámico de TomSelect dropdowns
+    setTimeout(() => {
+        const tomSelectElements = document.querySelectorAll('.tomselect-select');
+        
+        tomSelectElements.forEach(select => {
+            // Buscar la instancia de TomSelect asociada
+            if(select.tomselect) {
+                const tomSelectInstance = select.tomselect;
+                
+                // Cuando se abre el dropdown
+                if (tomSelectInstance.on) {
+                    tomSelectInstance.on('dropdown_open', function() {
+                        const wrapper = tomSelectInstance.wrapper;
+                        if(wrapper) {
+                            wrapper.classList.add('ts-dropdown-open');
+                        }
+                    });
+                    
+                    // Cuando se cierra el dropdown
+                    tomSelectInstance.on('dropdown_close', function() {
+                        const wrapper = tomSelectInstance.wrapper;
+                        if(wrapper) {
+                            wrapper.classList.remove('ts-dropdown-open');
+                        }
+                    });
+                }
+            }
+        });
+    }, 200);
 
     // Limpiar filtros
     document.getElementById('limpiarFiltrosImportaciones').addEventListener('click', function() {
@@ -156,8 +369,12 @@ document.addEventListener('DOMContentLoaded', function() {
         // Reset status checkboxes
         document.querySelectorAll('.status-checkbox').forEach(cb => cb.checked = false);
         
-        // Reset usuario
-        document.getElementById('usuarioImports').value = '';
+        // Reset usuario usando TomSelect si está disponible
+        if (window.tomSelectUsuarioInstance) {
+            window.tomSelectUsuarioInstance.clear();
+        } else {
+            document.getElementById('usuarioImports').value = '';
+        }
         
         // Reset con fallidos
         document.getElementById('conFallidos').checked = false;
@@ -165,5 +382,47 @@ document.addEventListener('DOMContentLoaded', function() {
         // Trigger filter
         window.filterImports && window.filterImports();
     });
+
+    // Mejorar la animación de la sección de usuario
+    const usuarioSection = document.querySelector('.filter-section:has(#usuarioImports)');
+    if (usuarioSection) {
+        const header = usuarioSection.querySelector('.filter-section-header');
+        const content = usuarioSection.querySelector('.filter-section-content');
+        
+        if (header && content) {
+            // Función para recalcular la altura
+            const recalculateHeight = () => {
+                // Obtener la altura del contenido actual
+                const scrollHeight = content.scrollHeight;
+                const currentMaxHeight = content.style.maxHeight;
+                
+                // Si está abierto, actualizar la altura al scrollHeight actual
+                if (currentMaxHeight && currentMaxHeight !== '0px' && parseFloat(currentMaxHeight) > 0) {
+                    content.style.maxHeight = scrollHeight + 'px';
+                }
+            };
+            
+            // Recalcular cuando TomSelect esté listo
+            setTimeout(recalculateHeight, 50);
+            setTimeout(recalculateHeight, 150);
+            setTimeout(recalculateHeight, 300);
+            setTimeout(recalculateHeight, 500);
+            
+            // Usar MutationObserver para detectar cambios en el contenido (TomSelect renderizando)
+            const observer = new MutationObserver(() => {
+                recalculateHeight();
+            });
+            
+            observer.observe(content, {
+                childList: true,
+                subtree: true,
+                attributes: true,
+                attributeFilter: ['style']
+            });
+            
+            // Recalcular en caso de resize
+            window.addEventListener('resize', recalculateHeight);
+        }
+    }
 });
 </script>

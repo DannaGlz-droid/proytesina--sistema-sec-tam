@@ -268,7 +268,7 @@ document.addEventListener('DOMContentLoaded', function () {
         const searchTerm = document.getElementById('search-imports').value.toLowerCase();
         const dateRange = document.getElementById('dateRangeImports').value;
         const selectedStatuses = Array.from(document.querySelectorAll('.status-checkbox:checked')).map(cb => cb.value);
-        const usuario = document.getElementById('usuarioImports').value.toLowerCase();
+        const usuarioId = document.getElementById('usuarioImports').value; // Now this is an ID, not a name
         const conFallidos = document.getElementById('conFallidos').checked;
         const startDate = document.getElementById('startDateImports').value;
         const endDate = document.getElementById('endDateImports').value;
@@ -279,8 +279,8 @@ document.addEventListener('DOMContentLoaded', function () {
                 return false;
             }
 
-            // Filtro por usuario
-            if (usuario && !(imp.created_by && imp.created_by.toLowerCase().includes(usuario))) {
+            // Filtro por usuario (now comparing by ID)
+            if (usuarioId && parseInt(usuarioId) !== parseInt(imp.user_id)) {
                 return false;
             }
 

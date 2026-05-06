@@ -36,7 +36,7 @@ unset($__defined_vars, $__key, $__value); ?>
         </div>
         <i class="fas fa-chevron-down text-[#611132] text-xs transition-transform duration-300"></i>
     </button>
-    <div class="filter-section-content transition-all duration-300 ease-in-out overflow-hidden" 
+    <div class="filter-section-content transition-all duration-300 ease-in-out" 
          style="<?php echo e($abierto ? 'max-height: 500px; opacity: 1;' : 'max-height: 0; opacity: 0;'); ?>">
         <div class="space-y-2 py-1">
             <?php echo e($slot); ?>
@@ -44,6 +44,17 @@ unset($__defined_vars, $__key, $__value); ?>
         </div>
     </div>
 </div>
+
+<style>
+    .filter-section-content {
+        overflow: visible;
+    }
+    
+    /* Cuando está cerrado, ocultar el overflow */
+    .filter-section-content[style*="opacity: 0"] {
+        overflow: hidden;
+    }
+</style>
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
@@ -61,7 +72,14 @@ document.addEventListener('DOMContentLoaded', function() {
                                content.style.maxHeight.includes('px');
         
         if (isCurrentlyOpen) {
-            content.style.maxHeight = content.scrollHeight + 'px';
+            let maxHeight = content.scrollHeight;
+            
+            // Si hay elementos TomSelect, agregar espacio extra para los dropdowns
+            if (content.querySelector('.tomselect-select')) {
+                maxHeight += 350;
+            }
+            
+            content.style.maxHeight = maxHeight + 'px';
             content.style.opacity = '1';
             icon.style.transform = 'rotate(0deg)';
         } else {
@@ -80,11 +98,29 @@ document.addEventListener('DOMContentLoaded', function() {
                 icon.style.transform = 'rotate(-90deg)';
             } else {
                 // Abrir con animación
-                content.style.maxHeight = content.scrollHeight + 'px';
+                let scrollHeight = content.scrollHeight;
+                
+                // Si hay elementos TomSelect, agregar espacio extra para los dropdowns
+                if (content.querySelector('.tomselect-select')) {
+                    scrollHeight += 350;
+                }
+                
+                content.style.maxHeight = scrollHeight + 'px';
                 content.style.opacity = '1';
                 content.style.paddingTop = '';
                 content.style.paddingBottom = '';
                 icon.style.transform = 'rotate(0deg)';
+                
+                // Recalcular nuevamente tras la animación en caso de que TomSelect o elementos dinámicos cambien
+                setTimeout(() => {
+                    let newScrollHeight = content.scrollHeight;
+                    if (content.querySelector('.tomselect-select')) {
+                        newScrollHeight += 350;
+                    }
+                    if (newScrollHeight > scrollHeight) {
+                        content.style.maxHeight = newScrollHeight + 'px';
+                    }
+                }, 50);
             }
         });
     });

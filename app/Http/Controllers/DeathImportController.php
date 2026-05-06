@@ -787,6 +787,7 @@ class DeathImportController extends Controller
                     'imports.created_at',
                     'imports.updated_at',
                     'imports.reversed_at',
+                    'imports.user_id',
                     'creator.name as created_by',
                     'reverser.name as reversed_by',
                 ])

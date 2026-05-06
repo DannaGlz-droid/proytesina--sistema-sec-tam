@@ -86,7 +86,7 @@
     <x-filtros.seccion icono="map-marker-alt" titulo="Ubicación">
             <div class="filter-group">
             <label class="block text-xs text-gray-600 font-lora mb-1">Jurisdicción de residencia:</label>
-            <select id="jurisdiccion" name="jurisdiccion" class="w-full border border-[#404041] rounded-lg px-3 py-1.5 text-xs">
+            <select id="jurisdiccion" name="jurisdiccion" class="tomselect-select">
                 <option value="">Todas</option>
                 @if($jurisdictions)
                     @foreach($jurisdictions as $j)
@@ -101,7 +101,7 @@
 
             <div class="filter-group">
             <label class="block text-xs text-gray-600 font-lora mb-1">Municipio de residencia:</label>
-            <select id="municipio" name="municipio" class="w-full border border-[#404041] rounded-lg px-3 py-1.5 text-xs">
+            <select id="municipio" name="municipio" class="tomselect-select">
                 <option value="">Todos</option>
                 @if($municipalities)
                     @foreach($municipalities as $m)
@@ -116,7 +116,7 @@
 
             <div class="filter-group">
             <label class="block text-xs text-gray-600 font-lora mb-1">Municipio de defunción:</label>
-            <select id="municipioDefuncion" name="municipioDefuncion" class="w-full border border-[#404041] rounded-lg px-3 py-1.5 text-xs">
+            <select id="municipioDefuncion" name="municipioDefuncion" class="tomselect-select">
                 <option value="">Todos</option>
                 @if($municipalities)
                     @foreach($municipalities as $m)
@@ -151,7 +151,7 @@
     <x-filtros.seccion icono="heartbeat" titulo="Causas">
         <div class="filter-group">
             <label class="block text-xs text-gray-600 font-lora mb-1">Causa de defunción:</label>
-            <select id="causa" name="causa" class="w-full border border-[#404041] rounded-lg px-3 py-1.5 text-xs">
+            <select id="causa" name="causa" class="tomselect-select">
                 <option value="">Todas</option>
                 @if($causes)
                     @foreach($causes as $c)
@@ -434,6 +434,155 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     });
+
+    // --- Inicializar TomSelect para los campos de filtros ---
+    function initTomSelectDefunciones() {
+        const selectores = [
+            { id: 'jurisdiccion', placeholder: 'Seleccione una jurisdicción...' },
+            { id: 'municipio', placeholder: 'Seleccione un municipio...' },
+            { id: 'municipioDefuncion', placeholder: 'Seleccione un municipio...' },
+            { id: 'causa', placeholder: 'Seleccione una causa...' }
+        ];
+
+        selectores.forEach(sel => {
+            const selectEl = document.getElementById(sel.id);
+            if (selectEl && typeof TomSelect !== 'undefined') {
+                const tomSelectInstance = new TomSelect(selectEl, {
+                    valueField: 'value',
+                    labelField: 'text',
+                    searchField: 'text',
+                    maxOptions: 100,
+                    maxItems: 1,
+                    create: false,
+                    placeholder: sel.placeholder,
+                    onChange: () => {
+                        // Recalcular altura de la sección si está abierta
+                        const section = selectEl.closest('.filter-section');
+                        const content = section?.querySelector('.filter-section-content');
+                        if (content && content.style.maxHeight && content.style.maxHeight !== '0px') {
+                            setTimeout(() => {
+                                content.style.maxHeight = content.scrollHeight + 'px';
+                            }, 10);
+                        }
+                    }
+                });
+
+                // Guardar instancia globalmente para limpiar después
+                window[`tomSelect_${sel.id}`] = tomSelectInstance;
+                
+                // NUEVA SOLUCIÓN: Usar un ResizeObserver para monitorear cuando el wrapper cambia de tamaño (dropdown abierto/cerrado)
+                const wrapper = selectEl.nextElementSibling; // El ts-wrapper es el hermano siguiente
+                if (wrapper && typeof ResizeObserver !== 'undefined') {
+                    const section = selectEl.closest('.filter-section');
+                    const content = section?.querySelector('.filter-section-content');
+                    
+                    if (content) {
+                        const resizeObserver = new ResizeObserver(() => {
+                            // Cuando el wrapper cambia de tamaño (dropdown abierto), expandir la sección
+                            const wrapperHeight = wrapper.offsetHeight;
+                            const contentHeight = content.scrollHeight;
+                            
+                            if (wrapperHeight > 40) { // Si es más grande que un campo normal, el dropdown está abierto
+                                // Expandir para acomodar el dropdown
+                                content.style.maxHeight = (contentHeight + 350) + 'px';
+                            } else if (content.style.maxHeight !== '0px' && parseFloat(content.style.maxHeight) > 0) {
+                                // Si el dropdown se cerró, restaurar
+                                content.style.maxHeight = contentHeight + 'px';
+                            }
+                        });
+                        
+                        resizeObserver.observe(wrapper);
+                    }
+                }
+            }
+        });
+    }
+
+    // Try to initialize immediately
+    if (typeof TomSelect !== 'undefined') {
+        initTomSelectDefunciones();
+    } else {
+        // If TomSelect not available yet, wait for it
+        let attempts = 0;
+        const checkTomSelect = setInterval(() => {
+            if (typeof TomSelect !== 'undefined') {
+                clearInterval(checkTomSelect);
+                initTomSelectDefunciones();
+            }
+            attempts++;
+            if (attempts > 50) { // Stop after 5 seconds (50 * 100ms)
+                clearInterval(checkTomSelect);
+                console.warn('TomSelect did not load in time');
+            }
+        }, 100);
+    }
+
+    // --- Recalcular altura cuando TomSelect renderiza para CADA sección ---
+    const tomSelectSelectors = ['jurisdiccion', 'municipio', 'municipioDefuncion', 'causa'];
+    tomSelectSelectors.forEach(id => {
+        const selectEl = document.getElementById(id);
+        if (!selectEl) return;
+        
+        const section = selectEl.closest('.filter-section');
+        const content = section?.querySelector('.filter-section-content');
+        
+        if (content) {
+            // Función para recalcular la altura
+            const recalculateHeight = () => {
+                const scrollHeight = content.scrollHeight;
+                const currentMaxHeight = content.style.maxHeight;
+                
+                // Si está abierto, actualizar la altura al scrollHeight actual
+                if (currentMaxHeight && currentMaxHeight !== '0px' && parseFloat(currentMaxHeight) > 0) {
+                    content.style.maxHeight = scrollHeight + 'px';
+                }
+            };
+            
+            // Recalcular cuando TomSelect esté listo
+            setTimeout(recalculateHeight, 50);
+            setTimeout(recalculateHeight, 150);
+            setTimeout(recalculateHeight, 300);
+            setTimeout(recalculateHeight, 500);
+            
+            // Usar MutationObserver para detectar cambios en el contenido (TomSelect renderizando)
+            const observer = new MutationObserver(() => {
+                recalculateHeight();
+            });
+            
+            observer.observe(content, {
+                childList: true,
+                subtree: true,
+                attributes: true,
+                attributeFilter: ['style']
+            });
+            
+            // Recalcular en caso de resize
+            window.addEventListener('resize', recalculateHeight);
+        }
+    });
+
+    // --- Mejorar evento Limpiar filtros ---
+    const limpiarButton = document.getElementById('limpiarFiltros');
+    if (limpiarButton) {
+        // Guardar el listener original
+        const originalClickHandler = limpiarButton.onclick;
+        
+        // Reemplazar con un nuevo listener que agregue la limpieza de TomSelect
+        limpiarButton.onclick = null; // Remover listener anterior
+        limpiarButton.addEventListener('click', function(e) {
+            // Ejecutar el listener original si existía
+            if (originalClickHandler) {
+                originalClickHandler.call(this, e);
+            }
+            
+            // Limpiar TomSelect
+            ['jurisdiccion', 'municipio', 'municipioDefuncion', 'causa'].forEach(id => {
+                if (window[`tomSelect_${id}`]) {
+                    window[`tomSelect_${id}`].clear();
+                }
+            });
+        });
+    }
 });
 </script>
 
@@ -468,4 +617,172 @@ document.addEventListener('DOMContentLoaded', function() {
 
 /* chevron in seccion component already handles rotation; esta règle asegura transición */
 .filter-section-header .fa-chevron-down { transition: transform 300ms ease; }
+
+/* TomSelect Styles */
+select.tomselect-select {
+    position: absolute !important;
+    left: -9999px !important;
+    width: 1px !important;
+    height: 1px !important;
+    overflow: hidden !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+    border: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: transparent !important;
+    -webkit-appearance: none !important;
+    -moz-appearance: none !important;
+    appearance: none !important;
+    display: none !important;
+}
+
+select.tomselect-select::-ms-expand { display: none !important; }
+select.tomselect-select { 
+    background-image: none !important;
+    visibility: hidden !important;
+}
+
+.ts-wrapper { 
+    display: block; 
+    width: 100%;
+    position: relative;
+    z-index: 9999 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+.ts-control {
+    z-index: 9999 !important;
+    position: relative;
+    border: 1px solid #404041 !important;
+    border-radius: 0.5rem !important;
+    padding: 6px 12px !important;
+    background: #ffffff !important;
+    font-family: inherit;
+    font-size: 0.75rem;
+    line-height: 1.25rem !important;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    box-sizing: border-box;
+    margin: 0 !important;
+    box-shadow: none !important;
+    height: auto !important;
+    min-height: 32px !important;
+    transition: all 0.2s ease;
+}
+
+.ts-control:focus-within {
+    border-color: #404041 !important;
+    outline: none !important;
+    box-shadow: 0 0 0 1px #611132 !important;
+}
+
+.ts-control .item, .ts-control input {
+    padding: 0 !important;
+    margin: 0 !important;
+    height: auto !important;
+    line-height: 1.25rem !important;
+    font-size: inherit;
+    font-family: inherit;
+}
+
+.ts-control .dropdown-toggle,
+.ts-control .ts-dropdown-toggle,
+.ts-control .dropdown_toggle,
+.ts-control .ts-clear {
+    display: none !important;
+}
+
+.ts-dropdown {
+    border: 1px solid #404041;
+    border-radius: 0.5rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    max-height: 250px;
+    overflow-y: auto;
+    z-index: 999999 !important;
+    position: absolute !important;
+    top: 100% !important;
+    left: 0 !important;
+    right: 0 !important;
+    background: white;
+    margin-top: 2px;
+}
+
+.ts-dropdown .ts-option {
+    padding: 0.5rem 0.75rem;
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+}
+
+.ts-dropdown .ts-option:hover {
+    background-color: #f3f4f6;
+}
+
+.ts-dropdown .ts-option.selected {
+    background-color: #e5e7eb;
+    color: #404041;
+}
+
+.ts-control::after {
+    content: "";
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 18px;
+    height: 18px;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'/></svg>");
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: 12px 12px;
+    pointer-events: none;
+    opacity: 0.92;
+}
+
+.ts-wrapper, .ts-control { vertical-align: middle; }
+
+/* Asegurar que TomSelect dropdown tenga muy alto z-index */
+.filter-section-content {
+    position: relative;
+}
+
+.ts-wrapper.ts-dropdown-open {
+    z-index: 999999 !important;
+}
+
+.ts-wrapper:not(.ts-dropdown-open) {
+    z-index: 1 !important;
+}
 </style>
+
+<script>
+// Manager para z-index dinámico de TomSelect dropdowns
+document.addEventListener('DOMContentLoaded', function() {
+    const tomSelectElements = document.querySelectorAll('.tomselect-select');
+    
+    tomSelectElements.forEach(select => {
+        // Buscar la instancia de TomSelect asociada
+        if(select.tomselect) {
+            const tomSelectInstance = select.tomselect;
+            
+            // Cuando se abre el dropdown
+            tomSelectInstance.on('dropdown_open', function() {
+                const wrapper = tomSelectInstance.wrapper;
+                if(wrapper) {
+                    wrapper.classList.add('ts-dropdown-open');
+                }
+            });
+            
+            // Cuando se cierra el dropdown
+            tomSelectInstance.on('dropdown_close', function() {
+                const wrapper = tomSelectInstance.wrapper;
+                if(wrapper) {
+                    wrapper.classList.remove('ts-dropdown-open');
+                }
+            });
+        }
+    });
+});
+</script>
