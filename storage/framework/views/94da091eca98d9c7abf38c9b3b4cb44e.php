@@ -60,7 +60,7 @@
 <?php unset($__componentOriginal05946ab4158a4a56cc8ba494d36225d3); ?>
 <?php endif; ?>
 
-    <!-- Fechas (match con estadisticas) -->
+    <!-- Fechas - Simplificado -->
     <?php if (isset($component)) { $__componentOriginal05946ab4158a4a56cc8ba494d36225d3 = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginal05946ab4158a4a56cc8ba494d36225d3 = $attributes; } ?>
 <?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.filtros.seccion','data' => ['icono' => 'calendar-alt','titulo' => 'Fecha alta']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
@@ -71,81 +71,28 @@
 <?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
 <?php endif; ?>
 <?php $component->withAttributes(['icono' => 'calendar-alt','titulo' => 'Fecha alta']); ?>
+        <div class="filter-group">
+            <label class="block text-xs text-gray-600 font-lora mb-1">Rango:</label>
+            <select name="date_range" id="dateRange" class="w-full border border-[#404041] rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-[#611132] focus:border-transparent">
+                <option value="all" <?php echo e(request('date_range', 'all') === 'all' ? 'selected' : ''); ?>>Todas las fechas</option>
+                <option value="7days" <?php echo e(request('date_range') === '7days' ? 'selected' : ''); ?>>Últimos 7 días</option>
+                <option value="30days" <?php echo e(request('date_range') === '30days' ? 'selected' : ''); ?>>Últimos 30 días</option>
+                <option value="90days" <?php echo e(request('date_range') === '90days' ? 'selected' : ''); ?>>Últimos 90 días</option>
+                <option value="6months" <?php echo e(request('date_range') === '6months' ? 'selected' : ''); ?>>Últimos 6 meses</option>
+                <option value="custom" <?php echo e(request('date_range') === 'custom' ? 'selected' : ''); ?>>Personalizado</option>
+            </select>
+        </div>
+
+        <div id="customRangeSelector" class="custom-range-group" style="display: <?php echo e(request('date_range') === 'custom' ? 'block' : 'none'); ?>;">
             <div class="filter-group">
-                <label class="block text-xs text-gray-600 font-lora mb-1">Rango:</label>
-                <select name="date_range" id="dateRange" class="w-full border border-[#404041] rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-[#611132] focus:border-transparent">
-                    <option value="all" <?php echo e(request('date_range', 'all') === 'all' ? 'selected' : ''); ?>>Todas las fechas</option>
-                    <option value="year" <?php echo e(request('date_range') === 'year' ? 'selected' : ''); ?>>Año específico</option>
-                    <option value="month" <?php echo e(request('date_range') === 'month' ? 'selected' : ''); ?>>Mes específico</option>
-                    <option value="multiple-months" <?php echo e(request('date_range') === 'multiple-months' ? 'selected' : ''); ?>>Múltiples meses</option>
-                    <option value="quarter" <?php echo e(request('date_range') === 'quarter' ? 'selected' : ''); ?>>Trimestre</option>
-                    <option value="custom" <?php echo e(request('date_range') === 'custom' ? 'selected' : ''); ?>>Personalizado</option>
-                </select>
+                <label class="block text-xs text-gray-600 font-lora mb-1">Desde:</label>
+                <input type="date" name="date_from" id="startDate" value="<?php echo e(request('date_from')); ?>" class="w-full border border-[#404041] rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-[#611132] focus:border-[#611132]">
             </div>
-
-            <div class="filter-group year-selector-group" id="yearSelector" style="display: <?php echo e(request('date_range') === 'year' ? 'block' : 'none'); ?>;">
-                <label class="block text-xs text-gray-600 font-lora mb-1">Año:</label>
-                <select name="year" id="year" class="w-full border border-[#404041] rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-[#611132] focus:border-[#611132]">
-                    <option value="">Seleccionar año</option>
-                    <?php for($y = date('Y'); $y >= date('Y')-5; $y--): ?>
-                        <option value="<?php echo e($y); ?>" <?php echo e(request('year') == $y ? 'selected' : ''); ?>><?php echo e($y); ?></option>
-                    <?php endfor; ?>
-                </select>
+            <div class="filter-group">
+                <label class="block text-xs text-gray-600 font-lora mb-1">Hasta:</label>
+                <input type="date" name="date_to" id="endDate" value="<?php echo e(request('date_to')); ?>" class="w-full border border-[#404041] rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-[#611132] focus:border-[#611132]">
             </div>
-
-            <div class="filter-group month-selector-group" id="monthSelector" style="display: <?php echo e(request('date_range') === 'month' ? 'block' : 'none'); ?>;">
-                <label class="block text-xs text-gray-600 font-lora mb-1">Mes:</label>
-                <select name="month" id="month" class="w-full border border-[#404041] rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-[#611132] focus:border-[#611132]">
-                    <option value="">Seleccionar mes</option>
-                    <option value="01" <?php echo e(request('month') === '01' ? 'selected' : ''); ?>>Enero</option>
-                    <option value="02" <?php echo e(request('month') === '02' ? 'selected' : ''); ?>>Febrero</option>
-                    <option value="03" <?php echo e(request('month') === '03' ? 'selected' : ''); ?>>Marzo</option>
-                    <option value="04" <?php echo e(request('month') === '04' ? 'selected' : ''); ?>>Abril</option>
-                    <option value="05" <?php echo e(request('month') === '05' ? 'selected' : ''); ?>>Mayo</option>
-                    <option value="06" <?php echo e(request('month') === '06' ? 'selected' : ''); ?>>Junio</option>
-                    <option value="07" <?php echo e(request('month') === '07' ? 'selected' : ''); ?>>Julio</option>
-                    <option value="08" <?php echo e(request('month') === '08' ? 'selected' : ''); ?>>Agosto</option>
-                    <option value="09" <?php echo e(request('month') === '09' ? 'selected' : ''); ?>>Septiembre</option>
-                    <option value="10" <?php echo e(request('month') === '10' ? 'selected' : ''); ?>>Octubre</option>
-                    <option value="11" <?php echo e(request('month') === '11' ? 'selected' : ''); ?>>Noviembre</option>
-                    <option value="12" <?php echo e(request('month') === '12' ? 'selected' : ''); ?>>Diciembre</option>
-                </select>
-            </div>
-
-            <div class="filter-group multiple-months-group" id="multipleMonthsSelector" style="display: <?php echo e(request('date_range') === 'multiple-months' ? 'block' : 'none'); ?>;">
-                <label class="block text-xs text-gray-600 font-lora mb-1">Meses:</label>
-                <div class="grid grid-cols-3 gap-2 mt-2 months-container">
-                    <?php $__currentLoopData = range(1,12); $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $m): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                        <?php $mm = str_pad($m,2,'0',STR_PAD_LEFT); ?>
-                        <div>
-                            <input type="checkbox" id="month-<?php echo e($mm); ?>" name="months[]" class="month-checkbox" value="<?php echo e($mm); ?>" <?php echo e(is_array(request('months')) && in_array($mm, request('months')) ? 'checked' : ''); ?>>
-                            <label for="month-<?php echo e($mm); ?>" class="month-label block text-center text-xs py-1.5 bg-gray-100 border border-gray-300 rounded cursor-pointer hover:bg-gray-200"><?php echo e(['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'][$m-1]); ?></label>
-                        </div>
-                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
-                </div>
-            </div>
-
-            <div class="filter-group quarter-selector-group" id="quarterSelector" style="display: <?php echo e(request('date_range') === 'quarter' ? 'block' : 'none'); ?>;">
-                <label class="block text-xs text-gray-600 font-lora mb-1">Trimestre:</label>
-                <select name="quarter" id="quarter" class="w-full border border-[#404041] rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-[#611132] focus:border-[#611132]">
-                    <option value="">Seleccionar trimestre</option>
-                    <option value="1" <?php echo e(request('quarter') === '1' ? 'selected' : ''); ?>>Q1 (Ene-Mar)</option>
-                    <option value="2" <?php echo e(request('quarter') === '2' ? 'selected' : ''); ?>>Q2 (Abr-Jun)</option>
-                    <option value="3" <?php echo e(request('quarter') === '3' ? 'selected' : ''); ?>>Q3 (Jul-Sep)</option>
-                    <option value="4" <?php echo e(request('quarter') === '4' ? 'selected' : ''); ?>>Q4 (Oct-Dic)</option>
-                </select>
-            </div>
-
-            <div id="customRangeSelector" class="custom-range-group" style="display: <?php echo e(request('date_range') === 'custom' ? 'block' : 'none'); ?>;">
-                <div class="filter-group">
-                    <label class="block text-xs text-gray-600 font-lora mb-1">Desde:</label>
-                    <input type="date" name="date_from" id="startDate" value="<?php echo e(request('date_from')); ?>" class="w-full border border-[#404041] rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-[#611132] focus:border-[#611132]">
-                </div>
-                <div class="filter-group">
-                    <label class="block text-xs text-gray-600 font-lora mb-1">Hasta:</label>
-                    <input type="date" name="date_to" id="endDate" value="<?php echo e(request('date_to')); ?>" class="w-full border border-[#404041] rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-[#611132] focus:border-[#611132]">
-                </div>
-            </div>
+        </div>
      <?php echo $__env->renderComponent(); ?>
 <?php endif; ?>
 <?php if (isset($__attributesOriginal05946ab4158a4a56cc8ba494d36225d3)): ?>

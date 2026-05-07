@@ -4,8 +4,8 @@
         <!-- Logo Tamaulipas Gobierno del Estado (más grande) -->
         <img src="<?php echo e(asset('images/tam_logo.png')); ?>" alt="Tamaulipas Gobierno del Estado" class="h-10 lg:h-13 object-contain">
         
-        <!-- Línea separadora vertical (color dorado similar a los iconos) -->
-        <div class="h-9 lg:h-12 w-px bg-[#b7862a] mx-3 lg:mx-4"></div>
+        <!-- Línea separadora vertical (color consistente con acento) -->
+        <div class="h-9 lg:h-12 w-px bg-[#bc955c] mx-3 lg:mx-4"></div>
         
         <!-- Logo Secretaría de Salud (más pequeño) -->
         <img src="<?php echo e(asset('images/logo-secretaria.png')); ?>" alt="Secretaría de Salud" class="h-6 lg:h-8 object-contain">
@@ -167,22 +167,26 @@
         </div>
 
         <!-- Avatar y nombre del usuario con dropdown responsive -->
-        <div class="relative flex items-center" x-data="{ openProfile: false }">
+        <div class="relative flex items-center ml-1 lg:ml-2" x-data="{ openProfile: false }">
             <!-- Área clickeable SOLO para ir al perfil -->
-            <a href="<?php echo e(route('usuario.miperfil')); ?>" class="flex items-center space-x-0 lg:space-x-1">
+            <a href="<?php echo e(route('usuario.miperfil')); ?>" class="flex items-center gap-2.5 lg:gap-3.5">
                 <!-- Avatar circular más grande -->
-                <div class="w-9 h-9 lg:w-11 lg:h-11 rounded-full overflow-hidden">
-                    <ion-icon name="person-circle" class="text-white text-4xl lg:text-[44px]"></ion-icon>
+                <div class="w-9 h-9 lg:w-11 lg:h-11 rounded-full overflow-hidden flex-shrink-0 bg-[#611132] flex items-center justify-center">
+                    <?php if(auth()->user()->profile_photo_path): ?>
+                        <img src="<?php echo e(asset('storage/' . auth()->user()->profile_photo_path)); ?>" alt="Foto de perfil" class="w-full h-full object-cover">
+                    <?php else: ?>
+                        <img src="<?php echo e(asset('images/default_pfp.svg.png')); ?>" alt="Avatar predeterminado" class="w-full h-full object-cover">
+                    <?php endif; ?>
                 </div>
                 <!-- Nombre y cargo - se oculta en mobile -->
-                <div class="text-left hidden lg:block min-w-0 w-40">
-                    <p class="text-sm font-semibold"><?php echo e(auth()->user()->name); ?></p>
-                    <p class="text-xs text-gray-300"><?php echo e(auth()->user()->position->name ?? 'Sin cargo'); ?></p>
+                <div class="text-left hidden lg:block min-w-0 w-44 h-8 overflow-hidden">
+                    <p class="text-sm font-semibold leading-tight truncate"><?php echo e(trim(implode(' ', array_filter([auth()->user()->name, auth()->user()->first_last_name])))); ?></p>
+                    <p class="text-xs text-gray-300 leading-tight truncate"><?php echo e(auth()->user()->position->name ?? 'Sin cargo'); ?></p>
                 </div>
             </a>
 
             <!-- Botón separado SOLO para abrir el menú -->
-            <button @click="openProfile = !openProfile" class="p-1 text-gray-300 hover:text-white transition-colors ml-1">
+            <button @click="openProfile = !openProfile" class="ml-2 lg:ml-3 p-1.5 lg:p-2 text-gray-300 hover:text-white transition-colors hover:bg-white/10 rounded-lg flex-shrink-0">
                 <ion-icon name="chevron-down" class="text-lg lg:text-xl"></ion-icon>
             </button>
 
@@ -201,7 +205,7 @@
                 <!-- Encabezado del menú -->
                 <div class="px-3 lg:px-4 py-2 lg:py-3 border-b border-gray-100 bg-gray-50">
                     <p class="text-xs lg:text-sm font-medium text-gray-600">Cuenta</p>
-                    <p class="text-xs text-gray-500 mt-1"><?php echo e(auth()->user()->name); ?></p>
+                    <p class="text-xs text-gray-500 mt-1"><?php echo e(trim(implode(' ', array_filter([auth()->user()->name, auth()->user()->first_last_name, auth()->user()->second_last_name])))); ?></p>
                 </div>
 
                 <!-- Opciones del menú -->

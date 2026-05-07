@@ -154,13 +154,17 @@ class UserController extends Controller
         }
 
         // registration date range
-        if ($request->filled('date_range') && $request->input('date_range') !== 'custom') {
+        if ($request->filled('date_range') && $request->input('date_range') !== 'custom' && $request->input('date_range') !== 'all') {
             $dr = $request->input('date_range');
-            if (is_numeric($dr)) {
-                $days = (int) $dr;
+            $daysMap = [
+                '7days' => 7,
+                '30days' => 30,
+                '90days' => 90,
+                '6months' => 180,
+            ];
+            if (isset($daysMap[$dr])) {
+                $days = $daysMap[$dr];
                 $query->whereDate('registration_date', '>=', now()->subDays($days));
-            } elseif ($dr === 'year') {
-                $query->whereYear('registration_date', now()->year);
             }
         } elseif ($request->input('date_range') === 'custom') {
             if ($request->filled('date_from')) {

@@ -430,6 +430,17 @@
             $('#ultimaSesion, #estadoCuenta, #dateRange, #cargo, #jurisdiccion, #rol').on('change', function() {
                 try { table.ajax.reload(); } catch (e) {}
             });
+
+            // Handle date range selector visibility
+            $('#dateRange').on('change', function() {
+                const val = $(this).val();
+                const customSelector = $('#customRangeSelector');
+                if (val === 'custom') {
+                    customSelector.slideDown(200);
+                } else {
+                    customSelector.slideUp(200);
+                }
+            });
         });
     </script>
 @endsection

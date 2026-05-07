@@ -16,30 +16,33 @@
                 <div class="border border-[#404041] rounded-lg p-6 bg-white">
                     <!-- FOTO DE PERFIL -->
                     <div class="flex flex-col items-center mb-6">
-                        <div class="w-24 h-24 bg-[#611132] rounded-full flex items-center justify-center mb-4">
-                            <span class="text-white text-2xl font-lora font-bold">
-                                <?php
-                                    $givenName = trim(auth()->user()->name ?? '');
-                                    $firstLast = trim(auth()->user()->first_last_name ?? '');
-                                    $secondLast = trim(auth()->user()->second_last_name ?? '');
-                                    $fullName = trim(implode(' ', array_filter([$givenName, $firstLast, $secondLast])));
-                                    $initials = '';
-                                    if ($fullName !== '') {
-                                        $parts = preg_split('/\s+/', $fullName);
-                                        if (count($parts) >= 2) {
-                                            $initials = mb_substr($parts[0], 0, 1) . mb_substr($parts[1], 0, 1);
-                                        } else {
-                                            $initials = mb_substr($parts[0], 0, 2);
-                                        }
-                                    }
-                                ?>
-                                <?php echo e(strtoupper($initials)); ?>
-
-                            </span>
+                        <div class="relative group">
+                            <?php if(auth()->user()->profile_photo_path): ?>
+                                <img src="<?php echo e(asset('storage/' . auth()->user()->profile_photo_path)); ?>" alt="Foto de perfil" class="w-24 h-24 rounded-full object-cover border-4 border-[#611132]">
+                            <?php else: ?>
+                                <img src="<?php echo e(asset('images/default_pfp.svg.png')); ?>" alt="Avatar predeterminado" class="w-24 h-24 rounded-full object-cover border-4 border-[#611132]">
+                            <?php endif; ?>
+                            
+                            <!-- Overlay hover con opciones -->
+                            <div class="absolute inset-0 rounded-full bg-black bg-opacity-0 group-hover:bg-opacity-50 transition-all duration-300 flex items-center justify-center opacity-0 group-hover:opacity-100">
+                                <div class="flex gap-2">
+                                    <button type="button" id="uploadPhotoBtn" class="bg-white text-[#611132] p-2 rounded-full hover:bg-gray-100 transition" title="Cambiar foto">
+                                        <i class="fas fa-camera text-sm"></i>
+                                    </button>
+                                    <?php if(auth()->user()->profile_photo_path): ?>
+                                        <button type="button" id="deletePhotoBtn" class="bg-white text-red-600 p-2 rounded-full hover:bg-gray-100 transition" title="Eliminar foto">
+                                            <i class="fas fa-trash text-sm"></i>
+                                        </button>
+                                    <?php endif; ?>
+                                </div>
+                            </div>
                         </div>
-                        <h2 class="text-lg font-lora font-bold text-[#404041] text-center"><?php echo e($fullName ?: auth()->user()->name); ?></h2>
+                        
+                        <!-- Input file hidden -->
+                        <input type="file" id="photoInput" accept="image/*" style="display: none;">
+                        
+                        <h2 class="text-lg font-lora font-bold text-[#404041] text-center mt-4"><?php echo e($fullName ?? auth()->user()->name); ?></h2>
                         <p class="text-sm text-gray-600 font-lora text-center"><?php echo e(auth()->user()->position->name ?? 'Sin cargo'); ?></p>
-                       
                     </div>
 
                     <!-- INFORMACIÓN RÁPIDA -->
@@ -209,5 +212,100 @@
 
     <!-- AGREGAR FONT AWESOME -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const uploadPhotoBtn = document.getElementById('uploadPhotoBtn');
+            const deletePhotoBtn = document.getElementById('deletePhotoBtn');
+            const photoInput = document.getElementById('photoInput');
+
+            // Abrir input de archivo al hacer click en el botón
+            if (uploadPhotoBtn) {
+                uploadPhotoBtn.addEventListener('click', function() {
+                    photoInput.click();
+                });
+            }
+
+            // Manejar la selección del archivo
+            if (photoInput) {
+                photoInput.addEventListener('change', function(e) {
+                    const file = e.target.files[0];
+                    if (!file) return;
+
+                    // Validar tamaño (máx 5MB)
+                    if (file.size > 5 * 1024 * 1024) {
+                        alert('El archivo es demasiado grande. Máximo 5MB.');
+                        return;
+                    }
+
+                    // Subir foto
+                    const formData = new FormData();
+                    formData.append('profile_photo', file);
+                    formData.append('_token', '<?php echo e(csrf_token()); ?>');
+
+                    const uploadBtn = uploadPhotoBtn;
+                    uploadBtn.disabled = true;
+                    uploadBtn.innerHTML = '<i class="fas fa-spinner fa-spin text-sm"></i>';
+
+                    fetch('<?php echo e(route("usuario.upload-photo")); ?>', {
+                        method: 'POST',
+                        body: formData
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            // Recargar la página para mostrar la nueva foto
+                            location.reload();
+                        } else {
+                            alert('Error: ' + data.message);
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('Error al subir la foto');
+                    })
+                    .finally(() => {
+                        uploadBtn.disabled = false;
+                        uploadBtn.innerHTML = '<i class="fas fa-camera text-sm"></i>';
+                    });
+                });
+            }
+
+            // Eliminar foto de perfil
+            if (deletePhotoBtn) {
+                deletePhotoBtn.addEventListener('click', function() {
+                    if (!confirm('¿Está seguro de que desea eliminar su foto de perfil?')) {
+                        return;
+                    }
+
+                    const deleteBtn = deletePhotoBtn;
+                    deleteBtn.disabled = true;
+
+                    fetch('<?php echo e(route("usuario.delete-photo")); ?>', {
+                        method: 'DELETE',
+                        headers: {
+                            'X-CSRF-TOKEN': '<?php echo e(csrf_token()); ?>',
+                            'Content-Type': 'application/json'
+                        }
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            location.reload();
+                        } else {
+                            alert('Error: ' + data.message);
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('Error al eliminar la foto');
+                    })
+                    .finally(() => {
+                        deleteBtn.disabled = false;
+                    });
+                });
+            }
+        });
+    </script>
 <?php $__env->stopSection(); ?>
 <?php echo $__env->make('layouts.principal', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH C:\Proyectos Laravel\sistema-sec-tam\resources\views/usuarios/miperfil.blade.php ENDPATH**/ ?>

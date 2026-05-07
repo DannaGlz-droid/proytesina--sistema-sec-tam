@@ -3,14 +3,14 @@
     <a href="<?php echo e(route('usuario.miperfil')); ?>" class="text-sm lg:text-base h-full text-white py-0.5 lg:py-1 px-6 lg:px-8 transition duration-200 ease-in-out flex items-center flex-shrink-0 relative group">
             <span class="relative py-1.5">
                 Mi perfil
-                <span class="absolute bottom-0 left-0 w-0 h-0.5 bg-[#DB9703] transition-all duration-200 group-hover:w-full"></span>
+                <span class="absolute bottom-0 left-0 w-0 h-0.5 bg-[#bc955c] transition-all duration-200 group-hover:w-full"></span>
             </span>
         </a>
     <?php if(auth()->user() && auth()->user()->isAdmin()): ?>
         <a href="<?php echo e(route('user.user-gestion')); ?>" class="text-sm lg:text-base h-full text-white py-0.5 lg:py-1 px-6 lg:px-8 transition duration-200 ease-in-out flex items-center flex-shrink-0 relative group">
             <span class="relative py-1.5">
                 Gestión de usuarios
-                <span class="absolute bottom-0 left-0 w-0 h-0.5 bg-[#DB9703] transition-all duration-200 group-hover:w-full"></span>
+                <span class="absolute bottom-0 left-0 w-0 h-0.5 bg-[#bc955c] transition-all duration-200 group-hover:w-full"></span>
             </span>
         </a>
     <?php endif; ?>

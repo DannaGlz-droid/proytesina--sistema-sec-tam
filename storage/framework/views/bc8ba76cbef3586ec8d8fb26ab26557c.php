@@ -4,7 +4,7 @@
     <a href="<?php echo e(route('reportes.index')); ?>" class="text-sm lg:text-base h-full px-4 lg:px-6 transition duration-200 ease-in-out flex items-center flex-shrink-0 relative group">
             <span class="relative py-1.5">
                 Centro de control
-                <span class="absolute bottom-0 left-0 w-0 h-0.5 bg-[#DB9703] transition-all duration-200 group-hover:w-full"></span>
+                <span class="absolute bottom-0 left-0 w-0 h-0.5 bg-[#bc955c] transition-all duration-200 group-hover:w-full"></span>
             </span>
         </a>
         
@@ -14,7 +14,7 @@
                 <span class="relative py-1.5 flex items-center">
                     Nuevo registro
                     <i class="fas fa-chevron-down text-xs ml-1 lg:ml-2 transition-transform duration-200" id="menuArrow"></i>
-                    <span class="absolute bottom-0 left-0 w-0 h-0.5 bg-[#DB9703] transition-all duration-200 group-hover:w-full"></span>
+                    <span class="absolute bottom-0 left-0 w-0 h-0.5 bg-[#bc955c] transition-all duration-200 group-hover:w-full"></span>
                 </span>
             </button>
             

@@ -157,7 +157,9 @@ Route::middleware('auth')->group(function () {
     Route::post('notificaciones/marcar-todas-leidas', [App\Http\Controllers\ReportController::class, 'markAllNotificationsRead'])->name('notificaciones.mark-all-read');
 
     // ========== PERFIL Y UTILIDADES (Todos los usuarios autenticados) ==========
-    Route::view('usuario/miperfil', 'usuarios.miperfil')->name('usuario.miperfil');
+    Route::get('usuario/miperfil', [App\Http\Controllers\UserProfileController::class, 'show'])->name('usuario.miperfil');
+    Route::post('usuario/miperfil/upload-photo', [App\Http\Controllers\UserProfileController::class, 'uploadPhoto'])->name('usuario.upload-photo');
+    Route::delete('usuario/miperfil/delete-photo', [App\Http\Controllers\UserProfileController::class, 'deletePhoto'])->name('usuario.delete-photo');
     
     // API endpoints for autocomplete (todos los roles con acceso a reportes)
     Route::middleware('role:Administrador,Coordinador,Operador')->group(function () {

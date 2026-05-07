@@ -35,23 +35,23 @@
                             @error('name') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
                         </div>
                         <div>
-                            <label for="first_last_name" class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Apellido paterno <span class="text-red-600">*</span></label>
-                            <input id="first_last_name" name="first_last_name" type="text" required minlength="2" maxlength="191"
-                                   class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora" 
-                                   placeholder="Ej: García"
-                                value="{{ old('first_last_name', $user->first_last_name) }}">
-                            @error('first_last_name') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
-                        </div>
-                    </div>
-                    
-                    <div class="space-y-3">
-                        <div>
                             <label for="second_last_name" class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Apellido materno</label>
                             <input id="second_last_name" name="second_last_name" type="text" minlength="2" maxlength="191"
                                    class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora" 
                                    placeholder="Ej: López"
                                 value="{{ old('second_last_name', $user->second_last_name) }}">
                             @error('second_last_name') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
+                        </div>
+                    </div>
+                    
+                    <div class="space-y-3">
+                        <div>
+                            <label for="first_last_name" class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Apellido paterno <span class="text-red-600">*</span></label>
+                            <input id="first_last_name" name="first_last_name" type="text" required minlength="2" maxlength="191"
+                                   class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora" 
+                                   placeholder="Ej: García"
+                                value="{{ old('first_last_name', $user->first_last_name) }}">
+                            @error('first_last_name') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
                         </div>
                         <div>
                             <div class="grid grid-cols-2 gap-3">

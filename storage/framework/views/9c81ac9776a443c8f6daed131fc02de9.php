@@ -172,6 +172,14 @@ unset($__defined_vars, $__key, $__value); ?>
 <?php $component = $__componentOriginal05946ab4158a4a56cc8ba494d36225d3; ?>
 <?php unset($__componentOriginal05946ab4158a4a56cc8ba494d36225d3); ?>
 <?php endif; ?>
+
+    <!-- Botón Aplicar filtros -->
+    <div class="mt-4 pt-3 border-t border-gray-200">
+        <button type="button" id="aplicarFiltrosImportaciones" class="w-full bg-[#611132] text-white px-3 py-3 rounded-lg text-sm font-semibold hover:bg-[#4a0e26] transition-all duration-300 font-lora flex items-center justify-center gap-2">
+            <i class="fas fa-filter text-sm"></i>
+            Aplicar Filtros
+        </button>
+    </div>
  <?php echo $__env->renderComponent(); ?>
 <?php endif; ?>
 <?php if (isset($__attributesOriginalfcb8ead5baf63da144e640a174656b50)): ?>
@@ -483,6 +491,22 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Trigger filter
         window.filterImports && window.filterImports();
+    });
+
+    // Aplicar filtros: si existe el botón principal de búsqueda, simular click para reutilizar lógica
+    document.getElementById('aplicarFiltrosImportaciones')?.addEventListener('click', function() {
+        // Preferir usar el botón de búsqueda si está en la página para garantizar renderTable()
+        const searchBtn = document.getElementById('search-imports-btn');
+        if (searchBtn) {
+            searchBtn.click();
+            return;
+        }
+
+        // Fallback: invocar filterImports y emitir evento para que la página lo capture
+        if (window.filterImports) {
+            window.filterImports();
+            window.dispatchEvent(new Event('importsFiltersApplied'));
+        }
     });
 
     // Mejorar la animación de la sección de usuario
