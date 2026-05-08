@@ -80,6 +80,18 @@
         </div>
     </x-filtros.seccion>
 
+    <!-- Registros fallidos -->
+    <x-filtros.seccion icono="exclamation-triangle" titulo="Registros">
+        <div class="space-y-2">
+            <div class="filter-group">
+                <label class="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-1 rounded">
+                    <input type="checkbox" id="conFallidos" name="conFallidos" class="rounded">
+                    <span class="text-xs text-gray-600 font-lora">Con errores en registros</span>
+                </label>
+            </div>
+        </div>
+    </x-filtros.seccion>
+
     <!-- Botón Aplicar filtros -->
     <div class="mt-4 pt-3 border-t border-gray-200">
         <button type="button" id="aplicarFiltrosImportaciones" class="w-full bg-[#611132] text-white px-3 py-3 rounded-lg text-sm font-semibold hover:bg-[#4a0e26] transition-all duration-300 font-lora flex items-center justify-center gap-2">
@@ -258,25 +270,9 @@ document.addEventListener('DOMContentLoaded', function() {
     const dateRangeImports = document.getElementById('dateRangeImports');
     const customRangeSelectorImports = document.getElementById('customRangeSelectorImports');
 
-    if (dateRangeImports) {
+    if (dateRangeImports && customRangeSelectorImports) {
         dateRangeImports.addEventListener('change', function() {
             customRangeSelectorImports.style.display = this.value === 'custom' ? 'block' : 'none';
-            
-            // Recalcular la altura de la sección padre cuando cambia la visibilidad
-            const sectionContent = dateRangeImports.closest('.filter-section')?.querySelector('.filter-section-content');
-            if (sectionContent && sectionContent.style.maxHeight && sectionContent.style.maxHeight !== '0px') {
-                setTimeout(() => {
-                    const scrollHeight = sectionContent.scrollHeight;
-                    
-                    // Si hay elementos TomSelect, agregar espacio extra para los dropdowns
-                    let maxHeight = scrollHeight;
-                    if (sectionContent.querySelector('.tomselect-select')) {
-                        maxHeight += 350;
-                    }
-                    
-                    sectionContent.style.maxHeight = maxHeight + 'px';
-                }, 50);
-            }
         });
     }
 
@@ -286,13 +282,30 @@ document.addEventListener('DOMContentLoaded', function() {
         if (usuarioSelect && typeof TomSelect !== 'undefined') {
             const tomSelectInstance = new TomSelect(usuarioSelect, {
                 valueField: 'id',
-                labelField: 'name',
-                searchField: 'name',
+                labelField: 'display_name',
+                searchField: ['name', 'username'],
                 maxOptions: 20,
                 maxItems: 1,
                 create: false,
                 preload: 'focus',
                 placeholder: 'Seleccione un usuario...',
+                render: {
+                    option: function (data, escape) {
+                        const name = data.full_name || data.name || '';
+                        const username = data.username ? `@${data.username}` : '';
+                        return `
+                            <div class="py-1">
+                                <div class="text-sm font-medium text-gray-900">${escape(name)}</div>
+                                ${username ? `<div class="text-xs text-gray-500">${escape(username)}</div>` : ''}
+                            </div>
+                        `;
+                    },
+                    item: function (data, escape) {
+                        const name = data.full_name || data.name || '';
+                        const username = data.username ? `@${data.username}` : '';
+                        return `<div>${escape(name)}${username ? ` <span class="text-gray-500">(${escape(username)})</span>` : ''}</div>`;
+                    }
+                },
                 load: function(query, callback) {
                     // Allow empty query so TomSelect can preload all users
                     fetch('/api/users/search?q=' + encodeURIComponent(query))
@@ -368,85 +381,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }, 200);
 
-    // Limpiar filtros
-    document.getElementById('limpiarFiltrosImportaciones').addEventListener('click', function() {
-        // Reset date range
-        if (dateRangeImports) dateRangeImports.value = 'all';
-        customRangeSelectorImports.style.display = 'none';
-        
-        // Reset status checkboxes
-        document.querySelectorAll('.status-checkbox').forEach(cb => cb.checked = false);
-        
-        // Reset usuario usando TomSelect si está disponible
-        if (window.tomSelectUsuarioInstance) {
-            window.tomSelectUsuarioInstance.clear();
-        } else {
-            document.getElementById('usuarioImports').value = '';
-        }
-        
-        // Reset con fallidos
-        document.getElementById('conFallidos').checked = false;
-        
-        // Trigger filter
-        window.filterImports && window.filterImports();
-    });
 
-    // Aplicar filtros: si existe el botón principal de búsqueda, simular click para reutilizar lógica
-    document.getElementById('aplicarFiltrosImportaciones')?.addEventListener('click', function() {
-        // Preferir usar el botón de búsqueda si está en la página para garantizar renderTable()
-        const searchBtn = document.getElementById('search-imports-btn');
-        if (searchBtn) {
-            searchBtn.click();
-            return;
-        }
-
-        // Fallback: invocar filterImports y emitir evento para que la página lo capture
-        if (window.filterImports) {
-            window.filterImports();
-            window.dispatchEvent(new Event('importsFiltersApplied'));
-        }
-    });
-
-    // Mejorar la animación de la sección de usuario
-    const usuarioSection = document.querySelector('.filter-section:has(#usuarioImports)');
-    if (usuarioSection) {
-        const header = usuarioSection.querySelector('.filter-section-header');
-        const content = usuarioSection.querySelector('.filter-section-content');
-        
-        if (header && content) {
-            // Función para recalcular la altura
-            const recalculateHeight = () => {
-                // Obtener la altura del contenido actual
-                const scrollHeight = content.scrollHeight;
-                const currentMaxHeight = content.style.maxHeight;
-                
-                // Si está abierto, actualizar la altura al scrollHeight actual
-                if (currentMaxHeight && currentMaxHeight !== '0px' && parseFloat(currentMaxHeight) > 0) {
-                    content.style.maxHeight = scrollHeight + 'px';
-                }
-            };
-            
-            // Recalcular cuando TomSelect esté listo
-            setTimeout(recalculateHeight, 50);
-            setTimeout(recalculateHeight, 150);
-            setTimeout(recalculateHeight, 300);
-            setTimeout(recalculateHeight, 500);
-            
-            // Usar MutationObserver para detectar cambios en el contenido (TomSelect renderizando)
-            const observer = new MutationObserver(() => {
-                recalculateHeight();
-            });
-            
-            observer.observe(content, {
-                childList: true,
-                subtree: true,
-                attributes: true,
-                attributeFilter: ['style']
-            });
-            
-            // Recalcular en caso de resize
-            window.addEventListener('resize', recalculateHeight);
-        }
-    }
 });
 </script>

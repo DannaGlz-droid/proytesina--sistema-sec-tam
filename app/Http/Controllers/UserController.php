@@ -25,11 +25,25 @@ class UserController extends Controller
         $q = $request->get('q', '');
         $items = User::when($q, function($query) use ($q) {
                     $query->where('name', 'like', "%{$q}%")
+                          ->orWhere('first_last_name', 'like', "%{$q}%")
+                          ->orWhere('second_last_name', 'like', "%{$q}%")
+                          ->orWhere('username', 'like', "%{$q}%")
                           ->orWhere('email', 'like', "%{$q}%");
                 })
                 ->orderBy('name')
                 ->limit(20)
-                ->get(['id', 'name']);
+                ->get(['id', 'name', 'first_last_name', 'second_last_name', 'username']);
+
+        $items = $items->map(function ($user) {
+            $fullName = trim($user->name . ' ' . $user->first_last_name . ' ' . ($user->second_last_name ?? ''));
+            return [
+                'id' => $user->id,
+                'name' => $user->name,
+                'full_name' => $fullName,
+                'username' => $user->username,
+                'display_name' => $user->username ? $fullName . ' (@' . $user->username . ')' : $fullName,
+            ];
+        });
 
         // Return results as array
         return response()->json($items->toArray());

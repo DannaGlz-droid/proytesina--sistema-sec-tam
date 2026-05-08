@@ -789,7 +789,13 @@ class DeathImportController extends Controller
                     'imports.reversed_at',
                     'imports.user_id',
                     'creator.name as created_by',
+                    'creator.first_last_name as created_by_first_last_name',
+                    'creator.second_last_name as created_by_second_last_name',
+                    'creator.username as created_by_username',
                     'reverser.name as reversed_by',
+                    'reverser.first_last_name as reversed_by_first_last_name',
+                    'reverser.second_last_name as reversed_by_second_last_name',
+                    'reverser.username as reversed_by_username',
                 ])
                 ->orderBy('imports.created_at', 'desc')
                 ->paginate(25);
@@ -798,6 +804,51 @@ class DeathImportController extends Controller
         } catch (\Throwable $e) {
             Log::error("Error fetching import history: " . $e->getMessage());
             return response()->json(['ok' => false, 'message' => $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * Delete multiple import history records
+     */
+    public function massDelete(Request $request)
+    {
+        $data = $request->validate([
+            'ids' => ['required', 'array'],
+            'ids.*' => ['integer'],
+        ]);
+
+        $ids = $data['ids'];
+
+        try {
+            DB::beginTransaction();
+
+            $imports = DB::table('imports')
+                ->whereIn('id', $ids)
+                ->get(['id', 'path', 'error_csv_path']);
+
+            $pathsToDelete = [];
+            foreach ($imports as $import) {
+                if (!empty($import->path)) {
+                    $pathsToDelete[] = $import->path;
+                }
+                if (!empty($import->error_csv_path)) {
+                    $pathsToDelete[] = $import->error_csv_path;
+                }
+            }
+
+            if (!empty($pathsToDelete)) {
+                Storage::delete($pathsToDelete);
+            }
+
+            $deleted = DB::table('imports')->whereIn('id', $ids)->delete();
+
+            DB::commit();
+
+            return response()->json(['ok' => true, 'deleted' => $deleted]);
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            Log::error('massDelete imports error: ' . $e->getMessage());
+            return response()->json(['ok' => false, 'message' => 'Error al eliminar historial de importaciones'], 500);
         }
     }
 

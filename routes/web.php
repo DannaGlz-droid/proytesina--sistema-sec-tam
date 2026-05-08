@@ -84,6 +84,7 @@ Route::middleware('auth')->group(function () {
             ]);
         })->name('statistic.failed-imports-view');
         Route::get('api/estadisticas/historial-importaciones', [App\Http\Controllers\DeathImportController::class, 'getImportHistory'])->name('statistic.import-history');
+        Route::post('api/estadisticas/importaciones/mass-delete', [App\Http\Controllers\DeathImportController::class, 'massDelete'])->name('statistic.import-history.massDelete');
         Route::post('api/estadisticas/revertir-importacion/{importId}', [App\Http\Controllers\DeathImportController::class, 'reverseImport'])->name('statistic.reverse-import');
         
         // Failed records management
