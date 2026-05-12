@@ -477,4 +477,322 @@ class StatisticsController extends Controller
             ], 500);
         }
     }
+
+    /**
+     * Obtiene datos de un tipo de gráfica específica con filtros aplicados.
+     * GET /api/chart/{chartType}?filters...
+     * 
+     * Tipos soportados: municipios, tendencias, edades, genero, causas, jurisdicciones, comparativa
+     */
+    public function getChartData(Request $request, $chartType = 'municipios')
+    {
+        try {
+            $filters = $request->all();
+            
+            // Resolver columna de fecha
+            $dateColumn = Schema::hasColumn('deaths', 'death_date') ? 'death_date' : 'created_at';
+            
+            // Determinar columna de municipio según parámetro
+            $munCol = !empty($filters['municipio_kind']) && $filters['municipio_kind'] === 'residence' 
+                ? 'residence_municipality_id' 
+                : 'death_municipality_id';
+            
+            // Helper para aplicar filtros comunes
+            $applyFilters = function ($query) use ($filters, $dateColumn, $munCol) {
+                // Rango de fechas
+                if (!empty($filters['start_date']) && !empty($filters['end_date'])) {
+                    $query->whereBetween($dateColumn, [$filters['start_date'], $filters['end_date']]);
+                }
+                
+                // Municipio
+                if (!empty($filters['municipality_id']) && is_numeric($filters['municipality_id'])) {
+                    $query->where($munCol, (int)$filters['municipality_id']);
+                } elseif (!empty($filters['municipios']) && is_array($filters['municipios'])) {
+                    $query->whereIn($munCol, $filters['municipios']);
+                }
+                
+                // Causa
+                if (!empty($filters['cause_id']) && is_numeric($filters['cause_id'])) {
+                    $query->where('death_cause_id', (int)$filters['cause_id']);
+                } elseif (!empty($filters['causas']) && is_array($filters['causas'])) {
+                    $query->whereIn('death_cause_id', $filters['causas']);
+                }
+                
+                // Sexo
+                if (!empty($filters['sex'])) {
+                    $query->where('sex', $filters['sex']);
+                }
+                
+                // Jurisdicción
+                if (!empty($filters['jurisdiction_id']) && is_numeric($filters['jurisdiction_id'])) {
+                    $query->where('jurisdiction_id', (int)$filters['jurisdiction_id']);
+                }
+            };
+            
+            $limit = !empty($filters['limit']) && is_numeric($filters['limit']) ? (int)$filters['limit'] : null;
+            
+            // Según el tipo de gráfica, ejecutar consultas específicas
+            switch ($chartType) {
+                case 'municipios':
+                    return $this->getChartMunicipios($filters, $dateColumn, $munCol, $applyFilters, $limit);
+                    
+                case 'tendencias':
+                    return $this->getChartTendencias($filters, $dateColumn, $applyFilters);
+                    
+                case 'edades':
+                    return $this->getChartEdades($filters, $dateColumn, $applyFilters, $limit);
+                    
+                case 'genero':
+                    return $this->getChartGenero($filters, $dateColumn, $applyFilters);
+                    
+                case 'causas':
+                    return $this->getChartCausas($filters, $dateColumn, $applyFilters, $limit);
+                    
+                case 'jurisdicciones':
+                    return $this->getChartJurisdicciones($filters, $dateColumn, $applyFilters, $limit);
+                    
+                case 'comparativa':
+                    return $this->getChartComparativa($filters, $dateColumn, $munCol, $applyFilters, $limit);
+                    
+                default:
+                    return response()->json(['error' => 'Tipo de gráfica no válido'], 400);
+            }
+        } catch (\Throwable $e) {
+            \Log::error('getChartData error: ' . $e->getMessage(), ['exception' => $e]);
+            $debug = config('app.debug') ? $e->getMessage() . ' in ' . $e->getFile() . ':' . $e->getLine() : 'Error';
+            return response()->json([
+                'error' => 'Error al obtener datos de la gráfica',
+                'message' => $e->getMessage(),
+                'debug' => $debug,
+            ], 500);
+        }
+    }
+
+    private function getChartMunicipios($filters, $dateColumn, $munCol, $applyFilters, $limit)
+    {
+        $munCountsQ = DB::table('deaths')
+            ->select(DB::raw("{$munCol} as muni_id"), DB::raw('COUNT(*) as total'))
+            ->groupBy(DB::raw("{$munCol}"));
+        $applyFilters($munCountsQ);
+        $munCountsRaw = $munCountsQ->get()->pluck('total', 'muni_id')->all();
+
+        $municipalitiesQ = DB::table('municipalities')->select('id','name','jurisdiction_id')->orderBy('name');
+        if (Schema::hasTable('jurisdictions') && DB::table('jurisdictions')->count() === 12) {
+            $jurIds = DB::table('jurisdictions')->pluck('id')->all();
+            $municipalitiesQ->whereIn('jurisdiction_id', $jurIds);
+        }
+        $municipalitiesFull = $municipalitiesQ->get();
+
+        $municipios = $municipalitiesFull->map(function($m) use ($munCountsRaw) {
+            $total = isset($munCountsRaw[$m->id]) ? (int)$munCountsRaw[$m->id] : 0;
+            return ['name' => $m->name ?? 'Sin dato', 'total' => $total];
+        })->sortByDesc('total');
+        
+        if ($limit) {
+            $municipios = $municipios->take($limit);
+        }
+
+        return response()->json([
+            'type' => 'municipios',
+            'labels' => $municipios->pluck('name')->values()->all(),
+            'counts' => $municipios->pluck('total')->values()->all(),
+            'total' => array_sum($municipios->pluck('total')->all()),
+        ]);
+    }
+
+    private function getChartTendencias($filters, $dateColumn, $applyFilters)
+    {
+        $groupBy = $filters['group_by'] ?? 'month';
+        
+        if ($groupBy === 'day') {
+            $query = DB::table('deaths')
+                ->select(DB::raw("DATE(deaths.{$dateColumn}) as period"),
+                         DB::raw("MIN(DATE_FORMAT(deaths.{$dateColumn}, '%d %b')) as period_label"),
+                         DB::raw('COUNT(*) as total'))
+                ->groupBy(DB::raw("DATE(deaths.{$dateColumn})"))->orderBy(DB::raw("DATE(deaths.{$dateColumn})"));
+        } elseif ($groupBy === 'year') {
+            $query = DB::table('deaths')
+                ->select(DB::raw("DATE_FORMAT(deaths.{$dateColumn}, '%Y') as period"),
+                         DB::raw("DATE_FORMAT(deaths.{$dateColumn}, '%Y') as period_label"),
+                         DB::raw('COUNT(*) as total'))
+                ->groupBy(DB::raw("DATE_FORMAT(deaths.{$dateColumn}, '%Y')"))
+                ->orderBy(DB::raw("DATE_FORMAT(deaths.{$dateColumn}, '%Y')"));
+        } else {
+            // month (default)
+            $query = DB::table('deaths')
+                ->select(DB::raw("DATE_FORMAT(deaths.{$dateColumn}, '%Y-%m') as period"),
+                         DB::raw("MIN(DATE_FORMAT(deaths.{$dateColumn}, '%b %Y')) as period_label"),
+                         DB::raw('COUNT(*) as total'))
+                ->groupBy(DB::raw("DATE_FORMAT(deaths.{$dateColumn}, '%Y-%m')"))
+                ->orderBy(DB::raw("DATE_FORMAT(deaths.{$dateColumn}, '%Y-%m')"));
+        }
+        
+        $applyFilters($query);
+        $data = $query->get();
+
+        return response()->json([
+            'type' => 'tendencias',
+            'group_by' => $groupBy,
+            'labels' => $data->pluck('period_label')->values()->all(),
+            'counts' => $data->pluck('total')->map(fn($v) => (int)$v)->values()->all(),
+            'total' => array_sum($data->pluck('total')->all()),
+        ]);
+    }
+
+    private function getChartEdades($filters, $dateColumn, $applyFilters, $limit)
+    {
+        $ageOrder = ['0-4','5-14','15-24','25-34','35-44','45-54','55-64','65-74','75+','Desconocido'];
+        $edades = collect();
+
+        if (Schema::hasColumn('deaths', 'birth_date')) {
+            $edadesQ = DB::table('deaths')
+                ->select(DB::raw("CASE
+                    WHEN birth_date IS NULL THEN 'Desconocido'
+                    WHEN TIMESTAMPDIFF(YEAR, birth_date, CURDATE()) BETWEEN 0 AND 4 THEN '0-4'
+                    WHEN TIMESTAMPDIFF(YEAR, birth_date, CURDATE()) BETWEEN 5 AND 14 THEN '5-14'
+                    WHEN TIMESTAMPDIFF(YEAR, birth_date, CURDATE()) BETWEEN 15 AND 24 THEN '15-24'
+                    WHEN TIMESTAMPDIFF(YEAR, birth_date, CURDATE()) BETWEEN 25 AND 34 THEN '25-34'
+                    WHEN TIMESTAMPDIFF(YEAR, birth_date, CURDATE()) BETWEEN 35 AND 44 THEN '35-44'
+                    WHEN TIMESTAMPDIFF(YEAR, birth_date, CURDATE()) BETWEEN 45 AND 54 THEN '45-54'
+                    WHEN TIMESTAMPDIFF(YEAR, birth_date, CURDATE()) BETWEEN 55 AND 64 THEN '55-64'
+                    WHEN TIMESTAMPDIFF(YEAR, birth_date, CURDATE()) BETWEEN 65 AND 74 THEN '65-74'
+                    ELSE '75+' END as range"), DB::raw('COUNT(*) as total'))
+                ->groupBy('range');
+            $applyFilters($edadesQ);
+            $edadesRaw = $edadesQ->get();
+
+            $ordered = collect();
+            foreach ($ageOrder as $lbl) {
+                $found = $edadesRaw->firstWhere('range', $lbl);
+                $ordered->push(['range' => $lbl, 'total' => $found ? (int)$found->total : 0]);
+            }
+            $edades = $ordered;
+        }
+
+        return response()->json([
+            'type' => 'edades',
+            'labels' => $edades->pluck('range')->values()->all(),
+            'counts' => $edades->pluck('total')->values()->all(),
+            'total' => array_sum($edades->pluck('total')->all()),
+        ]);
+    }
+
+    private function getChartGenero($filters, $dateColumn, $applyFilters)
+    {
+        $query = DB::table('deaths')
+            ->select('sex', DB::raw('COUNT(*) as total'))
+            ->groupBy('sex');
+        $applyFilters($query);
+        $generos = $query->get();
+
+        // Normalizar etiquetas
+        $generos = $generos->map(function($g) {
+            $label = $g->sex ?? 'Sin dato';
+            if (in_array(strtolower($label), ['m', 'masculino'])) $label = 'Hombre';
+            elseif (in_array(strtolower($label), ['f', 'femenino'])) $label = 'Mujer';
+            return ['label' => $label, 'total' => (int)$g->total];
+        });
+
+        return response()->json([
+            'type' => 'genero',
+            'labels' => $generos->pluck('label')->values()->all(),
+            'counts' => $generos->pluck('total')->values()->all(),
+            'total' => array_sum($generos->pluck('total')->all()),
+        ]);
+    }
+
+    private function getChartCausas($filters, $dateColumn, $applyFilters, $limit)
+    {
+        $query = DB::table('deaths')
+            ->leftJoin('death_causes', 'death_causes.id', '=', 'deaths.death_cause_id')
+            ->select('death_causes.name as name', DB::raw('COUNT(deaths.id) as total'))
+            ->groupBy('death_causes.name')
+            ->orderByDesc('total');
+        $applyFilters($query);
+        if ($limit) {
+            $query->limit($limit);
+        }
+        $causas = $query->get();
+
+        return response()->json([
+            'type' => 'causas',
+            'labels' => $causas->pluck('name')->map(fn($v) => $v ?? 'Sin dato')->values()->all(),
+            'counts' => $causas->pluck('total')->map(fn($v) => (int)$v)->values()->all(),
+            'total' => array_sum($causas->pluck('total')->all()),
+        ]);
+    }
+
+    private function getChartJurisdicciones($filters, $dateColumn, $applyFilters, $limit)
+    {
+        if (!Schema::hasTable('jurisdictions')) {
+            return response()->json(['error' => 'Tabla de jurisdicciones no existe'], 404);
+        }
+
+        $query = DB::table('deaths')
+            ->leftJoin('jurisdictions', 'jurisdictions.id', '=', 'deaths.jurisdiction_id')
+            ->select('jurisdictions.name as name', DB::raw('COUNT(deaths.id) as total'))
+            ->groupBy('jurisdictions.name')
+            ->orderByDesc('total');
+        $applyFilters($query);
+        if ($limit) {
+            $query->limit($limit);
+        }
+        $jurisdictions = $query->get();
+
+        return response()->json([
+            'type' => 'jurisdicciones',
+            'labels' => $jurisdictions->pluck('name')->map(fn($v) => $v ?? 'Sin dato')->values()->all(),
+            'counts' => $jurisdictions->pluck('total')->map(fn($v) => (int)$v)->values()->all(),
+            'total' => array_sum($jurisdictions->pluck('total')->all()),
+        ]);
+    }
+
+    private function getChartComparativa($filters, $dateColumn, $munCol, $applyFilters, $limit)
+    {
+        // Obtener municipios
+        $munCountsQ = DB::table('deaths')
+            ->select(DB::raw("death_municipality_id as muni_id"), DB::raw('COUNT(*) as total'))
+            ->groupBy(DB::raw("death_municipality_id"));
+        $applyFilters($munCountsQ);
+        $deathCounts = $munCountsQ->get()->pluck('total', 'muni_id')->all();
+
+        $resCountsQ = DB::table('deaths')
+            ->select(DB::raw('residence_municipality_id as muni_id'), DB::raw('COUNT(*) as total'))
+            ->groupBy(DB::raw('residence_municipality_id'));
+        $applyFilters($resCountsQ);
+        $resCounts = $resCountsQ->get()->pluck('total', 'muni_id')->all();
+
+        $municipalitiesQ = DB::table('municipalities')->select('id','name','jurisdiction_id')->orderBy('name');
+        if (Schema::hasTable('jurisdictions') && DB::table('jurisdictions')->count() === 12) {
+            $jurIds = DB::table('jurisdictions')->pluck('id')->all();
+            $municipalitiesQ->whereIn('jurisdiction_id', $jurIds);
+        }
+        $municipalitiesFull = $municipalitiesQ->get();
+
+        $municipios = $municipalitiesFull->map(function($m) use ($resCounts, $deathCounts) {
+            $resCount = isset($resCounts[$m->id]) ? (int)$resCounts[$m->id] : 0;
+            $deathCount = isset($deathCounts[$m->id]) ? (int)$deathCounts[$m->id] : 0;
+            return [
+                'name' => $m->name ?? 'Sin dato',
+                'residence' => $resCount,
+                'death' => $deathCount
+            ];
+        })->sortByDesc(function($m) { return $m['residence'] + $m['death']; });
+
+        if ($limit) {
+            $municipios = $municipios->take($limit);
+        }
+
+        $labels = $municipios->pluck('name')->values()->all();
+        $residence = $municipios->pluck('residence')->values()->all();
+        $death = $municipios->pluck('death')->values()->all();
+
+        return response()->json([
+            'type' => 'comparativa',
+            'labels' => $labels,
+            'residence_counts' => $residence,
+            'death_counts' => $death,
+            'total' => array_sum($residence) + array_sum($death),
+        ]);
+    }
 }

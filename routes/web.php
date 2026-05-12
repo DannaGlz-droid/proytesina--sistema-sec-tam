@@ -60,6 +60,7 @@ Route::middleware('auth')->group(function () {
         Route::delete('estadisticas/datos/{death}', [App\Http\Controllers\DeathController::class, 'destroy'])->name('statistic.destroy');
         Route::get('estadisticas/graficas', [App\Http\Controllers\StatisticsController::class, 'index'])->name('estadisticas.graficas');
         Route::get('estadisticas/charts-data', [App\Http\Controllers\StatisticsController::class, 'chartsData'])->name('estadisticas.charts-data');
+        Route::get('api/chart/{chartType?}', [App\Http\Controllers\StatisticsController::class, 'getChartData'])->name('api.chart.data');
     });
 
     // ========== HISTORIAL DE IMPORTACIONES (Solo Administrador) ==========
@@ -86,6 +87,8 @@ Route::middleware('auth')->group(function () {
         Route::get('api/estadisticas/historial-importaciones', [App\Http\Controllers\DeathImportController::class, 'getImportHistory'])->name('statistic.import-history');
         Route::post('api/estadisticas/importaciones/mass-delete', [App\Http\Controllers\DeathImportController::class, 'massDelete'])->name('statistic.import-history.massDelete');
         Route::post('api/estadisticas/revertir-importacion/{importId}', [App\Http\Controllers\DeathImportController::class, 'reverseImport'])->name('statistic.reverse-import');
+        // Delete single import history entry (does NOT delete imported deaths)
+        Route::post('api/estadisticas/importaciones/{importId}/delete', [App\Http\Controllers\DeathImportController::class, 'destroy'])->name('statistic.import-history.delete');
         
         // Failed records management
         Route::get('api/estadisticas/importaciones/{importId}/registros-fallidos', [App\Http\Controllers\DeathImportController::class, 'getFailedRecords'])->name('statistic.failed-records');

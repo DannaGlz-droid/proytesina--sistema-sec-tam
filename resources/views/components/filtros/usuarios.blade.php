@@ -50,11 +50,11 @@
         <div id="customRangeSelector" class="custom-range-group" style="display: {{ request('date_range') === 'custom' ? 'block' : 'none' }};">
             <div class="filter-group">
                 <label class="block text-xs text-gray-600 font-lora mb-1">Desde:</label>
-                <input type="date" name="date_from" id="startDate" value="{{ request('date_from') }}" class="w-full border border-[#404041] rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-[#611132] focus:border-[#611132]">
+                <input type="date" name="date_from" id="startDate" value="{{ request('date_from') }}" max="{{ now()->toDateString() }}" class="w-full border border-[#404041] rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-[#611132] focus:border-[#611132]">
             </div>
             <div class="filter-group">
                 <label class="block text-xs text-gray-600 font-lora mb-1">Hasta:</label>
-                <input type="date" name="date_to" id="endDate" value="{{ request('date_to') }}" class="w-full border border-[#404041] rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-[#611132] focus:border-[#611132]">
+                <input type="date" name="date_to" id="endDate" value="{{ request('date_to') }}" max="{{ now()->toDateString() }}" class="w-full border border-[#404041] rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-[#611132] focus:border-[#611132]">
             </div>
         </div>
     </x-filtros.seccion>
@@ -85,7 +85,7 @@
     <x-filtros.seccion icono="map-marker-alt" titulo="Ubicación">
         <div class="filter-group">
             <label class="block text-xs text-gray-600 font-lora mb-1">Jurisdicción:</label>
-            <select name="jurisdiction_id" class="w-full border border-[#404041] rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-[#611132] focus:border-[#611132]" id="jurisdiccion">
+            <select name="jurisdiction_id" class="tomselect-select" id="jurisdiccion">
                 <option value="" {{ request('jurisdiction_id') === null || request('jurisdiction_id') === '' ? 'selected' : '' }}>Todas</option>
                 @if(isset($jurisdictions) && $jurisdictions->isNotEmpty())
                     @foreach($jurisdictions as $j)
@@ -190,6 +190,136 @@
 
 /* chevron transition */
 .filter-section-header .fa-chevron-down { transition: transform 300ms ease; }
+
+/* TomSelect Styles */
+select.tomselect-select {
+    position: absolute !important;
+    left: -9999px !important;
+    width: 1px !important;
+    height: 1px !important;
+    overflow: hidden !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+    border: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: transparent !important;
+    -webkit-appearance: none !important;
+    -moz-appearance: none !important;
+    appearance: none !important;
+    display: none !important;
+}
+
+select.tomselect-select::-ms-expand { display: none !important; }
+select.tomselect-select { 
+    background-image: none !important;
+    visibility: hidden !important;
+}
+
+.ts-wrapper { 
+    display: block; 
+    width: 100%;
+    position: relative;
+    z-index: 9999 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+.ts-control {
+    z-index: 9999 !important;
+    position: relative;
+    border: 1px solid #404041 !important;
+    border-radius: 0.5rem !important;
+    padding: 6px 12px !important;
+    background: #ffffff !important;
+    font-family: inherit;
+    font-size: 0.75rem;
+    line-height: 1.25rem !important;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    box-sizing: border-box;
+    margin: 0 !important;
+    box-shadow: none !important;
+    height: auto !important;
+    min-height: 32px !important;
+    transition: all 0.2s ease;
+}
+
+.ts-control:focus-within {
+    border-color: #404041 !important;
+    outline: none !important;
+    box-shadow: 0 0 0 1px #611132 !important;
+}
+
+.ts-control .item, .ts-control input {
+    padding: 0 !important;
+    margin: 0 !important;
+    height: auto !important;
+    line-height: 1.25rem !important;
+    font-size: inherit;
+    font-family: inherit;
+}
+
+.ts-control .dropdown-toggle,
+.ts-control .ts-dropdown-toggle,
+.ts-control .dropdown_toggle,
+.ts-control .ts-clear {
+    display: none !important;
+}
+
+.ts-dropdown {
+    border: 1px solid #404041;
+    border-radius: 0.5rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    max-height: 250px;
+    overflow-y: auto;
+    z-index: 999999 !important;
+    position: absolute !important;
+    top: 100% !important;
+    left: 0 !important;
+    right: 0 !important;
+    background: white;
+    margin-top: 2px;
+}
+
+.ts-dropdown .ts-option {
+    padding: 0.5rem 0.75rem;
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+}
+
+.ts-dropdown .ts-option:hover {
+    background-color: #f3f4f6;
+}
+
+.ts-dropdown .ts-option.selected {
+    background-color: #e5e7eb;
+    color: #404041;
+}
+
+.ts-control::after {
+    content: "";
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 18px;
+    height: 18px;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'/></svg>");
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: 12px 12px;
+    pointer-events: none;
+    opacity: 0.92;
+}
+
+.ts-wrapper, .ts-control { vertical-align: middle; }
+
+/* Asegurar que TomSelect dropdown tenga muy alto z-index */
+.filter-section-content {
+    position: relative;
+}
 </style>
 
 <script>
@@ -327,6 +457,27 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!form) e.preventDefault();
     });
 
+    function clampToToday(input) {
+        if (!input || !input.value) return true;
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const chosen = new Date(input.value + 'T00:00:00');
+        if (chosen > today) {
+            input.value = '';
+            alert('La fecha no puede ser mayor a la fecha actual.');
+            return false;
+        }
+        return true;
+    }
+
+    document.getElementById('startDate')?.addEventListener('change', function() {
+        clampToToday(this);
+    });
+
+    document.getElementById('endDate')?.addEventListener('change', function() {
+        clampToToday(this);
+    });
+
     // Recalcula alturas de secciones abiertas al hacer resize
     window.addEventListener('resize', () => {
         document.querySelectorAll('.filter-section-content').forEach(content => {
@@ -335,5 +486,53 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     });
+
+    // --- Inicializar TomSelect para el campo de Jurisdicción ---
+    function initTomSelectJurisdiccion() {
+        const selectEl = document.getElementById('jurisdiccion');
+        if (selectEl && typeof TomSelect !== 'undefined') {
+            const tomSelectInstance = new TomSelect(selectEl, {
+                valueField: 'value',
+                labelField: 'text',
+                searchField: 'text',
+                maxOptions: 100,
+                maxItems: 1,
+                create: false,
+                placeholder: 'Seleccione una jurisdicción...',
+                onChange: () => {
+                    // Recalcular altura de la sección si está abierta
+                    const section = selectEl.closest('.filter-section');
+                    const content = section?.querySelector('.filter-section-content');
+                    if (content && content.style.maxHeight && content.style.maxHeight !== '0px') {
+                        setTimeout(() => {
+                            content.style.maxHeight = content.scrollHeight + 'px';
+                        }, 10);
+                    }
+                }
+            });
+
+            // Guardar instancia globalmente
+            window.tomSelect_jurisdiccion = tomSelectInstance;
+        }
+    }
+
+    // Try to initialize immediately
+    if (typeof TomSelect !== 'undefined') {
+        initTomSelectJurisdiccion();
+    } else {
+        // If TomSelect not available yet, wait for it
+        let attempts = 0;
+        const checkTomSelect = setInterval(() => {
+            if (typeof TomSelect !== 'undefined') {
+                clearInterval(checkTomSelect);
+                initTomSelectJurisdiccion();
+            }
+            attempts++;
+            if (attempts > 50) { // Stop after 5 seconds (50 * 100ms)
+                clearInterval(checkTomSelect);
+                console.warn('TomSelect did not load in time');
+            }
+        }, 100);
+    }
 });
 </script>

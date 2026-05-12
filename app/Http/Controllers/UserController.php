@@ -137,7 +137,13 @@ class UserController extends Controller
                 $days = (int) $ls;
                 $query->where('last_session', '>=', now()->subDays($days));
             } elseif ($ls === 'never') {
-                $query->whereNull('last_session');
+                $query->whereNull('last_session')
+                      ->whereNotExists(function ($subQuery) {
+                          $subQuery->select(DB::raw(1))
+                              ->from('sessions')
+                              ->whereColumn('sessions.user_id', 'users.id')
+                              ->where('last_activity', '>=', now()->subHours(24)->timestamp);
+                      });
             }
         }
 
@@ -288,6 +294,48 @@ class UserController extends Controller
             $query->where('jurisdiction_id', $request->input('jurisdiction_id'));
         }
 
+        // last_session filter shortcuts: today, 7, 30, 90, never
+        if ($request->filled('last_session')) {
+            $ls = $request->input('last_session');
+            if ($ls === 'today') {
+                $query->whereDate('last_session', now()->toDateString());
+            } elseif (is_numeric($ls)) {
+                $days = (int) $ls;
+                $query->whereNotNull('last_session')
+                      ->whereDate('last_session', '>=', now()->subDays($days)->toDateString());
+            } elseif ($ls === 'never') {
+                $query->whereNull('last_session')
+                      ->whereNotExists(function ($subQuery) {
+                          $subQuery->select(DB::raw(1))
+                              ->from('sessions')
+                              ->whereColumn('sessions.user_id', 'users.id')
+                              ->where('last_activity', '>=', now()->subHours(24)->timestamp);
+                      });
+            }
+        }
+
+        // registration date range
+        if ($request->filled('date_range') && $request->input('date_range') !== 'custom' && $request->input('date_range') !== 'all') {
+            $dr = $request->input('date_range');
+            $daysMap = [
+                '7days' => 7,
+                '30days' => 30,
+                '90days' => 90,
+                '6months' => 180,
+            ];
+            if (isset($daysMap[$dr])) {
+                $days = $daysMap[$dr];
+                $query->whereDate('registration_date', '>=', now()->subDays($days)->toDateString());
+            }
+        } elseif ($request->input('date_range') === 'custom') {
+            if ($request->filled('date_from')) {
+                $query->whereDate('registration_date', '>=', $request->input('date_from'));
+            }
+            if ($request->filled('date_to')) {
+                $query->whereDate('registration_date', '<=', $request->input('date_to'));
+            }
+        }
+
         $recordsTotal = User::count();
         $recordsFiltered = $query->count();
 
@@ -301,22 +349,17 @@ class UserController extends Controller
             $roleName = optional($user->role)->name ?? '—';
             $roleLower = strtolower($roleName);
             if (in_array($roleLower, ['administrador', 'admin'])) {
-                // Admin: Rojo institucional
-                $roleClasses = 'bg-[#762f2d] text-white font-bold';
+                $roleClasses = 'bg-[#e0e7ff] text-[#3730a3]';
             } elseif (in_array($roleLower, ['coordinador'])) {
-                // Coordinador: Azul profesional
-                $roleClasses = 'bg-[#4f772d] text-white font-bold';
+                $roleClasses = 'bg-[#dcfce7] text-[#166534]';
             } elseif (in_array($roleLower, ['operador'])) {
-                // Operador: Verde profesional
-                $roleClasses = 'bg-[#2d4f76] text-white font-bold';
+                $roleClasses = 'bg-[#fef3c7] text-[#92400e]';
             } elseif ($roleLower === 'invitado') {
-                // Invitado: Gris
-                $roleClasses = 'bg-gray-600 text-white font-bold';
+                $roleClasses = 'bg-[#fee2e2] text-[#991b1b]';
             } elseif (in_array($roleLower, ['usuario', 'user'])) {
-                // Usuario: Azul (por defecto si no es coordinador)
-                $roleClasses = 'bg-blue-700 text-white font-bold';
+                $roleClasses = 'bg-[#f8f1f4] text-[#611132]';
             } else {
-                $roleClasses = 'bg-slate-600 text-white font-bold'; // Gris por defecto para roles desconocidos
+                $roleClasses = 'bg-slate-100 text-slate-700';
             }
 
             $isActive = (bool) $user->is_active;
@@ -334,7 +377,7 @@ class UserController extends Controller
                 'position' => optional($user->position)->name ?? '—',
                 'jurisdiction' => optional($user->jurisdiction)->name ?? '—',
                 'registration_date' => $user->formatted_registration_date ?? $user->registration_date,
-                'role' => "<span class='{$roleClasses} text-xs font-semibold px-3 py-1 rounded-lg'>{$roleName}</span>",
+                'role' => "<span class='inline-block px-3 py-1 rounded-full text-xs font-bold {$roleClasses}'>{$roleName}</span>",
                 'status' => "<div class='flex items-center gap-1'><span class='w-2 h-2 rounded-full {$statusDot}'></span><span class='text-xs'>{$statusText}</span></div>",
                 'last_session' => $user->last_session_diff ?? $user->last_session,
                 'actions' => view('usuarios.partials.table-actions', compact('user'))->render(),

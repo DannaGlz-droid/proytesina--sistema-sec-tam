@@ -66,7 +66,7 @@
                             </div>
 
                             <!-- Table wrapper -->
-                            <div class="overflow-x-auto min-w-0">
+                            <div class="overflow-x-hidden min-w-0">
                         <table id="users-table" class="min-w-full w-full text-sm text-left text-gray-500">
                             <thead class="text-xs text-gray-700 uppercase bg-gray-50 border-b border-[#404041]">
                                 <tr>
@@ -166,11 +166,18 @@
             const table = $('#users-table').DataTable({
                 serverSide: true,
                 processing: true,
-                scrollX: true,
+                scrollX: false,
+                autoWidth: false,
                 deferredRender: true,
                 searching: true,  // Enable DataTables search
                 lengthChange: false, // Disable DataTables length (use custom)
                 dom: 't', // Only show table
+                responsive: {
+                    details: {
+                        type: 'inline',
+                        target: 'tr'
+                    }
+                },
                 ajax: {
                     url: '{{ route('user.datatable') }}',
                     type: 'POST',
@@ -220,19 +227,34 @@
                 ],
                 // Hide the ID column visually (we still include it in data for checkbox rendering)
                 columnDefs: [
-                    { targets: 1, visible: false }
+                    { targets: 0, responsivePriority: 1 },
+                    { targets: 1, visible: false, searchable: false },
+                    { targets: 2, responsivePriority: 1 },
+                    { targets: 3, responsivePriority: 2 },
+                    { targets: 4, responsivePriority: 10 },
+                    { targets: 5, responsivePriority: 11 },
+                    { targets: 6, responsivePriority: 8 },
+                    { targets: 7, responsivePriority: 9 },
+                    { targets: 8, responsivePriority: 10 },
+                    { targets: 9, responsivePriority: 10 },
+                    { targets: 10, responsivePriority: 7 },
+                    { targets: 11, responsivePriority: 1 },
+                    { targets: 12, responsivePriority: 5 },
+                    { targets: 13, responsivePriority: 6 },
+                    { targets: 14, responsivePriority: 1 }
                 ],
                 pageLength: 25,
                 // Default: registration_date desc so newest users appear first.
                 // registration_date is column index 10 (accounting for leading checkbox column at index 0).
                 order: [[10, 'desc']],
                 language: {
-                    emptyTable: 'No hay datos disponibles',
+                    emptyTable: 'No se encontraron registros coincidentes',
                     loadingRecords: 'Cargando...',
                     processing: 'Procesando...',
                     zeroRecords: 'No se encontraron registros coincidentes'
                 },
                 drawCallback: function(settings) {
+                    updateEmptyState(this.api());
                     updateCustomInfo(this.api());
                     updateCustomPagination(this.api());
                     try { toggleBulkDeleteUsersButton(); } catch (e) { console.error('toggleBulkDeleteUsersButton error', e); }
@@ -276,6 +298,11 @@
                 toggleBulkDeleteUsersButton();
             });
 
+            // Prevent row-expansion clicks when interacting with checkboxes or action buttons
+            $('#users-table tbody').on('click', 'input.row-check-user, button, a', function(e) {
+                e.stopPropagation();
+            });
+
             $('#users-table tbody').on('change', '.row-check-user', function() {
                 if (!$(this).is(':checked')) {
                     $('#select-all-users').prop('checked', false);
@@ -289,6 +316,14 @@
                     $('#bulk-delete-users').css('display', 'flex');
                 } else {
                     $('#bulk-delete-users').css('display', 'none');
+                }
+            }
+
+            function updateEmptyState(api) {
+                const info = api.page.info();
+                const tbody = $('#users-table tbody');
+                if (info.recordsDisplay === 0) {
+                    tbody.html('<tr class="users-empty-row"><td colspan="15" class="text-center py-4 text-gray-500">No se encontraron registros coincidentes</td></tr>');
                 }
             }
 
@@ -424,11 +459,6 @@
                     // if table isn't available, fallback to full submit
                     this.submit();
                 }
-            });
-
-            // Also reload table when specific filter controls change (optional UX)
-            $('#ultimaSesion, #estadoCuenta, #dateRange, #cargo, #jurisdiccion, #rol').on('change', function() {
-                try { table.ajax.reload(); } catch (e) {}
             });
 
             // Handle date range selector visibility

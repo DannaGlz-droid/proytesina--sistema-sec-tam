@@ -27,9 +27,9 @@
                         <!-- Row 1: Folio | Nombre | Ap. paterno -->
                         <div>
                             <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Folio <span class="text-red-600">*</span></label>
-                            <input id="gov_folio" name="gov_folio" type="text" value="{{ old('gov_folio') }}" required minlength="9" maxlength="9" pattern="[0-9]{9}" inputmode="numeric" title="Debe ingresar exactamente 9 dígitos numéricos"
+                            <input id="gov_folio" name="gov_folio" type="text" value="{{ old('gov_folio') }}" required minlength="9" maxlength="17" pattern="([0-9]{9}|[0-9]{2}[A-Za-z][0-9]{5}[A-Za-z][0-9]{8})" title="Debe ingresar 9 dígitos o el folio alfanumérico de defunción"
                                 class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora" 
-                                placeholder="Ej: 230787888">
+                                placeholder="Ej: 230787888 o 28M19673E00000007">
                             @error('gov_folio') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
                         </div>
 

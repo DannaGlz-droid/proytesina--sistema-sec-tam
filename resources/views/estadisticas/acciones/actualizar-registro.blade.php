@@ -30,7 +30,7 @@
                            <input id="gov_folio" name="gov_folio" type="text" 
                                class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora" 
                                placeholder="Ej: 230787888"
-                               value="{{ old('gov_folio', $defuncion->gov_folio ?? '') }}" required minlength="9" maxlength="9" pattern="[0-9]{9}" inputmode="numeric" title="Ingrese 9 dígitos">
+                               value="{{ old('gov_folio', $defuncion->gov_folio ?? '') }}" required minlength="9" maxlength="17" pattern="([0-9]{9}|[0-9]{2}[A-Za-z][0-9]{5}[A-Za-z][0-9]{8})" title="Ingrese 9 dígitos o el folio alfanumérico de defunción">
                         @error('gov_folio') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
                     </div>
 

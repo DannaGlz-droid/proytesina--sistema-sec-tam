@@ -142,6 +142,7 @@ class DeathImportController extends Controller
                         $folio = trim((string)$row[0]);
                     }
                     if ($folio !== null && $folio !== '') {
+                        $folio = strtoupper($folio);
                         $folioCounts[$folio] = ($folioCounts[$folio] ?? 0) + 1;
                     }
                 }
@@ -265,6 +266,9 @@ class DeathImportController extends Controller
                 if (is_null($folio) && isset($row[0]) && trim((string)$row[0]) !== '') {
                     $folio = trim((string)$row[0]);
                 }
+                if ($folio !== null && $folio !== '') {
+                    $folio = strtoupper($folio);
+                }
                 // Accept both correct header names and older/mistyped ones for backwards compatibility
                 $first = trim((string)(($rowAssoc['primerapellido'] ?? $rowAssoc['primerapellid'] ?? ''))) ?: null;
                 $second = trim((string)(($rowAssoc['segundoapellido'] ?? $rowAssoc['segundoapellid'] ?? ''))) ?: null;
@@ -367,9 +371,9 @@ class DeathImportController extends Controller
                     $municipalityLookup[$this->normalizeMunicipalityName($deathMunicipality->name)] = $deathMunicipality;
                 }
 
-                // Validate gov_folio strictly: require and format 9 digits
-                if (is_null($folio) || !preg_match('/^[0-9]{9}$/', (string)$folio)) {
-                    $errors[] = 'Folio gubernamental inválido o ausente (se requieren 9 dígitos)';
+                // Validate gov_folio: accept 9 digits or the alphanumeric defunction format.
+                if (is_null($folio) || !preg_match('/^(?:[0-9]{9}|[0-9]{2}[A-Z][0-9]{5}[A-Z][0-9]{8})$/i', (string)$folio)) {
+                    $errors[] = 'Folio gubernamental inválido o ausente (se requieren 9 dígitos o el formato alfanumérico de defunción)';
                 }
 
                 // map or create death location: use existing or create new if missing
@@ -853,6 +857,39 @@ class DeathImportController extends Controller
     }
 
     /**
+     * Delete a single import history record (does NOT delete imported deaths).
+     */
+    public function destroy(Request $request, $importId)
+    {
+        try {
+            DB::beginTransaction();
+
+            $import = DB::table('imports')->where('id', $importId)->first(['id', 'path', 'error_csv_path']);
+            if (!$import) {
+                return response()->json(['ok' => false, 'message' => 'Importación no encontrada'], 404);
+            }
+
+            $pathsToDelete = [];
+            if (!empty($import->path)) $pathsToDelete[] = $import->path;
+            if (!empty($import->error_csv_path)) $pathsToDelete[] = $import->error_csv_path;
+
+            if (!empty($pathsToDelete)) {
+                Storage::delete($pathsToDelete);
+            }
+
+            $deleted = DB::table('imports')->where('id', $importId)->delete();
+
+            DB::commit();
+
+            return response()->json(['ok' => true, 'deleted' => $deleted]);
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            Log::error('destroy import error: ' . $e->getMessage());
+            return response()->json(['ok' => false, 'message' => 'Error al eliminar el historial de importación'], 500);
+        }
+    }
+
+    /**
      * Get failed records for a specific import, with pagination
      */
     public function getFailedRecords($importId)
@@ -929,10 +966,10 @@ class DeathImportController extends Controller
                 }
             }
 
-            // Additional cleanup: remove any non-numeric characters if any slipped through
+            // Additional cleanup: remove formatting characters but preserve letters and digits.
             if ($folio) {
-                $folioClean = preg_replace('/[^0-9]/', '', $folio);
-                if (strlen($folioClean) === 9) {
+                $folioClean = strtoupper(preg_replace('/[^A-Z0-9]/i', '', $folio));
+                if (preg_match('/^(?:[0-9]{9}|[0-9]{2}[A-Z][0-9]{5}[A-Z][0-9]{8})$/', $folioClean)) {
                     $folio = $folioClean;
                 }
             }
@@ -940,8 +977,8 @@ class DeathImportController extends Controller
             // Validate basic required fields
             if (!$name) $errors[] = 'Nombre vacío';
             if (!$first) $errors[] = 'Primer apellido vacío';
-            if (is_null($folio) || !preg_match('/^[0-9]{9}$/', (string)$folio)) {
-                $errors[] = 'Folio gubernamental inválido o ausente (se requieren 9 dígitos). Folio recibido: ' . ($folio ?? 'vacío');
+            if (is_null($folio) || !preg_match('/^(?:[0-9]{9}|[0-9]{2}[A-Z][0-9]{5}[A-Z][0-9]{8})$/i', (string)$folio)) {
+                $errors[] = 'Folio gubernamental inválido o ausente (se requieren 9 dígitos o el formato alfanumérico de defunción). Folio recibido: ' . ($folio ?? 'vacío');
             }
             
             // Validate age is present (required field)

@@ -1,9 +1,9 @@
-@extends('layouts.principal')
-@section('title', 'Estadísticas')
-@section('content')
 
-    @include('components.header-admin')
-    @include('components.nav-estadisticas')
+<?php $__env->startSection('title', 'Estadísticas'); ?>
+<?php $__env->startSection('content'); ?>
+
+    <?php echo $__env->make('components.header-admin', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?>
+    <?php echo $__env->make('components.nav-estadisticas', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?>
 
     <div class="px-4 lg:pl-10 pt-6 lg:pt-10 pb-8 lg:pb-12">
         <!-- HEADER -->
@@ -149,9 +149,9 @@
                                         <h4 class="text-xs font-semibold text-[#404041] font-lora">Municipios</h4>
                                     </div>
                                     <select id="municipiosFilter" class="w-full border border-[#404041] rounded-lg px-3 py-1.5 text-xs" multiple data-placeholder="Selecciona municipios">
-                                        @foreach($municipalities as $mun)
-                                            <option value="{{ $mun->id }}">{{ $mun->name }}</option>
-                                        @endforeach
+                                        <?php $__currentLoopData = $municipalities; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $mun): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                            <option value="<?php echo e($mun->id); ?>"><?php echo e($mun->name); ?></option>
+                                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                                     </select>
                                 </div>
 
@@ -162,26 +162,26 @@
                                         <h4 class="text-xs font-semibold text-[#404041] font-lora">Causas</h4>
                                     </div>
                                     <select id="causasFilter" class="w-full border border-[#404041] rounded-lg px-3 py-1.5 text-xs" multiple data-placeholder="Selecciona causas">
-                                        @foreach($causes as $cause)
-                                            <option value="{{ $cause->id }}">{{ $cause->name }}</option>
-                                        @endforeach
+                                        <?php $__currentLoopData = $causes; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $cause): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                            <option value="<?php echo e($cause->id); ?>"><?php echo e($cause->name); ?></option>
+                                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                                     </select>
                                 </div>
 
                                 <!-- Filtro de Jurisdicciones (contextual) -->
-                                @if($jurisdictions->count() > 0)
+                                <?php if($jurisdictions->count() > 0): ?>
                                 <div id="filterJurisdicciones" class="filter-section dynamic-filter" style="display: none;">
                                     <div class="flex items-center gap-2 mb-3 pb-2 border-b border-gray-200">
                                         <i class="fas fa-building text-[#611132] text-sm"></i>
                                         <h4 class="text-xs font-semibold text-[#404041] font-lora">Jurisdicciones</h4>
                                     </div>
                                     <select id="jurisdiccionesFilter" class="w-full border border-[#404041] rounded-lg px-3 py-1.5 text-xs" multiple data-placeholder="Selecciona jurisdicciones">
-                                        @foreach($jurisdictions as $jur)
-                                            <option value="{{ $jur->id }}">{{ $jur->name }}</option>
-                                        @endforeach
+                                        <?php $__currentLoopData = $jurisdictions; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $jur): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                            <option value="<?php echo e($jur->id); ?>"><?php echo e($jur->name); ?></option>
+                                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                                     </select>
                                 </div>
-                                @endif
+                                <?php endif; ?>
 
                                 <!-- Filtro de Sexo (contextual) -->
                                 <div id="filterSexo" class="filter-section dynamic-filter" style="display: none;">
@@ -191,9 +191,9 @@
                                     </div>
                                     <select id="sexoFilter" class="w-full border border-[#404041] rounded-lg px-3 py-1.5 text-xs">
                                         <option value="">Todos</option>
-                                        @foreach($sexes as $sex)
-                                            <option value="{{ $sex->value }}">{{ $sex->label }}</option>
-                                        @endforeach
+                                        <?php $__currentLoopData = $sexes; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $sex): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                            <option value="<?php echo e($sex->value); ?>"><?php echo e($sex->label); ?></option>
+                                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                                     </select>
                                 </div>
 
@@ -305,7 +305,7 @@
     <script src="https://cdn.jsdelivr.net/npm/echarts@5.5.1/dist/echarts.min.js"></script>
 
     <!-- Include modal para descargas -->
-    @include('components.modal-descargas')
+    <?php echo $__env->make('components.modal-descargas', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?>
 
     <script>
         let currentChartType = 'municipios';
@@ -614,7 +614,7 @@
             };
 
             const params = new URLSearchParams(filters);
-            fetch(`{{ route('api.chart.data') }}/` + chartType + '?' + params.toString())
+            fetch(`<?php echo e(route('api.chart.data')); ?>/` + chartType + '?' + params.toString())
                 .then(response => response.json())
                 .then(data => {
                     if (data.error) {
@@ -982,4 +982,6 @@
         }
     </style>
 
-@endsection
+<?php $__env->stopSection(); ?>
+
+<?php echo $__env->make('layouts.principal', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH C:\Proyectos Laravel\sistema-sec-tam\resources\views/estadisticas/graficas.blade.php ENDPATH**/ ?>

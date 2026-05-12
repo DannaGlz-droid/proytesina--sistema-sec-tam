@@ -111,7 +111,7 @@
             padding: 0.25rem 0.75rem;
             border-radius: 9999px;
             font-size: 0.75rem;
-            font-weight: 500;
+            font-weight: 700;
         }
 
         .status-completed {
@@ -663,17 +663,18 @@ document.addEventListener('DOMContentLoaded', function () {
                 <td class="px-3 py-2 text-right flex gap-2 justify-end">
                     ${imp.rows_failed > 0 ? `
                         <a href="/estadisticas/importaciones/${imp.id}/registros-fallidos" 
-                           class="inline-flex items-center justify-center gap-1 w-20 px-2 py-1 rounded text-xs font-semibold border border-[#404041] text-[#404041] hover:bg-[#404041] hover:text-white transition-all duration-200 ${canReverse ? '' : 'action-btn-disabled'}" 
+                           class="w-7 h-7 flex items-center justify-center rounded border border-[#404041] text-[#404041] hover:bg-[#404041] hover:text-white transition-all duration-200 ${canReverse ? '' : 'action-btn-disabled'}" 
                            ${canReverse ? '' : 'onclick="return false;" style="pointer-events: none; cursor: not-allowed;"'}
-                           title="${canReverse ? 'Ver registros fallidos' : 'No disponible (importación revertida)'}">
-                            <i class="fas fa-exclamation-circle text-xs"></i> Fallidos
+                           title="${canReverse ? 'Ver registros fallidos' : 'No disponible (importación revertida)'}" aria-label="Registros fallidos ${imp.id}">
+                            <i class="fas fa-exclamation-circle text-xs"></i>
                         </a>
-                    ` : `<div class="w-20"></div>`}
-                    <button class="inline-flex items-center justify-center gap-1 w-20 px-2 py-1 rounded text-xs font-semibold border border-[#AB1A1A] text-[#AB1A1A] hover:bg-[#AB1A1A] hover:text-white transition-all duration-200 ${canReverse ? '' : 'action-btn-disabled'}" 
-                            onclick="reverseImport(${imp.id})" 
-                            ${canReverse ? '' : 'disabled'} 
-                            title="${canReverse ? 'Revertir esta importación' : 'No se puede revertir'}">
-                        <i class="fas fa-undo text-xs"></i> Revertir
+                    ` : `<div class="w-7"></div>`}
+                    <button class="w-7 h-7 flex items-center justify-center rounded border border-[#404041] text-[#404041] hover:bg-[#404041] hover:text-white transition-all duration-200 ${canReverse ? '' : 'action-btn-disabled'}"
+                            onclick="reverseImport(${imp.id})" ${canReverse ? '' : 'disabled'} title="${canReverse ? 'Revertir esta importación' : 'No se puede revertir'}" aria-label="Revertir ${imp.id}">
+                        <i class="fas fa-undo text-xs"></i>
+                    </button>
+                    <button class="w-7 h-7 flex items-center justify-center rounded border border-[#AB1A1A] text-[#AB1A1A] hover:bg-[#AB1A1A] hover:text-white transition-all duration-200" onclick="deleteImport(${imp.id})" title="Eliminar del historial (no elimina registros importados)" aria-label="Eliminar historial ${imp.id}">
+                        <i class="fas fa-trash text-xs"></i>
                     </button>
                 </td>
             `;
@@ -838,6 +839,37 @@ function reverseImport(importId) {
     .then(json => {
         if (json.ok) {
             alert(json.message);
+            location.reload();
+        } else {
+            alert('Error: ' + (json.message || 'Error desconocido'));
+        }
+    })
+    .catch(err => {
+        console.error(err);
+        alert('Error al procesar la solicitud');
+    });
+}
+
+function deleteImport(importId) {
+    if (!confirm('¿Confirmas eliminar este registro del historial? Esta acción no puede deshacerse.')) {
+        return;
+    }
+
+    const url = `/api/estadisticas/importaciones/${importId}/delete`;
+    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '{{ csrf_token() }}';
+
+    fetch(url, {
+        method: 'POST',
+        headers: {
+            'X-CSRF-TOKEN': csrfToken,
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({})
+    })
+    .then(res => res.json())
+    .then(json => {
+        if (json.ok) {
+            alert('El registro del historial fue eliminado');
             location.reload();
         } else {
             alert('Error: ' + (json.message || 'Error desconocido'));

@@ -424,8 +424,8 @@ class DeathController extends Controller
     public function store(Request $request)
     {
         $data = $request->validate([
-            // gov_folio: expect exactly 9 numeric characters (government folio)
-            'gov_folio' => ['required','string','regex:/^[0-9]{9}$/','unique:deaths,gov_folio'],
+            // gov_folio: accept 9-digit folios and the alphanumeric defunction format.
+            'gov_folio' => ['required','string','regex:/^(?:[0-9]{9}|[0-9]{2}[A-Za-z][0-9]{5}[A-Za-z][0-9]{8})$/','unique:deaths,gov_folio'],
             'name' => ['required','string','max:191'],
             'first_last_name' => ['required','string','max:191'],
             'second_last_name' => ['nullable','string','max:191'],
@@ -553,8 +553,8 @@ class DeathController extends Controller
     public function update(Request $request, Death $death)
     {
         $data = $request->validate([
-            // gov_folio: expect exactly 9 numeric characters (government folio)
-            'gov_folio' => ['required','string','regex:/^[0-9]{9}$/','unique:deaths,gov_folio,' . $death->id],
+            // gov_folio: accept 9-digit folios and the alphanumeric defunction format.
+            'gov_folio' => ['required','string','regex:/^(?:[0-9]{9}|[0-9]{2}[A-Za-z][0-9]{5}[A-Za-z][0-9]{8})$/','unique:deaths,gov_folio,' . $death->id],
             'name' => ['required','string','max:191'],
             'first_last_name' => ['required','string','max:191'],
             'second_last_name' => ['nullable','string','max:191'],
