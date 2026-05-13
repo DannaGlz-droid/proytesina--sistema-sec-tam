@@ -63,7 +63,7 @@
                     
                     <!-- COLUMNA IZQUIERDA - Filtros (DINÁMICOS según gráfica) -->
                     <div id="estadisticas-filtros" class="lg:w-80 flex-shrink-0">
-                        <div class="border border-[#404041] rounded-lg bg-white bg-opacity-95 overflow-hidden shadow-sm">
+                        <div class="border border-[#404041] rounded-lg bg-white bg-opacity-95 overflow-visible shadow-sm">
                             <!-- Header de Filtros -->
                             <div class="bg-white px-4 py-3 border-b border-[#e5e7eb] flex justify-between items-center">
                                 <h3 class="text-sm font-lora font-semibold text-[#404041]">Filtros</h3>
@@ -90,52 +90,78 @@
                                         <h4 class="text-xs font-semibold text-[#404041] font-lora">Fechas</h4>
                                     </div>
                                     <div class="space-y-2">
-                                        <div>
+                                        <div class="filter-group">
                                             <label class="block text-xs text-gray-600 font-lora mb-1">Rango:</label>
                                             <select id="dateRange" class="w-full border border-[#404041] rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-[#611132] focus:border-transparent">
                                                 <option value="all">Todas las fechas</option>
                                                 <option value="year">Año específico</option>
                                                 <option value="month">Mes específico</option>
+                                                <option value="multiple-months">Múltiples meses</option>
+                                                <option value="quarter">Trimestre</option>
                                                 <option value="custom">Personalizado</option>
                                             </select>
                                         </div>
 
-                                        <div id="yearSelector" style="display: none;">
-                                            <label class="block text-xs text-gray-600 font-lora mb-1">Año:</label>
-                                            <select id="year" class="w-full border border-[#404041] rounded-lg px-3 py-1.5 text-xs">
-                                                <option value="">Seleccionar año</option>
-                                                <option value="2024">2024</option>
-                                                <option value="2023">2023</option>
-                                                <option value="2022">2022</option>
-                                                <option value="2021">2021</option>
-                                                <option value="2020">2020</option>
+                                        <div class="filter-group" id="yearSelector" style="display: none;">
+                                            <label class="block text-xs text-gray-600 font-lora mb-1">Año de defunción:</label>
+                                            <?php $currentYear = now()->year; $minYear = 1950; ?>
+                                            <input type="number" id="year" min="<?php echo e($minYear); ?>" max="<?php echo e($currentYear); ?>" class="w-full border border-[#404041] rounded-lg px-3 py-1.5 text-xs" placeholder="Ej: <?php echo e($currentYear); ?>">
+                                        </div>
+
+                                        <div class="filter-group" id="monthSimpleSelector" style="display: none;">
+                                            <label class="block text-xs text-gray-600 font-lora mb-1">Mes de defunción:</label>
+                                            <select id="month" class="w-full border border-[#404041] rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-[#611132] focus:border-transparent">
+                                                <option value="">Seleccionar mes</option>
+                                                <?php
+                                                    $months = [
+                                                        '01' => 'Enero','02' => 'Febrero','03' => 'Marzo','04' => 'Abril','05' => 'Mayo','06' => 'Junio',
+                                                        '07' => 'Julio','08' => 'Agosto','09' => 'Septiembre','10' => 'Octubre','11' => 'Noviembre','12' => 'Diciembre'
+                                                    ];
+                                                ?>
+                                                <?php $__currentLoopData = $months; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $mval => $mlabel): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                                    <option value="<?php echo e($mval); ?>"><?php echo e($mlabel); ?></option>
+                                                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                                             </select>
                                         </div>
 
-                                        <div id="monthSelector" style="display: none;">
-                                            <label class="block text-xs text-gray-600 font-lora mb-1">Mes:</label>
-                                            <select id="month" class="w-full border border-[#404041] rounded-lg px-3 py-1.5 text-xs">
-                                                <option value="">Seleccionar mes</option>
-                                                <option value="01">Enero</option>
-                                                <option value="02">Febrero</option>
-                                                <option value="03">Marzo</option>
-                                                <option value="04">Abril</option>
-                                                <option value="05">Mayo</option>
-                                                <option value="06">Junio</option>
-                                                <option value="07">Julio</option>
-                                                <option value="08">Agosto</option>
-                                                <option value="09">Septiembre</option>
-                                                <option value="10">Octubre</option>
-                                                <option value="11">Noviembre</option>
-                                                <option value="12">Diciembre</option>
+                                        <div class="filter-group" id="monthSelector" style="display: none;">
+                                            <label class="block text-xs text-gray-600 font-lora mb-1">Meses de defunción:</label>
+                                            <div class="grid grid-cols-3 gap-2 mt-2 months-container">
+                                                <?php
+                                                    $months = [
+                                                        '01' => 'Ene','02' => 'Feb','03' => 'Mar','04' => 'Abr','05' => 'May','06' => 'Jun',
+                                                        '07' => 'Jul','08' => 'Ago','09' => 'Sep','10' => 'Oct','11' => 'Nov','12' => 'Dic'
+                                                    ];
+                                                ?>
+                                                <?php $__currentLoopData = $months; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $mval => $mlabel): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                                    <div>
+                                                        <input type="checkbox" id="month-<?php echo e($mval); ?>" name="selectedMonths[]" class="month-checkbox" value="<?php echo e($mval); ?>">
+                                                        <label for="month-<?php echo e($mval); ?>" class="month-label block text-center text-xs py-1.5 bg-gray-100 border border-gray-300 rounded cursor-pointer hover:bg-gray-200"><?php echo e($mlabel); ?></label>
+                                                    </div>
+                                                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                                            </div>
+                                        </div>
+
+                                        <div class="filter-group" id="quarterSelector" style="display: none;">
+                                            <label class="block text-xs text-gray-600 font-lora mb-1">Trimestre de defunción:</label>
+                                            <select id="quarter" class="w-full border border-[#404041] rounded-lg px-3 py-1.5 text-xs">
+                                                <option value="">Seleccionar trimestre</option>
+                                                <option value="1">Q1 (Ene-Mar)</option>
+                                                <option value="2">Q2 (Abr-Jun)</option>
+                                                <option value="3">Q3 (Jul-Sep)</option>
+                                                <option value="4">Q4 (Oct-Dic)</option>
                                             </select>
                                         </div>
 
                                         <div id="customDateSelector" style="display: none;">
-                                            <label class="block text-xs text-gray-600 font-lora mb-1">Desde:</label>
-                                            <input type="date" id="customStartDate" class="w-full border border-[#404041] rounded-lg px-3 py-1.5 text-xs">
-                                            <label class="block text-xs text-gray-600 font-lora mb-1 mt-2">Hasta:</label>
-                                            <input type="date" id="customEndDate" class="w-full border border-[#404041] rounded-lg px-3 py-1.5 text-xs">
+                                            <div class="filter-group">
+                                                <label class="block text-xs text-gray-600 font-lora mb-1">Desde (fecha de defunción):</label>
+                                                <input type="date" id="customStartDate" class="w-full border border-[#404041] rounded-lg px-3 py-1.5 text-xs">
+                                            </div>
+                                            <div class="filter-group">
+                                                <label class="block text-xs text-gray-600 font-lora mb-1">Hasta (fecha de defunción):</label>
+                                                <input type="date" id="customEndDate" class="w-full border border-[#404041] rounded-lg px-3 py-1.5 text-xs">
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -148,7 +174,7 @@
                                         <i class="fas fa-city text-[#611132] text-sm"></i>
                                         <h4 class="text-xs font-semibold text-[#404041] font-lora">Municipios</h4>
                                     </div>
-                                    <select id="municipiosFilter" class="w-full border border-[#404041] rounded-lg px-3 py-1.5 text-xs" multiple data-placeholder="Selecciona municipios">
+                                    <select id="municipiosFilter" class="tomselect-select" multiple data-placeholder="Selecciona municipios">
                                         <?php $__currentLoopData = $municipalities; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $mun): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                                             <option value="<?php echo e($mun->id); ?>"><?php echo e($mun->name); ?></option>
                                         <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
@@ -161,7 +187,7 @@
                                         <i class="fas fa-heartbeat text-[#611132] text-sm"></i>
                                         <h4 class="text-xs font-semibold text-[#404041] font-lora">Causas</h4>
                                     </div>
-                                    <select id="causasFilter" class="w-full border border-[#404041] rounded-lg px-3 py-1.5 text-xs" multiple data-placeholder="Selecciona causas">
+                                    <select id="causasFilter" class="tomselect-select" multiple data-placeholder="Selecciona causas">
                                         <?php $__currentLoopData = $causes; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $cause): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                                             <option value="<?php echo e($cause->id); ?>"><?php echo e($cause->name); ?></option>
                                         <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
@@ -175,7 +201,7 @@
                                         <i class="fas fa-building text-[#611132] text-sm"></i>
                                         <h4 class="text-xs font-semibold text-[#404041] font-lora">Jurisdicciones</h4>
                                     </div>
-                                    <select id="jurisdiccionesFilter" class="w-full border border-[#404041] rounded-lg px-3 py-1.5 text-xs" multiple data-placeholder="Selecciona jurisdicciones">
+                                    <select id="jurisdiccionesFilter" class="tomselect-select" multiple data-placeholder="Selecciona jurisdicciones">
                                         <?php $__currentLoopData = $jurisdictions; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $jur): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                                             <option value="<?php echo e($jur->id); ?>"><?php echo e($jur->name); ?></option>
                                         <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
@@ -382,7 +408,98 @@
             loadChart('municipios');
         });
 
+        function initializeTomSelect() {
+            // Inicializar Tom Select para multiselects - permite deseleccionar fácilmente
+            const multiSelectIds = ['municipiosFilter', 'causasFilter', 'jurisdiccionesFilter'];
+            
+            multiSelectIds.forEach(id => {
+                const element = document.getElementById(id);
+                if (element && !element.tomselect && typeof TomSelect !== 'undefined') {
+                    new TomSelect(element, {
+                        valueField: 'value',
+                        labelField: 'text',
+                        searchField: 'text',
+                        maxOptions: 100,
+                        maxItems: null,
+                        create: false,
+                        placeholder: element.dataset.placeholder || 'Selecciona opciones',
+                        hideSelected: false,
+                        closeAfterSelect: false,
+                        plugins: {
+                            'remove_button': {
+                                title: 'Eliminar esta selección'
+                            }
+                        },
+                        onChange: (value) => {
+                            // Actualizar los filtros mostrados en "Filtros aplicados:"
+                            collectFilters();
+                            updateActiveFiltersDisplay();
+                            updateChart();
+                        },
+                        onOptionSelect: () => {
+                            // Cerrar después de seleccionar para mejorar UX
+                            setTimeout(() => {
+                                element.tomselect.close();
+                            }, 100);
+                        }
+                    });
+                }
+            });
+        }
+
+        // Intentar inicializar Tom Select inmediatamente
+        if (typeof TomSelect !== 'undefined') {
+            initializeTomSelect();
+            manageTomSelectDropdowns();
+        } else {
+            // Si Tom Select no está disponible, esperar a que lo esté
+            let attempts = 0;
+            const checkTomSelect = setInterval(() => {
+                if (typeof TomSelect !== 'undefined') {
+                    clearInterval(checkTomSelect);
+                    initializeTomSelect();
+                    manageTomSelectDropdowns();
+                }
+                attempts++;
+                if (attempts > 50) { // Stop after 5 seconds (50 * 100ms)
+                    clearInterval(checkTomSelect);
+                    console.warn('TomSelect did not load in time');
+                }
+            }, 100);
+        }
+
+        // Manejar dinámicamente el z-index de los dropdowns de Tom Select
+        function manageTomSelectDropdowns() {
+            const tomSelectElements = document.querySelectorAll('.tomselect-select');
+            
+            tomSelectElements.forEach(select => {
+                // Buscar la instancia de TomSelect asociada
+                if (select.tomselect) {
+                    const tomSelectInstance = select.tomselect;
+                    
+                    // Cuando se abre el dropdown
+                    tomSelectInstance.on('dropdown_open', function() {
+                        const wrapper = tomSelectInstance.wrapper;
+                        if (wrapper) {
+                            wrapper.classList.add('ts-dropdown-open');
+                        }
+                    });
+                    
+                    // Cuando se cierra el dropdown
+                    tomSelectInstance.on('dropdown_close', function() {
+                        const wrapper = tomSelectInstance.wrapper;
+                        if (wrapper) {
+                            wrapper.classList.remove('ts-dropdown-open');
+                        }
+                    });
+                }
+            });
+        }
+
         function initializeEventListeners() {
+            // Inicializar Tom Select para multiselects
+            initializeTomSelect();
+
             document.querySelectorAll('.chart-tab-btn').forEach(btn => {
                 btn.addEventListener('click', function() {
                     selectChart(this.dataset.chart);
@@ -390,13 +507,48 @@
             });
 
             document.getElementById('dateRange').addEventListener('change', onDateRangeChange);
-            document.getElementById('year').addEventListener('change', updateChart);
-            document.getElementById('month').addEventListener('change', updateChart);
+            
+            // Event listeners para campos de fecha
+            const yearInput = document.getElementById('year');
+            if (yearInput) yearInput.addEventListener('change', updateChart);
+            
+            // Event listener para mes específico (select simple)
+            const monthSelect = document.getElementById('month');
+            if (monthSelect && monthSelect.tagName === 'SELECT') {
+                monthSelect.addEventListener('change', updateChart);
+            }
+            
+            const quarterSelect = document.getElementById('quarter');
+            if (quarterSelect) quarterSelect.addEventListener('change', updateChart);
+            
+            // Manejar checkboxes de meses
+            document.querySelectorAll('.month-checkbox').forEach(checkbox => {
+                checkbox.addEventListener('change', function() {
+                    updateChart();
+                });
+            });
+            
+            // Manejar labels de meses para mejor UX usando event delegation
+            const monthsContainer = document.querySelector('.months-container');
+            if (monthsContainer) {
+                monthsContainer.addEventListener('click', function(e) {
+                    // Si se hace clic en un label de mes
+                    if (e.target.classList.contains('month-label')) {
+                        const label = e.target;
+                        const checkbox = label.previousElementSibling;
+                        if (checkbox && checkbox.classList.contains('month-checkbox')) {
+                            checkbox.checked = !checkbox.checked;
+                            checkbox.dispatchEvent(new Event('change', { bubbles: true }));
+                            checkbox.focus();
+                        }
+                    }
+                });
+            }
+            
             document.getElementById('customStartDate').addEventListener('change', updateChart);
             document.getElementById('customEndDate').addEventListener('change', updateChart);
-            document.getElementById('municipiosFilter').addEventListener('change', updateChart);
-            document.getElementById('causasFilter').addEventListener('change', updateChart);
-            document.getElementById('jurisdiccionesFilter').addEventListener('change', updateChart);
+            // Nota: Los eventos para municipiosFilter, causasFilter, jurisdiccionesFilter 
+            // se manejan dentro de Tom Select (onChange), no aquí
             document.getElementById('sexoFilter').addEventListener('change', updateChart);
             document.getElementById('granularidadFilter').addEventListener('change', updateChart);
 
@@ -435,6 +587,8 @@
                 btn.classList.toggle('active', btn.dataset.chart === chartType);
             });
             updateVisibleFilters(chartType);
+            // Al cambiar de pestaña, limpiar filtros pero evitar recargar dos veces la gráfica.
+            clearFilters(true);
             document.getElementById('chartTypeSelector').value = 'auto';
             chartConfig.type = chartTypeDefaults[chartType];
             loadChart(chartType);
@@ -460,15 +614,89 @@
 
         function onDateRangeChange() {
             const value = document.getElementById('dateRange').value;
-            document.getElementById('yearSelector').style.display = value === 'year' ? 'block' : 'none';
-            document.getElementById('monthSelector').style.display = value === 'month' ? 'block' : 'none';
-            document.getElementById('customDateSelector').style.display = value === 'custom' ? 'block' : 'none';
+            const yearSelector = document.getElementById('yearSelector');
+            const monthSimpleSelector = document.getElementById('monthSimpleSelector');
+            const monthSelector = document.getElementById('monthSelector');
+            const quarterSelector = document.getElementById('quarterSelector');
+            const customDateSelector = document.getElementById('customDateSelector');
+            
+            // Ocultar todo
+            [yearSelector, monthSimpleSelector, monthSelector, quarterSelector, customDateSelector].forEach(el => {
+                if (el) el.style.display = 'none';
+            });
+            
+            // Mostrar según la opción seleccionada
+            switch(value) {
+                case 'year':
+                    if (yearSelector) yearSelector.style.display = 'block';
+                    break;
+                case 'month':
+                    if (yearSelector) yearSelector.style.display = 'block';
+                    if (monthSimpleSelector) monthSimpleSelector.style.display = 'block';
+                    break;
+                case 'multiple-months':
+                    if (yearSelector) yearSelector.style.display = 'block';
+                    if (monthSelector) monthSelector.style.display = 'block';
+                    // Agregar event listeners a los labels cuando se muestren múltiples meses
+                    setTimeout(() => {
+                        setupMonthLabels();
+                    }, 100);
+                    break;
+                case 'quarter':
+                    if (yearSelector) yearSelector.style.display = 'block';
+                    if (quarterSelector) quarterSelector.style.display = 'block';
+                    break;
+                case 'custom':
+                    if (customDateSelector) customDateSelector.style.display = 'block';
+                    break;
+                default:
+                    // all - no mostrar nada extra
+                    break;
+            }
+            
             updateChart();
+        }
+
+        function setupMonthLabels() {
+            const monthsContainer = document.querySelector('.months-container');
+            if (!monthsContainer) return;
+            
+            // Limpiar listeners previos removiendo y recreando el contenedor
+            const parent = monthsContainer.parentElement;
+            const newContainer = monthsContainer.cloneNode(true);
+            parent.replaceChild(newContainer, monthsContainer);
+            
+            // Obtener el contenedor actualizado
+            const updated = document.querySelector('.months-container');
+            if (!updated) return;
+            
+            // Re-agregar listeners a los checkboxes clonados
+            updated.querySelectorAll('.month-checkbox').forEach(checkbox => {
+                checkbox.addEventListener('change', function() {
+                    updateChart();
+                });
+            });
+            
+            // Agregar listener con event delegation para los labels
+            updated.addEventListener('click', handleMonthLabelClick);
+        }
+        
+        function handleMonthLabelClick(e) {
+            if (e.target.classList.contains('month-label')) {
+                e.preventDefault();
+                const label = e.target;
+                const checkbox = label.previousElementSibling;
+                if (checkbox && checkbox.classList.contains('month-checkbox')) {
+                    checkbox.checked = !checkbox.checked;
+                    checkbox.dispatchEvent(new Event('change', { bubbles: true }));
+                }
+            }
         }
 
         function collectFilters() {
             const dateRange = document.getElementById('dateRange').value;
             let startDate = null, endDate = null;
+            const currentYear = new Date().getFullYear();
 
             if (dateRange === 'year') {
                 const year = document.getElementById('year').value;
@@ -477,20 +705,47 @@
                     endDate = `${year}-12-31`;
                 }
             } else if (dateRange === 'month') {
-                const year = new Date().getFullYear();
-                const month = document.getElementById('month').value;
-                if (month) {
-                    startDate = `${year}-${month}-01`;
-                    const nextMonth = parseInt(month) === 12 ? `${year + 1}-01-01` : `${year}-${String(parseInt(month) + 1).padStart(2, '0')}-01`;
-                    endDate = new Date(nextMonth);
-                    endDate.setDate(endDate.getDate() - 1);
-                    endDate = endDate.toISOString().split('T')[0];
+                const year = document.getElementById('year').value || currentYear;
+                const monthValue = document.getElementById('month').value;
+                if (monthValue) {
+                    const monthNum = parseInt(monthValue);
+                    startDate = `${year}-${monthValue}-01`;
+                    const nextMonth = monthNum === 12 ? `${parseInt(year) + 1}-01-01` : `${year}-${String(monthNum + 1).padStart(2, '0')}-01`;
+                    const endDateObj = new Date(nextMonth);
+                    endDateObj.setDate(endDateObj.getDate() - 1);
+                    endDate = endDateObj.toISOString().split('T')[0];
+                }
+            } else if (dateRange === 'multiple-months') {
+                const year = document.getElementById('year').value || currentYear;
+                const checkedMonths = Array.from(document.querySelectorAll('.month-checkbox:checked')).map(cb => cb.value);
+                if (checkedMonths.length > 0) {
+                    const firstMonth = Math.min(...checkedMonths.map(Number));
+                    const lastMonth = Math.max(...checkedMonths.map(Number));
+                    startDate = `${year}-${String(firstMonth).padStart(2, '0')}-01`;
+                    const endMonthVal = lastMonth === 12 ? 1 : lastMonth + 1;
+                    const endYear = lastMonth === 12 ? parseInt(year) + 1 : year;
+                    const endDateObj = new Date(`${endYear}-${String(endMonthVal).padStart(2, '0')}-01`);
+                    endDateObj.setDate(endDateObj.getDate() - 1);
+                    endDate = endDateObj.toISOString().split('T')[0];
+                }
+            } else if (dateRange === 'quarter') {
+                const year = document.getElementById('year').value || currentYear;
+                const quarter = document.getElementById('quarter').value;
+                if (quarter) {
+                    const startMonth = (parseInt(quarter) - 1) * 3 + 1;
+                    const endMonth = startMonth + 2;
+                    startDate = `${year}-${String(startMonth).padStart(2, '0')}-01`;
+                    const nextQuarterStart = parseInt(quarter) === 4 ? `${parseInt(year) + 1}-01-01` : `${year}-${String((parseInt(quarter) * 3) + 1).padStart(2, '0')}-01`;
+                    const endDateObj = new Date(nextQuarterStart);
+                    endDateObj.setDate(endDateObj.getDate() - 1);
+                    endDate = endDateObj.toISOString().split('T')[0];
                 }
             } else if (dateRange === 'custom') {
                 startDate = document.getElementById('customStartDate').value;
                 endDate = document.getElementById('customEndDate').value;
             }
 
+            activeFilters.dateRange = dateRange;
             activeFilters.startDate = startDate;
             activeFilters.endDate = endDate;
             activeFilters.municipios = Array.from(document.getElementById('municipiosFilter').selectedOptions || []).map(o => o.value);
@@ -505,6 +760,37 @@
             updateActiveFiltersDisplay();
         }
 
+        function getDateFilterText() {
+            const monthNames = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+            const monthFullNames = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+            
+            const dateRange = activeFilters.dateRange;
+            const startDate = activeFilters.startDate;
+            const endDate = activeFilters.endDate;
+            
+            if (!startDate || !endDate) return null;
+            
+            const year = startDate.split('-')[0];
+            const startMonth = parseInt(startDate.split('-')[1]);
+            const endMonth = parseInt(endDate.split('-')[1]);
+            
+            switch(dateRange) {
+                case 'year':
+                    return `Año ${year}`;
+                case 'month':
+                    return `${monthFullNames[startMonth - 1]} ${year}`;
+                case 'multiple-months':
+                    return `${monthNames[startMonth - 1]}-${monthNames[endMonth - 1]} ${year}`;
+                case 'quarter':
+                    const quarter = Math.ceil(startMonth / 3);
+                    return `Trimestre ${quarter} ${year}`;
+                case 'custom':
+                    return `${startDate} a ${endDate}`;
+                default:
+                    return null;
+            }
+        }
+
         function updateActiveFiltersDisplay() {
             const container = document.getElementById('filtrosActivosList');
             const section = document.getElementById('filtrosActivos');
@@ -513,14 +799,12 @@
             let hasActiveFilters = false;
 
             // Mostrar rango de fechas
-            if (activeFilters.startDate || activeFilters.endDate) {
-                const dateText = activeFilters.startDate && activeFilters.endDate 
-                    ? `${activeFilters.startDate.split('-')[0]}`
-                    : 'Personalizado';
+            const dateText = getDateFilterText();
+            if (dateText) {
                 container.innerHTML += `<span class="inline-flex items-center gap-1 bg-[#611132] text-white text-xs px-2.5 py-1 rounded-full font-lora">
                     <i class="fas fa-calendar-alt"></i>
                     ${dateText}
-                    <button onclick="clearDateFilter()" class="ml-1 hover:opacity-70"><i class="fas fa-times"></i></button>
+                    <button onclick="clearDateFilter()" class="ml-1 hover:opacity-70">×</button>
                 </span>`;
                 hasActiveFilters = true;
             }
@@ -531,7 +815,7 @@
                 container.innerHTML += `<span class="inline-flex items-center gap-1 bg-[#8B6F47] text-white text-xs px-2.5 py-1 rounded-full font-lora">
                     <i class="fas fa-city"></i>
                     ${municipiosText}
-                    <button onclick="clearFilter('municipios')" class="ml-1 hover:opacity-70"><i class="fas fa-times"></i></button>
+                    <button onclick="clearFilter('municipios')" class="ml-1 hover:opacity-70">×</button>
                 </span>`;
                 hasActiveFilters = true;
             }
@@ -542,7 +826,7 @@
                 container.innerHTML += `<span class="inline-flex items-center gap-1 bg-[#2C5F5D] text-white text-xs px-2.5 py-1 rounded-full font-lora">
                     <i class="fas fa-heartbeat"></i>
                     ${causasText}
-                    <button onclick="clearFilter('causas')" class="ml-1 hover:opacity-70"><i class="fas fa-times"></i></button>
+                    <button onclick="clearFilter('causas')" class="ml-1 hover:opacity-70">×</button>
                 </span>`;
                 hasActiveFilters = true;
             }
@@ -553,7 +837,7 @@
                 container.innerHTML += `<span class="inline-flex items-center gap-1 bg-[#9B4D6F] text-white text-xs px-2.5 py-1 rounded-full font-lora">
                     <i class="fas fa-building"></i>
                     ${jurisdiccionesText}
-                    <button onclick="clearFilter('jurisdicciones')" class="ml-1 hover:opacity-70"><i class="fas fa-times"></i></button>
+                    <button onclick="clearFilter('jurisdicciones')" class="ml-1 hover:opacity-70">×</button>
                 </span>`;
                 hasActiveFilters = true;
             }
@@ -564,7 +848,7 @@
                 container.innerHTML += `<span class="inline-flex items-center gap-1 bg-[#4A7C7E] text-white text-xs px-2.5 py-1 rounded-full font-lora">
                     <i class="fas fa-venus-mars"></i>
                     ${sexoLabel}
-                    <button onclick="clearFilter('sexo')" class="ml-1 hover:opacity-70"><i class="fas fa-times"></i></button>
+                    <button onclick="clearFilter('sexo')" class="ml-1 hover:opacity-70">×</button>
                 </span>`;
                 hasActiveFilters = true;
             }
@@ -576,25 +860,41 @@
         function clearDateFilter() {
             document.getElementById('dateRange').value = 'all';
             document.getElementById('yearSelector').style.display = 'none';
+            document.getElementById('monthSimpleSelector').style.display = 'none';
             document.getElementById('monthSelector').style.display = 'none';
+            document.getElementById('quarterSelector').style.display = 'none';
             document.getElementById('customDateSelector').style.display = 'none';
             document.getElementById('year').value = '';
             document.getElementById('month').value = '';
+            document.getElementById('quarter').value = '';
             document.getElementById('customStartDate').value = '';
             document.getElementById('customEndDate').value = '';
+            // Limpiar checkboxes de meses
+            document.querySelectorAll('.month-checkbox').forEach(checkbox => {
+                checkbox.checked = false;
+            });
+            collectFilters();
             updateChart();
         }
 
         function clearFilter(filterType) {
             if (filterType === 'municipios') {
-                document.getElementById('municipiosFilter').value = '';
+                const el = document.getElementById('municipiosFilter');
+                el.value = '';
+                if (el.tomselect) el.tomselect.clear();
             } else if (filterType === 'causas') {
-                document.getElementById('causasFilter').value = '';
+                const el = document.getElementById('causasFilter');
+                el.value = '';
+                if (el.tomselect) el.tomselect.clear();
             } else if (filterType === 'jurisdicciones') {
-                document.getElementById('jurisdiccionesFilter').value = '';
+                const el = document.getElementById('jurisdiccionesFilter');
+                el.value = '';
+                if (el.tomselect) el.tomselect.clear();
             } else if (filterType === 'sexo') {
                 document.getElementById('sexoFilter').value = '';
             }
+            collectFilters();
+            updateActiveFiltersDisplay();
             updateChart();
         }
 
@@ -819,24 +1119,46 @@
             loadChart(currentChartType);
         }
 
-        function clearFilters() {
+        function clearFilters(suppressUpdate = false) {
             document.getElementById('dateRange').value = 'all';
             document.getElementById('year').value = '';
             document.getElementById('month').value = '';
+            document.getElementById('quarter').value = '';
             document.getElementById('customStartDate').value = '';
             document.getElementById('customEndDate').value = '';
-            document.getElementById('municipiosFilter').value = '';
-            document.getElementById('causasFilter').value = '';
-            document.getElementById('jurisdiccionesFilter').value = '';
             document.getElementById('sexoFilter').value = '';
             document.getElementById('granularidadFilter').value = 'month';
             
-            document.getElementById('yearSelector').style.display = 'none';
-            document.getElementById('monthSelector').style.display = 'none';
-            document.getElementById('customDateSelector').style.display = 'none';
+            // Limpiar checkboxes de meses
+            document.querySelectorAll('.month-checkbox').forEach(checkbox => {
+                checkbox.checked = false;
+            });
+            
+            // Limpiar multiselects y actualizar Tom Select
+            const multiSelectIds = ['municipiosFilter', 'causasFilter', 'jurisdiccionesFilter'];
+            multiSelectIds.forEach(id => {
+                const element = document.getElementById(id);
+                element.value = '';
+                // Si Tom Select está inicializado, actualizar su valor
+                if (element.tomselect) {
+                    element.tomselect.clear();
+                }
+            });
+            
+            // Ocultar todos los selectores condicionales
+            const selectors = [
+                document.getElementById('yearSelector'),
+                document.getElementById('monthSimpleSelector'),
+                document.getElementById('monthSelector'),
+                document.getElementById('quarterSelector'),
+                document.getElementById('customDateSelector')
+            ];
+            selectors.forEach(selector => {
+                if (selector) selector.style.display = 'none';
+            });
             
             updateActiveFiltersDisplay();
-            updateChart();
+            if (!suppressUpdate) updateChart();
         }
 
         function showLoadingMessage() {
@@ -962,11 +1284,30 @@
 
         #filtrosActivosList button {
             cursor: pointer;
-            transition: opacity 0.2s;
+            transition: all 0.2s ease;
+            background: rgba(0, 0, 0, 0.2);
+            border: none;
+            border-radius: 50%;
+            width: 16px;
+            height: 16px;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 0.9rem;
+            line-height: 1;
+            flex-shrink: 0;
+            min-width: 16px;
         }
 
         #filtrosActivosList button:hover {
-            opacity: 0.7;
+            background: rgba(0, 0, 0, 0.4);
+            transform: scale(1.15);
+        }
+
+        #filtrosActivosList button {
+            font-weight: normal;
         }
 
         @keyframes fadeInSlide {
@@ -979,6 +1320,207 @@
                 transform: translateY(0);
             }
         }
+
+        /* Estilos para checkboxes de meses */
+        .month-checkbox {
+            display: none;
+        }
+
+        .month-label {
+            display: block;
+            text-center;
+            text-xs;
+            padding: 0.375rem 0;
+            background-color: #f3f4f6;
+            border: 1px solid #d1d5db;
+            border-radius: 0.375rem;
+            cursor: pointer;
+            user-select: none;
+            transition: all 0.2s ease;
+        }
+
+        .month-label:hover {
+            background-color: #e5e7eb;
+            border-color: #9ca3af;
+        }
+
+        .month-checkbox:checked + .month-label {
+            background-color: #611132;
+            color: white;
+            border-color: #611132;
+            font-weight: 500;
+        }
+
+        .month-checkbox:focus + .month-label {
+            outline: 2px solid #611132;
+            outline-offset: 1px;
+        }
+
+        /* === Tom Select Styling === */
+        #estadisticas-filtros {
+            overflow: visible !important;
+            position: relative;
+        }
+
+        #estadisticas-filtros > div {
+            overflow: visible !important;
+        }
+
+        #estadisticas-filtros .px-4 {
+            overflow: visible !important;
+        }
+
+        select.tomselect-select {
+            position: absolute !important;
+            left: -9999px !important;
+            width: 1px !important;
+            height: 1px !important;
+            overflow: hidden !important;
+            opacity: 0 !important;
+            pointer-events: none !important;
+            border: 0 !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            background: transparent !important;
+            -webkit-appearance: none !important;
+            -moz-appearance: none !important;
+            appearance: none !important;
+            display: none !important;
+        }
+
+        select.tomselect-select::-ms-expand { display: none !important; }
+        select.tomselect-select { 
+            background-image: none !important;
+            visibility: hidden !important;
+        }
+
+        .ts-wrapper { 
+            display: block; 
+            width: 100%;
+            position: relative;
+            z-index: 9999 !important;
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+
+        .ts-control {
+            z-index: 9999 !important;
+            position: relative;
+            border: 1px solid #404041 !important;
+            border-radius: 0.5rem !important;
+            padding: 8px 12px !important;
+            background: #ffffff !important;
+            font-family: inherit;
+            font-size: 0.75rem;
+            line-height: 1.25rem !important;
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            box-sizing: border-box;
+            margin: 0 !important;
+            box-shadow: none !important;
+            height: auto !important;
+            min-height: 36px !important;
+            max-height: 36px !important;
+            transition: all 0.2s ease;
+        }
+
+        .ts-control:focus-within {
+            border-color: #404041 !important;
+            outline: none !important;
+            box-shadow: 0 0 0 1px #611132 !important;
+        }
+
+        .ts-control .item, .ts-control input {
+            padding: 0 !important;
+            margin: 0 !important;
+            height: auto !important;
+            line-height: 1.25rem !important;
+            font-size: inherit;
+            font-family: inherit;
+        }
+
+        .ts-control .item {
+            display: none !important;
+        }
+
+        .ts-control input {
+            flex: 1;
+            min-width: 150px;
+        }
+
+        .ts-control input::placeholder {
+            color: #9ca3af;
+            font-style: italic;
+        }
+        }
+
+        .ts-control .dropdown-toggle,
+        .ts-control .ts-dropdown-toggle,
+        .ts-control .dropdown_toggle,
+        .ts-control .ts-clear {
+            display: none !important;
+        }
+
+        .ts-dropdown {
+            border: 1px solid #404041;
+            border-radius: 0.5rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            max-height: 250px;
+            overflow-y: auto;
+            z-index: 999999 !important;
+            position: absolute !important;
+            top: 100% !important;
+            left: 0 !important;
+            right: 0 !important;
+            background: white;
+            margin-top: 2px;
+        }
+
+        .ts-dropdown .ts-option {
+            padding: 0.5rem 0.75rem;
+            cursor: pointer;
+            transition: background-color 0.15s ease;
+        }
+
+        .ts-dropdown .ts-option:hover {
+            background-color: #f3f4f6;
+        }
+
+        .ts-dropdown .ts-option.selected {
+            background-color: #e5e7eb;
+            color: #404041;
+        }
+
+        .ts-control::after {
+            content: "";
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 18px;
+            height: 18px;
+            background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'/></svg>");
+            background-repeat: no-repeat;
+            background-position: center;
+            background-size: 12px 12px;
+            pointer-events: none;
+            opacity: 0.92;
+        }
+
+        .ts-wrapper, .ts-control { vertical-align: middle; }
+
+        /* Asegurar que TomSelect dropdown tenga muy alto z-index */
+        .filter-section-content {
+            position: relative;
+        }
+
+        .ts-wrapper.ts-dropdown-open {
+            z-index: 999999 !important;
+        }
+
+        .ts-wrapper:not(.ts-dropdown-open) {
+            z-index: 1 !important;
         }
     </style>
 
