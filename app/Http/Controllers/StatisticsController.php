@@ -641,39 +641,60 @@ class StatisticsController extends Controller
 
     private function getChartEdades($filters, $dateColumn, $applyFilters, $limit)
     {
-        $ageOrder = ['0-4','5-14','15-24','25-34','35-44','45-54','55-64','65-74','75+','Desconocido'];
+        $ageOrder = ['<5 años','5-19 años','20-64 años','65+ años'];
         $edades = collect();
+        $causasPorEdad = [];
 
-        if (Schema::hasColumn('deaths', 'birth_date')) {
-            $edadesQ = DB::table('deaths')
-                ->select(DB::raw("CASE
-                    WHEN birth_date IS NULL THEN 'Desconocido'
-                    WHEN TIMESTAMPDIFF(YEAR, birth_date, CURDATE()) BETWEEN 0 AND 4 THEN '0-4'
-                    WHEN TIMESTAMPDIFF(YEAR, birth_date, CURDATE()) BETWEEN 5 AND 14 THEN '5-14'
-                    WHEN TIMESTAMPDIFF(YEAR, birth_date, CURDATE()) BETWEEN 15 AND 24 THEN '15-24'
-                    WHEN TIMESTAMPDIFF(YEAR, birth_date, CURDATE()) BETWEEN 25 AND 34 THEN '25-34'
-                    WHEN TIMESTAMPDIFF(YEAR, birth_date, CURDATE()) BETWEEN 35 AND 44 THEN '35-44'
-                    WHEN TIMESTAMPDIFF(YEAR, birth_date, CURDATE()) BETWEEN 45 AND 54 THEN '45-54'
-                    WHEN TIMESTAMPDIFF(YEAR, birth_date, CURDATE()) BETWEEN 55 AND 64 THEN '55-64'
-                    WHEN TIMESTAMPDIFF(YEAR, birth_date, CURDATE()) BETWEEN 65 AND 74 THEN '65-74'
-                    ELSE '75+' END as range"), DB::raw('COUNT(*) as total'))
-                ->groupBy('range');
-            $applyFilters($edadesQ);
-            $edadesRaw = $edadesQ->get();
+        // Build subquery first for age with causes
+        $subquery = DB::table('deaths')
+            ->leftJoin('death_causes', 'death_causes.id', '=', 'deaths.death_cause_id')
+            ->select(
+                DB::raw("CASE
+                    WHEN age < 5 THEN '<5 años'
+                    WHEN age >= 5 AND age < 20 THEN '5-19 años'
+                    WHEN age >= 20 AND age < 65 THEN '20-64 años'
+                    ELSE '65+ años' END as age_range"),
+                'death_causes.name as cause_name'
+            );
+        
+        $applyFilters($subquery);
+        
+        // Get raw data with causes for detailed analysis
+        $edadesRaw = $subquery->get();
+        
+        // Count by age range
+        $edadesCounts = $edadesRaw->groupBy('age_range')
+            ->map(function($items) { return $items->count(); });
 
-            $ordered = collect();
-            foreach ($ageOrder as $lbl) {
-                $found = $edadesRaw->firstWhere('range', $lbl);
-                $ordered->push(['range' => $lbl, 'total' => $found ? (int)$found->total : 0]);
-            }
-            $edades = $ordered;
+        // Get top causes per age group (top 3)
+        foreach ($ageOrder as $ageLabel) {
+            $causesInAge = $edadesRaw->where('age_range', $ageLabel)
+                ->groupBy('cause_name')
+                ->map(function($items) { return $items->count(); })
+                ->sortDesc()
+                ->take(3);
+            
+            $causasPorEdad[$ageLabel] = $causesInAge->toArray();
         }
+
+        // Build ordered result
+        $ordered = collect();
+        foreach ($ageOrder as $lbl) {
+            $count = $edadesCounts->get($lbl, 0);
+            $ordered->push([
+                'range' => $lbl, 
+                'total' => (int)$count,
+                'top_causes' => $causasPorEdad[$lbl] ?? []
+            ]);
+        }
+        $edades = $ordered;
 
         return response()->json([
             'type' => 'edades',
             'labels' => $edades->pluck('range')->values()->all(),
             'counts' => $edades->pluck('total')->values()->all(),
             'total' => array_sum($edades->pluck('total')->all()),
+            'data_with_causes' => $edades->toArray(),
         ]);
     }
 

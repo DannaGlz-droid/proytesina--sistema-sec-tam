@@ -236,6 +236,18 @@
                                     </select>
                                 </div>
 
+                                <!-- Toggle de Causas Principales para Edades (contextual) -->
+                                <div id="filterCausasPrincipales" class="filter-section dynamic-filter" style="display: none;">
+                                    <div class="flex items-center gap-2 pb-2 border-b border-gray-200 mb-3">
+                                        <i class="fas fa-star text-[#611132] text-sm"></i>
+                                        <h4 class="text-xs font-semibold text-[#404041] font-lora">Información</h4>
+                                    </div>
+                                    <label class="flex items-center gap-3 cursor-pointer hover:bg-gray-50 p-2 rounded-lg transition-colors">
+                                        <input type="checkbox" id="mostrarCausasPrincipales" class="w-4 h-4 rounded border-[#404041] text-[#611132] cursor-pointer">
+                                        <span class="text-xs text-gray-700 font-lora">Mostrar causas principales por edad</span>
+                                    </label>
+                                </div>
+
                             </div>
                         </div>
                     </div>
@@ -310,6 +322,25 @@
                             <div class="chart-wrapper" style="height:400px; position:relative;">
                                 <div id="mainChart" style="width: 100%; height: 100%;"></div>
                             </div>
+                            
+                            <!-- Tabla de Causas Principales (solo para Edades) -->
+                            <div id="causasPrincipalesContainer" class="hidden mt-6 pt-4 border-t border-gray-200">
+                                <h3 class="text-sm font-bold text-[#404041] mb-4 font-lora">Causas Principales de Muerte por Grupo de Edad</h3>
+                                <div class="overflow-x-auto">
+                                    <table class="w-full text-xs border-collapse">
+                                        <thead>
+                                            <tr class="bg-gray-50 border-b border-gray-200">
+                                                <th class="px-3 py-2 text-left font-semibold text-[#404041] font-lora">Grupo de Edad</th>
+                                                <th class="px-3 py-2 text-left font-semibold text-[#404041] font-lora">Total</th>
+                                                <th class="px-3 py-2 text-left font-semibold text-[#404041] font-lora">Causas Principales</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="causasPrincipalesBody">
+                                            <!-- Se llena dinámicamente con JavaScript -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
                         </div>
 
                         <!-- Mensaje de Carga/Error -->
@@ -329,6 +360,8 @@
 
     <!-- Incluir ECharts -->
     <script src="https://cdn.jsdelivr.net/npm/echarts@5.5.1/dist/echarts.min.js"></script>
+    <!-- Incluir html2canvas para capturar el DOM cuando sea posible (mejor export visual) -->
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 
     <!-- Include modal para descargas -->
     @include('components.modal-descargas')
@@ -345,8 +378,10 @@
         };
 
         let activeFilters = {
+            dateRange: 'all',
             startDate: null,
             endDate: null,
+            selectedMonths: [],
             municipios: [],
             municipiosNames: [],
             causas: [],
@@ -354,7 +389,8 @@
             jurisdicciones: [],
             jurisdiccionesNames: [],
             sexo: null,
-            granularidad: 'month'
+            granularidad: 'month',
+            mostrarCausasPrincipales: false
         };
 
         const colorPalettes = {
@@ -390,7 +426,7 @@
         const filtersForChart = {
             municipios: ['dates', 'causas', 'jurisdicciones', 'sexo'],
             tendencias: ['dates', 'municipios', 'causas', 'sexo', 'granularidad'],
-            edades: ['dates', 'municipios', 'causas', 'jurisdicciones'],
+            edades: ['dates', 'municipios', 'causas', 'jurisdicciones', 'causasPrincipales'],
             genero: ['dates', 'municipios', 'causas', 'jurisdicciones'],
             causas: ['dates', 'municipios', 'jurisdicciones', 'sexo'],
             jurisdicciones: ['dates', 'causas', 'sexo'],
@@ -551,6 +587,7 @@
             // se manejan dentro de Tom Select (onChange), no aquí
             document.getElementById('sexoFilter').addEventListener('change', updateChart);
             document.getElementById('granularidadFilter').addEventListener('change', updateChart);
+            document.getElementById('mostrarCausasPrincipales').addEventListener('change', updateChart);
 
             document.getElementById('chartTypeSelector').addEventListener('change', function() {
                 chartConfig.type = this.value === 'auto' ? chartTypeDefaults[currentChartType] : this.value;
@@ -571,12 +608,280 @@
 
             document.getElementById('limpiarFiltros').addEventListener('click', clearFilters);
 
-            document.getElementById('descargarActual').addEventListener('click', function() {
-                if (currentEchartsInstance) {
+            document.getElementById('descargarActual').addEventListener('click', async function() {
+                if (!currentEchartsInstance) return;
+                
+                // Obtener el tipo de serie para determinar si es pie/doughnut
+                const opt = currentEchartsInstance.getOption ? currentEchartsInstance.getOption() : null;
+                const series = opt && opt.series && opt.series[0] ? opt.series[0] : null;
+                const isChartPie = series && (series.type === 'pie');
+                
+                // Para gráficas pie/doughnut, usar directamente echarts sin html2canvas para evitar leyendas duplicadas
+                if (isChartPie) {
+                    const dataURL = currentEchartsInstance.getDataURL({ type: 'png', pixelRatio: 2, backgroundColor: '#ffffff' });
                     const link = document.createElement('a');
-                    link.href = currentEchartsInstance.getDataURL({ type: 'png' });
+                    link.href = dataURL;
                     link.download = `grafica-${currentChartType}-${new Date().toISOString().split('T')[0]}.png`;
                     link.click();
+                    return;
+                }
+                
+                // Para Edades con tabla de causas, capturar ambos elementos
+                if (currentChartType === 'edades' && document.getElementById('mostrarCausasPrincipales').checked) {
+                    // Usar html2canvas si está disponible
+                    if (typeof html2canvas !== 'undefined') {
+                        const element = document.querySelector('[id="mainChart"]').closest('.bg-white');
+                        html2canvas(element, {
+                            scale: 2,
+                            useCORS: true,
+                            backgroundColor: '#ffffff'
+                        }).then(canvas => {
+                            const link = document.createElement('a');
+                            link.href = canvas.toDataURL('image/png');
+                            link.download = `grafica-${currentChartType}-${new Date().toISOString().split('T')[0]}.png`;
+                            link.click();
+                        });
+                    } else {
+                        // Fallback si html2canvas no está disponible, descargar solo el chart
+                        const link = document.createElement('a');
+                        link.href = currentEchartsInstance.getDataURL({ type: 'png' });
+                        link.download = `grafica-${currentChartType}-${new Date().toISOString().split('T')[0]}.png`;
+                        link.click();
+                    }
+                } else {
+                    // Para otros charts (barras, líneas), intentar capturar el DOM con html2canvas (más fiable)
+                    if (typeof html2canvas !== 'undefined') {
+                        const element = document.querySelector('[id="mainChart"]').closest('.bg-white');
+                        if (element) {
+                            // Construir un contenedor de export compacto: imagen del chart + leyenda
+                            try {
+                                // Obtener imagen del chart (solo canvas) en alta resolución
+                                const chartImgData = currentEchartsInstance.getDataURL({ type: 'png', pixelRatio: 2, backgroundColor: '#ffffff' });
+
+                                // Crear contenedor export
+                                const exportDiv = document.createElement('div');
+                                exportDiv.style.display = 'flex';
+                                exportDiv.style.alignItems = 'center';
+                                exportDiv.style.background = '#ffffff';
+                                exportDiv.style.padding = '8px 12px';
+                                exportDiv.style.borderRadius = '6px';
+                                exportDiv.style.fontFamily = getComputedStyle(document.body).fontFamily || 'sans-serif';
+                                exportDiv.style.color = '#404041';
+
+                                // Imagen del chart
+                                const img = document.createElement('img');
+                                img.src = chartImgData;
+                                img.style.display = 'block';
+                                img.style.maxWidth = 'none';
+                                img.style.height = 'auto';
+                                img.style.marginRight = '20px';
+
+                                // Construir leyenda a partir de la opción actual
+                                const legendDiv = document.createElement('div');
+                                legendDiv.style.display = 'flex';
+                                legendDiv.style.flexDirection = 'column';
+                                legendDiv.style.gap = '8px';
+
+                                const opt = currentEchartsInstance.getOption ? currentEchartsInstance.getOption() : null;
+                                const series = opt && opt.series && opt.series[0] ? opt.series[0] : null;
+                                const colors = opt && opt.color ? opt.color : null;
+
+                                if (series && series.data && Array.isArray(series.data)) {
+                                    series.data.forEach((d, idx) => {
+                                        const item = document.createElement('div');
+                                        item.style.display = 'flex';
+                                        item.style.alignItems = 'center';
+                                        item.style.gap = '10px';
+                                        item.style.fontSize = '15px';
+
+                                        const sw = document.createElement('span');
+                                        sw.style.display = 'inline-block';
+                                        // Ajustar tamaño del recuadro de color para ser proporcional a la fuente
+                                        sw.style.width = '18px';
+                                        sw.style.height = '16px';
+                                        sw.style.borderRadius = '3px';
+                                        sw.style.background = (colors && colors[idx]) ? colors[idx] : (d.itemStyle && d.itemStyle.color ? d.itemStyle.color : '#ccc');
+
+                                        const label = document.createElement('span');
+                                        label.textContent = d.name;
+
+                                        item.appendChild(sw);
+                                        item.appendChild(label);
+                                        legendDiv.appendChild(item);
+                                    });
+                                }
+
+                                exportDiv.appendChild(img);
+                                exportDiv.appendChild(legendDiv);
+
+                                // Añadir al DOM fuera de pantalla para que html2canvas pueda renderizarlo
+                                exportDiv.style.position = 'fixed';
+                                exportDiv.style.left = '-9999px';
+                                exportDiv.style.top = '0';
+                                document.body.appendChild(exportDiv);
+
+                                // Esperar a que la imagen cargue para capturar correctamente
+                                img.onload = function() {
+                                    html2canvas(exportDiv, { scale: 2, useCORS: true, backgroundColor: '#ffffff' }).then(canvas => {
+                                        const dataURL = canvas.toDataURL('image/png');
+                                        const arr = dataURL.split(',');
+                                        const mime = arr[0].match(/:(.*?);/)[1];
+                                        const bstr = atob(arr[1]);
+                                        let n = bstr.length;
+                                        const u8arr = new Uint8Array(n);
+                                        while(n--) { u8arr[n] = bstr.charCodeAt(n); }
+                                        const blob = new Blob([u8arr], { type: mime });
+                                        const objUrl = URL.createObjectURL(blob);
+                                        const link = document.createElement('a');
+                                        link.href = objUrl;
+                                        link.download = `grafica-${currentChartType}-${new Date().toISOString().split('T')[0]}.png`;
+                                        document.body.appendChild(link);
+                                        link.click();
+                                        link.remove();
+                                        setTimeout(() => URL.revokeObjectURL(objUrl), 1000);
+                                        exportDiv.remove();
+                                    }).catch(err => {
+                                        console.warn('html2canvas exportDiv failed, falling back', err);
+                                        exportDiv.remove();
+                                    });
+                                };
+                                // If already cached image, trigger onload manually
+                                if (img.complete) img.onload();
+                                return;
+                            } catch (err) {
+                                console.warn('compact export failed, falling back to full DOM capture', err);
+                            }
+                        }
+                    }
+                    // Para otros charts, renderizar la opción en un contenedor fuera de pantalla
+                    // y exportar solo la imagen resultante (sin el padding/contenedor de la UI)
+                    try {
+                        // Obtener dimensiones reales del chart en pantalla para mantener proporciones
+                        const mainChartEl = document.getElementById('mainChart');
+                        const rect = mainChartEl ? mainChartEl.getBoundingClientRect() : null;
+                        const exportWidth = rect ? Math.max(600, Math.round(rect.width)) : 900;
+                        const exportHeight = rect ? Math.max(400, Math.round(rect.height)) : 600;
+
+                        const tmpDiv = document.createElement('div');
+                        tmpDiv.style.width = exportWidth + 'px';
+                        tmpDiv.style.height = exportHeight + 'px';
+                        tmpDiv.style.position = 'fixed';
+                        tmpDiv.style.left = '-9999px';
+                        tmpDiv.style.top = '-9999px';
+                        // Allow rendering even though offscreen
+                        // Make it invisible but renderable: use opacity 0 (visibility:hidden may prevent render)
+                        tmpDiv.style.opacity = '0';
+                        tmpDiv.style.pointerEvents = 'none';
+                        document.body.appendChild(tmpDiv);
+
+                        const tmpChart = echarts.init(tmpDiv, null, { width: exportWidth, height: exportHeight, devicePixelRatio: window.devicePixelRatio || 1 });
+                        // Construir una opción de export más robusta basada en la opción actual
+                        const currentOption = currentEchartsInstance.getOption ? currentEchartsInstance.getOption() : null;
+                        let exportOption = currentOption;
+
+                        if (currentOption && currentOption.series && currentOption.series[0]) {
+                            const s = currentOption.series[0];
+                            if (s.type === 'pie') {
+                                const pieData = s.data || [];
+                                const colors = currentOption.color || (window && window.colorPalettes && window.colorPalettes[chartConfig.colorPalette]) || [];
+
+                                // calcular dimensiones desde el contenedor real si está disponible
+                                // Use actual export dimensions to compute legend position
+                                const visW = exportWidth;
+                                const visH = exportHeight;
+
+                                const legendLeftPx = Math.round(visW * 0.62);
+
+                                // Calcular radios en píxeles para asegurar que el círculo quepa
+                                const outerRadiusPx = Math.floor(Math.min(visW, visH) * 0.42);
+                                const innerRadiusPx = chartConfig.type === 'doughnut' ? Math.floor(outerRadiusPx * 0.56) : 0;
+                                const centerX = Math.round(visW * 0.36);
+                                const centerY = Math.round(visH / 2);
+
+                                exportOption = {
+                                    color: colors,
+                                    tooltip: { trigger: 'item' },
+                                    legend: { show: false },
+                                    series: [{
+                                        name: s.name || chartTitles[currentChartType] || '',
+                                        type: 'pie',
+                                        // usar centro y radios en píxeles para export evitar recortes
+                                        center: [centerX, centerY],
+                                        radius: chartConfig.type === 'doughnut' ? [innerRadiusPx, outerRadiusPx] : outerRadiusPx,
+                                        avoidLabelOverlap: true,
+                                        data: pieData,
+                                        label: {
+                                            show: true,
+                                            position: 'outside',
+                                            distance: 6,
+                                            fontSize: 13,
+                                            color: '#404041',
+                                            overflow: 'none',
+                                            width: 180,
+                                            formatter: s.label && s.label.formatter ? s.label.formatter : undefined
+                                        },
+                                        labelLine: { show: true, length: 12, length2: 8 }
+                                    }]
+                                };
+                            }
+                        }
+
+                        tmpChart.setOption(exportOption || currentOption, true);
+
+                        // Esperar un momento para que echarts complete el render fuera de pantalla
+                        await new Promise(resolve => setTimeout(resolve, 200));
+
+                        const dataURL = tmpChart.getDataURL({ type: 'png', pixelRatio: 2, backgroundColor: '#ffffff' });
+                        tmpChart.dispose();
+                        tmpDiv.remove();
+
+                        // Convertir dataURL a Blob para evitar problemas con navegadores
+                        function dataURLtoBlob(dataurl) {
+                            const arr = dataurl.split(',');
+                            const mime = arr[0].match(/:(.*?);/)[1];
+                            const bstr = atob(arr[1]);
+                            let n = bstr.length;
+                            const u8arr = new Uint8Array(n);
+                            while(n--) {
+                                u8arr[n] = bstr.charCodeAt(n);
+                            }
+                            return new Blob([u8arr], { type: mime });
+                        }
+
+                        const blob = dataURLtoBlob(dataURL);
+                        const objUrl = URL.createObjectURL(blob);
+                        const link = document.createElement('a');
+                        link.href = objUrl;
+                        link.download = `grafica-${currentChartType}-${new Date().toISOString().split('T')[0]}.png`;
+                        document.body.appendChild(link);
+                        link.click();
+                        link.remove();
+                        setTimeout(() => URL.revokeObjectURL(objUrl), 1000);
+                    } catch (e) {
+                        // Fallback a getDataURL directo si algo falla
+                        try {
+                            const fallbackData = currentEchartsInstance.getDataURL({ type: 'png', pixelRatio: 2, backgroundColor: '#ffffff' });
+                            const blobFb = (function(dataurl){
+                                const arr = dataurl.split(',');
+                                const mime = arr[0].match(/:(.*?);/)[1];
+                                const bstr = atob(arr[1]);
+                                let n = bstr.length;
+                                const u8arr = new Uint8Array(n);
+                                while(n--) { u8arr[n] = bstr.charCodeAt(n); }
+                                return new Blob([u8arr], { type: mime });
+                            })(fallbackData);
+                            const objUrlFb = URL.createObjectURL(blobFb);
+                            const linkFb = document.createElement('a');
+                            linkFb.href = objUrlFb;
+                            linkFb.download = `grafica-${currentChartType}-${new Date().toISOString().split('T')[0]}.png`;
+                            document.body.appendChild(linkFb);
+                            linkFb.click();
+                            linkFb.remove();
+                            setTimeout(() => URL.revokeObjectURL(objUrlFb), 1000);
+                        } catch (e2) {
+                            console.error('Fallback download failed', e2);
+                        }
+                    }
                 }
             });
         }
@@ -595,7 +900,7 @@
         }
 
         function updateVisibleFilters(chartType) {
-            const allFilters = ['filterMunicipios', 'filterCausas', 'filterJurisdicciones', 'filterSexo', 'filterGranularidad'];
+            const allFilters = ['filterMunicipios', 'filterCausas', 'filterJurisdicciones', 'filterSexo', 'filterGranularidad', 'filterCausasPrincipales'];
             const availableFilters = filtersForChart[chartType] || [];
 
             allFilters.forEach(filterId => {
@@ -607,6 +912,7 @@
                     if (filterId === 'filterJurisdicciones' && availableFilters.includes('jurisdicciones')) show = true;
                     if (filterId === 'filterSexo' && availableFilters.includes('sexo')) show = true;
                     if (filterId === 'filterGranularidad' && availableFilters.includes('granularidad')) show = true;
+                    if (filterId === 'filterCausasPrincipales' && availableFilters.includes('causasPrincipales')) show = true;
                     element.style.display = show ? 'block' : 'none';
                 }
             });
@@ -727,6 +1033,8 @@
                     const endDateObj = new Date(`${endYear}-${String(endMonthVal).padStart(2, '0')}-01`);
                     endDateObj.setDate(endDateObj.getDate() - 1);
                     endDate = endDateObj.toISOString().split('T')[0];
+                    // Guardar meses seleccionados para el chip
+                    activeFilters.selectedMonths = checkedMonths.map(Number).sort((a, b) => a - b);
                 }
             } else if (dateRange === 'quarter') {
                 const year = document.getElementById('year').value || currentYear;
@@ -756,6 +1064,7 @@
             activeFilters.jurisdiccionesNames = Array.from(document.getElementById('jurisdiccionesFilter').selectedOptions || []).map(o => o.text);
             activeFilters.sexo = document.getElementById('sexoFilter').value || null;
             activeFilters.granularidad = document.getElementById('granularidadFilter').value || 'month';
+            activeFilters.mostrarCausasPrincipales = document.getElementById('mostrarCausasPrincipales').checked || false;
             
             updateActiveFiltersDisplay();
         }
@@ -776,14 +1085,33 @@
             
             switch(dateRange) {
                 case 'year':
-                    return `Año ${year}`;
+                    return `${year}`;
                 case 'month':
                     return `${monthFullNames[startMonth - 1]} ${year}`;
                 case 'multiple-months':
-                    return `${monthNames[startMonth - 1]}-${monthNames[endMonth - 1]} ${year}`;
+                    // Obtener meses seleccionados desde activeFilters
+                    const selectedMonths = activeFilters.selectedMonths || [];
+                    if (selectedMonths.length === 0) return null;
+                    
+                    // Verificar si los meses son consecutivos
+                    let isConsecutive = true;
+                    for (let i = 1; i < selectedMonths.length; i++) {
+                        if (selectedMonths[i] !== selectedMonths[i-1] + 1) {
+                            isConsecutive = false;
+                            break;
+                        }
+                    }
+                    
+                    if (isConsecutive && selectedMonths.length > 1) {
+                        // Meses consecutivos: "Ene-Mar 2026"
+                        return `${monthNames[selectedMonths[0] - 1]}-${monthNames[selectedMonths[selectedMonths.length - 1] - 1]} ${year}`;
+                    } else {
+                        // Meses no consecutivos: "Ene, Abr, Jul, Ago 2026"
+                        return `${selectedMonths.map(m => monthNames[m - 1]).join(', ')} ${year}`;
+                    }
                 case 'quarter':
                     const quarter = Math.ceil(startMonth / 3);
-                    return `Trimestre ${quarter} ${year}`;
+                    return `Q${quarter} ${year}`;
                 case 'custom':
                     return `${startDate} a ${endDate}`;
                 default:
@@ -932,11 +1260,36 @@
 
         function renderChart(data) {
             const chartContainer = document.getElementById('mainChart');
+            const chartWrapper = chartContainer.closest('.chart-wrapper');
+            const axisFontSize = 14;
+            const valueLabelFontSize = 13;
+            const legendFontSize = 15;
             
             // Limpiar instancia anterior completamente
             if (currentEchartsInstance) {
                 currentEchartsInstance.dispose();
             }
+
+            const isPieLikeChart = chartConfig.type === 'auto'
+                ? ['pie', 'doughnut'].includes(getOptimalChartType(currentChartType))
+                : ['pie', 'doughnut'].includes(chartConfig.type);
+
+            if (chartWrapper) {
+                chartWrapper.style.height = isPieLikeChart ? '520px' : '400px';
+                if (isPieLikeChart) {
+                    // Mostrar el chart en modo compacto: solo espacio para la gráfica + leyenda
+                    chartWrapper.style.display = 'flex';
+                    chartWrapper.style.justifyContent = 'center';
+                    chartWrapper.style.alignItems = 'center';
+                } else {
+                    chartWrapper.style.display = '';
+                    chartWrapper.style.justifyContent = '';
+                    chartWrapper.style.alignItems = '';
+                    // Reset chart container width when not using compact pie layout
+                    if (chartContainer) chartContainer.style.width = '';
+                }
+            }
+
             // Recrear instancia limpia
             currentEchartsInstance = echarts.init(chartContainer);
 
@@ -965,16 +1318,23 @@
                 option = {
                     color: palette,
                     title: { text: '' },
-                    tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
-                    legend: { data: ['Residencia', 'Lugar de Defunción'], bottom: 10 },
+                    tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' }, textStyle: { fontSize: axisFontSize } },
+                    legend: {
+                        data: ['Residencia', 'Lugar de Defunción'],
+                        bottom: 10,
+                        itemWidth: 18,
+                        itemHeight: 16,
+                        textStyle: { fontSize: legendFontSize, color: '#404041' }
+                    },
                     grid: { left: '3%', right: '4%', bottom: '15%', top: '15%', containLabel: true },
                     xAxis: {
                         type: 'category',
                         data: labels,
-                        axisLabel: { rotate: 45, interval: 0 }
+                        axisLabel: { rotate: 45, interval: 0, fontSize: axisFontSize, color: '#404041' }
                     },
                     yAxis: {
-                        type: 'value'
+                        type: 'value',
+                        axisLabel: { fontSize: axisFontSize, color: '#404041' }
                     },
                     series: [
                         {
@@ -997,18 +1357,64 @@
                     name: label,
                     value: values[i]
                 }));
-                
+                // Calcular medidas en píxeles para ocupar solo lo necesario
+                let pieDiameterPx = 0;
+                let legendEstimatePx = 180; // ancho estimado para la leyenda
+                if (chartWrapper) {
+                    const wrapperRect = chartWrapper.getBoundingClientRect();
+                    const wrapperH = Math.max(380, wrapperRect.height || 520);
+                    pieDiameterPx = Math.floor(wrapperH * 0.9);
+                } else {
+                    pieDiameterPx = 420;
+                }
+
+                // Ajustar ancho del contenedor del canvas para que no ocupe todo el espacio
+                const estimatedTotalWidth = pieDiameterPx + legendEstimatePx + 40;
+                chartContainer.style.width = estimatedTotalWidth + 'px';
+                chartContainer.style.margin = '0 auto';
+
+                // Calcular centro y radios en píxeles para que el pie esté a la izquierda y la leyenda a la derecha
+                const centerX = Math.round(pieDiameterPx / 2 + 20) + 'px';
+                const centerY = '50%';
+                const outerRadius = Math.round(pieDiameterPx / 2) + 'px';
+                const innerRadius = chartType === 'doughnut' ? Math.round(pieDiameterPx * 0.35) + 'px' : null;
+
                 option = {
                     color: colors,
-                    tooltip: { trigger: 'item' },
-                    legend: { orient: 'vertical', left: 'left', bottom: 10 },
+                    // Activar animaciones explícitamente para pie/doughnut
+                    animation: true,
+                    animationDuration: 800,
+                    animationEasing: 'cubicOut',
+                    tooltip: { trigger: 'item', textStyle: { fontSize: axisFontSize } },
+                    legend: {
+                        orient: 'vertical',
+                        left: 'auto',
+                        right: 12,
+                        top: 'middle',
+                        // aumentar tamaño de los cuadros para ser proporcionales a la fuente
+                        itemWidth: 18,
+                        itemHeight: 16,
+                        itemGap: 10,
+                        textStyle: {
+                            fontSize: 15,
+                            color: '#404041'
+                        }
+                    },
                     series: [{
                         name: chartTitles[currentChartType],
-                        type: chartType === 'doughnut' ? 'pie' : 'pie',
-                        radius: chartType === 'doughnut' ? ['40%', '70%'] : '75%',
+                        type: 'pie',
+                        center: [centerX, centerY],
+                        radius: innerRadius ? [innerRadius, outerRadius] : outerRadius,
+                        avoidLabelOverlap: true,
                         data: pieData,
                         label: {
                             show: true,
+                            position: 'outside',
+                            distance: 6,
+                            fontSize: 15,
+                            color: '#404041',
+                            overflow: 'none',
+                            width: 180,
                             formatter: (params) => {
                                 if (chartConfig.dataLabelMode === 'value') {
                                     return params.value;
@@ -1019,6 +1425,11 @@
                                 }
                                 return params.name;
                             }
+                        },
+                        labelLine: {
+                            show: true,
+                            length: 12,
+                            length2: 8
                         }
                     }]
                 };
@@ -1027,16 +1438,17 @@
                 option = {
                     color: colors,
                     title: { text: '' },
-                    tooltip: { trigger: 'axis', axisPointer: { type: 'cross' } },
+                    tooltip: { trigger: 'axis', axisPointer: { type: 'cross' }, textStyle: { fontSize: axisFontSize } },
                     grid: { left: '3%', right: '4%', bottom: '10%', top: '10%', containLabel: true },
                     xAxis: {
                         type: 'category',
                         data: labels,
                         boundaryGap: false,
-                        axisLabel: { rotate: 45, interval: 'auto' }
+                        axisLabel: { rotate: 45, interval: 'auto', fontSize: axisFontSize, color: '#404041' }
                     },
                     yAxis: {
-                        type: 'value'
+                        type: 'value',
+                        axisLabel: { fontSize: axisFontSize, color: '#404041' }
                     },
                     series: [{
                         name: chartTitles[currentChartType],
@@ -1048,6 +1460,8 @@
                         label: {
                             show: chartConfig.dataLabelMode !== 'none',
                             position: 'top',
+                            fontSize: valueLabelFontSize,
+                            color: '#404041',
                             formatter: (params) => {
                                 if (chartConfig.dataLabelMode === 'value') return params.value;
                                 return params.value;
@@ -1058,16 +1472,47 @@
             } else if (chartType === 'bar' || chartType === 'barHorizontal') {
                 // Barras verticales u horizontales
                 const isHorizontal = chartType === 'barHorizontal';
+                
+                // Preparar tooltip especial para Edades con causas principales
+                let tooltipFormatter = null;
+                if (currentChartType === 'edades' && activeFilters.mostrarCausasPrincipales && data.data_with_causes) {
+                    tooltipFormatter = (params) => {
+                        if (params.length === 0) return '';
+                        const dataIndex = params[0].dataIndex;
+                        const item = data.data_with_causes[dataIndex];
+                        if (!item || !item.top_causes) return params[0].name + ': ' + params[0].value;
+                        
+                        let html = `<div style="font-weight:bold;">${item.range}</div>`;
+                        html += `<div>Total: ${item.total} defunciones</div>`;
+                        if (Object.keys(item.top_causes).length > 0) {
+                            html += `<div style="margin-top:5px; font-weight:bold; font-size:0.85em;">Causas principales:</div>`;
+                            Object.entries(item.top_causes).forEach(([cause, count], idx) => {
+                                const pct = ((count / item.total) * 100).toFixed(1);
+                                html += `<div style="font-size:0.85em;">• ${cause}: ${count} (${pct}%)</div>`;
+                            });
+                        }
+                        return html;
+                    };
+                }
+                
                 option = {
                     color: colors,
                     title: { text: '' },
-                    tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
+                    tooltip: { 
+                        trigger: 'axis', 
+                        axisPointer: { type: 'shadow' },
+                        textStyle: { fontSize: axisFontSize },
+                        ...(tooltipFormatter ? { formatter: tooltipFormatter } : {})
+                    },
                     grid: { left: isHorizontal ? '20%' : '3%', right: '4%', bottom: isHorizontal ? '3%' : '15%', top: '10%', containLabel: true },
-                    [isHorizontal ? 'xAxis' : 'yAxis']: { type: 'value' },
+                    [isHorizontal ? 'xAxis' : 'yAxis']: {
+                        type: 'value',
+                        axisLabel: { fontSize: axisFontSize, color: '#404041' }
+                    },
                     [isHorizontal ? 'yAxis' : 'xAxis']: {
                         type: 'category',
                         data: labels,
-                        axisLabel: { interval: 0 },
+                        axisLabel: { interval: 0, fontSize: axisFontSize, color: '#404041' },
                         ...(isHorizontal ? {} : { rotate: 45 })
                     },
                     series: [{
@@ -1080,6 +1525,8 @@
                         label: {
                             show: chartConfig.dataLabelMode !== 'none',
                             position: isHorizontal ? 'right' : 'top',
+                            fontSize: valueLabelFontSize,
+                            color: '#404041',
                             formatter: (params) => {
                                 if (chartConfig.dataLabelMode === 'value') return params.value;
                                 if (chartConfig.dataLabelMode === 'percent') {
@@ -1097,8 +1544,69 @@
                 };
             }
 
-            currentEchartsInstance.setOption(option, true);
-            hideLoadingMessage();
+            // Aplicar opción y preservar animaciones: para pie/rosquilla
+            // hacemos resize ANTES de setOption para que echarts inicie
+            // con las dimensiones correctas y ejecute la animación inicial.
+            function applyOptionAndFinish() {
+                try {
+                    currentEchartsInstance.setOption(option, true);
+                } catch (e) {
+                    console.warn('setOption failed', e);
+                }
+                hideLoadingMessage();
+            }
+
+            try {
+                if (isPieLikeChart) {
+                    // Pequeño timeout para permitir que el DOM aplique estilos antes del resize
+                    setTimeout(() => {
+                        if (currentEchartsInstance && typeof currentEchartsInstance.resize === 'function') {
+                            currentEchartsInstance.resize();
+                        }
+                        applyOptionAndFinish();
+                    }, 60);
+                } else {
+                    applyOptionAndFinish();
+                }
+            } catch (e) {
+                console.warn('apply option failed', e);
+                applyOptionAndFinish();
+            }
+            
+            // Actualizar tabla de causas principales si es Edades
+            if (currentChartType === 'edades' && data.data_with_causes) {
+                updateCausasTable(data.data_with_causes);
+            }
+        }
+        
+        function updateCausasTable(dataWithCauses) {
+            const container = document.getElementById('causasPrincipalesContainer');
+            const tbody = document.getElementById('causasPrincipalesBody');
+            
+            if (!container || !tbody) return;
+            
+            tbody.innerHTML = '';
+            
+            dataWithCauses.forEach(item => {
+                const row = document.createElement('tr');
+                row.className = 'border-b border-gray-200 hover:bg-gray-50';
+                
+                const causasText = Object.entries(item.top_causes)
+                    .map(([cause, count]) => `${cause}: ${count}`)
+                    .join(' | ');
+                
+                row.innerHTML = `
+                    <td class="px-3 py-2 font-semibold text-[#611132] font-lora">${item.range}</td>
+                    <td class="px-3 py-2 text-[#404041]">${item.total}</td>
+                    <td class="px-3 py-2 text-[#404041]">${causasText || 'No disponible'}</td>
+                `;
+                
+                tbody.appendChild(row);
+            });
+            
+            // Mostrar u ocultar la tabla según el checkbox
+            const shouldShow = document.getElementById('mostrarCausasPrincipales').checked;
+            container.classList.toggle('hidden', !shouldShow);
         }
 
         function getOptimalChartType(metric) {
