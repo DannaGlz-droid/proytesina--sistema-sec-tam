@@ -215,8 +215,23 @@ class StatisticsController extends Controller
 
             // helper para aplicar filtros a un query builder
             $applyFilters = function ($query) use ($filters, $dateColumn, $munCol) {
-                // Fecha
-                if (!empty($filters['start_date']) && !empty($filters['end_date'])) {
+                // Fecha: soportar start_date/end_date, o arrays de years/months
+                if (!empty($filters['months']) && is_array($filters['months']) && !empty($filters['years']) && is_array($filters['years'])) {
+                    $periods = [];
+                    foreach ($filters['years'] as $y) {
+                        foreach ($filters['months'] as $m) {
+                            $yy = (int)$y;
+                            $mm = sprintf('%02d', (int)$m);
+                            $periods[] = "{$yy}-{$mm}";
+                        }
+                    }
+                    if (!empty($periods)) {
+                        $query->whereIn(DB::raw("DATE_FORMAT({$dateColumn}, '%Y-%m')"), $periods);
+                    }
+                } elseif (!empty($filters['years']) && is_array($filters['years'])) {
+                    $years = array_map('strval', $filters['years']);
+                    $query->whereIn(DB::raw("DATE_FORMAT({$dateColumn}, '%Y')"), $years);
+                } elseif (!empty($filters['start_date']) && !empty($filters['end_date'])) {
                     $query->whereBetween($dateColumn, [$filters['start_date'], $filters['end_date']]);
                 }
 
@@ -499,8 +514,23 @@ class StatisticsController extends Controller
             
             // Helper para aplicar filtros comunes
             $applyFilters = function ($query) use ($filters, $dateColumn, $munCol) {
-                // Rango de fechas
-                if (!empty($filters['start_date']) && !empty($filters['end_date'])) {
+                // Rango de fechas: soportar arrays `months` y `years` o start/end
+                if (!empty($filters['months']) && is_array($filters['months']) && !empty($filters['years']) && is_array($filters['years'])) {
+                    $periods = [];
+                    foreach ($filters['years'] as $y) {
+                        foreach ($filters['months'] as $m) {
+                            $yy = (int)$y;
+                            $mm = sprintf('%02d', (int)$m);
+                            $periods[] = "{$yy}-{$mm}";
+                        }
+                    }
+                    if (!empty($periods)) {
+                        $query->whereIn(DB::raw("DATE_FORMAT({$dateColumn}, '%Y-%m')"), $periods);
+                    }
+                } elseif (!empty($filters['years']) && is_array($filters['years'])) {
+                    $years = array_map('strval', $filters['years']);
+                    $query->whereIn(DB::raw("DATE_FORMAT({$dateColumn}, '%Y')"), $years);
+                } elseif (!empty($filters['start_date']) && !empty($filters['end_date'])) {
                     $query->whereBetween($dateColumn, [$filters['start_date'], $filters['end_date']]);
                 }
                 

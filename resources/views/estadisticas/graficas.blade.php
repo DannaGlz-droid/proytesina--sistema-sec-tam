@@ -94,35 +94,20 @@
                                             <label class="block text-xs text-gray-600 font-lora mb-1">Rango:</label>
                                             <select id="dateRange" class="w-full border border-[#404041] rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-[#611132] focus:border-transparent">
                                                 <option value="all">Todas las fechas</option>
-                                                <option value="year">Año específico</option>
-                                                <option value="month">Mes específico</option>
-                                                <option value="multiple-months">Múltiples meses</option>
+                                                <option value="years">Año(s)</option>
+                                                <option value="months">Mes(es)</option>
                                                 <option value="quarter">Trimestre</option>
                                                 <option value="custom">Personalizado</option>
                                             </select>
                                         </div>
 
                                         <div class="filter-group" id="yearSelector" style="display: none;">
-                                            <label class="block text-xs text-gray-600 font-lora mb-1">Año de defunción:</label>
-                                            @php $currentYear = now()->year; $minYear = 1950; @endphp
-                                            <input type="number" id="year" min="{{ $minYear }}" max="{{ $currentYear }}" class="w-full border border-[#404041] rounded-lg px-3 py-1.5 text-xs" placeholder="Ej: {{ $currentYear }}">
+                                            <label class="block text-xs text-gray-600 font-lora mb-1">Año(s) de defunción:</label>
+                                            @php $currentYear = now()->year; @endphp
+                                            <input type="text" id="year" placeholder="Ej: 2024 o 2024, 2025, 2026" class="w-full border border-[#404041] rounded-lg px-3 py-1.5 text-xs" title="Escribe años separados por coma">
                                         </div>
 
-                                        <div class="filter-group" id="monthSimpleSelector" style="display: none;">
-                                            <label class="block text-xs text-gray-600 font-lora mb-1">Mes de defunción:</label>
-                                            <select id="month" class="w-full border border-[#404041] rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-[#611132] focus:border-transparent">
-                                                <option value="">Seleccionar mes</option>
-                                                @php
-                                                    $months = [
-                                                        '01' => 'Enero','02' => 'Febrero','03' => 'Marzo','04' => 'Abril','05' => 'Mayo','06' => 'Junio',
-                                                        '07' => 'Julio','08' => 'Agosto','09' => 'Septiembre','10' => 'Octubre','11' => 'Noviembre','12' => 'Diciembre'
-                                                    ];
-                                                @endphp
-                                                @foreach($months as $mval => $mlabel)
-                                                    <option value="{{ $mval }}">{{ $mlabel }}</option>
-                                                @endforeach
-                                            </select>
-                                        </div>
+                                        <!-- Se usa un único selector de meses que permite seleccionar 1 o varios -->
 
                                         <div class="filter-group" id="monthSelector" style="display: none;">
                                             <label class="block text-xs text-gray-600 font-lora mb-1">Meses de defunción:</label>
@@ -324,23 +309,80 @@
                             </div>
                             
                             <!-- Tabla de Causas Principales (solo para Edades) -->
-                            <div id="causasPrincipalesContainer" class="hidden mt-6 pt-4 border-t border-gray-200">
-                                <h3 class="text-sm font-bold text-[#404041] mb-4 font-lora">Causas Principales de Muerte por Grupo de Edad</h3>
-                                <div class="overflow-x-auto">
-                                    <table class="w-full text-xs border-collapse">
+                            <div id="causasPrincipalesContainer" class="hidden mt-6 pt-4 border-t border-gray-200 w-full">
+                                <h3 class="text-base font-bold text-[#404041] mb-4 font-lora">Causas Principales de Muerte por Grupo de Edad</h3>
+                                <div class="overflow-x-auto w-full mx-auto causas-table-wrapper">
+                                    <table class="w-full text-sm border-collapse table-fixed">
+                                        <colgroup>
+                                            <col style="width: 16%;">
+                                            <col style="width: 8%;">
+                                            <col style="width: 76%;">
+                                        </colgroup>
                                         <thead>
                                             <tr class="bg-gray-50 border-b border-gray-200">
                                                 <th class="px-3 py-2 text-left font-semibold text-[#404041] font-lora">Grupo de Edad</th>
-                                                <th class="px-3 py-2 text-left font-semibold text-[#404041] font-lora">Total</th>
-                                                <th class="px-3 py-2 text-left font-semibold text-[#404041] font-lora">Causas Principales</th>
+                                                <th id="causasTotalHeader" class="px-3 py-2 text-left font-semibold text-[#404041] font-lora">Total</th>
+                                                <th id="causasDetalleHeader" class="px-3 py-2 text-left font-semibold text-[#404041] font-lora">Causas Principales</th>
                                             </tr>
                                         </thead>
-                                        <tbody id="causasPrincipalesBody">
+                                        <tbody id="causasPrincipalesBody" class="align-top">
                                             <!-- Se llena dinámicamente con JavaScript -->
                                         </tbody>
                                     </table>
                                 </div>
                             </div>
+
+                            <style>
+                                /* Asegurar que la tabla use todo el ancho y las causas se envuelvan para mejor legibilidad */
+                                #causasPrincipalesContainer { width: 100%; }
+                                #causasPrincipalesContainer .causas-table-wrapper {
+                                    width: min(100%, 1020px);
+                                    max-width: 88%;
+                                }
+                                #causasPrincipalesContainer table { table-layout: fixed; }
+                                #causasPrincipalesContainer th, #causasPrincipalesContainer td { word-wrap: break-word; white-space: normal; }
+                                #causasPrincipalesContainer td:nth-child(3) { white-space: normal; }
+                                /* Un poco más de interlineado para legibilidad */
+                                #causasPrincipalesContainer td, #causasPrincipalesContainer th { line-height: 1.4; }
+                                /* Información adicional compacta: una sola línea con truncado */
+                                #causasPrincipalesContainer td.causas-principales-cell {
+                                    white-space: nowrap;
+                                    overflow: hidden;
+                                    text-overflow: ellipsis;
+                                    max-width: 0;
+                                    font-size: 0.85rem;
+                                }
+                                /* Separar visualmente ranking (#1) y cantidad para evitar confusión */
+                                #causasPrincipalesContainer .causa-chip {
+                                    display: inline-flex;
+                                    align-items: center;
+                                    gap: 0.25rem;
+                                }
+                                #causasPrincipalesContainer .top-rank-badge {
+                                    display: inline-block;
+                                    padding: 0.05rem 0.35rem;
+                                    border-radius: 9999px;
+                                    background: #f3f4f6;
+                                    color: #374151;
+                                    font-size: 0.72rem;
+                                    font-weight: 700;
+                                    line-height: 1.2;
+                                }
+                                #causasPrincipalesContainer .top-count-pill {
+                                    display: inline-block;
+                                    padding: 0.05rem 0.35rem;
+                                    border-radius: 0.3rem;
+                                    background: #fef3c7;
+                                    color: #78350f;
+                                    font-weight: 800;
+                                    line-height: 1.2;
+                                    border: 1px solid #f59e0b;
+                                }
+
+                                @media (max-width: 1024px) {
+                                    #causasPrincipalesContainer .causas-table-wrapper { max-width: 100%; }
+                                }
+                            </style>
                         </div>
 
                         <!-- Mensaje de Carga/Error -->
@@ -382,6 +424,7 @@
             startDate: null,
             endDate: null,
             selectedMonths: [],
+            selectedYears: [],
             municipios: [],
             municipiosNames: [],
             causas: [],
@@ -892,6 +935,13 @@
                 btn.classList.toggle('active', btn.dataset.chart === chartType);
             });
             updateVisibleFilters(chartType);
+            
+            // Ocultar tabla de causas si no es Edades
+            const causasContainer = document.getElementById('causasPrincipalesContainer');
+            if (causasContainer) {
+                causasContainer.classList.add('hidden');
+            }
+            
             // Al cambiar de pestaña, limpiar filtros pero evitar recargar dos veces la gráfica.
             clearFilters(true);
             document.getElementById('chartTypeSelector').value = 'auto';
@@ -933,21 +983,17 @@
             
             // Mostrar según la opción seleccionada
             switch(value) {
-                case 'year':
-                    if (yearSelector) yearSelector.style.display = 'block';
-                    break;
-                case 'month':
-                    if (yearSelector) yearSelector.style.display = 'block';
-                    if (monthSimpleSelector) monthSimpleSelector.style.display = 'block';
-                    break;
-                case 'multiple-months':
-                    if (yearSelector) yearSelector.style.display = 'block';
-                    if (monthSelector) monthSelector.style.display = 'block';
-                    // Agregar event listeners a los labels cuando se muestren múltiples meses
-                    setTimeout(() => {
-                        setupMonthLabels();
-                    }, 100);
-                    break;
+                    case 'years':
+                        if (yearSelector) yearSelector.style.display = 'block';
+                        break;
+                    case 'months':
+                        if (yearSelector) yearSelector.style.display = 'block';
+                        if (monthSelector) monthSelector.style.display = 'block';
+                        // Agregar event listeners a los labels cuando se muestren meses
+                        setTimeout(() => {
+                            setupMonthLabels();
+                        }, 100);
+                        break;
                 case 'quarter':
                     if (yearSelector) yearSelector.style.display = 'block';
                     if (quarterSelector) quarterSelector.style.display = 'block';
@@ -1004,37 +1050,47 @@
             let startDate = null, endDate = null;
             const currentYear = new Date().getFullYear();
 
-            if (dateRange === 'year') {
-                const year = document.getElementById('year').value;
-                if (year) {
-                    startDate = `${year}-01-01`;
-                    endDate = `${year}-12-31`;
+            if (dateRange === 'years') {
+                const yearVal = document.getElementById('year').value;
+                if (yearVal) {
+                    // Parsear años separados por coma
+                    const yearsRaw = yearVal.split(',').map(y => y.trim()).filter(y => y !== '');
+                    const yearsNums = yearsRaw.map(y => Number(y)).filter(y => !isNaN(y) && y > 0);
+                    if (yearsNums.length > 0) {
+                        yearsNums.sort((a, b) => a - b);
+                        const minY = Math.min(...yearsNums);
+                        const maxY = Math.max(...yearsNums);
+                        startDate = `${minY}-01-01`;
+                        endDate = `${maxY}-12-31`;
+                        activeFilters.selectedYears = yearsNums;
+                    }
                 }
-            } else if (dateRange === 'month') {
-                const year = document.getElementById('year').value || currentYear;
-                const monthValue = document.getElementById('month').value;
-                if (monthValue) {
-                    const monthNum = parseInt(monthValue);
-                    startDate = `${year}-${monthValue}-01`;
-                    const nextMonth = monthNum === 12 ? `${parseInt(year) + 1}-01-01` : `${year}-${String(monthNum + 1).padStart(2, '0')}-01`;
-                    const endDateObj = new Date(nextMonth);
-                    endDateObj.setDate(endDateObj.getDate() - 1);
-                    endDate = endDateObj.toISOString().split('T')[0];
-                }
-            } else if (dateRange === 'multiple-months') {
-                const year = document.getElementById('year').value || currentYear;
+            } else if (dateRange === 'months') {
+                const yearVal = document.getElementById('year').value;
                 const checkedMonths = Array.from(document.querySelectorAll('.month-checkbox:checked')).map(cb => cb.value);
-                if (checkedMonths.length > 0) {
-                    const firstMonth = Math.min(...checkedMonths.map(Number));
-                    const lastMonth = Math.max(...checkedMonths.map(Number));
-                    startDate = `${year}-${String(firstMonth).padStart(2, '0')}-01`;
-                    const endMonthVal = lastMonth === 12 ? 1 : lastMonth + 1;
-                    const endYear = lastMonth === 12 ? parseInt(year) + 1 : year;
-                    const endDateObj = new Date(`${endYear}-${String(endMonthVal).padStart(2, '0')}-01`);
-                    endDateObj.setDate(endDateObj.getDate() - 1);
-                    endDate = endDateObj.toISOString().split('T')[0];
-                    // Guardar meses seleccionados para el chip
-                    activeFilters.selectedMonths = checkedMonths.map(Number).sort((a, b) => a - b);
+                if (checkedMonths.length > 0 && yearVal) {
+                    // Parsear años separados por coma
+                    const yearsRaw = yearVal.split(',').map(y => y.trim()).filter(y => y !== '');
+                    const yearsNums = yearsRaw.map(y => Number(y)).filter(y => !isNaN(y) && y > 0).sort((a, b) => a - b);
+                    const monthsNums = checkedMonths.map(m => parseInt(m));
+                    if (yearsNums.length > 0) {
+                        // construir periodos y calcular primero/ultimo periodo
+                        let periods = [];
+                        yearsNums.forEach(y => monthsNums.forEach(m => periods.push(y * 100 + m)));
+                        const minPeriod = Math.min(...periods);
+                        const maxPeriod = Math.max(...periods);
+                        const startYear = Math.floor(minPeriod / 100);
+                        const startMonth = minPeriod % 100;
+                        const endYear = Math.floor(maxPeriod / 100);
+                        const endMonth = maxPeriod % 100;
+                        startDate = `${startYear}-${String(startMonth).padStart(2, '0')}-01`;
+                        const nextMonth = endMonth === 12 ? `${endYear + 1}-01-01` : `${endYear}-${String(endMonth + 1).padStart(2, '0')}-01`;
+                        const endDateObj = new Date(nextMonth);
+                        endDateObj.setDate(endDateObj.getDate() - 1);
+                        endDate = endDateObj.toISOString().split('T')[0];
+                        activeFilters.selectedMonths = monthsNums.sort((a,b) => a - b);
+                        activeFilters.selectedYears = yearsNums;
+                    }
                 }
             } else if (dateRange === 'quarter') {
                 const year = document.getElementById('year').value || currentYear;
@@ -1084,11 +1140,42 @@
             const endMonth = parseInt(endDate.split('-')[1]);
             
             switch(dateRange) {
-                case 'year':
-                    return `${year}`;
-                case 'month':
-                    return `${monthFullNames[startMonth - 1]} ${year}`;
-                case 'multiple-months':
+                case 'years':
+                    const yrs = activeFilters.selectedYears || [];
+                    if (yrs.length === 0) return null;
+                    if (yrs.length === 1) return `${yrs[0]}`;
+                    // Verificar si los años son consecutivos
+                    let consecY = true;
+                    for (let i = 1; i < yrs.length; i++) if (yrs[i] !== yrs[i-1] + 1) { consecY = false; break; }
+                    if (consecY) return `${yrs[0]}-${yrs[yrs.length - 1]}`;
+                    return yrs.join(', ');
+
+                case 'months':
+                    // Obtener meses y años seleccionados desde activeFilters
+                    const selMonths = activeFilters.selectedMonths || [];
+                    const selYears = activeFilters.selectedYears || [];
+                    if (selMonths.length === 0) return null;
+                    // Si sólo hay un año seleccionado, mostrar meses con ese año
+                    if (selYears.length === 1) {
+                        const y0 = selYears[0];
+                        // Verificar si los meses son consecutivos
+                        let isConsecutive = true;
+                        for (let i = 1; i < selMonths.length; i++) {
+                            if (selMonths[i] !== selMonths[i-1] + 1) { isConsecutive = false; break; }
+                        }
+                        if (isConsecutive && selMonths.length > 1) {
+                            return `${monthNames[selMonths[0] - 1]}-${monthNames[selMonths[selMonths.length - 1] - 1]} ${y0}`;
+                        } else {
+                            return `${selMonths.map(m => monthNames[m - 1]).join(', ')} ${y0}`;
+                        }
+                    }
+                    // Varios años seleccionados: mostrar meses y rango/lista de años
+                    const yrsText = selYears.length > 0 ? (
+                        selYears.length === 2 && selYears[1] === selYears[0] + 1 
+                            ? `${selYears[0]}-${selYears[1]}` 
+                            : selYears.join(', ')
+                    ) : '';
+                    return `${selMonths.map(m => monthNames[m - 1]).join(', ')} (${yrsText})`;
                     // Obtener meses seleccionados desde activeFilters
                     const selectedMonths = activeFilters.selectedMonths || [];
                     if (selectedMonths.length === 0) return null;
@@ -1187,13 +1274,12 @@
 
         function clearDateFilter() {
             document.getElementById('dateRange').value = 'all';
-            document.getElementById('yearSelector').style.display = 'none';
-            document.getElementById('monthSimpleSelector').style.display = 'none';
-            document.getElementById('monthSelector').style.display = 'none';
-            document.getElementById('quarterSelector').style.display = 'none';
-            document.getElementById('customDateSelector').style.display = 'none';
+            ['yearSelector','monthSimpleSelector','monthSelector','quarterSelector','customDateSelector'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.style.display = 'none';
+            });
+            // Limpiar input de año
             document.getElementById('year').value = '';
-            document.getElementById('month').value = '';
             document.getElementById('quarter').value = '';
             document.getElementById('customStartDate').value = '';
             document.getElementById('customEndDate').value = '';
@@ -1201,6 +1287,8 @@
             document.querySelectorAll('.month-checkbox').forEach(checkbox => {
                 checkbox.checked = false;
             });
+            activeFilters.selectedMonths = [];
+            activeFilters.selectedYears = [];
             collectFilters();
             updateChart();
         }
@@ -1233,6 +1321,8 @@
             const filters = {
                 ...(activeFilters.startDate && { start_date: activeFilters.startDate }),
                 ...(activeFilters.endDate && { end_date: activeFilters.endDate }),
+                ...(activeFilters.selectedMonths.length && { months: activeFilters.selectedMonths }),
+                ...(activeFilters.selectedYears.length && { years: activeFilters.selectedYears }),
                 ...(activeFilters.municipios.length && { municipios: activeFilters.municipios }),
                 ...(activeFilters.causas.length && { causas: activeFilters.causas }),
                 ...(activeFilters.jurisdicciones.length && { jurisdicciones: activeFilters.jurisdicciones }),
@@ -1241,7 +1331,15 @@
                 ...(chartType === 'tendencias' && { group_by: activeFilters.granularidad })
             };
 
-            const params = new URLSearchParams(filters);
+            const params = new URLSearchParams();
+            Object.keys(filters).forEach(k => {
+                const v = filters[k];
+                if (Array.isArray(v)) {
+                    v.forEach(item => params.append(k + '[]', item));
+                } else {
+                    params.append(k, v);
+                }
+            });
             fetch(`{{ route('api.chart.data') }}/` + chartType + '?' + params.toString())
                 .then(response => response.json())
                 .then(data => {
@@ -1264,6 +1362,13 @@
             const axisFontSize = 14;
             const valueLabelFontSize = 13;
             const legendFontSize = 15;
+            const expandedCircularCharts = ['causas', 'edades'].includes(currentChartType);
+            const formatNumber = (num) => Number(num || 0).toLocaleString('es-MX');
+            const labelRich = {
+                value: { fontWeight: 800, color: '#1f2937', fontSize: expandedCircularCharts ? 18 : valueLabelFontSize + 1 },
+                percent: { fontWeight: 800, color: '#1f2937', fontSize: expandedCircularCharts ? 18 : valueLabelFontSize + 1 },
+                normal: { fontWeight: 600, color: '#404041', fontSize: expandedCircularCharts ? 16 : valueLabelFontSize }
+            };
             
             // Limpiar instancia anterior completamente
             if (currentEchartsInstance) {
@@ -1360,24 +1465,53 @@
                 // Calcular medidas en píxeles para ocupar solo lo necesario
                 let pieDiameterPx = 0;
                 let legendEstimatePx = 180; // ancho estimado para la leyenda
+                let legendRightOffset = 12;
+                let containerHeightAdjusted = null;
+                
                 if (chartWrapper) {
                     const wrapperRect = chartWrapper.getBoundingClientRect();
                     const wrapperH = Math.max(380, wrapperRect.height || 520);
-                    pieDiameterPx = Math.floor(wrapperH * 0.9);
+                    const pieScale = expandedCircularCharts ? 1.12 : 0.9;
+                    pieDiameterPx = Math.floor(wrapperH * pieScale);
                 } else {
-                    pieDiameterPx = 420;
+                    pieDiameterPx = expandedCircularCharts ? 520 : 420;
+                }
+
+                // Para 'causas' (leyenda larga con muchos items): ajustar ancho de leyenda y altura del contenedor
+                if (expandedCircularCharts) {
+                    legendEstimatePx = Math.max(280, pieData.length * 16 + 80); // ajustado para estar más cerca
+                    legendRightOffset = 20;
+                    if (chartWrapper) {
+                        containerHeightAdjusted = Math.max(700, pieDiameterPx + 160);
+                        chartWrapper.style.height = containerHeightAdjusted + 'px';
+                    }
                 }
 
                 // Ajustar ancho del contenedor del canvas para que no ocupe todo el espacio
-                const estimatedTotalWidth = pieDiameterPx + legendEstimatePx + 40;
+                let estimatedTotalWidth = pieDiameterPx + legendEstimatePx + 40;
+                if (expandedCircularCharts) {
+                    estimatedTotalWidth = pieDiameterPx + legendEstimatePx + 140; // espacio compacto para leyenda grande y cercana
+                }
                 chartContainer.style.width = estimatedTotalWidth + 'px';
                 chartContainer.style.margin = '0 auto';
 
                 // Calcular centro y radios en píxeles para que el pie esté a la izquierda y la leyenda a la derecha
-                const centerX = Math.round(pieDiameterPx / 2 + 20) + 'px';
+                let centerX = Math.round(pieDiameterPx / 2 + 20) + 'px';
                 const centerY = '50%';
-                const outerRadius = Math.round(pieDiameterPx / 2) + 'px';
-                const innerRadius = chartType === 'doughnut' ? Math.round(pieDiameterPx * 0.35) + 'px' : null;
+                let outerRadius = Math.round(pieDiameterPx / 2) + 'px';
+                let innerRadius = chartType === 'doughnut' ? Math.round(pieDiameterPx * 0.35) + 'px' : null;
+
+                // Para 'causas' (leyenda larga): mover el pie más a la derecha y agrandar el radio para dar más presencia
+                if (expandedCircularCharts) {
+                    centerX = Math.round(pieDiameterPx / 2 + 110) + 'px';
+                    outerRadius = Math.round(pieDiameterPx * 0.50) + 'px';
+                    if (chartType === 'doughnut') {
+                        innerRadius = Math.round(pieDiameterPx * 0.31) + 'px';
+                    }
+                }
+
+                // Para 'causas' reducir fuente de leyenda para evitar solapamientos
+                const legendFontSizeForCausas = expandedCircularCharts ? 12 : 15;
 
                 option = {
                     color: colors,
@@ -1389,14 +1523,13 @@
                     legend: {
                         orient: 'vertical',
                         left: 'auto',
-                        right: 12,
+                        right: legendRightOffset,
                         top: 'middle',
-                        // aumentar tamaño de los cuadros para ser proporcionales a la fuente
-                        itemWidth: 18,
-                        itemHeight: 16,
-                        itemGap: 10,
+                        itemWidth: expandedCircularCharts ? 36 : 18,
+                        itemHeight: expandedCircularCharts ? 32 : 16,
+                        itemGap: 12,
                         textStyle: {
-                            fontSize: 15,
+                            fontSize: expandedCircularCharts ? 18 : legendFontSizeForCausas,
                             color: '#404041'
                         }
                     },
@@ -1410,26 +1543,28 @@
                         label: {
                             show: true,
                             position: 'outside',
-                            distance: 6,
-                            fontSize: 15,
+                            distance: expandedCircularCharts ? 12 : 6,
+                            fontSize: expandedCircularCharts ? 18 : 15,
+                            fontWeight: 700,
                             color: '#404041',
                             overflow: 'none',
-                            width: 180,
+                            width: expandedCircularCharts ? 420 : 180,
+                            rich: labelRich,
                             formatter: (params) => {
                                 if (chartConfig.dataLabelMode === 'value') {
-                                    return params.value;
+                                    return `{value|${formatNumber(params.value)}}`;
                                 } else if (chartConfig.dataLabelMode === 'percent') {
-                                    return params.percent + '%';
+                                    return `{percent|${params.percent}%}`;
                                 } else if (chartConfig.dataLabelMode === 'both') {
-                                    return params.value + ' (' + params.percent + '%)';
+                                    return `{value|${formatNumber(params.value)}} {normal|(${params.percent}%)}`;
                                 }
-                                return params.name;
+                                return `{normal|${params.name}}`;
                             }
                         },
                         labelLine: {
                             show: true,
                             length: 12,
-                            length2: 8
+                            length2: expandedCircularCharts ? 18 : 8
                         }
                     }]
                 };
@@ -1461,10 +1596,11 @@
                             show: chartConfig.dataLabelMode !== 'none',
                             position: 'top',
                             fontSize: valueLabelFontSize,
+                            fontWeight: 800,
                             color: '#404041',
+                            rich: labelRich,
                             formatter: (params) => {
-                                if (chartConfig.dataLabelMode === 'value') return params.value;
-                                return params.value;
+                                return `{value|${formatNumber(params.value)}}`;
                             }
                         }
                     }]
@@ -1526,16 +1662,17 @@
                             show: chartConfig.dataLabelMode !== 'none',
                             position: isHorizontal ? 'right' : 'top',
                             fontSize: valueLabelFontSize,
+                            fontWeight: 800,
                             color: '#404041',
+                            rich: labelRich,
                             formatter: (params) => {
-                                if (chartConfig.dataLabelMode === 'value') return params.value;
+                                const total = values.reduce((a, b) => a + b, 0);
+                                if (chartConfig.dataLabelMode === 'value') return `{value|${formatNumber(params.value)}}`;
                                 if (chartConfig.dataLabelMode === 'percent') {
-                                    const total = values.reduce((a, b) => a + b, 0);
-                                    return ((params.value / total) * 100).toFixed(1) + '%';
+                                    return `{percent|${((params.value / total) * 100).toFixed(1)}%}`;
                                 }
                                 if (chartConfig.dataLabelMode === 'both') {
-                                    const total = values.reduce((a, b) => a + b, 0);
-                                    return params.value + ' (' + ((params.value / total) * 100).toFixed(1) + '%)';
+                                    return `{value|${formatNumber(params.value)}} {normal|(${((params.value / total) * 100).toFixed(1)}%)}`;
                                 }
                                 return '';
                             }
@@ -1575,37 +1712,97 @@
             
             // Actualizar tabla de causas principales si es Edades
             if (currentChartType === 'edades' && data.data_with_causes) {
-                updateCausasTable(data.data_with_causes);
+                updateCausasTable(data.data_with_causes, data.total || 0);
             }
         }
         
-        function updateCausasTable(dataWithCauses) {
+        function updateCausasTable(dataWithCauses, grandTotal = 0) {
             const container = document.getElementById('causasPrincipalesContainer');
             const tbody = document.getElementById('causasPrincipalesBody');
+            const totalHeader = document.getElementById('causasTotalHeader');
+            const detailHeader = document.getElementById('causasDetalleHeader');
             
             if (!container || !tbody) return;
+
+            const mode = chartConfig.dataLabelMode;
+            const safeGrandTotal = Number(grandTotal || 0);
+
+            if (totalHeader && detailHeader) {
+                if (mode === 'percent') {
+                    totalHeader.textContent = 'Total (%)';
+                    detailHeader.textContent = 'Causas Principales (%)';
+                } else if (mode === 'both') {
+                    totalHeader.textContent = 'Total (Valor y %)';
+                    detailHeader.textContent = 'Causas Principales (Valor y %)';
+                } else {
+                    totalHeader.textContent = 'Total';
+                    detailHeader.textContent = 'Causas Principales';
+                }
+            }
+
+            const formatPct = (value, total) => {
+                const num = Number(value || 0);
+                const den = Number(total || 0);
+                if (!den) return '0.0%';
+                return ((num / den) * 100).toFixed(1) + '%';
+            };
+
+            const formatTotal = (value) => {
+                const num = Number(value || 0);
+                if (mode === 'percent') return formatPct(num, safeGrandTotal);
+                if (mode === 'both') return `${num.toLocaleString('es-MX')} (${formatPct(num, safeGrandTotal)})`;
+                return num.toLocaleString('es-MX');
+            };
+
+            const formatCauseValue = (count, rowTotal) => {
+                const num = Number(count || 0);
+                if (mode === 'percent') return `<span class="font-bold text-[#1f2937]">${formatPct(num, rowTotal)}</span>`;
+                if (mode === 'both') return `<span class="font-bold text-[#1f2937]">${num.toLocaleString('es-MX')} (${formatPct(num, rowTotal)})</span>`;
+                return `<span class="font-bold text-[#1f2937]">${num.toLocaleString('es-MX')}</span>`;
+            };
+
+            const formatCauseValueText = (count, rowTotal) => {
+                const num = Number(count || 0);
+                if (mode === 'percent') return formatPct(num, rowTotal);
+                if (mode === 'both') return `${num.toLocaleString('es-MX')} (${formatPct(num, rowTotal)})`;
+                return num.toLocaleString('es-MX');
+            };
+
+            const escapeAttr = (text) => String(text || '')
+                .replace(/&/g, '&amp;')
+                .replace(/"/g, '&quot;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;');
             
             tbody.innerHTML = '';
             
             dataWithCauses.forEach(item => {
                 const row = document.createElement('tr');
                 row.className = 'border-b border-gray-200 hover:bg-gray-50';
-                
-                const causasText = Object.entries(item.top_causes)
-                    .map(([cause, count]) => `${cause}: ${count}`)
+
+                const sortedCauses = Object.entries(item.top_causes || {})
+                    .map(([cause, count]) => ({ cause, count: Number(count || 0) }))
+                    .sort((a, b) => b.count - a.count);
+
+                const causasText = sortedCauses
+                    .map((entry, idx) => `<span class="causa-chip"><span class="top-rank-badge">#${idx + 1}</span>${entry.cause}<span class="top-count-pill">${formatCauseValue(entry.count, item.total)}</span></span>`)
+                    .join(' · ');
+
+                const causasTitle = sortedCauses
+                    .map((entry, idx) => `#${idx + 1}: ${entry.cause} = ${formatCauseValueText(entry.count, item.total)}`)
                     .join(' | ');
                 
                 row.innerHTML = `
                     <td class="px-3 py-2 font-semibold text-[#611132] font-lora">${item.range}</td>
-                    <td class="px-3 py-2 text-[#404041]">${item.total}</td>
-                    <td class="px-3 py-2 text-[#404041]">${causasText || 'No disponible'}</td>
+                    <td class="px-3 py-2 text-[#404041] font-extrabold">${formatTotal(item.total)}</td>
+                    <td class="px-3 py-2 text-[#404041] causas-principales-cell" title="${escapeAttr(causasTitle)}">${causasText || 'No disponible'}</td>
                 `;
                 
                 tbody.appendChild(row);
             });
             
-            // Mostrar u ocultar la tabla según el checkbox
-            const shouldShow = document.getElementById('mostrarCausasPrincipales').checked;
+            // Mostrar u ocultar la tabla SOLO si estamos en Edades Y el checkbox está marcado
+            const shouldShow = currentChartType === 'edades' && document.getElementById('mostrarCausasPrincipales').checked;
             container.classList.toggle('hidden', !shouldShow);
         }
 
@@ -1628,14 +1825,19 @@
         }
 
         function clearFilters(suppressUpdate = false) {
-            document.getElementById('dateRange').value = 'all';
-            document.getElementById('year').value = '';
-            document.getElementById('month').value = '';
-            document.getElementById('quarter').value = '';
-            document.getElementById('customStartDate').value = '';
-            document.getElementById('customEndDate').value = '';
-            document.getElementById('sexoFilter').value = '';
-            document.getElementById('granularidadFilter').value = 'month';
+            const safeSetValue = (id, value) => {
+                const el = document.getElementById(id);
+                if (el) el.value = value;
+            };
+            
+            safeSetValue('dateRange', 'all');
+            safeSetValue('year', '');
+            safeSetValue('month', '');
+            safeSetValue('quarter', '');
+            safeSetValue('customStartDate', '');
+            safeSetValue('customEndDate', '');
+            safeSetValue('sexoFilter', '');
+            safeSetValue('granularidadFilter', 'month');
             
             // Limpiar checkboxes de meses
             document.querySelectorAll('.month-checkbox').forEach(checkbox => {
@@ -1646,10 +1848,12 @@
             const multiSelectIds = ['municipiosFilter', 'causasFilter', 'jurisdiccionesFilter'];
             multiSelectIds.forEach(id => {
                 const element = document.getElementById(id);
-                element.value = '';
-                // Si Tom Select está inicializado, actualizar su valor
-                if (element.tomselect) {
-                    element.tomselect.clear();
+                if (element) {
+                    element.value = '';
+                    // Si Tom Select está inicializado, actualizar su valor
+                    if (element.tomselect) {
+                        element.tomselect.clear();
+                    }
                 }
             });
             
