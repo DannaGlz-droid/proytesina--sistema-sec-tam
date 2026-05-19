@@ -248,6 +248,7 @@
                                     <select id="chartTypeSelector" class="text-sm border border-gray-200 rounded px-3 py-1.5 font-lora bg-white">
                                         <option value="auto">Auto</option>
                                         <option value="bar">Barras</option>
+                                        <option value="barHorizontal">Barras Horizontales</option>
                                         <option value="pie">Pastel</option>
                                         <option value="doughnut">Rosquilla</option>
                                         <option value="line">Línea</option>
@@ -454,6 +455,16 @@
             causas: 'doughnut',
             jurisdicciones: 'bar',
             comparativa: 'bar'
+        };
+
+        const chartTypeOptions = {
+            municipios: ['auto', 'bar', 'barHorizontal', 'pie', 'doughnut'],
+            tendencias: ['auto', 'line', 'area'],
+            edades: ['auto', 'bar', 'pie', 'doughnut'],
+            genero: ['auto', 'bar', 'pie', 'doughnut'],
+            causas: ['auto', 'bar', 'barHorizontal', 'pie', 'doughnut'],
+            jurisdicciones: ['auto', 'bar', 'barHorizontal', 'pie', 'doughnut'],
+            comparativa: ['bar']
         };
 
         const chartTitles = {
@@ -966,6 +977,36 @@
                     element.style.display = show ? 'block' : 'none';
                 }
             });
+            updateChartTypeOptions(chartType);
+        }
+
+        function updateChartTypeOptions(chartType) {
+            const selector = document.getElementById('chartTypeSelector');
+            if (!selector) return;
+            const availableTypes = chartTypeOptions[chartType] || ['auto', 'bar'];
+            const currentValue = selector.value;
+            const allOptions = {
+                'auto': 'Auto',
+                'bar': 'Barras',
+                'barHorizontal': 'Barras Horizontales',
+                'pie': 'Pastel',
+                'doughnut': 'Rosquilla',
+                'line': 'Línea',
+                'area': 'Área'
+            };
+            selector.innerHTML = '';
+            availableTypes.forEach(type => {
+                const option = document.createElement('option');
+                option.value = type;
+                option.textContent = allOptions[type] || type;
+                selector.appendChild(option);
+            });
+            if (!availableTypes.includes(currentValue)) {
+                selector.value = availableTypes[0];
+                chartConfig.type = currentValue === 'auto' ? chartTypeDefaults[chartType] : currentValue;
+            } else {
+                selector.value = currentValue;
+            }
         }
 
         function onDateRangeChange() {
@@ -1362,7 +1403,7 @@
             const axisFontSize = 14;
             const valueLabelFontSize = 13;
             const legendFontSize = 15;
-            const expandedCircularCharts = ['causas', 'edades'].includes(currentChartType);
+            const expandedCircularCharts = ['municipios', 'edades', 'genero', 'causas', 'jurisdicciones'].includes(currentChartType);
             const formatNumber = (num) => Number(num || 0).toLocaleString('es-MX');
             const labelRich = {
                 value: { fontWeight: 800, color: '#1f2937', fontSize: expandedCircularCharts ? 18 : valueLabelFontSize + 1 },
@@ -1410,7 +1451,10 @@
             // Determinar tipo de gráfica: usar la selección del usuario o el óptimo si es "auto"
             let chartType = chartConfig.type === 'auto' ? getOptimalChartType(currentChartType) : chartConfig.type;
             
-            // Si el usuario selecciona "area", trata como "line" con área
+            // Detectar si es área antes de convertir a line
+            const isAreaChart = chartType === 'area';
+            
+            // Si el usuario selecciona "area", trata como "line" con areaStyle
             if (chartType === 'area') {
                 chartType = 'line';
             }
@@ -1477,10 +1521,10 @@
                     pieDiameterPx = expandedCircularCharts ? 520 : 420;
                 }
 
-                // Para 'causas' (leyenda larga con muchos items): ajustar ancho de leyenda y altura del contenedor
+                // Para 'edades', 'genero' y 'causas' (gráficas expandidas): ajustar leyenda
                 if (expandedCircularCharts) {
-                    legendEstimatePx = Math.max(280, pieData.length * 16 + 80); // ajustado para estar más cerca
-                    legendRightOffset = 20;
+                    legendEstimatePx = Math.max(280, pieData.length * 16 + 80);
+                    legendRightOffset = 60;
                     if (chartWrapper) {
                         containerHeightAdjusted = Math.max(700, pieDiameterPx + 160);
                         chartWrapper.style.height = containerHeightAdjusted + 'px';
@@ -1490,7 +1534,8 @@
                 // Ajustar ancho del contenedor del canvas para que no ocupe todo el espacio
                 let estimatedTotalWidth = pieDiameterPx + legendEstimatePx + 40;
                 if (expandedCircularCharts) {
-                    estimatedTotalWidth = pieDiameterPx + legendEstimatePx + 140; // espacio compacto para leyenda grande y cercana
+                    // Espacio generoso para que los números de la izquierda no se corten y la leyenda tenga distancia
+                    estimatedTotalWidth = pieDiameterPx + legendEstimatePx + 300;
                 }
                 chartContainer.style.width = estimatedTotalWidth + 'px';
                 chartContainer.style.margin = '0 auto';
@@ -1501,17 +1546,21 @@
                 let outerRadius = Math.round(pieDiameterPx / 2) + 'px';
                 let innerRadius = chartType === 'doughnut' ? Math.round(pieDiameterPx * 0.35) + 'px' : null;
 
-                // Para 'causas' (leyenda larga): mover el pie más a la derecha y agrandar el radio para dar más presencia
+                // Para 'edades', 'genero' y 'causas' (gráficas expandidas): mover el pie más a la derecha y agrandar el radio
                 if (expandedCircularCharts) {
-                    centerX = Math.round(pieDiameterPx / 2 + 110) + 'px';
+                    centerX = Math.round(pieDiameterPx / 2 + 140) + 'px';
                     outerRadius = Math.round(pieDiameterPx * 0.50) + 'px';
                     if (chartType === 'doughnut') {
                         innerRadius = Math.round(pieDiameterPx * 0.31) + 'px';
                     }
                 }
 
-                // Para 'causas' reducir fuente de leyenda para evitar solapamientos
-                const legendFontSizeForCausas = expandedCircularCharts ? 12 : 15;
+                // Determinar tamaño de fuente de leyenda según el tipo de gráfica
+                let legendFontSizeActual = 15;
+                if (expandedCircularCharts) {
+                    // Para causas, reducir fuente un poco para que quepa mejor
+                    legendFontSizeActual = currentChartType === 'causas' ? 13 : 18;
+                }
 
                 option = {
                     color: colors,
@@ -1529,7 +1578,7 @@
                         itemHeight: expandedCircularCharts ? 32 : 16,
                         itemGap: 12,
                         textStyle: {
-                            fontSize: expandedCircularCharts ? 18 : legendFontSizeForCausas,
+                            fontSize: legendFontSizeActual,
                             color: '#404041'
                         }
                     },
@@ -1548,7 +1597,7 @@
                             fontWeight: 700,
                             color: '#404041',
                             overflow: 'none',
-                            width: expandedCircularCharts ? 420 : 180,
+                            width: expandedCircularCharts ? 500 : 180,
                             rich: labelRich,
                             formatter: (params) => {
                                 if (chartConfig.dataLabelMode === 'value') {
@@ -1569,7 +1618,36 @@
                     }]
                 };
             } else if (chartType === 'line') {
-                // Línea con área para tendencias
+                // Línea o Área para tendencias
+                const seriesConfig = {
+                    name: chartTitles[currentChartType],
+                    type: 'line',
+                    data: values,
+                    smooth: false,
+                    itemStyle: { color: palette[0] },
+                    label: {
+                        show: chartConfig.dataLabelMode !== 'none',
+                        position: 'top',
+                        fontSize: valueLabelFontSize,
+                        fontWeight: 800,
+                        color: '#404041',
+                        rich: labelRich,
+                        formatter: (params) => {
+                            return `{value|${formatNumber(params.value)}}`;
+                        }
+                    }
+                };
+
+                // Solo agregar areaStyle si es gráfica de área
+                if (isAreaChart) {
+                    seriesConfig.areaStyle = { 
+                        color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                            { offset: 0, color: palette[0] + 'cc' }, 
+                            { offset: 1, color: palette[0] + '00' }
+                        ]) 
+                    };
+                }
+
                 option = {
                     color: colors,
                     title: { text: '' },
@@ -1585,25 +1663,7 @@
                         type: 'value',
                         axisLabel: { fontSize: axisFontSize, color: '#404041' }
                     },
-                    series: [{
-                        name: chartTitles[currentChartType],
-                        type: 'line',
-                        data: values,
-                        smooth: true,
-                        areaStyle: { color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [{ offset: 0, color: palette[0] + 'cc' }, { offset: 1, color: palette[0] + '00' }]) },
-                        itemStyle: { color: palette[0] },
-                        label: {
-                            show: chartConfig.dataLabelMode !== 'none',
-                            position: 'top',
-                            fontSize: valueLabelFontSize,
-                            fontWeight: 800,
-                            color: '#404041',
-                            rich: labelRich,
-                            formatter: (params) => {
-                                return `{value|${formatNumber(params.value)}}`;
-                            }
-                        }
-                    }]
+                    series: [seriesConfig]
                 };
             } else if (chartType === 'bar' || chartType === 'barHorizontal') {
                 // Barras verticales u horizontales
@@ -1809,11 +1869,11 @@
         function getOptimalChartType(metric) {
             // Determinar el tipo de gráfica óptimo para cada métrica
             const typeMap = {
-                'municipios': 'barHorizontal',    // Barras horizontales para municipios
-                'tendencias': 'line',              // Línea con área para tendencias
+                'municipios': 'bar',               // Barras verticales por defecto
+                'tendencias': 'line',              // Línea para tendencias
                 'edades': 'bar',                   // Barras verticales para edades
                 'genero': 'pie',                   // Pastel para género
-                'causas': 'barHorizontal',         // Barras horizontales para causas
+                'causas': 'bar',                   // Barras verticales por defecto
                 'jurisdicciones': 'bar',           // Barras verticales para jurisdicciones
                 'comparativa': 'bar'               // Barras agrupadas para comparativa
             };
