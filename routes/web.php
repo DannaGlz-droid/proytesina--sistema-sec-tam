@@ -60,6 +60,7 @@ Route::middleware('auth')->group(function () {
         Route::delete('estadisticas/datos/{death}', [App\Http\Controllers\DeathController::class, 'destroy'])->name('statistic.destroy');
         Route::get('estadisticas/graficas', [App\Http\Controllers\StatisticsController::class, 'index'])->name('estadisticas.graficas');
         Route::get('estadisticas/charts-data', [App\Http\Controllers\StatisticsController::class, 'chartsData'])->name('estadisticas.charts-data');
+        Route::get('api/default-date-range', [App\Http\Controllers\StatisticsController::class, 'getDefaultDateRangeApi'])->name('api.default-date-range');
         Route::get('api/chart/{chartType?}', [App\Http\Controllers\StatisticsController::class, 'getChartData'])->name('api.chart.data');
     });
 

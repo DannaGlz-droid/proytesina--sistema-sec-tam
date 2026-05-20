@@ -494,6 +494,40 @@ class StatisticsController extends Controller
     }
 
     /**
+     * Obtiene el rango de fechas default (últimos 12 meses desde el último registro)
+     */
+    private function calculateDefaultDateRange()
+    {
+        $dateColumn = Schema::hasColumn('deaths', 'death_date') ? 'death_date' : 'created_at';
+        
+        // Obtener la fecha máxima de registro
+        $maxDate = DB::table('deaths')->max($dateColumn);
+        
+        if (!$maxDate) {
+            // Si no hay registros, usar hoy y 1 año atrás
+            $endDate = now();
+            $startDate = now()->subYear();
+        } else {
+            $endDate = \Carbon\Carbon::parse($maxDate);
+            $startDate = $endDate->copy()->subYear();
+        }
+        
+        return [
+            'start_date' => $startDate->format('Y-m-d'),
+            'end_date' => $endDate->format('Y-m-d'),
+        ];
+    }
+
+    /**
+     * Endpoint para obtener rangos de fecha default
+     * GET /api/default-date-range
+     */
+    public function getDefaultDateRangeApi()
+    {
+        return response()->json($this->calculateDefaultDateRange());
+    }
+
+    /**
      * Obtiene datos de un tipo de gráfica específica con filtros aplicados.
      * GET /api/chart/{chartType}?filters...
      * 
@@ -503,6 +537,14 @@ class StatisticsController extends Controller
     {
         try {
             $filters = $request->all();
+            
+            // Si no hay filtros de fecha especificados, aplicar rango default (últimos 12 meses)
+            if (empty($filters['start_date']) && empty($filters['end_date']) && 
+                empty($filters['months']) && empty($filters['years'])) {
+                $defaultRange = $this->calculateDefaultDateRange();
+                $filters['start_date'] = $defaultRange['start_date'];
+                $filters['end_date'] = $defaultRange['end_date'];
+            }
             
             // Resolver columna de fecha
             $dateColumn = Schema::hasColumn('deaths', 'death_date') ? 'death_date' : 'created_at';
@@ -600,9 +642,15 @@ class StatisticsController extends Controller
 
     private function getChartMunicipios($filters, $dateColumn, $munCol, $applyFilters, $limit)
     {
+        // Determinar el tipo de municipio (defunción o residencia)
+        $municipioType = $filters['municipio_type'] ?? 'defuncion';
+        $finalMunCol = $municipioType === 'residencia' 
+            ? 'residence_municipality_id' 
+            : 'death_municipality_id';
+
         $munCountsQ = DB::table('deaths')
-            ->select(DB::raw("{$munCol} as muni_id"), DB::raw('COUNT(*) as total'))
-            ->groupBy(DB::raw("{$munCol}"));
+            ->select(DB::raw("{$finalMunCol} as muni_id"), DB::raw('COUNT(*) as total'))
+            ->groupBy(DB::raw("{$finalMunCol}"));
         $applyFilters($munCountsQ);
         $munCountsRaw = $munCountsQ->get()->pluck('total', 'muni_id')->all();
 
@@ -634,6 +682,13 @@ class StatisticsController extends Controller
     {
         $groupBy = $filters['group_by'] ?? 'month';
         
+        // Meses en español para traducción
+        $monthsSpanish = [
+            'Jan' => 'Ene', 'Feb' => 'Feb', 'Mar' => 'Mar', 'Apr' => 'Abr',
+            'May' => 'May', 'Jun' => 'Jun', 'Jul' => 'Jul', 'Aug' => 'Ago',
+            'Sep' => 'Sep', 'Oct' => 'Oct', 'Nov' => 'Nov', 'Dec' => 'Dic'
+        ];
+        
         if ($groupBy === 'day') {
             $query = DB::table('deaths')
                 ->select(DB::raw("DATE(deaths.{$dateColumn}) as period"),
@@ -659,6 +714,25 @@ class StatisticsController extends Controller
         
         $applyFilters($query);
         $data = $query->get();
+        
+        // Traducir meses al español si es agrupación por mes
+        if ($groupBy === 'month') {
+            $data = $data->map(function($item) use ($monthsSpanish) {
+                // Cambiar formato "Jan 2026" a "Ene 2026"
+                foreach ($monthsSpanish as $en => $es) {
+                    $item->period_label = str_replace($en, $es, $item->period_label);
+                }
+                return $item;
+            });
+        } elseif ($groupBy === 'day') {
+            // Traducir meses también para días
+            $data = $data->map(function($item) use ($monthsSpanish) {
+                foreach ($monthsSpanish as $en => $es) {
+                    $item->period_label = str_replace($en, $es, $item->period_label);
+                }
+                return $item;
+            });
+        }
 
         return response()->json([
             'type' => 'tendencias',
@@ -800,6 +874,23 @@ class StatisticsController extends Controller
 
     private function getChartComparativa($filters, $dateColumn, $munCol, $applyFilters, $limit)
     {
+        $comparativaType = $filters['comparativa_type'] ?? 'residencia-defuncion';
+        
+        switch ($comparativaType) {
+            case 'genero-causa':
+                return $this->getChartComparativaGeneroCausa($filters, $dateColumn, $applyFilters, $limit);
+            case 'edad-causa':
+                return $this->getChartComparativaEdadCausa($filters, $dateColumn, $applyFilters, $limit);
+            case 'lugar-causa':
+                return $this->getChartComparativaLugarCausa($filters, $dateColumn, $applyFilters, $limit);
+            case 'residencia-defuncion':
+            default:
+                return $this->getChartComparativaResidenciaDefuncion($filters, $dateColumn, $munCol, $applyFilters, $limit);
+        }
+    }
+
+    private function getChartComparativaResidenciaDefuncion($filters, $dateColumn, $munCol, $applyFilters, $limit)
+    {
         // Obtener municipios
         $munCountsQ = DB::table('deaths')
             ->select(DB::raw("death_municipality_id as muni_id"), DB::raw('COUNT(*) as total'))
@@ -844,6 +935,164 @@ class StatisticsController extends Controller
             'residence_counts' => $residence,
             'death_counts' => $death,
             'total' => array_sum($residence) + array_sum($death),
+        ]);
+    }
+
+    private function getChartComparativaGeneroCausa($filters, $dateColumn, $applyFilters, $limit)
+    {
+        // Obtener causas agrupadas por género
+        $dataQ = DB::table('deaths')
+            ->leftJoin('death_causes', 'death_causes.id', '=', 'deaths.death_cause_id')
+            ->select('deaths.sex', 'death_causes.name as cause', DB::raw('COUNT(deaths.id) as total'))
+            ->groupBy('deaths.sex', 'death_causes.name');
+        $applyFilters($dataQ);
+        $data = $dataQ->get();
+
+        // Agrupar por causa
+        $causes = [];
+        foreach ($data as $row) {
+            $cause = $row->cause ?? 'Sin dato';
+            if (!isset($causes[$cause])) {
+                $causes[$cause] = ['M' => 0, 'F' => 0, 'Otro' => 0];
+            }
+            $causes[$cause][$row->sex] = (int)$row->total;
+        }
+
+        // Ordenar por total descendente y tomar top N si aplica
+        uasort($causes, function($a, $b) {
+            $totalA = array_sum($a);
+            $totalB = array_sum($b);
+            return $totalB <=> $totalA;
+        });
+
+        if ($limit) {
+            $causes = array_slice($causes, 0, $limit, true);
+        }
+
+        $labels = array_keys($causes);
+        $male_counts = array_map(function($c) { return $c['M'] ?? 0; }, $causes);
+        $female_counts = array_map(function($c) { return $c['F'] ?? 0; }, $causes);
+
+        return response()->json([
+            'type' => 'comparativa',
+            'labels' => $labels,
+            'residence_counts' => $male_counts,
+            'death_counts' => $female_counts,
+            'total' => array_sum($male_counts) + array_sum($female_counts),
+        ]);
+    }
+
+    private function getChartComparativaEdadCausa($filters, $dateColumn, $applyFilters, $limit)
+    {
+        // Rango de edades
+        $ageOrder = ['0-4','5-14','15-24','25-34','35-44','45-54','55-64','65-74','75+'];
+        
+        $dataQ = DB::table('deaths')
+            ->leftJoin('death_causes', 'death_causes.id', '=', 'deaths.death_cause_id')
+            ->select(
+                DB::raw("CASE
+                    WHEN deaths.age_years IS NULL OR deaths.age_years < 0 THEN 'Desconocido'
+                    WHEN deaths.age_years BETWEEN 0 AND 4 THEN '0-4'
+                    WHEN deaths.age_years BETWEEN 5 AND 14 THEN '5-14'
+                    WHEN deaths.age_years BETWEEN 15 AND 24 THEN '15-24'
+                    WHEN deaths.age_years BETWEEN 25 AND 34 THEN '25-34'
+                    WHEN deaths.age_years BETWEEN 35 AND 44 THEN '35-44'
+                    WHEN deaths.age_years BETWEEN 45 AND 54 THEN '45-54'
+                    WHEN deaths.age_years BETWEEN 55 AND 64 THEN '55-64'
+                    WHEN deaths.age_years BETWEEN 65 AND 74 THEN '65-74'
+                    ELSE '75+' END as age_range"),
+                'death_causes.name as cause',
+                DB::raw('COUNT(deaths.id) as total')
+            )
+            ->groupBy('age_range', 'death_causes.name');
+        $applyFilters($dataQ);
+        $data = $dataQ->get();
+
+        // Agrupar por rango de edad
+        $ageGroups = [];
+        foreach ($ageOrder as $age) {
+            $ageGroups[$age] = ['causes' => []];
+        }
+        
+        foreach ($data as $row) {
+            $age = $row->age_range ?? 'Desconocido';
+            $cause = $row->cause ?? 'Sin dato';
+            if (!isset($ageGroups[$age])) {
+                $ageGroups[$age] = ['causes' => []];
+            }
+            $ageGroups[$age]['causes'][$cause] = (int)$row->total;
+        }
+
+        // Para cada rango de edad, obtener causa principal
+        $labels = [];
+        $primary_cause_counts = [];
+        
+        foreach ($ageGroups as $age => $group) {
+            if (empty($group['causes'])) continue;
+            
+            arsort($group['causes']);
+            $primaryCause = key($group['causes']);
+            $count = current($group['causes']);
+            
+            $labels[] = $age;
+            $primary_cause_counts[] = $count;
+        }
+
+        return response()->json([
+            'type' => 'comparativa',
+            'labels' => $labels,
+            'residence_counts' => array_fill(0, count($labels), 0), // Placeholder
+            'death_counts' => $primary_cause_counts,
+            'total' => array_sum($primary_cause_counts),
+        ]);
+    }
+
+    private function getChartComparativaLugarCausa($filters, $dateColumn, $applyFilters, $limit)
+    {
+        // Obtener causas agrupadas por lugar de defunción
+        $dataQ = DB::table('deaths')
+            ->leftJoin('death_locations', 'death_locations.id', '=', 'deaths.death_location_id')
+            ->leftJoin('death_causes', 'death_causes.id', '=', 'deaths.death_cause_id')
+            ->select('death_locations.name as location', 'death_causes.name as cause', DB::raw('COUNT(deaths.id) as total'))
+            ->groupBy('death_locations.name', 'death_causes.name');
+        $applyFilters($dataQ);
+        $data = $dataQ->get();
+
+        // Agrupar por lugar
+        $locations = [];
+        foreach ($data as $row) {
+            $location = $row->location ?? 'Sin dato';
+            $cause = $row->cause ?? 'Sin dato';
+            if (!isset($locations[$location])) {
+                $locations[$location] = [];
+            }
+            $locations[$location][$cause] = (int)$row->total;
+        }
+
+        // Ordenar por total descendente y tomar top N si aplica
+        uasort($locations, function($a, $b) {
+            return array_sum($b) <=> array_sum($a);
+        });
+
+        if ($limit) {
+            $locations = array_slice($locations, 0, $limit, true);
+        }
+
+        $labels = array_keys($locations);
+        
+        // Para cada lugar, obtener causa principal
+        $primary_cause_counts = [];
+        foreach ($locations as $location => $causes) {
+            arsort($causes);
+            $primary_cause_counts[] = current($causes);
+        }
+
+        return response()->json([
+            'type' => 'comparativa',
+            'labels' => $labels,
+            'residence_counts' => array_fill(0, count($labels), 0), // Placeholder
+            'death_counts' => $primary_cause_counts,
+            'total' => array_sum($primary_cause_counts),
         ]);
     }
 }

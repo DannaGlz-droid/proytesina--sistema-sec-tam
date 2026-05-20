@@ -153,6 +153,18 @@
 
                                 <!-- FILTROS CONTEXTUALES DINÁMICOS -->
                                 
+                                <!-- Tipo de Municipio (Defunción vs Residencia) -->
+                                <div id="filterTipoMunicipio" class="filter-section dynamic-filter" style="display: none;">
+                                    <div class="flex items-center gap-2 mb-3 pb-2 border-b border-gray-200">
+                                        <i class="fas fa-map-marker text-[#611132] text-sm"></i>
+                                        <h4 class="text-xs font-semibold text-[#404041] font-lora">Tipo de Municipio</h4>
+                                    </div>
+                                    <select id="tipoMunicipioFilter" class="w-full border border-[#404041] rounded-lg px-3 py-1.5 text-xs">
+                                        <option value="defuncion">Municipio de Defunción</option>
+                                        <option value="residencia">Municipio de Residencia</option>
+                                    </select>
+                                </div>
+
                                 <!-- Filtro de Municipios (contextual) -->
                                 <div id="filterMunicipios" class="filter-section dynamic-filter" style="display: none;">
                                     <div class="flex items-center gap-2 mb-3 pb-2 border-b border-gray-200">
@@ -221,6 +233,20 @@
                                     </select>
                                 </div>
 
+                                <!-- Selector de Tipo de Comparativa (contextual) -->
+                                <div id="filterTipoComparativa" class="filter-section dynamic-filter" style="display: none;">
+                                    <div class="flex items-center gap-2 mb-3 pb-2 border-b border-gray-200">
+                                        <i class="fas fa-exchange-alt text-[#611132] text-sm"></i>
+                                        <h4 class="text-xs font-semibold text-[#404041] font-lora">Tipo de Comparativa</h4>
+                                    </div>
+                                    <select id="tipoComparativaFilter" class="w-full border border-[#404041] rounded-lg px-3 py-1.5 text-xs">
+                                        <option value="residencia-defuncion">Residencia vs Lugar de Defunción</option>
+                                        <option value="genero-causa">Género vs Causa</option>
+                                        <option value="edad-causa">Rango Etario vs Causa</option>
+                                        <option value="lugar-causa">Lugar de Defunción vs Causa</option>
+                                    </select>
+                                </div>
+
                                 <!-- Toggle de Causas Principales para Edades (contextual) -->
                                 <div id="filterCausasPrincipales" class="filter-section dynamic-filter" style="display: none;">
                                     <div class="flex items-center gap-2 pb-2 border-b border-gray-200 mb-3">
@@ -269,14 +295,13 @@
                                 </div>
 
                                 <!-- Top N -->
-                                <div class="flex flex-col gap-1 flex-1 min-w-40">
+                                <div id="filterTop" class="flex flex-col gap-1 flex-1 min-w-40" style="display: none;">
                                     <label class="text-xs font-semibold text-gray-700 font-lora">Top</label>
                                     <select id="chartLimit" class="text-sm border border-gray-200 rounded px-3 py-1.5 font-lora bg-white">
                                         <option value="all">Todos</option>
                                         <option value="5">Top 5</option>
                                         <option value="10">Top 10</option>
                                         <option value="15">Top 15</option>
-                                        <option value="20">Top 20</option>
                                     </select>
                                 </div>
 
@@ -387,9 +412,8 @@
                         </div>
 
                         <!-- Mensaje de Carga/Error -->
-                        <div id="loadingMessage" class="hidden text-center py-8 text-gray-600">
-                            <i class="fas fa-spinner fa-spin text-2xl text-[#611132] mb-3"></i>
-                            <p class="font-lora">Cargando datos...</p>
+                        <div id="loadingMessage" class="hidden absolute top-4 right-4 z-50 bg-white rounded-lg p-3 shadow-lg">
+                            <i class="fas fa-spinner fa-spin text-2xl text-[#611132]"></i>
                         </div>
                         <div id="errorMessage" class="hidden text-center py-8 text-red-600 bg-red-50 rounded-lg">
                             <i class="fas fa-exclamation-circle text-2xl mb-2"></i>
@@ -434,7 +458,9 @@
             jurisdiccionesNames: [],
             sexo: null,
             granularidad: 'month',
-            mostrarCausasPrincipales: false
+            mostrarCausasPrincipales: false,
+            tipoComparativa: 'residencia-defuncion',
+            tipoMunicipio: 'defuncion'
         };
 
         const colorPalettes = {
@@ -477,15 +503,25 @@
             comparativa: 'Comparativa: Residencia vs Defunción'
         };
 
+        const comparativaLabels = {
+            'residencia-defuncion': 'Residencia vs Lugar de Defunción',
+            'genero-causa': 'Género vs Causa de Defunción',
+            'edad-causa': 'Rango Etario vs Causa de Defunción',
+            'lugar-causa': 'Lugar de Defunción vs Causa'
+        };
+
         const filtersForChart = {
-            municipios: ['dates', 'causas', 'jurisdicciones', 'sexo'],
+            municipios: ['dates', 'tipoMunicipio', 'causas', 'jurisdicciones', 'sexo'],
             tendencias: ['dates', 'municipios', 'causas', 'sexo', 'granularidad'],
             edades: ['dates', 'municipios', 'causas', 'jurisdicciones', 'causasPrincipales'],
             genero: ['dates', 'municipios', 'causas', 'jurisdicciones'],
             causas: ['dates', 'municipios', 'jurisdicciones', 'sexo'],
             jurisdicciones: ['dates', 'causas', 'sexo'],
-            comparativa: ['dates', 'causas', 'sexo']
+            comparativa: ['dates', 'tipoComparativa']
         };
+
+        // Gráficas que deben mostrar el selector "Top"
+        const chartTypesWithTopSelector = ['municipios', 'jurisdicciones', 'comparativa'];
 
         document.addEventListener('DOMContentLoaded', function() {
             try {
@@ -494,9 +530,35 @@
                 console.warn('ChartDataLabels no disponible');
             }
 
+            // Cargar rangos de fecha default antes de inicializar
+            loadDefaultDateRange();
+            
             initializeEventListeners();
-            loadChart('municipios');
+            selectChart('municipios');
         });
+
+        // Función para cargar los rangos de fecha default
+        async function loadDefaultDateRange() {
+            try {
+                const response = await fetch('{{ route("api.default-date-range") }}');
+                const data = await response.json();
+                
+                // Actualizar los inputs de fecha
+                const startDateInput = document.getElementById('customStartDate');
+                const endDateInput = document.getElementById('customEndDate');
+                
+                if (startDateInput && endDateInput) {
+                    startDateInput.value = data.start_date;
+                    endDateInput.value = data.end_date;
+                    
+                    // Actualizar también los valores en activeFilters
+                    activeFilters.startDate = data.start_date;
+                    activeFilters.endDate = data.end_date;
+                }
+            } catch (error) {
+                console.error('Error loading default date range:', error);
+            }
+        }
 
         function initializeTomSelect() {
             // Inicializar Tom Select para multiselects - permite deseleccionar fácilmente
@@ -642,6 +704,8 @@
             document.getElementById('sexoFilter').addEventListener('change', updateChart);
             document.getElementById('granularidadFilter').addEventListener('change', updateChart);
             document.getElementById('mostrarCausasPrincipales').addEventListener('change', updateChart);
+            document.getElementById('tipoComparativaFilter').addEventListener('change', updateChart);
+            document.getElementById('tipoMunicipioFilter').addEventListener('change', updateChart);
 
             document.getElementById('chartTypeSelector').addEventListener('change', function() {
                 chartConfig.type = this.value === 'auto' ? chartTypeDefaults[currentChartType] : this.value;
@@ -703,239 +767,12 @@
                         link.click();
                     }
                 } else {
-                    // Para otros charts (barras, líneas), intentar capturar el DOM con html2canvas (más fiable)
-                    if (typeof html2canvas !== 'undefined') {
-                        const element = document.querySelector('[id="mainChart"]').closest('.bg-white');
-                        if (element) {
-                            // Construir un contenedor de export compacto: imagen del chart + leyenda
-                            try {
-                                // Obtener imagen del chart (solo canvas) en alta resolución
-                                const chartImgData = currentEchartsInstance.getDataURL({ type: 'png', pixelRatio: 2, backgroundColor: '#ffffff' });
-
-                                // Crear contenedor export
-                                const exportDiv = document.createElement('div');
-                                exportDiv.style.display = 'flex';
-                                exportDiv.style.alignItems = 'center';
-                                exportDiv.style.background = '#ffffff';
-                                exportDiv.style.padding = '8px 12px';
-                                exportDiv.style.borderRadius = '6px';
-                                exportDiv.style.fontFamily = getComputedStyle(document.body).fontFamily || 'sans-serif';
-                                exportDiv.style.color = '#404041';
-
-                                // Imagen del chart
-                                const img = document.createElement('img');
-                                img.src = chartImgData;
-                                img.style.display = 'block';
-                                img.style.maxWidth = 'none';
-                                img.style.height = 'auto';
-                                img.style.marginRight = '20px';
-
-                                // Construir leyenda a partir de la opción actual
-                                const legendDiv = document.createElement('div');
-                                legendDiv.style.display = 'flex';
-                                legendDiv.style.flexDirection = 'column';
-                                legendDiv.style.gap = '8px';
-
-                                const opt = currentEchartsInstance.getOption ? currentEchartsInstance.getOption() : null;
-                                const series = opt && opt.series && opt.series[0] ? opt.series[0] : null;
-                                const colors = opt && opt.color ? opt.color : null;
-
-                                if (series && series.data && Array.isArray(series.data)) {
-                                    series.data.forEach((d, idx) => {
-                                        const item = document.createElement('div');
-                                        item.style.display = 'flex';
-                                        item.style.alignItems = 'center';
-                                        item.style.gap = '10px';
-                                        item.style.fontSize = '15px';
-
-                                        const sw = document.createElement('span');
-                                        sw.style.display = 'inline-block';
-                                        // Ajustar tamaño del recuadro de color para ser proporcional a la fuente
-                                        sw.style.width = '18px';
-                                        sw.style.height = '16px';
-                                        sw.style.borderRadius = '3px';
-                                        sw.style.background = (colors && colors[idx]) ? colors[idx] : (d.itemStyle && d.itemStyle.color ? d.itemStyle.color : '#ccc');
-
-                                        const label = document.createElement('span');
-                                        label.textContent = d.name;
-
-                                        item.appendChild(sw);
-                                        item.appendChild(label);
-                                        legendDiv.appendChild(item);
-                                    });
-                                }
-
-                                exportDiv.appendChild(img);
-                                exportDiv.appendChild(legendDiv);
-
-                                // Añadir al DOM fuera de pantalla para que html2canvas pueda renderizarlo
-                                exportDiv.style.position = 'fixed';
-                                exportDiv.style.left = '-9999px';
-                                exportDiv.style.top = '0';
-                                document.body.appendChild(exportDiv);
-
-                                // Esperar a que la imagen cargue para capturar correctamente
-                                img.onload = function() {
-                                    html2canvas(exportDiv, { scale: 2, useCORS: true, backgroundColor: '#ffffff' }).then(canvas => {
-                                        const dataURL = canvas.toDataURL('image/png');
-                                        const arr = dataURL.split(',');
-                                        const mime = arr[0].match(/:(.*?);/)[1];
-                                        const bstr = atob(arr[1]);
-                                        let n = bstr.length;
-                                        const u8arr = new Uint8Array(n);
-                                        while(n--) { u8arr[n] = bstr.charCodeAt(n); }
-                                        const blob = new Blob([u8arr], { type: mime });
-                                        const objUrl = URL.createObjectURL(blob);
-                                        const link = document.createElement('a');
-                                        link.href = objUrl;
-                                        link.download = `grafica-${currentChartType}-${new Date().toISOString().split('T')[0]}.png`;
-                                        document.body.appendChild(link);
-                                        link.click();
-                                        link.remove();
-                                        setTimeout(() => URL.revokeObjectURL(objUrl), 1000);
-                                        exportDiv.remove();
-                                    }).catch(err => {
-                                        console.warn('html2canvas exportDiv failed, falling back', err);
-                                        exportDiv.remove();
-                                    });
-                                };
-                                // If already cached image, trigger onload manually
-                                if (img.complete) img.onload();
-                                return;
-                            } catch (err) {
-                                console.warn('compact export failed, falling back to full DOM capture', err);
-                            }
-                        }
-                    }
-                    // Para otros charts, renderizar la opción en un contenedor fuera de pantalla
-                    // y exportar solo la imagen resultante (sin el padding/contenedor de la UI)
-                    try {
-                        // Obtener dimensiones reales del chart en pantalla para mantener proporciones
-                        const mainChartEl = document.getElementById('mainChart');
-                        const rect = mainChartEl ? mainChartEl.getBoundingClientRect() : null;
-                        const exportWidth = rect ? Math.max(600, Math.round(rect.width)) : 900;
-                        const exportHeight = rect ? Math.max(400, Math.round(rect.height)) : 600;
-
-                        const tmpDiv = document.createElement('div');
-                        tmpDiv.style.width = exportWidth + 'px';
-                        tmpDiv.style.height = exportHeight + 'px';
-                        tmpDiv.style.position = 'fixed';
-                        tmpDiv.style.left = '-9999px';
-                        tmpDiv.style.top = '-9999px';
-                        // Allow rendering even though offscreen
-                        // Make it invisible but renderable: use opacity 0 (visibility:hidden may prevent render)
-                        tmpDiv.style.opacity = '0';
-                        tmpDiv.style.pointerEvents = 'none';
-                        document.body.appendChild(tmpDiv);
-
-                        const tmpChart = echarts.init(tmpDiv, null, { width: exportWidth, height: exportHeight, devicePixelRatio: window.devicePixelRatio || 1 });
-                        // Construir una opción de export más robusta basada en la opción actual
-                        const currentOption = currentEchartsInstance.getOption ? currentEchartsInstance.getOption() : null;
-                        let exportOption = currentOption;
-
-                        if (currentOption && currentOption.series && currentOption.series[0]) {
-                            const s = currentOption.series[0];
-                            if (s.type === 'pie') {
-                                const pieData = s.data || [];
-                                const colors = currentOption.color || (window && window.colorPalettes && window.colorPalettes[chartConfig.colorPalette]) || [];
-
-                                // calcular dimensiones desde el contenedor real si está disponible
-                                // Use actual export dimensions to compute legend position
-                                const visW = exportWidth;
-                                const visH = exportHeight;
-
-                                const legendLeftPx = Math.round(visW * 0.62);
-
-                                // Calcular radios en píxeles para asegurar que el círculo quepa
-                                const outerRadiusPx = Math.floor(Math.min(visW, visH) * 0.42);
-                                const innerRadiusPx = chartConfig.type === 'doughnut' ? Math.floor(outerRadiusPx * 0.56) : 0;
-                                const centerX = Math.round(visW * 0.36);
-                                const centerY = Math.round(visH / 2);
-
-                                exportOption = {
-                                    color: colors,
-                                    tooltip: { trigger: 'item' },
-                                    legend: { show: false },
-                                    series: [{
-                                        name: s.name || chartTitles[currentChartType] || '',
-                                        type: 'pie',
-                                        // usar centro y radios en píxeles para export evitar recortes
-                                        center: [centerX, centerY],
-                                        radius: chartConfig.type === 'doughnut' ? [innerRadiusPx, outerRadiusPx] : outerRadiusPx,
-                                        avoidLabelOverlap: true,
-                                        data: pieData,
-                                        label: {
-                                            show: true,
-                                            position: 'outside',
-                                            distance: 6,
-                                            fontSize: 13,
-                                            color: '#404041',
-                                            overflow: 'none',
-                                            width: 180,
-                                            formatter: s.label && s.label.formatter ? s.label.formatter : undefined
-                                        },
-                                        labelLine: { show: true, length: 12, length2: 8 }
-                                    }]
-                                };
-                            }
-                        }
-
-                        tmpChart.setOption(exportOption || currentOption, true);
-
-                        // Esperar un momento para que echarts complete el render fuera de pantalla
-                        await new Promise(resolve => setTimeout(resolve, 200));
-
-                        const dataURL = tmpChart.getDataURL({ type: 'png', pixelRatio: 2, backgroundColor: '#ffffff' });
-                        tmpChart.dispose();
-                        tmpDiv.remove();
-
-                        // Convertir dataURL a Blob para evitar problemas con navegadores
-                        function dataURLtoBlob(dataurl) {
-                            const arr = dataurl.split(',');
-                            const mime = arr[0].match(/:(.*?);/)[1];
-                            const bstr = atob(arr[1]);
-                            let n = bstr.length;
-                            const u8arr = new Uint8Array(n);
-                            while(n--) {
-                                u8arr[n] = bstr.charCodeAt(n);
-                            }
-                            return new Blob([u8arr], { type: mime });
-                        }
-
-                        const blob = dataURLtoBlob(dataURL);
-                        const objUrl = URL.createObjectURL(blob);
-                        const link = document.createElement('a');
-                        link.href = objUrl;
-                        link.download = `grafica-${currentChartType}-${new Date().toISOString().split('T')[0]}.png`;
-                        document.body.appendChild(link);
-                        link.click();
-                        link.remove();
-                        setTimeout(() => URL.revokeObjectURL(objUrl), 1000);
-                    } catch (e) {
-                        // Fallback a getDataURL directo si algo falla
-                        try {
-                            const fallbackData = currentEchartsInstance.getDataURL({ type: 'png', pixelRatio: 2, backgroundColor: '#ffffff' });
-                            const blobFb = (function(dataurl){
-                                const arr = dataurl.split(',');
-                                const mime = arr[0].match(/:(.*?);/)[1];
-                                const bstr = atob(arr[1]);
-                                let n = bstr.length;
-                                const u8arr = new Uint8Array(n);
-                                while(n--) { u8arr[n] = bstr.charCodeAt(n); }
-                                return new Blob([u8arr], { type: mime });
-                            })(fallbackData);
-                            const objUrlFb = URL.createObjectURL(blobFb);
-                            const linkFb = document.createElement('a');
-                            linkFb.href = objUrlFb;
-                            linkFb.download = `grafica-${currentChartType}-${new Date().toISOString().split('T')[0]}.png`;
-                            document.body.appendChild(linkFb);
-                            linkFb.click();
-                            linkFb.remove();
-                            setTimeout(() => URL.revokeObjectURL(objUrlFb), 1000);
-                        } catch (e2) {
-                            console.error('Fallback download failed', e2);
-                        }
-                    }
+                    // Para otros charts (barras, líneas, área, edades), usar la imagen del chart sin leyenda
+                    const dataURL = currentEchartsInstance.getDataURL({ type: 'png', pixelRatio: 2, backgroundColor: '#ffffff' });
+                    const link = document.createElement('a');
+                    link.href = dataURL;
+                    link.download = `grafica-${currentChartType}-${new Date().toISOString().split('T')[0]}.png`;
+                    link.click();
                 }
             });
         }
@@ -961,23 +798,61 @@
         }
 
         function updateVisibleFilters(chartType) {
-            const allFilters = ['filterMunicipios', 'filterCausas', 'filterJurisdicciones', 'filterSexo', 'filterGranularidad', 'filterCausasPrincipales'];
+            const allFilters = ['filterTipoMunicipio', 'filterMunicipios', 'filterCausas', 'filterJurisdicciones', 'filterSexo', 'filterGranularidad', 'filterCausasPrincipales', 'filterTipoComparativa'];
             const availableFilters = filtersForChart[chartType] || [];
 
             allFilters.forEach(filterId => {
                 const element = document.getElementById(filterId);
                 if (element) {
                     let show = false;
+                    if (filterId === 'filterTipoMunicipio' && availableFilters.includes('tipoMunicipio')) show = true;
                     if (filterId === 'filterMunicipios' && availableFilters.includes('municipios')) show = true;
                     if (filterId === 'filterCausas' && availableFilters.includes('causas')) show = true;
                     if (filterId === 'filterJurisdicciones' && availableFilters.includes('jurisdicciones')) show = true;
                     if (filterId === 'filterSexo' && availableFilters.includes('sexo')) show = true;
                     if (filterId === 'filterGranularidad' && availableFilters.includes('granularidad')) show = true;
                     if (filterId === 'filterCausasPrincipales' && availableFilters.includes('causasPrincipales')) show = true;
+                    if (filterId === 'filterTipoComparativa' && availableFilters.includes('tipoComparativa')) show = true;
                     element.style.display = show ? 'block' : 'none';
                 }
             });
+
+            // Mostrar/ocultar selector Top según el tipo de gráfica
+            const filterTopElement = document.getElementById('filterTop');
+            if (filterTopElement) {
+                filterTopElement.style.display = chartTypesWithTopSelector.includes(chartType) ? 'flex' : 'none';
+            }
+
             updateChartTypeOptions(chartType);
+            updateDataLabelOptions(chartType);
+        }
+
+        function updateDataLabelOptions(chartType) {
+            const datalabelModeSelect = document.getElementById('datalabelMode');
+            if (!datalabelModeSelect) return;
+
+            const options = datalabelModeSelect.querySelectorAll('option');
+            
+            // Para Tendencias, deshabilitar "Solo %" y "Ambos"
+            if (chartType === 'tendencias') {
+                options.forEach(option => {
+                    if (option.value === 'percent' || option.value === 'both') {
+                        option.disabled = true;
+                    } else {
+                        option.disabled = false;
+                    }
+                });
+                // Si está seleccionado un opción deshabilitada, cambiar a "auto"
+                if (datalabelModeSelect.value === 'percent' || datalabelModeSelect.value === 'both') {
+                    datalabelModeSelect.value = 'auto';
+                    chartConfig.dataLabelMode = 'auto';
+                }
+            } else {
+                // Para otros gráficos, habilitar todas las opciones
+                options.forEach(option => {
+                    option.disabled = false;
+                });
+            }
         }
 
         function updateChartTypeOptions(chartType) {
@@ -1162,6 +1037,8 @@
             activeFilters.sexo = document.getElementById('sexoFilter').value || null;
             activeFilters.granularidad = document.getElementById('granularidadFilter').value || 'month';
             activeFilters.mostrarCausasPrincipales = document.getElementById('mostrarCausasPrincipales').checked || false;
+            activeFilters.tipoComparativa = document.getElementById('tipoComparativaFilter').value || 'residencia-defuncion';
+            activeFilters.tipoMunicipio = document.getElementById('tipoMunicipioFilter').value || 'defuncion';
             
             updateActiveFiltersDisplay();
         }
@@ -1349,6 +1226,8 @@
                 if (el.tomselect) el.tomselect.clear();
             } else if (filterType === 'sexo') {
                 document.getElementById('sexoFilter').value = '';
+            } else if (filterType === 'tipoMunicipio') {
+                document.getElementById('tipoMunicipioFilter').value = 'defuncion';
             }
             collectFilters();
             updateActiveFiltersDisplay();
@@ -1369,7 +1248,9 @@
                 ...(activeFilters.jurisdicciones.length && { jurisdicciones: activeFilters.jurisdicciones }),
                 ...(activeFilters.sexo && { sex: activeFilters.sexo }),
                 ...(chartConfig.limit && { limit: chartConfig.limit }),
-                ...(chartType === 'tendencias' && { group_by: activeFilters.granularidad })
+                ...(chartType === 'tendencias' && { group_by: activeFilters.granularidad }),
+                ...(chartType === 'comparativa' && { comparativa_type: activeFilters.tipoComparativa }),
+                ...(chartType === 'municipios' && { municipio_type: activeFilters.tipoMunicipio })
             };
 
             const params = new URLSearchParams();
@@ -1384,12 +1265,15 @@
             fetch(`{{ route('api.chart.data') }}/` + chartType + '?' + params.toString())
                 .then(response => response.json())
                 .then(data => {
-                    if (data.error) {
-                        showErrorMessage(data.message || 'Error al obtener datos');
-                    } else {
-                        renderChart(data);
-                        hideLoadingMessage();
-                    }
+                    // Agregar delay mínimo para que el spinner sea visible
+                    setTimeout(() => {
+                        if (data.error) {
+                            showErrorMessage(data.message || 'Error al obtener datos');
+                        } else {
+                            renderChart(data);
+                            hideLoadingMessage();
+                        }
+                    }, 300);
                 })
                 .catch(error => {
                     console.error('Error:', error);
@@ -1439,7 +1323,17 @@
             // Recrear instancia limpia
             currentEchartsInstance = echarts.init(chartContainer);
 
-            document.getElementById('chartTitle').textContent = chartTitles[currentChartType] || 'Gráfica';
+            let chartTitle = currentChartType === 'comparativa' 
+                ? comparativaLabels[activeFilters.tipoComparativa] || chartTitles[currentChartType]
+                : (chartTitles[currentChartType] || 'Gráfica');
+            
+            // Agregar tipo de municipio en el título si aplica
+            if (currentChartType === 'municipios' && activeFilters.tipoMunicipio) {
+                const tipoLabel = activeFilters.tipoMunicipio === 'residencia' ? 'Residencia' : 'Defunción';
+                chartTitle += ` (${tipoLabel})`;
+            }
+            
+            document.getElementById('chartTitle').textContent = chartTitle;
             document.getElementById('totalRecords').textContent = (data.total || 0).toLocaleString();
 
             let labels = data.labels || [];
@@ -1524,7 +1418,8 @@
                 // Para 'edades', 'genero' y 'causas' (gráficas expandidas): ajustar leyenda
                 if (expandedCircularCharts) {
                     legendEstimatePx = Math.max(280, pieData.length * 16 + 80);
-                    legendRightOffset = 60;
+                    // Espaciado especial para Causas: mucho más espacio
+                    legendRightOffset = currentChartType === 'causas' ? 200 : 120;
                     if (chartWrapper) {
                         containerHeightAdjusted = Math.max(700, pieDiameterPx + 160);
                         chartWrapper.style.height = containerHeightAdjusted + 'px';
@@ -1535,7 +1430,8 @@
                 let estimatedTotalWidth = pieDiameterPx + legendEstimatePx + 40;
                 if (expandedCircularCharts) {
                     // Espacio generoso para que los números de la izquierda no se corten y la leyenda tenga distancia
-                    estimatedTotalWidth = pieDiameterPx + legendEstimatePx + 300;
+                    let additionalSpacing = currentChartType === 'causas' ? 550 : 420;
+                    estimatedTotalWidth = pieDiameterPx + legendEstimatePx + additionalSpacing;
                 }
                 chartContainer.style.width = estimatedTotalWidth + 'px';
                 chartContainer.style.margin = '0 auto';
@@ -1607,7 +1503,8 @@
                                 } else if (chartConfig.dataLabelMode === 'both') {
                                     return `{value|${formatNumber(params.value)}} {normal|(${params.percent}%)}`;
                                 }
-                                return `{normal|${params.name}}`;
+                                // Por defecto: mostrar valor en lugar del nombre
+                                return `{value|${formatNumber(params.value)}}`;
                             }
                         },
                         labelLine: {
@@ -1700,7 +1597,7 @@
                         textStyle: { fontSize: axisFontSize },
                         ...(tooltipFormatter ? { formatter: tooltipFormatter } : {})
                     },
-                    grid: { left: isHorizontal ? '20%' : '3%', right: '4%', bottom: isHorizontal ? '3%' : '15%', top: '10%', containLabel: true },
+                    grid: { left: isHorizontal ? '3%' : '3%', right: isHorizontal ? '7%' : '4%', bottom: isHorizontal ? '3%' : '15%', top: '10%', containLabel: true },
                     [isHorizontal ? 'xAxis' : 'yAxis']: {
                         type: 'value',
                         axisLabel: { fontSize: axisFontSize, color: '#404041' }
