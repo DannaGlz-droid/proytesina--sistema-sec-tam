@@ -14,10 +14,7 @@
                     Seleccione una métrica para analizar y explore los datos con filtros personalizados.
                 </p>
             </div>
-            <button class="bg-[#611132] text-white px-4 py-2.5 rounded-lg text-xs font-semibold hover:bg-[#4a0e26] transition-all duration-300 font-lora flex items-center gap-2 whitespace-nowrap shadow-sm self-start lg:self-auto" id="descargarActual">
-                <i class="fas fa-download text-xs"></i>
-                Descargar Gráfica
-            </button>
+            
         </div>
 
         <!-- SELECTOR DE GRÁFICAS (Pestañas) -->
@@ -272,7 +269,6 @@
                                 <div class="flex flex-col gap-1 flex-1 min-w-40">
                                     <label class="text-xs font-semibold text-gray-700 font-lora">Tipo de Gráfica</label>
                                     <select id="chartTypeSelector" class="text-sm border border-gray-200 rounded px-3 py-1.5 font-lora bg-white">
-                                        <option value="auto">Auto</option>
                                         <option value="bar">Barras</option>
                                         <option value="barHorizontal">Barras Horizontales</option>
                                         <option value="pie">Pastel</option>
@@ -286,11 +282,9 @@
                                 <div class="flex flex-col gap-1 flex-1 min-w-40">
                                     <label class="text-xs font-semibold text-gray-700 font-lora">Etiquetas</label>
                                     <select id="datalabelMode" class="text-sm border border-gray-200 rounded px-3 py-1.5 font-lora bg-white">
-                                        <option value="auto">Auto</option>
                                         <option value="value">Solo Valores</option>
                                         <option value="percent">Solo %</option>
                                         <option value="both">Ambos</option>
-                                        <option value="none">Ocultar</option>
                                     </select>
                                 </div>
 
@@ -309,27 +303,35 @@
                                 <div class="flex flex-col gap-1 flex-1 min-w-40">
                                     <label class="text-xs font-semibold text-gray-700 font-lora">Paleta</label>
                                     <select id="colorPalette" class="text-sm border border-gray-200 rounded px-3 py-1.5 font-lora bg-white">
-                                        <option value="principal">Principal</option>
-                                        <option value="modern">Moderna</option>
-                                        <option value="nature">Natural</option>
-                                        <option value="warm">Cálida</option>
-                                        <option value="cool">Fría</option>
-                                        <option value="sunset">Sunset</option>
-                                        <option value="ocean">Ocean</option>
+                                        <option value="aqua">Aqua</option>
+                                        <option value="autumn">Autumn</option>
+                                        <option value="rose">Rose</option>
+                                        <option value="spectrum">Spectrum</option>
+                                        <option value="earth">Earth</option>
+                                        <option value="goldenEarth">Golden Earth</option>
+                                        <option value="maroon611132">Maroon 611132</option>
                                     </select>
                                 </div>
                             </div>
 
-                            <!-- Indicador de Total -->
-                            <div class="text-sm text-gray-700 font-lora">
-                                <span class="font-semibold">Total de registros:</span>
-                                <span id="totalRecords" class="text-[#611132] font-bold">0</span>
-                            </div>
+                        
                         </div>
 
                         <!-- Gráfica Principal -->
                         <div class="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
-                            <h2 id="chartTitle" class="text-lg font-bold text-[#404041] mb-4 font-lora">Cargando...</h2>
+                            <div class="flex items-center justify-between gap-4 mb-4">
+                                <div class="flex items-center gap-3">
+                                    <h2 id="chartTitle" class="text-lg font-bold text-[#404041] font-lora">Cargando...</h2>
+                                    <div id="chartTotalBadge" class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#f8f2f5] border border-[#e7d7de] text-sm font-semibold text-[#611132]">
+                                        <span class="text-xs">Total</span>
+                                        <span id="chartTotalValue">0</span>
+                                    </div>
+                                </div>
+                                <button class="bg-[#611132] text-white px-4 py-2.5 rounded-lg text-xs font-semibold hover:bg-[#4a0e26] transition-all duration-300 font-lora flex items-center gap-2 whitespace-nowrap shadow-sm" id="descargarActual">
+                                    <i class="fas fa-download text-xs"></i>
+                                    Descargar Gráfica
+                                </button>
+                            </div>
                             <div class="chart-wrapper" style="height:400px; position:relative;">
                                 <div id="mainChart" style="width: 100%; height: 100%;"></div>
                             </div>
@@ -438,9 +440,9 @@
         let currentEchartsInstance = null;
         let chartConfig = {
             type: 'bar',
-            dataLabelMode: 'auto',
+            dataLabelMode: 'value',
             limit: null,
-            colorPalette: 'principal',
+            colorPalette: 'aqua',
             groupBy: 'month'
         };
 
@@ -464,32 +466,79 @@
         };
 
         const colorPalettes = {
-            principal: ['#611132', '#8B6F47', '#2C5F5D', '#9B4D6F', '#4A7C7E', '#A67C52', '#3D4F5C', '#7A5060'],
-            modern: ['#4A90A4', '#7BA05B', '#D88559', '#B565A7', '#5DADA5', '#F4D35E', '#EE964B', '#F95738'],
-            nature: ['#264653', '#2A9D8F', '#E9C46A', '#F4A261', '#E76F51', '#D4A574', '#B8956A', '#9A8C98'],
-            warm: ['#FF6B6B', '#FFA62B', '#FFD93D', '#FF6B9D', '#C44569', '#F8B500', '#D61355', '#FF3864'],
-            cool: ['#1A535C', '#4ECDC4', '#44A08D', '#95E1D3', '#38B6FF', '#118AB2', '#073B4C', '#06D6A0'],
-            sunset: ['#FF6B35', '#F7931E', '#FDB833', '#F37335', '#C1272D', '#FF4E50', '#F34C3A', '#D1291E'],
-            ocean: ['#264653', '#2A9D8F', '#E76F51', '#F4A261', '#E9C46A', '#457B9D', '#1D3557', '#A8DADC']
+            // Paleta aqua de 15 colores armoniosos de fuerte a suave (para Top <= 15)
+            aqua: [
+                '#2B4141', // dark slate
+                '#245D66', // deep teal
+                '#1D798A', // teal
+                '#0EB1D2', // cyan strong
+                '#21CBDE', // cyan
+                '#34E4EA', // bright cyan
+                '#3FEDE7', // aqua
+                '#5FCFD0', // muted aqua
+                '#8AB9B5', // muted teal
+                '#A9BEB2', // ash teal
+                '#C8C2AE', // pale oak
+                '#D6D4C7', // warm gray
+                '#E6E8E0', // light gray
+                '#F0F6F4', // very light aqua
+                '#F7F3EA'  // pale cream
+            ]
+            ,
+            // Paleta autumn con tonos tierra y calidez progresiva.
+            autumn: [
+                '#4C061D', '#782D1F', '#8F4020', '#A55320', '#BB6721',
+                '#D17A22', '#C39E5A', '#B4C292', '#9AA48A', '#7F6F4F',
+                '#736F4E', '#5F593F', '#4B432E', '#3B3923', '#2E2B1E'
+            ]
+            ,
+            // Paleta rose con base intensa y degradado suave.
+            rose: [
+                '#331832', '#4C061D', '#861B47', '#AF1D51', '#D81E5B',
+                '#E43955', '#F0544F', '#F28A6E', '#DB9691', '#D1B7B2',
+                '#C6D8D3', '#FDF0D5', '#F7E3C9', '#EECFC2', '#B78A8A'
+            ],
+            // Paleta spectrum de alto contraste para diferenciar mejor los Top 15.
+            spectrum: [
+                '#CC4318', '#F6511D', '#FFB400', '#C0B13C', '#80AD77',
+                '#40AAB2', '#00A6ED', '#7FB800', '#46722A', '#0D2C54',
+                '#6A4C93', '#9C6ADE', '#E76F51', '#2A9D8F', '#264653'
+            ],
+            // Paleta earth con buen contraste para barras y pastel.
+            earth: [
+                '#5A3E2B', '#8B5E34', '#B07D4F', '#D9A441', '#C0B13C',
+                '#80AD77', '#5C8D89', '#4D6C8A', '#3D405B', '#264653',
+                '#6D597A', '#B56576', '#E56B6F', '#EAAC8B', '#F4F1DE'
+            ],
+            // Paleta golden earth inspirada en la captura actual: dorados, olivo y cierre cálido.
+            goldenEarth: [
+                '#A56502', '#C77A02', '#AB9003', '#8EA604', '#A8AC03',
+                '#C2B102', '#F5BB00', '#F1AD03', '#EC9F05', '#BF3100',
+                '#7A5C1E', '#9B6A2F', '#B07A3F', '#D48A2F', '#E0B35B'
+            ],
+            // Paleta monocromática basada en #611132, de tintes claros a sombras profundas.
+            maroon611132: [
+                '#611132'
+            ]
         };
 
         const chartTypeDefaults = {
             municipios: 'bar',
             tendencias: 'line',
             edades: 'bar',
-            genero: 'doughnut',
-            causas: 'doughnut',
+            genero: 'bar',
+            causas: 'bar',
             jurisdicciones: 'bar',
             comparativa: 'bar'
         };
 
         const chartTypeOptions = {
-            municipios: ['auto', 'bar', 'barHorizontal', 'pie', 'doughnut'],
-            tendencias: ['auto', 'line', 'area'],
-            edades: ['auto', 'bar', 'pie', 'doughnut'],
-            genero: ['auto', 'bar', 'pie', 'doughnut'],
-            causas: ['auto', 'bar', 'barHorizontal', 'pie', 'doughnut'],
-            jurisdicciones: ['auto', 'bar', 'barHorizontal', 'pie', 'doughnut'],
+            municipios: ['bar', 'barHorizontal', 'pie', 'doughnut'],
+            tendencias: ['line', 'area'],
+            edades: ['bar', 'pie', 'doughnut'],
+            genero: ['bar', 'pie', 'doughnut'],
+            causas: ['bar', 'barHorizontal', 'pie', 'doughnut'],
+            jurisdicciones: ['bar', 'barHorizontal', 'pie', 'doughnut'],
             comparativa: ['bar']
         };
 
@@ -708,7 +757,7 @@
             document.getElementById('tipoMunicipioFilter').addEventListener('change', updateChart);
 
             document.getElementById('chartTypeSelector').addEventListener('change', function() {
-                chartConfig.type = this.value === 'auto' ? chartTypeDefaults[currentChartType] : this.value;
+                chartConfig.type = this.value;
                 updateChart();
             });
             document.getElementById('datalabelMode').addEventListener('change', function() {
@@ -792,7 +841,6 @@
             
             // Al cambiar de pestaña, limpiar filtros pero evitar recargar dos veces la gráfica.
             clearFilters(true);
-            document.getElementById('chartTypeSelector').value = 'auto';
             chartConfig.type = chartTypeDefaults[chartType];
             loadChart(chartType);
         }
@@ -842,10 +890,10 @@
                         option.disabled = false;
                     }
                 });
-                // Si está seleccionado un opción deshabilitada, cambiar a "auto"
+                // Si está seleccionado un opción deshabilitada, cambiar a "value"
                 if (datalabelModeSelect.value === 'percent' || datalabelModeSelect.value === 'both') {
-                    datalabelModeSelect.value = 'auto';
-                    chartConfig.dataLabelMode = 'auto';
+                    datalabelModeSelect.value = 'value';
+                    chartConfig.dataLabelMode = 'value';
                 }
             } else {
                 // Para otros gráficos, habilitar todas las opciones
@@ -858,10 +906,9 @@
         function updateChartTypeOptions(chartType) {
             const selector = document.getElementById('chartTypeSelector');
             if (!selector) return;
-            const availableTypes = chartTypeOptions[chartType] || ['auto', 'bar'];
+            const availableTypes = chartTypeOptions[chartType] || ['bar'];
             const currentValue = selector.value;
             const allOptions = {
-                'auto': 'Auto',
                 'bar': 'Barras',
                 'barHorizontal': 'Barras Horizontales',
                 'pie': 'Pastel',
@@ -870,18 +917,22 @@
                 'area': 'Área'
             };
             selector.innerHTML = '';
-            availableTypes.forEach(type => {
+            availableTypes.forEach((type, index) => {
                 const option = document.createElement('option');
                 option.value = type;
                 option.textContent = allOptions[type] || type;
+                // Marcar como selected si es la primera opción o si coincide con el valor actual
+                if (index === 0 || type === currentValue) {
+                    option.selected = true;
+                }
                 selector.appendChild(option);
             });
-            if (!availableTypes.includes(currentValue)) {
+            
+            // Asegurarse de que siempre hay un valor seleccionado
+            if (!selector.value) {
                 selector.value = availableTypes[0];
-                chartConfig.type = currentValue === 'auto' ? chartTypeDefaults[chartType] : currentValue;
-            } else {
-                selector.value = currentValue;
             }
+            chartConfig.type = selector.value;
         }
 
         function onDateRangeChange() {
@@ -1235,7 +1286,6 @@
         }
 
         function loadChart(chartType) {
-            showLoadingMessage();
             collectFilters();
 
             const filters = {
@@ -1265,15 +1315,11 @@
             fetch(`{{ route('api.chart.data') }}/` + chartType + '?' + params.toString())
                 .then(response => response.json())
                 .then(data => {
-                    // Agregar delay mínimo para que el spinner sea visible
-                    setTimeout(() => {
-                        if (data.error) {
-                            showErrorMessage(data.message || 'Error al obtener datos');
-                        } else {
-                            renderChart(data);
-                            hideLoadingMessage();
-                        }
-                    }, 300);
+                    if (data.error) {
+                        showErrorMessage(data.message || 'Error al obtener datos');
+                    } else {
+                        renderChart(data);
+                    }
                 })
                 .catch(error => {
                     console.error('Error:', error);
@@ -1287,6 +1333,13 @@
             const axisFontSize = 14;
             const valueLabelFontSize = 13;
             const legendFontSize = 15;
+            const verticalBarGrid = {
+                left: '3%',
+                right: '4%',
+                top: '12%',
+                bottom: '12%',
+                containLabel: true
+            };
             const expandedCircularCharts = ['municipios', 'edades', 'genero', 'causas', 'jurisdicciones'].includes(currentChartType);
             const formatNumber = (num) => Number(num || 0).toLocaleString('es-MX');
             const labelRich = {
@@ -1305,7 +1358,7 @@
                 : ['pie', 'doughnut'].includes(chartConfig.type);
 
             if (chartWrapper) {
-                chartWrapper.style.height = isPieLikeChart ? '520px' : '400px';
+                chartWrapper.style.height = isPieLikeChart ? '520px' : '500px';
                 if (isPieLikeChart) {
                     // Mostrar el chart en modo compacto: solo espacio para la gráfica + leyenda
                     chartWrapper.style.display = 'flex';
@@ -1334,7 +1387,11 @@
             }
             
             document.getElementById('chartTitle').textContent = chartTitle;
-            document.getElementById('totalRecords').textContent = (data.total || 0).toLocaleString();
+            const totalStr = (data.total || 0).toLocaleString();
+            const totalEl = document.getElementById('totalRecords');
+            if (totalEl) totalEl.textContent = totalStr;
+            const badgeEl = document.getElementById('chartTotalValue');
+            if (badgeEl) badgeEl.textContent = totalStr;
 
             let labels = data.labels || [];
             let values = currentChartType === 'comparativa' ? null : (data.counts || []);
@@ -1356,6 +1413,51 @@
             // Construir opciones según el tipo de gráfica
             let option = {};
 
+            // Filtrar entradas con valor 0 en gráficas de barras para evitar mostrar categorías sin datos
+            try {
+                if ((chartType === 'bar' || chartType === 'barHorizontal')) {
+                    if (currentChartType === 'comparativa' && data.residence_counts && data.death_counts) {
+                        const fLabels = [];
+                        const fRes = [];
+                        const fDeath = [];
+                        for (let i = 0; i < labels.length; i++) {
+                            const r = Number(data.residence_counts[i] || 0);
+                            const d = Number(data.death_counts[i] || 0);
+                            if (r !== 0 || d !== 0) {
+                                fLabels.push(labels[i]);
+                                fRes.push(r);
+                                fDeath.push(d);
+                            }
+                        }
+                        if (fLabels.length === 0) {
+                            showErrorMessage('No hay datos para los filtros seleccionados');
+                            return;
+                        }
+                        labels = fLabels;
+                        data.residence_counts = fRes;
+                        data.death_counts = fDeath;
+                    } else if (values && values.length) {
+                        const fLabels = [];
+                        const fValues = [];
+                        for (let i = 0; i < labels.length; i++) {
+                            const v = Number(values[i] || 0);
+                            if (v !== 0) {
+                                fLabels.push(labels[i]);
+                                fValues.push(values[i]);
+                            }
+                        }
+                        if (fLabels.length === 0) {
+                            showErrorMessage('No hay datos para los filtros seleccionados');
+                            return;
+                        }
+                        labels = fLabels;
+                        values = fValues;
+                    }
+                }
+            } catch (e) {
+                console.warn('Filter zeros failed', e);
+            }
+
             if (currentChartType === 'comparativa') {
                 // Gráfica de barras agrupadas para comparativa
                 option = {
@@ -1369,7 +1471,7 @@
                         itemHeight: 16,
                         textStyle: { fontSize: legendFontSize, color: '#404041' }
                     },
-                    grid: { left: '3%', right: '4%', bottom: '15%', top: '15%', containLabel: true },
+                    grid: verticalBarGrid,
                     xAxis: {
                         type: 'category',
                         data: labels,
@@ -1400,6 +1502,12 @@
                     name: label,
                     value: values[i]
                 }));
+                // Filtrar slices con valor 0 para evitar mostrar muchos 0 alrededor del pastel
+                const filteredPieData = pieData.filter(d => Number(d.value || 0) !== 0);
+                if (filteredPieData.length === 0) {
+                    showErrorMessage('No hay datos para los filtros seleccionados');
+                    return;
+                }
                 // Calcular medidas en píxeles para ocupar solo lo necesario
                 let pieDiameterPx = 0;
                 let legendEstimatePx = 180; // ancho estimado para la leyenda
@@ -1417,7 +1525,7 @@
 
                 // Para 'edades', 'genero' y 'causas' (gráficas expandidas): ajustar leyenda
                 if (expandedCircularCharts) {
-                    legendEstimatePx = Math.max(280, pieData.length * 16 + 80);
+                    legendEstimatePx = Math.max(280, filteredPieData.length * 16 + 80);
                     // Espaciado especial para Causas: mucho más espacio
                     legendRightOffset = currentChartType === 'causas' ? 200 : 120;
                     if (chartWrapper) {
@@ -1484,7 +1592,7 @@
                         center: [centerX, centerY],
                         radius: innerRadius ? [innerRadius, outerRadius] : outerRadius,
                         avoidLabelOverlap: true,
-                        data: pieData,
+                        data: filteredPieData,
                         label: {
                             show: true,
                             position: 'outside',
@@ -1565,6 +1673,17 @@
             } else if (chartType === 'bar' || chartType === 'barHorizontal') {
                 // Barras verticales u horizontales
                 const isHorizontal = chartType === 'barHorizontal';
+                let categoryAxisFontSize = ['edades', 'genero'].includes(currentChartType)
+                    ? 16
+                    : (currentChartType === 'jurisdicciones' ? 12 : axisFontSize);
+
+                if (['municipios', 'jurisdicciones'].includes(currentChartType)) {
+                    if (chartConfig.limit === 10) {
+                        categoryAxisFontSize = 15;
+                    } else if (chartConfig.limit === 5) {
+                        categoryAxisFontSize = 16;
+                    }
+                }
                 
                 // Preparar tooltip especial para Edades con causas principales
                 let tooltipFormatter = null;
@@ -1597,7 +1716,15 @@
                         textStyle: { fontSize: axisFontSize },
                         ...(tooltipFormatter ? { formatter: tooltipFormatter } : {})
                     },
-                    grid: { left: isHorizontal ? '3%' : '3%', right: isHorizontal ? '7%' : '4%', bottom: isHorizontal ? '3%' : '15%', top: '10%', containLabel: true },
+                    grid: isHorizontal
+                        ? {
+                            left: '3%',
+                            right: '7%',
+                            bottom: '3%',
+                            top: '10%',
+                            containLabel: true
+                        }
+                        : verticalBarGrid,
                     [isHorizontal ? 'xAxis' : 'yAxis']: {
                         type: 'value',
                         axisLabel: { fontSize: axisFontSize, color: '#404041' }
@@ -1605,7 +1732,11 @@
                     [isHorizontal ? 'yAxis' : 'xAxis']: {
                         type: 'category',
                         data: labels,
-                        axisLabel: { interval: 0, fontSize: axisFontSize, color: '#404041' },
+                        axisLabel: { 
+                            interval: 0, 
+                            fontSize: categoryAxisFontSize, 
+                            color: '#404041' 
+                        },
                         ...(isHorizontal ? {} : { rotate: 45 })
                     },
                     series: [{
@@ -1647,7 +1778,6 @@
                 } catch (e) {
                     console.warn('setOption failed', e);
                 }
-                hideLoadingMessage();
             }
 
             try {

@@ -1,0 +1,1 @@
+<?php /**PATH C:\Proyectos Laravel\sistema-sec-tam\resources\views\reportes\editar\observatorio-de-lesiones.blade.php ENDPATH**/ ?>
