@@ -17,46 +17,44 @@
             
         </div>
 
-        <!-- SELECTOR DE GRÁFICAS (Pestañas) -->
-        <div class="mb-8 border-b border-[#e5e7eb]">
-            <div class="flex flex-wrap gap-0 overflow-x-auto pb-0">
-                <button class="chart-tab-btn active" data-chart="municipios" title="Distribución de defunciones por municipio">
-                    <i class="fas fa-map-marked-alt text-sm mr-1.5"></i>
-                    <span class="font-lora text-sm">Municipios</span>
-                </button>
-                <button class="chart-tab-btn" data-chart="tendencias" title="Tendencia temporal de defunciones">
-                    <i class="fas fa-chart-line text-sm mr-1.5"></i>
-                    <span class="font-lora text-sm">Tendencias</span>
-                </button>
-                <button class="chart-tab-btn" data-chart="edades" title="Distribución por rangos etarios">
-                    <i class="fas fa-chart-bar text-sm mr-1.5"></i>
-                    <span class="font-lora text-sm">Edades</span>
-                </button>
-                <button class="chart-tab-btn" data-chart="genero" title="Distribución por género">
-                    <i class="fas fa-venus-mars text-sm mr-1.5"></i>
-                    <span class="font-lora text-sm">Género</span>
-                </button>
-                <button class="chart-tab-btn" data-chart="causas" title="Causas principales de defunción">
-                    <i class="fas fa-heartbeat text-sm mr-1.5"></i>
-                    <span class="font-lora text-sm">Causas</span>
-                </button>
-                <button class="chart-tab-btn" data-chart="jurisdicciones" title="Distribución por jurisdicción">
-                    <i class="fas fa-building text-sm mr-1.5"></i>
-                    <span class="font-lora text-sm">Jurisdicciones</span>
-                </button>
-                <button class="chart-tab-btn" data-chart="comparativa" title="Residencia vs Lugar de Defunción">
-                    <i class="fas fa-exchange-alt text-sm mr-1.5"></i>
-                    <span class="font-lora text-sm">Comparativa</span>
-                </button>
-            </div>
-        </div>
-
         <!-- CONTENEDOR PRINCIPAL -->
         <div class="border border-[#404041] rounded-lg lg:rounded-xl bg-white bg-opacity-95 max-w-full shadow-md overflow-hidden">
-            
+            <div class="border-b border-gray-300 bg-gray-50 px-4 lg:px-6 pt-4">
+                <nav class="flex flex-wrap gap-1 overflow-x-auto pb-0" aria-label="Tabs">
+                    <button type="button" class="chart-tab-btn active" data-chart="municipios" title="Distribución de defunciones por municipio" style="border-bottom-color: #611132;">
+                        <i class="fas fa-map-marked-alt text-sm mr-1.5"></i>
+                        <span class="font-lora text-sm">Municipios</span>
+                    </button>
+                    <button type="button" class="chart-tab-btn" data-chart="tendencias" title="Tendencia temporal de defunciones" style="border-bottom-color: #4C8CC4;">
+                        <i class="fas fa-chart-line text-sm mr-1.5"></i>
+                        <span class="font-lora text-sm">Tendencias</span>
+                    </button>
+                    <button type="button" class="chart-tab-btn" data-chart="edades" title="Distribución por rangos etarios" style="border-bottom-color: #75A84E;">
+                        <i class="fas fa-chart-bar text-sm mr-1.5"></i>
+                        <span class="font-lora text-sm">Edades</span>
+                    </button>
+                    <button type="button" class="chart-tab-btn" data-chart="genero" title="Distribución por género" style="border-bottom-color: #9D2449;">
+                        <i class="fas fa-venus-mars text-sm mr-1.5"></i>
+                        <span class="font-lora text-sm">Género</span>
+                    </button>
+                    <button type="button" class="chart-tab-btn" data-chart="causas" title="Causas principales de defunción" style="border-bottom-color: #6B4C8A;">
+                        <i class="fas fa-heartbeat text-sm mr-1.5"></i>
+                        <span class="font-lora text-sm">Causas</span>
+                    </button>
+                    <button type="button" class="chart-tab-btn" data-chart="jurisdicciones" title="Distribución por jurisdicción" style="border-bottom-color: #C08400;">
+                        <i class="fas fa-building text-sm mr-1.5"></i>
+                        <span class="font-lora text-sm">Jurisdicciones</span>
+                    </button>
+                    <button type="button" class="chart-tab-btn" data-chart="comparativa" title="Residencia vs Lugar de Defunción" style="border-bottom-color: #4A7C7E;">
+                        <i class="fas fa-exchange-alt text-sm mr-1.5"></i>
+                        <span class="font-lora text-sm">Comparativa</span>
+                    </button>
+                </nav>
+            </div>
+
             <div class="p-4 lg:p-6 pt-8 lg:pt-12">
                 <!-- Layout: Filtros + Gráfica -->
-                <div class="flex flex-col lg:flex-row gap-6">
+                <div class="flex flex-col lg:flex-row gap-6 lg:items-stretch">
                     
                     <!-- COLUMNA IZQUIERDA - Filtros (DINÁMICOS según gráfica) -->
                     <div id="estadisticas-filtros" class="lg:w-80 flex-shrink-0">
@@ -68,14 +66,6 @@
                                     <i class="fas fa-redo text-xs"></i>
                                     Limpiar
                                 </button>
-                            </div>
-
-                            <!-- Filtros Activos/Aplicados -->
-                            <div id="filtrosActivos" class="px-4 py-3 bg-blue-50 border-b border-blue-200 hidden">
-                                <p class="text-xs font-semibold text-[#404041] font-lora mb-2">Filtros aplicados:</p>
-                                <div id="filtrosActivosList" class="flex flex-wrap gap-2">
-                                    <!-- Los chips se generan dinámicamente con JavaScript -->
-                                </div>
                             </div>
 
                             <!-- Contenido de Filtros -->
@@ -258,17 +248,27 @@
 
                             </div>
                         </div>
+
+                        <div class="mt-4 border border-[#404041] rounded-lg bg-white bg-opacity-95 overflow-visible shadow-sm">
+                            <div class="bg-white px-4 py-3 border-b border-[#e5e7eb] flex items-center gap-2">
+                                <i class="fas fa-palette text-[#611132] text-sm"></i>
+                                <h3 class="text-sm font-lora font-semibold text-[#404041]">Paletas</h3>
+                            </div>
+                            <div class="px-4 py-4">
+                                <div id="colorPalettePicker" class="grid grid-cols-2 gap-2"></div>
+                            </div>
+                        </div>
                     </div>
 
                     <!-- COLUMNA DERECHA - Gráfica -->
-                    <div class="lg:flex-1">
+                    <div class="lg:flex-1 flex flex-col min-h-0">
                         <!-- Controles de Presentación -->
-                        <div class="flex flex-col gap-4 mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
-                            <div class="flex flex-col sm:flex-row gap-4 flex-wrap">
+                        <div class="mb-6">
+                            <div class="grid grid-cols-3 gap-4 items-stretch">
                                 <!-- Tipo de Gráfica -->
-                                <div class="flex flex-col gap-1 flex-1 min-w-40">
-                                    <label class="text-xs font-semibold text-gray-700 font-lora">Tipo de Gráfica</label>
-                                    <select id="chartTypeSelector" class="text-sm border border-gray-200 rounded px-3 py-1.5 font-lora bg-white">
+                                <div class="flex flex-col gap-3 rounded-lg border border-gray-200 bg-white p-4 shadow-sm min-w-0">
+                                    <label class="text-[11px] font-semibold uppercase tracking-[0.12em] text-gray-500 font-lora">Tipo de Gráfica</label>
+                                    <select id="chartTypeSelector" class="hidden">
                                         <option value="bar">Barras</option>
                                         <option value="barHorizontal">Barras Horizontales</option>
                                         <option value="pie">Pastel</option>
@@ -276,49 +276,47 @@
                                         <option value="line">Línea</option>
                                         <option value="area">Área</option>
                                     </select>
+                                    <div id="chartTypeButtons" class="grid grid-flow-col auto-cols-fr gap-2 w-full max-w-[26rem]"></div>
                                 </div>
 
                                 <!-- Etiquetas -->
-                                <div class="flex flex-col gap-1 flex-1 min-w-40">
-                                    <label class="text-xs font-semibold text-gray-700 font-lora">Etiquetas</label>
-                                    <select id="datalabelMode" class="text-sm border border-gray-200 rounded px-3 py-1.5 font-lora bg-white">
+                                <div class="flex flex-col gap-3 rounded-lg border border-gray-200 bg-white p-4 shadow-sm min-w-0">
+                                    <label class="text-[11px] font-semibold uppercase tracking-[0.12em] text-gray-500 font-lora">Etiquetas</label>
+                                    <select id="datalabelMode" class="hidden">
                                         <option value="value">Solo Valores</option>
-                                        <option value="percent">Solo %</option>
+                                        <option value="percent">Solo Porc.</option>
                                         <option value="both">Ambos</option>
                                     </select>
+                                    <div id="dataLabelButtons" class="grid grid-flow-col auto-cols-fr gap-2 w-full max-w-[20.5rem]"></div>
                                 </div>
 
                                 <!-- Top N -->
-                                <div id="filterTop" class="flex flex-col gap-1 flex-1 min-w-40" style="display: none;">
-                                    <label class="text-xs font-semibold text-gray-700 font-lora">Top</label>
-                                    <select id="chartLimit" class="text-sm border border-gray-200 rounded px-3 py-1.5 font-lora bg-white">
+                                <div id="filterTop" class="flex flex-col gap-3 rounded-lg border border-gray-200 bg-white p-4 shadow-sm min-w-0" style="display: none;">
+                                    <label class="text-[11px] font-semibold uppercase tracking-[0.12em] text-gray-500 font-lora">Top</label>
+                                    <select id="chartLimit" class="hidden">
                                         <option value="all">Todos</option>
                                         <option value="5">Top 5</option>
                                         <option value="10">Top 10</option>
                                         <option value="15">Top 15</option>
                                     </select>
+                                    <div id="chartLimitButtons" class="grid grid-flow-col auto-cols-fr gap-2 w-full max-w-[20.5rem]"></div>
                                 </div>
 
-                                <!-- Paleta de Colores -->
-                                <div class="flex flex-col gap-1 flex-1 min-w-40">
-                                    <label class="text-xs font-semibold text-gray-700 font-lora">Paleta</label>
-                                    <select id="colorPalette" class="text-sm border border-gray-200 rounded px-3 py-1.5 font-lora bg-white">
-                                        <option value="aqua">Aqua</option>
-                                        <option value="autumn">Autumn</option>
-                                        <option value="rose">Rose</option>
-                                        <option value="spectrum">Spectrum</option>
-                                        <option value="earth">Earth</option>
-                                        <option value="goldenEarth">Golden Earth</option>
-                                        <option value="maroon611132">Maroon 611132</option>
-                                    </select>
-                                </div>
                             </div>
 
                         
                         </div>
 
                         <!-- Gráfica Principal -->
-                        <div class="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
+                        <div class="bg-white p-4 rounded-lg border border-gray-200 shadow-sm flex flex-col flex-1 min-h-0">
+                            <!-- Filtros Activos/Aplicados -->
+                            <div id="filtrosActivos" class="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg hidden">
+                                <p class="text-xs font-semibold text-[#404041] font-lora mb-2">Filtros aplicados:</p>
+                                <div id="filtrosActivosList" class="flex flex-wrap gap-2">
+                                    <!-- Los chips se generan dinámicamente con JavaScript -->
+                                </div>
+                            </div>
+
                             <div class="flex items-center justify-between gap-4 mb-4">
                                 <div class="flex items-center gap-3">
                                     <h2 id="chartTitle" class="text-lg font-bold text-[#404041] font-lora">Cargando...</h2>
@@ -327,13 +325,48 @@
                                         <span id="chartTotalValue">0</span>
                                     </div>
                                 </div>
-                                <button class="bg-[#611132] text-white px-4 py-2.5 rounded-lg text-xs font-semibold hover:bg-[#4a0e26] transition-all duration-300 font-lora flex items-center gap-2 whitespace-nowrap shadow-sm" id="descargarActual">
-                                    <i class="fas fa-download text-xs"></i>
-                                    Descargar Gráfica
-                                </button>
+                                <div class="relative" id="downloadMenuWrapper">
+                                    <div class="inline-flex overflow-hidden rounded-lg shadow-sm">
+                                        <button type="button" class="bg-[#611132] text-white px-5 py-3 text-sm font-semibold hover:bg-[#4a0e26] transition-all duration-300 font-lora flex items-center gap-2 whitespace-nowrap" id="descargarActual">
+                                            <i class="fas fa-download text-sm"></i>
+                                            Descargar Gráfica
+                                        </button>
+                                        <button type="button" class="bg-[#4a0e26] text-white px-3 py-3 text-sm font-semibold hover:bg-[#3c0b1f] transition-all duration-300 border-l border-white/10" id="descargarOpciones" aria-label="Abrir opciones de descarga">
+                                            <i class="fas fa-chevron-down text-xs opacity-90"></i>
+                                        </button>
+                                    </div>
+                                    <div id="downloadMenu" class="hidden absolute right-0 mt-2 w-64 rounded-lg border border-gray-200 bg-white shadow-lg z-50 overflow-hidden">
+                                        <button type="button" class="download-option w-full text-left px-5 py-3 text-sm font-lora text-[#404041] hover:bg-gray-50 flex items-center gap-3" data-export="png-transparent">
+                                            <i class="fas fa-image text-[#611132] text-sm"></i>
+                                            PNG (transparente)
+                                        </button>
+                                        <button type="button" class="download-option w-full text-left px-5 py-3 text-sm font-lora text-[#404041] hover:bg-gray-50 flex items-center gap-3" data-export="png-white">
+                                            <i class="fas fa-image text-[#611132] text-sm"></i>
+                                            PNG (fondo blanco)
+                                        </button>
+                                        <button type="button" class="download-option w-full text-left px-5 py-3 text-sm font-lora text-[#404041] hover:bg-gray-50 flex items-center gap-3" data-export="pdf">
+                                            <i class="fas fa-file-pdf text-[#611132] text-sm"></i>
+                                            PDF
+                                        </button>
+                                    </div>
+                                </div>
                             </div>
-                            <div class="chart-wrapper" style="height:400px; position:relative;">
+                            <div class="chart-wrapper relative flex-1 min-h-[520px]" style="position:relative;">
                                 <div id="mainChart" style="width: 100%; height: 100%;"></div>
+                                <div id="loadingMessage" class="absolute inset-0 z-40 items-center justify-center bg-white/70 backdrop-blur-[1px] rounded-lg" style="display: none;">
+                                    <div class="bg-white rounded-full p-3 shadow-sm border border-gray-200">
+                                        <i class="fas fa-spinner fa-spin text-2xl text-[#611132]"></i>
+                                    </div>
+                                </div>
+                                <div id="errorMessage" class="absolute inset-0 z-40 items-center justify-center rounded-lg bg-white/70 px-4 text-center" style="display: none;">
+                                    <div class="flex flex-col items-center gap-3">
+                                        <div class="flex h-16 w-16 items-center justify-center rounded-full bg-gray-100 text-gray-400">
+                                            <i class="fas fa-inbox text-3xl"></i>
+                                        </div>
+                                        <p class="text-lg font-lora text-gray-600" id="errorText">No hay datos para los filtros seleccionados</p>
+                                        <p class="text-sm text-gray-500 font-lora">Intenta ajustar los criterios de búsqueda</p>
+                                    </div>
+                                </div>
                             </div>
                             
                             <!-- Tabla de Causas Principales (solo para Edades) -->
@@ -412,15 +445,6 @@
                                 }
                             </style>
                         </div>
-
-                        <!-- Mensaje de Carga/Error -->
-                        <div id="loadingMessage" class="hidden absolute top-4 right-4 z-50 bg-white rounded-lg p-3 shadow-lg">
-                            <i class="fas fa-spinner fa-spin text-2xl text-[#611132]"></i>
-                        </div>
-                        <div id="errorMessage" class="hidden text-center py-8 text-red-600 bg-red-50 rounded-lg">
-                            <i class="fas fa-exclamation-circle text-2xl mb-2"></i>
-                            <p class="font-lora" id="errorText">Error al cargar los datos</p>
-                        </div>
                     </div>
                 </div>
             </div>
@@ -431,6 +455,7 @@
     <script src="https://cdn.jsdelivr.net/npm/echarts@5.5.1/dist/echarts.min.js"></script>
     <!-- Incluir html2canvas para capturar el DOM cuando sea posible (mejor export visual) -->
     <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
 
     <!-- Include modal para descargas -->
     @include('components.modal-descargas')
@@ -464,6 +489,9 @@
             tipoComparativa: 'residencia-defuncion',
             tipoMunicipio: 'defuncion'
         };
+
+        // Full municipalities list with jurisdiction info (used to filter municipios when jurisdicción is selected)
+        const municipalitiesFull = @json($municipalities->map(function($m) { return ['id' => $m->id, 'name' => $m->name, 'jurisdiction_id' => $m->jurisdiction_id ?? null]; })->values());
 
         const colorPalettes = {
             // Paleta aqua de 15 colores armoniosos de fuerte a suave (para Top <= 15)
@@ -522,6 +550,16 @@
             ]
         };
 
+        const colorPaletteLabels = {
+            aqua: 'Aqua',
+            autumn: 'Autumn',
+            rose: 'Rose',
+            spectrum: 'Spectrum',
+            earth: 'Earth',
+            goldenEarth: 'Golden Earth',
+            maroon611132: 'Maroon 611132'
+        };
+
         const chartTypeDefaults = {
             municipios: 'bar',
             tendencias: 'line',
@@ -572,6 +610,28 @@
         // Gráficas que deben mostrar el selector "Top"
         const chartTypesWithTopSelector = ['municipios', 'jurisdicciones', 'comparativa'];
 
+        const chartTypeIcons = {
+            bar: 'fa-chart-column',
+            barHorizontal: 'fa-chart-bar',
+            pie: 'fa-chart-pie',
+            doughnut: 'fa-circle-notch',
+            line: 'fa-chart-line',
+            area: 'fa-chart-area'
+        };
+
+        const dataLabelIcons = {
+            value: 'fa-hashtag',
+            percent: 'fa-percent',
+            both: 'fa-layer-group'
+        };
+
+        const chartLimitLabels = {
+            all: 'Todos',
+            5: 'Top 5',
+            10: 'Top 10',
+            15: 'Top 15'
+        };
+
         document.addEventListener('DOMContentLoaded', function() {
             try {
                 if (typeof ChartDataLabels !== 'undefined') Chart.register(ChartDataLabels);
@@ -581,6 +641,10 @@
 
             // Cargar rangos de fecha default antes de inicializar
             loadDefaultDateRange();
+            renderColorPalettePreview(chartConfig.colorPalette);
+            renderChartTypeButtons('municipios');
+            renderDataLabelButtons('municipios');
+            renderChartLimitButtons('municipios');
             
             initializeEventListeners();
             selectChart('municipios');
@@ -635,6 +699,11 @@
                             // Actualizar los filtros mostrados en "Filtros aplicados:"
                             collectFilters();
                             updateActiveFiltersDisplay();
+                            // Si cambió la jurisdicción mientras se ve 'municipios', actualizar la lista de municipios disponibles
+                            if (element.id === 'jurisdiccionesFilter' && currentChartType === 'municipios') {
+                                const selected = Array.isArray(value) ? value.map(String) : (value ? [String(value)] : []);
+                                updateMunicipiosOptions(selected);
+                            }
                             updateChart();
                         },
                         onOptionSelect: () => {
@@ -695,6 +764,37 @@
                     });
                 }
             });
+        }
+
+        // Actualiza las opciones del select de municipios según las jurisdicciones seleccionadas
+        function updateMunicipiosOptions(selectedJurIds = []) {
+            const munEl = document.getElementById('municipiosFilter');
+            if (!munEl) return;
+            const tom = munEl.tomselect;
+            if (!tom) return;
+
+            // Normalizar ids a strings para comparación
+            const selStr = (selectedJurIds || []).map(String);
+
+            // Filtrar la lista completa de municipios
+            const allowed = municipalitiesFull.filter(m => {
+                if (!m.jurisdiction_id) return selStr.length === 0; // si no hay info, mostrar sólo cuando no hay filtro
+                if (selStr.length === 0) return true; // sin jurisdicción seleccionada -> todos
+                return selStr.includes(String(m.jurisdiction_id));
+            });
+
+            // Guardar selecciones actuales y mantener sólo las que siguen permitidas
+            const currentVals = Array.isArray(munEl.tomselect.getValue()) ? munEl.tomselect.getValue() : (munEl.tomselect.getValue() ? [munEl.tomselect.getValue()] : []);
+            const allowedIds = allowed.map(a => String(a.id));
+            const keep = currentVals.filter(v => allowedIds.includes(String(v)));
+
+            // Reconstruir opciones
+            tom.clearOptions();
+            allowed.forEach(m => tom.addOption({ value: String(m.id), text: m.name }));
+
+            // Restaurar selección válida
+            tom.clear();
+            if (keep.length) tom.setValue(keep);
         }
 
         function initializeEventListeners() {
@@ -758,72 +858,171 @@
 
             document.getElementById('chartTypeSelector').addEventListener('change', function() {
                 chartConfig.type = this.value;
+                renderChartTypeButtons(currentChartType);
                 updateChart();
             });
             document.getElementById('datalabelMode').addEventListener('change', function() {
                 chartConfig.dataLabelMode = this.value;
+                renderDataLabelButtons(currentChartType);
                 updateChart();
             });
             document.getElementById('chartLimit').addEventListener('change', function() {
                 chartConfig.limit = this.value === 'all' ? null : parseInt(this.value);
+                renderChartLimitButtons(currentChartType);
                 updateChart();
             });
-            document.getElementById('colorPalette').addEventListener('change', function() {
-                chartConfig.colorPalette = this.value;
-                updateChart();
+
+            document.getElementById('chartTypeButtons')?.addEventListener('click', function(event) {
+                const button = event.target.closest('.visual-option-btn[data-target="chartTypeSelector"]');
+                if (!button || button.disabled) return;
+                setSelectValueAndTrigger('chartTypeSelector', button.dataset.value);
             });
+
+            document.getElementById('dataLabelButtons')?.addEventListener('click', function(event) {
+                const button = event.target.closest('.visual-option-btn[data-target="datalabelMode"]');
+                if (!button || button.disabled) return;
+                setSelectValueAndTrigger('datalabelMode', button.dataset.value);
+            });
+
+            document.getElementById('chartLimitButtons')?.addEventListener('click', function(event) {
+                const button = event.target.closest('.visual-option-btn[data-target="chartLimit"]');
+                if (!button || button.disabled) return;
+                setSelectValueAndTrigger('chartLimit', button.dataset.value);
+            });
+
+            const palettePicker = document.getElementById('colorPalettePicker');
+            if (palettePicker) {
+                palettePicker.addEventListener('click', function(event) {
+                    const button = event.target.closest('.palette-chip');
+                    if (!button) return;
+                    const paletteName = button.dataset.palette;
+                    if (!paletteName || chartConfig.colorPalette === paletteName) return;
+                    chartConfig.colorPalette = paletteName;
+                    renderColorPalettePreview(paletteName);
+                    updateChart();
+                });
+            }
 
             document.getElementById('limpiarFiltros').addEventListener('click', clearFilters);
 
-            document.getElementById('descargarActual').addEventListener('click', async function() {
-                if (!currentEchartsInstance) return;
-                
-                // Obtener el tipo de serie para determinar si es pie/doughnut
-                const opt = currentEchartsInstance.getOption ? currentEchartsInstance.getOption() : null;
-                const series = opt && opt.series && opt.series[0] ? opt.series[0] : null;
-                const isChartPie = series && (series.type === 'pie');
-                
-                // Para gráficas pie/doughnut, usar directamente echarts sin html2canvas para evitar leyendas duplicadas
-                if (isChartPie) {
-                    const dataURL = currentEchartsInstance.getDataURL({ type: 'png', pixelRatio: 2, backgroundColor: '#ffffff' });
-                    const link = document.createElement('a');
-                    link.href = dataURL;
-                    link.download = `grafica-${currentChartType}-${new Date().toISOString().split('T')[0]}.png`;
-                    link.click();
-                    return;
+            const downloadMenuWrapper = document.getElementById('downloadMenuWrapper');
+            const downloadMenu = document.getElementById('downloadMenu');
+            const downloadButton = document.getElementById('descargarActual');
+            const downloadOptionsButton = document.getElementById('descargarOpciones');
+
+            if (downloadButton && downloadMenu) {
+                downloadButton.addEventListener('click', function(event) {
+                    event.stopPropagation();
+                    exportCurrentChart('png-white');
+                });
+
+                if (downloadOptionsButton) {
+                    downloadOptionsButton.addEventListener('click', function(event) {
+                        event.stopPropagation();
+                        downloadMenu.classList.toggle('hidden');
+                    });
                 }
-                
-                // Para Edades con tabla de causas, capturar ambos elementos
-                if (currentChartType === 'edades' && document.getElementById('mostrarCausasPrincipales').checked) {
-                    // Usar html2canvas si está disponible
-                    if (typeof html2canvas !== 'undefined') {
-                        const element = document.querySelector('[id="mainChart"]').closest('.bg-white');
-                        html2canvas(element, {
-                            scale: 2,
-                            useCORS: true,
-                            backgroundColor: '#ffffff'
-                        }).then(canvas => {
-                            const link = document.createElement('a');
-                            link.href = canvas.toDataURL('image/png');
-                            link.download = `grafica-${currentChartType}-${new Date().toISOString().split('T')[0]}.png`;
-                            link.click();
-                        });
-                    } else {
-                        // Fallback si html2canvas no está disponible, descargar solo el chart
-                        const link = document.createElement('a');
-                        link.href = currentEchartsInstance.getDataURL({ type: 'png' });
-                        link.download = `grafica-${currentChartType}-${new Date().toISOString().split('T')[0]}.png`;
-                        link.click();
+
+                document.querySelectorAll('.download-option').forEach(option => {
+                    option.addEventListener('click', async function() {
+                        const exportType = this.dataset.export;
+                        downloadMenu.classList.add('hidden');
+                        await exportCurrentChart(exportType);
+                    });
+                });
+
+                document.addEventListener('click', function(event) {
+                    if (downloadMenuWrapper && !downloadMenuWrapper.contains(event.target)) {
+                        downloadMenu.classList.add('hidden');
                     }
-                } else {
-                    // Para otros charts (barras, líneas, área, edades), usar la imagen del chart sin leyenda
-                    const dataURL = currentEchartsInstance.getDataURL({ type: 'png', pixelRatio: 2, backgroundColor: '#ffffff' });
-                    const link = document.createElement('a');
-                    link.href = dataURL;
-                    link.download = `grafica-${currentChartType}-${new Date().toISOString().split('T')[0]}.png`;
-                    link.click();
-                }
-            });
+                });
+            }
+        }
+
+        function getCurrentDownloadName(extension) {
+            return `estadisticas-${currentChartType}-${new Date().toISOString().split('T')[0]}.${extension}`;
+        }
+
+        function getChartBackgroundOption(transparent) {
+            return transparent ? {} : { backgroundColor: '#ffffff' };
+        }
+
+        function getChartDataUrl(transparent = false) {
+            if (!currentEchartsInstance) return null;
+
+            const backgroundOptions = getChartBackgroundOption(transparent);
+            const opt = currentEchartsInstance.getOption ? currentEchartsInstance.getOption() : null;
+            const series = opt && opt.series && opt.series[0] ? opt.series[0] : null;
+            const isChartPie = series && (series.type === 'pie');
+
+            if (isChartPie) {
+                return currentEchartsInstance.getDataURL({ type: 'png', pixelRatio: 2, ...backgroundOptions });
+            }
+
+            return currentEchartsInstance.getDataURL({ type: 'png', pixelRatio: 2, ...backgroundOptions });
+        }
+
+        async function captureChartAsCanvas(transparent = false) {
+            if (currentChartType === 'edades' && document.getElementById('mostrarCausasPrincipales').checked && typeof html2canvas !== 'undefined') {
+                const element = document.querySelector('[id="mainChart"]').closest('.bg-white');
+                return html2canvas(element, {
+                    scale: 2,
+                    useCORS: true,
+                    backgroundColor: transparent ? null : '#ffffff'
+                });
+            }
+
+            const dataUrl = getChartDataUrl(transparent);
+            if (!dataUrl) return null;
+
+            const img = new Image();
+            img.crossOrigin = 'anonymous';
+            img.src = dataUrl;
+            await img.decode();
+
+            const canvas = document.createElement('canvas');
+            canvas.width = img.naturalWidth;
+            canvas.height = img.naturalHeight;
+            const ctx = canvas.getContext('2d');
+            if (ctx) {
+                ctx.drawImage(img, 0, 0);
+            }
+
+            return canvas;
+        }
+
+        async function exportCurrentChart(exportType) {
+            if (!currentEchartsInstance) return;
+
+            if (exportType === 'pdf') {
+                const canvas = await captureChartAsCanvas(false);
+                if (!canvas) return;
+
+                const { jsPDF } = window.jspdf || {};
+                if (!jsPDF) return;
+
+                const pdf = new jsPDF({ orientation: canvas.width >= canvas.height ? 'landscape' : 'portrait', unit: 'pt', format: 'a4' });
+                const pageWidth = pdf.internal.pageSize.getWidth();
+                const pageHeight = pdf.internal.pageSize.getHeight();
+                const ratio = Math.min((pageWidth - 40) / canvas.width, (pageHeight - 40) / canvas.height);
+                const width = canvas.width * ratio;
+                const height = canvas.height * ratio;
+                const x = (pageWidth - width) / 2;
+                const y = (pageHeight - height) / 2;
+
+                pdf.addImage(canvas.toDataURL('image/png'), 'PNG', x, y, width, height);
+                pdf.save(getCurrentDownloadName('pdf'));
+                return;
+            }
+
+            const transparent = exportType === 'png-transparent';
+            const canvas = await captureChartAsCanvas(transparent);
+            if (!canvas) return;
+
+            const link = document.createElement('a');
+            link.href = canvas.toDataURL('image/png');
+            link.download = getCurrentDownloadName('png');
+            link.click();
         }
 
         function selectChart(chartType) {
@@ -873,6 +1072,7 @@
 
             updateChartTypeOptions(chartType);
             updateDataLabelOptions(chartType);
+            renderChartLimitButtons(chartType);
         }
 
         function updateDataLabelOptions(chartType) {
@@ -901,6 +1101,8 @@
                     option.disabled = false;
                 });
             }
+
+            renderDataLabelButtons(chartType);
         }
 
         function updateChartTypeOptions(chartType) {
@@ -933,6 +1135,8 @@
                 selector.value = availableTypes[0];
             }
             chartConfig.type = selector.value;
+            renderChartTypeButtons(chartType);
+            renderChartLimitButtons(chartType);
         }
 
         function onDateRangeChange() {
@@ -1010,6 +1214,119 @@
                     checkbox.dispatchEvent(new Event('change', { bubbles: true }));
                 }
             }
+        }
+
+        function renderColorPalettePreview(paletteName) {
+            const picker = document.getElementById('colorPalettePicker');
+            if (!picker) return;
+
+            const paletteKeys = Object.keys(colorPalettes);
+
+            picker.innerHTML = paletteKeys.map(key => {
+                const palette = colorPalettes[key] || [];
+                const label = colorPaletteLabels[key] || key;
+                const activeClass = key === paletteName ? 'border-[#611132] bg-[#f8f2f5] ring-1 ring-[#611132]' : 'border-gray-200 bg-white hover:bg-gray-50';
+                const swatches = palette.slice(0, 4);
+
+                return `
+                    <button type="button" class="palette-chip w-full rounded-lg border px-2 py-2 text-left transition-all duration-200 ${activeClass}" data-palette="${key}" aria-pressed="${key === paletteName}">
+                        <div class="flex items-center gap-1 mb-1">
+                            ${swatches.map(color => `<span class="h-3.5 w-3.5 rounded-sm border border-white shadow-sm" style="background:${color};" title="${color}"></span>`).join('')}
+                        </div>
+                        <div class="text-[11px] font-semibold font-lora text-[#404041] truncate">${label}</div>
+                    </button>
+                `;
+            }).join('');
+        }
+
+        function setSelectValueAndTrigger(selectId, value) {
+            const select = document.getElementById(selectId);
+            if (!select) return;
+            select.value = value;
+            select.dispatchEvent(new Event('change', { bubbles: true }));
+        }
+
+        function renderChartTypeButtons(chartType) {
+            const container = document.getElementById('chartTypeButtons');
+            const selector = document.getElementById('chartTypeSelector');
+            if (!container || !selector) return;
+
+            const availableTypes = chartTypeOptions[chartType] || ['bar'];
+            const currentValue = selector.value || chartConfig.type || availableTypes[0];
+            const isSingleType = availableTypes.length === 1;
+            const labels = {
+                bar: 'Barras',
+                barHorizontal: 'Horiz.',
+                pie: 'Pastel',
+                doughnut: 'Rosquilla',
+                line: 'Línea',
+                area: 'Área'
+            };
+
+            container.className = isSingleType
+                ? 'flex items-start justify-start gap-2 w-fit max-w-none'
+                : 'grid grid-flow-col auto-cols-fr gap-2 w-full max-w-[26rem]';
+
+            container.innerHTML = availableTypes.map(type => {
+                const active = type === currentValue;
+                return `
+                    <button type="button" class="visual-option-btn visual-option-card ${isSingleType ? 'is-compact-single' : ''} ${active ? 'active' : ''}" data-target="chartTypeSelector" data-value="${type}" aria-pressed="${active}">
+                        <i class="fas ${chartTypeIcons[type] || 'fa-chart-simple'} text-xl"></i>
+                        <span class="visual-option-label">${labels[type] || type}</span>
+                    </button>
+                `;
+            }).join('');
+        }
+
+        function renderDataLabelButtons(chartType) {
+            const container = document.getElementById('dataLabelButtons');
+            const select = document.getElementById('datalabelMode');
+            if (!container || !select) return;
+
+            const currentValue = select.value || chartConfig.dataLabelMode || 'value';
+            const options = [
+                { value: 'value', label: 'Valores' },
+                { value: 'percent', label: 'Porc.' },
+                { value: 'both', label: 'Ambos' }
+            ];
+
+            container.innerHTML = options.map(option => {
+                const isDisabled = chartType === 'tendencias' && (option.value === 'percent' || option.value === 'both');
+                const active = option.value === currentValue;
+                return `
+                    <button type="button" class="visual-option-btn visual-option-card ${active ? 'active' : ''}" data-target="datalabelMode" data-value="${option.value}" ${isDisabled ? 'disabled' : ''} aria-pressed="${active}">
+                        <i class="fas ${dataLabelIcons[option.value] || 'fa-circle'} text-xl"></i>
+                        <span class="visual-option-label">${option.label}</span>
+                    </button>
+                `;
+            }).join('');
+        }
+
+        function renderChartLimitButtons(chartType) {
+            const container = document.getElementById('chartLimitButtons');
+            const select = document.getElementById('chartLimit');
+            const wrapper = document.getElementById('filterTop');
+            if (!container || !select || !wrapper) return;
+
+            const currentValue = select.value || (chartConfig.limit ? String(chartConfig.limit) : 'all');
+            const options = [
+                { value: 'all', label: chartLimitLabels.all },
+                { value: '5', label: chartLimitLabels[5] },
+                { value: '10', label: chartLimitLabels[10] },
+                { value: '15', label: chartLimitLabels[15] }
+            ];
+
+            container.innerHTML = options.map(option => {
+                const active = option.value === currentValue;
+                return `
+                    <button type="button" class="visual-option-btn visual-option-card ${active ? 'active' : ''}" data-target="chartLimit" data-value="${option.value}" aria-pressed="${active}">
+                        <span class="visual-limit-badge ${option.value === 'all' ? 'is-all' : ''}">${option.value === 'all' ? '∞' : option.value}</span>
+                        <span class="visual-option-label">${option.label}</span>
+                    </button>
+                `;
+            }).join('');
+
+            wrapper.style.display = chartTypesWithTopSelector.includes(chartType) ? 'flex' : 'none';
         }
 
         function collectFilters() {
@@ -1330,6 +1647,11 @@
         function renderChart(data) {
             const chartContainer = document.getElementById('mainChart');
             const chartWrapper = chartContainer.closest('.chart-wrapper');
+            const loadingMessage = document.getElementById('loadingMessage');
+            const errorMessage = document.getElementById('errorMessage');
+            if (loadingMessage) loadingMessage.style.display = 'none';
+            if (errorMessage) errorMessage.style.display = 'none';
+            if (chartContainer) chartContainer.style.visibility = 'visible';
             const axisFontSize = 14;
             const valueLabelFontSize = 13;
             const legendFontSize = 15;
@@ -1358,8 +1680,8 @@
                 : ['pie', 'doughnut'].includes(chartConfig.type);
 
             if (chartWrapper) {
-                chartWrapper.style.height = isPieLikeChart ? '520px' : '500px';
                 if (isPieLikeChart) {
+                    chartWrapper.style.height = '520px';
                     // Mostrar el chart en modo compacto: solo espacio para la gráfica + leyenda
                     chartWrapper.style.display = 'flex';
                     chartWrapper.style.justifyContent = 'center';
@@ -1368,6 +1690,8 @@
                     chartWrapper.style.display = '';
                     chartWrapper.style.justifyContent = '';
                     chartWrapper.style.alignItems = '';
+                    chartWrapper.style.height = '';
+                    chartWrapper.style.minHeight = '';
                     // Reset chart container width when not using compact pie layout
                     if (chartContainer) chartContainer.style.width = '';
                 }
@@ -1517,19 +1841,19 @@
                 if (chartWrapper) {
                     const wrapperRect = chartWrapper.getBoundingClientRect();
                     const wrapperH = Math.max(380, wrapperRect.height || 520);
-                    const pieScale = expandedCircularCharts ? 1.12 : 0.9;
+                    const pieScale = expandedCircularCharts ? 0.84 : 0.9;
                     pieDiameterPx = Math.floor(wrapperH * pieScale);
                 } else {
-                    pieDiameterPx = expandedCircularCharts ? 520 : 420;
+                    pieDiameterPx = expandedCircularCharts ? 420 : 420;
                 }
 
                 // Para 'edades', 'genero' y 'causas' (gráficas expandidas): ajustar leyenda
                 if (expandedCircularCharts) {
-                    legendEstimatePx = Math.max(280, filteredPieData.length * 16 + 80);
+                    legendEstimatePx = Math.max(230, filteredPieData.length * 13 + 70);
                     // Espaciado especial para Causas: mucho más espacio
-                    legendRightOffset = currentChartType === 'causas' ? 200 : 120;
+                    legendRightOffset = currentChartType === 'causas' ? 130 : 90;
                     if (chartWrapper) {
-                        containerHeightAdjusted = Math.max(700, pieDiameterPx + 160);
+                        containerHeightAdjusted = Math.max(560, pieDiameterPx + 120);
                         chartWrapper.style.height = containerHeightAdjusted + 'px';
                     }
                 }
@@ -1538,7 +1862,7 @@
                 let estimatedTotalWidth = pieDiameterPx + legendEstimatePx + 40;
                 if (expandedCircularCharts) {
                     // Espacio generoso para que los números de la izquierda no se corten y la leyenda tenga distancia
-                    let additionalSpacing = currentChartType === 'causas' ? 550 : 420;
+                    let additionalSpacing = currentChartType === 'causas' ? 320 : 240;
                     estimatedTotalWidth = pieDiameterPx + legendEstimatePx + additionalSpacing;
                 }
                 chartContainer.style.width = estimatedTotalWidth + 'px';
@@ -1552,10 +1876,10 @@
 
                 // Para 'edades', 'genero' y 'causas' (gráficas expandidas): mover el pie más a la derecha y agrandar el radio
                 if (expandedCircularCharts) {
-                    centerX = Math.round(pieDiameterPx / 2 + 140) + 'px';
-                    outerRadius = Math.round(pieDiameterPx * 0.50) + 'px';
+                    centerX = Math.round(pieDiameterPx / 2 + 90) + 'px';
+                    outerRadius = Math.round(pieDiameterPx * 0.42) + 'px';
                     if (chartType === 'doughnut') {
-                        innerRadius = Math.round(pieDiameterPx * 0.31) + 'px';
+                        innerRadius = Math.round(pieDiameterPx * 0.26) + 'px';
                     }
                 }
 
@@ -1563,7 +1887,7 @@
                 let legendFontSizeActual = 15;
                 if (expandedCircularCharts) {
                     // Para causas, reducir fuente un poco para que quepa mejor
-                    legendFontSizeActual = currentChartType === 'causas' ? 13 : 18;
+                    legendFontSizeActual = currentChartType === 'causas' ? 12 : 14;
                 }
 
                 option = {
@@ -1579,7 +1903,7 @@
                         right: legendRightOffset,
                         top: 'middle',
                         itemWidth: expandedCircularCharts ? 36 : 18,
-                        itemHeight: expandedCircularCharts ? 32 : 16,
+                        itemHeight: expandedCircularCharts ? 22 : 16,
                         itemGap: 12,
                         textStyle: {
                             fontSize: legendFontSizeActual,
@@ -1596,12 +1920,12 @@
                         label: {
                             show: true,
                             position: 'outside',
-                            distance: expandedCircularCharts ? 12 : 6,
-                            fontSize: expandedCircularCharts ? 18 : 15,
+                            distance: expandedCircularCharts ? 8 : 6,
+                            fontSize: expandedCircularCharts ? 14 : 15,
                             fontWeight: 700,
                             color: '#404041',
                             overflow: 'none',
-                            width: expandedCircularCharts ? 500 : 180,
+                            width: expandedCircularCharts ? 260 : 180,
                             rich: labelRich,
                             formatter: (params) => {
                                 if (chartConfig.dataLabelMode === 'value') {
@@ -1618,7 +1942,7 @@
                         labelLine: {
                             show: true,
                             length: 12,
-                            length2: expandedCircularCharts ? 18 : 8
+                            length2: expandedCircularCharts ? 12 : 8
                         }
                     }]
                 };
@@ -1791,6 +2115,11 @@
                     }, 60);
                 } else {
                     applyOptionAndFinish();
+                    requestAnimationFrame(() => {
+                        if (currentEchartsInstance && typeof currentEchartsInstance.resize === 'function') {
+                            currentEchartsInstance.resize();
+                        }
+                    });
                 }
             } catch (e) {
                 console.warn('apply option failed', e);
@@ -1925,6 +2254,8 @@
             safeSetValue('customEndDate', '');
             safeSetValue('sexoFilter', '');
             safeSetValue('granularidadFilter', 'month');
+            safeSetValue('chartLimit', 'all');
+            chartConfig.limit = null;
             
             // Limpiar checkboxes de meses
             document.querySelectorAll('.month-checkbox').forEach(checkbox => {
@@ -1955,24 +2286,37 @@
             selectors.forEach(selector => {
                 if (selector) selector.style.display = 'none';
             });
+
+            renderChartTypeButtons(currentChartType);
+            renderDataLabelButtons(currentChartType);
+            renderChartLimitButtons(currentChartType);
             
             updateActiveFiltersDisplay();
             if (!suppressUpdate) updateChart();
         }
 
         function showLoadingMessage() {
-            document.getElementById('loadingMessage').classList.remove('hidden');
-            document.getElementById('errorMessage').classList.add('hidden');
+            const loadingMessage = document.getElementById('loadingMessage');
+            const errorMessage = document.getElementById('errorMessage');
+            if (loadingMessage) loadingMessage.style.display = 'flex';
+            if (errorMessage) errorMessage.style.display = 'none';
+            const chartEl = document.getElementById('mainChart');
+            if (chartEl) chartEl.style.visibility = 'visible';
         }
 
         function hideLoadingMessage() {
-            document.getElementById('loadingMessage').classList.add('hidden');
+            const loadingMessage = document.getElementById('loadingMessage');
+            if (loadingMessage) loadingMessage.style.display = 'none';
         }
 
         function showErrorMessage(message) {
             document.getElementById('errorText').textContent = message;
-            document.getElementById('errorMessage').classList.remove('hidden');
-            document.getElementById('loadingMessage').classList.add('hidden');
+            const errorMessage = document.getElementById('errorMessage');
+            const loadingMessage = document.getElementById('loadingMessage');
+            if (errorMessage) errorMessage.style.display = 'flex';
+            if (loadingMessage) loadingMessage.style.display = 'none';
+            const chartEl = document.getElementById('mainChart');
+            if (chartEl) chartEl.style.visibility = 'hidden';
         }
     </script>
 
@@ -1982,31 +2326,134 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            padding: 0.875rem 1rem;
-            border: none;
-            border-bottom: 3px solid transparent;
-            background: transparent;
+            padding: 0.625rem 1rem;
+            border: 1px solid #d1d5db;
+            border-bottom: 0;
+            border-top-left-radius: 0.5rem;
+            border-top-right-radius: 0.5rem;
+            background: white;
             cursor: pointer;
             transition: all 0.3s ease;
-            color: #666;
+            color: #404041;
             font-weight: 500;
             white-space: nowrap;
             position: relative;
         }
 
-        .chart-tab-btn:hover {
-            color: #611132;
-            background-color: #f8f4f6;
+        .chart-tab-btn:hover:not(.active) {
+            background-color: #f3f4f6;
         }
 
         .chart-tab-btn.active {
-            color: #611132;
-            border-bottom-color: #611132;
-            background-color: transparent;
+            color: white;
+            background-color: #404041;
+            border-color: #d1d5db;
         }
 
         .chart-tab-btn i {
             color: currentColor;
+        }
+
+        .visual-option-btn {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 0.25rem;
+            justify-content: center;
+            width: 100%;
+            min-height: 4.9rem;
+            padding: 0.65rem 0.5rem;
+            border: 1px solid #e5e7eb;
+            background: #fff;
+            color: #404041;
+            transition: all 0.2s ease;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+            text-align: center;
+            border-radius: 0.75rem;
+        }
+
+        .visual-option-btn.is-compact-single {
+            width: auto;
+            min-width: 9.5rem;
+            padding-left: 0.9rem;
+            padding-right: 0.9rem;
+        }
+
+        .visual-option-btn span {
+            line-height: 1.05;
+        }
+
+        .visual-option-label {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            padding: 0.18rem 0.48rem;
+            border-radius: 9999px;
+            background: #f8f2f5;
+            color: #611132;
+            font-size: 0.74rem;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            width: fit-content;
+        }
+
+        .visual-option-btn:hover:not(:disabled) {
+            border-color: #c7b0bb;
+            background: #fdf8fa;
+            transform: translateY(-1px);
+        }
+
+        .visual-option-btn.active {
+            border-color: #611132;
+            background: #f8f2f5;
+            color: #611132;
+            box-shadow: 0 0 0 1px rgba(97, 17, 50, 0.08);
+        }
+
+        .visual-option-btn:disabled {
+            opacity: 0.45;
+            cursor: not-allowed;
+        }
+
+        .visual-option-card {
+            min-height: 4.9rem;
+        }
+
+        .visual-option-pill {
+            min-height: 4.9rem;
+        }
+
+        .visual-limit-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 1.7rem;
+            height: 1.7rem;
+            border-radius: 9999px;
+            background: #f3f4f6;
+            color: #611132;
+            font-size: 0.88rem;
+            font-weight: 800;
+            line-height: 1;
+        }
+
+        .visual-limit-badge.is-all {
+            width: 1.7rem;
+            height: 1.7rem;
+            font-size: 1.35rem;
+        }
+
+        .hide-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+
+        .hide-scrollbar::-webkit-scrollbar {
+            width: 0;
+            height: 0;
+            display: none;
         }
 
         /* Estilos para el selector de gráficas */

@@ -391,16 +391,18 @@
                         </x-publicacion-card>
                     @empty
                         <div class="col-span-full text-center py-12">
-                            <div class="text-gray-400 mb-4">
-                                <i class="fas fa-inbox text-6xl"></i>
-                            </div>
+                            <div class="flex flex-col items-center gap-3">
+                                <div class="flex h-16 w-16 items-center justify-center rounded-full bg-gray-100 text-gray-400">
+                                    <i class="fas fa-inbox text-3xl"></i>
+                                </div>
                             @if(request('q') || request('status') === 'aprobado' || request('status') === 'rechazado')
                                 <p class="text-lg font-lora text-gray-600">No se encontraron reportes</p>
-                                <p class="text-sm text-gray-500 font-lora mt-2">Intenta ajustar los criterios de búsqueda</p>
+                                <p class="text-sm text-gray-500 font-lora">Intenta ajustar los criterios de búsqueda</p>
                             @else
                                 <p class="text-lg font-lora text-gray-600">No hay publicaciones registradas</p>
-                                <p class="text-sm text-gray-500 font-lora mt-2">Comienza creando un nuevo reporte</p>
+                                <p class="text-sm text-gray-500 font-lora">Comienza creando un nuevo reporte</p>
                             @endif
+                            </div>
                         </div>
                     @endforelse
                 </div>

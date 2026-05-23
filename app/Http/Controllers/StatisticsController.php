@@ -181,8 +181,9 @@ class StatisticsController extends Controller
         try {
             if (!empty($jurisdictions) && is_iterable($jurisdictions) && count($jurisdictions) === 12) {
                 $jurIds = collect($jurisdictions)->pluck('id')->values()->all();
+                // Always include jurisdiction_id to allow frontend dependent filtering
                 $municipalities = DB::table('municipalities')
-                    ->select('id','name')
+                    ->select('id','name','jurisdiction_id')
                     ->whereIn('jurisdiction_id', $jurIds)
                     ->orderBy('name')
                     ->get();
@@ -595,9 +596,15 @@ class StatisticsController extends Controller
                     $query->where('sex', $filters['sex']);
                 }
                 
-                // Jurisdicción
+                // Jurisdicción: aceptar un id numérico o un array de ids (`jurisdicciones[]`)
                 if (!empty($filters['jurisdiction_id']) && is_numeric($filters['jurisdiction_id'])) {
                     $query->where('jurisdiction_id', (int)$filters['jurisdiction_id']);
+                } elseif (!empty($filters['jurisdicciones']) && is_array($filters['jurisdicciones'])) {
+                    // Normalizar valores numéricos
+                    $ids = array_values(array_filter($filters['jurisdicciones'], fn($v) => is_numeric($v)));
+                    if (!empty($ids)) {
+                        $query->whereIn('jurisdiction_id', $ids);
+                    }
                 }
             };
             
@@ -651,6 +658,22 @@ class StatisticsController extends Controller
         $munCountsQ = DB::table('deaths')
             ->select(DB::raw("{$finalMunCol} as muni_id"), DB::raw('COUNT(*) as total'))
             ->groupBy(DB::raw("{$finalMunCol}"));
+
+        // If jurisdictions filter is present, compute municipality ids belonging to those
+        // jurisdictions and restrict the counts query by those municipality ids. This
+        // ensures the distribution by municipalities shows only municipios that belong
+        // to the selected jurisdicción(es), regardless of deaths.jurisdiction_id values.
+        $jurisdictionMunIds = null;
+        if (!empty($filters['jurisdicciones']) && is_array($filters['jurisdicciones'])) {
+            $jurIdsFilter = array_values(array_filter($filters['jurisdicciones'], fn($v) => is_numeric($v)));
+            if (!empty($jurIdsFilter)) {
+                $jurisdictionMunIds = DB::table('municipalities')->whereIn('jurisdiction_id', $jurIdsFilter)->pluck('id')->all();
+                if (!empty($jurisdictionMunIds)) {
+                    $munCountsQ->whereIn($finalMunCol, $jurisdictionMunIds);
+                }
+            }
+        }
+
         $applyFilters($munCountsQ);
         $munCountsRaw = $munCountsQ->get()->pluck('total', 'muni_id')->all();
 
@@ -660,6 +683,15 @@ class StatisticsController extends Controller
             $municipalitiesQ->whereIn('jurisdiction_id', $jurIds);
         }
         $municipalitiesFull = $municipalitiesQ->get();
+        // If frontend requested specific jurisdictions, restrict the municipalities list
+        if (!empty($filters['jurisdicciones']) && is_array($filters['jurisdicciones'])) {
+            $jurIdsFilter = array_values(array_filter($filters['jurisdicciones'], fn($v) => is_numeric($v)));
+            if (!empty($jurIdsFilter)) {
+                $municipalitiesFull = $municipalitiesFull->filter(function($m) use ($jurIdsFilter) {
+                    return in_array($m->jurisdiction_id, $jurIdsFilter);
+                })->values();
+            }
+        }
 
         $municipios = $municipalitiesFull->map(function($m) use ($munCountsRaw) {
             $total = isset($munCountsRaw[$m->id]) ? (int)$munCountsRaw[$m->id] : 0;

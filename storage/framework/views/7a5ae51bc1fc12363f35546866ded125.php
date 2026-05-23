@@ -1,1 +1,0 @@
-<?php /**PATH C:\Proyectos Laravel\sistema-sec-tam\resources\views\reportes\editar\seguridad-vial.blade.php ENDPATH**/ ?>
