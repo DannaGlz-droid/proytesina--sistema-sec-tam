@@ -22,31 +22,24 @@
             <div class="border-b border-gray-300 bg-gray-50 px-4 lg:px-6 pt-4">
                 <nav class="flex flex-wrap gap-1 overflow-x-auto pb-0" aria-label="Tabs">
                     <button type="button" class="chart-tab-btn active" data-chart="municipios" title="Distribución de defunciones por municipio" style="border-bottom-color: #611132;">
-                        <i class="fas fa-map-marked-alt text-sm mr-1.5"></i>
                         <span class="font-lora text-sm">Municipios</span>
                     </button>
                     <button type="button" class="chart-tab-btn" data-chart="tendencias" title="Tendencia temporal de defunciones" style="border-bottom-color: #4C8CC4;">
-                        <i class="fas fa-chart-line text-sm mr-1.5"></i>
                         <span class="font-lora text-sm">Tendencias</span>
                     </button>
                     <button type="button" class="chart-tab-btn" data-chart="edades" title="Distribución por rangos etarios" style="border-bottom-color: #75A84E;">
-                        <i class="fas fa-chart-bar text-sm mr-1.5"></i>
                         <span class="font-lora text-sm">Edades</span>
                     </button>
                     <button type="button" class="chart-tab-btn" data-chart="genero" title="Distribución por género" style="border-bottom-color: #9D2449;">
-                        <i class="fas fa-venus-mars text-sm mr-1.5"></i>
                         <span class="font-lora text-sm">Género</span>
                     </button>
                     <button type="button" class="chart-tab-btn" data-chart="causas" title="Causas principales de defunción" style="border-bottom-color: #6B4C8A;">
-                        <i class="fas fa-heartbeat text-sm mr-1.5"></i>
                         <span class="font-lora text-sm">Causas</span>
                     </button>
                     <button type="button" class="chart-tab-btn" data-chart="jurisdicciones" title="Distribución por jurisdicción" style="border-bottom-color: #C08400;">
-                        <i class="fas fa-building text-sm mr-1.5"></i>
                         <span class="font-lora text-sm">Jurisdicciones</span>
                     </button>
                     <button type="button" class="chart-tab-btn" data-chart="comparativa" title="Residencia vs Lugar de Defunción" style="border-bottom-color: #4A7C7E;">
-                        <i class="fas fa-exchange-alt text-sm mr-1.5"></i>
                         <span class="font-lora text-sm">Comparativa</span>
                     </button>
                 </nav>
@@ -287,7 +280,7 @@
                                         <option value="percent">Solo Porc.</option>
                                         <option value="both">Ambos</option>
                                     </select>
-                                    <div id="dataLabelButtons" class="grid grid-flow-col auto-cols-fr gap-2 w-full max-w-[20.5rem]"></div>
+                                    <div id="dataLabelButtons" class="grid grid-flow-col auto-cols-fr gap-2 w-full max-w-[28rem]"></div>
                                 </div>
 
                                 <!-- Top N -->
@@ -299,7 +292,7 @@
                                         <option value="10">Top 10</option>
                                         <option value="15">Top 15</option>
                                     </select>
-                                    <div id="chartLimitButtons" class="grid grid-flow-col auto-cols-fr gap-2 w-full max-w-[20.5rem]"></div>
+                                    <div id="chartLimitButtons" class="grid grid-flow-col auto-cols-fr gap-2 w-full max-w-[28rem]"></div>
                                 </div>
 
                             </div>
@@ -351,7 +344,7 @@
                                     </div>
                                 </div>
                             </div>
-                            <div class="chart-wrapper relative flex-1 min-h-[520px]" style="position:relative;">
+                            <div class="chart-wrapper relative flex-none h-[520px]" style="position:relative;">
                                 <div id="mainChart" style="width: 100%; height: 100%;"></div>
                                 <div id="loadingMessage" class="absolute inset-0 z-40 items-center justify-center bg-white/70 backdrop-blur-[1px] rounded-lg" style="display: none;">
                                     <div class="bg-white rounded-full p-3 shadow-sm border border-gray-200">
@@ -394,25 +387,26 @@
                             </div>
 
                             <style>
-                                /* Asegurar que la tabla use todo el ancho y las causas se envuelvan para mejor legibilidad */
+                                /* Asegurar que la tabla use todo el ancho disponible y las causas puedan mostrarse completas */
                                 #causasPrincipalesContainer { width: 100%; }
                                 #causasPrincipalesContainer .causas-table-wrapper {
-                                    width: min(100%, 1020px);
-                                    max-width: 88%;
+                                    width: 100%;
+                                    max-width: 100%;
                                 }
-                                #causasPrincipalesContainer table { table-layout: fixed; }
+                                /* Permitir que la tabla ajuste sus columnas según contenido para dar más espacio a la columna de causas */
+                                #causasPrincipalesContainer table { table-layout: auto; width: 100%; }
                                 #causasPrincipalesContainer th, #causasPrincipalesContainer td { word-wrap: break-word; white-space: normal; }
                                 #causasPrincipalesContainer td:nth-child(3) { white-space: normal; }
                                 /* Un poco más de interlineado para legibilidad */
-                                #causasPrincipalesContainer td, #causasPrincipalesContainer th { line-height: 1.4; }
-                                /* Información adicional compacta: una sola línea con truncado */
+                                #causasPrincipalesContainer td, #causasPrincipalesContainer th { line-height: 1.45; }
+                                /* Permitir que las causas se envuelvan en varias líneas en lugar de truncar */
                                 #causasPrincipalesContainer td.causas-principales-cell {
-                                    white-space: nowrap;
-                                    overflow: hidden;
-                                    text-overflow: ellipsis;
-                                    max-width: 0;
-                                    font-size: 0.85rem;
+                                    white-space: normal;
+                                    overflow: visible;
+                                    text-overflow: unset;
+                                    font-size: 0.95rem;
                                 }
+                                #causasPrincipalesContainer .causa-chip { margin-right: 0.5rem; display: inline-flex; align-items: center; gap: 0.35rem; }
                                 /* Separar visualmente ranking (#1) y cantidad para evitar confusión */
                                 #causasPrincipalesContainer .causa-chip {
                                     display: inline-flex;
@@ -494,60 +488,149 @@
         const municipalitiesFull = @json($municipalities->map(function($m) { return ['id' => $m->id, 'name' => $m->name, 'jurisdiction_id' => $m->jurisdiction_id ?? null]; })->values());
 
         const colorPalettes = {
-            // Paleta aqua de 15 colores armoniosos de fuerte a suave (para Top <= 15)
+            // Paleta aqua de 15 colores armoniosos oscuro a medio (para Top <= 15)
             aqua: [
-                '#2B4141', // dark slate
-                '#245D66', // deep teal
-                '#1D798A', // teal
-                '#0EB1D2', // cyan strong
-                '#21CBDE', // cyan
-                '#34E4EA', // bright cyan
-                '#3FEDE7', // aqua
-                '#5FCFD0', // muted aqua
-                '#8AB9B5', // muted teal
-                '#A9BEB2', // ash teal
-                '#C8C2AE', // pale oak
-                '#D6D4C7', // warm gray
-                '#E6E8E0', // light gray
-                '#F0F6F4', // very light aqua
-                '#F7F3EA'  // pale cream
+                '#2F3D14', // verde casi negro extremo
+                '#3D4E1B', // verde muy oscuro sombra
+                '#485C24', // verde casi negro
+                '#5A6B2D', // verde oscuro profundo
+                '#6C7836', // verde oscuro muy saturado
+                '#7C8A43', // verde oliva oscuro
+                '#8B9852', // verde oliva medio oscuro (NUEVO)
+                '#909E54', // verde oliva intermedio
+                '#9FB063', // verde oliva claro
+                '#A8C363', // verde amarillo saturado
+                '#B8CC76', // verde amarillo vibrante
+                '#C2D67E', // verde amarillo brillante
+                '#CADE90', // verde amarillo medio (NUEVO)
+                '#D6E4A5', // verde amarillo claro suave (NUEVO)
+                '#DFE9B8'  // verde claro suave (NUEVO)
             ]
             ,
-            // Paleta autumn con tonos tierra y calidez progresiva.
+            // Paleta autumn tierra: progresión de marrón oscuro a beige claro con 5 colores adicionales.
             autumn: [
-                '#4C061D', '#782D1F', '#8F4020', '#A55320', '#BB6721',
-                '#D17A22', '#C39E5A', '#B4C292', '#9AA48A', '#7F6F4F',
-                '#736F4E', '#5F593F', '#4B432E', '#3B3923', '#2E2B1E'
-            ]
-            ,
-            // Paleta rose con base intensa y degradado suave.
+                '#1A140D', // marrón casi negro extremo (NUEVO)
+                '#2C2111', // marrón muy oscuro
+                '#3D3120', // marrón oscuro intermedio (NUEVO)
+                '#44331A', // marrón oscuro
+                '#5C4624', // marrón medio oscuro
+                '#6F5630', // marrón medio intermedio (NUEVO)
+                '#83673F', // marrón medio
+                '#93754A', // marrón medio claro (NUEVO)
+                '#A9875A', // marrón claro
+                '#C4976C', // marrón claro intermedio (NUEVO)
+                '#CD9F6E', // tan/durazno
+                '#DCAF85', // tan claro
+                '#EAC39C', // tan muy claro
+                '#F8D6B3', // beige claro
+                '#F7E1BE'  // beige muy claro
+            ],
+            // Paleta rose: progresión de rojo oscuro a rosa claro con 5 colores adicionales estratégicos.
             rose: [
-                '#331832', '#4C061D', '#861B47', '#AF1D51', '#D81E5B',
-                '#E43955', '#F0544F', '#F28A6E', '#DB9691', '#D1B7B2',
-                '#C6D8D3', '#FDF0D5', '#F7E3C9', '#EECFC2', '#B78A8A'
+                '#6B1114', // rojo muy oscuro sombra extrema (NUEVO)
+                '#9C191B', // rojo oscuro muy saturado
+                '#8F1518', // rojo oscuro intermedio (NUEVO)
+                '#AC1C1E', // rojo oscuro saturado
+                '#BD1F21', // rojo profundo
+                '#CB2A2E', // rojo claro intermedio (NUEVO)
+                '#D02224', // rojo medio
+                '#DD2C2F', // rojo claro
+                '#E35053', // rojo claro saturado
+                '#E95D60', // rojo-rosa oscuro intermedio (NUEVO)
+                '#E66063', // rojo-rosa intermedio
+                '#EC8385', // rojo-rosa claro
+                '#F1A7A9', // rosa claro
+                '#F4B5B8', // rosa claro suave (NUEVO)
+                '#F6CACC'  // rosa muy claro
             ],
-            // Paleta spectrum de alto contraste para diferenciar mejor los Top 15.
+            // Paleta Tropical Harmonic: degradado profesional azul → verde → amarillo → naranja → rojo con contraste máximo.
             spectrum: [
-                '#CC4318', '#F6511D', '#FFB400', '#C0B13C', '#80AD77',
-                '#40AAB2', '#00A6ED', '#7FB800', '#46722A', '#0D2C54',
-                '#6A4C93', '#9C6ADE', '#E76F51', '#2A9D8F', '#264653'
+                '#264653', // azul oscuro profundo
+                '#287271', // verde azulado profundo
+                '#2A9D8F', // verde azulado vibrante
+                '#5CAE9F', // verde agua brillante
+                '#8AB17D', // verde oliva
+                '#BABB74', // verde amarillento
+                '#E9C46A', // amarillo dorado
+                '#EFB366', // naranja dorado suave
+                '#F4A261', // naranja
+                '#EE8959', // naranja rojo
+                '#E76F51', // rojo naranja
+                '#D1623E', // rojo profundo
+                '#A84A2A', // terracota
+                '#6B3E2E', // marrón chocolate
+                '#3A3A3A'  // gris oscuro carbón
             ],
-            // Paleta earth con buen contraste para barras y pastel.
+            // Paleta earth naranja-amarillo: progresión de naranja oscuro a amarillo claro con 5 colores adicionales.
             earth: [
-                '#5A3E2B', '#8B5E34', '#B07D4F', '#D9A441', '#C0B13C',
-                '#80AD77', '#5C8D89', '#4D6C8A', '#3D405B', '#264653',
-                '#6D597A', '#B56576', '#E56B6F', '#EAAC8B', '#F4F1DE'
+                '#CC5200', // naranja muy oscuro sombra (NUEVO)
+                '#FF7B00', // naranja oscuro
+                '#FF8514', // naranja profundo (NUEVO)
+                '#FF8800', // naranja
+                '#FF9500', // naranja claro
+                '#FFA200', // naranja amarillento
+                '#FFAA00', // naranja amarillo intermedio (NUEVO)
+                '#FFB700', // amarillo naranja
+                '#FFC300', // amarillo dorado
+                '#FFD000', // amarillo
+                '#FFD615', // amarillo brillante (NUEVO)
+                '#FFD933', // amarillo claro
+                '#FFDE4D', // amarillo claro cálido (NUEVO)
+                '#FFE15C', // amarillo claro pálido
+                '#FFFACD'  // amarillo muy claro suave
             ],
-            // Paleta golden earth inspirada en la captura actual: dorados, olivo y cierre cálido.
+            // Paleta goldenEarth púrpura monocromática: progresión de púrpura oscuro a púrpura claro con 5 colores adicionales.
             goldenEarth: [
-                '#A56502', '#C77A02', '#AB9003', '#8EA604', '#A8AC03',
-                '#C2B102', '#F5BB00', '#F1AD03', '#EC9F05', '#BF3100',
-                '#7A5C1E', '#9B6A2F', '#B07A3F', '#D48A2F', '#E0B35B'
+                '#2A0E47', // púrpura casi negro extremo (NUEVO)
+                '#431259', // púrpura casi negro
+                '#511F73', // púrpura muy oscuro intermedio (NUEVO)
+                '#60308C', // púrpura muy oscuro
+                '#6A3FA0', // púrpura oscuro intermedio (NUEVO)
+                '#6F46A6', // púrpura oscuro
+                '#805EBF', // púrpura medio
+                '#8F6FC9', // púrpura medio claro intermedio (NUEVO)
+                '#8B79D9', // púrpura claro
+                '#9A99F2', // púrpura claro vibrante
+                '#A8B3F0', // púrpura claro suave intermedio (NUEVO)
+                '#B3BEFF', // púrpura claro
+                '#CCDCFF', // púrpura muy claro
+                '#D9E6FF', // púrpura pálido claro (NUEVO)
+                '#E6F2FF'  // púrpura muy claro pálido
             ],
             // Paleta monocromática basada en #611132, de tintes claros a sombras profundas.
             maroon611132: [
                 '#611132'
+            ],
+            // Paleta Monocromática Azul Corporativa: progresión de azul oscuro a azul claro con 5 colores adicionales.
+            institutional: [
+                '#001A3A', // azul casi negro (sombra extrema - NUEVO)
+                '#003A70', // azul marino profundo
+                '#1965A0', // azul institucional
+                '#1A4D7A', // azul muy oscuro intermedio (NUEVO)
+                '#0F558F', // azul corporativo oscuro
+                '#2D82BD', // azul claro corporativo
+                '#2476B1', // azul profesional
+                '#5CA5D0', // azul luminoso intermedio (NUEVO)
+                '#4893C6', // azul brillante
+                '#64A4CE', // azul claro profesional
+                '#8FC5E0', // azul pastel intermedio (NUEVO)
+                '#8DBEDC', // azul pastel
+                '#B7D7EA', // azul muy claro
+                '#D8E8F5', // azul pálido (NUEVO)
+                '#E2EFF6'  // casi blanco azulado
             ]
+        };
+
+        // Paletas de ALTO CONTRASTE para gráficas circulares (pie/doughnut) - 10 colores más contrastantes seleccionados de los 15 originales
+        const colorPalettesCircular = {
+            aqua: ['#2F3D14', '#3D4E1B', '#6C7836', '#8B9852', '#A8C363', '#B8CC76', '#C2D67E', '#D6E4A5', '#DFE9B8', '#485C24'],
+            autumn: ['#1A140D', '#3D3120', '#5C4624', '#83673F', '#A9875A', '#C4976C', '#DCAF85', '#EAC39C', '#F8D6B3', '#F7E1BE'],
+            rose: ['#6B1114', '#9C191B', '#BD1F21', '#DD2C2F', '#E35053', '#E95D60', '#EC8385', '#F1A7A9', '#F4B5B8', '#F6CACC'],
+            spectrum: ['#264653', '#2A9D8F', '#8AB17D', '#E9C46A', '#F4A261', '#E76F51', '#D1623E', '#A84A2A', '#6B3E2E', '#3A3A3A'],
+            earth: ['#4D7300', '#99CC33', '#CCEE66', '#33CCAA', '#006699', '#990066', '#E066CC', '#FF6600', '#FF9900', '#FFCC00'],
+            goldenEarth: ['#2A0E47', '#431259', '#6A3FA0', '#805EBF', '#8F6FC9', '#9A99F2', '#B3BEFF', '#CCDCFF', '#D9E6FF', '#E6F2FF'],
+            institutional: ['#001A3A', '#003A70', '#1965A0', '#0F558F', '#2D82BD', '#5CA5D0', '#8FC5E0', '#B7D7EA', '#D8E8F5', '#E2EFF6'],
+            maroon611132: ['#2C0617', '#4a0e26', '#611132', '#8B2A52', '#9C4460', '#B84C3A', '#C97C8A', '#D96969', '#E8A8A8', '#F0CCCC']
         };
 
         const colorPaletteLabels = {
@@ -557,7 +640,8 @@
             spectrum: 'Spectrum',
             earth: 'Earth',
             goldenEarth: 'Golden Earth',
-            maroon611132: 'Maroon 611132'
+            maroon611132: 'Maroon 611132',
+            institutional: 'Institucional'
         };
 
         const chartTypeDefaults = {
@@ -1284,17 +1368,27 @@
             if (!container || !select) return;
 
             const currentValue = select.value || chartConfig.dataLabelMode || 'value';
-            const options = [
+            let options = [
                 { value: 'value', label: 'Valores' },
                 { value: 'percent', label: 'Porc.' },
                 { value: 'both', label: 'Ambos' }
             ];
 
+            // Para Tendencias, mostrar solo Valores
+            if (chartType === 'tendencias') {
+                options = options.filter(opt => opt.value === 'value');
+            }
+
+            const isSingleOption = options.length === 1;
+
+            container.className = isSingleOption
+                ? 'flex items-start justify-start gap-2 w-fit max-w-none'
+                : 'grid grid-flow-col auto-cols-fr gap-2 w-full max-w-[28rem]';
+
             container.innerHTML = options.map(option => {
-                const isDisabled = chartType === 'tendencias' && (option.value === 'percent' || option.value === 'both');
                 const active = option.value === currentValue;
                 return `
-                    <button type="button" class="visual-option-btn visual-option-card ${active ? 'active' : ''}" data-target="datalabelMode" data-value="${option.value}" ${isDisabled ? 'disabled' : ''} aria-pressed="${active}">
+                    <button type="button" class="visual-option-btn visual-option-card ${isSingleOption ? 'is-compact-single' : ''} ${active ? 'active' : ''}" data-target="datalabelMode" data-value="${option.value}" aria-pressed="${active}">
                         <i class="fas ${dataLabelIcons[option.value] || 'fa-circle'} text-xl"></i>
                         <span class="visual-option-label">${option.label}</span>
                     </button>
@@ -1316,10 +1410,16 @@
                 { value: '15', label: chartLimitLabels[15] }
             ];
 
+            const isSingleOption = options.length === 1;
+
+            container.className = isSingleOption
+                ? 'flex items-start justify-start gap-2 w-fit max-w-none'
+                : 'grid grid-flow-col auto-cols-fr gap-2 w-full max-w-[28rem]';
+
             container.innerHTML = options.map(option => {
                 const active = option.value === currentValue;
                 return `
-                    <button type="button" class="visual-option-btn visual-option-card ${active ? 'active' : ''}" data-target="chartLimit" data-value="${option.value}" aria-pressed="${active}">
+                    <button type="button" class="visual-option-btn visual-option-card ${isSingleOption ? 'is-compact-single' : ''} ${active ? 'active' : ''}" data-target="chartLimit" data-value="${option.value}" aria-pressed="${active}">
                         <span class="visual-limit-badge ${option.value === 'all' ? 'is-all' : ''}">${option.value === 'all' ? '∞' : option.value}</span>
                         <span class="visual-option-label">${option.label}</span>
                     </button>
@@ -1503,7 +1603,6 @@
             const dateText = getDateFilterText();
             if (dateText) {
                 container.innerHTML += `<span class="inline-flex items-center gap-1 bg-[#611132] text-white text-xs px-2.5 py-1 rounded-full font-lora">
-                    <i class="fas fa-calendar-alt"></i>
                     ${dateText}
                     <button onclick="clearDateFilter()" class="ml-1 hover:opacity-70">×</button>
                 </span>`;
@@ -1514,7 +1613,6 @@
             if (activeFilters.municipios.length > 0) {
                 const municipiosText = activeFilters.municipiosNames.join(', ');
                 container.innerHTML += `<span class="inline-flex items-center gap-1 bg-[#8B6F47] text-white text-xs px-2.5 py-1 rounded-full font-lora">
-                    <i class="fas fa-city"></i>
                     ${municipiosText}
                     <button onclick="clearFilter('municipios')" class="ml-1 hover:opacity-70">×</button>
                 </span>`;
@@ -1525,7 +1623,6 @@
             if (activeFilters.causas.length > 0) {
                 const causasText = activeFilters.causasNames.join(', ');
                 container.innerHTML += `<span class="inline-flex items-center gap-1 bg-[#2C5F5D] text-white text-xs px-2.5 py-1 rounded-full font-lora">
-                    <i class="fas fa-heartbeat"></i>
                     ${causasText}
                     <button onclick="clearFilter('causas')" class="ml-1 hover:opacity-70">×</button>
                 </span>`;
@@ -1536,7 +1633,6 @@
             if (activeFilters.jurisdicciones.length > 0) {
                 const jurisdiccionesText = activeFilters.jurisdiccionesNames.join(', ');
                 container.innerHTML += `<span class="inline-flex items-center gap-1 bg-[#9B4D6F] text-white text-xs px-2.5 py-1 rounded-full font-lora">
-                    <i class="fas fa-building"></i>
                     ${jurisdiccionesText}
                     <button onclick="clearFilter('jurisdicciones')" class="ml-1 hover:opacity-70">×</button>
                 </span>`;
@@ -1547,7 +1643,6 @@
             if (activeFilters.sexo) {
                 const sexoLabel = activeFilters.sexo === 'M' ? 'Hombre' : (activeFilters.sexo === 'F' ? 'Mujer' : activeFilters.sexo);
                 container.innerHTML += `<span class="inline-flex items-center gap-1 bg-[#4A7C7E] text-white text-xs px-2.5 py-1 rounded-full font-lora">
-                    <i class="fas fa-venus-mars"></i>
                     ${sexoLabel}
                     <button onclick="clearFilter('sexo')" class="ml-1 hover:opacity-70">×</button>
                 </span>`;
@@ -1720,7 +1815,9 @@
             let labels = data.labels || [];
             let values = currentChartType === 'comparativa' ? null : (data.counts || []);
             
-            const palette = colorPalettes[chartConfig.colorPalette];
+            // Usar paleta de alto contraste para gráficas circulares, paleta normal para barras/líneas
+            const paletteSource = isPieLikeChart ? colorPalettesCircular : colorPalettes;
+            const palette = paletteSource[chartConfig.colorPalette];
             const colors = labels.map((_, i) => palette[i % palette.length]);
 
             // Determinar tipo de gráfica: usar la selección del usuario o el óptimo si es "auto"
