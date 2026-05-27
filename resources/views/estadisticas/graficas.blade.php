@@ -465,6 +465,26 @@
             groupBy: 'month'
         };
 
+        // Preferencias GLOBALES del usuario - se mantienen al cambiar de métrica
+        // Si la métrica actual no soporta la preferencia, se ajusta automáticamente
+        let preferredConfig = {
+            type: 'bar',
+            dataLabelMode: 'value',
+            limit: null
+        };
+
+        // DEPRECATED: Las configuraciones son GLOBALES, no por métrica
+        // Las configuraciones (tipo gráfica, etiquetas, top) se mantienen al cambiar de métrica
+        // let metricConfigs = {
+        //     municipios: { type: 'bar', dataLabelMode: 'value', limit: null },
+        //     tendencias: { type: 'line', dataLabelMode: 'value', limit: null },
+        //     edades: { type: 'bar', dataLabelMode: 'value', limit: null },
+        //     genero: { type: 'pie', dataLabelMode: 'value', limit: null },
+        //     causas: { type: 'bar', dataLabelMode: 'value', limit: null },
+        //     jurisdicciones: { type: 'bar', dataLabelMode: 'value', limit: null },
+        //     comparativa: { type: 'bar', dataLabelMode: 'value', limit: null }
+        // };
+
         let activeFilters = {
             dateRange: 'all',
             startDate: null,
@@ -716,6 +736,14 @@
             15: 'Top 15'
         };
 
+        // Definir límites disponibles por tipo de gráfico
+        const chartLimitsByType = {
+            municipios: [5, 10, 15],
+            jurisdicciones: [5, 10],  // Solo hasta 10 porque hay 12 jurisdicciones en total
+            comparativa: [5, 10, 15],
+            default: [5, 10, 15]
+        };
+
         document.addEventListener('DOMContentLoaded', function() {
             try {
                 if (typeof ChartDataLabels !== 'undefined') Chart.register(ChartDataLabels);
@@ -942,16 +970,22 @@
 
             document.getElementById('chartTypeSelector').addEventListener('change', function() {
                 chartConfig.type = this.value;
+                preferredConfig.type = this.value;  // Guardar preferencia global
+                // CONFIGURACIONES SON GLOBALES - se mantienen al cambiar de métrica
                 renderChartTypeButtons(currentChartType);
                 updateChart();
             });
             document.getElementById('datalabelMode').addEventListener('change', function() {
                 chartConfig.dataLabelMode = this.value;
+                preferredConfig.dataLabelMode = this.value;  // Guardar preferencia global
+                // CONFIGURACIONES SON GLOBALES - se mantienen al cambiar de métrica
                 renderDataLabelButtons(currentChartType);
                 updateChart();
             });
             document.getElementById('chartLimit').addEventListener('change', function() {
                 chartConfig.limit = this.value === 'all' ? null : parseInt(this.value);
+                preferredConfig.limit = chartConfig.limit;  // Guardar preferencia global
+                // CONFIGURACIONES SON GLOBALES - se mantienen al cambiar de métrica
                 renderChartLimitButtons(currentChartType);
                 updateChart();
             });
@@ -1111,9 +1145,13 @@
 
         function selectChart(chartType) {
             currentChartType = chartType;
+            
+            // Actualizar botones de tab
             document.querySelectorAll('.chart-tab-btn').forEach(btn => {
                 btn.classList.toggle('active', btn.dataset.chart === chartType);
             });
+            
+            // Actualizar filtros contextuales disponibles para esta métrica
             updateVisibleFilters(chartType);
             
             // Ocultar tabla de causas si no es Edades
@@ -1122,9 +1160,46 @@
                 causasContainer.classList.add('hidden');
             }
             
-            // Al cambiar de pestaña, limpiar filtros pero evitar recargar dos veces la gráfica.
-            clearFilters(true);
-            chartConfig.type = chartTypeDefaults[chartType];
+            // Limpiar SOLO filtros de datos (fechas, municipios, etc.), NO la visualización (tipo gráfica, etiquetas)
+            clearFiltersDataOnly(true);
+            
+            // CONFIGURACIONES GLOBALES:
+            // Usar las preferencias del usuario, ajustando si la métrica actual no las soporta
+            const validTypes = chartTypeOptions[chartType] || [];
+            
+            // Aplicar preferencia de tipo, validando que sea válido para esta métrica
+            if (validTypes.includes(preferredConfig.type)) {
+                chartConfig.type = preferredConfig.type;
+            } else {
+                chartConfig.type = chartTypeDefaults[chartType];
+            }
+            
+            // Aplicar preferencia de etiquetas
+            chartConfig.dataLabelMode = preferredConfig.dataLabelMode;
+            
+            // Para Tendencias: si está en modo percent o both, forzar a value
+            if (chartType === 'tendencias' && (chartConfig.dataLabelMode === 'percent' || chartConfig.dataLabelMode === 'both')) {
+                chartConfig.dataLabelMode = 'value';
+            }
+            
+            // Aplicar preferencia de límite (top)
+            chartConfig.limit = preferredConfig.limit;
+            
+            // Actualizar selectores HTML con los valores actuales
+            document.getElementById('chartTypeSelector').value = chartConfig.type;
+            document.getElementById('datalabelMode').value = chartConfig.dataLabelMode;
+            document.getElementById('chartLimit').value = chartConfig.limit ? String(chartConfig.limit) : 'all';
+            
+            // Actualizar visibilidad y opciones de selectores según la métrica
+            updateDataLabelOptions(chartType);
+            updateChartTypeOptions(chartType);
+            
+            // Renderizar botones visuales con los valores actuales
+            renderChartTypeButtons(chartType);
+            renderDataLabelButtons(chartType);
+            renderChartLimitButtons(chartType);
+            
+            // Cargar datos de la nueva métrica
             loadChart(chartType);
         }
 
@@ -1403,11 +1478,16 @@
             if (!container || !select || !wrapper) return;
 
             const currentValue = select.value || (chartConfig.limit ? String(chartConfig.limit) : 'all');
+            
+            // Obtener los límites disponibles para este tipo de gráfico
+            const availableLimits = chartLimitsByType[chartType] || chartLimitsByType.default;
+            
             const options = [
                 { value: 'all', label: chartLimitLabels.all },
-                { value: '5', label: chartLimitLabels[5] },
-                { value: '10', label: chartLimitLabels[10] },
-                { value: '15', label: chartLimitLabels[15] }
+                ...availableLimits.map(limit => ({ 
+                    value: String(limit), 
+                    label: chartLimitLabels[limit] 
+                }))
             ];
 
             const isSingleOption = options.length === 1;
@@ -1750,13 +1830,20 @@
             const axisFontSize = 14;
             const valueLabelFontSize = 13;
             const legendFontSize = 15;
-            const verticalBarGrid = {
-                left: '3%',
-                right: '4%',
-                top: '12%',
-                bottom: '12%',
-                containLabel: true
+            
+            // Grids diferentes según chart type para espaciado consistente
+            const verticalBarGrids = {
+                municipios: { left: '3%', right: '4%', top: 55, bottom: 60, containLabel: true },
+                edades: { left: '3%', right: '4%', top: 55, bottom: 60, containLabel: true },
+                genero: { left: '3%', right: '4%', top: 55, bottom: 70, containLabel: true },
+                causas: { left: '3%', right: '4%', top: 55, bottom: 70, containLabel: true },
+                jurisdicciones: { left: '3%', right: '4%', top: 55, bottom: 70, containLabel: true },
+                comparativa: { left: '3%', right: '4%', top: 55, bottom: 70, containLabel: true },
+                tendencias: { left: '3%', right: '4%', bottom: 70, top: 55, containLabel: true }
             };
+            
+            // Obtener grid para el chart type actual
+            const verticalBarGrid = verticalBarGrids[currentChartType] || { left: '3%', right: '4%', top: 55, bottom: 70, containLabel: true };
             const expandedCircularCharts = ['municipios', 'edades', 'genero', 'causas', 'jurisdicciones'].includes(currentChartType);
             const formatNumber = (num) => Number(num || 0).toLocaleString('es-MX');
             const labelRich = {
@@ -1776,7 +1863,7 @@
 
             if (chartWrapper) {
                 if (isPieLikeChart) {
-                    chartWrapper.style.height = '520px';
+                    chartWrapper.style.height = '650px';
                     // Mostrar el chart en modo compacto: solo espacio para la gráfica + leyenda
                     chartWrapper.style.display = 'flex';
                     chartWrapper.style.justifyContent = 'center';
@@ -1785,7 +1872,10 @@
                     chartWrapper.style.display = '';
                     chartWrapper.style.justifyContent = '';
                     chartWrapper.style.alignItems = '';
-                    chartWrapper.style.height = '';
+                    
+                    // Altura uniforme para todas las gráficas no circulares
+                    chartWrapper.style.height = '650px';
+                    
                     chartWrapper.style.minHeight = '';
                     // Reset chart container width when not using compact pie layout
                     if (chartContainer) chartContainer.style.width = '';
@@ -1883,6 +1973,9 @@
                 // Gráfica de barras agrupadas para comparativa
                 option = {
                     color: palette,
+                    animation: true,
+                    animationDuration: 800,
+                    animationEasing: 'cubicOut',
                     title: { text: '' },
                     tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' }, textStyle: { fontSize: axisFontSize } },
                     legend: {
@@ -1949,10 +2042,6 @@
                     legendEstimatePx = Math.max(230, filteredPieData.length * 13 + 70);
                     // Espaciado especial para Causas: mucho más espacio
                     legendRightOffset = currentChartType === 'causas' ? 130 : 90;
-                    if (chartWrapper) {
-                        containerHeightAdjusted = Math.max(560, pieDiameterPx + 120);
-                        chartWrapper.style.height = containerHeightAdjusted + 'px';
-                    }
                 }
 
                 // Ajustar ancho del contenedor del canvas para que no ocupe todo el espacio
@@ -2076,9 +2165,12 @@
 
                 option = {
                     color: colors,
+                    animation: true,
+                    animationDuration: 800,
+                    animationEasing: 'cubicOut',
                     title: { text: '' },
                     tooltip: { trigger: 'axis', axisPointer: { type: 'cross' }, textStyle: { fontSize: axisFontSize } },
-                    grid: { left: '3%', right: '4%', bottom: '10%', top: '10%', containLabel: true },
+                    grid: verticalBarGrid,
                     xAxis: {
                         type: 'category',
                         data: labels,
@@ -2130,6 +2222,9 @@
                 
                 option = {
                     color: colors,
+                    animation: true,
+                    animationDuration: 800,
+                    animationEasing: 'cubicOut',
                     title: { text: '' },
                     tooltip: { 
                         trigger: 'axis', 
@@ -2140,9 +2235,9 @@
                     grid: isHorizontal
                         ? {
                             left: '3%',
-                            right: '7%',
-                            bottom: '3%',
-                            top: '10%',
+                            right: '4%',
+                            bottom: 70,
+                            top: 55,
                             containLabel: true
                         }
                         : verticalBarGrid,
@@ -2195,7 +2290,7 @@
             // con las dimensiones correctas y ejecute la animación inicial.
             function applyOptionAndFinish() {
                 try {
-                    currentEchartsInstance.setOption(option, true);
+                    currentEchartsInstance.setOption(option, false);
                 } catch (e) {
                     console.warn('setOption failed', e);
                 }
@@ -2211,12 +2306,11 @@
                         applyOptionAndFinish();
                     }, 60);
                 } else {
+                    // Para gráficas no circulares: también hacer resize antes de setOption para permitir animaciones
+                    if (currentEchartsInstance && typeof currentEchartsInstance.resize === 'function') {
+                        currentEchartsInstance.resize();
+                    }
                     applyOptionAndFinish();
-                    requestAnimationFrame(() => {
-                        if (currentEchartsInstance && typeof currentEchartsInstance.resize === 'function') {
-                            currentEchartsInstance.resize();
-                        }
-                    });
                 }
             } catch (e) {
                 console.warn('apply option failed', e);
@@ -2337,6 +2431,56 @@
             loadChart(currentChartType);
         }
 
+        // Limpia SOLO los filtros de datos (fechas, municipios, etc.)
+        // NO resetea las configuraciones de visualización (tipo gráfica, etiquetas, top)
+        function clearFiltersDataOnly(suppressUpdate = false) {
+            const safeSetValue = (id, value) => {
+                const el = document.getElementById(id);
+                if (el) el.value = value;
+            };
+            
+            safeSetValue('dateRange', 'all');
+            safeSetValue('year', '');
+            safeSetValue('month', '');
+            safeSetValue('quarter', '');
+            safeSetValue('customStartDate', '');
+            safeSetValue('customEndDate', '');
+            safeSetValue('sexoFilter', '');
+            safeSetValue('granularidadFilter', 'month');
+            
+            // Limpiar checkboxes de meses
+            document.querySelectorAll('.month-checkbox').forEach(checkbox => {
+                checkbox.checked = false;
+            });
+            
+            // Limpiar multiselects
+            const multiSelectIds = ['municipiosFilter', 'causasFilter', 'jurisdiccionesFilter'];
+            multiSelectIds.forEach(id => {
+                const element = document.getElementById(id);
+                if (element) {
+                    element.value = '';
+                    if (element.tomselect) {
+                        element.tomselect.clear();
+                    }
+                }
+            });
+            
+            // Ocultar selectores condicionales de fecha
+            const selectors = [
+                document.getElementById('yearSelector'),
+                document.getElementById('monthSimpleSelector'),
+                document.getElementById('monthSelector'),
+                document.getElementById('quarterSelector'),
+                document.getElementById('customDateSelector')
+            ];
+            selectors.forEach(selector => {
+                if (selector) selector.style.display = 'none';
+            });
+
+            updateActiveFiltersDisplay();
+            if (!suppressUpdate) updateChart();
+        }
+
         function clearFilters(suppressUpdate = false) {
             const safeSetValue = (id, value) => {
                 const el = document.getElementById(id);
@@ -2351,8 +2495,9 @@
             safeSetValue('customEndDate', '');
             safeSetValue('sexoFilter', '');
             safeSetValue('granularidadFilter', 'month');
-            safeSetValue('chartLimit', 'all');
-            chartConfig.limit = null;
+            // NO resetear chartLimit aquí - preservar configuración de visualización por métrica
+            // safeSetValue('chartLimit', 'all');
+            // chartConfig.limit = null;
             
             // Limpiar checkboxes de meses
             document.querySelectorAll('.month-checkbox').forEach(checkbox => {
