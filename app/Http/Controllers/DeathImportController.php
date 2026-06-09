@@ -10,7 +10,7 @@ use App\Models\Death;
 use App\Models\DeathCause;
 use App\Models\DeathLocation;
 use App\Models\Municipality;
-use App\Models\Jurisdiction;
+use App\Models\District;
 use App\Models\FailedImportRecord;
 use Carbon\Carbon;
 use Maatwebsite\Excel\Facades\Excel;
@@ -323,7 +323,7 @@ class DeathImportController extends Controller
                 $residenceMunicipality = null;
                 $deathMunicipality = null;
 
-                $otherJur = Jurisdiction::firstOrCreate(['name' => 'OTRO']);
+                $otherJur = District::firstOrCreate(['name' => 'OTRO']);
 
                 if ($residenceMunicipalityName) {
                     $norm = $this->normalizeMunicipalityName($residenceMunicipalityName);
@@ -334,7 +334,7 @@ class DeathImportController extends Controller
                         $residenceMunicipality = Municipality::firstOrCreate([
                             'name' => 'OTRO'
                         ], [
-                            'jurisdiction_id' => $otherJur->id
+                            'district_id' => $otherJur->id
                         ]);
                         $municipalityLookup[$this->normalizeMunicipalityName($residenceMunicipality->name)] = $residenceMunicipality;
                     }
@@ -343,7 +343,7 @@ class DeathImportController extends Controller
                     $residenceMunicipality = Municipality::firstOrCreate([
                         'name' => 'OTRO'
                     ], [
-                        'jurisdiction_id' => $otherJur->id
+                        'district_id' => $otherJur->id
                     ]);
                     $municipalityLookup[$this->normalizeMunicipalityName($residenceMunicipality->name)] = $residenceMunicipality;
                 }
@@ -357,7 +357,7 @@ class DeathImportController extends Controller
                         $deathMunicipality = Municipality::firstOrCreate([
                             'name' => 'OTRO'
                         ], [
-                            'jurisdiction_id' => $otherJur->id
+                            'district_id' => $otherJur->id
                         ]);
                         $municipalityLookup[$this->normalizeMunicipalityName($deathMunicipality->name)] = $deathMunicipality;
                     }
@@ -366,7 +366,7 @@ class DeathImportController extends Controller
                     $deathMunicipality = Municipality::firstOrCreate([
                         'name' => 'OTRO'
                     ], [
-                        'jurisdiction_id' => $otherJur->id
+                        'district_id' => $otherJur->id
                     ]);
                     $municipalityLookup[$this->normalizeMunicipalityName($deathMunicipality->name)] = $deathMunicipality;
                 }
@@ -611,15 +611,15 @@ class DeathImportController extends Controller
                 $d->death_municipality_id = $deathMunicipality->id;
                 // Derive jurisdiction from municipality of residence when possible.
                 // If residence municipality is the generic 'OTRO', explicitly set jurisdiction to 'OTRO'.
-                if ($residenceMunicipality && $residenceMunicipality->jurisdiction_id) {
-                    $d->jurisdiction_id = $residenceMunicipality->jurisdiction_id;
+                if ($residenceMunicipality && $residenceMunicipality->district_id) {
+                    $d->district_id = $residenceMunicipality->district_id;
                 } elseif ($residenceMunicipality && mb_strtolower(trim($residenceMunicipality->name)) === 'otro') {
                     // Ensure 'OTRO' jurisdiction exists and assign it
-                    $otroJur = Jurisdiction::firstOrCreate(['name' => 'OTRO']);
-                    $d->jurisdiction_id = $otroJur->id;
+                    $otroJur = District::firstOrCreate(['name' => 'OTRO']);
+                    $d->district_id = $otroJur->id;
                 } else {
-                    $defaultJur = Jurisdiction::firstOrCreate(['name' => 'NO ENCONTRADA']);
-                    $d->jurisdiction_id = $defaultJur->id;
+                    $defaultJur = District::firstOrCreate(['name' => 'NO ENCONTRADO']);
+                    $d->district_id = $defaultJur->id;
                 }
                 $d->death_location_id = $deathLocation ? $deathLocation->id : null;
                 $d->death_cause_id = $deathCause->id;
@@ -1128,8 +1128,8 @@ class DeathImportController extends Controller
                 // Set municipalities (try to find them, use OTRO as default)
                 $residenceMunicipalityName = trim((string)($rowData['municipioresidenciad'] ?? '')) ?: null;
                 $deathMunicipalityName = trim((string)($rowData['municipiodefunciond'] ?? '')) ?: null;
-                $otherJur = Jurisdiction::firstOrCreate(['name' => 'OTRO']);
-                $otherMuni = Municipality::firstOrCreate(['name' => 'OTRO'], ['jurisdiction_id' => $otherJur->id]);
+                $otherJur = District::firstOrCreate(['name' => 'OTRO']);
+                $otherMuni = Municipality::firstOrCreate(['name' => 'OTRO'], ['district_id' => $otherJur->id]);
                 
                 if ($residenceMunicipalityName) {
                     $residenceMuni = Municipality::where('name', 'like', '%' . $residenceMunicipalityName . '%')->first();
@@ -1147,11 +1147,11 @@ class DeathImportController extends Controller
                 
                 // Set jurisdiction based on residence municipality
                 $residenceMuni = Municipality::where('name', 'like', '%' . ($residenceMunicipalityName ?? '') . '%')->first();
-                if ($residenceMuni && $residenceMuni->jurisdiction_id) {
-                    $death->jurisdiction_id = $residenceMuni->jurisdiction_id;
+                if ($residenceMuni && $residenceMuni->district_id) {
+                    $death->district_id = $residenceMuni->district_id;
                 } else {
                     // Fallback to OTRO jurisdiction if municipality not found
-                    $death->jurisdiction_id = $otherJur->id;
+                    $death->district_id = $otherJur->id;
                 }
                 
                 $death->import_id = $failedRecord->import_id;

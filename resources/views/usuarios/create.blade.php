@@ -186,19 +186,19 @@
                             </select>
                         </div>
 
-                        <!-- Jurisdicción -->
+                        <!-- Distrito -->
                         <div>
-                            <label for="jurisdiction_id" class="block text-sm font-medium text-gray-700 mb-2">
-                                Jurisdicción
+                            <label for="district_id" class="block text-sm font-medium text-gray-700 mb-2">
+                                Distrito
                             </label>
                             <select 
-                                id="jurisdiction_id"
-                                name="jurisdiction_id"
+                                id="district_id"
+                                name="district_id"
                                 class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                             >
                                 <option value="">-- Seleccionar --</option>
                                 @foreach ($jurisdictions as $jurisdiction)
-                                    <option value="{{ $jurisdiction->id }}" {{ old('jurisdiction_id') == $jurisdiction->id ? 'selected' : '' }}>
+                                    <option value="{{ $jurisdiction->id }}" {{ old('district_id') == $jurisdiction->id ? 'selected' : '' }}>
                                         {{ $jurisdiction->name }}
                                     </option>
                                 @endforeach
@@ -282,7 +282,7 @@
                     'password_confirmation': 'password_confirmation',
                     'role_id': 'role_id',
                     'position_id': 'position_id',
-                    'jurisdiction_id': 'jurisdiction_id'
+                    'district_id': 'district_id'
                 };
 
                 // Aplicar setCustomValidity a cada campo con error

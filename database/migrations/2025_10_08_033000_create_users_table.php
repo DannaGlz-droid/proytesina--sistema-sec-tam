@@ -25,7 +25,7 @@ return new class extends Migration
             $table->date('registration_date')->nullable(); // date - fecha_alta
             $table->datetime('last_session')->nullable(); // datetime - ultima_sesion
             $table->foreignId('position_id')->constrained('positions'); // FK to positions - id_cargo
-            $table->foreignId('jurisdiction_id')->constrained('jurisdictions'); // FK to jurisdictions - id_jurisdiccion  
+            $table->foreignId('district_id')->constrained('districts'); // FK to districts - id_jurisdiccion  
             $table->foreignId('role_id')->constrained('roles'); // FK to roles - id_rol
             $table->rememberToken(); // varchar(255) - remember_token
             $table->timestamps(); // created_at, updated_at

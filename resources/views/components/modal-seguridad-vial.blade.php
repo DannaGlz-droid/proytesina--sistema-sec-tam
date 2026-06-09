@@ -56,7 +56,7 @@
                     <i class="fas fa-map text-[#404041] text-xl"></i>
                     <h5 class="font-semibold text-[#404041] font-lora">Jurisdicción</h5>
                 </div>
-                <div class="text-lg font-bold text-[#404041] font-lora modal-jurisdiccion">-</div>
+                <div class="text-lg font-bold text-[#404041] font-lora modal-distrito">-</div>
                 <p class="text-xs text-gray-600 font-lora mt-1">Zona administrativa</p>
             </div>
         </div>

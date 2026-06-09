@@ -84,17 +84,17 @@
     <!-- Ubicación -->
     <x-filtros.seccion icono="map-marker-alt" titulo="Ubicación">
         <div class="filter-group">
-            <label class="block text-xs text-gray-600 font-lora mb-1">Jurisdicción:</label>
-            <select name="jurisdiction_id" class="tomselect-select" id="jurisdiccion">
-                <option value="" {{ request('jurisdiction_id') === null || request('jurisdiction_id') === '' ? 'selected' : '' }}>Todas</option>
-                @if(isset($jurisdictions) && $jurisdictions->isNotEmpty())
-                    @foreach($jurisdictions as $j)
-                        <option value="{{ $j->id }}" {{ (string) request('jurisdiction_id') === (string) $j->id ? 'selected' : '' }}>{{ $j->name }}</option>
+            <label class="block text-xs text-gray-600 font-lora mb-1">Distrito:</label>
+            <select name="district_id" class="tomselect-select" id="distrito">
+                <option value="" {{ request('district_id') === null || request('district_id') === '' ? 'selected' : '' }}>Todas</option>
+                @if(isset($districts) && $districts->isNotEmpty())
+                    @foreach($districts as $d)
+                        <option value="{{ $d->id }}" {{ (string) request('district_id') === (string) $d->id ? 'selected' : '' }}>{{ $d->name }}</option>
                     @endforeach
                 @else
-                    <option>Jurisdicción Sanitaria I</option>
-                    <option>Jurisdicción Sanitaria II</option>
-                    <option>Jurisdicción Sanitaria III</option>
+                    <option>Distrito Sanitario I</option>
+                    <option>Distrito Sanitario II</option>
+                    <option>Distrito Sanitario III</option>
                 @endif
             </select>
         </div>
@@ -488,17 +488,17 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     // --- Inicializar TomSelect para el campo de Jurisdicción ---
-    function initTomSelectJurisdiccion() {
-        const selectEl = document.getElementById('jurisdiccion');
+    function initTomSelectdistrito() {
+        const selectEl = document.getElementById('distrito');
         if (selectEl && typeof TomSelect !== 'undefined') {
-            const tomSelectInstance = new TomSelect(selectEl, {
+                const tomSelectInstance = new TomSelect(selectEl, {
                 valueField: 'value',
                 labelField: 'text',
                 searchField: 'text',
                 maxOptions: 100,
                 maxItems: 1,
                 create: false,
-                placeholder: 'Seleccione una jurisdicción...',
+                    placeholder: 'Seleccione un distrito...',
                 onChange: () => {
                     // Recalcular altura de la sección si está abierta
                     const section = selectEl.closest('.filter-section');
@@ -512,20 +512,20 @@ document.addEventListener('DOMContentLoaded', function() {
             });
 
             // Guardar instancia globalmente
-            window.tomSelect_jurisdiccion = tomSelectInstance;
+            window.tomSelect_distrito = tomSelectInstance;
         }
     }
 
     // Try to initialize immediately
     if (typeof TomSelect !== 'undefined') {
-        initTomSelectJurisdiccion();
+        initTomSelectdistrito();
     } else {
         // If TomSelect not available yet, wait for it
         let attempts = 0;
         const checkTomSelect = setInterval(() => {
             if (typeof TomSelect !== 'undefined') {
                 clearInterval(checkTomSelect);
-                initTomSelectJurisdiccion();
+                initTomSelectdistrito();
             }
             attempts++;
             if (attempts > 50) { // Stop after 5 seconds (50 * 100ms)

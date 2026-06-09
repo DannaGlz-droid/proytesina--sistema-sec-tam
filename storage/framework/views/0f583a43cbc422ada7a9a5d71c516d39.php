@@ -8,4 +8,5 @@
         <?php echo e($slot); ?>
 
     </div>
-</div><?php /**PATH C:\Proyectos Laravel\sistema-sec-tam\resources\views/components/filtros/base.blade.php ENDPATH**/ ?>
+</div>
+<?php /**PATH C:\Proyectos Laravel\sistema-sec-tam\resources\views/components/filtros/base.blade.php ENDPATH**/ ?>

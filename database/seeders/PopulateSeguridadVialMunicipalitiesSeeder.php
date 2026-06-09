@@ -23,11 +23,11 @@ class PopulateSeguridadVialMunicipalitiesSeeder extends Seeder
             return;
         }
 
-        $defaultJurisdictionId = $defaultMunicipality->jurisdiction_id;
+        $defaultJurisdictionId = $defaultMunicipality->district_id;
         
         // Buscar todos los RoadSafetyReports que tengan municipio_id NULL
         $reportsToUpdate = RoadSafetyReport::whereNull('municipality_id')
-            ->orWhereNull('jurisdiction_id')
+            ->orWhereNull('district_id')
             ->get();
 
         if ($reportsToUpdate->isEmpty()) {
@@ -43,12 +43,12 @@ class PopulateSeguridadVialMunicipalitiesSeeder extends Seeder
             }
             
             // Si el reporte no tiene jurisdicción, asignar la del municipio (o la por defecto)
-            if (is_null($report->jurisdiction_id)) {
+            if (is_null($report->district_id)) {
                 if ($report->municipality_id) {
                     $municipality = Municipality::find($report->municipality_id);
-                    $report->jurisdiction_id = $municipality?->jurisdiction_id ?? $defaultJurisdictionId;
+                    $report->district_id = $municipality?->district_id ?? $defaultJurisdictionId;
                 } else {
-                    $report->jurisdiction_id = $defaultJurisdictionId;
+                    $report->district_id = $defaultJurisdictionId;
                 }
             }
             

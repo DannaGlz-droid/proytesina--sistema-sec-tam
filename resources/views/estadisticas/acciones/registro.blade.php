@@ -135,13 +135,13 @@
                         <div class="space-y-3">
                         
                         <div>
-                            <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Jurisdicción de residencia</label>
+                            <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Distrito de residencia</label>
                             {{-- Hidden input that will be submitted. The visible select is disabled so users can't change it directly. --}}
-                            <input type="hidden" id="jurisdiction_input" name="jurisdiction_id" value="{{ old('jurisdiction_id') ?? '' }}">
-                            <!-- Visible, readable jurisdiction display (readonly) to improve accessibility. The hidden input still submits the id. -->
+                            <input type="hidden" id="jurisdiction_input" name="district_id" value="{{ old('district_id') ?? '' }}">
+                            <!-- Visible, readable district display (readonly) to improve accessibility. The hidden input still submits the id. -->
                             <input id="jurisdiction_display" type="text" class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora" value="Pendiente (seleccione municipio)" readonly aria-describedby="jurisdiction-help">
-                            <span id="jurisdiction-help" class="sr-only">La jurisdicción se determina automáticamente según el municipio seleccionado</span>
-                            @error('jurisdiction_id') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
+                            <span id="jurisdiction-help" class="sr-only">El distrito se determina automáticamente según el municipio seleccionado</span>
+                            @error('district_id') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
                         </div>
                         <div>
                             <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Lugar específico <span class="text-red-600">*</span></label>
@@ -384,10 +384,10 @@
                 deathDateInput.max = todayString;
             }
             
-            // Build a map municipality_id -> jurisdiction_id
-            const muniToJur = @json($municipalities->mapWithKeys(function($m){ return [$m->id => $m->jurisdiction_id]; }));
-            // Map jurisdiction_id -> jurisdiction name (for display)
-            const jurisNames = @json($jurisdictions->mapWithKeys(function($j){ return [$j->id => $j->name]; }));
+            // Build a map municipality_id -> district_id
+            const muniToJur = @json($municipalities->mapWithKeys(function($m){ return [$m->id => $m->district_id]; }));
+            // Map district_id -> district name (for display)
+            const jurisNames = @json($districts->mapWithKeys(function($j){ return [$j->id => $j->name]; }));
 
             const residenceMuni = document.getElementById('residence_municipality_select');
             const deathMuni = document.getElementById('death_municipality_select');

@@ -17,15 +17,15 @@ class Municipality extends Model
      */
     protected $fillable = [
         'name',
-        'jurisdiction_id'
+        'district_id'
     ];
 
     /**
-     * Relationship: Municipality belongs to Jurisdiction
+     * Relationship: Municipality belongs to District
      */
-    public function jurisdiction()
+    public function district()
     {
-        return $this->belongsTo(Jurisdiction::class);
+        return $this->belongsTo(District::class);
     }
 
     /**

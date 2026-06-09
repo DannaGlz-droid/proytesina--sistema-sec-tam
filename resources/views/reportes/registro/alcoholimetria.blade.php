@@ -20,6 +20,34 @@
             scrollbar-width: thin;
             scrollbar-color: #ccc transparent;
         }
+
+        /* Tom Select styling to match form inputs */
+        .ts-wrapper { border: none !important; padding: 0 !important; background: transparent !important; }
+        select.tomselect-select {
+            position: absolute !important; left: -9999px !important; width: 1px !important;
+            height: 1px !important; overflow: hidden !important; opacity: 0 !important;
+            pointer-events: none !important; border: 0 !important; margin: 0 !important;
+            padding: 0 !important; background: transparent !important;
+        }
+        .ts-wrapper { display: block; width: 100%; }
+        .ts-control {
+            border: 1px solid #d1d5db !important; border-radius: 0.5rem !important;
+            padding: 8px 12px !important; background: #ffffff !important;
+            font-size: 0.875rem; line-height: 1.25rem !important;
+            box-shadow: none !important; height: auto !important; min-height: 36px !important;
+        }
+        .ts-control .item, .ts-control input { padding: 0 !important; margin: 0 !important; }
+        .ts-dropdown { border: 1px solid #d1d5db; border-radius: 0.5rem; max-height: 240px; }
+        .ts-dropdown .ts-option { padding: 0.5rem 0.75rem; }
+        .ts-control::after {
+            content: ""; position: absolute; right: 12px; top: 50%;
+            transform: translateY(-50%); width: 18px; height: 18px;
+            background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='1.6'><polyline points='6 9 12 15 18 9'/></svg>");
+            background-size: 12px 12px; pointer-events: none;
+        }
+        input[type="date"] {
+            padding: 8px 12px !important; border: 1px solid #d1d5db !important;
+        }
     </style>
 
     @include('components.header-admin')
@@ -52,26 +80,53 @@
                     <div class="space-y-3">
                         <div>
                             <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Tema <span class="text-red-600">*</span></label>
-                            <input type="text"
+                            <input id="tema" type="text" 
                                    name="tema"
-                                   minlength="3"
-                                   maxlength="146"
-                                   class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora"
+                                   class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora" 
                                    placeholder="Ej: Operativo alcoholimetría fin de semana"
                                    value="{{ old('tema', isset($publication) ? $publication->topic : '') }}"
-                                   required>
+                                   required minlength="3" maxlength="146">
+                        </div>
+
+                        <div>
+                            <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Municipio <span class="text-red-600">*</span></label>
+                            <select id="alcohol_municipality_select" name="municipio" class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora tomselect-select" required>
+                                <option value="">Seleccione un municipio</option>
+                                @php
+                                    $selectedMunicipio = old('municipio', isset($report) ? $report->municipality_id : '');
+                                @endphp
+                                @if($selectedMunicipio)
+                                    @php $m = $municipalities->firstWhere('id', $selectedMunicipio) @endphp
+                                    @if($m)
+                                        <option value="{{ $m->id }}" selected>{{ $m->name }}</option>
+                                    @endif
+                                @endif
+                            </select>
                         </div>
                     </div>
                     
                     <div class="space-y-3">
                         <div>
                             <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Fecha <span class="text-red-600">*</span></label>
-                            <input type="date"
+                            <input id="fecha" type="date" 
                                    name="fecha"
-                                   max="{{ date('Y-m-d') }}"
                                    class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora"
                                    value="{{ old('fecha', isset($publication) ? $publication->activity_date->format('Y-m-d') : '') }}"
-                                   required>
+                                   required max="{{ date('Y-m-d') }}">
+                        </div>
+
+                        <div>
+                            <label class="block text-xs lg:text-sm font-medium text-gray-500 mb-1 font-lora">Distrito</label>
+                            @if($isAdminOrCoordinator ?? false)
+                                <!-- Para Admin/Coordinador: Tom Select editable de distritos -->
+                                <select id="jurisdiction_select_alcohol" name="distrito" class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora" placeholder="Seleccione un distrito" required>
+                                    <option value="">Seleccione un distrito</option>
+                                </select>
+                            @else
+                                <!-- Para Operadores: campo readonly con distrito pre-asignado -->
+                                <input type="hidden" id="jurisdiction_input_alcohol" name="distrito" value="{{ old('distrito', isset($report) ? $report->district_id : '') }}" required>
+                                <input id="jurisdiction_display_alcohol" type="text" class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-200 rounded-lg bg-gray-50 text-gray-600 focus:ring-2 focus:ring-gray-300 focus:border-transparent transition-all duration-200 font-lora" value="{{ isset($report) && $report->district ? $report->district->name : 'Pendiente (seleccione municipio)' }}" readonly>
+                            @endif
                         </div>
                     </div>
                 </div>
@@ -83,7 +138,7 @@
             <!-- Sección 2: Operativos de alcoholimetría -->
             <div class="mb-6 lg:mb-8">
                 <div class="flex items-center mb-4">
-                    <ion-icon name="location-outline" class="text-xl lg:text-xl text-[#404041] mr-2"></ion-icon>
+                    <ion-icon name="shield-checkmark-outline" class="text-xl lg:text-xl text-[#404041] mr-2"></ion-icon>
                     <h2 class="text-lg lg:text-xl font-lora font-bold text-[#404041]">Operativos de alcoholimetría</h2>
                     <div class="flex-1 h-[1px] bg-[#404041] ml-3"></div>
                 </div>
@@ -468,6 +523,164 @@
     @endif
 
     </div>
+
+    <!-- Script para manejo de municipios y distritos -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Map municipality_id -> district_id
+            const muniToJur = @json($municipalities->mapWithKeys(function($m){ return [$m->id => $m->district_id]; }));
+            const jurisNames = @json($districts->mapWithKeys(function($j){ return [$j->id => $j->name]; }));
+            // Jurisdicción del usuario (puede ser null)
+            const currentJurisdiction = @json(optional(auth()->user())->district_id);
+            const isAdminOrCoordinator = @json($isAdminOrCoordinator ?? false);
+
+            const alcoholMuni = document.getElementById('alcohol_municipality_select');
+            const jurisdictionSelect = document.getElementById('jurisdiction_select_alcohol');
+            const jurisdictionDisplay = document.getElementById('jurisdiction_display_alcohol');
+            const hiddenJur = document.getElementById('jurisdiction_input_alcohol');
+
+            function setJurisdictionBasedOnMunicipality() {
+                const mid = alcoholMuni?.value || '';
+                if (mid && muniToJur[mid]) {
+                    const jid = muniToJur[mid];
+                    if (isAdminOrCoordinator && jurisdictionSelect) {
+                        // Para admin/coordinador: actualizar el select del distrito en modo silencioso
+                        // para no disparar onChange del distrito que limpia el municipio (bucle circular)
+                        if (jurisdictionSelect.tomselect) {
+                            jurisdictionSelect.tomselect.setValue(String(jid), true);
+                        } else {
+                            jurisdictionSelect.value = jid;
+                        }
+                    } else {
+                        // Para operadores: actualizar el campo hidden y display
+                        if (hiddenJur) hiddenJur.value = jid;
+                        if (jurisdictionDisplay) jurisdictionDisplay.value = jurisNames[jid] || '';
+                    }
+                } else {
+                    if (isAdminOrCoordinator && jurisdictionSelect) {
+                        if (jurisdictionSelect.tomselect) {
+                            jurisdictionSelect.tomselect.setValue('', true);
+                        } else {
+                            jurisdictionSelect.value = '';
+                        }
+                    } else {
+                        if (hiddenJur) hiddenJur.value = '';
+                        if (jurisdictionDisplay) jurisdictionDisplay.value = 'Pendiente (seleccione municipio)';
+                    }
+                }
+            }
+
+            // Para Admin/Coordinador: inicializar Tom Select para Distrito
+            if (isAdminOrCoordinator && jurisdictionSelect) {
+                const districtTs = new TomSelect(jurisdictionSelect, {
+                    valueField: 'id',
+                    labelField: 'name',
+                    searchField: 'name',
+                    maxOptions: 20,
+                    maxItems: 1,
+                    create: false,
+                    preload: true,
+                    load: function(query, callback) {
+                        let url = '/api/districts/search?q=' + encodeURIComponent(query);
+                        fetch(url).then(r => r.json()).then(items => callback(items)).catch(() => callback());
+                    },
+                    onChange: function(value) {
+                        // Limpiar el municipio cuando cambia el distrito
+                        if (alcoholMuni && alcoholMuni.tomselect) {
+                            alcoholMuni.tomselect.setValue('');
+                        }
+                    }
+                });
+                try { jurisdictionSelect.style.display = 'none'; } catch (e) {}
+                
+                // Si hay un valor pre-seleccionado, cargar esa opción
+                if (jurisdictionSelect.value) {
+                    districtTs.load(jurisdictionSelect.value, function(callback) {});
+                }
+            }
+
+            // Initialize Tom Select for municipality
+            function fetchMunicipalities(q) {
+                let url = '/api/municipalities/search?q=' + encodeURIComponent(q);
+                if (!isAdminOrCoordinator && currentJurisdiction) {
+                    // Para operadores: filtrar por su distrito
+                    url += '&district_id=' + encodeURIComponent(currentJurisdiction);
+                } else if (isAdminOrCoordinator && jurisdictionSelect) {
+                    // Para admin/coordinador: filtrar por el distrito seleccionado
+                    const selectedDistrict = jurisdictionSelect.value;
+                    if (selectedDistrict) {
+                        url += '&district_id=' + encodeURIComponent(selectedDistrict);
+                    }
+                }
+                return fetch(url).then(r => r.json());
+            }
+
+            if (alcoholMuni) {
+                const ts = new TomSelect(alcoholMuni, {
+                    valueField: 'id',
+                    labelField: 'name',
+                    searchField: 'name',
+                    maxOptions: 20,
+                    maxItems: 1,
+                    create: false,
+                    preload: true,
+                    load: function(query, callback) {
+                        fetchMunicipalities(query).then(items => callback(items)).catch(() => callback());
+                    },
+                    onChange: function(value) {
+                        alcoholMuni.value = value;
+                        const evt = new Event('change', { bubbles: true });
+                        alcoholMuni.dispatchEvent(evt);
+                    }
+                });
+                alcoholMuni.classList.remove('tomselect-select');
+                try { alcoholMuni.style.display = 'none'; } catch (e) {}
+            }
+
+            if (alcoholMuni) {
+                alcoholMuni.addEventListener('change', setJurisdictionBasedOnMunicipality);
+                setJurisdictionBasedOnMunicipality();
+            }
+
+            // Para Admin/Coordinador: cuando cambia el distrito, refrescar la lista de municipios
+            if (isAdminOrCoordinator && jurisdictionSelect) {
+                jurisdictionSelect.addEventListener('change', function() {
+                    // Limpiar la selección de municipio cuando cambia el distrito
+                    if (alcoholMuni && alcoholMuni.tomselect) {
+                        alcoholMuni.tomselect.clearOptions();
+                        alcoholMuni.tomselect.setValue('');
+                        alcoholMuni.tomselect.load('', function(callback) {});
+                    }
+                });
+            }
+
+            // Si el usuario tiene una jurisdicción asignada y NO es admin/coordinador, establecerla en el campo oculto y en el display
+            if (!isAdminOrCoordinator && currentJurisdiction) {
+                if (hiddenJur && !hiddenJur.value) hiddenJur.value = currentJurisdiction;
+                if (jurisdictionDisplay && (!jurisdictionDisplay.value || jurisdictionDisplay.value.includes('Pendiente'))) {
+                    jurisdictionDisplay.value = jurisNames[currentJurisdiction] || jurisdictionDisplay.value;
+                }
+            }
+
+            // Interceptar el envío del formulario para actualizar files_to_delete
+            const mainForm = document.getElementById('alcoholimetriaForm');
+            const isEditMode = {{ isset($publication) ? 'true' : 'false' }};
+            
+            if (mainForm) {
+                mainForm.addEventListener('submit', function(e) {
+                    // Actualizar files_to_delete SIEMPRE (tanto en creación como en edición)
+                    if (isEditMode && document.getElementById('files-to-delete')) {
+                        const filesToDeleteIds = [];
+                        document.querySelectorAll('#existing-files-list .file-delete-checkbox:checked').forEach(checkbox => {
+                            const fileId = checkbox.closest('.file-item').dataset.fileId;
+                            if (fileId) filesToDeleteIds.push(fileId);
+                        });
+                        document.getElementById('files-to-delete').value = filesToDeleteIds.join(',');
+                    }
+                });
+            }
+        });
+    </script>
 
     <!-- Script para manejo de archivos -->
     <script>

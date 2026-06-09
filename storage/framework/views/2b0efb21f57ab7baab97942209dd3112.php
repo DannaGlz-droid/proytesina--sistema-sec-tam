@@ -58,9 +58,9 @@
             <div class="bg-white rounded-lg p-4 border border-[#404041]">
                 <div class="flex items-center gap-3 mb-3">
                     <i class="fas fa-map text-[#404041] text-xl"></i>
-                    <h5 class="font-semibold text-[#404041] font-lora">Jurisdicción</h5>
+                    <h5 class="font-semibold text-[#404041] font-lora">Distrito</h5>
                 </div>
-                <div class="text-lg font-bold text-[#404041] font-lora modal-jurisdiccion">Jurisdicción Sanitaria III</div>
+                <div class="text-lg font-bold text-[#404041] font-lora modal-distrito">Distrito Sanitario III</div>
                 <p class="text-xs text-gray-600 font-lora mt-1">Zona administrativa</p>
             </div>
         </div>
@@ -74,4 +74,5 @@
 <?php if (isset($__componentOriginal8995d0c5cd3d3f03fd154e9c66f4c68f)): ?>
 <?php $component = $__componentOriginal8995d0c5cd3d3f03fd154e9c66f4c68f; ?>
 <?php unset($__componentOriginal8995d0c5cd3d3f03fd154e9c66f4c68f); ?>
-<?php endif; ?><?php /**PATH C:\Proyectos Laravel\sistema-sec-tam\resources\views/components/modal-observatorio.blade.php ENDPATH**/ ?>
+<?php endif; ?>
+<?php /**PATH C:\Proyectos Laravel\sistema-sec-tam\resources\views/components/modal-observatorio.blade.php ENDPATH**/ ?>

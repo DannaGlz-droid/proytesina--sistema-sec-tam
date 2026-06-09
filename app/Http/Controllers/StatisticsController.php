@@ -149,12 +149,12 @@ class StatisticsController extends Controller
      */
     protected function commonLists()
     {
-    $municipalities = DB::table('municipalities')->select('id','name','jurisdiction_id')->orderBy('name')->get();
+    $municipalities = DB::table('municipalities')->select('id','name','district_id')->orderBy('name')->get();
         $causes = DB::table('death_causes')->select('id','name')->orderBy('name')->get();
-        // Jurisdictions list (if the table exists)
-        $jurisdictions = [];
-        if (Schema::hasTable('jurisdictions')) {
-            $jurisdictions = DB::table('jurisdictions')->select('id','name')->orderBy('name')->get();
+        // districts list (if the table exists)
+        $districts = [];
+        if (Schema::hasTable('districts')) {
+            $districts = DB::table('districts')->select('id','name')->orderBy('name')->get();
         }
 
         // Sex values: prefer distinct values stored in deaths table, but map common codes to readable labels
@@ -175,16 +175,16 @@ class StatisticsController extends Controller
             })->values();
         }
 
-        // If the `jurisdictions` table contains the 12 jurisdicciones de Tamaulipas
+        // If the `districts` table contains the 12 jurisdicciones de Tamaulipas
         // (como indicas), preferir mostrar sólo municipios pertenecientes a esas
         // jurisdicciones. Esto evita mostrar municipios de otros estados.
         try {
-            if (!empty($jurisdictions) && is_iterable($jurisdictions) && count($jurisdictions) === 12) {
-                $jurIds = collect($jurisdictions)->pluck('id')->values()->all();
-                // Always include jurisdiction_id to allow frontend dependent filtering
+            if (!empty($districts) && is_iterable($districts) && count($districts) === 12) {
+                $distIds = collect($districts)->pluck('id')->values()->all();
+                // Always include district_id to allow frontend dependent filtering
                 $municipalities = DB::table('municipalities')
-                    ->select('id','name','jurisdiction_id')
-                    ->whereIn('jurisdiction_id', $jurIds)
+                    ->select('id','name','district_id')
+                    ->whereIn('district_id', $distIds)
                     ->orderBy('name')
                     ->get();
             }
@@ -192,7 +192,7 @@ class StatisticsController extends Controller
             // if anything goes wrong, keep the original municipalities list
         }
 
-        return compact('municipalities','causes','jurisdictions','sexes');
+        return compact('municipalities','causes','districts','sexes');
     }
 
     /**
@@ -319,11 +319,11 @@ class StatisticsController extends Controller
             $munCountsRaw = $munCountsQ->get()->pluck('total', 'muni_id')->all();
 
             // Build municipalities list - prefer restricting to the Tamaulipas jurisdicciones if available
-            $municipalitiesQ = DB::table('municipalities')->select('id','name','jurisdiction_id')->orderBy('name');
-            // If jurisdictions table looks like the 12 Tamaulipas jurisdictions, restrict to them
-            if (Schema::hasTable('jurisdictions') && DB::table('jurisdictions')->count() === 12) {
-                $jurIds = DB::table('jurisdictions')->pluck('id')->all();
-                $municipalitiesQ->whereIn('jurisdiction_id', $jurIds);
+            $municipalitiesQ = DB::table('municipalities')->select('id','name','district_id')->orderBy('name');
+            // If districts table looks like the 12 Tamaulipas districts, restrict to them
+            if (Schema::hasTable('districts') && DB::table('districts')->count() === 12) {
+                $distIds = DB::table('districts')->pluck('id')->all();
+                $municipalitiesQ->whereIn('district_id', $distIds);
             }
             $municipalitiesFull = $municipalitiesQ->get();
 
@@ -333,19 +333,19 @@ class StatisticsController extends Controller
                 return (object)['name' => $m->name ?? 'Sin dato', 'total' => $total, 'id' => $m->id];
             })->sortByDesc('total')->values();
 
-            // Jurisdicciones (por el campo jurisdiction_id en deaths, si existe la tabla)
-            $jurisdictions = collect();
-            if (Schema::hasTable('jurisdictions')) {
-                $jurQ = DB::table('deaths')
-                    ->leftJoin('jurisdictions', 'jurisdictions.id', '=', 'deaths.jurisdiction_id')
-                    ->select('jurisdictions.name as name', DB::raw('COUNT(deaths.id) as total'))
-                    ->groupBy('jurisdictions.name')
+            // Jurisdicciones (por el campo district_id en deaths, si existe la tabla)
+            $districts = collect();
+            if (Schema::hasTable('districts')) {
+                $distQ = DB::table('deaths')
+                    ->leftJoin('districts', 'districts.id', '=', 'deaths.district_id')
+                    ->select('districts.name as name', DB::raw('COUNT(deaths.id) as total'))
+                    ->groupBy('districts.name')
                     ->orderByDesc('total');
-                $applyFilters($jurQ);
+                $applyFilters($distQ);
                 if (!empty($filters['limit']) && is_numeric($filters['limit'])) {
-                    $jurQ->limit((int)$filters['limit']);
+                    $distQ->limit((int)$filters['limit']);
                 }
-                $jurisdictions = $jurQ->get();
+                $districts = $distQ->get();
             }
 
             // Tendencia temporal: agrupar por día/mes/año según parámetro 'group_by'
@@ -465,8 +465,8 @@ class StatisticsController extends Controller
                 'generos' => [ 'labels' => $generos->pluck('sex')->map(fn($v) => $v ?? 'Sin dato')->values()->all(), 'counts' => $generos->pluck('total')->map(fn($v) => (int)$v)->values()->all() ],
                 'causas' => [ 'labels' => $causas->pluck('name')->map(fn($v) => $v ?? 'Sin dato')->values()->all(), 'counts' => $causas->pluck('total')->map(fn($v) => (int)$v)->values()->all() ],
                 'edades' => [ 'labels' => $edades->pluck('range')->values()->all(), 'counts' => $edades->pluck('total')->map(fn($v) => (int)$v)->values()->all() ],
-                // Jurisdictions
-                'jurisdictions' => [ 'labels' => $jurisdictions->pluck('name')->map(fn($v) => $v ?? 'Sin dato')->values()->all(), 'counts' => $jurisdictions->pluck('total')->map(fn($v) => (int)$v)->values()->all() ],
+                // districts
+                'districts' => [ 'labels' => $districts->pluck('name')->map(fn($v) => $v ?? 'Sin dato')->values()->all(), 'counts' => $districts->pluck('total')->map(fn($v) => (int)$v)->values()->all() ],
                 // Residence vs Death per municipality (aligned to full municipalities list)
                 'municipios_compare' => (function() use ($municipios, $resCounts, $deathCounts) {
                     $labels = $municipios->pluck('name')->values()->all();
@@ -596,14 +596,20 @@ class StatisticsController extends Controller
                     $query->where('sex', $filters['sex']);
                 }
                 
-                // Jurisdicción: aceptar un id numérico o un array de ids (`jurisdicciones[]`)
-                if (!empty($filters['jurisdiction_id']) && is_numeric($filters['jurisdiction_id'])) {
-                    $query->where('jurisdiction_id', (int)$filters['jurisdiction_id']);
+                // Jurisdicción: aceptar un id numérico o un array de ids (`jurisdicciones[]` o `distritoes[]`)
+                if (!empty($filters['district_id']) && is_numeric($filters['district_id'])) {
+                    $query->where('district_id', (int)$filters['district_id']);
                 } elseif (!empty($filters['jurisdicciones']) && is_array($filters['jurisdicciones'])) {
                     // Normalizar valores numéricos
                     $ids = array_values(array_filter($filters['jurisdicciones'], fn($v) => is_numeric($v)));
                     if (!empty($ids)) {
-                        $query->whereIn('jurisdiction_id', $ids);
+                        $query->whereIn('district_id', $ids);
+                    }
+                } elseif (!empty($filters['distritoes']) && is_array($filters['distritoes'])) {
+                    // Normalizar valores numéricos
+                    $ids = array_values(array_filter($filters['distritoes'], fn($v) => is_numeric($v)));
+                    if (!empty($ids)) {
+                        $query->whereIn('district_id', $ids);
                     }
                 }
             };
@@ -628,6 +634,7 @@ class StatisticsController extends Controller
                     return $this->getChartCausas($filters, $dateColumn, $applyFilters, $limit);
                     
                 case 'jurisdicciones':
+                case 'distritoes':
                     return $this->getChartJurisdicciones($filters, $dateColumn, $applyFilters, $limit);
                     
                 case 'comparativa':
@@ -659,17 +666,17 @@ class StatisticsController extends Controller
             ->select(DB::raw("{$finalMunCol} as muni_id"), DB::raw('COUNT(*) as total'))
             ->groupBy(DB::raw("{$finalMunCol}"));
 
-        // If jurisdictions filter is present, compute municipality ids belonging to those
-        // jurisdictions and restrict the counts query by those municipality ids. This
+        // If districts filter is present, compute municipality ids belonging to those
+        // districts and restrict the counts query by those municipality ids. This
         // ensures the distribution by municipalities shows only municipios that belong
-        // to the selected jurisdicción(es), regardless of deaths.jurisdiction_id values.
-        $jurisdictionMunIds = null;
+        // to the selected jurisdicción(es), regardless of deaths.district_id values.
+        $distisdictionMunIds = null;
         if (!empty($filters['jurisdicciones']) && is_array($filters['jurisdicciones'])) {
-            $jurIdsFilter = array_values(array_filter($filters['jurisdicciones'], fn($v) => is_numeric($v)));
-            if (!empty($jurIdsFilter)) {
-                $jurisdictionMunIds = DB::table('municipalities')->whereIn('jurisdiction_id', $jurIdsFilter)->pluck('id')->all();
-                if (!empty($jurisdictionMunIds)) {
-                    $munCountsQ->whereIn($finalMunCol, $jurisdictionMunIds);
+            $distIdsFilter = array_values(array_filter($filters['jurisdicciones'], fn($v) => is_numeric($v)));
+            if (!empty($distIdsFilter)) {
+                $distisdictionMunIds = DB::table('municipalities')->whereIn('district_id', $distIdsFilter)->pluck('id')->all();
+                if (!empty($distisdictionMunIds)) {
+                    $munCountsQ->whereIn($finalMunCol, $distisdictionMunIds);
                 }
             }
         }
@@ -677,18 +684,18 @@ class StatisticsController extends Controller
         $applyFilters($munCountsQ);
         $munCountsRaw = $munCountsQ->get()->pluck('total', 'muni_id')->all();
 
-        $municipalitiesQ = DB::table('municipalities')->select('id','name','jurisdiction_id')->orderBy('name');
-        if (Schema::hasTable('jurisdictions') && DB::table('jurisdictions')->count() === 12) {
-            $jurIds = DB::table('jurisdictions')->pluck('id')->all();
-            $municipalitiesQ->whereIn('jurisdiction_id', $jurIds);
+        $municipalitiesQ = DB::table('municipalities')->select('id','name','district_id')->orderBy('name');
+        if (Schema::hasTable('districts') && DB::table('districts')->count() === 12) {
+            $distIds = DB::table('districts')->pluck('id')->all();
+            $municipalitiesQ->whereIn('district_id', $distIds);
         }
         $municipalitiesFull = $municipalitiesQ->get();
-        // If frontend requested specific jurisdictions, restrict the municipalities list
+        // If frontend requested specific districts, restrict the municipalities list
         if (!empty($filters['jurisdicciones']) && is_array($filters['jurisdicciones'])) {
-            $jurIdsFilter = array_values(array_filter($filters['jurisdicciones'], fn($v) => is_numeric($v)));
-            if (!empty($jurIdsFilter)) {
-                $municipalitiesFull = $municipalitiesFull->filter(function($m) use ($jurIdsFilter) {
-                    return in_array($m->jurisdiction_id, $jurIdsFilter);
+            $distIdsFilter = array_values(array_filter($filters['jurisdicciones'], fn($v) => is_numeric($v)));
+            if (!empty($distIdsFilter)) {
+                $municipalitiesFull = $municipalitiesFull->filter(function($m) use ($distIdsFilter) {
+                    return in_array($m->district_id, $distIdsFilter);
                 })->values();
             }
         }
@@ -881,26 +888,26 @@ class StatisticsController extends Controller
 
     private function getChartJurisdicciones($filters, $dateColumn, $applyFilters, $limit)
     {
-        if (!Schema::hasTable('jurisdictions')) {
+        if (!Schema::hasTable('districts')) {
             return response()->json(['error' => 'Tabla de jurisdicciones no existe'], 404);
         }
 
         $query = DB::table('deaths')
-            ->leftJoin('jurisdictions', 'jurisdictions.id', '=', 'deaths.jurisdiction_id')
-            ->select('jurisdictions.name as name', DB::raw('COUNT(deaths.id) as total'))
-            ->groupBy('jurisdictions.name')
+            ->leftJoin('districts', 'districts.id', '=', 'deaths.district_id')
+            ->select('districts.name as name', DB::raw('COUNT(deaths.id) as total'))
+            ->groupBy('districts.name')
             ->orderByDesc('total');
         $applyFilters($query);
         if ($limit) {
             $query->limit($limit);
         }
-        $jurisdictions = $query->get();
+        $districts = $query->get();
 
         return response()->json([
             'type' => 'jurisdicciones',
-            'labels' => $jurisdictions->pluck('name')->map(fn($v) => $v ?? 'Sin dato')->values()->all(),
-            'counts' => $jurisdictions->pluck('total')->map(fn($v) => (int)$v)->values()->all(),
-            'total' => array_sum($jurisdictions->pluck('total')->all()),
+            'labels' => $districts->pluck('name')->map(fn($v) => $v ?? 'Sin dato')->values()->all(),
+            'counts' => $districts->pluck('total')->map(fn($v) => (int)$v)->values()->all(),
+            'total' => array_sum($districts->pluck('total')->all()),
         ]);
     }
 
@@ -936,10 +943,10 @@ class StatisticsController extends Controller
         $applyFilters($resCountsQ);
         $resCounts = $resCountsQ->get()->pluck('total', 'muni_id')->all();
 
-        $municipalitiesQ = DB::table('municipalities')->select('id','name','jurisdiction_id')->orderBy('name');
-        if (Schema::hasTable('jurisdictions') && DB::table('jurisdictions')->count() === 12) {
-            $jurIds = DB::table('jurisdictions')->pluck('id')->all();
-            $municipalitiesQ->whereIn('jurisdiction_id', $jurIds);
+        $municipalitiesQ = DB::table('municipalities')->select('id','name','district_id')->orderBy('name');
+        if (Schema::hasTable('districts') && DB::table('districts')->count() === 12) {
+            $distIds = DB::table('districts')->pluck('id')->all();
+            $municipalitiesQ->whereIn('district_id', $distIds);
         }
         $municipalitiesFull = $municipalitiesQ->get();
 

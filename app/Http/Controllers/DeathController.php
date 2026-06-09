@@ -6,7 +6,7 @@ use Illuminate\Http\Request;
 use App\Models\Death;
 use App\Models\DeathCause;
 use App\Models\Municipality;
-use App\Models\Jurisdiction;
+use App\Models\District;
 use App\Models\DeathLocation;
 use Illuminate\Support\Facades\Redirect;
 use Illuminate\Support\Facades\DB;
@@ -32,7 +32,7 @@ class DeathController extends Controller
         // Column mapping (same order as table columns shown to server-side, NOT including the client-side checkbox column)
         // Note: DataTables on the client will include a leading checkbox column (index 0). When DataTables sends an order column index,
         // we need to map it to our $columns array. If the requested column is 0 (the checkbox), default to 'id'. Otherwise subtract 1.
-        $columns = ['gov_folio', 'name', 'first_last_name', 'second_last_name', 'age', 'sex', 'death_date', 'residence_municipality_id', 'death_municipality_id', 'jurisdiction_id', 'death_location_id', 'death_cause_id'];
+        $columns = ['gov_folio', 'name', 'first_last_name', 'second_last_name', 'age', 'sex', 'death_date', 'residence_municipality_id', 'death_municipality_id', 'district_id', 'death_location_id', 'death_cause_id'];
         if ($orderColumnIndex == 0) {
             $orderColumn = 'id';
         } else {
@@ -99,7 +99,7 @@ class DeathController extends Controller
         
         if ($request->filled('jurisdiccion')) {
             $val = $request->input('jurisdiccion');
-            $query->whereHas('jurisdiction', function ($qj) use ($val) {
+            $query->whereHas('district', function ($qj) use ($val) {
                 $qj->whereRaw('LOWER(name) = ?', [strtolower($val)])
                    ->orWhere('name', 'like', "%{$val}%");
             });
@@ -156,7 +156,7 @@ class DeathController extends Controller
         $recordsFiltered = $query->count();
         
         // Apply ordering and pagination
-        $deaths = $query->with(['deathCause', 'deathMunicipality', 'residenceMunicipality', 'jurisdiction', 'deathLocation']);
+        $deaths = $query->with(['deathCause', 'deathMunicipality', 'residenceMunicipality', 'district', 'deathLocation']);
         
         // Special handling for age ordering: calculate total days
         if ($orderColumn === 'age') {
@@ -196,7 +196,7 @@ class DeathController extends Controller
                 'death_date' => $death->death_date ? $death->death_date->format('d/m/Y') : '—',
                 'residence_municipality' => optional($death->residenceMunicipality)->name ?? '—',
                 'death_municipality' => optional($death->deathMunicipality)->name ?? '—',
-                'jurisdiction' => optional($death->jurisdiction)->name ?? '—',
+                'district' => optional($death->district)->name ?? '—',
                 'death_location' => optional($death->deathLocation)->name ?? '—',
                 'death_cause' => optional($death->deathCause)->name ?? '—',
                 'actions' => view('estadisticas.partials.table-actions', compact('death'))->render(),
@@ -305,7 +305,7 @@ class DeathController extends Controller
         // Jurisdiction / Municipality (residence) / death municipality filters
         if ($request->filled('jurisdiccion')) {
             $val = $request->input('jurisdiccion');
-            $query->whereHas('jurisdiction', function ($qj) use ($val) {
+            $query->whereHas('district', function ($qj) use ($val) {
                 $qj->whereRaw('LOWER(name) = ?', [strtolower($val)])
                    ->orWhere('name', 'like', "%{$val}%");
             });
@@ -374,7 +374,7 @@ class DeathController extends Controller
 
         $orderBy = $allowedSorts[$sort] ?? $allowedSorts['death_date_desc'];
 
-        $deaths = $query->with(['deathCause', 'deathMunicipality', 'jurisdiction', 'deathLocation']);
+        $deaths = $query->with(['deathCause', 'deathMunicipality', 'district', 'deathLocation']);
 
         // Apply primary order
         $deaths = $deaths->orderBy($orderBy[0], $orderBy[1]);
@@ -388,7 +388,7 @@ class DeathController extends Controller
 
         // Lookup data used by filters (small lists)
         $causes = DeathCause::all();
-        $jurisdictions = Jurisdiction::all();
+        $districts = District::all();
         $municipalities = Municipality::all();
 
         // Get count of unresolved import failures
@@ -396,7 +396,7 @@ class DeathController extends Controller
             ->where('is_resolved', false)
             ->count();
 
-        return view('estadisticas.datos', compact('deaths', 'causes', 'jurisdictions', 'municipalities', 'unresolvedFailures'));
+        return view('estadisticas.datos', compact('deaths', 'causes', 'districts', 'municipalities', 'unresolvedFailures'));
     }
 
     /**
@@ -411,11 +411,11 @@ class DeathController extends Controller
     {
         // Show the form for creating a new death record
         $causes = DeathCause::all();
-        $jurisdictions = Jurisdiction::all();
+        $districts = District::all();
         $municipalities = Municipality::all();
         $locations = DeathLocation::all();
 
-        return view('estadisticas.acciones.registro', compact('causes', 'jurisdictions', 'municipalities', 'locations'));
+        return view('estadisticas.acciones.registro', compact('causes', 'districts', 'municipalities', 'locations'));
     }
 
     /**
@@ -444,7 +444,7 @@ class DeathController extends Controller
                     $fail('El municipio seleccionado no es válido.');
                 }
             }],
-            'jurisdiction_id' => ['nullable','integer','exists:jurisdictions,id'],
+            'district_id' => ['nullable','integer','exists:districts,id'],
             'death_location_id' => ['required','integer','exists:death_locations,id'],
             'death_cause_id' => ['required','integer','exists:death_causes,id'],
             'death_date' => ['required','date','before_or_equal:today'],
@@ -511,18 +511,18 @@ class DeathController extends Controller
             }
         }
         // Determine jurisdiction: derive from residence municipality when possible
-        // If not found, use explicit `jurisdiction_id` from the form; otherwise assign a default 'NO ENCONTRADA'
-        $jurisdictionId = null;
+        // If not found, use explicit `district_id` from the form; otherwise assign a default 'NO ENCONTRADO'
+        $districtId = null;
         if (!empty($data['residence_municipality_id'])) {
             $resMun = Municipality::find($data['residence_municipality_id']);
-            if ($resMun && $resMun->jurisdiction_id) $jurisdictionId = $resMun->jurisdiction_id;
+            if ($resMun && $resMun->district_id) $districtId = $resMun->district_id;
         }
-        if (is_null($jurisdictionId) && !empty($data['jurisdiction_id'])) {
-            $jurisdictionId = $data['jurisdiction_id'];
+        if (is_null($districtId) && !empty($data['district_id'])) {
+            $districtId = $data['district_id'];
         }
-        if (is_null($jurisdictionId)) {
-            $defaultJur = Jurisdiction::firstOrCreate(['name' => 'NO ENCONTRADA']);
-            $jurisdictionId = $defaultJur->id;
+        if (is_null($districtId)) {
+            $defaultJur = District::firstOrCreate(['name' => 'NO ENCONTRADO']);
+            $districtId = $defaultJur->id;
         }
 
         // Create record
@@ -539,7 +539,7 @@ class DeathController extends Controller
             'death_date' => $data['death_date'],
             'residence_municipality_id' => $data['residence_municipality_id'] ?? null,
             'death_municipality_id' => $data['death_municipality_id'] ?? null,
-            'jurisdiction_id' => $jurisdictionId,
+            'district_id' => $districtId,
             'death_location_id' => $data['death_location_id'] ?? null,
             'death_cause_id' => $data['death_cause_id'],
         ]);
@@ -573,7 +573,7 @@ class DeathController extends Controller
                     $fail('El municipio seleccionado no es válido.');
                 }
             }],
-            'jurisdiction_id' => ['nullable','integer','exists:jurisdictions,id'],
+            'district_id' => ['nullable','integer','exists:districts,id'],
             'death_location_id' => ['required','integer','exists:death_locations,id'],
             'death_cause_id' => ['required','integer','exists:death_causes,id'],
             'death_date' => ['required','date','before_or_equal:today'],
@@ -638,18 +638,18 @@ class DeathController extends Controller
             }
         }
         // Determine jurisdiction: derive from residence municipality when possible
-        // If not found, use explicit `jurisdiction_id` from the form; otherwise assign a default 'NO ENCONTRADA'
-        $jurisdictionId = null;
+        // If not found, use explicit `district_id` from the form; otherwise assign a default 'NO ENCONTRADO'
+        $districtId = null;
         if (!empty($data['residence_municipality_id'])) {
             $resMun = Municipality::find($data['residence_municipality_id']);
-            if ($resMun && $resMun->jurisdiction_id) $jurisdictionId = $resMun->jurisdiction_id;
+            if ($resMun && $resMun->district_id) $districtId = $resMun->district_id;
         }
-        if (is_null($jurisdictionId) && !empty($data['jurisdiction_id'])) {
-            $jurisdictionId = $data['jurisdiction_id'];
+        if (is_null($districtId) && !empty($data['district_id'])) {
+            $districtId = $data['district_id'];
         }
-        if (is_null($jurisdictionId)) {
-            $defaultJur = Jurisdiction::firstOrCreate(['name' => 'NO ENCONTRADA']);
-            $jurisdictionId = $defaultJur->id;
+        if (is_null($districtId)) {
+            $defaultJur = District::firstOrCreate(['name' => 'NO ENCONTRADO']);
+            $districtId = $defaultJur->id;
         }
 
         // Update record
@@ -666,7 +666,7 @@ class DeathController extends Controller
             'death_date' => $data['death_date'],
             'residence_municipality_id' => $data['residence_municipality_id'] ?? null,
             'death_municipality_id' => $data['death_municipality_id'] ?? null,
-            'jurisdiction_id' => $jurisdictionId,
+            'district_id' => $districtId,
             'death_location_id' => $data['death_location_id'] ?? null,
             'death_cause_id' => $data['death_cause_id'],
         ]);
@@ -678,13 +678,13 @@ class DeathController extends Controller
     {
         // Show the form for editing an existing death record
         $causes = DeathCause::all();
-        $jurisdictions = Jurisdiction::all();
+        $districts = District::all();
         $municipalities = Municipality::all();
         $locations = DeathLocation::all();
 
         // The update view expects a variable named $defuncion (existing views use Spanish variable)
         $defuncion = $death;
-        return view('estadisticas.acciones.actualizar-registro', compact('defuncion', 'causes', 'jurisdictions', 'municipalities', 'locations'));
+        return view('estadisticas.acciones.actualizar-registro', compact('defuncion', 'causes', 'districts', 'municipalities', 'locations'));
     }
 
     public function show(Death $death)

@@ -236,4 +236,5 @@
             </div>
         </div>
     </div>
-</div><?php /**PATH C:\Proyectos Laravel\sistema-sec-tam\resources\views/components/header-admin.blade.php ENDPATH**/ ?>
+</div>
+<?php /**PATH C:\Proyectos Laravel\sistema-sec-tam\resources\views/components/header-admin.blade.php ENDPATH**/ ?>

@@ -35,7 +35,7 @@ class DeathRequest extends FormRequest
             'sex' => 'required|string|in:male,female,other',
             'death_date' => 'required|date',
             'residence_municipality_id' => 'required|exists:municipalities,id',
-            'jurisdiction_id' => 'required|exists:jurisdictions,id',
+            'district_id' => 'required|exists:districts,id',
             'death_municipality_id' => 'required|exists:municipalities,id',
             'death_location_id' => 'required|exists:death_locations,id',
             'death_cause_id' => 'required|exists:death_causes,id',

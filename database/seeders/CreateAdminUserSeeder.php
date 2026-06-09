@@ -5,7 +5,7 @@ namespace Database\Seeders;
 use Illuminate\Database\Seeder;
 use App\Models\Role;
 use App\Models\Position;
-use App\Models\Jurisdiction;
+use App\Models\District;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
 
@@ -23,7 +23,7 @@ class CreateAdminUserSeeder extends Seeder
         $position = Position::firstOrCreate(['name' => 'Administrador']);
 
         // Create or get a fallback jurisdiction
-        $jurisdiction = Jurisdiction::firstOrCreate(['name' => 'Sin jurisdicción']);
+        $jurisdiction = District::firstOrCreate(['name' => 'Sin jurisdicción']);
 
         // Credentials to use for the test admin user
         $email = 'admin@example.test';
@@ -43,7 +43,7 @@ class CreateAdminUserSeeder extends Seeder
                 'password' => Hash::make($password),
                 'is_active' => true,
                 'position_id' => $position->id,
-                'jurisdiction_id' => $jurisdiction->id,
+                'district_id' => $jurisdiction->id,
                 'role_id' => $role->id,
                 'registration_date' => now()->toDateString(),
             ]);
@@ -64,7 +64,7 @@ class CreateAdminUserSeeder extends Seeder
                 'password' => Hash::make($password),
                 'is_active' => true,
                 'position_id' => $position->id,
-                'jurisdiction_id' => $jurisdiction->id,
+                'district_id' => $jurisdiction->id,
                 'role_id' => $role->id,
                 'registration_date' => now()->toDateString(),
             ]);

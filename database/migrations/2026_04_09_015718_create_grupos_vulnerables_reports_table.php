@@ -19,7 +19,7 @@ return new class extends Migration
             $table->string('location', 255); // varchar(255) NOT NULL - lugar
             $table->string('promoter', 255); // varchar(255) NOT NULL - promotor
             $table->foreignId('municipality_id')->nullable()->constrained('municipalities'); // FK to municipalities
-            $table->foreignId('jurisdiction_id')->nullable()->constrained('jurisdictions'); // FK to jurisdictions
+            $table->foreignId('district_id')->nullable()->constrained('districts'); // FK to districts
             $table->timestamps(); // created_at, updated_at
         });
     }

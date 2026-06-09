@@ -184,7 +184,7 @@
                         <div class="space-y-3">
                             <div>
                                 <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Jurisdicción de residencia</label>
-                                <input name="jurisdiccion" type="text" value="" readonly
+                                <input name="distrito" type="text" value="" readonly
                                        class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg bg-gray-50 text-gray-700 font-lora" 
                                        placeholder="Jurisdicción">
                             </div>
@@ -366,7 +366,7 @@
                         <div class="space-y-3">
                             <div>
                                 <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Jurisdicción de residencia</label>
-                                <input name="jurisdiccion" type="text" value=""
+                                <input name="distrito" type="text" value=""
                                        class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora" 
                                        placeholder="Jurisdicción">
                             </div>
@@ -717,7 +717,7 @@ function parseDateForInput(dateStr) {
 // Build a map municipality name -> jurisdiction name (for lookup)
 const muniToJurName = @json(
     $municipalities->mapWithKeys(function($m) use ($jurisdictions) {
-        $jur = $jurisdictions->find($m->jurisdiction_id);
+        $jur = $jurisdictions->find($m->district_id);
         return [$m->name => $jur ? $jur->name : ''];
     })
 );
@@ -1089,14 +1089,14 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
                 
                 // Jurisdicción: CALCULAR basada en municipio de residencia
-                if (fieldName === 'jurisdiccion') {
+                if (fieldName === 'distrito') {
                     // Primero buscar si existe en los datos
-                    value = formData.jurisdiccion || 
-                            originalData.jurisdiccion ||
+                    value = formData.distrito || 
+                            originalData.distrito ||
                             formData.jurisdiction ||
                             originalData.jurisdiction ||
-                            formData.jurisdiccion_id ||
-                            originalData.jurisdiccion_id ||
+                            formData.distrito_id ||
+                            originalData.distrito_id ||
                             originalData.jurisdicccion ||
                             '';
                     
@@ -1246,7 +1246,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Debug log important fields
                 console.group('Record #' + card.dataset.recordId + ' - Saved Data');
                 console.log('Municipio Residencia:', originalFormData.municipioresidenciad);
-                console.log('Jurisdicción:', originalFormData.jurisdiccion);
+                console.log('Jurisdicción:', originalFormData.distrito);
                 console.log('Municipio Defunción:', originalFormData.municipiodefunciond);
                 console.log('Lugar Específico:', originalFormData.sitiodefunciond);
                 console.log('Causa Defunción:', originalFormData.sheet);

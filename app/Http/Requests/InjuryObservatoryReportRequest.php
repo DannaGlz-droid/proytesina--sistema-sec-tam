@@ -30,7 +30,7 @@ class InjuryObservatoryReportRequest extends FormRequest
             'tema' => 'required|string|min:3|max:255',
             'fecha' => 'required|date|before_or_equal:today',
             'municipio' => 'required|exists:municipalities,id',
-            'jurisdiccion' => 'required|exists:jurisdictions,id',
+            'jurisdiccion' => 'required|exists:districts,id',
             'descripcion' => 'nullable|string|max:5000',
             // En modo edición, los archivos son opcionales; en creación, obligatorio al menos 1
             'archivos' => $isUpdate ? 'nullable|array' : 'required|array|min:1',

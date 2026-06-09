@@ -13,12 +13,12 @@ class MunicipalityController extends Controller
     public function search(Request $request)
     {
         $q = $request->get('q', '');
-        $jurisdictionId = $request->get('jurisdiction_id');
+        $districtId = $request->get('district_id');
         $items = Municipality::when($q, function($query) use ($q) {
                     $query->where('name', 'like', "%{$q}%");
                 })
-                ->when($jurisdictionId, function($query) use ($jurisdictionId) {
-                    $query->where('jurisdiction_id', $jurisdictionId);
+                ->when($districtId, function($query) use ($districtId) {
+                    $query->where('district_id', $districtId);
                 })
                 ->orderBy('name')
                 ->limit(20)
@@ -35,14 +35,14 @@ class MunicipalityController extends Controller
     {
         $data = $request->validate([
             'name' => 'required|string|max:255',
-            'jurisdiction_id' => 'nullable|integer|exists:jurisdictions,id'
+            'district_id' => 'nullable|integer|exists:districts,id'
         ]);
 
         // Use firstOrCreate to avoid duplicates
         $mun = Municipality::firstOrCreate([
             'name' => $data['name']
         ], [
-            'jurisdiction_id' => $data['jurisdiction_id'] ?? null
+            'district_id' => $data['district_id'] ?? null
         ]);
 
         return response()->json($mun, 201);

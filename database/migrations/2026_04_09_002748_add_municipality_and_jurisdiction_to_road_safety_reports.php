@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::table('road_safety_reports', function (Blueprint $table) {
             $table->foreignId('municipality_id')->nullable()->constrained('municipalities');
-            $table->foreignId('jurisdiction_id')->nullable()->constrained('jurisdictions');
+            $table->foreignId('district_id')->nullable()->constrained('districts');
         });
     }
 
@@ -24,8 +24,8 @@ return new class extends Migration
     {
         Schema::table('road_safety_reports', function (Blueprint $table) {
             $table->dropForeignIdFor('municipalities');
-            $table->dropForeignIdFor('jurisdictions');
-            $table->dropColumn(['municipality_id', 'jurisdiction_id']);
+            $table->dropForeignIdFor('districts');
+            $table->dropColumn(['municipality_id', 'district_id']);
         });
     }
 };

@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('municipalities', function (Blueprint $table) {
             $table->id(); // int PRIMARY KEY AUTO_INCREMENT
             $table->string('name', 255); // varchar(255) NOT NULL
-            $table->foreignId('jurisdiction_id')->constrained('jurisdictions'); // FK to jurisdictions
+            $table->foreignId('district_id')->constrained('districts'); // FK to districts
             $table->timestamps(); // created_at, updated_at
         });
     }

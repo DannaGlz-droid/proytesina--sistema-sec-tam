@@ -26,7 +26,9 @@ class BreathalyzerReport extends Model
         'public_transport_collective',
         'public_transport_individual',
         'cargo_transport',
-        'emergency_vehicles'
+        'emergency_vehicles',
+        'municipality_id',
+        'district_id'
     ];
 
     /**
@@ -59,5 +61,21 @@ class BreathalyzerReport extends Model
     public function publication()
     {
         return $this->belongsTo(Publication::class);
+    }
+
+    /**
+     * Relationship: BreathalyzerReport belongs to Municipality
+     */
+    public function municipality()
+    {
+        return $this->belongsTo(Municipality::class);
+    }
+
+    /**
+     * Relationship: BreathalyzerReport belongs to District
+     */
+    public function district()
+    {
+        return $this->belongsTo(District::class);
     }
 }

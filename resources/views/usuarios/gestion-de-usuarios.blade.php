@@ -23,7 +23,7 @@
             </div>
                 <div class="flex flex-col lg:flex-row gap-6">
                     <div class="lg:w-80 flex-shrink-0">
-                        <x-filtros.usuarios :positions="$positions" :jurisdictions="$jurisdictions" :roles="$roles" />
+                        <x-filtros.usuarios :positions="$positions" :districts="$districts" :roles="$roles" />
                     </div>
                     <div class="flex-1 min-w-0">
                         <!-- Custom controls wrapper styled like the site -->
@@ -79,7 +79,7 @@
                                     <th scope="col" class="px-3 py-2 font-lora whitespace-nowrap text-xs">Correo</th>
                                     <th scope="col" class="px-3 py-2 font-lora whitespace-nowrap text-xs">Teléfono</th>
                                     <th scope="col" class="px-3 py-2 font-lora whitespace-nowrap text-xs">Cargo</th>
-                                    <th scope="col" class="px-3 py-2 font-lora whitespace-nowrap text-xs">Jurisdicción</th>
+                                    <th scope="col" class="px-3 py-2 font-lora whitespace-nowrap text-xs">Distrito</th>
                                     <th scope="col" class="px-3 py-3 font-lora whitespace-nowrap text-xs">Fecha alta</th>
                                     <th scope="col" class="px-3 py-2 font-lora whitespace-nowrap text-xs">Rol</th>
                                     <th scope="col" class="px-3 py-2 font-lora whitespace-nowrap text-xs">Estado</th>
@@ -218,7 +218,7 @@
                     { data: 'email', name: 'email' },
                     { data: 'phone', name: 'phone' },
                     { data: 'position', name: 'position_id', orderable: false },
-                    { data: 'jurisdiction', name: 'jurisdiction_id', orderable: false },
+                    { data: 'district', name: 'district_id', orderable: false },
                     { data: 'registration_date', name: 'registration_date' },
                     { data: 'role', name: 'role_id', orderable: false },
                     { data: 'status', name: 'is_active', orderable: false },

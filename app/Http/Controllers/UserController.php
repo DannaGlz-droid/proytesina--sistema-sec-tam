@@ -8,7 +8,7 @@ use App\Models\User;
 use Illuminate\Support\Facades\Hash;
 use App\Models\Role;
 use App\Models\Position;
-use App\Models\Jurisdiction;
+use App\Models\District;
 use App\Models\Notification;
 use Illuminate\Support\Facades\Redirect;
 use Illuminate\Support\Facades\DB;
@@ -91,7 +91,7 @@ class UserController extends Controller
             'date_from' => ['nullable','date'],
             'date_to' => ['nullable','date'],
             'position_id' => ['nullable','integer','exists:positions,id'],
-            'jurisdiction_id' => ['nullable','integer','exists:jurisdictions,id'],
+            'district_id' => ['nullable','integer','exists:districts,id'],
             'role_id' => ['nullable','integer','exists:roles,id'],
         ]);
 
@@ -124,8 +124,8 @@ class UserController extends Controller
         if ($request->filled('position_id')) {
             $query->where('position_id', $request->input('position_id'));
         }
-        if ($request->filled('jurisdiction_id')) {
-            $query->where('jurisdiction_id', $request->input('jurisdiction_id'));
+        if ($request->filled('district_id')) {
+            $query->where('district_id', $request->input('district_id'));
         }
 
         // last_session filter shortcuts: today, 7, 30, 90, never
@@ -210,18 +210,18 @@ class UserController extends Controller
         $orderBy = $allowedSorts[$sort] ?? $allowedSorts['registration_date_desc'];
 
         // Paginación: mantiene los parámetros de consulta en los enlaces
-        $users = $query->with(['role','position','jurisdiction'])
+        $users = $query->with(['role','position','district'])
                        ->orderBy($orderBy[0], $orderBy[1])
                        ->paginate($perPage)
                        ->withQueryString();
 
         // lookup data for filters
         $positions = Position::all();
-        $jurisdictions = Jurisdiction::all();
+        $districts = District::all();
         $roles = Role::all();
 
         // Renderizar la vista con el paginador (helpers firstItem/lastItem/total disponibles)
-        return view('usuarios.gestion-de-usuarios', compact('users','positions','jurisdictions','roles'));
+        return view('usuarios.gestion-de-usuarios', compact('users','positions','districts','roles'));
     }
 
     /**
@@ -256,7 +256,7 @@ class UserController extends Controller
             6 => 'email',
             7 => 'phone',
             8 => 'position_id',
-            9 => 'jurisdiction_id',
+            9 => 'district_id',
             10 => 'registration_date',
             11 => 'role_id',
             12 => 'is_active',
@@ -290,8 +290,8 @@ class UserController extends Controller
         if ($request->filled('position_id')) {
             $query->where('position_id', $request->input('position_id'));
         }
-        if ($request->filled('jurisdiction_id')) {
-            $query->where('jurisdiction_id', $request->input('jurisdiction_id'));
+        if ($request->filled('district_id')) {
+            $query->where('district_id', $request->input('district_id'));
         }
 
         // last_session filter shortcuts: today, 7, 30, 90, never
@@ -339,7 +339,7 @@ class UserController extends Controller
         $recordsTotal = User::count();
         $recordsFiltered = $query->count();
 
-        $users = $query->with(['role', 'position', 'jurisdiction'])
+        $users = $query->with(['role', 'position', 'district'])
                        ->orderBy($orderColumn, $orderDir)
                        ->skip($start)
                        ->take($length)
@@ -375,7 +375,7 @@ class UserController extends Controller
                 'email' => $user->email,
                 'phone' => $user->phone,
                 'position' => optional($user->position)->name ?? '—',
-                'jurisdiction' => optional($user->jurisdiction)->name ?? '—',
+                'district' => optional($user->district)->name ?? '—',
                 'registration_date' => $user->formatted_registration_date ?? $user->registration_date,
                 'role' => "<span class='inline-block px-3 py-1 rounded-full text-xs font-bold {$roleClasses}'>{$roleName}</span>",
                 'status' => "<div class='flex items-center gap-1'><span class='w-2 h-2 rounded-full {$statusDot}'></span><span class='text-xs'>{$statusText}</span></div>",
@@ -415,14 +415,21 @@ class UserController extends Controller
 
         $positions = Position::all();
         // Solo mostrar jurisdicciones numeradas (I - XII), excluir opciones genéricas
-        $jurisdictions = Jurisdiction::whereNotIn('name', ['OTRO', 'Sin jurisdicción', 'NO ENCONTRADA', 'No encontrada', 'Otra', 'otra'])
+        $districts = District::whereNotIn('name', ['OTRO', 'Sin jurisdicción', 'NO ENCONTRADO', 'NO ENCONTRADO', 'Otra', 'otra'])
                                       ->orderBy('name')
                                       ->get();
+        
+        // Agregar opción "Oficina Central" para admins y coordinadores
+        $centralOffice = new District();
+        $centralOffice->id = 999;
+        $centralOffice->name = 'Oficina Central';
+        $districts->push($centralOffice);
+        
         // Solo mostrar: Administrador, Operador, Coordinador (usar nombres canónicos en español)
         $roles = Role::whereIn('name', ['Administrador', 'Operador', 'Coordinador', 'administrador', 'operador', 'coordinador'])->get();
 
         // Render the registration view (controller provides lookup data)
-        return view('usuarios.acciones.registro', compact('positions', 'jurisdictions', 'roles'));
+        return view('usuarios.acciones.registro', compact('positions', 'districts', 'roles'));
     }
 
     public function store(UserRequest $request)
@@ -455,13 +462,20 @@ class UserController extends Controller
     {
         $positions = Position::all();
         // Solo mostrar jurisdicciones numeradas (I - XII), excluir opciones genéricas
-        $jurisdictions = Jurisdiction::whereNotIn('name', ['OTRO', 'Sin jurisdicción', 'NO ENCONTRADA', 'No encontrada', 'Otra', 'otra'])
+        $districts = District::whereNotIn('name', ['OTRO', 'Sin jurisdicción', 'NO ENCONTRADO', 'NO ENCONTRADO', 'Otra', 'otra'])
                                       ->orderBy('name')
                                       ->get();
+        
+        // Agregar opción "Oficina Central" para admins y coordinadores
+        $centralOffice = new District();
+        $centralOffice->id = 999;
+        $centralOffice->name = 'Oficina Central';
+        $districts->push($centralOffice);
+        
         // Solo mostrar: Administrador, Operador, Coordinador (usar nombres canónicos en español)
         $roles = Role::whereIn('name', ['Administrador', 'Operador', 'Coordinador', 'administrador', 'operador', 'coordinador'])->get();
 
-        return view('usuarios.acciones.actualizar-registro', compact('user', 'positions', 'jurisdictions', 'roles'));
+        return view('usuarios.acciones.actualizar-registro', compact('user', 'positions', 'districts', 'roles'));
       }
 
     public function update(UserRequest $request, User $user)

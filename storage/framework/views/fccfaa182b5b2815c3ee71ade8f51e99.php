@@ -178,4 +178,5 @@ document.addEventListener('DOMContentLoaded', function() {
     // Hacer funciones globales para que puedan ser llamadas desde otros scripts
     window.mostrarModalDescargas = mostrarModal;
 });
-</script><?php /**PATH C:\Proyectos Laravel\sistema-sec-tam\resources\views/components/modal-descargas.blade.php ENDPATH**/ ?>
+</script>
+<?php /**PATH C:\Proyectos Laravel\sistema-sec-tam\resources\views/components/modal-descargas.blade.php ENDPATH**/ ?>

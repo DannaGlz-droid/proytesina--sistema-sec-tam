@@ -152,12 +152,12 @@
                         <div>
                             <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Jurisdicción de residencia</label>
                 {{-- Hidden input to submit jurisdiction id; visible input is readonly/display only --}}
-                <input type="hidden" id="jurisdiction_input" name="jurisdiction_id" value="{{ old('jurisdiction_id', $defuncion->jurisdiction_id ?? '') }}">
+                <input type="hidden" id="jurisdiction_input" name="district_id" value="{{ old('district_id', $defuncion->district_id ?? '') }}">
                 <input type="text" id="jurisdiction" 
                     class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg bg-gray-50 focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora" 
                     placeholder="Pendiente (seleccione municipio)"
                     readonly
-                    value="{{ old('jurisdiction_id') ? ($jurisdictions->firstWhere('id', old('jurisdiction_id'))->name ?? '') : (optional($defuncion->jurisdiction)->name ?? '') }}">
+                    value="{{ old('district_id') ? ($jurisdictions->firstWhere('id', old('district_id'))->name ?? '') : (optional($defuncion->jurisdiction)->name ?? '') }}">
                         </div>
                         <div>
                             <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Lugar específico <span class="text-red-600">*</span></label>
@@ -252,7 +252,7 @@
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             // Build municipality -> jurisdiction id map. Support keys by id and by lowercased name.
-            const muniToJur = @isset($municipalities) @json($municipalities->mapWithKeys(function($m){ return [$m->id => $m->jurisdiction_id, mb_strtolower($m->name) => $m->jurisdiction_id]; })) @else {} @endisset;
+            const muniToJur = @isset($municipalities) @json($municipalities->mapWithKeys(function($m){ return [$m->id => $m->district_id, mb_strtolower($m->name) => $m->district_id]; })) @else {} @endisset;
             const jurIdToName = @isset($jurisdictions) @json($jurisdictions->mapWithKeys(function($j){ return [$j->id => $j->name]; })) @else {} @endisset;
 
             const residenceMuni = document.getElementById('residence_municipality_select');

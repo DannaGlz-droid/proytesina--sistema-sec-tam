@@ -59,14 +59,14 @@
                 <!-- COMPONENTE DE FILTROS -->
                 <?php if (isset($component)) { $__componentOriginal23105fab6c390d1966189f69b007b578 = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginal23105fab6c390d1966189f69b007b578 = $attributes; } ?>
-<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.filtros.defunciones','data' => ['jurisdictions' => $jurisdictions,'municipalities' => $municipalities,'causes' => $causes]] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.filtros.defunciones','data' => ['districts' => $districts,'municipalities' => $municipalities,'causes' => $causes]] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
 <?php $component->withName('filtros.defunciones'); ?>
 <?php if ($component->shouldRender()): ?>
 <?php $__env->startComponent($component->resolveView(), $component->data()); ?>
 <?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
 <?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
 <?php endif; ?>
-<?php $component->withAttributes(['jurisdictions' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($jurisdictions),'municipalities' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($municipalities),'causes' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($causes)]); ?>
+<?php $component->withAttributes(['districts' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($districts),'municipalities' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($municipalities),'causes' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($causes)]); ?>
 <?php echo $__env->renderComponent(); ?>
 <?php endif; ?>
 <?php if (isset($__attributesOriginal23105fab6c390d1966189f69b007b578)): ?>
@@ -134,7 +134,7 @@
                                 <th scope="col" class="px-3 py-2 font-lora whitespace-nowrap text-xs">Fecha def.</th>
                                 <th scope="col" class="px-3 py-2 font-lora whitespace-nowrap text-xs">Municipio (res.)</th>
                                 <th scope="col" class="px-3 py-2 font-lora whitespace-nowrap text-xs">Municipio (def.)</th>
-                                <th scope="col" title="Jurisdicción de residencia" class="px-3 py-2 font-lora whitespace-nowrap text-xs">Jurisdicción (res.)</th>
+                                <th scope="col" title="Distrito de residencia" class="px-3 py-2 font-lora whitespace-nowrap text-xs">Distrito (res.)</th>
                                 <th scope="col" class="px-3 py-2 font-lora whitespace-nowrap text-xs">Lugar</th>
                                 <th scope="col" class="px-3 py-2 font-lora whitespace-nowrap text-xs">Causa</th>
                                 <th scope="col" class="px-3 py-2 font-lora whitespace-nowrap text-xs text-right w-24" data-orderable="false">Acciones</th>
@@ -346,7 +346,7 @@ document.addEventListener('DOMContentLoaded', function () {
             { data: 'death_date', name: 'death_date' },
             { data: 'residence_municipality', name: 'residence_municipality_id', orderable: false },
             { data: 'death_municipality', name: 'death_municipality_id', orderable: false },
-            { data: 'jurisdiction', name: 'jurisdiction_id', orderable: false },
+            { data: 'district', name: 'district_id', orderable: false },
             { data: 'death_location', name: 'death_location_id', orderable: false },
             { data: 'death_cause', name: 'death_cause_id', orderable: false },
             { data: 'actions', name: 'actions', orderable: false, searchable: false }
@@ -562,4 +562,5 @@ document.addEventListener('DOMContentLoaded', function () {
 <?php $__env->stopPush(); ?>
 
  
+
 <?php echo $__env->make('layouts.principal', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH C:\Proyectos Laravel\sistema-sec-tam\resources\views/estadisticas/datos.blade.php ENDPATH**/ ?>

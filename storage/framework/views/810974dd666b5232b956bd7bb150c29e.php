@@ -108,4 +108,5 @@ unset($__defined_vars, $__key, $__value); ?>
         <?php echo e($primaryText); ?>
 
     </button>
-</div><?php /**PATH C:\Proyectos Laravel\sistema-sec-tam\resources\views/components/form-buttons.blade.php ENDPATH**/ ?>
+</div>
+<?php /**PATH C:\Proyectos Laravel\sistema-sec-tam\resources\views/components/form-buttons.blade.php ENDPATH**/ ?>

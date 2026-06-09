@@ -21,7 +21,7 @@ class RoadSafetyReport extends Model
         'location',
         'promoter',
         'municipality_id',
-        'jurisdiction_id',
+        'district_id',
     ];
 
     protected $hidden = [
@@ -64,8 +64,8 @@ class RoadSafetyReport extends Model
     /**
      * Relationship: RoadSafetyReport belongs to Jurisdiction
      */
-    public function jurisdiction()
+    public function district()
     {
-        return $this->belongsTo(Jurisdiction::class);
+        return $this->belongsTo(District::class);
     }
 }

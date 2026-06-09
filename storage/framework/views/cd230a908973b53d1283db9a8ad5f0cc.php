@@ -134,4 +134,5 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 });
-</script><?php /**PATH C:\Proyectos Laravel\sistema-sec-tam\resources\views/components/filtros/seccion.blade.php ENDPATH**/ ?>
+</script>
+<?php /**PATH C:\Proyectos Laravel\sistema-sec-tam\resources\views/components/filtros/seccion.blade.php ENDPATH**/ ?>

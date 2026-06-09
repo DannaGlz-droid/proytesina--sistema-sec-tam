@@ -19,4 +19,5 @@
             </span>
         </a>
     </div>
-</div><?php /**PATH C:\Proyectos Laravel\sistema-sec-tam\resources\views/components/nav-estadisticas.blade.php ENDPATH**/ ?>
+</div>
+<?php /**PATH C:\Proyectos Laravel\sistema-sec-tam\resources\views/components/nav-estadisticas.blade.php ENDPATH**/ ?>

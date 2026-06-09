@@ -71,7 +71,7 @@ Route::middleware('auth')->group(function () {
         })->name('statistic.import-history-view');
         Route::get('estadisticas/importaciones/{importId}/registros-fallidos', function ($importId) {
             $municipalities = \App\Models\Municipality::all();
-            $jurisdictions = \App\Models\Jurisdiction::all();
+            $districts = \App\Models\District::all();
             $locations = \App\Models\DeathLocation::all();
             $causes = \App\Models\DeathCause::all();
             $import = \Illuminate\Support\Facades\DB::table('imports')->find($importId);
@@ -80,7 +80,7 @@ Route::middleware('auth')->group(function () {
                 'importId' => $importId,
                 'importFileName' => $importFileName,
                 'municipalities' => $municipalities,
-                'jurisdictions' => $jurisdictions,
+                'districts' => $districts,
                 'locations' => $locations,
                 'causes' => $causes,
             ]);
@@ -108,7 +108,7 @@ Route::middleware('auth')->group(function () {
         // Crear reportes (formularios)
         Route::get('reportes/registro/seguridad-vial', [App\Http\Controllers\ReportController::class, 'createSeguridadVial'])->name('reportes.seguridad-vial');
         Route::get('reportes/registro/observatorio-de-lesiones', [App\Http\Controllers\ReportController::class, 'createObservatorio'])->name('reportes.observatorio-de-lesiones');
-        Route::view('reportes/registro/alcoholimetria', 'reportes.registro.alcoholimetria')->name('reportes.alcoholimetria');
+        Route::get('reportes/registro/alcoholimetria', [App\Http\Controllers\ReportController::class, 'createAlcoholimetria'])->name('reportes.alcoholimetria');
         Route::get('reportes/registro/grupos-vulnerables', [App\Http\Controllers\ReportController::class, 'createGruposVulnerables'])->name('reportes.grupos-vulnerables');
 
         // Guardar reportes
@@ -170,6 +170,7 @@ Route::middleware('auth')->group(function () {
     Route::middleware('role:Administrador,Coordinador,Operador')->group(function () {
         Route::get('api/users/search', [App\Http\Controllers\UserController::class, 'search'])->name('api.users.search');
         Route::get('api/municipalities/search', [App\Http\Controllers\MunicipalityController::class, 'search'])->name('api.municipalities.search');
+        Route::get('api/districts/search', [App\Http\Controllers\DistrictController::class, 'search'])->name('api.districts.search');
         Route::post('api/municipalities', [App\Http\Controllers\MunicipalityController::class, 'store'])->name('api.municipalities.store');
         Route::get('api/causes/search', [App\Http\Controllers\LookupController::class, 'searchCauses'])->name('api.causes.search');
         Route::get('api/locations/search', [App\Http\Controllers\LookupController::class, 'searchLocations'])->name('api.locations.search');

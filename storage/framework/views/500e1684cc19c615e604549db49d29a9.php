@@ -152,4 +152,5 @@
 <?php if (isset($__componentOriginal8995d0c5cd3d3f03fd154e9c66f4c68f)): ?>
 <?php $component = $__componentOriginal8995d0c5cd3d3f03fd154e9c66f4c68f; ?>
 <?php unset($__componentOriginal8995d0c5cd3d3f03fd154e9c66f4c68f); ?>
-<?php endif; ?><?php /**PATH C:\Proyectos Laravel\sistema-sec-tam\resources\views/components/modal-alcoholimetria.blade.php ENDPATH**/ ?>
+<?php endif; ?>
+<?php /**PATH C:\Proyectos Laravel\sistema-sec-tam\resources\views/components/modal-alcoholimetria.blade.php ENDPATH**/ ?>

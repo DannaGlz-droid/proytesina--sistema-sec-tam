@@ -37,4 +37,5 @@
     
     <?php echo $__env->yieldPushContent('scripts'); ?>
 </body>
-</html><?php /**PATH C:\Proyectos Laravel\sistema-sec-tam\resources\views/layouts/principal.blade.php ENDPATH**/ ?>
+</html>
+<?php /**PATH C:\Proyectos Laravel\sistema-sec-tam\resources\views/layouts/principal.blade.php ENDPATH**/ ?>

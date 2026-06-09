@@ -42,7 +42,12 @@ class UserRequest extends FormRequest
                     $fail('El cargo seleccionado no es válido.');
                 }
             }],
-            'jurisdiction_id' => 'required|exists:jurisdictions,id',
+            'district_id' => ['required', function ($attribute, $value, $fail) {
+                // Permitir ID 999 (Oficina Central) o cualquier distrito que exista en la BD
+                if ($value != 999 && !\App\Models\District::where('id', $value)->exists()) {
+                    $fail('El distrito seleccionado no es válido.');
+                }
+            }],
             'role_id' => 'required|exists:roles,id',
         ];
     }

@@ -55,14 +55,14 @@
         </select>
         @error('position_id') <div class="text-red-600">{{ $message }}</div> @enderror
 
-        <label for="" name="jurisdiction">Jurisdiction</label>
-        <select name="jurisdiction_id">
+        <label for="" name="district">Distrito</label>
+        <select name="district_id">
             <option value="">-- Seleccionar --</option>
             @foreach ($jurisdictions as $jurisdiction)
-                <option value="{{ $jurisdiction->id }}" {{ $user->jurisdiction_id == $jurisdiction->id ? 'selected' : '' }}>{{ $jurisdiction->name }}</option>
+                <option value="{{ $jurisdiction->id }}" {{ $user->district_id == $jurisdiction->id ? 'selected' : '' }}>{{ $jurisdiction->name }}</option>
             @endforeach
         </select>
-        @error('jurisdiction_id') <div class="text-red-600">{{ $message }}</div> @enderror
+        @error('district_id') <div class="text-red-600">{{ $message }}</div> @enderror
 
         <label for="" name="role">Role</label>
         <select name="role_id">

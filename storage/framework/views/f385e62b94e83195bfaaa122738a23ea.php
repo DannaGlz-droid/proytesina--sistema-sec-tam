@@ -36,8 +36,8 @@
                     <button type="button" class="chart-tab-btn" data-chart="causas" title="Causas principales de defunción" style="border-bottom-color: #6B4C8A;">
                         <span class="font-lora text-sm">Causas</span>
                     </button>
-                    <button type="button" class="chart-tab-btn" data-chart="jurisdicciones" title="Distribución por jurisdicción" style="border-bottom-color: #C08400;">
-                        <span class="font-lora text-sm">Jurisdicciones</span>
+                    <button type="button" class="chart-tab-btn" data-chart="distritoes" title="Distribución por distrito" style="border-bottom-color: #C08400;">
+                        <span class="font-lora text-sm">Distritos</span>
                     </button>
                     <button type="button" class="chart-tab-btn" data-chart="comparativa" title="Residencia vs Lugar de Defunción" style="border-bottom-color: #4A7C7E;">
                         <span class="font-lora text-sm">Comparativa</span>
@@ -171,16 +171,16 @@
                                     </select>
                                 </div>
 
-                                <!-- Filtro de Jurisdicciones (contextual) -->
-                                <?php if($jurisdictions->count() > 0): ?>
-                                <div id="filterJurisdicciones" class="filter-section dynamic-filter" style="display: none;">
+                                <!-- Filtro de distritos (contextual) -->
+                                <?php if($districts->count() > 0): ?>
+                                <div id="filterdistritoes" class="filter-section dynamic-filter" style="display: none;">
                                     <div class="flex items-center gap-2 mb-3 pb-2 border-b border-gray-200">
                                         <i class="fas fa-building text-[#611132] text-sm"></i>
-                                        <h4 class="text-xs font-semibold text-[#404041] font-lora">Jurisdicciones</h4>
+                                        <h4 class="text-xs font-semibold text-[#404041] font-lora">Distritos</h4>
                                     </div>
-                                    <select id="jurisdiccionesFilter" class="tomselect-select" multiple data-placeholder="Selecciona jurisdicciones">
-                                        <?php $__currentLoopData = $jurisdictions; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $jur): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                                            <option value="<?php echo e($jur->id); ?>"><?php echo e($jur->name); ?></option>
+                                    <select id="distritoesFilter" class="tomselect-select" multiple data-placeholder="Selecciona distritos">
+                                        <?php $__currentLoopData = $districts; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $district): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                            <option value="<?php echo e($district->id); ?>"><?php echo e($district->name); ?></option>
                                         <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                                     </select>
                                 </div>
@@ -481,7 +481,7 @@
         //     edades: { type: 'bar', dataLabelMode: 'value', limit: null },
         //     genero: { type: 'pie', dataLabelMode: 'value', limit: null },
         //     causas: { type: 'bar', dataLabelMode: 'value', limit: null },
-        //     jurisdicciones: { type: 'bar', dataLabelMode: 'value', limit: null },
+        //     distritoes: { type: 'bar', dataLabelMode: 'value', limit: null },
         //     comparativa: { type: 'bar', dataLabelMode: 'value', limit: null }
         // };
 
@@ -495,8 +495,8 @@
             municipiosNames: [],
             causas: [],
             causasNames: [],
-            jurisdicciones: [],
-            jurisdiccionesNames: [],
+            distritoes: [],
+            distritoesNames: [],
             sexo: null,
             granularidad: 'month',
             mostrarCausasPrincipales: false,
@@ -505,7 +505,7 @@
         };
 
         // Full municipalities list with jurisdiction info (used to filter municipios when jurisdicción is selected)
-        const municipalitiesFull = <?php echo json_encode($municipalities->map(function($m) { return ['id' => $m->id, 'name' => $m->name, 'jurisdiction_id' => $m->jurisdiction_id ?? null]; })->values()) ?>;
+        const municipalitiesFull = <?php echo json_encode($municipalities->map(function($m) { return ['id' => $m->id, 'name' => $m->name, 'district_id' => $m->district_id ?? null]; })->values()) ?>;
 
         const colorPalettes = {
             // Paleta aqua de 15 colores armoniosos oscuro a medio (para Top <= 15)
@@ -670,7 +670,7 @@
             edades: 'bar',
             genero: 'bar',
             causas: 'bar',
-            jurisdicciones: 'bar',
+            distritoes: 'bar',
             comparativa: 'bar'
         };
 
@@ -680,7 +680,7 @@
             edades: ['bar', 'pie', 'doughnut'],
             genero: ['bar', 'pie', 'doughnut'],
             causas: ['bar', 'barHorizontal', 'pie', 'doughnut'],
-            jurisdicciones: ['bar', 'barHorizontal', 'pie', 'doughnut'],
+            distritoes: ['bar', 'barHorizontal', 'pie', 'doughnut'],
             comparativa: ['bar']
         };
 
@@ -690,7 +690,7 @@
             edades: 'Distribución por Edades',
             genero: 'Distribución por Género',
             causas: 'Causas de Defunción',
-            jurisdicciones: 'Distribución por Jurisdicción',
+            distritoes: 'Distribución por Distritos',
             comparativa: 'Comparativa: Residencia vs Defunción'
         };
 
@@ -702,17 +702,17 @@
         };
 
         const filtersForChart = {
-            municipios: ['dates', 'tipoMunicipio', 'causas', 'jurisdicciones', 'sexo'],
+            municipios: ['dates', 'tipoMunicipio', 'causas', 'distritoes', 'sexo'],
             tendencias: ['dates', 'municipios', 'causas', 'sexo', 'granularidad'],
-            edades: ['dates', 'municipios', 'causas', 'jurisdicciones', 'causasPrincipales'],
-            genero: ['dates', 'municipios', 'causas', 'jurisdicciones'],
-            causas: ['dates', 'municipios', 'jurisdicciones', 'sexo'],
-            jurisdicciones: ['dates', 'causas', 'sexo'],
+            edades: ['dates', 'municipios', 'causas', 'distritoes', 'causasPrincipales'],
+            genero: ['dates', 'municipios', 'causas', 'distritoes'],
+            causas: ['dates', 'municipios', 'distritoes', 'sexo'],
+            distritoes: ['dates', 'causas', 'sexo'],
             comparativa: ['dates', 'tipoComparativa']
         };
 
         // Gráficas que deben mostrar el selector "Top"
-        const chartTypesWithTopSelector = ['municipios', 'jurisdicciones', 'comparativa'];
+        const chartTypesWithTopSelector = ['municipios', 'distritoes', 'comparativa'];
 
         const chartTypeIcons = {
             bar: 'fa-chart-column',
@@ -739,7 +739,7 @@
         // Definir límites disponibles por tipo de gráfico
         const chartLimitsByType = {
             municipios: [5, 10, 15],
-            jurisdicciones: [5, 10],  // Solo hasta 10 porque hay 12 jurisdicciones en total
+            distritoes: [5, 10],  // Solo hasta 10 porque hay 12 distritoes en total
             comparativa: [5, 10, 15],
             default: [5, 10, 15]
         };
@@ -787,7 +787,7 @@
 
         function initializeTomSelect() {
             // Inicializar Tom Select para multiselects - permite deseleccionar fácilmente
-            const multiSelectIds = ['municipiosFilter', 'causasFilter', 'jurisdiccionesFilter'];
+            const multiSelectIds = ['municipiosFilter', 'causasFilter', 'distritoesFilter'];
             
             multiSelectIds.forEach(id => {
                 const element = document.getElementById(id);
@@ -812,7 +812,7 @@
                             collectFilters();
                             updateActiveFiltersDisplay();
                             // Si cambió la jurisdicción mientras se ve 'municipios', actualizar la lista de municipios disponibles
-                            if (element.id === 'jurisdiccionesFilter' && currentChartType === 'municipios') {
+                            if (element.id === 'distritoesFilter' && currentChartType === 'municipios') {
                                 const selected = Array.isArray(value) ? value.map(String) : (value ? [String(value)] : []);
                                 updateMunicipiosOptions(selected);
                             }
@@ -878,7 +878,7 @@
             });
         }
 
-        // Actualiza las opciones del select de municipios según las jurisdicciones seleccionadas
+        // Actualiza las opciones del select de municipios según las distritoes seleccionadas
         function updateMunicipiosOptions(selectedJurIds = []) {
             const munEl = document.getElementById('municipiosFilter');
             if (!munEl) return;
@@ -890,9 +890,9 @@
 
             // Filtrar la lista completa de municipios
             const allowed = municipalitiesFull.filter(m => {
-                if (!m.jurisdiction_id) return selStr.length === 0; // si no hay info, mostrar sólo cuando no hay filtro
+                if (!m.district_id) return selStr.length === 0; // si no hay info, mostrar sólo cuando no hay filtro
                 if (selStr.length === 0) return true; // sin jurisdicción seleccionada -> todos
-                return selStr.includes(String(m.jurisdiction_id));
+                return selStr.includes(String(m.district_id));
             });
 
             // Guardar selecciones actuales y mantener sólo las que siguen permitidas
@@ -960,7 +960,7 @@
             
             document.getElementById('customStartDate').addEventListener('change', updateChart);
             document.getElementById('customEndDate').addEventListener('change', updateChart);
-            // Nota: Los eventos para municipiosFilter, causasFilter, jurisdiccionesFilter 
+            // Nota: Los eventos para municipiosFilter, causasFilter, distritoesFilter 
             // se manejan dentro de Tom Select (onChange), no aquí
             document.getElementById('sexoFilter').addEventListener('change', updateChart);
             document.getElementById('granularidadFilter').addEventListener('change', updateChart);
@@ -1204,7 +1204,7 @@
         }
 
         function updateVisibleFilters(chartType) {
-            const allFilters = ['filterTipoMunicipio', 'filterMunicipios', 'filterCausas', 'filterJurisdicciones', 'filterSexo', 'filterGranularidad', 'filterCausasPrincipales', 'filterTipoComparativa'];
+            const allFilters = ['filterTipoMunicipio', 'filterMunicipios', 'filterCausas', 'filterdistritoes', 'filterSexo', 'filterGranularidad', 'filterCausasPrincipales', 'filterTipoComparativa'];
             const availableFilters = filtersForChart[chartType] || [];
 
             allFilters.forEach(filterId => {
@@ -1214,7 +1214,7 @@
                     if (filterId === 'filterTipoMunicipio' && availableFilters.includes('tipoMunicipio')) show = true;
                     if (filterId === 'filterMunicipios' && availableFilters.includes('municipios')) show = true;
                     if (filterId === 'filterCausas' && availableFilters.includes('causas')) show = true;
-                    if (filterId === 'filterJurisdicciones' && availableFilters.includes('jurisdicciones')) show = true;
+                    if (filterId === 'filterdistritoes' && availableFilters.includes('distritoes')) show = true;
                     if (filterId === 'filterSexo' && availableFilters.includes('sexo')) show = true;
                     if (filterId === 'filterGranularidad' && availableFilters.includes('granularidad')) show = true;
                     if (filterId === 'filterCausasPrincipales' && availableFilters.includes('causasPrincipales')) show = true;
@@ -1580,8 +1580,8 @@
             activeFilters.municipiosNames = Array.from(document.getElementById('municipiosFilter').selectedOptions || []).map(o => o.text);
             activeFilters.causas = Array.from(document.getElementById('causasFilter').selectedOptions || []).map(o => o.value);
             activeFilters.causasNames = Array.from(document.getElementById('causasFilter').selectedOptions || []).map(o => o.text);
-            activeFilters.jurisdicciones = Array.from(document.getElementById('jurisdiccionesFilter').selectedOptions || []).map(o => o.value);
-            activeFilters.jurisdiccionesNames = Array.from(document.getElementById('jurisdiccionesFilter').selectedOptions || []).map(o => o.text);
+            activeFilters.distritoes = Array.from(document.getElementById('distritoesFilter').selectedOptions || []).map(o => o.value);
+            activeFilters.distritoesNames = Array.from(document.getElementById('distritoesFilter').selectedOptions || []).map(o => o.text);
             activeFilters.sexo = document.getElementById('sexoFilter').value || null;
             activeFilters.granularidad = document.getElementById('granularidadFilter').value || 'month';
             activeFilters.mostrarCausasPrincipales = document.getElementById('mostrarCausasPrincipales').checked || false;
@@ -1709,12 +1709,12 @@
                 hasActiveFilters = true;
             }
 
-            // Mostrar jurisdicciones seleccionadas
-            if (activeFilters.jurisdicciones.length > 0) {
-                const jurisdiccionesText = activeFilters.jurisdiccionesNames.join(', ');
+            // Mostrar distritoes seleccionadas
+            if (activeFilters.distritoes.length > 0) {
+                const distritoesText = activeFilters.distritoesNames.join(', ');
                 container.innerHTML += `<span class="inline-flex items-center gap-1 bg-[#9B4D6F] text-white text-xs px-2.5 py-1 rounded-full font-lora">
-                    ${jurisdiccionesText}
-                    <button onclick="clearFilter('jurisdicciones')" class="ml-1 hover:opacity-70">×</button>
+                    ${distritoesText}
+                    <button onclick="clearFilter('distritoes')" class="ml-1 hover:opacity-70">×</button>
                 </span>`;
                 hasActiveFilters = true;
             }
@@ -1763,8 +1763,8 @@
                 const el = document.getElementById('causasFilter');
                 el.value = '';
                 if (el.tomselect) el.tomselect.clear();
-            } else if (filterType === 'jurisdicciones') {
-                const el = document.getElementById('jurisdiccionesFilter');
+            } else if (filterType === 'distritoes') {
+                const el = document.getElementById('distritoesFilter');
                 el.value = '';
                 if (el.tomselect) el.tomselect.clear();
             } else if (filterType === 'sexo') {
@@ -1787,7 +1787,7 @@
                 ...(activeFilters.selectedYears.length && { years: activeFilters.selectedYears }),
                 ...(activeFilters.municipios.length && { municipios: activeFilters.municipios }),
                 ...(activeFilters.causas.length && { causas: activeFilters.causas }),
-                ...(activeFilters.jurisdicciones.length && { jurisdicciones: activeFilters.jurisdicciones }),
+                ...(activeFilters.distritoes.length && { distritoes: activeFilters.distritoes }),
                 ...(activeFilters.sexo && { sex: activeFilters.sexo }),
                 ...(chartConfig.limit && { limit: chartConfig.limit }),
                 ...(chartType === 'tendencias' && { group_by: activeFilters.granularidad }),
@@ -1837,14 +1837,14 @@
                 edades: { left: '3%', right: '4%', top: 55, bottom: 60, containLabel: true },
                 genero: { left: '3%', right: '4%', top: 55, bottom: 70, containLabel: true },
                 causas: { left: '3%', right: '4%', top: 55, bottom: 70, containLabel: true },
-                jurisdicciones: { left: '3%', right: '4%', top: 55, bottom: 70, containLabel: true },
+                distritoes: { left: '3%', right: '4%', top: 55, bottom: 70, containLabel: true },
                 comparativa: { left: '3%', right: '4%', top: 55, bottom: 70, containLabel: true },
                 tendencias: { left: '3%', right: '4%', bottom: 70, top: 55, containLabel: true }
             };
             
             // Obtener grid para el chart type actual
             const verticalBarGrid = verticalBarGrids[currentChartType] || { left: '3%', right: '4%', top: 55, bottom: 70, containLabel: true };
-            const expandedCircularCharts = ['municipios', 'edades', 'genero', 'causas', 'jurisdicciones'].includes(currentChartType);
+            const expandedCircularCharts = ['municipios', 'edades', 'genero', 'causas', 'distritoes'].includes(currentChartType);
             const formatNumber = (num) => Number(num || 0).toLocaleString('es-MX');
             const labelRich = {
                 value: { fontWeight: 800, color: '#1f2937', fontSize: expandedCircularCharts ? 18 : valueLabelFontSize + 1 },
@@ -2188,9 +2188,9 @@
                 const isHorizontal = chartType === 'barHorizontal';
                 let categoryAxisFontSize = ['edades', 'genero'].includes(currentChartType)
                     ? 16
-                    : (currentChartType === 'jurisdicciones' ? 12 : axisFontSize);
+                    : (currentChartType === 'distritoes' ? 12 : axisFontSize);
 
-                if (['municipios', 'jurisdicciones'].includes(currentChartType)) {
+                if (['municipios', 'distritoes'].includes(currentChartType)) {
                     if (chartConfig.limit === 10) {
                         categoryAxisFontSize = 15;
                     } else if (chartConfig.limit === 5) {
@@ -2421,7 +2421,7 @@
                 'edades': 'bar',                   // Barras verticales para edades
                 'genero': 'pie',                   // Pastel para género
                 'causas': 'bar',                   // Barras verticales por defecto
-                'jurisdicciones': 'bar',           // Barras verticales para jurisdicciones
+                'distritoes': 'bar',           // Barras verticales para distritoes
                 'comparativa': 'bar'               // Barras agrupadas para comparativa
             };
             return typeMap[metric] || 'bar';
@@ -2454,7 +2454,7 @@
             });
             
             // Limpiar multiselects
-            const multiSelectIds = ['municipiosFilter', 'causasFilter', 'jurisdiccionesFilter'];
+            const multiSelectIds = ['municipiosFilter', 'causasFilter', 'distritoesFilter'];
             multiSelectIds.forEach(id => {
                 const element = document.getElementById(id);
                 if (element) {
@@ -2505,7 +2505,7 @@
             });
             
             // Limpiar multiselects y actualizar Tom Select
-            const multiSelectIds = ['municipiosFilter', 'causasFilter', 'jurisdiccionesFilter'];
+            const multiSelectIds = ['municipiosFilter', 'causasFilter', 'distritoesFilter'];
             multiSelectIds.forEach(id => {
                 const element = document.getElementById(id);
                 if (element) {

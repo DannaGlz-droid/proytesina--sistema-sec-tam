@@ -156,17 +156,17 @@
 <?php endif; ?>
 <?php $component->withAttributes(['icono' => 'map-marker-alt','titulo' => 'Ubicación']); ?>
         <div class="filter-group">
-            <label class="block text-xs text-gray-600 font-lora mb-1">Jurisdicción:</label>
-            <select name="jurisdiction_id" class="tomselect-select" id="jurisdiccion">
-                <option value="" <?php echo e(request('jurisdiction_id') === null || request('jurisdiction_id') === '' ? 'selected' : ''); ?>>Todas</option>
-                <?php if(isset($jurisdictions) && $jurisdictions->isNotEmpty()): ?>
-                    <?php $__currentLoopData = $jurisdictions; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $j): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                        <option value="<?php echo e($j->id); ?>" <?php echo e((string) request('jurisdiction_id') === (string) $j->id ? 'selected' : ''); ?>><?php echo e($j->name); ?></option>
+            <label class="block text-xs text-gray-600 font-lora mb-1">Distrito:</label>
+            <select name="district_id" class="tomselect-select" id="distrito">
+                <option value="" <?php echo e(request('district_id') === null || request('district_id') === '' ? 'selected' : ''); ?>>Todas</option>
+                <?php if(isset($districts) && $districts->isNotEmpty()): ?>
+                    <?php $__currentLoopData = $districts; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $d): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                        <option value="<?php echo e($d->id); ?>" <?php echo e((string) request('district_id') === (string) $d->id ? 'selected' : ''); ?>><?php echo e($d->name); ?></option>
                     <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                 <?php else: ?>
-                    <option>Jurisdicción Sanitaria I</option>
-                    <option>Jurisdicción Sanitaria II</option>
-                    <option>Jurisdicción Sanitaria III</option>
+                    <option>Distrito Sanitario I</option>
+                    <option>Distrito Sanitario II</option>
+                    <option>Distrito Sanitario III</option>
                 <?php endif; ?>
             </select>
         </div>
@@ -596,17 +596,17 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     // --- Inicializar TomSelect para el campo de Jurisdicción ---
-    function initTomSelectJurisdiccion() {
-        const selectEl = document.getElementById('jurisdiccion');
+    function initTomSelectdistrito() {
+        const selectEl = document.getElementById('distrito');
         if (selectEl && typeof TomSelect !== 'undefined') {
-            const tomSelectInstance = new TomSelect(selectEl, {
+                const tomSelectInstance = new TomSelect(selectEl, {
                 valueField: 'value',
                 labelField: 'text',
                 searchField: 'text',
                 maxOptions: 100,
                 maxItems: 1,
                 create: false,
-                placeholder: 'Seleccione una jurisdicción...',
+                    placeholder: 'Seleccione un distrito...',
                 onChange: () => {
                     // Recalcular altura de la sección si está abierta
                     const section = selectEl.closest('.filter-section');
@@ -620,20 +620,20 @@ document.addEventListener('DOMContentLoaded', function() {
             });
 
             // Guardar instancia globalmente
-            window.tomSelect_jurisdiccion = tomSelectInstance;
+            window.tomSelect_distrito = tomSelectInstance;
         }
     }
 
     // Try to initialize immediately
     if (typeof TomSelect !== 'undefined') {
-        initTomSelectJurisdiccion();
+        initTomSelectdistrito();
     } else {
         // If TomSelect not available yet, wait for it
         let attempts = 0;
         const checkTomSelect = setInterval(() => {
             if (typeof TomSelect !== 'undefined') {
                 clearInterval(checkTomSelect);
-                initTomSelectJurisdiccion();
+                initTomSelectdistrito();
             }
             attempts++;
             if (attempts > 50) { // Stop after 5 seconds (50 * 100ms)
@@ -643,4 +643,5 @@ document.addEventListener('DOMContentLoaded', function() {
         }, 100);
     }
 });
-</script><?php /**PATH C:\Proyectos Laravel\sistema-sec-tam\resources\views/components/filtros/usuarios.blade.php ENDPATH**/ ?>
+</script>
+<?php /**PATH C:\Proyectos Laravel\sistema-sec-tam\resources\views/components/filtros/usuarios.blade.php ENDPATH**/ ?>

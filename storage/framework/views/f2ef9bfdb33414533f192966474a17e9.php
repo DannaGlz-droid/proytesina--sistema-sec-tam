@@ -30,7 +30,7 @@
         <?php endif; ?>
 
         <!-- Contenedor principal -->
-        <div class="border border-[#404041] rounded-lg lg:rounded-xl bg-white bg-opacity-95 max-w-full shadow-md overflow-hidden">
+        <div class="border border-[#404041] rounded-lg lg:rounded-xl bg-white bg-opacity-95 max-w-full shadow-md overflow-visible">
             
             <!-- PESTAÑAS INTEGRADAS AL CONTENEDOR -->
             <div class="border-b border-gray-300 bg-gray-50 px-4 lg:px-6 pt-4">
@@ -78,6 +78,17 @@
                                 <option value="pendiente" <?php echo e(request('status') === 'pendiente' ? 'selected' : ''); ?>>Pendiente</option>
                                 <option value="aprobado" <?php echo e(request('status') === 'aprobado' ? 'selected' : ''); ?>>Aprobado</option>
                                 <option value="rechazado" <?php echo e(request('status') === 'rechazado' ? 'selected' : ''); ?>>Rechazado</option>
+                            </select>
+                        </div>
+
+                        <!-- Distrito -->
+                        <div class="flex-1 min-w-0 w-full sm:w-auto sm:flex-1 sm:max-w-[160px]">
+                            <label class="block text-xs font-semibold text-[#404041] mb-1 font-lora">Distrito</label>
+                            <select id="district_id" name="district_id" class="tomselect-select" data-placeholder="Todos los distritos">
+                                <option value="">Todos los distritos</option>
+                                <?php $__currentLoopData = $districts; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $district): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                    <option value="<?php echo e($district->id); ?>" <?php echo e(request('district_id') == $district->id ? 'selected' : ''); ?>><?php echo e($district->name); ?></option>
+                                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                             </select>
                         </div>
 
@@ -179,15 +190,15 @@
                                 $editRoute = route('reportes.seguridad-vial.edit', $pub) . '?redirect_tipo=' . (request('tipo') ?? 'todos');
                                 $reporte = $pub->roadSafetyReports->first();
                                 if ($reporte) {
-                                    // Mostrar la línea de Actividad sólo para Seguridad Vial
-                                    $activityInfo = 'Actividad: ' . ($reporte->activityType->name ?? 'No especificado');
+                                    // Mostrar el Distrito en lugar de Actividad
+                                    $activityInfo = 'Distrito: ' . ($reporte->district->name ?? 'No especificado');
                                     $dataAttributes = [
                                         'data-lugar' => $reporte->location ?? '',
                                         'data-promotor' => $reporte->promoter ?? '',
                                         'data-participantes' => $reporte->participants ?? '',
                                         'data-actividad' => $reporte->activityType->name ?? '',
                                         'data-municipio' => $reporte->municipality->name ?? '',
-                                        'data-jurisdiccion' => $reporte->jurisdiction->name ?? '',
+                                        'data-distrito' => $reporte->district->name ?? '',
                                     ];
                                 }
                             } elseif ($pub->publication_type === 'observatorio') {
@@ -198,11 +209,11 @@
                                 $editRoute = route('reportes.observatorio.edit', $pub) . '?redirect_tipo=' . (request('tipo') ?? 'todos');
                                 $reporte = $pub->injuryObservatoryReports->first();
                                 if ($reporte) {
-                                    // No mostrar línea de "Actividad" para observatorio; mantener sólo "Subido por"
-                                    $activityInfo = '';
+                                    // Mostrar el Distrito para Observatorio
+                                    $activityInfo = 'Distrito: ' . ($reporte->district->name ?? 'No especificado');
                                     $dataAttributes = [
                                         'data-municipio' => $reporte->municipality->name ?? '',
-                                        'data-jurisdiccion' => $reporte->jurisdiction->name ?? '',
+                                        'data-distrito' => $reporte->district->name ?? '',
                                     ];
                                 }
                             } elseif ($pub->publication_type === 'alcoholimetria') {
@@ -213,8 +224,8 @@
                                 $editRoute = route('reportes.alcoholimetria.edit', $pub) . '?redirect_tipo=' . (request('tipo') ?? 'todos');
                                 $reporte = $pub->breathalyzerReports->first();
                                 if ($reporte) {
-                                    // No mostrar línea de "Actividad" para alcoholimetría; mantener sólo "Subido por"
-                                    $activityInfo = '';
+                                    // Mostrar el Distrito para Alcoholimetría
+                                    $activityInfo = 'Distrito: ' . ($reporte->district->name ?? 'No especificado');
                                     $dataAttributes = [
                                         'data-puntos-revision' => $reporte->checkpoints ?? '',
                                         'data-conductores-no-aptos' => $reporte->drivers_not_fit ?? '',
@@ -237,14 +248,14 @@
                                 $editRoute = route('reportes.grupos-vulnerables.edit', $pub) . '?redirect_tipo=' . (request('tipo') ?? 'todos');
                                 $reporte = $pub->gruposVulnerablesReport;
                                 if ($reporte) {
-                                    $activityInfo = 'Actividad: ' . ($reporte->activityType->name ?? 'No especificado');
+                                    $activityInfo = 'Distrito: ' . ($reporte->district->name ?? 'No especificado');
                                     $dataAttributes = [
                                         'data-lugar' => $reporte->location ?? '',
                                         'data-promotor' => $reporte->promoter ?? '',
                                         'data-participantes' => $reporte->participants ?? '',
                                         'data-actividad' => $reporte->activityType->name ?? '',
                                         'data-municipio' => $reporte->municipality->name ?? '',
-                                        'data-jurisdiccion' => $reporte->jurisdiction->name ?? '',
+                                        'data-distrito' => $reporte->district->name ?? '',
                                     ];
                                 } else {
                                     $activityInfo = '';
@@ -422,7 +433,7 @@
 
     <!-- INCLUIR TODOS LOS COMPONENTES DE MODALES -->
 <!-- Modal de rechazo -->
-<div id="reject-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+<div id="reject-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-[999999] flex items-center justify-center p-4">
     <div class="bg-white rounded-xl shadow-2xl max-w-2xl w-full p-6 border border-gray-200">
         <div class="flex items-center justify-between mb-4 pb-4 border-b border-gray-300">
             <h3 class="text-xl font-bold text-[#404041] font-lora">Rechazar Reporte</h3>
@@ -460,7 +471,7 @@
 </div>
 
 <!-- Modal de eliminación -->
-<div id="delete-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+<div id="delete-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-[999999] flex items-center justify-center p-4">
     <div class="bg-white rounded-xl shadow-2xl max-w-2xl w-full p-6 border border-gray-200">
         <div class="flex items-center justify-between mb-4 pb-4 border-b border-gray-300">
             <h3 class="text-xl font-bold text-[#404041] font-lora">Eliminar Publicación</h3>
@@ -921,7 +932,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 fillBasicData(modal, this.dataset);
                 
                 // Datos específicos de seguridad vial
-                const specificFields = ['lugar', 'promotor', 'participantes', 'actividad', 'municipio', 'jurisdiccion'];
+                const specificFields = ['lugar', 'promotor', 'participantes', 'actividad', 'municipio', 'distrito'];
                 specificFields.forEach(field => {
                     const element = modal.querySelector(`.modal-${field}`);
                     if (element && this.dataset[field]) {
@@ -962,7 +973,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 // Datos específicos del observatorio
                 const specificFields = [
-                    'municipio', 'jurisdiccion', 'totalLesiones',
+                    'municipio', 'distrito', 'totalLesiones',
                     'lesionesGraves', 'lesionesModeradas', 'lesionesLeves'
                 ];
                 
@@ -1005,7 +1016,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 fillBasicData(modal, this.dataset);
                 
                 // Datos específicos de Grupos Vulnerables (desde data attributes)
-                const specificFields = ['lugar', 'promotor', 'participantes', 'actividad', 'municipio', 'jurisdiccion'];
+                const specificFields = ['lugar', 'promotor', 'participantes', 'actividad', 'municipio', 'distrito'];
                 specificFields.forEach(field => {
                     const element = modal.querySelector(`.modal-${field}`);
                     if (element && this.dataset[field]) {
@@ -2167,5 +2178,180 @@ document.addEventListener('DOMContentLoaded', function() {
 
     <!-- Incluir Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+<style>
+    /* TomSelect Styles para publicaciones */
+    select.tomselect-select {
+        position: absolute !important;
+        left: -9999px !important;
+        width: 1px !important;
+        height: 1px !important;
+        overflow: hidden !important;
+        opacity: 0 !important;
+        pointer-events: none !important;
+        border: 0 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        background: transparent !important;
+        -webkit-appearance: none !important;
+        -moz-appearance: none !important;
+        appearance: none !important;
+        display: none !important;
+    }
+
+    select.tomselect-select::-ms-expand { display: none !important; }
+    select.tomselect-select { 
+        background-image: none !important;
+        visibility: hidden !important;
+    }
+
+    .ts-wrapper { 
+        display: contents !important;
+        z-index: 9999 !important;
+    }
+
+    .ts-control {
+        z-index: 9999 !important;
+        position: relative;
+        border: 1px solid #404041 !important;
+        border-radius: 0.5rem !important;
+        padding: 5px 12px !important;
+        background: #ffffff !important;
+        font-family: inherit;
+        font-size: 0.75rem;
+        line-height: 1.25rem !important;
+        display: flex;
+        align-items: center;
+        justify-content: flex-start;
+        box-sizing: border-box;
+        margin: 0 !important;
+        box-shadow: none !important;
+        transition: all 0.2s ease;
+        width: 100%;
+        color: #1f2937 !important;
+    }
+
+    .ts-control .ts-control-input {
+        color: #1f2937 !important;
+    }
+
+    .ts-control input::placeholder {
+        color: #1f2937 !important;
+    }
+
+    .ts-control .item {
+        color: #1f2937 !important;
+    }
+
+    .ts-control:focus-within {
+        border-color: #404041 !important;
+        outline: none !important;
+        box-shadow: 0 0 0 1px #611132 !important;
+    }
+
+    .ts-control .item, .ts-control input {
+        padding: 0 !important;
+        margin: 0 !important;
+        height: auto !important;
+        line-height: 1.25rem !important;
+        font-size: inherit;
+        font-family: inherit;
+    }
+
+    .ts-control .dropdown-toggle,
+    .ts-control .ts-dropdown-toggle,
+    .ts-control .dropdown_toggle,
+    .ts-control .ts-clear {
+        display: none !important;
+    }
+
+    .ts-dropdown {
+        border: 1px solid #404041;
+        border-radius: 0.5rem;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        max-height: 250px;
+        overflow-y: auto;
+        z-index: 999999 !important;
+        position: fixed !important;
+        background: white;
+        min-width: 200px;
+    }
+
+    .ts-dropdown .ts-option {
+        padding: 0.5rem 0.75rem;
+        cursor: pointer;
+        transition: background-color 0.15s ease;
+    }
+
+    .ts-dropdown .ts-option:hover {
+        background-color: #f3f4f6;
+    }
+
+    .ts-dropdown .ts-option.selected {
+        background-color: #e5e7eb;
+        color: #404041;
+    }
+
+    .ts-control::after {
+        content: "▾";
+        position: absolute;
+        right: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #404041;
+        font-size: 0.6rem;
+        pointer-events: none;
+    }
+</style>
+
+<script>
+    // Initialize TomSelect for district filter
+    document.addEventListener('DOMContentLoaded', function() {
+        const tomSelectElements = document.querySelectorAll('.tomselect-select');
+        tomSelectElements.forEach(select => {
+            const instance = new TomSelect(select, {
+                create: false,
+                placeholder: select.dataset.placeholder || 'Selecciona una opción',
+                maxItems: select.hasAttribute('multiple') ? null : 1,
+                hidePlaceholder: true,
+                searchField: ['text', 'value'],
+                closeAfterSelect: true
+            });
+
+            // Posicionar el dropdown correctamente
+            const control = instance.control;
+            const dropdown = instance.dropdown;
+
+            const positionDropdown = () => {
+                const rect = control.getBoundingClientRect();
+                dropdown.style.top = rect.bottom + 'px';
+                dropdown.style.left = rect.left + 'px';
+                dropdown.style.width = rect.width + 'px';
+            };
+
+            // Posicionar cuando se abre
+            instance.on('dropdown_open', positionDropdown);
+            
+            // Re-posicionar al hacer scroll
+            window.addEventListener('scroll', () => {
+                if (dropdown.style.display !== 'none') {
+                    positionDropdown();
+                }
+            });
+        });
+
+        // Match ts-control height exactly to the other native selects
+        const refSelect = document.querySelector('select[name="status"]');
+        if (refSelect) {
+            const refHeight = refSelect.offsetHeight;
+            document.querySelectorAll('.ts-control').forEach(ctrl => {
+                ctrl.style.height = refHeight + 'px';
+                ctrl.style.minHeight = refHeight + 'px';
+                ctrl.style.maxHeight = refHeight + 'px';
+            });
+        }
+    });
+</script>
 <?php $__env->stopSection(); ?>
+
 <?php echo $__env->make('layouts.principal', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH C:\Proyectos Laravel\sistema-sec-tam\resources\views/reportes/publicaciones.blade.php ENDPATH**/ ?>

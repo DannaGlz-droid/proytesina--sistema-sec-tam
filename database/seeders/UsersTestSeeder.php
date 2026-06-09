@@ -8,7 +8,7 @@ use Illuminate\Support\Str;
 use App\Models\User;
 use App\Models\Role;
 use App\Models\Position;
-use App\Models\Jurisdiction;
+use App\Models\District;
 use Illuminate\Support\Facades\DB;
 
 class UsersTestSeeder extends Seeder
@@ -32,10 +32,10 @@ class UsersTestSeeder extends Seeder
             $posTec = Position::firstOrCreate(['name' => 'Técnico']);
             $posAdm = Position::firstOrCreate(['name' => 'Administrativo']);
 
-            // Ensure jurisdictions
-            $jur1 = Jurisdiction::firstOrCreate(['name' => 'I']);
-            $jur2 = Jurisdiction::firstOrCreate(['name' => 'II']);
-            $jurOtro = Jurisdiction::firstOrCreate(['name' => 'OTRO']);
+            // Ensure districts
+            $jur1 = District::firstOrCreate(['name' => 'I']);
+            $jur2 = District::firstOrCreate(['name' => 'II']);
+            $jurOtro = District::firstOrCreate(['name' => 'OTRO']);
 
             // Create 5 users
             $users = [
@@ -50,7 +50,7 @@ class UsersTestSeeder extends Seeder
                     'registration_date' => now()->subDays(30)->toDateString(),
                     'last_session' => now()->subHours(2),
                     'position_id' => $posAdm->id,
-                    'jurisdiction_id' => $jur1->id,
+                    'district_id' => $jur1->id,
                     'role_id' => $adminRole->id,
                     'password' => Hash::make('Password123!'),
                 ],
@@ -65,7 +65,7 @@ class UsersTestSeeder extends Seeder
                     'registration_date' => now()->subDays(60)->toDateString(),
                     'last_session' => now()->subDays(10),
                     'position_id' => $posTec->id,
-                    'jurisdiction_id' => $jur2->id,
+                    'district_id' => $jur2->id,
                     'role_id' => $operatorRole->id,
                     'password' => Hash::make('Password123!'),
                 ],
@@ -80,7 +80,7 @@ class UsersTestSeeder extends Seeder
                     'registration_date' => now()->subDays(15)->toDateString(),
                     'last_session' => now()->subDays(1),
                     'position_id' => $posMed->id,
-                    'jurisdiction_id' => $jur1->id,
+                    'district_id' => $jur1->id,
                     'role_id' => $coordRole->id,
                     'password' => Hash::make('Password123!'),
                 ],
@@ -95,7 +95,7 @@ class UsersTestSeeder extends Seeder
                     'registration_date' => now()->toDateString(),
                     'last_session' => null,
                     'position_id' => $posEnf->id,
-                    'jurisdiction_id' => $jurOtro->id,
+                    'district_id' => $jurOtro->id,
                     'role_id' => $guestRole->id,
                     'password' => Hash::make('Password123!'),
                 ],
@@ -110,7 +110,7 @@ class UsersTestSeeder extends Seeder
                     'registration_date' => now()->subDays(5)->toDateString(),
                     'last_session' => now()->subMinutes(90),
                     'position_id' => $posTec->id,
-                    'jurisdiction_id' => $jur2->id,
+                    'district_id' => $jur2->id,
                     'role_id' => $userRole->id,
                     'password' => Hash::make('Password123!'),
                 ],
@@ -125,7 +125,7 @@ class UsersTestSeeder extends Seeder
                         'is_active' => $u['is_active'],
                         'role_id' => $u['role_id'],
                         'position_id' => $u['position_id'],
-                        'jurisdiction_id' => $u['jurisdiction_id'],
+                        'district_id' => $u['district_id'],
                     ]);
                     continue;
                 }

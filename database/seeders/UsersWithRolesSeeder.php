@@ -6,7 +6,7 @@ use Illuminate\Database\Seeder;
 use App\Models\User;
 use App\Models\Role;
 use App\Models\Position;
-use App\Models\Jurisdiction;
+use App\Models\District;
 use Illuminate\Support\Facades\Hash;
 use Carbon\Carbon;
 
@@ -40,7 +40,7 @@ class UsersWithRolesSeeder extends Seeder
 
         // Ensure there is at least one Position and one Jurisdiction to satisfy FK constraints
         $defaultPosition = Position::firstOrCreate(['name' => 'Sin cargo']);
-        $defaultJurisdiction = Jurisdiction::firstOrCreate(['name' => 'Sin jurisdicción']);
+        $defaultJurisdiction = District::firstOrCreate(['name' => 'Sin jurisdicción']);
 
         foreach ($users as $roleName => $data) {
             $role = Role::where('name', $roleName)->first();
@@ -57,7 +57,7 @@ class UsersWithRolesSeeder extends Seeder
                     'is_active' => true,
                     'registration_date' => $now,
                     'position_id' => $defaultPosition->id,
-                    'jurisdiction_id' => $defaultJurisdiction->id,
+                    'district_id' => $defaultJurisdiction->id,
                     'role_id' => $role ? $role->id : null,
                 ]
             );

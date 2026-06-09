@@ -1,5 +1,5 @@
 <!-- components/modal-descargas.blade.php -->
-<div id="modalDescargas" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden transition-opacity duration-300">
+<div id="modalDescargas" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[999999] hidden transition-opacity duration-300">
     <div class="bg-white border border-[#404041] rounded-lg lg:rounded-xl shadow-md transform transition-all duration-300 scale-95 opacity-0 max-w-2xl w-full mx-4">
         <!-- Header - AGREGADO rounded-t-lg lg:rounded-t-xl -->
         <div class="border-b border-gray-300 p-6 bg-white rounded-t-lg lg:rounded-t-xl">

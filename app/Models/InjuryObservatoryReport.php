@@ -17,13 +17,13 @@ class InjuryObservatoryReport extends Model
     protected $fillable = [
         'publication_id',
         'municipality_id',
-        'jurisdiction_id',
+        'district_id',
     ];
 
     protected $hidden = [
         'publication_id',   // FK sensible
         'municipality_id',  // FK sensible  
-        'jurisdiction_id'   // FK sensible
+        'district_id'   // FK sensible
     ];
 
     /**
@@ -44,8 +44,8 @@ class InjuryObservatoryReport extends Model
     /**
      * Relationship: InjuryObservatoryReport belongs to Jurisdiction
      */
-    public function jurisdiction()
+    public function district()
     {
-        return $this->belongsTo(Jurisdiction::class);
+        return $this->belongsTo(District::class);
     }
 }

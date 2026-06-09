@@ -198,13 +198,13 @@ unset($__errorArgs, $__bag); ?>
                         <div class="space-y-3">
                         
                         <div>
-                            <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Jurisdicción de residencia</label>
+                            <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Distrito de residencia</label>
                             
-                            <input type="hidden" id="jurisdiction_input" name="jurisdiction_id" value="<?php echo e(old('jurisdiction_id') ?? ''); ?>">
-                            <!-- Visible, readable jurisdiction display (readonly) to improve accessibility. The hidden input still submits the id. -->
+                            <input type="hidden" id="jurisdiction_input" name="district_id" value="<?php echo e(old('district_id') ?? ''); ?>">
+                            <!-- Visible, readable district display (readonly) to improve accessibility. The hidden input still submits the id. -->
                             <input id="jurisdiction_display" type="text" class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora" value="Pendiente (seleccione municipio)" readonly aria-describedby="jurisdiction-help">
-                            <span id="jurisdiction-help" class="sr-only">La jurisdicción se determina automáticamente según el municipio seleccionado</span>
-                            <?php $__errorArgs = ['jurisdiction_id'];
+                            <span id="jurisdiction-help" class="sr-only">El distrito se determina automáticamente según el municipio seleccionado</span>
+                            <?php $__errorArgs = ['district_id'];
 $__bag = $errors->getBag($__errorArgs[1] ?? 'default');
 if ($__bag->has($__errorArgs[0])) :
 if (isset($message)) { $__messageOriginal = $message; }
@@ -489,10 +489,10 @@ unset($__errorArgs, $__bag); ?>
                 deathDateInput.max = todayString;
             }
             
-            // Build a map municipality_id -> jurisdiction_id
-            const muniToJur = <?php echo json_encode($municipalities->mapWithKeys(function($m){ return [$m->id => $m->jurisdiction_id]; }), 15, 512) ?>;
-            // Map jurisdiction_id -> jurisdiction name (for display)
-            const jurisNames = <?php echo json_encode($jurisdictions->mapWithKeys(function($j){ return [$j->id => $j->name]; }), 15, 512) ?>;
+            // Build a map municipality_id -> district_id
+            const muniToJur = <?php echo json_encode($municipalities->mapWithKeys(function($m){ return [$m->id => $m->district_id]; }), 15, 512) ?>;
+            // Map district_id -> district name (for display)
+            const jurisNames = <?php echo json_encode($districts->mapWithKeys(function($j){ return [$j->id => $j->name]; }), 15, 512) ?>;
 
             const residenceMuni = document.getElementById('residence_municipality_select');
             const deathMuni = document.getElementById('death_municipality_select');
@@ -840,4 +840,5 @@ unset($__errorArgs, $__bag); ?>
         })();
     </script>
 <?php $__env->stopSection(); ?>
+
 <?php echo $__env->make('layouts.principal', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH C:\Proyectos Laravel\sistema-sec-tam\resources\views/estadisticas/acciones/registro.blade.php ENDPATH**/ ?>

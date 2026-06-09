@@ -3,7 +3,7 @@
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
-use App\Models\Jurisdiction;
+use App\Models\District;
 use App\Models\Municipality;
 use App\Models\DeathLocation;
 use App\Models\DeathCause;
@@ -17,11 +17,11 @@ class InsertTestDeathSeeder extends Seeder
     public function run(): void
     {
         // Create or get minimal related records required by the deaths table
-        $jur = Jurisdiction::firstOrCreate(['name' => 'TEST_JUR']);
+        $jur = District::firstOrCreate(['name' => 'TEST_JUR']);
 
         $mun = Municipality::firstOrCreate([
             'name' => 'TEST_MUN',
-            'jurisdiction_id' => $jur->id,
+            'district_id' => $jur->id,
         ]);
 
         $loc = DeathLocation::firstOrCreate(['name' => 'TEST_LOC']);
@@ -38,7 +38,7 @@ class InsertTestDeathSeeder extends Seeder
                 'sex' => 'M',
                 'death_date' => '2024-01-01',
                 'residence_municipality_id' => $mun->id,
-                'jurisdiction_id' => $jur->id,
+                'district_id' => $jur->id,
                 'death_municipality_id' => $mun->id,
                 'death_location_id' => $loc->id,
                 'death_cause_id' => $cause->id,

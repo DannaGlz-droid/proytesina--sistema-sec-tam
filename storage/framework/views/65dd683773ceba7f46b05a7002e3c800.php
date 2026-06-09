@@ -15,4 +15,5 @@
         </a>
     <?php endif; ?>
     </div>
-</div><?php /**PATH C:\Proyectos Laravel\sistema-sec-tam\resources\views/components/nav-usuario.blade.php ENDPATH**/ ?>
+</div>
+<?php /**PATH C:\Proyectos Laravel\sistema-sec-tam\resources\views/components/nav-usuario.blade.php ENDPATH**/ ?>

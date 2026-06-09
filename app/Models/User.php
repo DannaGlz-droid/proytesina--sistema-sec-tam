@@ -28,7 +28,7 @@ class User extends Authenticatable
         'registration_date',
         'last_session',
         'position_id',
-        'jurisdiction_id',
+        'district_id',
         'role_id',
         'password',
         'profile_photo_path',
@@ -78,11 +78,11 @@ class User extends Authenticatable
     }
 
     /**
-     * Relationship: User belongs to Jurisdiction
+     * Relationship: User belongs to District
      */
-    public function jurisdiction()
+    public function district()
     {
-        return $this->belongsTo(Jurisdiction::class);
+        return $this->belongsTo(District::class);
     }
 
     /**

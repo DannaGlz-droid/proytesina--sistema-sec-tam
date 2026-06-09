@@ -21,7 +21,7 @@ class GruposVulnerablesReport extends Model
         'location',
         'promoter',
         'municipality_id',
-        'jurisdiction_id',
+        'district_id',
     ];
 
     protected $hidden = [
@@ -62,10 +62,10 @@ class GruposVulnerablesReport extends Model
     }
 
     /**
-     * Relationship: GruposVulnerablesReport belongs to Jurisdiction
+     * Relationship: GruposVulnerablesReport belongs to District
      */
-    public function jurisdiction()
+    public function district()
     {
-        return $this->belongsTo(Jurisdiction::class);
+        return $this->belongsTo(District::class);
     }
 }

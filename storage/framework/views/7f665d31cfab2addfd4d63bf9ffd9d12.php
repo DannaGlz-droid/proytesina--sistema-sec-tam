@@ -2,7 +2,7 @@
 
 $__newAttributes = [];
 $__propNames = \Illuminate\View\ComponentAttributeBag::extractPropNames(([
-    'jurisdictions' => null,
+    'districts' => null,
     'municipalities' => null,
     'causes' => null,
 ]));
@@ -21,7 +21,7 @@ unset($__propNames);
 unset($__newAttributes);
 
 foreach (array_filter(([
-    'jurisdictions' => null,
+    'districts' => null,
     'municipalities' => null,
     'causes' => null,
 ]), 'is_string', ARRAY_FILTER_USE_KEY) as $__key => $__value) {
@@ -153,16 +153,16 @@ unset($__defined_vars, $__key, $__value); ?>
 <?php endif; ?>
 <?php $component->withAttributes(['icono' => 'map-marker-alt','titulo' => 'Ubicación']); ?>
             <div class="filter-group">
-            <label class="block text-xs text-gray-600 font-lora mb-1">Jurisdicción de residencia:</label>
-            <select id="jurisdiccion" name="jurisdiccion" class="tomselect-select">
-                <option value="">Todas</option>
-                <?php if($jurisdictions): ?>
-                    <?php $__currentLoopData = $jurisdictions; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $j): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                        <option value="<?php echo e($j->name); ?>" <?php echo e(request('jurisdiccion') === $j->name ? 'selected' : ''); ?>><?php echo e($j->name); ?></option>
+            <label class="block text-xs text-gray-600 font-lora mb-1">Distrito de residencia:</label>
+            <select id="distrito" name="distrito" class="tomselect-select">
+                <option value="">Todos</option>
+                <?php if($districts): ?>
+                    <?php $__currentLoopData = $districts; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $d): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                        <option value="<?php echo e($d->name); ?>" <?php echo e(request('distrito') === $d->name ? 'selected' : ''); ?>><?php echo e($d->name); ?></option>
                     <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                 <?php else: ?>
-                    <option value="norte">Jurisdicción Norte</option>
-                    <option value="sur">Jurisdicción Sur</option>
+                    <option value="norte">Distrito Norte</option>
+                    <option value="sur">Distrito Sur</option>
                 <?php endif; ?>
             </select>
         </div>
@@ -537,7 +537,7 @@ document.addEventListener('DOMContentLoaded', function() {
             quarter: document.getElementById('quarter')?.value,
             startDate: document.getElementById('startDate')?.value,
             endDate: document.getElementById('endDate')?.value,
-            jurisdiccion: document.getElementById('jurisdiccion')?.value,
+            distrito: document.getElementById('distrito')?.value,
             municipio: document.getElementById('municipio')?.value,
             municipioDefuncion: document.getElementById('municipioDefuncion')?.value,
             sexo: document.getElementById('sexo')?.value,
@@ -560,7 +560,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // --- Inicializar TomSelect para los campos de filtros ---
     function initTomSelectDefunciones() {
         const selectores = [
-            { id: 'jurisdiccion', placeholder: 'Seleccione una jurisdicción...' },
+            { id: 'distrito', placeholder: 'Seleccione un distrito...' },
             { id: 'municipio', placeholder: 'Seleccione un municipio...' },
             { id: 'municipioDefuncion', placeholder: 'Seleccione un municipio...' },
             { id: 'causa', placeholder: 'Seleccione una causa...' }
@@ -640,7 +640,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // --- Recalcular altura cuando TomSelect renderiza para CADA sección ---
-    const tomSelectSelectors = ['jurisdiccion', 'municipio', 'municipioDefuncion', 'causa'];
+    const tomSelectSelectors = ['distrito', 'municipio', 'municipioDefuncion', 'causa'];
     tomSelectSelectors.forEach(id => {
         const selectEl = document.getElementById(id);
         if (!selectEl) return;
@@ -698,7 +698,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             
             // Limpiar TomSelect
-            ['jurisdiccion', 'municipio', 'municipioDefuncion', 'causa'].forEach(id => {
+            ['distrito', 'municipio', 'municipioDefuncion', 'causa'].forEach(id => {
                 if (window[`tomSelect_${id}`]) {
                     window[`tomSelect_${id}`].clear();
                 }
@@ -907,4 +907,5 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 });
-</script><?php /**PATH C:\Proyectos Laravel\sistema-sec-tam\resources\views/components/filtros/defunciones.blade.php ENDPATH**/ ?>
+</script>
+<?php /**PATH C:\Proyectos Laravel\sistema-sec-tam\resources\views/components/filtros/defunciones.blade.php ENDPATH**/ ?>

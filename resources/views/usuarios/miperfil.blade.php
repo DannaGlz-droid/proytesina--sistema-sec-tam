@@ -66,8 +66,8 @@
                         <div class="flex items-center gap-3">
                             <i class="fas fa-map-marker-alt text-[#611132] text-sm"></i>
                             <div>
-                                <p class="text-xs text-gray-500 font-lora">Jurisdicción</p>
-                                <p class="text-sm text-[#404041] font-lora">{{ auth()->user()->jurisdiction->name ?? 'Sin jurisdicción' }}</p>
+                                <p class="text-xs text-gray-500 font-lora">Distrito</p>
+                                <p class="text-sm text-[#404041] font-lora">{{ auth()->user()->district->name ?? 'Sin distrito' }}</p>
                             </div>
                         </div>
                     </div>
@@ -138,8 +138,8 @@
                                 </div>
                                 
                                 <div>
-                                    <label class="block text-xs text-gray-600 font-lora mb-1">Jurisdicción</label>
-                                    <p class="text-sm text-[#404041] font-lora bg-gray-50 px-3 py-2 rounded border">{{ auth()->user()->jurisdiction->name ?? 'Sin jurisdicción' }}</p>
+                                    <label class="block text-xs text-gray-600 font-lora mb-1">Distrito</label>
+                                    <p class="text-sm text-[#404041] font-lora bg-gray-50 px-3 py-2 rounded border">{{ auth()->user()->district->name ?? 'Sin distrito' }}</p>
                                 </div>
                             </div>
 

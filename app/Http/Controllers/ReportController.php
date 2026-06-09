@@ -9,7 +9,7 @@ use App\Models\RoadSafetyReport;
 use App\Models\InjuryObservatoryReport;
 use App\Models\BreathalyzerReport;
 use App\Models\Municipality;
-use App\Models\Jurisdiction;
+use App\Models\District;
 use App\Models\ActivityType;
 use App\Models\Notification;
 use App\Models\User;
@@ -40,9 +40,9 @@ class ReportController extends Controller
             'comments.user.position',
             'roadSafetyReports.activityType',
             'roadSafetyReports.municipality',
-            'roadSafetyReports.jurisdiction',
+            'roadSafetyReports.district',
             'injuryObservatoryReports.municipality',
-            'injuryObservatoryReports.jurisdiction',
+            'injuryObservatoryReports.district',
             'breathalyzerReports'
         ]);
 
@@ -80,6 +80,32 @@ class ReportController extends Controller
                       $q->where('name', 'LIKE', "%{$search}%");
                   });
             });
+        }
+
+        // Filtro por distrito
+        if ($request->filled('district_id')) {
+            $districtId = $request->input('district_id');
+            
+            // Si es 999 (Oficina Central), filtrar por usuarios admin/coordinador
+            if ($districtId == 999) {
+                $query->whereHas('user.role', function($q) {
+                    $q->whereIn('name', ['Administrador', 'Coordinador']);
+                });
+            } else {
+                // Filtro normal por distrito
+                $query->where(function($q) use ($districtId) {
+                    // Filtrar por reports que pertenecen a este distrito
+                    $q->whereHas('roadSafetyReports', function($q) use ($districtId) {
+                        $q->where('district_id', $districtId);
+                    })
+                    ->orWhereHas('injuryObservatoryReports', function($q) use ($districtId) {
+                        $q->where('district_id', $districtId);
+                    })
+                    ->orWhereHas('gruposVulnerablesReport', function($q) use ($districtId) {
+                        $q->where('district_id', $districtId);
+                    });
+                });
+            }
         }
 
         // Filtro por fechas predefinidas (usar `publication_date` visible)
@@ -179,7 +205,16 @@ class ReportController extends Controller
             });
         });
         
-        return view('reportes.publicaciones', compact('publications'));
+        // Obtener lista de distritos para el filtro
+        $districts = District::orderBy('name')->get();
+        
+        // Agregar opción "Oficina Central" solo para reportes (administradores y coordinadores)
+        $centralOffice = new District();
+        $centralOffice->id = 999;
+        $centralOffice->name = 'Oficina Central';
+        $districts->push($centralOffice);
+        
+        return view('reportes.publicaciones', compact('publications', 'districts'));
     }
 
     /**
@@ -421,10 +456,20 @@ class ReportController extends Controller
      */
     public function createObservatorio()
     {
-        $municipalities = Municipality::with('jurisdiction')->orderBy('name')->get();
-        $jurisdictions = Jurisdiction::orderBy('name')->get();
+        $user = Auth::user();
+        $municipalities = Municipality::with('district')->orderBy('name')->get();
+        $districts = District::orderBy('name')->get();
         
-        return view('reportes.registro.observatorio-de-lesiones', compact('municipalities', 'jurisdictions'));
+        // Agregar opción "Oficina Central" para admins y coordinadores
+        $centralOffice = new District();
+        $centralOffice->id = 999;
+        $centralOffice->name = 'Oficina Central';
+        $districts->push($centralOffice);
+        
+        // Pasar información de si el usuario es admin o coordinador
+        $isAdminOrCoordinator = $user->isAdmin() || $user->isCoordinator();
+        
+        return view('reportes.registro.observatorio-de-lesiones', compact('municipalities', 'districts', 'isAdminOrCoordinator'));
     }
 
     /**
@@ -432,11 +477,21 @@ class ReportController extends Controller
      */
     public function createSeguridadVial()
     {
+        $user = Auth::user();
         $activityTypes = ActivityType::all();
         $municipalities = Municipality::all();
-        $jurisdictions = Jurisdiction::all();
+        $districts = District::all();
         
-        return view('reportes.registro.seguridad-vial', compact('activityTypes', 'municipalities', 'jurisdictions'));
+        // Agregar opción "Oficina Central" para admins y coordinadores
+        $centralOffice = new District();
+        $centralOffice->id = 999;
+        $centralOffice->name = 'Oficina Central';
+        $districts->push($centralOffice);
+        
+        // Pasar información de si el usuario es admin o coordinador
+        $isAdminOrCoordinator = $user->isAdmin() || $user->isCoordinator();
+        
+        return view('reportes.registro.seguridad-vial', compact('activityTypes', 'municipalities', 'districts', 'isAdminOrCoordinator'));
     }
 
     /**
@@ -465,10 +520,10 @@ class ReportController extends Controller
             // Server-side: if the user has a jurisdiction, ensure the municipality (and/or submitted jurisdiction)
             // belongs to the same jurisdiction to avoid manipulating the request client-side.
             $user = Auth::user();
-            $userJur = optional($user)->jurisdiction_id;
+            $userJur = optional($user)->district_id;
             if ($userJur) {
                 $mun = Municipality::find($validated['municipio'] ?? null);
-                if (!$mun || $mun->jurisdiction_id != $userJur) {
+                if (!$mun || $mun->district_id != $userJur) {
                     return redirect()->back()->withInput()->with('error', 'El municipio seleccionado no pertenece a su jurisdicción.');
                 }
                 if (isset($validated['jurisdiccion']) && $validated['jurisdiccion'] != $userJur) {
@@ -497,7 +552,7 @@ class ReportController extends Controller
                 'location' => $validated['lugar'],
                 'promoter' => $validated['promotor'],
                 'municipality_id' => $validated['municipio'] ?? null,
-                'jurisdiction_id' => $validated['jurisdiccion'] ?? null,
+                'district_id' => $validated['jurisdiccion'] ?? null,
             ]);
 
             // 3. Guardar archivos si existen (soporte para múltiples archivos)
@@ -552,9 +607,9 @@ class ReportController extends Controller
         $report = $publication->roadSafetyReports->first();
         $activityTypes = \App\Models\ActivityType::all();
         $municipalities = Municipality::all();
-        $jurisdictions = Jurisdiction::all();
+        $districts = District::all();
         
-        return view('reportes.registro.seguridad-vial', compact('publication', 'report', 'activityTypes', 'municipalities', 'jurisdictions'));
+        return view('reportes.registro.seguridad-vial', compact('publication', 'report', 'activityTypes', 'municipalities', 'districts'));
     }
 
     /**
@@ -584,10 +639,10 @@ class ReportController extends Controller
 
             // Server-side: if the user has a jurisdiction, ensure the municipality (and/or submitted jurisdiction)
             // belongs to the same jurisdiction to avoid manipulating the request client-side.
-            $userJur = optional($user)->jurisdiction_id;
+            $userJur = optional($user)->district_id;
             if ($userJur) {
                 $mun = Municipality::find($validated['municipio'] ?? null);
-                if (!$mun || $mun->jurisdiction_id != $userJur) {
+                if (!$mun || $mun->district_id != $userJur) {
                     return redirect()->back()->withInput()->with('error', 'El municipio seleccionado no pertenece a su jurisdicción.');
                 }
                 if (isset($validated['jurisdiccion']) && $validated['jurisdiccion'] != $userJur) {
@@ -633,7 +688,7 @@ class ReportController extends Controller
                     'location' => $validated['lugar'],
                     'promoter' => $validated['promotor'],
                     'municipality_id' => $validated['municipio'] ?? null,
-                    'jurisdiction_id' => $validated['jurisdiccion'] ?? null,
+                    'district_id' => $validated['jurisdiccion'] ?? null,
                 ]);
             }
 
@@ -674,10 +729,10 @@ class ReportController extends Controller
             // Server-side: if the user has a jurisdiction, ensure the municipality (and/or submitted jurisdiction)
             // belongs to the same jurisdiction to avoid manipulating the request client-side.
             $user = Auth::user();
-            $userJur = optional($user)->jurisdiction_id;
+            $userJur = optional($user)->district_id;
             if ($userJur) {
                 $mun = Municipality::find($validated['municipio']);
-                if (!$mun || $mun->jurisdiction_id != $userJur) {
+                if (!$mun || $mun->district_id != $userJur) {
                     return redirect()->back()->withInput()->with('error', 'El municipio seleccionado no pertenece a su jurisdicción.');
                 }
                 if (isset($validated['jurisdiccion']) && $validated['jurisdiccion'] != $userJur) {
@@ -702,7 +757,7 @@ class ReportController extends Controller
             InjuryObservatoryReport::create([
                 'publication_id' => $publication->id,
                 'municipality_id' => $validated['municipio'],
-                'jurisdiction_id' => $validated['jurisdiccion'],
+                'district_id' => $validated['jurisdiccion'],
             ]);
 
             // 3. Guardar archivos si existen
@@ -761,10 +816,10 @@ class ReportController extends Controller
         }
 
         $report = $publication->injuryObservatoryReports->first();
-        $municipalities = Municipality::with('jurisdiction')->orderBy('name')->get();
-        $jurisdictions = Jurisdiction::orderBy('name')->get();
+        $municipalities = Municipality::with('district')->orderBy('name')->get();
+        $districts = District::orderBy('name')->get();
         
-        return view('reportes.registro.observatorio-de-lesiones', compact('publication', 'report', 'municipalities', 'jurisdictions'));
+        return view('reportes.registro.observatorio-de-lesiones', compact('publication', 'report', 'municipalities', 'districts'));
     }
 
     /**
@@ -793,10 +848,10 @@ class ReportController extends Controller
 
             // Server-side jurisdiction check similar to storeObservatorio
             $user = Auth::user();
-            $userJur = optional($user)->jurisdiction_id;
+            $userJur = optional($user)->district_id;
             if ($userJur) {
                 $mun = Municipality::find($validated['municipio']);
-                if (!$mun || $mun->jurisdiction_id != $userJur) {
+                if (!$mun || $mun->district_id != $userJur) {
                     return redirect()->back()->withInput()->with('error', 'El municipio seleccionado no pertenece a su jurisdicción.');
                 }
                 if (isset($validated['jurisdiccion']) && $validated['jurisdiccion'] != $userJur) {
@@ -838,7 +893,7 @@ class ReportController extends Controller
             if ($report) {
                 $report->update([
                     'municipality_id' => $validated['municipio'],
-                    'jurisdiction_id' => $validated['jurisdiccion'],
+                    'district_id' => $validated['jurisdiccion'],
                 ]);
             }
 
@@ -869,6 +924,27 @@ class ReportController extends Controller
                 ->withInput()
                 ->with('error', 'Error al actualizar el reporte: ' . $e->getMessage());
         }
+    }
+
+    /**
+     * Mostrar formulario de creación de Alcoholimetría
+     */
+    public function createAlcoholimetria()
+    {
+        $user = Auth::user();
+        $municipalities = Municipality::all();
+        $districts = District::all();
+        
+        // Agregar opción "Oficina Central" para admins y coordinadores
+        $centralOffice = new District();
+        $centralOffice->id = 999;
+        $centralOffice->name = 'Oficina Central';
+        $districts->push($centralOffice);
+        
+        // Pasar información de si el usuario es admin o coordinador
+        $isAdminOrCoordinator = $user->isAdmin() || $user->isCoordinator();
+
+        return view('reportes.registro.alcoholimetria', compact('municipalities', 'districts', 'isAdminOrCoordinator'));
     }
 
     /**
@@ -910,6 +986,8 @@ class ReportController extends Controller
                 'public_transport_individual' => $validated['transporte_individual'],
                 'cargo_transport' => $validated['transporte_carga'],
                 'emergency_vehicles' => $validated['vehiculos_emergencia'],
+                'municipality_id' => $validated['municipio'] ?? null,
+                'district_id' => $validated['distrito'] ?? null,
             ]);
 
             // 3. Guardar archivos si existen (soporte para múltiples archivos)
@@ -962,8 +1040,19 @@ class ReportController extends Controller
         }
 
         $report = $publication->breathalyzerReports->first();
+        $municipalities = Municipality::all();
+        $districts = District::all();
+        
+        // Agregar opción "Oficina Central" para admins y coordinadores
+        $centralOffice = new District();
+        $centralOffice->id = 999;
+        $centralOffice->name = 'Oficina Central';
+        $districts->push($centralOffice);
+        
+        // Pasar información de si el usuario es admin o coordinador
+        $isAdminOrCoordinator = $user->isAdmin() || $user->isCoordinator();
 
-        return view('reportes.registro.alcoholimetria', compact('publication', 'report'));
+        return view('reportes.registro.alcoholimetria', compact('publication', 'report', 'municipalities', 'districts', 'isAdminOrCoordinator'));
     }
 
     /**
@@ -1033,6 +1122,8 @@ class ReportController extends Controller
                     'public_transport_individual' => $validated['transporte_individual'],
                     'cargo_transport' => $validated['transporte_carga'],
                     'emergency_vehicles' => $validated['vehiculos_emergencia'],
+                    'municipality_id' => $validated['municipio'] ?? null,
+                    'district_id' => $validated['distrito'] ?? null,
                 ]);
             }
 
@@ -1061,13 +1152,23 @@ class ReportController extends Controller
 
     public function createGruposVulnerables()
     {
+        $user = Auth::user();
         $municipalities = Municipality::orderBy('name')->get();
         $activityTypes = ActivityType::orderBy('name')->get();
-        $jurisdictions = Jurisdiction::orderBy('name')->get();
+        $districts = District::orderBy('name')->get();
         $publication = null;
         $report = null;
+        
+        // Agregar opción "Oficina Central" para admins y coordinadores
+        $centralOffice = new District();
+        $centralOffice->id = 999;
+        $centralOffice->name = 'Oficina Central';
+        $districts->push($centralOffice);
+        
+        // Pasar información de si el usuario es admin o coordinador
+        $isAdminOrCoordinator = $user->isAdmin() || $user->isCoordinator();
 
-        return view('reportes.registro.grupos-vulnerables', compact('municipalities', 'activityTypes', 'jurisdictions', 'publication', 'report'));
+        return view('reportes.registro.grupos-vulnerables', compact('municipalities', 'activityTypes', 'districts', 'publication', 'report', 'isAdminOrCoordinator'));
     }
 
     public function storeGruposVulnerables(GruposVulnerablesReportRequest $request)
@@ -1098,7 +1199,7 @@ class ReportController extends Controller
                 'location' => $validated['lugar'],
                 'promoter' => $validated['promotor'],
                 'municipality_id' => $validated['municipio'] ?? null,
-                'jurisdiction_id' => $validated['jurisdiccion'] ?? null,
+                'district_id' => $validated['jurisdiccion'] ?? null,
             ]);
 
             // 3. Guardar archivos si existen
@@ -1134,9 +1235,9 @@ class ReportController extends Controller
         $report = $publication->gruposVulnerablesReport;
         $municipalities = Municipality::orderBy('name')->get();
         $activityTypes = ActivityType::orderBy('name')->get();
-        $jurisdictions = Jurisdiction::orderBy('name')->get();
+        $districts = District::orderBy('name')->get();
 
-        return view('reportes.registro.grupos-vulnerables', compact('publication', 'report', 'municipalities', 'activityTypes', 'jurisdictions'));
+        return view('reportes.registro.grupos-vulnerables', compact('publication', 'report', 'municipalities', 'activityTypes', 'districts'));
     }
 
     public function updateGruposVulnerables(GruposVulnerablesReportRequest $request, Publication $publication)
@@ -1201,7 +1302,7 @@ class ReportController extends Controller
                     'location' => $validated['lugar'],
                     'promoter' => $validated['promotor'],
                     'municipality_id' => $validated['municipio'] ?? null,
-                    'jurisdiction_id' => $validated['jurisdiccion'] ?? null,
+                    'district_id' => $validated['jurisdiccion'] ?? null,
                 ]
             );
 
@@ -1252,7 +1353,7 @@ class ReportController extends Controller
                 'promoter' => $report->promoter ?? '-',
                 'participants' => $report->participants ?? '-',
                 'municipality' => $report->municipality?->name ?? '-',
-                'jurisdiction' => $report->jurisdiction?->name ?? '-',
+                'district' => $report->district?->name ?? '-',
             ]
         ]);
     }

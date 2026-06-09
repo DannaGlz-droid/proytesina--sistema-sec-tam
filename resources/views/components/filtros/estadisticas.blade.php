@@ -136,7 +136,7 @@
     <x-filtros.seccion icono="map-marker-alt" titulo="Ubicación">
         <div class="filter-group">
             <label class="block text-xs text-gray-600 font-lora mb-1">Jurisdicción de residencia:</label>
-            <select id="jurisdiccion" class="w-full border border-[#404041] rounded-lg px-3 py-1.5 text-xs">
+            <select id="distrito" class="w-full border border-[#404041] rounded-lg px-3 py-1.5 text-xs">
                 <option value="">Todas</option>
                 @isset($jurisdictions)
                     @foreach($jurisdictions as $j)
@@ -408,7 +408,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const quarter = document.getElementById('quarter')?.value; if (quarter) params.set('quarter', quarter);
         const startDate = document.getElementById('startDate')?.value; if (startDate) params.set('startDate', startDate);
         const endDate = document.getElementById('endDate')?.value; if (endDate) params.set('endDate', endDate);
-        const jurisdiccion = document.getElementById('jurisdiccion')?.value; if (jurisdiccion) params.set('jurisdiccion', jurisdiccion);
+        const distrito = document.getElementById('distrito')?.value; if (distrito) params.set('distrito', distrito);
         const municipio = document.getElementById('municipio')?.value; if (municipio) params.set('municipio', municipio);
         const municipioDefuncion = document.getElementById('municipioDefuncion')?.value; if (municipioDefuncion) params.set('municipioDefuncion', municipioDefuncion);
         const sexo = document.getElementById('sexo')?.value; if (sexo) params.set('sexo', sexo);
@@ -490,7 +490,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 quarter: document.getElementById('quarter')?.value,
                 startDate: document.getElementById('startDate')?.value,
                 endDate: document.getElementById('endDate')?.value,
-                jurisdiccion: document.getElementById('jurisdiccion')?.value,
+                distrito: document.getElementById('distrito')?.value,
                 municipio: document.getElementById('municipio')?.value,
                 municipioDefuncion: document.getElementById('municipioDefuncion')?.value,
                 sexo: document.getElementById('sexo')?.value,

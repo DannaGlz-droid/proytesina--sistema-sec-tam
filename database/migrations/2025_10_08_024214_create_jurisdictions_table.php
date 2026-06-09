@@ -9,9 +9,9 @@ return new class extends Migration
     /**
      * Run the migrations.
      */
-    public function up(): void // JURISDICCIONES
+    public function up(): void // DISTRICTS
     {
-        Schema::create('jurisdictions', function (Blueprint $table) {
+        Schema::create('districts', function (Blueprint $table) {
             $table->id(); // int PRIMARY KEY AUTO_INCREMENT
             $table->string('name', 255); // varchar(255) NOT NULL
             $table->timestamps(); // created_at y updated_at automáticamente
@@ -23,6 +23,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('jurisdictions');
+        Schema::dropIfExists('districts');
     }
 };

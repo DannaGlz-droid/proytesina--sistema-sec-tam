@@ -106,16 +106,16 @@
                     
                     <div class="space-y-3">
                         <div>
-                            <label for="jurisdiction_id" class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Jurisdicción <span class="text-red-600">*</span></label>
-                            <select id="jurisdiction_id" class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora" name="jurisdiction_id" required>
-                                <option value="">Seleccione una jurisdicción</option>
-                                @if(isset($jurisdictions))
-                                    @foreach($jurisdictions as $j)
-                                        <option value="{{ $j->id }}" {{ old('jurisdiction_id', $user->jurisdiction_id) == $j->id ? 'selected' : '' }}>{{ $j->name }}</option>
+                            <label for="district_id" class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Distrito <span class="text-red-600">*</span></label>
+                            <select id="district_id" class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora tomselect-select" name="district_id" required>
+                                <option value="">Seleccione un distrito</option>
+                                @if(isset($districts))
+                                    @foreach($districts as $j)
+                                        <option value="{{ $j->id }}" {{ old('district_id', $user->district_id) == $j->id ? 'selected' : '' }}>{{ $j->name }}</option>
                                     @endforeach
                                 @endif
                             </select>
-                            @error('jurisdiction_id') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
+                            @error('district_id') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
                         </div>
                     </div>
                 </div>
@@ -198,7 +198,7 @@
                     'password_confirmation': 'password_confirmation',
                     'role_id': 'role_id',
                     'position_id': 'position_select',
-                    'jurisdiction_id': 'jurisdiction_id'
+                    'district_id': 'district_id'
                 };
 
                 // Aplicar setCustomValidity a cada campo con error
@@ -377,6 +377,23 @@
                     });
                 } catch (e) {
                     console.warn('TomSelect init failed for #position_select', e);
+                }
+            }
+
+            const dist = document.getElementById('district_id');
+            if (dist) {
+                try {
+                    new TomSelect(dist, {
+                        valueField: 'value',
+                        labelField: 'text',
+                        searchField: ['text'],
+                        create: false,
+                        maxItems: 1,
+                        preload: false,
+                        maxOptions: 50
+                    });
+                } catch (e) {
+                    console.warn('TomSelect init failed for #district_id', e);
                 }
             }
         });

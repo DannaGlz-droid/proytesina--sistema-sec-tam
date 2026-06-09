@@ -57,7 +57,7 @@
                 </div>
 
                 <!-- COMPONENTE DE FILTROS -->
-                <x-filtros.defunciones :jurisdictions="$jurisdictions" :municipalities="$municipalities" :causes="$causes" />
+                <x-filtros.defunciones :districts="$districts" :municipalities="$municipalities" :causes="$causes" />
             </div>
 
             <!-- Columna Derecha - Tabla -->
@@ -115,7 +115,7 @@
                                 <th scope="col" class="px-3 py-2 font-lora whitespace-nowrap text-xs">Fecha def.</th>
                                 <th scope="col" class="px-3 py-2 font-lora whitespace-nowrap text-xs">Municipio (res.)</th>
                                 <th scope="col" class="px-3 py-2 font-lora whitespace-nowrap text-xs">Municipio (def.)</th>
-                                <th scope="col" title="Jurisdicción de residencia" class="px-3 py-2 font-lora whitespace-nowrap text-xs">Jurisdicción (res.)</th>
+                                <th scope="col" title="Distrito de residencia" class="px-3 py-2 font-lora whitespace-nowrap text-xs">Distrito (res.)</th>
                                 <th scope="col" class="px-3 py-2 font-lora whitespace-nowrap text-xs">Lugar</th>
                                 <th scope="col" class="px-3 py-2 font-lora whitespace-nowrap text-xs">Causa</th>
                                 <th scope="col" class="px-3 py-2 font-lora whitespace-nowrap text-xs text-right w-24" data-orderable="false">Acciones</th>
@@ -327,7 +327,7 @@ document.addEventListener('DOMContentLoaded', function () {
             { data: 'death_date', name: 'death_date' },
             { data: 'residence_municipality', name: 'residence_municipality_id', orderable: false },
             { data: 'death_municipality', name: 'death_municipality_id', orderable: false },
-            { data: 'jurisdiction', name: 'jurisdiction_id', orderable: false },
+            { data: 'district', name: 'district_id', orderable: false },
             { data: 'death_location', name: 'death_location_id', orderable: false },
             { data: 'death_cause', name: 'death_cause_id', orderable: false },
             { data: 'actions', name: 'actions', orderable: false, searchable: false }

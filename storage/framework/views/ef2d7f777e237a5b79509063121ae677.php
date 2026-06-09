@@ -66,8 +66,8 @@
                         <div class="flex items-center gap-3">
                             <i class="fas fa-map-marker-alt text-[#611132] text-sm"></i>
                             <div>
-                                <p class="text-xs text-gray-500 font-lora">Jurisdicción</p>
-                                <p class="text-sm text-[#404041] font-lora"><?php echo e(auth()->user()->jurisdiction->name ?? 'Sin jurisdicción'); ?></p>
+                                <p class="text-xs text-gray-500 font-lora">Distrito</p>
+                                <p class="text-sm text-[#404041] font-lora"><?php echo e(auth()->user()->district->name ?? 'Sin distrito'); ?></p>
                             </div>
                         </div>
                     </div>
@@ -138,8 +138,8 @@
                                 </div>
                                 
                                 <div>
-                                    <label class="block text-xs text-gray-600 font-lora mb-1">Jurisdicción</label>
-                                    <p class="text-sm text-[#404041] font-lora bg-gray-50 px-3 py-2 rounded border"><?php echo e(auth()->user()->jurisdiction->name ?? 'Sin jurisdicción'); ?></p>
+                                    <label class="block text-xs text-gray-600 font-lora mb-1">Distrito</label>
+                                    <p class="text-sm text-[#404041] font-lora bg-gray-50 px-3 py-2 rounded border"><?php echo e(auth()->user()->district->name ?? 'Sin distrito'); ?></p>
                                 </div>
                             </div>
 
@@ -308,4 +308,5 @@
         });
     </script>
 <?php $__env->stopSection(); ?>
+
 <?php echo $__env->make('layouts.principal', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH C:\Proyectos Laravel\sistema-sec-tam\resources\views/usuarios/miperfil.blade.php ENDPATH**/ ?>

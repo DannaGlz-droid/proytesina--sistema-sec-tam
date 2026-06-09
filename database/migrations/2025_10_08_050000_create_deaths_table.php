@@ -20,7 +20,7 @@ return new class extends Migration
             $table->enum('sex', ['M', 'F', 'Otro']); // enum('M', 'F', 'Otro') NOT NULL - sexo
             $table->date('death_date'); // date NOT NULL - fecha_defuncion
             $table->foreignId('residence_municipality_id')->constrained('municipalities'); // FK to municipalities - id_municipio_residencia
-            $table->foreignId('jurisdiction_id')->constrained('jurisdictions'); // FK to jurisdictions - id_jurisdiccion
+            $table->foreignId('district_id')->constrained('districts'); // FK to districts - id_jurisdiccion
             $table->foreignId('death_municipality_id')->constrained('municipalities'); // FK to municipalities - id_municipio_defuncion
             $table->foreignId('death_location_id')->constrained('death_locations'); // FK to death_locations - id_lugar_defuncion
             $table->foreignId('death_cause_id')->constrained('death_causes'); // FK to death_causes - id_causa_defuncion

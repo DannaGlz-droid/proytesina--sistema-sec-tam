@@ -1,5 +1,5 @@
 @props([
-    'jurisdictions' => null,
+    'districts' => null,
     'municipalities' => null,
     'causes' => null,
 ])
@@ -85,16 +85,16 @@
     <!-- Resto de secciones... (sin cambios funcionales, solo estilos y estructura) -->
     <x-filtros.seccion icono="map-marker-alt" titulo="Ubicación">
             <div class="filter-group">
-            <label class="block text-xs text-gray-600 font-lora mb-1">Jurisdicción de residencia:</label>
-            <select id="jurisdiccion" name="jurisdiccion" class="tomselect-select">
-                <option value="">Todas</option>
-                @if($jurisdictions)
-                    @foreach($jurisdictions as $j)
-                        <option value="{{ $j->name }}" {{ request('jurisdiccion') === $j->name ? 'selected' : '' }}>{{ $j->name }}</option>
+            <label class="block text-xs text-gray-600 font-lora mb-1">Distrito de residencia:</label>
+            <select id="distrito" name="distrito" class="tomselect-select">
+                <option value="">Todos</option>
+                @if($districts)
+                    @foreach($districts as $d)
+                        <option value="{{ $d->name }}" {{ request('distrito') === $d->name ? 'selected' : '' }}>{{ $d->name }}</option>
                     @endforeach
                 @else
-                    <option value="norte">Jurisdicción Norte</option>
-                    <option value="sur">Jurisdicción Sur</option>
+                    <option value="norte">Distrito Norte</option>
+                    <option value="sur">Distrito Sur</option>
                 @endif
             </select>
         </div>
@@ -415,7 +415,7 @@ document.addEventListener('DOMContentLoaded', function() {
             quarter: document.getElementById('quarter')?.value,
             startDate: document.getElementById('startDate')?.value,
             endDate: document.getElementById('endDate')?.value,
-            jurisdiccion: document.getElementById('jurisdiccion')?.value,
+            distrito: document.getElementById('distrito')?.value,
             municipio: document.getElementById('municipio')?.value,
             municipioDefuncion: document.getElementById('municipioDefuncion')?.value,
             sexo: document.getElementById('sexo')?.value,
@@ -438,7 +438,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // --- Inicializar TomSelect para los campos de filtros ---
     function initTomSelectDefunciones() {
         const selectores = [
-            { id: 'jurisdiccion', placeholder: 'Seleccione una jurisdicción...' },
+            { id: 'distrito', placeholder: 'Seleccione un distrito...' },
             { id: 'municipio', placeholder: 'Seleccione un municipio...' },
             { id: 'municipioDefuncion', placeholder: 'Seleccione un municipio...' },
             { id: 'causa', placeholder: 'Seleccione una causa...' }
@@ -518,7 +518,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // --- Recalcular altura cuando TomSelect renderiza para CADA sección ---
-    const tomSelectSelectors = ['jurisdiccion', 'municipio', 'municipioDefuncion', 'causa'];
+    const tomSelectSelectors = ['distrito', 'municipio', 'municipioDefuncion', 'causa'];
     tomSelectSelectors.forEach(id => {
         const selectEl = document.getElementById(id);
         if (!selectEl) return;
@@ -576,7 +576,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             
             // Limpiar TomSelect
-            ['jurisdiccion', 'municipio', 'municipioDefuncion', 'causa'].forEach(id => {
+            ['distrito', 'municipio', 'municipioDefuncion', 'causa'].forEach(id => {
                 if (window[`tomSelect_${id}`]) {
                     window[`tomSelect_${id}`].clear();
                 }

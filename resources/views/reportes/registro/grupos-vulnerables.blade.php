@@ -154,9 +154,17 @@
                                    required minlength="3" maxlength="255">
                         </div>
                         <div>
-                            <label class="block text-xs lg:text-sm font-medium text-gray-500 mb-1 font-lora">Jurisdicción</label>
-                            <input type="hidden" id="jurisdiction_input_gv" name="jurisdiccion" value="{{ old('jurisdiccion', isset($report) ? $report->jurisdiction_id : '') }}" required>
-                            <input id="jurisdiction_display_gv" type="text" class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-200 rounded-lg bg-gray-50 text-gray-600 focus:ring-2 focus:ring-gray-300 focus:border-transparent transition-all duration-200 font-lora" value="{{ isset($report) && $report->jurisdiction ? $report->jurisdiction->name : 'Pendiente (seleccione municipio)' }}" readonly>
+                            <label class="block text-xs lg:text-sm font-medium text-gray-500 mb-1 font-lora">Distrito</label>
+                            @if($isAdminOrCoordinator ?? false)
+                                <!-- Para Admin/Coordinador: Tom Select editable de distritos -->
+                                <select id="jurisdiction_select_gv" name="distrito" class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora" placeholder="Seleccione un distrito" required>
+                                    <option value="">Seleccione un distrito</option>
+                                </select>
+                            @else
+                                <!-- Para Operadores: campo readonly con distrito pre-asignado -->
+                                <input type="hidden" id="jurisdiction_input_gv" name="distrito" value="{{ old('distrito', isset($report) ? $report->district_id : '') }}" required>
+                                <input id="jurisdiction_display_gv" type="text" class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-200 rounded-lg bg-gray-50 text-gray-600 focus:ring-2 focus:ring-gray-300 focus:border-transparent transition-all duration-200 font-lora" value="{{ isset($report) && $report->district ? $report->district->name : 'Pendiente (seleccione municipio)' }}" readonly>
+                            @endif
                         </div>
                     </div>
                 </div>
@@ -640,7 +648,7 @@
                     // Limpiar el valor
                     gruposMuni.value = '';
                     // Reinicializar Tom Select
-                    const currentJurisdiction = @json(optional(auth()->user())->jurisdiction_id);
+                    const currentJurisdiction = @json(optional(auth()->user())->district_id);
                     const ts = new TomSelect(gruposMuni, {
                         valueField: 'id',
                         labelField: 'name',
@@ -652,7 +660,7 @@
                         load: function(query, callback) {
                             let url = '/api/municipalities/search?q=' + encodeURIComponent(query);
                             if (currentJurisdiction) {
-                                url += '&jurisdiction_id=' + encodeURIComponent(currentJurisdiction);
+                                url += '&district_id=' + encodeURIComponent(currentJurisdiction);
                             }
                             fetch(url).then(r => r.json()).then(items => callback(items)).catch(() => callback());
                         },
@@ -667,8 +675,8 @@
                 // Restaurar la jurisdicción del usuario (es fija y no debe cambiar)
                 const jurisdictionDisplay = document.getElementById('jurisdiction_display_gv');
                 const hiddenJur = document.getElementById('jurisdiction_input_gv');
-                const currentJurisdiction = @json(optional(auth()->user())->jurisdiction_id);
-                const jurisNames = @json($jurisdictions->mapWithKeys(function($j){ return [$j->id => $j->name]; }));
+                const currentJurisdiction = @json(optional(auth()->user())->district_id);
+                const jurisNames = @json($districts->mapWithKeys(function($j){ return [$j->id => $j->name]; }));
                 if (currentJurisdiction) {
                     if (hiddenJur) hiddenJur.value = currentJurisdiction;
                     if (jurisdictionDisplay) jurisdictionDisplay.value = jurisNames[currentJurisdiction] || '';
@@ -842,13 +850,15 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // Map municipality_id -> jurisdiction_id
-            const muniToJur = @json($municipalities->mapWithKeys(function($m){ return [$m->id => $m->jurisdiction_id]; }));
-            const jurisNames = @json($jurisdictions->mapWithKeys(function($j){ return [$j->id => $j->name]; }));
+            // Map municipality_id -> district_id
+            const muniToJur = @json($municipalities->mapWithKeys(function($m){ return [$m->id => $m->district_id]; }));
+            const jurisNames = @json($districts->mapWithKeys(function($j){ return [$j->id => $j->name]; }));
             // Jurisdicción del usuario (puede ser null)
-            const currentJurisdiction = @json(optional(auth()->user())->jurisdiction_id);
+            const currentJurisdiction = @json(optional(auth()->user())->district_id);
+            const isAdminOrCoordinator = @json($isAdminOrCoordinator ?? false);
 
             const gruposMuni = document.getElementById('grupos_municipality_select');
+            const jurisdictionSelect = document.getElementById('jurisdiction_select_gv');
             const jurisdictionDisplay = document.getElementById('jurisdiction_display_gv');
             const hiddenJur = document.getElementById('jurisdiction_input_gv');
 
@@ -856,12 +866,72 @@
                 const mid = gruposMuni?.value || '';
                 if (mid && muniToJur[mid]) {
                     const jid = muniToJur[mid];
-                    if (hiddenJur) hiddenJur.value = jid;
-                    if (jurisdictionDisplay) jurisdictionDisplay.value = jurisNames[jid] || '';
+                    if (isAdminOrCoordinator && jurisdictionSelect) {
+                        // Para admin/coordinador: actualizar el select del distrito en modo silencioso
+                        // para no disparar onChange del distrito que limpia el municipio (bucle circular)
+                        if (jurisdictionSelect.tomselect) {
+                            jurisdictionSelect.tomselect.setValue(String(jid), true);
+                        } else {
+                            jurisdictionSelect.value = jid;
+                        }
+                    } else {
+                        // Para operadores: actualizar el campo hidden y display
+                        if (hiddenJur) hiddenJur.value = jid;
+                        if (jurisdictionDisplay) jurisdictionDisplay.value = jurisNames[jid] || '';
+                    }
                 } else {
-                    if (hiddenJur) hiddenJur.value = '';
-                    if (jurisdictionDisplay) jurisdictionDisplay.value = 'Pendiente (seleccione municipio)';
+                    if (isAdminOrCoordinator && jurisdictionSelect) {
+                        if (jurisdictionSelect.tomselect) {
+                            jurisdictionSelect.tomselect.setValue('', true);
+                        } else {
+                            jurisdictionSelect.value = '';
+                        }
+                    } else {
+                        if (hiddenJur) hiddenJur.value = '';
+                        if (jurisdictionDisplay) jurisdictionDisplay.value = 'Pendiente (seleccione municipio)';
+                    }
                 }
+            }
+
+            // Para Admin/Coordinador: inicializar Tom Select para Distrito
+            if (isAdminOrCoordinator && jurisdictionSelect) {
+                const districtTs = new TomSelect(jurisdictionSelect, {
+                    valueField: 'id',
+                    labelField: 'name',
+                    searchField: 'name',
+                    maxOptions: 20,
+                    maxItems: 1,
+                    create: false,
+                    preload: true,
+                    load: function(query, callback) {
+                        let url = '/api/districts/search?q=' + encodeURIComponent(query);
+                        fetch(url).then(r => r.json()).then(items => callback(items)).catch(() => callback());
+                    },
+                    onChange: function(value) {
+                        // Limpiar el municipio cuando cambia el distrito
+                        if (gruposMuni && gruposMuni.tomselect) {
+                            gruposMuni.tomselect.setValue('');
+                        }
+                    }
+                });
+                try { jurisdictionSelect.style.display = 'none'; } catch (e) {}
+                
+                // Si hay un valor pre-seleccionado, cargar esa opción
+                if (jurisdictionSelect.value) {
+                    districtTs.load(jurisdictionSelect.value, function(callback) {});
+                }
+            }
+
+            // Para Admin/Coordinador: cuando cambia el distrito, filtrar municipios
+            if (isAdminOrCoordinator && jurisdictionSelect) {
+                jurisdictionSelect.addEventListener('change', function() {
+                    // Limpiar la selección de municipio cuando cambia el distrito
+                    if (gruposMuni && gruposMuni.tomselect) {
+                        gruposMuni.tomselect.clearOptions();
+                        gruposMuni.tomselect.setValue('');
+                        gruposMuni.tomselect.load('', function(callback) {});
+                    }
+                });
             }
 
             if (gruposMuni) {
@@ -872,8 +942,15 @@
             // Initialize Tom Select for municipality
             function fetchMunicipalities(q) {
                 let url = '/api/municipalities/search?q=' + encodeURIComponent(q);
-                if (currentJurisdiction) {
-                    url += '&jurisdiction_id=' + encodeURIComponent(currentJurisdiction);
+                if (!isAdminOrCoordinator && currentJurisdiction) {
+                    // Para operadores: filtrar por su distrito
+                    url += '&district_id=' + encodeURIComponent(currentJurisdiction);
+                } else if (isAdminOrCoordinator && jurisdictionSelect) {
+                    // Para admin/coordinador: filtrar por el distrito seleccionado
+                    const selectedDistrict = jurisdictionSelect.value;
+                    if (selectedDistrict) {
+                        url += '&district_id=' + encodeURIComponent(selectedDistrict);
+                    }
                 }
                 return fetch(url).then(r => r.json());
             }
@@ -891,15 +968,17 @@
                         fetchMunicipalities(query).then(items => callback(items)).catch(() => callback());
                     },
                     onChange: function(value) {
-                        const evt = new Event('change');
+                        gruposMuni.value = value;
+                        const evt = new Event('change', { bubbles: true });
                         gruposMuni.dispatchEvent(evt);
                     }
                 });
+                gruposMuni.classList.remove('tomselect-select');
                 try { gruposMuni.style.display = 'none'; } catch (e) {}
             }
 
-            // Si el usuario tiene una jurisdicción asignada, establecerla en el campo oculto y en el display
-            if (currentJurisdiction) {
+            // Si el usuario tiene una jurisdicción asignada y NO es admin/coordinador, establecerla en el campo oculto y en el display
+            if (!isAdminOrCoordinator && currentJurisdiction) {
                 if (hiddenJur && !hiddenJur.value) hiddenJur.value = currentJurisdiction;
                 if (jurisdictionDisplay && (!jurisdictionDisplay.value || jurisdictionDisplay.value.includes('Pendiente'))) {
                     jurisdictionDisplay.value = jurisNames[currentJurisdiction] || jurisdictionDisplay.value;

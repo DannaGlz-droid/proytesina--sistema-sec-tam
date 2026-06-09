@@ -25,14 +25,14 @@
                     <div class="lg:w-80 flex-shrink-0">
                         <?php if (isset($component)) { $__componentOriginaldfb34dbd9e2a4c0448d6497003ff47d0 = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginaldfb34dbd9e2a4c0448d6497003ff47d0 = $attributes; } ?>
-<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.filtros.usuarios','data' => ['positions' => $positions,'jurisdictions' => $jurisdictions,'roles' => $roles]] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.filtros.usuarios','data' => ['positions' => $positions,'districts' => $districts,'roles' => $roles]] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
 <?php $component->withName('filtros.usuarios'); ?>
 <?php if ($component->shouldRender()): ?>
 <?php $__env->startComponent($component->resolveView(), $component->data()); ?>
 <?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
 <?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
 <?php endif; ?>
-<?php $component->withAttributes(['positions' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($positions),'jurisdictions' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($jurisdictions),'roles' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($roles)]); ?>
+<?php $component->withAttributes(['positions' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($positions),'districts' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($districts),'roles' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($roles)]); ?>
 <?php echo $__env->renderComponent(); ?>
 <?php endif; ?>
 <?php if (isset($__attributesOriginaldfb34dbd9e2a4c0448d6497003ff47d0)): ?>
@@ -98,7 +98,7 @@
                                     <th scope="col" class="px-3 py-2 font-lora whitespace-nowrap text-xs">Correo</th>
                                     <th scope="col" class="px-3 py-2 font-lora whitespace-nowrap text-xs">Teléfono</th>
                                     <th scope="col" class="px-3 py-2 font-lora whitespace-nowrap text-xs">Cargo</th>
-                                    <th scope="col" class="px-3 py-2 font-lora whitespace-nowrap text-xs">Jurisdicción</th>
+                                    <th scope="col" class="px-3 py-2 font-lora whitespace-nowrap text-xs">Distrito</th>
                                     <th scope="col" class="px-3 py-3 font-lora whitespace-nowrap text-xs">Fecha alta</th>
                                     <th scope="col" class="px-3 py-2 font-lora whitespace-nowrap text-xs">Rol</th>
                                     <th scope="col" class="px-3 py-2 font-lora whitespace-nowrap text-xs">Estado</th>
@@ -237,7 +237,7 @@
                     { data: 'email', name: 'email' },
                     { data: 'phone', name: 'phone' },
                     { data: 'position', name: 'position_id', orderable: false },
-                    { data: 'jurisdiction', name: 'jurisdiction_id', orderable: false },
+                    { data: 'district', name: 'district_id', orderable: false },
                     { data: 'registration_date', name: 'registration_date' },
                     { data: 'role', name: 'role_id', orderable: false },
                     { data: 'status', name: 'is_active', orderable: false },
@@ -493,4 +493,5 @@
         });
     </script>
 <?php $__env->stopSection(); ?>
+
 <?php echo $__env->make('layouts.principal', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH C:\Proyectos Laravel\sistema-sec-tam\resources\views/usuarios/gestion-de-usuarios.blade.php ENDPATH**/ ?>

@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id(); // int PRIMARY KEY AUTO_INCREMENT
             $table->foreignId('publication_id')->constrained('publications'); // FK to publications - id_publicacion
             $table->foreignId('municipality_id')->constrained('municipalities'); // FK to municipalities - id_municipio
-            $table->foreignId('jurisdiction_id')->constrained('jurisdictions'); // FK to jurisdictions - id_jurisdiccion
+            $table->foreignId('district_id')->constrained('districts'); // FK to districts - id_jurisdiccion
             $table->timestamps(); // created_at, updated_at
         });
     }

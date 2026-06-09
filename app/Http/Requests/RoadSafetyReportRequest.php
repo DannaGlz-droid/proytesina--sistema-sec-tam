@@ -34,7 +34,7 @@ class RoadSafetyReportRequest extends FormRequest
             'participantes' => 'required|integer|min:1|max:9999',
             'promotor' => 'required|string|min:3|max:255',
             'municipio' => 'nullable|exists:municipalities,id',
-            'jurisdiccion' => 'nullable|exists:jurisdictions,id',
+            'jurisdiccion' => 'nullable|exists:districts,id',
             'descripcion' => 'nullable|string|max:5000',
             // En modo edición, los archivos son opcionales
             'archivos' => $isUpdate ? 'nullable|array' : 'required|array|min:1',
