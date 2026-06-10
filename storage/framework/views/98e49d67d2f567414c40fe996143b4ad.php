@@ -569,11 +569,13 @@
                 if (mid && muniToJur[mid]) {
                     const jid = muniToJur[mid];
                     if (isAdminOrCoordinator && jurisdictionSelect) {
-                        // Para admin/coordinador: actualizar el select del distrito
-                        jurisdictionSelect.value = jid;
-                        // Disparar evento de cambio
-                        const evt = new Event('change', { bubbles: true });
-                        jurisdictionSelect.dispatchEvent(evt);
+                        // Para admin/coordinador: actualizar el select del distrito en modo silencioso
+                        // para no disparar onChange del distrito que limpia el municipio (bucle circular)
+                        if (jurisdictionSelect.tomselect) {
+                            jurisdictionSelect.tomselect.setValue(String(jid), true);
+                        } else {
+                            jurisdictionSelect.value = jid;
+                        }
                     } else {
                         // Para operadores: actualizar el campo hidden y display
                         if (hiddenJur) hiddenJur.value = jid;
@@ -581,7 +583,11 @@
                     }
                 } else {
                     if (isAdminOrCoordinator && jurisdictionSelect) {
-                        jurisdictionSelect.value = '';
+                        if (jurisdictionSelect.tomselect) {
+                            jurisdictionSelect.tomselect.setValue('', true);
+                        } else {
+                            jurisdictionSelect.value = '';
+                        }
                     } else {
                         if (hiddenJur) hiddenJur.value = '';
                         if (jurisdictionDisplay) jurisdictionDisplay.value = 'Pendiente (seleccione municipio)';
@@ -618,46 +624,6 @@
                 }
             }
 
-            // Para Admin/Coordinador: cuando cambia el distrito, filtrar municipios
-            if (isAdminOrCoordinator && jurisdictionSelect) {
-                jurisdictionSelect.addEventListener('change', function() {
-                    const selectedDistrict = this.value;
-                    // Actualizar el municipio selector para que solo cargue municipios del distrito seleccionado
-                    if (alcoholMuni && alcoholMuni.tomselect) {
-                        alcoholMuni.tomselect.destroy();
-                        alcoholMuni.tomselect = null;
-                        alcoholMuni.value = '';
-                        
-                        const ts = new TomSelect(alcoholMuni, {
-                            valueField: 'id',
-                            labelField: 'name',
-                            searchField: 'name',
-                            maxOptions: 20,
-                            maxItems: 1,
-                            create: false,
-                            preload: true,
-                            load: function(query, callback) {
-                                let url = '/api/municipalities/search?q=' + encodeURIComponent(query);
-                                if (selectedDistrict) {
-                                    url += '&district_id=' + encodeURIComponent(selectedDistrict);
-                                }
-                                fetch(url).then(r => r.json()).then(items => callback(items)).catch(() => callback());
-                            },
-                            onChange: function(value) {
-                                const evt = new Event('change');
-                                alcoholMuni.dispatchEvent(evt);
-                            }
-                        });
-                        try { alcoholMuni.style.display = 'none'; } catch (e) {}
-                    }
-                });
-            }
-
-            if (alcoholMuni) {
-                alcoholMuni.addEventListener('change', setJurisdictionBasedOnMunicipality);
-                setJurisdictionBasedOnMunicipality();
-            }
-
             // Initialize Tom Select for municipality
             function fetchMunicipalities(q) {
                 let url = '/api/municipalities/search?q=' + encodeURIComponent(q);
@@ -674,14 +640,7 @@
                 return fetch(url).then(r => r.json());
             }
 
-            // Initialize Tom Select for municipality - destroy previous instance if exists
             if (alcoholMuni) {
-                // Destruir la instancia anterior si existe (causada por la clase tomselect-select)
-                if (alcoholMuni.tomselect) {
-                    alcoholMuni.tomselect.destroy();
-                    alcoholMuni.tomselect = null;
-                }
-                
                 const ts = new TomSelect(alcoholMuni, {
                     valueField: 'id',
                     labelField: 'name',
@@ -694,11 +653,30 @@
                         fetchMunicipalities(query).then(items => callback(items)).catch(() => callback());
                     },
                     onChange: function(value) {
-                        const evt = new Event('change');
+                        alcoholMuni.value = value;
+                        const evt = new Event('change', { bubbles: true });
                         alcoholMuni.dispatchEvent(evt);
                     }
                 });
+                alcoholMuni.classList.remove('tomselect-select');
                 try { alcoholMuni.style.display = 'none'; } catch (e) {}
+            }
+
+            if (alcoholMuni) {
+                alcoholMuni.addEventListener('change', setJurisdictionBasedOnMunicipality);
+                setJurisdictionBasedOnMunicipality();
+            }
+
+            // Para Admin/Coordinador: cuando cambia el distrito, refrescar la lista de municipios
+            if (isAdminOrCoordinator && jurisdictionSelect) {
+                jurisdictionSelect.addEventListener('change', function() {
+                    // Limpiar la selección de municipio cuando cambia el distrito
+                    if (alcoholMuni && alcoholMuni.tomselect) {
+                        alcoholMuni.tomselect.clearOptions();
+                        alcoholMuni.tomselect.setValue('');
+                        alcoholMuni.tomselect.load('', function(callback) {});
+                    }
+                });
             }
 
             // Si el usuario tiene una jurisdicción asignada y NO es admin/coordinador, establecerla en el campo oculto y en el display

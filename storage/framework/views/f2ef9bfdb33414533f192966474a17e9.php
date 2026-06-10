@@ -238,6 +238,8 @@
                                         'data-transporte-individual-no-apto' => $reporte->public_transport_individual ?? '',
                                         'data-transporte-carga-no-apto' => $reporte->cargo_transport ?? '',
                                         'data-emergencia-no-apto' => $reporte->emergency_vehicles ?? '',
+                                        'data-municipio' => $reporte->municipality->name ?? '',
+                                        'data-distrito' => $reporte->district->name ?? '',
                                     ];
                                 }
                             } elseif ($pub->publication_type === 'grupos-vulnerables') {
@@ -531,7 +533,7 @@
 <?php echo $__env->make('components.modal-grupos-vulnerables', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?>
 
 <!-- Navegación de Reportes (Flechas) -->
-<div id="report-nav-container" class="hidden fixed inset-0 z-50 pointer-events-none">
+<div id="report-nav-container" class="hidden fixed inset-0 z-[9999999] pointer-events-none">
     <!-- Flecha izquierda (posicionada a la izquierda) -->
     <button id="report-nav-prev" 
             class="pointer-events-auto absolute left-4 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-[#404041] text-white hover:bg-[#2a2a2a] transition-all duration-200 flex items-center justify-center shadow-lg hidden hover:shadow-xl cursor-pointer"
@@ -897,6 +899,15 @@ document.addEventListener('DOMContentLoaded', function() {
                     const key = kebabToCamel(kebab);
                     if (element && this.dataset[key] !== undefined && this.dataset[key] !== '') {
                         element.textContent = this.dataset[key];
+                    }
+                });
+
+                // Municipio y Distrito
+                const geoFields = ['municipio', 'distrito'];
+                geoFields.forEach(field => {
+                    const element = modal.querySelector(`.modal-${field}`);
+                    if (element && this.dataset[field]) {
+                        element.textContent = this.dataset[field];
                     }
                 });
                 
