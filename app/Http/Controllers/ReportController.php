@@ -991,7 +991,7 @@ class ReportController extends Controller
                 'cargo_transport' => $validated['transporte_carga'],
                 'emergency_vehicles' => $validated['vehiculos_emergencia'],
                 'municipality_id' => $validated['municipio'] ?? null,
-                'district_id' => $validated['distrito'] ?? null,
+                'district_id' => $validated['jurisdiccion'] ?? null,
             ]);
 
             // 3. Guardar archivos si existen (soporte para múltiples archivos)
@@ -1127,7 +1127,7 @@ class ReportController extends Controller
                     'cargo_transport' => $validated['transporte_carga'],
                     'emergency_vehicles' => $validated['vehiculos_emergencia'],
                     'municipality_id' => $validated['municipio'] ?? null,
-                    'district_id' => $validated['distrito'] ?? null,
+                    'district_id' => $validated['jurisdiccion'] ?? null,
                 ]);
             }
 
