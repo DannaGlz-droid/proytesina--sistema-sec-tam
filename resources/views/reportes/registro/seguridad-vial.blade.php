@@ -157,12 +157,12 @@
                             <label class="block text-xs lg:text-sm font-medium text-gray-500 mb-1 font-lora">Distrito</label>
                             @if($isAdminOrCoordinator ?? false)
                                 <!-- Para Admin/Coordinador: Tom Select editable de distritos -->
-                                <select id="jurisdiction_select_vial" name="distrito" class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora" placeholder="Seleccione un distrito" required>
+                                <select id="jurisdiction_select_vial" name="jurisdiccion" class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora" placeholder="Seleccione un distrito" required>
                                     <option value="">Seleccione un distrito</option>
                                 </select>
                             @else
                                 <!-- Para Operadores: campo readonly con distrito pre-asignado -->
-                                <input type="hidden" id="jurisdiction_input_vial" name="distrito" value="{{ old('distrito', isset($report) ? $report->district_id : '') }}" required>
+                                <input type="hidden" id="jurisdiction_input_vial" name="jurisdiccion" value="{{ old('jurisdiccion', isset($report) ? $report->district_id : '') }}" required>
                                 <input id="jurisdiction_display_vial" type="text" class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-200 rounded-lg bg-gray-50 text-gray-600 focus:ring-2 focus:ring-gray-300 focus:border-transparent transition-all duration-200 font-lora" value="{{ isset($report) && $report->district ? $report->district->name : 'Pendiente (seleccione municipio)' }}" readonly>
                             @endif
                         </div>
@@ -316,11 +316,19 @@
                                 Subir archivos (selección múltiple) <span class="text-red-600">*</span>
                             @endif
                         </label>
+
+                        @if(old('tema'))
+                            <div class="alert alert-warning p-3 mb-3 rounded-lg text-sm font-lora">
+                                <i class="fas fa-exclamation-triangle"></i>
+                                <strong>Nota:</strong> Después de un error de validación, debes volver a seleccionar los archivos. Los archivos anteriores no se conservan.
+                            </div>
+                        @endif
                         
                         <!-- Cuadro punteado para arrastrar y soltar -->
                         <div class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-[#404041] transition-colors duration-200 bg-gray-50">
                             <input type="file" 
                                    id="file-input"
+                                   name="archivos[]"
                                    class="hidden"
                                    accept=".pdf,.xlsx,.xls,.jpg,.jpeg,.png"
                                    multiple
@@ -754,12 +762,8 @@
             const mainForm = document.querySelector('form[action*="seguridad-vial"][method="POST"]:not([id^="delete-file"])');
             if (mainForm) {
                 mainForm.addEventListener('submit', function(e) {
-                    console.log('Form submit interceptado, action:', this.action);
-                    console.log('Form method:', this.method);
-                    
-                    // Solo validar archivos en modo CREACIÓN (no en modo EDICIÓN)
-                    const isEditMode = this.action.includes('/edit') || this.querySelector('input[name="_method"][value="PUT"]');
-                    console.log('Is edit mode:', isEditMode);
+                    // Detectar modo edición por la presencia del campo _method=PUT
+                    const isEditMode = !!this.querySelector('input[name="_method"][value="PUT"]');
                     
                     if (!isEditMode && selectedFiles.length === 0) {
                         e.preventDefault();
@@ -801,24 +805,15 @@
                             }
                         }
                         
-                        // Crear un DataTransfer para poder asignar múltiples archivos al input
+                        // Asignar los archivos seleccionados al input file existente
                         const dataTransfer = new DataTransfer();
                         selectedFiles.forEach(file => {
                             dataTransfer.items.add(file);
                         });
-                        
-                        // Crear un input hidden con todos los archivos
-                        const hiddenInput = document.createElement('input');
-                        hiddenInput.type = 'file';
-                        hiddenInput.name = 'archivos[]';
-                        hiddenInput.multiple = true;
-                        hiddenInput.files = dataTransfer.files;
-                        hiddenInput.style.display = 'none';
-                        
-                        this.appendChild(hiddenInput);
+                        if (fileInput) {
+                            fileInput.files = dataTransfer.files;
+                        }
                     }
-                    
-                    console.log('Form va a ser enviado normalmente');
                 });
             }
             
@@ -887,8 +882,16 @@
             const jurisdictionDisplay = document.getElementById('jurisdiction_display_vial');
             const hiddenJur = document.getElementById('jurisdiction_input_vial');
 
+            // Variables para restaurar old() después de error de validación
+            const oldJurisdiccion = '{{ old('jurisdiccion', '') }}';
+            const oldMunicipio = '{{ old('municipio', '') }}';
+
             function setJurisdictionBasedOnMunicipality() {
                 const mid = seguridadMuni?.value || '';
+                // Si hay old values y el municipio coincide, no sobrescribir el distrito
+                if (oldJurisdiccion && oldMunicipio && mid === oldMunicipio) {
+                    return;
+                }
                 if (mid && muniToJur[mid]) {
                     const jid = muniToJur[mid];
                     if (isAdminOrCoordinator && jurisdictionSelect) {
@@ -941,8 +944,20 @@
                 });
                 try { jurisdictionSelect.style.display = 'none'; } catch (e) {}
                 
-                // Si hay un valor pre-seleccionado, cargar esa opción
-                if (jurisdictionSelect.value) {
+                // Restaurar old('jurisdiccion') después de error de validación
+                const oldJurisdiccion = '{{ old('jurisdiccion', '') }}';
+                if (oldJurisdiccion) {
+                    fetch('/api/districts/search?q=' + encodeURIComponent(oldJurisdiccion))
+                        .then(r => r.json())
+                        .then(items => {
+                            if (items && items.length > 0) {
+                                districtTs.clearOptions();
+                                districtTs.addOption(items[0]);
+                                districtTs.setValue(oldJurisdiccion, true);
+                            }
+                        })
+                        .catch(() => {});
+                } else if (jurisdictionSelect.value) {
                     districtTs.load(jurisdictionSelect.value, function(callback) {});
                 }
             }
@@ -961,7 +976,10 @@
 
             if (seguridadMuni) {
                 seguridadMuni.addEventListener('change', setJurisdictionBasedOnMunicipality);
-                setJurisdictionBasedOnMunicipality();
+                // Solo llamar en carga inicial si NO hay old values (para no sobrescribir distrito)
+                if (!oldJurisdiccion && !oldMunicipio) {
+                    setJurisdictionBasedOnMunicipality();
+                }
             }
 
             // Initialize Tom Select for municipality
@@ -1000,6 +1018,21 @@
                 });
                 seguridadMuni.classList.remove('tomselect-select');
                 try { seguridadMuni.style.display = 'none'; } catch (e) {}
+                
+                // Restaurar old('municipio') después de inicializar Tom Select
+                if (oldMunicipio) {
+                    fetch('/api/municipalities/search?q=' + encodeURIComponent(oldMunicipio))
+                        .then(r => r.json())
+                        .then(items => {
+                            if (items && items.length > 0) {
+                                ts.clearOptions();
+                                ts.addOption(items[0]);
+                                // Usar setValue con silent=true para NO disparar onChange
+                                ts.setValue(oldMunicipio, true);
+                            }
+                        })
+                        .catch(() => {});
+                }
             }
 
             // Si el usuario tiene una jurisdicción asignada y NO es admin/coordinador, establecerla en el campo oculto y en el display

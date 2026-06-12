@@ -157,12 +157,12 @@
                             <label class="block text-xs lg:text-sm font-medium text-gray-500 mb-1 font-lora">Distrito</label>
                             @if($isAdminOrCoordinator ?? false)
                                 <!-- Para Admin/Coordinador: Tom Select editable de distritos -->
-                                <select id="jurisdiction_select_gv" name="distrito" class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora" placeholder="Seleccione un distrito" required>
+                                <select id="jurisdiction_select_gv" name="jurisdiccion" class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora" placeholder="Seleccione un distrito" required>
                                     <option value="">Seleccione un distrito</option>
                                 </select>
                             @else
                                 <!-- Para Operadores: campo readonly con distrito pre-asignado -->
-                                <input type="hidden" id="jurisdiction_input_gv" name="distrito" value="{{ old('distrito', isset($report) ? $report->district_id : '') }}" required>
+                                <input type="hidden" id="jurisdiction_input_gv" name="jurisdiccion" value="{{ old('jurisdiccion', isset($report) ? $report->district_id : '') }}" required>
                                 <input id="jurisdiction_display_gv" type="text" class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-200 rounded-lg bg-gray-50 text-gray-600 focus:ring-2 focus:ring-gray-300 focus:border-transparent transition-all duration-200 font-lora" value="{{ isset($report) && $report->district ? $report->district->name : 'Pendiente (seleccione municipio)' }}" readonly>
                             @endif
                         </div>
@@ -321,6 +321,7 @@
                         <div class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-[#404041] transition-colors duration-200 bg-gray-50">
                             <input type="file" 
                                    id="file-input"
+                                   name="archivos[]"
                                    class="hidden"
                                    accept=".pdf,.xlsx,.xls,.jpg,.jpeg,.png"
                                    multiple
@@ -729,15 +730,11 @@
             }
             
             // Interceptar el envío del formulario para agregar los archivos
-            const mainForm = document.querySelector('form[action*="grupos-vulnerables"][method="POST"]:not([id^="delete-file"])');  
+            const mainForm = document.querySelector('form[action*="grupos-vulnerables"][method="POST"]:not([id^="delete-file"])');
             if (mainForm) {
                 mainForm.addEventListener('submit', function(e) {
-                    console.log('Form submit interceptado, action:', this.action);
-                    console.log('Form method:', this.method);
-                    
-                    // Solo validar archivos en modo CREACIÓN (no en modo EDICIÓN)
-                    const isEditMode = this.action.includes('/edit') || this.querySelector('input[name="_method"][value="PUT"]');
-                    console.log('Is edit mode:', isEditMode);
+                    // Detectar modo edición por la presencia del campo _method=PUT
+                    const isEditMode = !!this.querySelector('input[name="_method"][value="PUT"]');
                     
                     if (!isEditMode && selectedFiles.length === 0) {
                         e.preventDefault();
@@ -779,24 +776,15 @@
                             }
                         }
                         
-                        // Crear un DataTransfer para poder asignar múltiples archivos al input
+                        // Asignar los archivos seleccionados al input file existente
                         const dataTransfer = new DataTransfer();
                         selectedFiles.forEach(file => {
                             dataTransfer.items.add(file);
                         });
-                        
-                        // Crear un input hidden con todos los archivos
-                        const hiddenInput = document.createElement('input');
-                        hiddenInput.type = 'file';
-                        hiddenInput.name = 'archivos[]';
-                        hiddenInput.multiple = true;
-                        hiddenInput.files = dataTransfer.files;
-                        hiddenInput.style.display = 'none';
-                        
-                        this.appendChild(hiddenInput);
+                        if (fileInput) {
+                            fileInput.files = dataTransfer.files;
+                        }
                     }
-                    
-                    console.log('Form va a ser enviado normalmente');
                 });
             }
         });

@@ -409,7 +409,7 @@
                                 <div class="flex h-16 w-16 items-center justify-center rounded-full bg-gray-100 text-gray-400">
                                     <i class="fas fa-inbox text-3xl"></i>
                                 </div>
-                            <?php if(request('q') || request('status') === 'aprobado' || request('status') === 'rechazado'): ?>
+                            <?php if(request()->filled('q') || request()->filled('status') || request()->filled('district_id') || request()->filled('date_filter') || request('tipo', 'todos') !== 'todos'): ?>
                                 <p class="text-lg font-lora text-gray-600">No se encontraron reportes</p>
                                 <p class="text-sm text-gray-500 font-lora">Intenta ajustar los criterios de búsqueda</p>
                             <?php else: ?>

@@ -90,12 +90,12 @@
                             <label class="block text-xs lg:text-sm font-medium text-gray-500 mb-1 font-lora">Distrito</label>
                             <?php if($isAdminOrCoordinator ?? false): ?>
                                 <!-- Para Admin/Coordinador: Tom Select editable de distritos -->
-                                <select id="jurisdiction_select" name="distrito" class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora" placeholder="Seleccione un distrito" required>
+                                <select id="jurisdiction_select" name="jurisdiccion" class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora" placeholder="Seleccione un distrito" required>
                                     <option value="">Seleccione un distrito</option>
                                 </select>
                             <?php else: ?>
                                 <!-- Para Operadores: campo readonly con distrito pre-asignado -->
-                                <input type="hidden" id="jurisdiction_input" name="distrito" value="<?php echo e(old('distrito', isset($report) ? $report->district_id : '')); ?>" required>
+                                <input type="hidden" id="jurisdiction_input" name="jurisdiccion" value="<?php echo e(old('jurisdiccion', isset($report) ? $report->district_id : '')); ?>" required>
                                 <input id="jurisdiction_display" type="text" class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-200 rounded-lg bg-gray-50 text-gray-600 focus:ring-2 focus:ring-gray-300 focus:border-transparent transition-all duration-200 font-lora" value="<?php echo e(isset($report) && $report->district ? $report->district->name : 'Pendiente (seleccione municipio)'); ?>" readonly>
                             <?php endif; ?>
                         </div>
@@ -208,6 +208,16 @@
                             <?php endif; ?>
                         </label>
                         
+                        <!-- Mensaje si hay old input (después de error de validación) -->
+                        <?php if(old('tema')): ?>
+                            <div class="mb-3 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                                <p class="text-xs text-amber-700 font-lora flex items-center">
+                                    <ion-icon name="alert-circle-outline" class="mr-1 text-sm"></ion-icon>
+                                    Los archivos seleccionados anteriormente se perdieron. Por favor, vuelva a seleccionar los archivos.
+                                </p>
+                            </div>
+                        <?php endif; ?>
+
                         <!-- Cuadro punteado para arrastrar y soltar -->
                         <div class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-[#404041] transition-colors duration-200 bg-gray-50">
                             <input type="file" 
@@ -574,8 +584,20 @@
             const jurisdictionDisplay = document.getElementById('jurisdiction_display');
             const hiddenJur = document.getElementById('jurisdiction_input');
 
+            // Guardar old('jurisdiccion') para evitar que el cambio de municipio lo sobrescriba
+            const oldJurisdiccion = '<?php echo e(old('jurisdiccion', '')); ?>';
+            const oldMunicipio = '<?php echo e(old('municipio', '')); ?>';
+
             function setJurisdictionBasedOnMunicipality() {
                 const mid = deathMuni?.value || '';
+                
+                // Si hay un old('jurisdiccion') y estamos en carga inicial (no cambio real del usuario),
+                // NO sobrescribir el distrito con el mapeo del municipio.
+                // Esto permite que el admin haya seleccionado un distrito diferente al que mapea el municipio.
+                if (oldJurisdiccion && oldMunicipio && mid === oldMunicipio) {
+                    return;
+                }
+                
                 if (mid && muniToJur[mid]) {
                     const jid = muniToJur[mid];
                     if (isAdminOrCoordinator && jurisdictionSelect) {
@@ -628,8 +650,21 @@
                 });
                 try { jurisdictionSelect.style.display = 'none'; } catch (e) {}
                 
-                // Si hay un valor pre-seleccionado, cargar esa opción
-                if (jurisdictionSelect.value) {
+                // Restaurar old('jurisdiccion') después de que Tom Select se inicialice
+                const oldJurisdiccion = '<?php echo e(old('jurisdiccion', '')); ?>';
+                if (oldJurisdiccion) {
+                    // Cargar el distrito específico por su ID
+                    fetch('/api/districts/search?q=' + encodeURIComponent(oldJurisdiccion))
+                        .then(r => r.json())
+                        .then(items => {
+                            if (items && items.length > 0) {
+                                districtTs.clearOptions();
+                                districtTs.addOption(items[0]);
+                                districtTs.setValue(oldJurisdiccion, true);
+                            }
+                        })
+                        .catch(() => {});
+                } else if (jurisdictionSelect.value) {
                     districtTs.load(jurisdictionSelect.value, function(callback) {});
                 }
             }
@@ -648,7 +683,10 @@
 
             if (deathMuni) {
                 deathMuni.addEventListener('change', setJurisdictionBasedOnMunicipality);
-                setJurisdictionBasedOnMunicipality();
+                // Solo llamar en carga inicial si NO hay old values (para no sobrescribir distrito)
+                if (!oldJurisdiccion && !oldMunicipio) {
+                    setJurisdictionBasedOnMunicipality();
+                }
             }
 
             window.clearObservatorioLesionesForm = function() {
@@ -755,6 +793,22 @@
                 });
                 deathMuni.classList.remove('tomselect-select');
                 try { deathMuni.style.display = 'none'; } catch (e) {}
+                
+                // Restaurar old('municipio') después de inicializar Tom Select
+                if (oldMunicipio) {
+                    // Cargar el municipio específico por su ID
+                    fetch('/api/municipalities/search?q=' + encodeURIComponent(oldMunicipio))
+                        .then(r => r.json())
+                        .then(items => {
+                            if (items && items.length > 0) {
+                                ts.clearOptions();
+                                ts.addOption(items[0]);
+                                // Usar setValue con silent=true para NO disparar onChange
+                                ts.setValue(oldMunicipio, true);
+                            }
+                        })
+                        .catch(() => {});
+                }
             }
 
             // Si el usuario tiene una jurisdicción asignada, establecerla en el campo oculto y en el display

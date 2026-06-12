@@ -13,6 +13,8 @@ use App\Models\District;
 use App\Models\ActivityType;
 use App\Models\Notification;
 use App\Models\User;
+use App\Mail\ReportCommentMail;
+use App\Mail\ReportRejectedMail;
 use App\Http\Requests\RoadSafetyReportRequest;
 use App\Http\Requests\InjuryObservatoryReportRequest;
 use App\Http\Requests\GruposVulnerablesReportRequest;
@@ -20,6 +22,8 @@ use App\Http\Requests\BreathalyzerReportRequest;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 use App\Config\ReportFileRequirements;
 use App\Models\GruposVulnerablesReport;
 use Illuminate\Support\Facades\Storage;
@@ -1481,6 +1485,11 @@ class ReportController extends Controller
                 'message' => $nMessage,
                 'read' => false,
             ]);
+
+            $recipient = User::find($recipientId);
+            if ($recipient) {
+                $this->sendReportCommentEmail($recipient, $publication, $comment, $user, $nTitle, $nMessage);
+            }
         }
 
     // For now, force comment response timezone to Victoria, Tamaulipas
@@ -1870,6 +1879,10 @@ class ReportController extends Controller
             'read' => false,
         ]);
 
+        if ($publication->user) {
+            $this->sendReportRejectedEmail($publication->user, $publication, $user, $request->rejection_reason);
+        }
+
         return response()->json([
             'success' => true,
             'message' => 'Reporte rechazado.',
@@ -1929,5 +1942,64 @@ class ReportController extends Controller
             'success' => true,
             'message' => 'Reporte reenviado para revisión exitosamente.',
         ]);
+    }
+
+    private function sendReportRejectedEmail(User $recipient, Publication $publication, User $rejector, string $reason): void
+    {
+        if (empty($recipient->email)) {
+            return;
+        }
+
+        try {
+            $reportUrl = route('reportes.index', ['publication' => $publication->id]);
+
+            Mail::to($recipient->email)->send(
+                new ReportRejectedMail($publication, $rejector, $reason, $reportUrl)
+            );
+        } catch (\Throwable $e) {
+            Log::warning('No se pudo enviar correo de reporte rechazado.', [
+                'publication_id' => $publication->id,
+                'recipient_user_id' => $recipient->id,
+                'error' => $e->getMessage(),
+            ]);
+        }
+    }
+
+    private function sendReportCommentEmail(
+        User $recipient,
+        Publication $publication,
+        PublicationComment $comment,
+        User $sender,
+        string $notificationTitle,
+        string $notificationMessage
+    ): void {
+        if (empty($recipient->email)) {
+            return;
+        }
+
+        try {
+            $reportUrl = route('reportes.index', [
+                'publication' => $publication->id,
+                'comment' => $comment->id,
+            ]);
+
+            Mail::to($recipient->email)->send(
+                new ReportCommentMail(
+                    $publication,
+                    $comment,
+                    $sender,
+                    $notificationTitle,
+                    $notificationMessage,
+                    $reportUrl
+                )
+            );
+        } catch (\Throwable $e) {
+            Log::warning('No se pudo enviar correo de comentario en reporte.', [
+                'publication_id' => $publication->id,
+                'comment_id' => $comment->id,
+                'recipient_user_id' => $recipient->id,
+                'error' => $e->getMessage(),
+            ]);
+        }
     }
 }

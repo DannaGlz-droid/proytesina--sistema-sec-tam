@@ -117,14 +117,23 @@
 
                         <div>
                             <label class="block text-xs lg:text-sm font-medium text-gray-500 mb-1 font-lora">Distrito</label>
+                            @php
+                                $selectedDistrito = old('jurisdiccion', isset($report) ? $report->district_id : '');
+                            @endphp
                             @if($isAdminOrCoordinator ?? false)
                                 <!-- Para Admin/Coordinador: Tom Select editable de distritos -->
-                                <select id="jurisdiction_select_alcohol" name="distrito" class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora" placeholder="Seleccione un distrito" required>
+                                <select id="jurisdiction_select_alcohol" name="jurisdiccion" class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora" placeholder="Seleccione un distrito" required>
                                     <option value="">Seleccione un distrito</option>
+                                    @if($selectedDistrito)
+                                        @php $selectedDistrictModel = $districts->firstWhere('id', $selectedDistrito) @endphp
+                                        @if($selectedDistrictModel)
+                                            <option value="{{ $selectedDistrictModel->id }}" selected>{{ $selectedDistrictModel->name }}</option>
+                                        @endif
+                                    @endif
                                 </select>
                             @else
                                 <!-- Para Operadores: campo readonly con distrito pre-asignado -->
-                                <input type="hidden" id="jurisdiction_input_alcohol" name="distrito" value="{{ old('distrito', isset($report) ? $report->district_id : '') }}" required>
+                                <input type="hidden" id="jurisdiction_input_alcohol" name="jurisdiccion" value="{{ $selectedDistrito }}" required>
                                 <input id="jurisdiction_display_alcohol" type="text" class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-200 rounded-lg bg-gray-50 text-gray-600 focus:ring-2 focus:ring-gray-300 focus:border-transparent transition-all duration-200 font-lora" value="{{ isset($report) && $report->district ? $report->district->name : 'Pendiente (seleccione municipio)' }}" readonly>
                             @endif
                         </div>
@@ -533,11 +542,13 @@
             // Jurisdicción del usuario (puede ser null)
             const currentJurisdiction = @json(optional(auth()->user())->district_id);
             const isAdminOrCoordinator = @json($isAdminOrCoordinator ?? false);
+            const initialDistrict = @json(old('distrito', isset($report) ? $report->district_id : ''));
 
             const alcoholMuni = document.getElementById('alcohol_municipality_select');
             const jurisdictionSelect = document.getElementById('jurisdiction_select_alcohol');
             const jurisdictionDisplay = document.getElementById('jurisdiction_display_alcohol');
             const hiddenJur = document.getElementById('jurisdiction_input_alcohol');
+            let syncingDistrictFromMunicipality = false;
 
             function setJurisdictionBasedOnMunicipality() {
                 const mid = alcoholMuni?.value || '';
@@ -546,11 +557,13 @@
                     if (isAdminOrCoordinator && jurisdictionSelect) {
                         // Para admin/coordinador: actualizar el select del distrito en modo silencioso
                         // para no disparar onChange del distrito que limpia el municipio (bucle circular)
+                        syncingDistrictFromMunicipality = true;
                         if (jurisdictionSelect.tomselect) {
                             jurisdictionSelect.tomselect.setValue(String(jid), true);
                         } else {
                             jurisdictionSelect.value = jid;
                         }
+                        syncingDistrictFromMunicipality = false;
                     } else {
                         // Para operadores: actualizar el campo hidden y display
                         if (hiddenJur) hiddenJur.value = jid;
@@ -558,11 +571,13 @@
                     }
                 } else {
                     if (isAdminOrCoordinator && jurisdictionSelect) {
+                        syncingDistrictFromMunicipality = true;
                         if (jurisdictionSelect.tomselect) {
                             jurisdictionSelect.tomselect.setValue('', true);
                         } else {
                             jurisdictionSelect.value = '';
                         }
+                        syncingDistrictFromMunicipality = false;
                     } else {
                         if (hiddenJur) hiddenJur.value = '';
                         if (jurisdictionDisplay) jurisdictionDisplay.value = 'Pendiente (seleccione municipio)';
@@ -585,6 +600,9 @@
                         fetch(url).then(r => r.json()).then(items => callback(items)).catch(() => callback());
                     },
                     onChange: function(value) {
+                        if (syncingDistrictFromMunicipality) {
+                            return;
+                        }
                         // Limpiar el municipio cuando cambia el distrito
                         if (alcoholMuni && alcoholMuni.tomselect) {
                             alcoholMuni.tomselect.setValue('');
@@ -594,8 +612,12 @@
                 try { jurisdictionSelect.style.display = 'none'; } catch (e) {}
                 
                 // Si hay un valor pre-seleccionado, cargar esa opción
-                if (jurisdictionSelect.value) {
-                    districtTs.load(jurisdictionSelect.value, function(callback) {});
+                if (initialDistrict) {
+                    const initialDistrictName = jurisNames[initialDistrict];
+                    if (initialDistrictName) {
+                        districtTs.addOption({ id: String(initialDistrict), name: initialDistrictName });
+                    }
+                    districtTs.setValue(String(initialDistrict), true);
                 }
             }
 
@@ -967,36 +989,23 @@
                             }
                         });
                         
-                        // Crear un DataTransfer para poder asignar múltiples archivos al input
+                        // Asignar los archivos seleccionados al input file existente
                         const dataTransfer = new DataTransfer();
                         selectedFiles.forEach(file => {
                             dataTransfer.items.add(file);
                         });
-                        
-                        // Crear un input hidden con todos los archivos
-                        const hiddenInput = document.createElement('input');
-                        hiddenInput.type = 'file';
-                        hiddenInput.name = 'archivos[]';
-                        hiddenInput.multiple = true;
-                        hiddenInput.files = dataTransfer.files;
-                        hiddenInput.style.display = 'none';
-                        
-                        this.appendChild(hiddenInput);
+                        if (fileInput) {
+                            fileInput.files = dataTransfer.files;
+                        }
                     } else if (isEditMode && selectedFiles.length > 0) {
                         // En modo edición, también agregar los nuevos archivos
                         const dataTransfer = new DataTransfer();
                         selectedFiles.forEach(file => {
                             dataTransfer.items.add(file);
                         });
-                        
-                        const hiddenInput = document.createElement('input');
-                        hiddenInput.type = 'file';
-                        hiddenInput.name = 'archivos[]';
-                        hiddenInput.multiple = true;
-                        hiddenInput.files = dataTransfer.files;
-                        hiddenInput.style.display = 'none';
-                        
-                        this.appendChild(hiddenInput);
+                        if (fileInput) {
+                            fileInput.files = dataTransfer.files;
+                        }
                     }
                 });
             }
