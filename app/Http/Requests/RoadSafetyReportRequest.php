@@ -34,7 +34,7 @@ class RoadSafetyReportRequest extends FormRequest
             'participantes' => 'required|integer|min:1|max:9999',
             'promotor' => 'required|string|min:3|max:255',
             'municipio' => 'nullable|exists:municipalities,id',
-            'jurisdiccion' => 'nullable|exists:districts,id',
+            'distrito' => 'nullable|exists:districts,id',
             'descripcion' => 'nullable|string|max:5000',
             // En modo edición, los archivos son opcionales
             'archivos' => $isUpdate ? 'nullable|array' : 'required|array|min:1',
@@ -139,7 +139,7 @@ class RoadSafetyReportRequest extends FormRequest
             'promotor.min' => 'El promotor debe tener al menos 3 caracteres.',
             'promotor.max' => 'El promotor no puede exceder 255 caracteres.',
             'municipio.exists' => 'El municipio seleccionado no es válido.',
-            'jurisdiccion.exists' => 'La jurisdicción seleccionada no es válida.',
+            'distrito.exists' => 'El distrito seleccionado no es válido.',
             'descripcion.max' => 'La descripción no puede exceder 5000 caracteres.',
             'archivos.required' => 'Debe subir al menos un archivo.',
             'archivos.array' => 'Los archivos deben ser un conjunto válido.',

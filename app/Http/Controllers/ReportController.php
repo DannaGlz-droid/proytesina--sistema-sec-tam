@@ -526,11 +526,11 @@ class ReportController extends Controller
                 if (!$mun || $mun->district_id != $userJur) {
                     return redirect()->back()->withInput()->with('error', 'El municipio seleccionado no pertenece a su jurisdicción.');
                 }
-                if (isset($validated['jurisdiccion']) && $validated['jurisdiccion'] != $userJur) {
+                if (isset($validated['distrito']) && $validated['distrito'] != $userJur) {
                     return redirect()->back()->withInput()->with('error', 'La jurisdicción seleccionada no coincide con su jurisdicción.');
                 }
                 // Force the jurisdiction to the user's jurisdiction for safety
-                $validated['jurisdiccion'] = $userJur;
+                $validated['distrito'] = $userJur;
             }
 
             // 1. Crear la publicación
@@ -552,7 +552,7 @@ class ReportController extends Controller
                 'location' => $validated['lugar'],
                 'promoter' => $validated['promotor'],
                 'municipality_id' => $validated['municipio'] ?? null,
-                'district_id' => $validated['jurisdiccion'] ?? null,
+                'district_id' => $validated['distrito'] ?? null,
             ]);
 
             // 3. Guardar archivos si existen (soporte para múltiples archivos)
@@ -645,11 +645,11 @@ class ReportController extends Controller
                 if (!$mun || $mun->district_id != $userJur) {
                     return redirect()->back()->withInput()->with('error', 'El municipio seleccionado no pertenece a su jurisdicción.');
                 }
-                if (isset($validated['jurisdiccion']) && $validated['jurisdiccion'] != $userJur) {
+                if (isset($validated['distrito']) && $validated['distrito'] != $userJur) {
                     return redirect()->back()->withInput()->with('error', 'La jurisdicción seleccionada no coincide con su jurisdicción.');
                 }
                 // Force the jurisdiction to the user's jurisdiction for safety
-                $validated['jurisdiccion'] = $userJur;
+                $validated['distrito'] = $userJur;
             }
 
             // 1. Procesar eliminación de archivos marcados
@@ -688,7 +688,7 @@ class ReportController extends Controller
                     'location' => $validated['lugar'],
                     'promoter' => $validated['promotor'],
                     'municipality_id' => $validated['municipio'] ?? null,
-                    'district_id' => $validated['jurisdiccion'] ?? null,
+                    'district_id' => $validated['distrito'] ?? null,
                 ]);
             }
 
@@ -735,11 +735,11 @@ class ReportController extends Controller
                 if (!$mun || $mun->district_id != $userJur) {
                     return redirect()->back()->withInput()->with('error', 'El municipio seleccionado no pertenece a su jurisdicción.');
                 }
-                if (isset($validated['jurisdiccion']) && $validated['jurisdiccion'] != $userJur) {
+                if (isset($validated['distrito']) && $validated['distrito'] != $userJur) {
                     return redirect()->back()->withInput()->with('error', 'La jurisdicción seleccionada no coincide con su jurisdicción.');
                 }
                 // Force the jurisdiction to the user's jurisdiction for safety
-                $validated['jurisdiccion'] = $userJur;
+                $validated['distrito'] = $userJur;
             }
 
             // 1. Crear la publicación
@@ -757,7 +757,7 @@ class ReportController extends Controller
             InjuryObservatoryReport::create([
                 'publication_id' => $publication->id,
                 'municipality_id' => $validated['municipio'],
-                'district_id' => $validated['jurisdiccion'],
+                'district_id' => $validated['distrito'],
             ]);
 
             // 3. Guardar archivos si existen
@@ -854,11 +854,11 @@ class ReportController extends Controller
                 if (!$mun || $mun->district_id != $userJur) {
                     return redirect()->back()->withInput()->with('error', 'El municipio seleccionado no pertenece a su jurisdicción.');
                 }
-                if (isset($validated['jurisdiccion']) && $validated['jurisdiccion'] != $userJur) {
+                if (isset($validated['distrito']) && $validated['distrito'] != $userJur) {
                     return redirect()->back()->withInput()->with('error', 'La jurisdicción seleccionada no coincide con su jurisdicción.');
                 }
                 // Force the jurisdiction to the user's jurisdiction for safety
-                $validated['jurisdiccion'] = $userJur;
+                $validated['distrito'] = $userJur;
             }
 
             // 1. Procesar eliminación de archivos marcados
@@ -893,7 +893,7 @@ class ReportController extends Controller
             if ($report) {
                 $report->update([
                     'municipality_id' => $validated['municipio'],
-                    'district_id' => $validated['jurisdiccion'],
+                    'district_id' => $validated['distrito'],
                 ]);
             }
 
@@ -1199,7 +1199,7 @@ class ReportController extends Controller
                 'location' => $validated['lugar'],
                 'promoter' => $validated['promotor'],
                 'municipality_id' => $validated['municipio'] ?? null,
-                'district_id' => $validated['jurisdiccion'] ?? null,
+                'district_id' => $validated['distrito'] ?? null,
             ]);
 
             // 3. Guardar archivos si existen
@@ -1302,7 +1302,7 @@ class ReportController extends Controller
                     'location' => $validated['lugar'],
                     'promoter' => $validated['promotor'],
                     'municipality_id' => $validated['municipio'] ?? null,
-                    'district_id' => $validated['jurisdiccion'] ?? null,
+                    'district_id' => $validated['distrito'] ?? null,
                 ]
             );
 
