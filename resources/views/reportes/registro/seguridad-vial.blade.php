@@ -157,8 +157,17 @@
                             <label class="block text-xs lg:text-sm font-medium text-gray-500 mb-1 font-lora">Distrito</label>
                             @if($isAdminOrCoordinator ?? false)
                                 <!-- Para Admin/Coordinador: Tom Select editable de distritos -->
+                                @php
+                                    $selectedDistritoVial = old('jurisdiccion', isset($report) ? $report->district_id : '');
+                                @endphp
                                 <select id="jurisdiction_select_vial" name="jurisdiccion" class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora" placeholder="Seleccione un distrito" required>
                                     <option value="">Seleccione un distrito</option>
+                                    @if($selectedDistritoVial)
+                                        @php $selectedDistrictModelVial = $districts->firstWhere('id', $selectedDistritoVial) @endphp
+                                        @if($selectedDistrictModelVial)
+                                            <option value="{{ $selectedDistrictModelVial->id }}" selected>{{ $selectedDistrictModelVial->name }}</option>
+                                        @endif
+                                    @endif
                                 </select>
                             @else
                                 <!-- Para Operadores: campo readonly con distrito pre-asignado -->
@@ -947,16 +956,11 @@
                 // Restaurar old('jurisdiccion') después de error de validación
                 const oldJurisdiccion = '{{ old('jurisdiccion', '') }}';
                 if (oldJurisdiccion) {
-                    fetch('/api/districts/search?q=' + encodeURIComponent(oldJurisdiccion))
-                        .then(r => r.json())
-                        .then(items => {
-                            if (items && items.length > 0) {
-                                districtTs.clearOptions();
-                                districtTs.addOption(items[0]);
-                                districtTs.setValue(oldJurisdiccion, true);
-                            }
-                        })
-                        .catch(() => {});
+                    const districtName = jurisNames[oldJurisdiccion];
+                    if (districtName) {
+                        districtTs.addOption({ id: String(oldJurisdiccion), name: districtName });
+                        districtTs.setValue(String(oldJurisdiccion), true);
+                    }
                 } else if (jurisdictionSelect.value) {
                     districtTs.load(jurisdictionSelect.value, function(callback) {});
                 }

@@ -727,6 +727,15 @@ class ReportController extends Controller
         $userId = Auth::id() ?? \App\Models\User::first()->id;
         $validated = $request->validated();
 
+        \Log::info('=== storeObservatorio INICIO ===', [
+            'user_id' => $userId,
+            'validated_data' => $validated,
+            'all_request' => $request->all(),
+            'has_files' => $request->hasFile('archivos'),
+            'files_count' => $request->hasFile('archivos') ? count($request->file('archivos')) : 0,
+            'session_errors' => session('errors') ? session('errors')->toArray() : null,
+        ]);
+
         try {
             DB::beginTransaction();
 
