@@ -454,6 +454,7 @@
                         <div class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-[#404041] transition-colors duration-200 bg-gray-50">
                             <input type="file" 
                                    id="file-input"
+                                   name="archivos[]"
                                    class="hidden"
                                    accept=".xlsx,.xls,.jpg,.jpeg,.png"
                                    multiple
