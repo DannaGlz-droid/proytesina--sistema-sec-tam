@@ -525,7 +525,7 @@ class ReportController extends Controller
             // belongs to the same jurisdiction to avoid manipulating the request client-side.
             $user = Auth::user();
             $userJur = optional($user)->district_id;
-            if ($userJur) {
+            if ($userJur && !($user->isAdmin() || $user->isCoordinator())) {
                 $mun = Municipality::find($validated['municipio'] ?? null);
                 if (!$mun || $mun->district_id != $userJur) {
                     return redirect()->back()->withInput()->with('error', 'El municipio seleccionado no pertenece a su jurisdicción.');
@@ -644,7 +644,7 @@ class ReportController extends Controller
             // Server-side: if the user has a jurisdiction, ensure the municipality (and/or submitted jurisdiction)
             // belongs to the same jurisdiction to avoid manipulating the request client-side.
             $userJur = optional($user)->district_id;
-            if ($userJur) {
+            if ($userJur && !($user->isAdmin() || $user->isCoordinator())) {
                 $mun = Municipality::find($validated['municipio'] ?? null);
                 if (!$mun || $mun->district_id != $userJur) {
                     return redirect()->back()->withInput()->with('error', 'El municipio seleccionado no pertenece a su jurisdicción.');
@@ -734,7 +734,7 @@ class ReportController extends Controller
             // belongs to the same jurisdiction to avoid manipulating the request client-side.
             $user = Auth::user();
             $userJur = optional($user)->district_id;
-            if ($userJur) {
+            if ($userJur && !($user->isAdmin() || $user->isCoordinator())) {
                 $mun = Municipality::find($validated['municipio']);
                 if (!$mun || $mun->district_id != $userJur) {
                     return redirect()->back()->withInput()->with('error', 'El municipio seleccionado no pertenece a su jurisdicción.');
@@ -853,7 +853,7 @@ class ReportController extends Controller
             // Server-side jurisdiction check similar to storeObservatorio
             $user = Auth::user();
             $userJur = optional($user)->district_id;
-            if ($userJur) {
+            if ($userJur && !($user->isAdmin() || $user->isCoordinator())) {
                 $mun = Municipality::find($validated['municipio']);
                 if (!$mun || $mun->district_id != $userJur) {
                     return redirect()->back()->withInput()->with('error', 'El municipio seleccionado no pertenece a su jurisdicción.');
