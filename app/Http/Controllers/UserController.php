@@ -14,6 +14,7 @@ use Illuminate\Support\Facades\Redirect;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use App\Http\Requests\UserRequest;
+use Illuminate\Validation\Rules\Password;
 
 class UserController extends Controller
 {
@@ -481,6 +482,7 @@ class UserController extends Controller
     public function update(UserRequest $request, User $user)
     {
         $data = $request->validated();
+        $passwordChanged = ! empty($data['password']);
 
         $data['is_active'] = $request->has('is_active') ? (bool) $request->input('is_active') : false;
 
@@ -496,6 +498,11 @@ class UserController extends Controller
         }
 
         $user->update($data);
+
+        if (! $user->is_active || $passwordChanged) {
+            DB::table('sessions')->where('user_id', $user->id)->delete();
+            $user->forceFill(['remember_token' => null])->save();
+        }
 
         return redirect()->route('user.user-gestion')->with('success', 'User updated successfully.');
 
@@ -525,11 +532,13 @@ class UserController extends Controller
     public function updatePassword(Request $request, User $user)
     {
         $data = $request->validate([
-            'password' => ['required', 'string', 'min:8', 'confirmed'],
+            'password' => ['required', 'confirmed', Password::defaults()],
         ]);
 
         $user->password = Hash::make($data['password']);
+        $user->remember_token = null;
         $user->save();
+        DB::table('sessions')->where('user_id', $user->id)->delete();
 
         return redirect()->route('user.user-gestion')->with('success', 'Password updated successfully.');
     }

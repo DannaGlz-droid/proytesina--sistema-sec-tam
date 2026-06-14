@@ -471,7 +471,9 @@ class ReportController extends Controller
         $districts->push($centralOffice);
         
         // Pasar información de si el usuario es admin o coordinador
-        $isAdminOrCoordinator = $user->isAdmin() || $user->isCoordinator();
+        $isAdminOrCoordinator = $user->isAdmin()
+            || $user->isCoordinator()
+            || (int) $user->district_id === 999;
         
         return view('reportes.registro.observatorio-de-lesiones', compact('municipalities', 'districts', 'isAdminOrCoordinator'));
     }
@@ -493,7 +495,9 @@ class ReportController extends Controller
         $districts->push($centralOffice);
         
         // Pasar información de si el usuario es admin o coordinador
-        $isAdminOrCoordinator = $user->isAdmin() || $user->isCoordinator();
+        $isAdminOrCoordinator = $user->isAdmin()
+            || $user->isCoordinator()
+            || (int) $user->district_id === 999;
         
         return view('reportes.registro.seguridad-vial', compact('activityTypes', 'municipalities', 'districts', 'isAdminOrCoordinator'));
     }
@@ -506,36 +510,31 @@ class ReportController extends Controller
         // Obtener user_id (autenticado o usuario por defecto)
         $userId = Auth::id() ?? \App\Models\User::first()->id;
         
-        // DEBUG: Ver qué datos llegan
-        \Log::info('Datos recibidos en storeSeguridadVial:', [
-            'user_id' => $userId,
-            'all_data' => $request->all(),
-            'activity_type_id' => $request->activity_type_id,
-            'has_archivos' => $request->hasFile('archivos'),
-            'archivos_count' => $request->hasFile('archivos') ? count($request->file('archivos')) : 0,
-        ]);
-
         // Los datos ya están validados por RoadSafetyReportRequest
         $validated = $request->validated();
 
+        $user = Auth::user();
+        $userDistrictId = optional($user)->district_id;
+        $mustUseAssignedDistrict = $user->isOperator()
+            && $userDistrictId
+            && (int) $userDistrictId !== 999;
+
+        if ($mustUseAssignedDistrict) {
+            $municipality = Municipality::find($validated['municipio'] ?? null);
+
+            if (!$municipality || (int) $municipality->district_id !== (int) $userDistrictId) {
+                return redirect()->back()->withInput()->with('error', 'El municipio seleccionado no pertenece a su distrito.');
+            }
+
+            if (isset($validated['jurisdiccion']) && (int) $validated['jurisdiccion'] !== (int) $userDistrictId) {
+                return redirect()->back()->withInput()->with('error', 'El distrito seleccionado no coincide con su distrito asignado.');
+            }
+
+            $validated['jurisdiccion'] = $userDistrictId;
+        }
+
         try {
             DB::beginTransaction();
-
-            // Server-side: if the user has a jurisdiction, ensure the municipality (and/or submitted jurisdiction)
-            // belongs to the same jurisdiction to avoid manipulating the request client-side.
-            $user = Auth::user();
-            $userJur = optional($user)->district_id;
-            if ($userJur && !($user->isAdmin() || $user->isCoordinator())) {
-                $mun = Municipality::find($validated['municipio'] ?? null);
-                if (!$mun || $mun->district_id != $userJur) {
-                    return redirect()->back()->withInput()->with('error', 'El municipio seleccionado no pertenece a su jurisdicción.');
-                }
-                if (isset($validated['jurisdiccion']) && $validated['jurisdiccion'] != $userJur) {
-                    return redirect()->back()->withInput()->with('error', 'La jurisdicción seleccionada no coincide con su jurisdicción.');
-                }
-                // Force the jurisdiction to the user's jurisdiction for safety
-                $validated['jurisdiccion'] = $userJur;
-            }
 
             // 1. Crear la publicación
             $publication = Publication::create([
@@ -571,7 +570,7 @@ class ReportController extends Controller
 
             return redirect()
                 ->route('reportes.index')
-                ->with('success', 'Reporte de Seguridad Vial registrado exitosamente. Total de publicaciones: ' . Publication::count());
+                ->with('success', 'Reporte de Seguridad Vial registrado exitosamente');
 
         } catch (\Exception $e) {
             DB::rollBack();
@@ -612,8 +611,11 @@ class ReportController extends Controller
         $activityTypes = \App\Models\ActivityType::all();
         $municipalities = Municipality::all();
         $districts = District::all();
+        $isAdminOrCoordinator = $user->isAdmin()
+            || $user->isCoordinator()
+            || (int) $user->district_id === 999;
         
-        return view('reportes.registro.seguridad-vial', compact('publication', 'report', 'activityTypes', 'municipalities', 'districts'));
+        return view('reportes.registro.seguridad-vial', compact('publication', 'report', 'activityTypes', 'municipalities', 'districts', 'isAdminOrCoordinator'));
     }
 
     /**
@@ -638,23 +640,27 @@ class ReportController extends Controller
                 ->with('error', 'No puedes actualizar una publicación aprobada.');
         }
 
+        $userDistrictId = optional($user)->district_id;
+        $mustUseAssignedDistrict = $user->isOperator()
+            && $userDistrictId
+            && (int) $userDistrictId !== 999;
+
+        if ($mustUseAssignedDistrict) {
+            $municipality = Municipality::find($validated['municipio'] ?? null);
+
+            if (!$municipality || (int) $municipality->district_id !== (int) $userDistrictId) {
+                return redirect()->back()->withInput()->with('error', 'El municipio seleccionado no pertenece a su distrito.');
+            }
+
+            if (isset($validated['jurisdiccion']) && (int) $validated['jurisdiccion'] !== (int) $userDistrictId) {
+                return redirect()->back()->withInput()->with('error', 'El distrito seleccionado no coincide con su distrito asignado.');
+            }
+
+            $validated['jurisdiccion'] = $userDistrictId;
+        }
+
         try {
             DB::beginTransaction();
-
-            // Server-side: if the user has a jurisdiction, ensure the municipality (and/or submitted jurisdiction)
-            // belongs to the same jurisdiction to avoid manipulating the request client-side.
-            $userJur = optional($user)->district_id;
-            if ($userJur && !($user->isAdmin() || $user->isCoordinator())) {
-                $mun = Municipality::find($validated['municipio'] ?? null);
-                if (!$mun || $mun->district_id != $userJur) {
-                    return redirect()->back()->withInput()->with('error', 'El municipio seleccionado no pertenece a su jurisdicción.');
-                }
-                if (isset($validated['jurisdiccion']) && $validated['jurisdiccion'] != $userJur) {
-                    return redirect()->back()->withInput()->with('error', 'La jurisdicción seleccionada no coincide con su jurisdicción.');
-                }
-                // Force the jurisdiction to the user's jurisdiction for safety
-                $validated['jurisdiccion'] = $userJur;
-            }
 
             // 1. Procesar eliminación de archivos marcados
             if ($request->filled('files_to_delete')) {
@@ -727,33 +733,28 @@ class ReportController extends Controller
         $userId = Auth::id() ?? \App\Models\User::first()->id;
         $validated = $request->validated();
 
-        \Log::info('=== storeObservatorio INICIO ===', [
-            'user_id' => $userId,
-            'validated_data' => $validated,
-            'all_request' => $request->all(),
-            'has_files' => $request->hasFile('archivos'),
-            'files_count' => $request->hasFile('archivos') ? count($request->file('archivos')) : 0,
-            'session_errors' => session('errors') ? session('errors')->toArray() : null,
-        ]);
+        $user = Auth::user();
+        $userDistrictId = optional($user)->district_id;
+        $mustUseAssignedDistrict = $user->isOperator()
+            && $userDistrictId
+            && (int) $userDistrictId !== 999;
+
+        if ($mustUseAssignedDistrict) {
+            $municipality = Municipality::find($validated['municipio']);
+
+            if (!$municipality || (int) $municipality->district_id !== (int) $userDistrictId) {
+                return redirect()->back()->withInput()->with('error', 'El municipio seleccionado no pertenece a su distrito.');
+            }
+
+            if ((int) $validated['jurisdiccion'] !== (int) $userDistrictId) {
+                return redirect()->back()->withInput()->with('error', 'El distrito seleccionado no coincide con su distrito asignado.');
+            }
+
+            $validated['jurisdiccion'] = $userDistrictId;
+        }
 
         try {
             DB::beginTransaction();
-
-            // Server-side: if the user has a jurisdiction, ensure the municipality (and/or submitted jurisdiction)
-            // belongs to the same jurisdiction to avoid manipulating the request client-side.
-            $user = Auth::user();
-            $userJur = optional($user)->district_id;
-            if ($userJur && !($user->isAdmin() || $user->isCoordinator())) {
-                $mun = Municipality::find($validated['municipio']);
-                if (!$mun || $mun->district_id != $userJur) {
-                    return redirect()->back()->withInput()->with('error', 'El municipio seleccionado no pertenece a su jurisdicción.');
-                }
-                if (isset($validated['jurisdiccion']) && $validated['jurisdiccion'] != $userJur) {
-                    return redirect()->back()->withInput()->with('error', 'La jurisdicción seleccionada no coincide con su jurisdicción.');
-                }
-                // Force the jurisdiction to the user's jurisdiction for safety
-                $validated['jurisdiccion'] = $userJur;
-            }
 
             // 1. Crear la publicación
             $publication = Publication::create([
@@ -831,8 +832,11 @@ class ReportController extends Controller
         $report = $publication->injuryObservatoryReports->first();
         $municipalities = Municipality::with('district')->orderBy('name')->get();
         $districts = District::orderBy('name')->get();
+        $isAdminOrCoordinator = $user->isAdmin()
+            || $user->isCoordinator()
+            || (int) $user->district_id === 999;
         
-        return view('reportes.registro.observatorio-de-lesiones', compact('publication', 'report', 'municipalities', 'districts'));
+        return view('reportes.registro.observatorio-de-lesiones', compact('publication', 'report', 'municipalities', 'districts', 'isAdminOrCoordinator'));
     }
 
     /**
@@ -856,23 +860,27 @@ class ReportController extends Controller
                 ->with('error', 'No puedes actualizar una publicación aprobada.');
         }
 
+        $userDistrictId = optional($user)->district_id;
+        $mustUseAssignedDistrict = $user->isOperator()
+            && $userDistrictId
+            && (int) $userDistrictId !== 999;
+
+        if ($mustUseAssignedDistrict) {
+            $municipality = Municipality::find($validated['municipio']);
+
+            if (!$municipality || (int) $municipality->district_id !== (int) $userDistrictId) {
+                return redirect()->back()->withInput()->with('error', 'El municipio seleccionado no pertenece a su distrito.');
+            }
+
+            if ((int) $validated['jurisdiccion'] !== (int) $userDistrictId) {
+                return redirect()->back()->withInput()->with('error', 'El distrito seleccionado no coincide con su distrito asignado.');
+            }
+
+            $validated['jurisdiccion'] = $userDistrictId;
+        }
+
         try {
             DB::beginTransaction();
-
-            // Server-side jurisdiction check similar to storeObservatorio
-            $user = Auth::user();
-            $userJur = optional($user)->district_id;
-            if ($userJur && !($user->isAdmin() || $user->isCoordinator())) {
-                $mun = Municipality::find($validated['municipio']);
-                if (!$mun || $mun->district_id != $userJur) {
-                    return redirect()->back()->withInput()->with('error', 'El municipio seleccionado no pertenece a su jurisdicción.');
-                }
-                if (isset($validated['jurisdiccion']) && $validated['jurisdiccion'] != $userJur) {
-                    return redirect()->back()->withInput()->with('error', 'La jurisdicción seleccionada no coincide con su jurisdicción.');
-                }
-                // Force the jurisdiction to the user's jurisdiction for safety
-                $validated['jurisdiccion'] = $userJur;
-            }
 
             // 1. Procesar eliminación de archivos marcados
             if ($request->filled('files_to_delete')) {
@@ -1497,7 +1505,7 @@ class ReportController extends Controller
 
             $recipient = User::find($recipientId);
             if ($recipient) {
-                $this->sendReportCommentEmail($recipient, $publication, $comment, $user, $nTitle, $nMessage);
+                $this->sendReportCommentEmail($recipient, $publication, $comment, $user, $nTitle);
             }
         }
 
@@ -1979,8 +1987,7 @@ class ReportController extends Controller
         Publication $publication,
         PublicationComment $comment,
         User $sender,
-        string $notificationTitle,
-        string $notificationMessage
+        string $notificationTitle
     ): void {
         if (empty($recipient->email)) {
             return;
@@ -1998,7 +2005,6 @@ class ReportController extends Controller
                     $comment,
                     $sender,
                     $notificationTitle,
-                    $notificationMessage,
                     $reportUrl
                 )
             );

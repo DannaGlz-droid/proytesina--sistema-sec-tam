@@ -28,7 +28,7 @@
 
       <div>
         <label for="login">Usuario o correo</label>
-        <input id="login" type="text" name="login" value="{{ old('login') }}" required autofocus placeholder="Usuario o correo">
+        <input id="login" type="text" name="login" value="{{ old('login') }}" required autofocus autocomplete="username" maxlength="320" autocapitalize="none" spellcheck="false" placeholder="Usuario o correo">
       </div>
 
       <div>
@@ -38,7 +38,7 @@
 
       <div>
         <label>
-          <input type="checkbox" name="remember"> Recordarme
+          <input type="checkbox" name="remember" value="1" {{ old('remember') ? 'checked' : '' }}> Recordarme
         </label>
       </div>
 

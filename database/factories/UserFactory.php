@@ -2,6 +2,9 @@
 
 namespace Database\Factories;
 
+use App\Models\District;
+use App\Models\Position;
+use App\Models\Role;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
@@ -25,9 +28,18 @@ class UserFactory extends Factory
     {
         return [
             'name' => fake()->name(),
+            'first_last_name' => fake()->lastName(),
+            'second_last_name' => fake()->lastName(),
             'email' => fake()->unique()->safeEmail(),
+            'phone' => fake()->numerify('##########'),
+            'username' => fake()->unique()->userName(),
             'email_verified_at' => now(),
             'password' => static::$password ??= Hash::make('password'),
+            'is_active' => true,
+            'registration_date' => now()->toDateString(),
+            'position_id' => fn () => Position::query()->firstOrCreate(['name' => 'Pruebas'])->id,
+            'district_id' => fn () => District::query()->firstOrCreate(['name' => 'Pruebas'])->id,
+            'role_id' => fn () => Role::query()->firstOrCreate(['name' => 'Operador'])->id,
             'remember_token' => Str::random(10),
         ];
     }

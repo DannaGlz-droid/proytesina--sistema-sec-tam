@@ -34,7 +34,12 @@
         <div class="relative flex items-center ml-3 lg:ml-4 mr-3 lg:mr-4" x-data="{ openNotifications: false, notifications: [], unreadCount: 0 }" 
              x-init="
                  // Cargar notificaciones al iniciar
-                 fetch('/notificaciones')
+                 fetch('/notificaciones', {
+                     headers: {
+                         'Accept': 'application/json',
+                         'X-Requested-With': 'XMLHttpRequest'
+                     }
+                 })
                      .then(res => res.json())
                      .then(data => {
                          notifications = data.notifications;
@@ -43,7 +48,12 @@
                  
                  // Recargar cada 30 segundos
                  setInterval(() => {
-                     fetch('/notificaciones')
+                     fetch('/notificaciones', {
+                         headers: {
+                             'Accept': 'application/json',
+                             'X-Requested-With': 'XMLHttpRequest'
+                         }
+                     })
                          .then(res => res.json())
                          .then(data => {
                              notifications = data.notifications;

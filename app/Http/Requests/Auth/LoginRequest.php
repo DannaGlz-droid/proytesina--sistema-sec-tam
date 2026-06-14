@@ -27,9 +27,8 @@ class LoginRequest extends FormRequest
     public function rules(): array
     {
         return [
-            // accept either email or username in the single `login` field
-            'login' => ['required', 'string'],
-            'password' => ['required', 'string'],
+            'login' => ['required', 'string', 'max:320'],
+            'password' => ['required', 'string', 'max:255'],
         ];
     }
 
@@ -42,16 +41,20 @@ class LoginRequest extends FormRequest
     {
         $this->ensureIsNotRateLimited();
 
-        $login = $this->input('login');
+        $login = trim((string) $this->input('login'));
         $password = $this->input('password');
 
-        // Determine whether the login value is an email address
         $field = filter_var($login, FILTER_VALIDATE_EMAIL) ? 'email' : 'username';
 
-        $credentials = [$field => $login, 'password' => $password];
+        $credentials = [
+            $field => $login,
+            'password' => $password,
+            'is_active' => true,
+        ];
 
         if (! Auth::attempt($credentials, $this->boolean('remember'))) {
             RateLimiter::hit($this->throttleKey());
+            RateLimiter::hit($this->ipThrottleKey());
 
             throw ValidationException::withMessages([
                 'login' => trans('auth.failed'),
@@ -68,13 +71,19 @@ class LoginRequest extends FormRequest
      */
     public function ensureIsNotRateLimited(): void
     {
-        if (! RateLimiter::tooManyAttempts($this->throttleKey(), 5)) {
+        $loginLimited = RateLimiter::tooManyAttempts($this->throttleKey(), 5);
+        $ipLimited = RateLimiter::tooManyAttempts($this->ipThrottleKey(), 25);
+
+        if (! $loginLimited && ! $ipLimited) {
             return;
         }
 
         event(new Lockout($this));
 
-        $seconds = RateLimiter::availableIn($this->throttleKey());
+        $seconds = max(
+            RateLimiter::availableIn($this->throttleKey()),
+            RateLimiter::availableIn($this->ipThrottleKey())
+        );
 
         throw ValidationException::withMessages([
             'login' => trans('auth.throttle', [
@@ -89,6 +98,16 @@ class LoginRequest extends FormRequest
      */
     public function throttleKey(): string
     {
-        return Str::transliterate(Str::lower($this->string('login')).'|'.$this->ip());
+        $login = Str::lower(trim((string) $this->input('login')));
+
+        return 'login:'.Str::transliterate($login).'|'.$this->ip();
+    }
+
+    /**
+     * Limit distributed attempts against many accounts from one address.
+     */
+    public function ipThrottleKey(): string
+    {
+        return 'login-ip:'.$this->ip();
     }
 }

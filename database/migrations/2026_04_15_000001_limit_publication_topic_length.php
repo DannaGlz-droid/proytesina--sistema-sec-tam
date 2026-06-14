@@ -13,10 +13,16 @@ return new class extends Migration
     public function up(): void
     {
         // Primero, truncar los datos que sean más largos que 146 caracteres
+        $driver = DB::connection()->getDriverName();
+        $lengthFunction = $driver === 'sqlite' ? 'LENGTH' : 'CHAR_LENGTH';
+        $substringExpression = $driver === 'sqlite'
+            ? 'SUBSTR(topic, 1, 146)'
+            : 'SUBSTRING(topic, 1, 146)';
+
         DB::table('publications')
-            ->whereRaw('CHAR_LENGTH(topic) > 146')
+            ->whereRaw("{$lengthFunction}(topic) > 146")
             ->update([
-                'topic' => DB::raw('SUBSTRING(topic, 1, 146)')
+                'topic' => DB::raw($substringExpression)
             ]);
         
         // Luego cambiar la longitud del campo

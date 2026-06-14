@@ -31,13 +31,46 @@ class AuthenticatedSessionController extends Controller
         // Reset last_session to NULL when user logs in (to indicate they're online)
         $user = Auth::user();
         $user->update(['last_session' => null]);
-        
-        if ($user->hasAnyRole(['Administrador', 'Coordinador'])) {
-            return redirect()->intended(route('statistic.data', absolute: false));
+
+        $fallback = $user->hasAnyRole(['Administrador', 'Coordinador'])
+            ? route('statistic.data', absolute: false)
+            : route('reportes.index', absolute: false);
+
+        $intended = $request->session()->pull('url.intended');
+
+        return $this->isNavigableIntendedUrl($request, $intended)
+            ? redirect()->to($intended)
+            : redirect()->to($fallback);
+    }
+
+    /**
+     * Prevent AJAX/JSON endpoints from becoming the post-login destination.
+     */
+    private function isNavigableIntendedUrl(Request $request, mixed $intended): bool
+    {
+        if (! is_string($intended) || $intended === '') {
+            return false;
         }
-        
-        // Operador e Invitado van a reportes
-        return redirect()->intended(route('reportes.index', absolute: false));
+
+        $parts = parse_url($intended);
+
+        if ($parts === false) {
+            return false;
+        }
+
+        if (isset($parts['host']) && $parts['host'] !== $request->getHost()) {
+            return false;
+        }
+
+        $path = '/'.ltrim($parts['path'] ?? '/', '/');
+
+        foreach (['/api/', '/notificaciones', '/login', '/logout'] as $blockedPath) {
+            if ($path === rtrim($blockedPath, '/') || str_starts_with($path, $blockedPath)) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     /**
@@ -45,6 +78,12 @@ class AuthenticatedSessionController extends Controller
      */
     public function destroy(Request $request): RedirectResponse
     {
+        $origin = $request->headers->get('Origin');
+
+        if ($origin && ! $this->isSameOrigin($request, $origin)) {
+            abort(403);
+        }
+
         // Actualizar last_session ANTES de hacer logout
         $user = Auth::user();
         if ($user) {
@@ -59,5 +98,20 @@ class AuthenticatedSessionController extends Controller
 
         // After logout, redirect to the login page
         return redirect()->route('login');
+    }
+
+    private function isSameOrigin(Request $request, string $origin): bool
+    {
+        $parts = parse_url($origin);
+
+        if ($parts === false || ! isset($parts['host'])) {
+            return false;
+        }
+
+        $originPort = $parts['port'] ?? (($parts['scheme'] ?? 'http') === 'https' ? 443 : 80);
+        $requestPort = $request->getPort();
+
+        return $parts['host'] === $request->getHost()
+            && $originPort === $requestPort;
     }
 }

@@ -9,6 +9,24 @@ return new class extends Migration
 {
     public function up(): void
     {
+        $legacyTables = [
+            'municipalities',
+            'users',
+            'deaths',
+            'road_safety_reports',
+            'injury_observatory_reports',
+            'grupos_vulnerables_reports',
+        ];
+
+        $hasLegacyColumns = collect($legacyTables)->contains(
+            fn (string $table) => Schema::hasTable($table)
+                && Schema::hasColumn($table, 'jurisdiction_id')
+        );
+
+        if (! Schema::hasTable('jurisdictions') && ! $hasLegacyColumns) {
+            return;
+        }
+
         // Step 1: Create districts table
         if (!Schema::hasTable('districts')) {
             Schema::create('districts', function (Blueprint $table) {

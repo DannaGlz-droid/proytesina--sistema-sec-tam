@@ -11,6 +11,25 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        $middleware->redirectUsersTo(function (\Illuminate\Http\Request $request): string {
+            $user = $request->user();
+
+            return $user && $user->hasAnyRole(['Administrador', 'Coordinador'])
+                ? route('statistic.data')
+                : route('reportes.index');
+        });
+
+        // Logout is protected by same-site cookies and an origin check in the
+        // controller so stale tabs can still close the session cleanly.
+        $middleware->validateCsrfTokens(except: [
+            'logout',
+        ]);
+
+        $middleware->appendToGroup('web', [
+            \App\Http\Middleware\EnsureUserIsActive::class,
+            \App\Http\Middleware\SecurityHeaders::class,
+        ]);
+
         $middleware->alias([
             'role' => \App\Http\Middleware\CheckRole::class,
         ]);

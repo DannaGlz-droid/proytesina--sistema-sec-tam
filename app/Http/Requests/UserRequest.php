@@ -4,6 +4,7 @@ namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\Rules\Password;
 
 class UserRequest extends FormRequest
 {
@@ -26,7 +27,9 @@ class UserRequest extends FormRequest
         $user = $this->route('user');
         $userId = $user ? $user->id : null;
 
-        $passwordRule = $userId ? ['nullable', 'string', 'confirmed', 'min:6'] : ['required', 'string', 'confirmed', 'min:6'];
+        $passwordRule = $userId
+            ? ['nullable', 'confirmed', Password::defaults()]
+            : ['required', 'confirmed', Password::defaults()];
 
         return [
             'name' => 'required|string|min:2|max:191',

@@ -47,6 +47,10 @@
                     <input type="password" 
                         id="password"
                         name="password"
+                        required
+                        minlength="12"
+                        maxlength="255"
+                        autocomplete="new-password"
                                        class="w-full px-3 py-2 pr-10 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora" 
                                        placeholder="Ingrese la nueva contraseña">
                     @error('password')
@@ -68,6 +72,10 @@
                     <input type="password" 
                         id="password_confirmation"
                         name="password_confirmation"
+                        required
+                        minlength="12"
+                        maxlength="255"
+                        autocomplete="new-password"
                                        class="w-full px-3 py-2 pr-10 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora" 
                                        placeholder="Confirme la nueva contraseña">
                     @error('password_confirmation')
@@ -199,7 +207,7 @@
             let color = '';
             let text = '';
             
-            if (password.length >= 8) strength++;
+            if (password.length >= 12) strength++;
             if (/[a-z]/.test(password)) strength++;
             if (/[A-Z]/.test(password)) strength++;
             if (/[0-9]/.test(password)) strength++;
