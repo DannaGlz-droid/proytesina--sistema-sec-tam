@@ -34,14 +34,14 @@
             <!-- Columna Izquierda - Filtros -->
             <div class="lg:w-80 flex-shrink-0">
                 <!-- SECCIÓN CARGAR ARCHIVO -->
-                <div class="border border-[#404041] rounded-lg p-4 bg-white mb-6">
+                <div class="border border-gray-200 rounded-xl p-4 bg-gray-50 mb-6 shadow-md shadow-gray-200/70 border-t-4 border-t-[#611132]">
                     <div class="flex justify-between items-center mb-4 border-b border-gray-300 pb-3">
                         <h3 class="font-semibold text-[#404041] text-lg font-lora">Cargar Archivo</h3>
                     </div>
                     
                     <div class="space-y-3">
                         <!-- Compact Drag & Drop area (unified style with reportes, simpler) -->
-                        <div id="deaths-drop-area" class="border-2 border-dashed border-gray-300 rounded-lg px-4 py-3 text-center cursor-pointer bg-white">
+                        <div id="deaths-drop-area" class="border-2 border-dashed border-gray-300 rounded-lg px-4 py-3 text-center cursor-pointer bg-white transition-all duration-200 hover:border-[#611132]/50 hover:bg-gray-50">
                             <input id="fileInput" type="file" name="file" accept=".xlsx,.xls" class="hidden" />
                             <div class="flex items-center justify-center gap-3">
                                 <i class="fas fa-cloud-upload-alt text-lg text-gray-400"></i>
@@ -62,20 +62,20 @@
 
             <!-- Columna Derecha - Tabla -->
             <div class="flex-1 min-w-0">
-                <div class="bg-white relative shadow-md sm:rounded-lg overflow-hidden border border-[#404041]">
+                <div class="bg-white relative shadow-lg shadow-gray-200/80 sm:rounded-xl overflow-hidden border border-gray-300 border-t-4 border-t-[#611132]">
                     <!-- Custom search, per-page controls -->
-                    <div class="flex flex-row flex-wrap items-center justify-between gap-3 p-4">
+                    <div class="flex flex-row flex-wrap items-center justify-between gap-3 p-4 bg-gray-50/80 border-b border-gray-200">
                         <div class="flex-1 min-w-0 sm:w-1/3 lg:w-1/2">
                             <div class="relative w-full max-w-xl min-w-0">
                                 <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
                                     <i class="fas fa-search text-gray-400 text-sm"></i>
                                 </div>
-                                <input type="text" id="dt-search-deaths" class="bg-gray-50 border border-[#404041] text-gray-900 text-sm rounded-lg focus:ring-[#611132] focus:border-[#611132] block w-full pl-10 pr-24 p-2.5" placeholder="Buscar en defunciones...">
+                                <input type="text" id="dt-search-deaths" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-[#611132] focus:border-[#611132] block w-full pl-10 pr-24 p-2.5" placeholder="Buscar en defunciones...">
                                 <div class="absolute inset-y-0 right-0 flex items-center pr-2 space-x-1">
                                     <button type="button" id="dt-search-deaths-btn" class="h-8 px-3 bg-[#611132] text-white rounded-lg text-xs font-semibold hover:bg-[#4a0e26] transition-all duration-150" title="Buscar">
                                         <i class="fas fa-search text-xs"></i>
                                     </button>
-                                    <button type="button" id="dt-clear-deaths-btn" class="h-8 px-2 bg-white border border-[#404041] text-gray-700 rounded-lg text-xs hover:bg-gray-100 hidden" title="Limpiar búsqueda">
+                                    <button type="button" id="dt-clear-deaths-btn" class="h-8 px-2 bg-white border border-gray-300 text-gray-700 rounded-lg text-xs hover:bg-gray-100 hidden" title="Limpiar búsqueda">
                                         <i class="fas fa-times text-xs"></i>
                                     </button>
                                 </div>
@@ -85,7 +85,7 @@
                         <div class="ml-0 sm:ml-auto flex items-center space-x-3">
                             <div class="flex items-center space-x-2">
                                 <span class="text-sm text-gray-700 font-lora">Mostrar</span>
-                                <select id="dt-per-page-deaths" class="bg-gray-50 border border-[#404041] text-gray-900 text-sm rounded-lg focus:ring-[#611132] focus:border-[#611132] block w-24 p-2">
+                                <select id="dt-per-page-deaths" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-[#611132] focus:border-[#611132] block w-24 p-2">
                                     <option value="25" selected>25</option>
                                     <option value="50">50</option>
                                     <option value="100">100</option>
@@ -103,7 +103,7 @@
                     <!-- Table wrapper -->
                     <div class="overflow-x-auto min-w-0">
                     <table id="deaths-table" class="min-w-full w-full text-sm text-left text-gray-500">
-                        <thead class="text-xs text-gray-700 uppercase bg-gray-50 border-b border-[#404041]">
+                        <thead class="text-xs text-gray-800 uppercase bg-gray-100 border-b border-gray-400">
                             <tr>
                                 <th scope="col" class="px-3 py-2 font-lora whitespace-nowrap text-xs"><input id="select-all-deaths" type="checkbox" /></th>
                                 <th scope="col" class="px-3 py-2 font-lora whitespace-nowrap text-xs">Folio</th>
@@ -128,7 +128,7 @@
                     </div>
                         
                     <!-- Custom pagination -->
-                    <nav class="flex flex-row flex-wrap items-center justify-between gap-3 p-4 border-t border-[#404041]">
+                    <nav class="flex flex-row flex-wrap items-center justify-between gap-3 p-4 border-t border-gray-200">
                         <span class="text-sm font-normal text-gray-500 font-lora flex-1 min-w-0" id="dt-info-deaths">
                             Mostrando <span class="font-semibold text-gray-900">0-0</span> de <span class="font-semibold text-gray-900">0</span> entradas
                         </span>
@@ -153,10 +153,10 @@
         
         /* DataTables + Tailwind table styling */
         #deaths-table.dataTable tbody tr { transition: background-color .15s ease; }
-        #deaths-table.dataTable tbody tr:hover { background-color: #f9fafb; }
+        #deaths-table.dataTable tbody tr:hover { background-color: #f3f4f6; }
         #deaths-table.dataTable tbody tr:nth-child(even) { background-color: #f9fafb; }
         #deaths-table.dataTable tbody tr:nth-child(odd) { background-color: white; }
-        #deaths-table.dataTable thead th { background: #f8fafc; border-bottom: 1px solid #d1d5db; cursor: pointer; }
+        #deaths-table.dataTable thead th { background: #f3f4f6; border-bottom: 1px solid #9ca3af; color: #1f2937; cursor: pointer; }
         #deaths-table.dataTable thead th.sorting:after,
         #deaths-table.dataTable thead th.sorting_asc:after,
         #deaths-table.dataTable thead th.sorting_desc:after {
@@ -186,11 +186,11 @@ document.addEventListener('DOMContentLoaded', function () {
         });
 
         ['dragenter', 'dragover'].forEach(function(eventName) {
-            dropArea.addEventListener(eventName, function() { dropArea.classList.add('bg-gray-50', 'border-[#404041]'); }, false);
+            dropArea.addEventListener(eventName, function() { dropArea.classList.add('bg-gray-50', 'border-[#611132]'); }, false);
         });
 
         ['dragleave', 'drop'].forEach(function(eventName) {
-            dropArea.addEventListener(eventName, function() { dropArea.classList.remove('bg-gray-50', 'border-[#404041]'); }, false);
+            dropArea.addEventListener(eventName, function() { dropArea.classList.remove('bg-gray-50', 'border-[#611132]'); }, false);
         });
 
         dropArea.addEventListener('drop', function(e) {

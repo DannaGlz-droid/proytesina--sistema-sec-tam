@@ -18,7 +18,7 @@
         <div class="space-y-2">
             <div class="filter-group">
                 <label class="block text-xs text-gray-600 font-lora mb-1">Rango:</label>
-                <select id="dateRange" name="dateRange" class="w-full border border-[#404041] rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-[#611132] focus:border-transparent">
+                <select id="dateRange" name="dateRange" class="w-full border border-gray-300 bg-white rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-[#611132] focus:border-[#611132]">
                     <option value="all">Todas</option>
                     <option value="year">Año específico</option>
                     <option value="month">Mes específico</option>
@@ -32,7 +32,7 @@
                 <div class="filter-group" id="yearSelector" style="display: none;">
                 <label class="block text-xs text-gray-600 font-lora mb-1">Año de defunción:</label>
                 @php $currentYear = now()->year; $minYear = 1950; @endphp
-                <input type="number" id="year" name="year" min="{{ $minYear }}" max="{{ $currentYear }}" value="{{ request('year') }}" class="w-full border border-[#404041] rounded-lg px-3 py-1.5 text-xs" placeholder="Ej: {{ $currentYear }}">
+                <input type="number" id="year" name="year" min="{{ $minYear }}" max="{{ $currentYear }}" value="{{ request('year') }}" class="w-full border border-gray-300 bg-white rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-[#611132] focus:border-[#611132]" placeholder="Ej: {{ $currentYear }}">
             </div>
 
             <div class="filter-group" id="monthSelector" style="display: none;">
@@ -60,7 +60,7 @@
 
             <div class="filter-group" id="quarterSelector" style="display: none;">
                 <label class="block text-xs text-gray-600 font-lora mb-1">Trimestre de defunción:</label>
-                <select id="quarter" name="quarter" class="w-full border border-[#404041] rounded-lg px-3 py-1.5 text-xs">
+                <select id="quarter" name="quarter" class="w-full border border-gray-300 bg-white rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-[#611132] focus:border-[#611132]">
                     <option value="">Seleccionar trimestre</option>
                     <option value="1">Q1 (Ene-Mar)</option>
                     <option value="2">Q2 (Abr-Jun)</option>
@@ -72,11 +72,11 @@
             <div id="customRangeSelector" style="display: none;">
                 <div class="filter-group">
                     <label class="block text-xs text-gray-600 font-lora mb-1">Desde (fecha de defunción):</label>
-                    <input type="date" id="startDate" name="startDate" class="w-full border border-[#404041] rounded-lg px-3 py-1.5 text-xs">
+                    <input type="date" id="startDate" name="startDate" class="w-full border border-gray-300 bg-white rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-[#611132] focus:border-[#611132]">
                 </div>
                 <div class="filter-group">
                     <label class="block text-xs text-gray-600 font-lora mb-1">Hasta (fecha de defunción):</label>
-                    <input type="date" id="endDate" name="endDate" class="w-full border border-[#404041] rounded-lg px-3 py-1.5 text-xs">
+                    <input type="date" id="endDate" name="endDate" class="w-full border border-gray-300 bg-white rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-[#611132] focus:border-[#611132]">
                 </div>
             </div>
         </div>
@@ -133,7 +133,7 @@
     <x-filtros.seccion icono="users" titulo="Demográficos">
         <div class="filter-group">
             <label class="block text-xs text-gray-600 font-lora mb-1">Sexo:</label>
-            <select id="sexo" name="sexo" class="w-full border border-[#404041] rounded-lg px-3 py-1.5 text-xs">
+            <select id="sexo" name="sexo" class="w-full border border-gray-300 bg-white rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-[#611132] focus:border-[#611132]">
                 <option value="">Todos</option>
                 <option value="F" {{ request('sexo') === 'F' ? 'selected' : (request('sexo') === 'f' ? 'selected' : '') }}>Femenino</option>
                 <option value="M" {{ request('sexo') === 'M' ? 'selected' : (request('sexo') === 'm' ? 'selected' : '') }}>Masculino</option>
@@ -142,7 +142,7 @@
 
         <div class="filter-group">
             <label class="block text-xs text-gray-600 font-lora mb-1">Edad:</label>
-            <input type="text" id="edad" name="edad" class="w-full border border-[#404041] rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-[#611132] focus:border-transparent" 
+            <input type="text" id="edad" name="edad" class="w-full border border-gray-300 bg-white rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-[#611132] focus:border-[#611132]" 
                    placeholder="Ej: 25 o 20-30 o 5,10,15">
             <div class="text-xs text-gray-500 mt-1">Edad específica, rango o múltiples valores separados por coma</div>
         </div>
@@ -166,7 +166,7 @@
     </x-filtros.seccion>
 
     <!-- Botón Filtrar -->
-    <div class="mt-6 pt-4 border-t border-gray-300">
+    <div class="mt-6 pt-4 border-t border-gray-200">
         <button type="submit" form="filters-form" class="w-full bg-[#611132] text-white px-3 py-3 rounded-lg text-sm font-semibold hover:bg-[#4a0e26] transition-all duration-300 font-lora flex items-center justify-center gap-2">
             <i class="fas fa-filter text-sm"></i>
             Aplicar Filtros
@@ -655,7 +655,7 @@ select.tomselect-select {
 .ts-control {
     z-index: 9999 !important;
     position: relative;
-    border: 1px solid #404041 !important;
+    border: 1px solid #d1d5db !important;
     border-radius: 0.5rem !important;
     padding: 6px 12px !important;
     background: #ffffff !important;
@@ -674,7 +674,7 @@ select.tomselect-select {
 }
 
 .ts-control:focus-within {
-    border-color: #404041 !important;
+    border-color: #611132 !important;
     outline: none !important;
     box-shadow: 0 0 0 1px #611132 !important;
 }
@@ -696,9 +696,9 @@ select.tomselect-select {
 }
 
 .ts-dropdown {
-    border: 1px solid #404041;
+    border: 1px solid #d1d5db;
     border-radius: 0.5rem;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.10);
     max-height: 250px;
     overflow-y: auto;
     z-index: 999999 !important;

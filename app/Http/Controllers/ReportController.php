@@ -177,6 +177,12 @@ class ReportController extends Controller
             $viewerTz = 'America/Mexico_City';
 
             $pub->comentarios_json = $orderedComments->map(function ($c) use ($user, $viewerTz) {
+                $commentUserName = trim(implode(' ', array_filter([
+                    $c->user->name,
+                    $c->user->first_last_name,
+                    $c->user->second_last_name,
+                ]))) ?: 'Usuario';
+
                 return [
                     'id' => $c->id,
                     'comment' => $c->comment,
@@ -188,8 +194,11 @@ class ReportController extends Controller
                     'created_at_iso' => $c->created_at->toIso8601String(),
                     'user' => [
                         'id' => $c->user->id,
-                        'name' => $c->user->name,
-                        'position' => optional($c->user->position)->name ?? 'Sin cargo'
+                        'name' => $commentUserName,
+                        'position' => optional($c->user->position)->name ?? 'Sin cargo',
+                        'profile_photo_url' => $c->user->profile_photo_path
+                            ? asset('storage/' . $c->user->profile_photo_path)
+                            : asset('images/default_pfp.svg.png'),
                     ],
                     // Per-user seen flag
                     // - If the current viewer is the author, show whether OTHER users have read this comment
@@ -1516,6 +1525,12 @@ class ReportController extends Controller
         // The author should see their own comment as "sent" (single check), not "seen" (double check)
         // It will only show double check when OTHER users have read it
 
+        $commentUserName = trim(implode(' ', array_filter([
+            $comment->user->name,
+            $comment->user->first_last_name,
+            $comment->user->second_last_name,
+        ]))) ?: 'Usuario';
+
         return response()->json([
             'success' => true,
             'comment' => [
@@ -1529,8 +1544,11 @@ class ReportController extends Controller
                 'created_at_iso' => $comment->created_at->toIso8601String(),
                 'user' => [
                     'id' => $comment->user->id,
-                    'name' => $comment->user->name,
+                    'name' => $commentUserName,
                     'position' => $comment->user->position->name ?? 'Sin cargo',
+                    'profile_photo_url' => $comment->user->profile_photo_path
+                        ? asset('storage/' . $comment->user->profile_photo_path)
+                        : asset('images/default_pfp.svg.png'),
                 ],
                 // Author sees their own comment as NOT seen yet (will show single check)
                 'seen_by_current_user' => false,

@@ -270,4 +270,16 @@ class User extends Authenticatable
     {
         return $this->hasRole('Invitado');
     }
+
+    /**
+     * Accessor: full name including both last names
+     */
+    public function getFullNameAttribute(): string
+    {
+        return trim(implode(' ', array_filter([
+            $this->name,
+            $this->first_last_name,
+            $this->second_last_name,
+        ])));
+    }
 }

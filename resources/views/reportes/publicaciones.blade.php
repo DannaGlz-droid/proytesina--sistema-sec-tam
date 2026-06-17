@@ -346,7 +346,7 @@
                             :has-unread="$hasUnread"
                             :status="$pub->status"
                             :approvedBy="optional($pub->approver)->name"
-                            :rejectedBy="optional($pub->rejector)->name"
+                            :rejectedBy="optional($pub->rejector)->full_name"
                             :rejectionReason="$pub->rejection_reason"
                             data-publication-tipo="{{ $pub->publication_type }}"
                             class="publication-card-wrapper">
@@ -356,7 +356,7 @@
                                         title="Ver detalles"
                                         data-tipo="{{ $pub->publication_type }}"
                                         data-titulo="{{ $pub->topic }}"
-                                        data-fecha="{{ $pub->publication_date->locale('es')->isoFormat('dddd, D [de] MMMM [de] YYYY') }}"
+                                        data-fecha="{{ $pub->publication_date->format('d/m/Y') }}"
                                         data-fecha-actividad="{{ $pub->activity_date->locale('es')->isoFormat('dddd, D [de] MMMM [de] YYYY') }}"
                                         data-usuario="{{ $uFull ?: ($pub->user->name ?? 'Usuario') }}"
                                         data-position="{{ $pub->user->position->name ?? '' }}"
@@ -367,7 +367,7 @@
                                         data-is-owner="{{ auth()->id() === $pub->user_id ? 'true' : 'false' }}"
                                         data-status="{{ $pub->status }}"
                                         data-approved-by="{{ optional($pub->approver)->name }}"
-                                        data-rejected-by="{{ optional($pub->rejector)->name }}"
+                                        data-rejected-by="{{ optional($pub->rejector)->full_name }}"
                                         data-rejection-reason="{{ $pub->rejection_reason }}"
                                         @foreach($dataAttributes as $key => $value)
                                             {{ $key }}="{{ $value }}"
@@ -434,7 +434,7 @@
     <!-- INCLUIR TODOS LOS COMPONENTES DE MODALES -->
 <!-- Modal de rechazo -->
 <div id="reject-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-[999999] flex items-center justify-center p-4">
-    <div class="bg-white rounded-xl shadow-2xl max-w-2xl w-full p-6 border border-gray-200">
+    <div class="bg-white rounded-xl max-w-2xl w-full p-6 border border-gray-200 border-t-4 border-t-[#611132] shadow-[0_20px_45px_rgba(17,24,39,0.18),0_2px_8px_rgba(17,24,39,0.08)] ring-1 ring-black/5">
         <div class="flex items-center justify-between mb-4 pb-4 border-b border-gray-300">
             <h3 class="text-xl font-bold text-[#404041] font-lora">Rechazar Reporte</h3>
             <button onclick="closeRejectModal()" class="text-gray-500 hover:text-gray-700 transition-colors duration-200 w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-200">
@@ -450,7 +450,7 @@
             <textarea 
                 id="rejection-reason"
                 rows="6"
-                class="w-full px-3 py-2 text-sm border border-[#404041] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#611132] focus:border-transparent font-lora resize-none"
+                class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg bg-gray-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#611132] focus:border-transparent font-lora resize-none shadow-sm"
                 placeholder="Explique brevemente por qué se rechaza este reporte..."
                 maxlength="500"
                 required></textarea>
@@ -459,7 +459,7 @@
         
         <div class="flex gap-3 pt-4 border-t border-gray-300">
             <button onclick="closeRejectModal()" 
-                    class="flex-1 px-4 py-2 border border-[#404041] text-[#404041] rounded-lg font-semibold hover:bg-gray-50 transition-all duration-300 font-lora text-sm">
+                    class="flex-1 px-4 py-2 border border-gray-300 text-[#404041] rounded-lg font-semibold hover:bg-gray-50 hover:border-[#611132]/40 transition-all duration-300 font-lora text-sm shadow-sm">
                 Cancelar
             </button>
             <button onclick="submitRejection()" 
@@ -472,7 +472,7 @@
 
 <!-- Modal de eliminación -->
 <div id="delete-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-[999999] flex items-center justify-center p-4">
-    <div class="bg-white rounded-xl shadow-2xl max-w-2xl w-full p-6 border border-gray-200">
+    <div class="bg-white rounded-xl max-w-2xl w-full p-6 border border-gray-200 border-t-4 border-t-[#611132] shadow-[0_20px_45px_rgba(17,24,39,0.18),0_2px_8px_rgba(17,24,39,0.08)] ring-1 ring-black/5">
         <div class="flex items-center justify-between mb-4 pb-4 border-b border-gray-300">
             <h3 class="text-xl font-bold text-[#404041] font-lora">Eliminar Publicación</h3>
             <button onclick="closeDeleteModal()" class="text-gray-500 hover:text-gray-700 transition-colors duration-200 w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-200">
@@ -487,7 +487,7 @@
             <input type="hidden" id="delete-modal-publication-id">
             <input type="hidden" id="delete-modal-redirect-tipo" name="redirect_tipo">
             
-            <div class="mb-4 p-4 bg-red-50 border border-[#404041] rounded-lg">
+            <div class="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg shadow-sm">
                 <p class="text-sm text-red-700 font-lora">
                     <i class="fas fa-exclamation-triangle mr-2"></i>
                     ¿Estás seguro de eliminar esta publicación? Esta acción no se puede deshacer fácilmente.
@@ -504,7 +504,7 @@
                     id="deletion-reason"
                     name="deletion_reason"
                     rows="4"
-                    class="w-full px-3 py-2 text-sm border border-[#404041] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#611132] focus:border-transparent font-lora resize-none"
+                    class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg bg-gray-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#611132] focus:border-transparent font-lora resize-none shadow-sm"
                     placeholder="Opcionalmente, explica por qué eliminas esta publicación..."
                     maxlength="500"></textarea>
                 <p class="text-xs text-gray-500 mt-1">Máximo 500 caracteres</p>
@@ -512,7 +512,7 @@
             
             <div class="flex gap-3 pt-4 border-t border-gray-300">
                 <button type="button" onclick="closeDeleteModal()" 
-                        class="flex-1 px-4 py-2 border border-[#404041] text-[#404041] rounded-lg font-semibold hover:bg-gray-50 transition-all duration-300 font-lora text-sm">
+                        class="flex-1 px-4 py-2 border border-gray-300 text-[#404041] rounded-lg font-semibold hover:bg-gray-50 hover:border-[#611132]/40 transition-all duration-300 font-lora text-sm shadow-sm">
                     Cancelar
                 </button>
                 <button type="submit" 
@@ -1056,10 +1056,10 @@ document.addEventListener('DOMContentLoaded', function() {
         };
         
         Object.entries(basicFields).forEach(([className, value]) => {
-            const element = modal.querySelector(`.${className}`);
-            if (element && value) {
+            modal.querySelectorAll(`.${className}`).forEach((element) => {
+                if (!value) return;
                 element.textContent = value;
-            }
+            });
         });
 
         // Nota: ya no mostramos el cargo del usuario en el modal (solo nombre)
@@ -1113,6 +1113,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // Configurar botones de aprobación/rechazo
         const approvalContainer = modal.querySelector('.approval-buttons-container');
+        const actionsFooter = modal.querySelector('.modal-actions-footer');
         const aprobarBtn = modal.querySelector('.aprobar-reporte');
         const rechazarBtn = modal.querySelector('.rechazar-reporte');
         
@@ -1124,26 +1125,37 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // Limpiar contenido previo del contenedor
             approvalContainer.innerHTML = '';
+            if (actionsFooter) {
+                actionsFooter.style.display = 'none';
+            }
             
             // Si es rechazado y el usuario es el autor, mostrar botón de reenvío
             if (status === 'rechazado' && isOwner) {
+                if (actionsFooter) {
+                    actionsFooter.style.display = 'flex';
+                }
                 approvalContainer.style.display = 'flex';
                 approvalContainer.innerHTML = `
-                    <button onclick="resubmitReport(${publicationId})" class="reenviar-reporte border border-[#404041] text-[#404041] px-4 lg:px-6 py-2 rounded-lg text-xs lg:text-sm font-semibold hover:bg-gray-100 transition-all duration-300 font-lora whitespace-nowrap flex items-center gap-2">
+                    <button onclick="resubmitReport(${publicationId})" class="reenviar-reporte min-w-[190px] justify-center border border-[#404041] text-[#404041] px-4 py-2 rounded-lg text-xs lg:text-sm font-semibold hover:bg-gray-100 transition-all duration-300 font-lora whitespace-nowrap inline-flex items-center gap-2">
                         <i class="fas fa-paper-plane"></i>Reenviar para revisión
                     </button>
                 `;
             }
             // Si es pendiente o rechazado y el usuario es Admin/Coordinador, mostrar botones de aprobar/rechazar
             else if (userIsAdminOrCoord && status !== 'aprobado') {
+                if (actionsFooter) {
+                    actionsFooter.style.display = 'flex';
+                }
                 approvalContainer.style.display = 'flex';
                 approvalContainer.innerHTML = `
-                    <button class="rechazar-reporte border border-[#AB1A1A] text-[#AB1A1A] px-4 lg:px-6 py-2 rounded-lg text-xs lg:text-sm font-semibold hover:bg-red-50 transition-all duration-300 font-lora whitespace-nowrap flex items-center gap-2">
-                        <i class="fas fa-times-circle"></i>Rechazar
-                    </button>
-                    <button class="aprobar-reporte bg-[#399e3b] text-white px-4 lg:px-6 py-2 rounded-lg text-xs lg:text-sm font-semibold hover:bg-[#2d7e2f] transition-all duration-300 font-lora whitespace-nowrap flex items-center gap-2">
-                        <i class="fas fa-check-circle"></i>Aprobar
-                    </button>
+                    <div class="w-full flex items-center justify-between gap-3">
+                        <button class="rechazar-reporte min-w-[118px] justify-center border border-[#AB1A1A] text-[#AB1A1A] px-4 py-2 rounded-lg text-xs lg:text-sm font-semibold hover:bg-red-50 transition-all duration-300 font-lora whitespace-nowrap inline-flex items-center gap-2">
+                            <i class="fas fa-times-circle"></i>Rechazar
+                        </button>
+                        <button class="aprobar-reporte min-w-[118px] justify-center bg-[#399e3b] text-white px-4 py-2 rounded-lg text-xs lg:text-sm font-semibold hover:bg-[#2d7e2f] transition-all duration-300 font-lora whitespace-nowrap inline-flex items-center gap-2 shadow-sm">
+                            <i class="fas fa-check-circle"></i>Aprobar
+                        </button>
+                    </div>
                 `;
                 
                 // Re-attach event handlers
@@ -1342,6 +1354,11 @@ document.addEventListener('DOMContentLoaded', function() {
         
         if (comentarios.length > 0) {
                 comentarios.forEach(comentario => {
+                    const userName = comentario.user?.name || 'Usuario';
+                    const userPosition = comentario.user?.position || 'Sin cargo';
+                    const userPhotoUrl = comentario.user?.profile_photo_url || '{{ asset('images/default_pfp.svg.png') }}';
+                    const avatarHtml = `<img src="${escapeHtml(userPhotoUrl)}" alt="Foto de ${escapeHtml(userName)}" class="w-8 h-8 rounded-full object-cover border border-[#611132]/20 shadow-sm flex-shrink-0">`;
+
                     // Prefer an ISO timestamp from the server and format it in the user's local timezone in the browser.
                     let dateStr = comentario.date || '';
                     let timeStr = comentario.time || '';
@@ -1363,33 +1380,32 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
 
                     const tickHtml = (comentario.user && comentario.user.id == CURRENT_USER_ID)
-                        ? (comentario.seen_by_current_user ? '<i class="fas fa-check-double text-blue-500 ml-2" title="Visto"></i>' : '<i class="fas fa-check text-gray-400 ml-2" title="Enviado"></i>')
+                        ? (comentario.seen_by_current_user ? '<i class="fas fa-check-double text-blue-500" title="Visto"></i>' : '<i class="fas fa-check text-gray-400" title="Enviado"></i>')
                         : '';
 
                     container.innerHTML += `
-                        <div class="bg-white border border-[#404041] rounded-lg p-3" data-comment-id="${comentario.id}" data-user-id="${comentario.user?.id}">
-                            <div class="flex justify-between items-start mb-2">
-                                <div>
-                                    <div class="font-semibold text-[#404041] font-lora">
-                                        ${comentario.user.name}
+                        <div class="comentario-item relative border rounded-xl px-3 py-2 transition-all duration-200" data-comment-id="${comentario.id}" data-user-id="${comentario.user?.id}">
+                            <div class="flex gap-2.5">
+                                ${avatarHtml}
+                                <div class="flex-1 min-w-0">
+                                    <div class="flex justify-between items-start gap-2 leading-none">
+                                        <div class="min-w-0 flex items-baseline gap-1.5 truncate leading-tight">
+                                            <span class="font-semibold text-[#404041] font-lora text-sm truncate">
+                                                ${escapeHtml(userName)}
+                                            </span>
+                                            <span class="text-gray-400 flex-shrink-0 text-xs">&middot;</span>
+                                            <span class="text-xs text-gray-500 font-lora truncate">
+                                                ${escapeHtml(userPosition)}
+                                            </span>
+                                        </div>
+                                        <div class="text-[11px] text-gray-500 font-lora whitespace-nowrap text-right pt-0.5">
+                                            ${escapeHtml(dateStr)} · ${escapeHtml(timeStr)}
+                                        </div>
                                     </div>
-                                    <div class="text-xs text-gray-500 font-lora">
-                                        ${comentario.user.position}
-                                    </div>
-                                </div>
-                                <div class="text-xs text-gray-500 font-lora whitespace-nowrap text-right">
-                                    ${dateStr}
+                                    <p class="m-0 pr-6 text-gray-700 text-sm leading-snug break-words whitespace-pre-line font-lora min-w-0">${escapeHtml(comentario.comment || '')}</p>
                                 </div>
                             </div>
-                            <div class="flex justify-between items-end gap-2">
-                                <p class="text-gray-700 text-sm break-words font-lora flex-1 min-w-0">
-                                    ${comentario.comment}
-                                </p>
-                                <div class="flex items-center gap-1 whitespace-nowrap flex-shrink-0 ml-auto">
-                                    <span class="text-xs text-gray-500 font-lora">${timeStr}</span>
-                                    ${tickHtml}
-                                </div>
-                            </div>
+                            <span class="absolute right-3 bottom-2 text-xs leading-none">${tickHtml}</span>
                         </div>
                     `;
             });
@@ -1401,6 +1417,15 @@ document.addEventListener('DOMContentLoaded', function() {
                 </div>
             `;
         }
+    }
+
+    function escapeHtml(value) {
+        return String(value ?? '')
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
     }
     
     // Funciones auxiliares
@@ -1557,7 +1582,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
             // Deshabilitar botón mientras se envía
             button.disabled = true;
-            button.innerHTML = '<i class="fas fa-spinner fa-spin text-xs"></i> Enviando...';
+            button.innerHTML = '<i class="fas fa-spinner fa-spin text-sm"></i>';
 
             fetch(`/reportes/${publicationId}/comentarios`, {
                 method: 'POST',
@@ -1666,7 +1691,7 @@ document.addEventListener('DOMContentLoaded', function() {
             })
             .finally(() => {
                 button.disabled = false;
-                button.innerHTML = '<i class="fas fa-paper-plane text-xs"></i> Enviar';
+                button.innerHTML = '<i class="fas fa-paper-plane text-sm"></i>';
             });
         }
 

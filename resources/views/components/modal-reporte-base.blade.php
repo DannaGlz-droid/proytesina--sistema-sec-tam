@@ -25,23 +25,16 @@
         content: '';
     }
     
-    .comentarios-toggle {
-        border-bottom: none;
-        border-radius: 0.5rem 0.5rem 0 0;
-    }
-    
     .comentarios-container {
         max-height: 0;
         opacity: 0;
         overflow: hidden;
         transition: max-height 0.4s ease-in-out, opacity 0.4s ease-in-out;
-        border-radius: 0 0 0.5rem 0.5rem;
-        border-top: none;
-        margin-top: -1px;
+        border-radius: 0.75rem;
     }
     
     .comentarios-container.expanded {
-        max-height: 500px;
+        max-height: 560px;
         opacity: 1;
     }
     
@@ -62,10 +55,69 @@
         scrollbar-width: thin;
         scrollbar-color: #ccc transparent;
     }
+
+    .publication-detail-modal {
+        border-top: 4px solid #611132;
+        box-shadow: 0 20px 45px rgba(17, 24, 39, 0.18), 0 2px 8px rgba(17, 24, 39, 0.08);
+    }
+
+    .publication-detail-modal div.border-\[\#404041\] {
+        background: #f9fafb !important;
+        border-color: #e5e7eb !important;
+        box-shadow: 0 1px 3px rgba(17, 24, 39, 0.08);
+    }
+
+    .publication-detail-modal div.border-\[\#404041\]:hover {
+        border-color: #e5e7eb !important;
+        box-shadow: 0 1px 3px rgba(17, 24, 39, 0.08);
+    }
+
+    .publication-detail-modal .datos-generales-grid > div {
+        min-height: 132px;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .publication-detail-modal .datos-generales-grid .dato-general-value {
+        min-height: 3rem;
+        display: flex;
+        align-items: flex-start;
+        line-height: 1.25;
+        word-break: break-word;
+    }
+
+    .publication-detail-modal .modal-status-container > div {
+        background: #f9fafb;
+        border-color: #e5e7eb;
+        box-shadow: 0 1px 3px rgba(17, 24, 39, 0.08);
+    }
+
+    .publication-detail-modal .comentarios-shell {
+        background: #f9fafb;
+        border: 1px solid #e5e7eb;
+        box-shadow: 0 8px 18px rgba(17, 24, 39, 0.08);
+    }
+
+    .publication-detail-modal .comentarios-toggle {
+        background: transparent;
+    }
+
+    .publication-detail-modal .comentario-item {
+        background: #ffffff !important;
+        border-color: #e5e7eb !important;
+        box-shadow: 0 1px 2px rgba(17, 24, 39, 0.06);
+        padding-top: 12px !important;
+        padding-bottom: 12px !important;
+    }
+
+    .publication-detail-modal .comentario-item:hover {
+        border-color: #e5e7eb !important;
+        box-shadow: 0 1px 2px rgba(17, 24, 39, 0.06);
+    }
 </style>
 
 <div id="{{ $modalId }}" class="fixed inset-0 bg-gray-900 bg-opacity-40 flex items-center justify-center z-[999999] hidden transition-opacity duration-200">
-    <div class="bg-white rounded-xl shadow-2xl max-w-4xl w-full mx-4 max-h-[95vh] overflow-hidden transform transition-all duration-300 scale-95 opacity-0 border border-gray-200">
+    <div class="publication-detail-modal bg-white rounded-xl max-w-4xl w-full mx-4 max-h-[95vh] overflow-hidden transform transition-all duration-300 scale-95 opacity-0 border border-gray-200 ring-1 ring-black/5">
 
         <!-- HEADER -->
         <div class="px-5 py-3 border-b border-gray-300 flex-shrink-0">
@@ -91,9 +143,9 @@
         </div>
 
         <!-- INFORMACIÓN ADICIONAL -->
-        <div class="px-6 py-2 border-b border-gray-300 flex-shrink-0">
-            <div class="flex flex-col md:flex-row justify-between items-center gap-0">
-                <div class="w-full md:w-auto">
+        <div class="px-6 py-3 border-b border-gray-300 flex-shrink-0 bg-gray-50">
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-3">
+                <div class="w-full md:w-auto text-left md:text-right">
                     <p class="text-sm text-gray-600 font-lora text-center md:text-left">Subido por: <span class="modal-usuario font-semibold">Usuario</span></p>
                 </div>
                 <div class="w-full md:w-auto">
@@ -106,13 +158,15 @@
         <div class="flex flex-col h-[calc(95vh-145px)]">
             <div class="p-6 overflow-y-auto flex-1">
                 
-                <!-- FECHA DE LA ACTIVIDAD -->
-                <div class="mb-4 bg-gray-50 rounded-lg p-2 border border-gray-200">
-                    <div class="flex items-center gap-2">
-                        <i class="fas fa-calendar-alt text-gray-500 text-sm"></i>
-                        <div>
-                            <p class="text-xs text-gray-500 font-lora">Fecha de la Actividad:</p>
+                <div class="hidden">
+                    <h4 class="font-semibold text-[#404041] mb-3 text-lg font-lora">Datos del reporte</h4>
+                    <div class="bg-white rounded-lg p-4 border border-[#404041]">
+                        <div class="flex items-center gap-3">
+                            <i class="fas fa-calendar-alt text-[#404041] text-xl"></i>
+                            <div>
+                                <h5 class="font-semibold text-[#404041] font-lora">Fecha de la actividad</h5>
                             <p class="text-sm font-semibold text-gray-700 font-lora modal-fecha-actividad">sábado, 14 de octubre de 2023</p>
+                        </div>
                         </div>
                     </div>
                 </div>
@@ -171,41 +225,38 @@
                 <div class="h-px bg-gray-300 mb-6"></div>
 
                 <!-- COMENTARIOS - COLAPSABLE CON DISEÑO CLASSROOM -->
-                <div class="comentarios-section">
+                <div class="comentarios-section comentarios-shell rounded-xl p-3">
                     
                     <!-- Botón para expandir/contraer comentarios -->
-                    <button type="button" class="comentarios-toggle w-full text-left px-4 py-3 bg-white hover:bg-gray-50 border border-gray-200 transition-all duration-200 flex items-center justify-between shadow-sm" style="display: none; border-radius: 0.5rem; rounded-lg;">  
-                        <div class="flex items-center gap-3">
-                            <i class="fas fa-comments text-[#404041] text-lg"></i>
-                            <div>
-                                <p class="font-semibold text-[#404041] font-lora text-sm">Comentarios</p>
-                                <p class="text-xs text-gray-600 font-lora contador-comentarios">Sin comentarios</p>
-                            </div>
+                    <button type="button" class="comentarios-toggle w-full text-left px-1 pb-3 transition-all duration-200 flex items-center justify-between" style="display: none;">  
+                        <div>
+                            <p class="font-semibold text-[#404041] font-lora text-sm leading-tight">Comentarios</p>
+                            <p class="text-xs text-gray-500 font-lora contador-comentarios leading-tight">Sin comentarios</p>
                         </div>
-                        <i class="fas fa-chevron-down text-[#404041] transition-transform duration-300 icono-chevron" style="transform: rotate(0deg);"></i>
+                        <i class="fas fa-chevron-down text-gray-500 transition-transform duration-300 icono-chevron text-xs" style="transform: rotate(0deg);"></i>
                     </button>
                     
                     <!-- Contenedor colapsable de comentarios -->
-                    <div class="comentarios-container bg-white border border-gray-200 p-4 shadow-sm">
+                    <div class="comentarios-container">
                         
                         <!-- Lista de comentarios -->
-                        <div class="space-y-3 max-h-64 overflow-y-auto mb-4 modal-comentarios">
+                        <div class="space-y-2 max-h-56 overflow-y-auto mb-3 pr-1 modal-comentarios">
                             <!-- Los comentarios se insertarán dinámicamente aquí -->
                         </div>
 
                         <!-- Separador -->
-                        <div class="border-t border-gray-200 pt-4"></div>
+                        <div class="border-t border-gray-200 pt-3"></div>
                         
                         <!-- FORMULARIO PARA NUEVO COMENTARIO -->
                         <div class="comentario-form-container" style="display: none;">
-                            <div class="flex gap-2 items-start w-full">
+                            <div class="flex gap-2 items-end w-full">
                                 <textarea 
-                                    class="nuevo-comentario flex-1 border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-[#611132] focus:border-transparent resize-none min-h-[44px] max-h-[120px] font-lora placeholder-gray-400"
+                                    class="nuevo-comentario flex-1 border border-gray-300 bg-white rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-gray-400 focus:border-gray-400 resize-none min-h-[40px] max-h-[100px] font-lora placeholder-gray-400 shadow-sm"
                                     rows="1"
                                     placeholder="Añade un comentario..."
                                 ></textarea>
                                 <button 
-                                    class="enviar-comentario px-3 py-2.5 bg-[#611132] text-white text-sm font-semibold rounded-lg hover:bg-[#4a0e26] transition-all duration-200 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed h-[44px] whitespace-nowrap"
+                                    class="enviar-comentario w-10 h-10 bg-[#611132] text-white text-sm font-semibold rounded-xl hover:bg-[#4a0e26] transition-all duration-200 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
                                     disabled
                                     title="Enviar comentario"
                                 >
@@ -223,13 +274,13 @@
             </div>
 
             <!-- FOOTER -->
-            <div class="bg-gray-50 px-6 py-4 border-t border-gray-300 flex items-center">
+            <div class="modal-actions-footer bg-gray-50 px-6 py-3 border-t border-gray-300 flex items-center min-h-[64px] flex-shrink-0">
                 <!-- Botones de aprobación/rechazo (solo Admin y Coordinador) -->
-                <div class="approval-buttons-container ml-auto flex gap-3" style="display: none;">
-                    <button class="rechazar-reporte border border-[#AB1A1A] text-[#AB1A1A] px-4 lg:px-6 py-2 rounded-lg text-xs lg:text-sm font-semibold hover:bg-red-50 transition-all duration-300 font-lora whitespace-nowrap flex items-center gap-2">
+                <div class="approval-buttons-container flex flex-wrap justify-end gap-3 w-full" style="display: none;">
+                    <button class="rechazar-reporte min-w-[118px] justify-center border border-[#AB1A1A] text-[#AB1A1A] px-4 py-2 rounded-lg text-xs lg:text-sm font-semibold hover:bg-red-50 transition-all duration-300 font-lora whitespace-nowrap inline-flex items-center gap-2">
                         <i class="fas fa-times-circle"></i>Rechazar
                     </button>
-                    <button class="aprobar-reporte bg-[#399e3b] text-white px-4 lg:px-6 py-2 rounded-lg text-xs lg:text-sm font-semibold hover:bg-[#2d7e2f] transition-all duration-300 font-lora whitespace-nowrap flex items-center gap-2">
+                    <button class="aprobar-reporte min-w-[118px] justify-center bg-[#399e3b] text-white px-4 py-2 rounded-lg text-xs lg:text-sm font-semibold hover:bg-[#2d7e2f] transition-all duration-300 font-lora whitespace-nowrap inline-flex items-center gap-2">
                         <i class="fas fa-check-circle"></i>Aprobar
                     </button>
                 </div>
