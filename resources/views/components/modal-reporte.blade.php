@@ -177,9 +177,9 @@
                     <div class="flex justify-between items-center mb-4">
                         <h4 class="font-semibold text-[#404041] text-lg font-lora">Archivos Adjuntos</h4>
                         <!-- Botón Descargar Todos los Archivos - MÁS COMPACTO -->
-                        <button class="descargar-todos-archivos px-3 py-1.5 bg-[#611132] text-white rounded-lg text-xs font-medium hover:bg-[#4a0e26] transition-all duration-300 font-lora whitespace-nowrap flex items-center justify-center gap-1">
+                        <button class="descargar-todos-archivos px-3 py-1.5 bg-white text-[#611132] border border-[#611132] rounded-lg text-xs font-medium hover:bg-[#611132] hover:text-white transition-all duration-300 font-lora whitespace-nowrap flex items-center justify-center gap-1">
                             <i class="fas fa-download text-xs"></i>
-                            Descargar Todos
+                            Descargar todo
                         </button>
                     </div>
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="modalArchivosAlcohol">
@@ -720,6 +720,7 @@ document.addEventListener('DOMContentLoaded', function() {
     .descargar-todos-archivos {
         font-weight: 500;
         transition: all 0.3s ease;
+        box-shadow: 0 1px 2px rgba(17, 24, 39, 0.12);
     }
     
     /* Efectos hover mejorados */

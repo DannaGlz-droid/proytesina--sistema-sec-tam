@@ -334,14 +334,14 @@
 
                         <?php if (isset($component)) { $__componentOriginale6927a94816a78ea3a8d4a0fc9fc3d88 = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginale6927a94816a78ea3a8d4a0fc9fc3d88 = $attributes; } ?>
-<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.publicacion-card','data' => ['dataPublicationId' => ''.e($pub->id).'','tipo' => $tipoDisplay,'titulo' => $pub->topic,'fecha' => $pub->publication_date->locale('es')->isoFormat('dddd, D [de] MMMM [de] YYYY'),'usuario' => $uShort,'usuarioFull' => $uFull,'descripcion' => $activityInfo,'archivosCount' => $pub->files->count(),'badgeClass' => $badgeClass,'badgeBorderClass' => $badgeBorderClass,'hasComments' => count($pub->comentarios_json ?? []) > 0,'hasUnread' => $hasUnread,'status' => $pub->status,'approvedBy' => optional($pub->approver)->name,'rejectedBy' => optional($pub->rejector)->full_name,'rejectionReason' => $pub->rejection_reason,'dataPublicationTipo' => ''.e($pub->publication_type).'','class' => 'publication-card-wrapper']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.publicacion-card','data' => ['dataPublicationId' => ''.e($pub->id).'','tipo' => $tipoDisplay,'titulo' => $pub->topic,'fecha' => $pub->publication_date->locale('es')->isoFormat('dddd, D [de] MMMM [de] YYYY'),'usuario' => $uShort,'usuarioFull' => $uFull,'descripcion' => $activityInfo,'archivosCount' => $pub->files->count(),'badgeClass' => $badgeClass,'badgeBorderClass' => $badgeBorderClass,'hasComments' => count($pub->comentarios_json ?? []) > 0,'hasUnread' => $hasUnread,'status' => $pub->status,'approvedBy' => optional($pub->approver)->full_name,'rejectedBy' => optional($pub->rejector)->full_name,'rejectionReason' => $pub->rejection_reason,'dataPublicationTipo' => ''.e($pub->publication_type).'','class' => 'publication-card-wrapper']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
 <?php $component->withName('publicacion-card'); ?>
 <?php if ($component->shouldRender()): ?>
 <?php $__env->startComponent($component->resolveView(), $component->data()); ?>
 <?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
 <?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
 <?php endif; ?>
-<?php $component->withAttributes(['data-publication-id' => ''.e($pub->id).'','tipo' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($tipoDisplay),'titulo' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($pub->topic),'fecha' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($pub->publication_date->locale('es')->isoFormat('dddd, D [de] MMMM [de] YYYY')),'usuario' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($uShort),'usuario_full' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($uFull),'descripcion' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($activityInfo),'archivosCount' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($pub->files->count()),'badgeClass' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($badgeClass),'badgeBorderClass' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($badgeBorderClass),'has-comments' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute(count($pub->comentarios_json ?? []) > 0),'has-unread' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($hasUnread),'status' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($pub->status),'approvedBy' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute(optional($pub->approver)->name),'rejectedBy' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute(optional($pub->rejector)->full_name),'rejectionReason' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($pub->rejection_reason),'data-publication-tipo' => ''.e($pub->publication_type).'','class' => 'publication-card-wrapper']); ?>
+<?php $component->withAttributes(['data-publication-id' => ''.e($pub->id).'','tipo' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($tipoDisplay),'titulo' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($pub->topic),'fecha' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($pub->publication_date->locale('es')->isoFormat('dddd, D [de] MMMM [de] YYYY')),'usuario' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($uShort),'usuario_full' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($uFull),'descripcion' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($activityInfo),'archivosCount' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($pub->files->count()),'badgeClass' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($badgeClass),'badgeBorderClass' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($badgeBorderClass),'has-comments' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute(count($pub->comentarios_json ?? []) > 0),'has-unread' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($hasUnread),'status' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($pub->status),'approvedBy' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute(optional($pub->approver)->full_name),'rejectedBy' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute(optional($pub->rejector)->full_name),'rejectionReason' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($pub->rejection_reason),'data-publication-tipo' => ''.e($pub->publication_type).'','class' => 'publication-card-wrapper']); ?>
 
                             <div class="flex justify-end gap-2">
                                 <button class="w-8 h-8 flex items-center justify-center rounded-lg border border-[#404041] text-[#404041] transition-all duration-300 hover:bg-[#404041] hover:text-white <?php echo e($claseModal); ?>" 
@@ -358,7 +358,7 @@
                                         data-publication-id="<?php echo e($pub->id); ?>"
                                         data-is-owner="<?php echo e(auth()->id() === $pub->user_id ? 'true' : 'false'); ?>"
                                         data-status="<?php echo e($pub->status); ?>"
-                                        data-approved-by="<?php echo e(optional($pub->approver)->name); ?>"
+                                        data-approved-by="<?php echo e(optional($pub->approver)->full_name); ?>"
                                         data-rejected-by="<?php echo e(optional($pub->rejector)->full_name); ?>"
                                         data-rejection-reason="<?php echo e($pub->rejection_reason); ?>"
                                         <?php $__currentLoopData = $dataAttributes; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $key => $value): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
@@ -1052,9 +1052,7 @@ document.addEventListener('DOMContentLoaded', function() {
             'modal-fecha-actividad': dataset.fechaActividad || dataset.fecha,
             // La fecha de publicación se muestra en la zona superior derecha (reemplaza 'Subido por')
             'modal-fecha-publicacion': dataset.fecha,
-            'modal-usuario': dataset.usuario,
-            // Mostrar texto por defecto cuando no exista descripción o sólo contenga espacios
-            'modal-descripcion': (dataset.descripcion && dataset.descripcion.trim()) ? dataset.descripcion : 'Sin descripción adicional.'
+            'modal-usuario': dataset.usuario
         };
         
         Object.entries(basicFields).forEach(([className, value]) => {
@@ -1064,9 +1062,28 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         });
 
+        const descripcion = (dataset.descripcion || '').trim();
+        const hasDescription = descripcion.length > 0 && descripcion !== 'Sin descripción adicional.';
+        const descripcionSection = modal.querySelector('.descripcion-section');
+        const descripcionSeparator = modal.querySelector('.descripcion-separator');
+
+        if (descripcionSection) {
+            descripcionSection.style.display = hasDescription ? 'block' : 'none';
+        }
+
+        if (descripcionSeparator) {
+            descripcionSeparator.style.display = hasDescription ? 'block' : 'none';
+        }
+
+        if (hasDescription) {
+            modal.querySelectorAll('.modal-descripcion').forEach((element) => {
+                element.textContent = descripcion;
+            });
+        }
+
         // Nota: ya no mostramos el cargo del usuario en el modal (solo nombre)
 
-        // Llenar información de estado de aprobación
+        // Llenar informacion de estado del reporte
         const statusContainer = modal.querySelector('.modal-status-container');
         if (statusContainer) {
             const status = dataset.status || 'publicado';
@@ -1075,36 +1092,49 @@ document.addEventListener('DOMContentLoaded', function() {
             if (status === 'aprobado') {
                 const approvedBy = dataset.approvedBy || 'Administrador';
                 statusHTML = `
-                    <div class="rounded-lg border border-[#404041] p-4 bg-white">
-                        <div class="flex items-center gap-3 mb-2">
-                            <i class="fas fa-check-circle text-green-600 text-lg"></i>
-                            <span class="text-base font-semibold text-[#404041] font-lora">Aprobado</span>
-                            <span class="text-sm text-gray-600 font-lora italic">por ${approvedBy}</span>
+                    <div class="rounded-lg border border-[#404041] p-3 bg-white">
+                        <div class="flex items-center gap-3">
+                            <span class="w-8 h-8 rounded-full bg-green-50 text-green-700 flex items-center justify-center">
+                                <i class="fas fa-check text-sm"></i>
+                            </span>
+                            <div>
+                                <p class="text-sm font-semibold text-[#404041] font-lora leading-tight">Aprobado</p>
+                                <p class="text-xs text-gray-500 font-lora leading-tight">Validado por ${escapeHtml(approvedBy)}</p>
+                            </div>
                         </div>
                     </div>
                 `;
             } else if (status === 'rechazado') {
                 const rejectedBy = dataset.rejectedBy || 'Administrador';
-                const rejectionReason = dataset.rejectionReason || 'No se proporcionó motivo';
+                const rejectionReason = dataset.rejectionReason || 'No se proporciono motivo';
                 statusHTML = `
-                    <div class="rounded-lg border border-[#404041] p-4 bg-white">
-                        <div class="flex items-center gap-3 mb-3">
-                            <i class="fas fa-times-circle text-red-600 text-lg"></i>
-                            <span class="text-base font-semibold text-[#404041] font-lora">Rechazado</span>
-                            <span class="text-sm text-gray-600 font-lora italic">por ${rejectedBy}</span>
+                    <div class="rounded-lg border border-[#404041] p-3 bg-white">
+                        <div class="flex items-center gap-3">
+                            <span class="w-8 h-8 rounded-full bg-red-50 text-red-700 flex items-center justify-center">
+                                <i class="fas fa-times text-sm"></i>
+                            </span>
+                            <div>
+                                <p class="text-sm font-semibold text-[#404041] font-lora leading-tight">Rechazado</p>
+                                <p class="text-xs text-gray-500 font-lora leading-tight">Revisado por ${escapeHtml(rejectedBy)}</p>
+                            </div>
                         </div>
                         <div class="mt-3 pt-3 border-t border-gray-200">
-                            <p class="text-base font-semibold text-[#404041] uppercase tracking-wide mb-2 font-lora">Motivo</p>
-                            <p class="text-base text-gray-700 font-lora leading-relaxed">${rejectionReason}</p>
+                            <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1 font-lora">Motivo</p>
+                            <p class="text-sm text-gray-700 font-lora leading-relaxed">${escapeHtml(rejectionReason)}</p>
                         </div>
                     </div>
                 `;
             } else {
                 statusHTML = `
-                    <div class="rounded-lg border border-[#404041] p-4 bg-white">
+                    <div class="rounded-lg border border-[#404041] p-3 bg-white">
                         <div class="flex items-center gap-3">
-                            <i class="fas fa-clock text-yellow-600 text-lg"></i>
-                            <span class="text-base font-semibold text-[#404041] font-lora">Pendiente de revisión</span>
+                            <span class="w-8 h-8 rounded-full bg-yellow-50 text-yellow-700 flex items-center justify-center">
+                                <i class="fas fa-clock text-sm"></i>
+                            </span>
+                            <div>
+                                <p class="text-sm font-semibold text-[#404041] font-lora leading-tight">Pendiente de revision</p>
+                                <p class="text-xs text-gray-500 font-lora leading-tight">Esperando validacion</p>
+                            </div>
                         </div>
                     </div>
                 `;
@@ -1258,18 +1288,24 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (comentariosToggle) {
                     comentariosToggle.style.display = 'flex';
                     const contadorSpan = comentariosToggle.querySelector('.contador-comentarios');
+                    const icono = comentariosToggle.querySelector('.icono-chevron');
+                    const hasComments = comentarios.length > 0;
+
                     if (contadorSpan) {
-                        if (comentarios.length > 0) {
-                            contadorSpan.textContent = `${comentarios.length} comentario${comentarios.length !== 1 ? 's' : ''}`;
-                            // Si hay comentarios, expandir automáticamente
-                            comentariosContainerDiv.classList.add('expanded');
-                            const icono = comentariosToggle.querySelector('.icono-chevron');
-                            if (icono) {
-                                icono.style.transform = 'rotate(180deg)';
-                            }
-                        } else {
-                            contadorSpan.textContent = 'Sin comentarios';
-                        }
+                        contadorSpan.textContent = `Comentarios (${comentarios.length})`;
+                    }
+
+                    if (comentariosContainerDiv) {
+                        comentariosContainerDiv.style.transition = 'none';
+                        comentariosContainerDiv.classList.toggle('expanded', hasComments);
+                        comentariosContainerDiv.offsetHeight;
+                        requestAnimationFrame(() => {
+                            comentariosContainerDiv.style.transition = '';
+                        });
+                    }
+
+                    if (icono) {
+                        icono.style.transform = hasComments ? 'rotate(180deg)' : 'rotate(0deg)';
                     }
                     
                     // Agregar evento de click al toggle
@@ -1357,7 +1393,8 @@ document.addEventListener('DOMContentLoaded', function() {
         if (comentarios.length > 0) {
                 comentarios.forEach(comentario => {
                     const userName = comentario.user?.name || 'Usuario';
-                    const userPosition = comentario.user?.position || 'Sin cargo';
+                    const userDistrict = comentario.user?.district || 'Sin distrito';
+                    const userMeta = userDistrict;
                     const userPhotoUrl = comentario.user?.profile_photo_url || '<?php echo e(asset('images/default_pfp.svg.png')); ?>';
                     const avatarHtml = `<img src="${escapeHtml(userPhotoUrl)}" alt="Foto de ${escapeHtml(userName)}" class="w-8 h-8 rounded-full object-cover border border-[#611132]/20 shadow-sm flex-shrink-0">`;
 
@@ -1390,21 +1427,20 @@ document.addEventListener('DOMContentLoaded', function() {
                             <div class="flex gap-2.5">
                                 ${avatarHtml}
                                 <div class="flex-1 min-w-0">
-                                    <div class="flex justify-between items-start gap-2 leading-none">
-                                        <div class="min-w-0 flex items-baseline gap-1.5 truncate leading-tight">
+                                    <div class="flex justify-between items-start gap-2">
+                                        <div class="min-w-0 flex items-baseline gap-2 leading-tight">
                                             <span class="font-semibold text-[#404041] font-lora text-sm truncate">
                                                 ${escapeHtml(userName)}
                                             </span>
-                                            <span class="text-gray-400 flex-shrink-0 text-xs">&middot;</span>
                                             <span class="text-xs text-gray-500 font-lora truncate">
-                                                ${escapeHtml(userPosition)}
+                                                ${escapeHtml(userMeta)}
                                             </span>
                                         </div>
                                         <div class="text-[11px] text-gray-500 font-lora whitespace-nowrap text-right pt-0.5">
                                             ${escapeHtml(dateStr)} · ${escapeHtml(timeStr)}
                                         </div>
                                     </div>
-                                    <p class="m-0 pr-6 text-gray-700 text-sm leading-snug break-words whitespace-pre-line font-lora min-w-0">${escapeHtml(comentario.comment || '')}</p>
+                                    <p class="m-0 mt-2.5 pr-6 text-gray-800 text-sm leading-snug break-words whitespace-pre-line font-lora min-w-0">${escapeHtml(comentario.comment || '')}</p>
                                 </div>
                             </div>
                             <span class="absolute right-3 bottom-2 text-xs leading-none">${tickHtml}</span>
@@ -1657,7 +1693,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     if (comentariosToggle) {
                         const contadorSpan = comentariosToggle.querySelector('.contador-comentarios');
                         if (contadorSpan) {
-                            contadorSpan.textContent = `${comentariosActuales.length} comentario${comentariosActuales.length !== 1 ? 's' : ''}`;
+                            contadorSpan.textContent = `Comentarios (${comentariosActuales.length})`;
                         }
                         
                         // Expandir la sección si estaba contraída

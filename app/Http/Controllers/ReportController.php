@@ -42,6 +42,7 @@ class ReportController extends Controller
             'rejector',
             'files',
             'comments.user.position',
+            'comments.user.district',
             'roadSafetyReports.activityType',
             'roadSafetyReports.municipality',
             'roadSafetyReports.district',
@@ -196,6 +197,7 @@ class ReportController extends Controller
                         'id' => $c->user->id,
                         'name' => $commentUserName,
                         'position' => optional($c->user->position)->name ?? 'Sin cargo',
+                        'district' => optional($c->user->district)->name ?? 'Sin distrito',
                         'profile_photo_url' => $c->user->profile_photo_path
                             ? asset('storage/' . $c->user->profile_photo_path)
                             : asset('images/default_pfp.svg.png'),
@@ -1447,7 +1449,7 @@ class ReportController extends Controller
         ]);
 
         // Cargar relaciones para devolver al frontend
-        $comment->load('user.position');
+        $comment->load('user.position', 'user.district');
 
         // Crear notificaciones para todos los usuarios involucrados en la publicación
         // (dueño de la publicación + otros comentaristas), excepto quien comenta.
@@ -1546,6 +1548,7 @@ class ReportController extends Controller
                     'id' => $comment->user->id,
                     'name' => $commentUserName,
                     'position' => $comment->user->position->name ?? 'Sin cargo',
+                    'district' => $comment->user->district->name ?? 'Sin distrito',
                     'profile_photo_url' => $comment->user->profile_photo_path
                         ? asset('storage/' . $comment->user->profile_photo_path)
                         : asset('images/default_pfp.svg.png'),
@@ -1869,6 +1872,7 @@ class ReportController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Reporte aprobado exitosamente.',
+            'approved_by' => $user->full_name,
         ]);
     }
 
@@ -1921,6 +1925,7 @@ class ReportController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Reporte rechazado.',
+            'rejected_by' => $user->full_name,
         ]);
     }
 
