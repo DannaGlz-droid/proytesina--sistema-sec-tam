@@ -269,7 +269,8 @@
                             $archivosArray = $pub->files->map(function($file) {
                                 return [
                                     'id' => $file->id,
-                                    'name' => $file->original_name
+                                    'name' => $file->original_name,
+                                    'public_url' => '/storage/' . ltrim($file->file_path, '/'),
                                 ];
                             })->toArray();
                             $archivosJson = json_encode($archivosArray);
@@ -532,6 +533,45 @@
 <?php echo $__env->make('components.modal-observatorio', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?>
 <?php echo $__env->make('components.modal-grupos-vulnerables', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?>
 
+<!-- Previsualizacion de archivos -->
+<div id="archivo-preview-overlay" class="hidden fixed inset-0 bg-[#2f2f2f]/95 text-white" style="z-index: 10000000;">
+    <div id="archivo-preview-header" class="h-20 px-5 flex items-center justify-between gap-5 bg-[#2f2f2f] border-b border-white/10">
+        <div class="flex items-center gap-4 min-w-0">
+            <button type="button" id="archivo-preview-close" class="w-12 h-12 rounded-full flex items-center justify-center text-white/80 hover:text-white hover:bg-white/10 transition-colors" title="Cerrar">
+                <i class="fas fa-times text-[26px]"></i>
+            </button>
+            <i id="archivo-preview-file-icon" class="fas fa-file text-[26px] text-white/80 flex-shrink-0"></i>
+            <div class="min-w-0">
+                <p id="archivo-preview-file-name" class="truncate font-lora font-semibold text-base md:text-lg leading-tight">Archivo</p>
+                <p id="archivo-preview-file-type" class="text-sm text-white/55 font-lora leading-tight mt-1">Previsualizacion</p>
+            </div>
+        </div>
+        <div class="flex items-center gap-2 flex-shrink-0">
+            <a id="archivo-preview-open" class="w-12 h-12 rounded-full hidden md:flex items-center justify-center text-white/80 hover:text-white hover:bg-white/10 transition-colors" target="_blank" rel="noopener" title="Abrir en otra pestana">
+                <i class="fas fa-external-link-alt text-xl"></i>
+            </a>
+            <a id="archivo-preview-download" class="w-12 h-12 rounded-full flex items-center justify-center text-white/80 hover:text-white hover:bg-white/10 transition-colors" title="Descargar">
+                <i class="fas fa-download text-xl"></i>
+            </a>
+        </div>
+    </div>
+
+    <button type="button" id="archivo-preview-prev" class="hidden absolute left-4 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-black/45 hover:bg-black/70 text-white transition-colors" title="Archivo anterior">
+        <i class="fas fa-chevron-left text-xl"></i>
+    </button>
+
+    <button type="button" id="archivo-preview-next" class="hidden absolute right-4 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-black/45 hover:bg-black/70 text-white transition-colors" title="Archivo siguiente">
+        <i class="fas fa-chevron-right text-xl"></i>
+    </button>
+
+    <div id="archivo-preview-content" class="h-[calc(100vh-5rem)] overflow-auto flex items-start justify-center p-4 md:p-8">
+        <div class="text-center text-white/70 font-lora mt-24">
+            <i class="fas fa-file-alt text-4xl mb-3"></i>
+            <p>Selecciona un archivo para previsualizar.</p>
+        </div>
+    </div>
+</div>
+
 <!-- Navegación de Reportes (Flechas) -->
 <div id="report-nav-container" class="hidden fixed inset-0 z-[9999999] pointer-events-none">
     <!-- Flecha izquierda (posicionada a la izquierda) -->
@@ -563,6 +603,33 @@
         .publication-card-wrapper.selected-card .archivos-open {
             background-color: rgba(76, 140, 196, 0.1);
             border-color: #4C8CC4 !important;
+        }
+
+        #archivo-preview-content {
+            scrollbar-width: thin;
+            scrollbar-color: rgba(156, 163, 175, 0.65) transparent;
+        }
+
+        #archivo-preview-content::-webkit-scrollbar {
+            width: 10px;
+            height: 10px;
+        }
+
+        #archivo-preview-content::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        #archivo-preview-content::-webkit-scrollbar-thumb {
+            background: rgba(156, 163, 175, 0.65);
+            border: 3px solid transparent;
+            border-radius: 999px;
+            background-clip: content-box;
+        }
+
+        #archivo-preview-content::-webkit-scrollbar-thumb:hover {
+            background: rgba(209, 213, 219, 0.85);
+            border: 2px solid transparent;
+            background-clip: content-box;
         }
     </style>
 
@@ -708,6 +775,9 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Teclado: flechas izquierda/derecha
     document.addEventListener('keydown', function(e) {
+        const filePreviewOpen = document.getElementById('archivo-preview-overlay') && !document.getElementById('archivo-preview-overlay').classList.contains('hidden');
+        if (filePreviewOpen) return;
+
         const openModal = document.querySelector('[id^="modal"]:not(.hidden)');
         if (!openModal) return;
         
@@ -1228,21 +1298,37 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 // Guardar lista de archivos en el modal para el botón "Descargar Todos"
                 modal.dataset.archivosJson = dataset.archivos;
-                
-                archivos.forEach((archivo) => {
-                    const fileName = archivo.name || archivo; // Soporte para formato antiguo y nuevo
+
+                const previewFiles = archivos.map((archivo) => {
+                    const fileName = archivo.name || archivo;
                     const fileId = archivo.id || null;
                     const extension = fileName.split('.').pop().toLowerCase();
+
+                    return {
+                        id: fileId,
+                        name: fileName,
+                        extension,
+                        publicUrl: archivo.public_url || null,
+                        canPreview: fileId && ['pdf', 'jpg', 'jpeg', 'png', 'xlsx', 'xls'].includes(extension),
+                    };
+                });
+                
+                previewFiles.forEach((archivo, index) => {
+                    const fileName = archivo.name;
+                    const fileId = archivo.id;
+                    const extension = archivo.extension;
                     const { icono, color } = obtenerEstiloArchivo(extension);
+                    const canPreview = archivo.canPreview;
+                    const safeFileName = escapeHtml(fileName);
                     
                     archivosContainer.innerHTML += `
-                        <div class="bg-white rounded-xl border border-[#404041] overflow-hidden transition-all duration-300 hover:shadow-lg group cursor-pointer">
+                        <div class="archivo-preview-card bg-white rounded-xl border border-[#404041] overflow-hidden transition-all duration-300 hover:shadow-lg group ${canPreview ? 'cursor-pointer' : ''}" data-file-id="${fileId}" data-file-name="${safeFileName}" data-extension="${extension}" data-file-index="${index}" title="${canPreview ? 'Abrir previsualizacion' : 'Previsualizacion no disponible'}" onclick="window.openArchivoPreviewFromCard(this, event)">
                             <div class="${color} h-20 flex items-center justify-center">
                                 <i class="${icono} text-3xl text-white"></i>
                             </div>
                             <div class="p-4">
-                                <p class="text-sm font-semibold text-[#404041] font-lora truncate mb-1" title="${fileName}">
-                                    ${fileName}
+                                <p class="text-sm font-semibold text-[#404041] font-lora truncate mb-1" title="${safeFileName}">
+                                    ${safeFileName}
                                 </p>
                                 <p class="text-xs text-gray-500 font-lora mb-3">
                                     ${extension.toUpperCase()} • ${obtenerTamañoAleatorio()}
@@ -1257,6 +1343,19 @@ document.addEventListener('DOMContentLoaded', function() {
                 });
                 
                 // Configurar botón "Descargar Todos" si existe
+                archivosContainer.dataset.previewFiles = JSON.stringify(previewFiles);
+
+                archivosContainer.querySelectorAll('.archivo-preview-card').forEach((card) => {
+                    card.addEventListener('click', function(event) {
+                        if (event.target.closest('.descargar-archivo')) {
+                            return;
+                        }
+
+                        event.preventDefault();
+                        window.openArchivoPreviewFromCard(this, event);
+                    });
+                });
+
                 const btnDescargarTodos = modal.querySelector('.descargar-todos-archivos');
                 if (btnDescargarTodos) {
                     btnDescargarTodos.replaceWith(btnDescargarTodos.cloneNode(true));
@@ -1457,6 +1556,263 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
+    const archivoPreviewState = {
+        files: [],
+        index: 0,
+        renderToken: 0,
+    };
+    let pdfJsLoadingPromise = null;
+
+    function openArchivoPreview(files, index) {
+        const supportedFiles = files.filter((file) => file.canPreview);
+        const selected = files[index];
+        const selectedId = selected ? selected.id : null;
+        const selectedIndex = supportedFiles.findIndex((file) => String(file.id) === String(selectedId));
+
+        if (!selected || !selected.canPreview || selectedIndex < 0) {
+            alert('Este archivo no tiene previsualizacion disponible');
+            return;
+        }
+
+        archivoPreviewState.files = supportedFiles;
+        archivoPreviewState.index = selectedIndex;
+        renderArchivoPreviewOverlay();
+
+        const overlay = document.getElementById('archivo-preview-overlay');
+        if (overlay) {
+            overlay.classList.remove('hidden');
+            overlay.style.display = 'block';
+            document.body.style.overflow = 'hidden';
+        }
+
+        document.getElementById('report-nav-container')?.classList.add('hidden');
+    }
+
+    window.openArchivoPreviewFromCard = function(card, event) {
+        if (event && event.target && event.target.closest('.descargar-archivo')) {
+            return;
+        }
+
+        const container = card.closest('.modal-archivos');
+        const fileIndex = Number(card.dataset.fileIndex || 0);
+
+        try {
+            const files = JSON.parse((container && container.dataset.previewFiles) ? container.dataset.previewFiles : '[]');
+            openArchivoPreview(files, fileIndex);
+        } catch (error) {
+            console.error('Error abriendo previsualizacion:', error);
+            alert('No se pudo identificar el archivo para previsualizar');
+        }
+    };
+
+    function closeArchivoPreview() {
+        const overlay = document.getElementById('archivo-preview-overlay');
+        const content = document.getElementById('archivo-preview-content');
+
+        if (content) {
+            content.innerHTML = '';
+        }
+
+        if (overlay) {
+            overlay.classList.add('hidden');
+            overlay.style.display = 'none';
+        }
+
+        const anyModalOpen = document.querySelector('[id^="modal"]:not(.hidden)');
+        if (!anyModalOpen) {
+            document.body.style.overflow = 'auto';
+        } else {
+            updateNavigationArrows();
+        }
+    }
+
+    function navigateArchivoPreview(direction) {
+        if (!archivoPreviewState.files.length) return;
+
+        archivoPreviewState.index = (archivoPreviewState.index + direction + archivoPreviewState.files.length) % archivoPreviewState.files.length;
+        renderArchivoPreviewOverlay();
+    }
+
+    function renderArchivoPreviewOverlay() {
+        const file = archivoPreviewState.files[archivoPreviewState.index];
+        if (!file) return;
+
+        const content = document.getElementById('archivo-preview-content');
+        const fileNameEl = document.getElementById('archivo-preview-file-name');
+        const fileTypeEl = document.getElementById('archivo-preview-file-type');
+        const fileIconEl = document.getElementById('archivo-preview-file-icon');
+        const openLink = document.getElementById('archivo-preview-open');
+        const downloadLink = document.getElementById('archivo-preview-download');
+        const prevButton = document.getElementById('archivo-preview-prev');
+        const nextButton = document.getElementById('archivo-preview-next');
+
+        if (!content) return;
+        const renderToken = ++archivoPreviewState.renderToken;
+
+        const extension = file.extension;
+        const previewUrl = `/reportes/file/${file.id}/preview`;
+        const displayUrl = extension === 'pdf' && file.publicUrl ? file.publicUrl : previewUrl;
+        const downloadUrl = `/reportes/file/${file.id}/download`;
+        const { icono } = obtenerEstiloArchivo(extension);
+
+        if (fileNameEl) fileNameEl.textContent = file.name;
+        if (fileTypeEl) fileTypeEl.textContent = `${extension.toUpperCase()} · ${archivoPreviewState.index + 1} de ${archivoPreviewState.files.length}`;
+        if (fileIconEl) fileIconEl.className = `${icono} text-[26px] text-white/80 flex-shrink-0`;
+        if (openLink) openLink.href = displayUrl;
+        if (downloadLink) downloadLink.href = downloadUrl;
+
+        const hasMultiple = archivoPreviewState.files.length > 1;
+        if (prevButton) prevButton.classList.toggle('hidden', !hasMultiple);
+        if (nextButton) nextButton.classList.toggle('hidden', !hasMultiple);
+
+        const loadingHtml = `
+            <div class="absolute inset-0 z-10 flex items-center justify-center bg-white">
+                <div class="animate-spin" style="width: 56px; height: 56px; border-radius: 9999px; border: 7px solid #e5e7eb; border-top-color: #611132; border-right-color: #d1d5db;"></div>
+            </div>
+        `;
+
+        if (['jpg', 'jpeg', 'png'].includes(extension)) {
+            content.className = 'h-[calc(100vh-5rem)] overflow-auto flex items-center justify-center py-4 px-16 sm:px-20 md:px-28 lg:px-32';
+            content.innerHTML = `
+                <img src="${previewUrl}" alt="${escapeHtml(file.name)}" class="archivo-preview-surface max-w-full max-h-full object-contain shadow-2xl bg-white">
+            `;
+            return;
+        }
+
+        if (extension === 'pdf') {
+            const pdfUrl = file.publicUrl || previewUrl;
+            renderPdfPreview(file, pdfUrl, loadingHtml, renderToken);
+            return;
+        }
+
+        if (['xlsx', 'xls'].includes(extension)) {
+            content.className = 'h-[calc(100vh-5rem)] overflow-auto flex items-start justify-center py-2 px-14 sm:px-16 md:px-20';
+            content.innerHTML = `
+                <div class="archivo-preview-surface relative w-full max-w-[88vw] h-[calc(100vh-7rem)] bg-white shadow-2xl">
+                    ${loadingHtml}
+                    <iframe src="${previewUrl}?embed=1" title="${escapeHtml(file.name)}" class="w-full h-full border-0 bg-white opacity-0 transition-opacity duration-200" onload="this.classList.remove('opacity-0'); this.previousElementSibling.remove();"></iframe>
+                </div>
+            `;
+            return;
+        }
+
+        content.className = 'h-[calc(100vh-5rem)] overflow-auto flex items-center justify-center p-4 md:p-8';
+            content.innerHTML = `
+                <div class="archivo-preview-surface text-center text-white/70 font-lora">
+                    <i class="fas fa-file-alt text-4xl mb-3"></i>
+                    <p>Este tipo de archivo no tiene previsualizacion disponible.</p>
+                </div>
+        `;
+    }
+
+    function ensurePdfJsLoaded() {
+        if (window.pdfjsLib) {
+            return Promise.resolve(window.pdfjsLib);
+        }
+
+        if (!pdfJsLoadingPromise) {
+            pdfJsLoadingPromise = new Promise((resolve, reject) => {
+                const script = document.createElement('script');
+                script.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
+                script.onload = () => {
+                    if (!window.pdfjsLib) {
+                        reject(new Error('PDF.js no esta disponible'));
+                        return;
+                    }
+
+                    window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+                    resolve(window.pdfjsLib);
+                };
+                script.onerror = () => reject(new Error('No se pudo cargar PDF.js'));
+                document.head.appendChild(script);
+            });
+        }
+
+        return pdfJsLoadingPromise;
+    }
+
+    async function renderPdfPreview(file, pdfUrl, loadingHtml, renderToken) {
+        const content = document.getElementById('archivo-preview-content');
+        if (!content) return;
+
+        const safeName = escapeHtml(file.name);
+        const sourceUrl = encodeURI(pdfUrl);
+
+        content.className = 'h-[calc(100vh-5rem)] overflow-auto flex items-start justify-center p-4 md:p-8';
+        content.innerHTML = `
+            <div id="pdf-preview-frame" class="relative w-full max-w-5xl min-h-[calc(100vh-9rem)]">
+                ${loadingHtml}
+                <div id="pdf-preview-pages" class="flex flex-col items-center gap-5" aria-label="Previsualizacion PDF: ${safeName}"></div>
+            </div>
+        `;
+
+        try {
+            const pdfjsLib = await ensurePdfJsLoaded();
+            if (renderToken !== archivoPreviewState.renderToken) return;
+
+            const loadingTask = pdfjsLib.getDocument({ url: sourceUrl, withCredentials: true });
+            const pdf = await loadingTask.promise;
+            if (renderToken !== archivoPreviewState.renderToken) return;
+
+            const frame = document.getElementById('pdf-preview-frame');
+            const pagesContainer = document.getElementById('pdf-preview-pages');
+            if (!frame || !pagesContainer) return;
+
+            const firstPage = await pdf.getPage(1);
+            const baseViewport = firstPage.getViewport({ scale: 1 });
+            const availableWidth = Math.max(320, Math.min(frame.clientWidth - 16, 930));
+            const scale = Math.max(0.8, Math.min(1.65, availableWidth / baseViewport.width));
+            const outputScale = Math.min(window.devicePixelRatio || 1, 2);
+
+            for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber++) {
+                if (renderToken !== archivoPreviewState.renderToken) return;
+
+                const page = pageNumber === 1 ? firstPage : await pdf.getPage(pageNumber);
+                const viewport = page.getViewport({ scale });
+                const canvas = document.createElement('canvas');
+                const context = canvas.getContext('2d');
+                const pageWrap = document.createElement('div');
+
+                canvas.width = Math.floor(viewport.width * outputScale);
+                canvas.height = Math.floor(viewport.height * outputScale);
+                canvas.style.width = `${Math.floor(viewport.width)}px`;
+                canvas.style.height = `${Math.floor(viewport.height)}px`;
+                canvas.className = 'block bg-white shadow-2xl';
+
+                pageWrap.className = 'archivo-preview-surface bg-white';
+                pageWrap.appendChild(canvas);
+
+                await page.render({
+                    canvasContext: context,
+                    viewport,
+                    transform: outputScale !== 1 ? [outputScale, 0, 0, outputScale, 0, 0] : null,
+                }).promise;
+
+                if (renderToken !== archivoPreviewState.renderToken) return;
+
+                pagesContainer.appendChild(pageWrap);
+
+                if (pageNumber === 1) {
+                    const loader = frame.querySelector('.absolute.inset-0');
+                    if (loader) loader.remove();
+                }
+            }
+        } catch (error) {
+            if (renderToken !== archivoPreviewState.renderToken) return;
+
+            content.innerHTML = `
+                <div class="text-center text-white/80 font-lora max-w-md">
+                    <i class="fas fa-file-pdf text-5xl mb-4"></i>
+                    <p class="mb-4">No se pudo cargar la previsualizacion del PDF en el visor interno.</p>
+                    <a href="${sourceUrl}" target="_blank" rel="noopener" class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-white text-[#2f2f2f] font-semibold">
+                        <i class="fas fa-up-right-from-square"></i>
+                        Abrir en otra pestana
+                    </a>
+                </div>
+            `;
+        }
+    }
+
     function escapeHtml(value) {
         return String(value ?? '')
             .replace(/&/g, '&amp;')
@@ -1465,6 +1821,50 @@ document.addEventListener('DOMContentLoaded', function() {
             .replace(/"/g, '&quot;')
             .replace(/'/g, '&#039;');
     }
+
+    document.getElementById('archivo-preview-close')?.addEventListener('click', closeArchivoPreview);
+    document.getElementById('archivo-preview-prev')?.addEventListener('click', () => navigateArchivoPreview(-1));
+    document.getElementById('archivo-preview-next')?.addEventListener('click', () => navigateArchivoPreview(1));
+
+    document.getElementById('archivo-preview-overlay')?.addEventListener('click', function(e) {
+        const isControlClick = e.target.closest(
+            '#archivo-preview-header, #archivo-preview-prev, #archivo-preview-next, #archivo-preview-close, #archivo-preview-open, #archivo-preview-download'
+        );
+        const isFileSurfaceClick = e.target.closest('.archivo-preview-surface');
+        const isPreviewContentClick = e.target.closest('#archivo-preview-content');
+
+        if (!isControlClick && !isFileSurfaceClick && (e.target === this || isPreviewContentClick)) {
+            closeArchivoPreview();
+        }
+    });
+
+    document.addEventListener('keydown', function(e) {
+        const overlay = document.getElementById('archivo-preview-overlay');
+        const isPreviewOpen = overlay && !overlay.classList.contains('hidden');
+
+        if (!isPreviewOpen) return;
+
+        if (e.key === 'Escape') {
+            e.preventDefault();
+            e.stopImmediatePropagation();
+            closeArchivoPreview();
+        } else if (e.key === 'ArrowLeft') {
+            e.preventDefault();
+            e.stopImmediatePropagation();
+            navigateArchivoPreview(-1);
+        } else if (e.key === 'ArrowRight') {
+            e.preventDefault();
+            e.stopImmediatePropagation();
+            navigateArchivoPreview(1);
+        }
+    }, true);
+
+    window.addEventListener('message', function(event) {
+        if (event.origin !== window.location.origin) return;
+        if (event.data && event.data.type === 'close-file-preview') {
+            closeArchivoPreview();
+        }
+    });
     
     // Funciones auxiliares
     function obtenerEstiloArchivo(extension) {
@@ -1749,6 +2149,13 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // === SISTEMA DE DESCARGA DE ARCHIVOS ===
     document.addEventListener('click', function(e) {
+        // Abrir previsualizacion al hacer click en la tarjeta del archivo
+        if (e.target.closest('.archivo-preview-card') && !e.target.closest('.descargar-archivo')) {
+            e.preventDefault();
+            const card = e.target.closest('.archivo-preview-card');
+            window.openArchivoPreviewFromCard(card, e);
+        }
+
         // Descargar archivo individual
         if (e.target.closest('.descargar-archivo')) {
             e.preventDefault();

@@ -21,6 +21,7 @@ use App\Http\Requests\GruposVulnerablesReportRequest;
 use App\Http\Requests\BreathalyzerReportRequest;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
@@ -28,6 +29,8 @@ use App\Config\ReportFileRequirements;
 use App\Models\GruposVulnerablesReport;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
+use PhpOffice\PhpSpreadsheet\IOFactory;
 
 class ReportController extends Controller
 {
@@ -1677,6 +1680,111 @@ class ReportController extends Controller
             ->update(['read' => true]);
 
         return response()->json(['success' => true]);
+    }
+
+    /**
+     * Preview a single file inline.
+     */
+    public function previewFile(Request $request, PublicationFile $file)
+    {
+        $user = Auth::user();
+
+        if ($user->isOperator() && $file->publication?->user_id !== $user->id) {
+            abort(403, 'No tienes permiso para previsualizar este archivo');
+        }
+
+        $fullPath = storage_path('app/public/' . $file->file_path);
+
+        if (!file_exists($fullPath)) {
+            abort(404, 'Archivo no encontrado');
+        }
+
+        $extension = strtolower(pathinfo($file->original_name, PATHINFO_EXTENSION));
+
+        if (in_array($extension, ['jpg', 'jpeg', 'png', 'pdf'])) {
+            return response()->file($fullPath, [
+                'Content-Disposition' => 'inline; filename="' . str_replace('"', '', $file->original_name) . '"',
+            ]);
+        }
+
+        if (in_array($extension, ['xlsx', 'xls'])) {
+            try {
+                $requestedSheetIndex = (int) $request->query('sheet', 0);
+                $cacheKey = implode(':', [
+                    'report-file-preview',
+                    $file->id,
+                    filemtime($fullPath),
+                    filesize($fullPath),
+                    $requestedSheetIndex,
+                ]);
+
+                $previewData = Cache::remember($cacheKey, now()->addMinutes(30), function () use ($fullPath, $file, $requestedSheetIndex) {
+                    $reader = IOFactory::createReaderForFile($fullPath);
+                    $reader->setReadDataOnly(true);
+                    $sheetNames = $reader->listWorksheetNames($fullPath);
+                    $sheetIndex = max(0, min($requestedSheetIndex, count($sheetNames) - 1));
+                    $reader->setLoadSheetsOnly($sheetNames[$sheetIndex]);
+
+                    $spreadsheet = $reader->load($fullPath);
+                    $sheet = $spreadsheet->getSheet(0);
+                    $sheetName = $sheet->getTitle();
+                    $totalRows = (int) $sheet->getHighestRow();
+                    $totalColumns = Coordinate::columnIndexFromString($sheet->getHighestColumn());
+                    $highestRow = min($totalRows, 120);
+                    $highestColumnIndex = min($totalColumns, 40);
+                    $rows = [];
+                    $columnLabels = [];
+
+                    for ($column = 1; $column <= $highestColumnIndex; $column++) {
+                        $columnLabels[] = Coordinate::stringFromColumnIndex($column);
+                    }
+
+                    for ($row = 1; $row <= $highestRow; $row++) {
+                        $cells = [];
+
+                        for ($column = 1; $column <= $highestColumnIndex; $column++) {
+                            $cells[] = $sheet->getCellByColumnAndRow($column, $row)->getFormattedValue();
+                        }
+
+                        $rows[] = $cells;
+                    }
+
+                    $spreadsheet->disconnectWorksheets();
+
+                    return [
+                        'fileName' => $file->original_name,
+                        'sheetName' => $sheetName,
+                        'sheetNames' => $sheetNames,
+                        'activeSheetIndex' => $sheetIndex,
+                        'columnLabels' => $columnLabels,
+                        'rows' => $rows,
+                        'rowLimitReached' => $totalRows > $highestRow,
+                        'columnLimitReached' => $totalColumns > $highestColumnIndex,
+                    ];
+                });
+
+                return view('reportes.preview-excel', $previewData);
+            } catch (\Throwable $e) {
+                Log::warning('No se pudo previsualizar el archivo Excel.', [
+                    'file_id' => $file->id,
+                    'error' => $e->getMessage(),
+                ]);
+
+                return response()->view('reportes.preview-excel', [
+                    'fileName' => $file->original_name,
+                    'sheetName' => null,
+                    'sheetNames' => [],
+                    'activeSheetIndex' => 0,
+                    'columnLabels' => [],
+                    'rows' => [],
+                    'rowLimitReached' => false,
+                    'columnLimitReached' => false,
+                    'error' => 'No se pudo generar la previsualizacion del archivo.',
+                ], 422);
+            }
+        }
+
+        abort(415, 'Este tipo de archivo no tiene previsualizacion disponible');
     }
 
     /**

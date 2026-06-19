@@ -100,6 +100,7 @@ Route::middleware('auth')->group(function () {
 
     // ========== REPORTES - VER PUBLICACIONES (Todos los roles autenticados) ==========
     Route::get('reportes/publicaciones', [App\Http\Controllers\ReportController::class, 'index'])->name('reportes.index');
+    Route::get('reportes/file/{file}/preview', [App\Http\Controllers\ReportController::class, 'previewFile'])->name('reportes.file.preview');
 
     // ========== REPORTES - CREAR, EDITAR, ELIMINAR (Administrador, Coordinador y Operador - NO Invitado) ==========
     Route::middleware('role:Administrador,Coordinador,Operador')->group(function () {
