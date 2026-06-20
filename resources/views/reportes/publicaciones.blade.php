@@ -603,6 +603,25 @@
             border-color: #4C8CC4 !important;
         }
 
+        #archivo-preview-overlay {
+            opacity: 1;
+            transition: opacity 260ms cubic-bezier(0.22, 1, 0.36, 1);
+        }
+
+        #archivo-preview-content {
+            transition: opacity 260ms cubic-bezier(0.22, 1, 0.36, 1), transform 260ms cubic-bezier(0.22, 1, 0.36, 1);
+            transform-origin: center center;
+        }
+
+        #archivo-preview-overlay.archivo-preview-closing {
+            opacity: 0;
+        }
+
+        #archivo-preview-overlay.archivo-preview-closing #archivo-preview-content {
+            opacity: 0;
+            transform: scale(0.975) translateY(6px);
+        }
+
         #archivo-preview-content {
             scrollbar-width: thin;
             scrollbar-color: rgba(156, 163, 175, 0.65) transparent;
@@ -628,6 +647,13 @@
             background: rgba(209, 213, 219, 0.85);
             border: 2px solid transparent;
             background-clip: content-box;
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            #archivo-preview-overlay,
+            #archivo-preview-content {
+                transition: none;
+            }
         }
     </style>
 
@@ -1342,8 +1368,17 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 // Configurar botón "Descargar Todos" si existe
                 archivosContainer.dataset.previewFiles = JSON.stringify(previewFiles);
+                schedulePreviewPreload(previewFiles);
 
                 archivosContainer.querySelectorAll('.archivo-preview-card').forEach((card) => {
+                    const preloadFromCard = () => {
+                        const fileIndex = Number(card.dataset.fileIndex || 0);
+                        preloadArchivoPreview(previewFiles[fileIndex]);
+                    };
+
+                    card.addEventListener('mouseenter', preloadFromCard, { once: true });
+                    card.addEventListener('focusin', preloadFromCard, { once: true });
+
                     card.addEventListener('click', function(event) {
                         if (event.target.closest('.descargar-archivo')) {
                             return;
@@ -1560,6 +1595,12 @@ document.addEventListener('DOMContentLoaded', function() {
         renderToken: 0,
     };
     let pdfJsLoadingPromise = null;
+    let archivoPreviewCloseTimer = null;
+    const archivoPreviewCache = {
+        pdf: new Map(),
+        pdfLoading: new Map(),
+        spreadsheetFrames: new Map(),
+    };
 
     function openArchivoPreview(files, index) {
         const supportedFiles = files.filter((file) => file.canPreview);
@@ -1578,6 +1619,12 @@ document.addEventListener('DOMContentLoaded', function() {
 
         const overlay = document.getElementById('archivo-preview-overlay');
         if (overlay) {
+            if (archivoPreviewCloseTimer) {
+                clearTimeout(archivoPreviewCloseTimer);
+                archivoPreviewCloseTimer = null;
+            }
+
+            overlay.classList.remove('archivo-preview-closing');
             overlay.classList.remove('hidden');
             overlay.style.display = 'block';
             document.body.style.overflow = 'hidden';
@@ -1607,21 +1654,31 @@ document.addEventListener('DOMContentLoaded', function() {
         const overlay = document.getElementById('archivo-preview-overlay');
         const content = document.getElementById('archivo-preview-content');
 
-        if (content) {
-            content.innerHTML = '';
-        }
+        archivoPreviewState.renderToken++;
 
-        if (overlay) {
+        if (!overlay || overlay.classList.contains('hidden')) return;
+        if (overlay.classList.contains('archivo-preview-closing')) return;
+
+        overlay.classList.add('archivo-preview-closing');
+
+        archivoPreviewCloseTimer = setTimeout(() => {
+            if (content) {
+                preserveActiveSpreadsheetFrame(content);
+                content.innerHTML = '';
+            }
+
             overlay.classList.add('hidden');
             overlay.style.display = 'none';
-        }
+            overlay.classList.remove('archivo-preview-closing');
+            archivoPreviewCloseTimer = null;
 
-        const anyModalOpen = document.querySelector('[id^="modal"]:not(.hidden)');
-        if (!anyModalOpen) {
-            document.body.style.overflow = 'auto';
-        } else {
-            updateNavigationArrows();
-        }
+            const anyModalOpen = document.querySelector('[id^="modal"]:not(.hidden)');
+            if (!anyModalOpen) {
+                document.body.style.overflow = 'auto';
+            } else {
+                updateNavigationArrows();
+            }
+        }, window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 280);
     }
 
     function navigateArchivoPreview(direction) {
@@ -1629,6 +1686,58 @@ document.addEventListener('DOMContentLoaded', function() {
 
         archivoPreviewState.index = (archivoPreviewState.index + direction + archivoPreviewState.files.length) % archivoPreviewState.files.length;
         renderArchivoPreviewOverlay();
+    }
+
+    function getPreviewUrl(file) {
+        return `/reportes/file/${file.id}/preview`;
+    }
+
+    function getPdfUrl(file) {
+        return file.publicUrl || getPreviewUrl(file);
+    }
+
+    function getFileCacheKey(file) {
+        return `${file.extension}:${file.id}:${file.name}`;
+    }
+
+    function getPreviewCacheHost() {
+        let host = document.getElementById('archivo-preview-cache-host');
+        if (!host) {
+            host = document.createElement('div');
+            host.id = 'archivo-preview-cache-host';
+            host.setAttribute('aria-hidden', 'true');
+            host.style.cssText = 'position:fixed;left:-10000px;top:-10000px;width:1px;height:1px;overflow:hidden;opacity:0;pointer-events:none;';
+            document.body.appendChild(host);
+        }
+        return host;
+    }
+
+    function schedulePreviewPreload(files) {
+        const supported = files.filter((file) => file.canPreview && ['pdf', 'xlsx', 'xls', 'jpg', 'jpeg', 'png'].includes(file.extension));
+        if (!supported.length) return;
+
+        window.setTimeout(() => {
+            supported.slice(0, 2).forEach((file) => preloadArchivoPreview(file));
+        }, 450);
+    }
+
+    function preloadArchivoPreview(file) {
+        if (!file || !file.canPreview) return;
+
+        if (['jpg', 'jpeg', 'png'].includes(file.extension)) {
+            const image = new Image();
+            image.src = getPreviewUrl(file);
+            return;
+        }
+
+        if (file.extension === 'pdf') {
+            preRenderPdfToCache(file);
+            return;
+        }
+
+        if (['xlsx', 'xls'].includes(file.extension)) {
+            ensureSpreadsheetFrame(file, true);
+        }
     }
 
     function renderArchivoPreviewOverlay() {
@@ -1648,7 +1757,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const renderToken = ++archivoPreviewState.renderToken;
 
         const extension = file.extension;
-        const previewUrl = `/reportes/file/${file.id}/preview`;
+        const previewUrl = getPreviewUrl(file);
         const displayUrl = extension === 'pdf' && file.publicUrl ? file.publicUrl : previewUrl;
         const downloadUrl = `/reportes/file/${file.id}/download`;
         const { icono } = obtenerEstiloArchivo(extension);
@@ -1664,7 +1773,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (nextButton) nextButton.classList.toggle('hidden', !hasMultiple);
 
         const loadingHtml = `
-            <div class="absolute inset-0 z-10 flex items-center justify-center bg-white">
+            <div class="archivo-preview-loader hidden absolute inset-0 z-10 flex items-center justify-center bg-white">
                 <div class="animate-spin" style="width: 56px; height: 56px; border-radius: 9999px; border: 7px solid #e5e7eb; border-top-color: #611132; border-right-color: #d1d5db;"></div>
             </div>
         `;
@@ -1678,7 +1787,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         if (extension === 'pdf') {
-            const pdfUrl = file.publicUrl || previewUrl;
+            const pdfUrl = getPdfUrl(file);
             renderPdfPreview(file, pdfUrl, loadingHtml, renderToken);
             return;
         }
@@ -1688,9 +1797,9 @@ document.addEventListener('DOMContentLoaded', function() {
             content.innerHTML = `
                 <div class="archivo-preview-surface relative w-full max-w-[88vw] h-[calc(100vh-7rem)] bg-white shadow-2xl">
                     ${loadingHtml}
-                    <iframe src="${previewUrl}?embed=1" title="${escapeHtml(file.name)}" class="w-full h-full border-0 bg-white opacity-0 transition-opacity duration-200" onload="this.classList.remove('opacity-0'); this.previousElementSibling.remove();"></iframe>
                 </div>
             `;
+            renderSpreadsheetPreview(file, content, renderToken);
             return;
         }
 
@@ -1729,6 +1838,72 @@ document.addEventListener('DOMContentLoaded', function() {
         return pdfJsLoadingPromise;
     }
 
+    function showPreviewLoaderIfStillLoading(container, renderToken, delay = 220) {
+        window.setTimeout(() => {
+            if (renderToken !== archivoPreviewState.renderToken) return;
+
+            const loader = container.querySelector('.archivo-preview-loader');
+            if (loader) {
+                loader.classList.remove('hidden');
+            }
+        }, delay);
+    }
+
+    function ensureSpreadsheetFrame(file, preloadOnly = false) {
+        const key = getFileCacheKey(file);
+        let entry = archivoPreviewCache.spreadsheetFrames.get(key);
+
+        if (!entry) {
+            const iframe = document.createElement('iframe');
+            iframe.src = `${getPreviewUrl(file)}?embed=1`;
+            iframe.title = file.name;
+            iframe.dataset.previewCacheKey = key;
+            iframe.className = 'w-full h-full border-0 bg-white opacity-0 transition-opacity duration-200';
+
+            entry = { iframe, loaded: false };
+            iframe.addEventListener('load', () => {
+                entry.loaded = true;
+                iframe.classList.remove('opacity-0');
+                const loader = iframe.parentElement?.querySelector('.archivo-preview-loader');
+                if (loader) loader.remove();
+            });
+
+            archivoPreviewCache.spreadsheetFrames.set(key, entry);
+            getPreviewCacheHost().appendChild(iframe);
+        }
+
+        if (preloadOnly && !entry.iframe.parentElement) {
+            getPreviewCacheHost().appendChild(entry.iframe);
+        }
+
+        return entry;
+    }
+
+    function renderSpreadsheetPreview(file, content, renderToken) {
+        const surface = content.querySelector('.archivo-preview-surface');
+        if (!surface) return;
+
+        const entry = ensureSpreadsheetFrame(file);
+        if (renderToken !== archivoPreviewState.renderToken) return;
+
+        entry.iframe.className = `w-full h-full border-0 bg-white transition-opacity duration-200 ${entry.loaded ? '' : 'opacity-0'}`;
+        surface.appendChild(entry.iframe);
+
+        if (entry.loaded) {
+            const loader = surface.querySelector('.archivo-preview-loader');
+            if (loader) loader.remove();
+        } else {
+            showPreviewLoaderIfStillLoading(content, renderToken);
+        }
+    }
+
+    function preserveActiveSpreadsheetFrame(content) {
+        const iframe = content.querySelector('iframe[data-preview-cache-key]');
+        if (!iframe) return;
+
+        getPreviewCacheHost().appendChild(iframe);
+    }
+
     async function renderPdfPreview(file, pdfUrl, loadingHtml, renderToken) {
         const content = document.getElementById('archivo-preview-content');
         if (!content) return;
@@ -1743,6 +1918,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 <div id="pdf-preview-pages" class="flex flex-col items-center gap-5" aria-label="Previsualizacion PDF: ${safeName}"></div>
             </div>
         `;
+        showPreviewLoaderIfStillLoading(content, renderToken);
 
         try {
             const pdfjsLib = await ensurePdfJsLoaded();
