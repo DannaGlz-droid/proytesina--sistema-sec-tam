@@ -977,7 +977,9 @@ class ReportController extends Controller
         $districts->push($centralOffice);
         
         // Pasar información de si el usuario es admin o coordinador
-        $isAdminOrCoordinator = $user->isAdmin() || $user->isCoordinator();
+        $isAdminOrCoordinator = $user->isAdmin()
+            || $user->isCoordinator()
+            || (int) $user->district_id === 999;
 
         return view('reportes.registro.alcoholimetria', compact('municipalities', 'districts', 'isAdminOrCoordinator'));
     }
@@ -1085,7 +1087,9 @@ class ReportController extends Controller
         $districts->push($centralOffice);
         
         // Pasar información de si el usuario es admin o coordinador
-        $isAdminOrCoordinator = $user->isAdmin() || $user->isCoordinator();
+        $isAdminOrCoordinator = $user->isAdmin()
+            || $user->isCoordinator()
+            || (int) $user->district_id === 999;
 
         return view('reportes.registro.alcoholimetria', compact('publication', 'report', 'municipalities', 'districts', 'isAdminOrCoordinator'));
     }
@@ -1201,7 +1205,9 @@ class ReportController extends Controller
         $districts->push($centralOffice);
         
         // Pasar información de si el usuario es admin o coordinador
-        $isAdminOrCoordinator = $user->isAdmin() || $user->isCoordinator();
+        $isAdminOrCoordinator = $user->isAdmin()
+            || $user->isCoordinator()
+            || (int) $user->district_id === 999;
 
         return view('reportes.registro.grupos-vulnerables', compact('municipalities', 'activityTypes', 'districts', 'publication', 'report', 'isAdminOrCoordinator'));
     }
@@ -1272,7 +1278,18 @@ class ReportController extends Controller
         $activityTypes = ActivityType::orderBy('name')->get();
         $districts = District::orderBy('name')->get();
 
-        return view('reportes.registro.grupos-vulnerables', compact('publication', 'report', 'municipalities', 'activityTypes', 'districts'));
+        // Agregar opción "Oficina Central" para admins y coordinadores
+        $centralOffice = new District();
+        $centralOffice->id = 999;
+        $centralOffice->name = 'Oficina Central';
+        $districts->push($centralOffice);
+
+        $user = Auth::user();
+        $isAdminOrCoordinator = $user->isAdmin()
+            || $user->isCoordinator()
+            || (int) $user->district_id === 999;
+
+        return view('reportes.registro.grupos-vulnerables', compact('publication', 'report', 'municipalities', 'activityTypes', 'districts', 'isAdminOrCoordinator'));
     }
 
     public function updateGruposVulnerables(GruposVulnerablesReportRequest $request, Publication $publication)

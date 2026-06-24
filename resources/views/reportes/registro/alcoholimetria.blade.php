@@ -1,5 +1,5 @@
 @extends('layouts.principal')
-@section('title', isset($publication) ? 'Editar Alcoholimetría' : 'Registro de Alcoholimetría')
+@section('title', isset($publication) ? 'Editar reporte de alcoholimetría' : 'Registrar reporte de alcoholimetría')
 @section('content')
 
     <style>
@@ -55,9 +55,40 @@
 
     <div class="px-4 lg:pl-10 pt-6 lg:pt-10 pb-8 lg:pb-12">
         <h1 class="text-2xl lg:text-3xl font-lora font-bold text-[#404041] mb-3">
-            {{ isset($publication) ? 'Editar alcoholimetría' : 'Registro de alcoholimetría' }}
+            {{ isset($publication) ? 'Editar reporte de alcoholimetría' : 'Registrar reporte de alcoholimetría' }}
         </h1>
-        <p class="text-sm lg:text-base text-[#404041] font-lora mb-6">Complete el formulario para {{ isset($publication) ? 'actualizar' : 'registrar' }} los datos de los operativos de alcoholimetría.</p>
+        <p class="text-sm lg:text-base text-[#404041] font-lora mb-6">{{ isset($publication) ? 'Actualiza la información y administra los archivos adjuntos de este reporte.' : 'Captura la información y adjunta los archivos requeridos para enviar este reporte.' }}</p>
+
+        <!-- Mensajes de error -->
+        @if(session('error'))
+            <div class="mb-6 bg-red-50 border-l-4 border-red-500 p-4 rounded-lg shadow-sm">
+                <div class="flex items-center">
+                    <i class="fas fa-exclamation-circle text-red-500 text-xl mr-3"></i>
+                    <p class="text-sm text-red-800 font-lora font-medium">{{ session('error') }}</p>
+                </div>
+            </div>
+        @endif
+
+        @php
+            $validationMessages = collect($errors->getMessages());
+            $generalErrors = $validationMessages->reject(fn($messages, $field) => str_starts_with($field, 'archivos'))->flatten();
+            $fileErrors = $validationMessages->filter(fn($messages, $field) => str_starts_with($field, 'archivos'))->flatten();
+        @endphp
+        @if($generalErrors->isNotEmpty())
+            <div class="mb-6 bg-red-50 border-l-4 border-red-500 p-4 rounded-lg shadow-sm">
+                <div class="flex items-start">
+                    <i class="fas fa-exclamation-circle text-red-500 text-xl mr-3 mt-0.5"></i>
+                    <div>
+                        <p class="text-sm text-red-800 font-lora font-semibold mb-2">Errores de validación:</p>
+                        <ul class="list-disc list-inside text-sm text-red-700 font-lora space-y-1">
+                            @foreach($generalErrors as $error)
+                                <li>{{ $error }}</li>
+                            @endforeach
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        @endif
 
         <!-- Cuadro del formulario responsive -->
         <form id="alcoholimetriaForm" action="{{ isset($publication) ? route('reportes.alcoholimetria.update', $publication) : route('reportes.alcoholimetria.store') }}" method="POST" enctype="multipart/form-data">
@@ -83,9 +114,9 @@
                             <input id="tema" type="text" 
                                    name="tema"
                                    class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora" 
-                                   placeholder="Ej: Operativo alcoholimetría fin de semana"
+                                   placeholder="Ej: Operativo de alcoholimetría"
                                    value="{{ old('tema', isset($publication) ? $publication->topic : '') }}"
-                                   required minlength="3" maxlength="146">
+                                   required minlength="3" maxlength="150">
                         </div>
 
                         <div>
@@ -340,7 +371,7 @@
                 <div class="space-y-3">
                         <div>
                             <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Descripción</label>
-                        <textarea id="descripcion" name="descripcion" maxlength="5000" class="w-full px-3 py-2 text-xs lg:text-sm border border-[#404041] rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora break-words whitespace-normal description-scroll" rows="4" placeholder="Describa los detalles, contexto, objetivos, resultados, etc. (opcional)">{{ old('descripcion', isset($publication) && $publication->description !== 'Sin descripción adicional.' ? $publication->description : '') }}</textarea>
+                    <textarea id="descripcion" name="descripcion" maxlength="5000" class="w-full px-3 py-2 text-xs lg:text-sm border border-[#404041] rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora break-words whitespace-normal description-scroll" rows="4" placeholder="Agregue contexto, resultados u observaciones relevantes">{{ old('descripcion', isset($publication) && $publication->description !== 'Sin descripción adicional.' ? $publication->description : '') }}</textarea>
                     </div>
                 </div>
             </div>
@@ -361,10 +392,15 @@
                     @if(isset($publication) && $publication->files->count() > 0)
                         <div class="mb-4">
                             <div class="bg-gray-50 border border-gray-200 rounded-lg p-4">
-                                <p class="font-medium mb-3 font-lora text-sm text-[#404041] flex items-center">
-                                    <ion-icon name="folder-open-outline" class="text-lg mr-2"></ion-icon>
-                                    Archivos actuales ({{ $publication->files->count() }})
-                                </p>
+                                <div class="mb-3 flex flex-wrap items-center justify-between gap-3">
+                                    <p class="font-medium font-lora text-sm text-[#404041] flex items-center">
+                                        <ion-icon name="folder-open-outline" class="text-lg mr-2"></ion-icon>
+                                        Archivos actuales ({{ $publication->files->count() }})
+                                    </p>
+                                    <button id="select-all-existing-files" type="button" class="text-sm text-[#611132] font-lora font-semibold underline-offset-4 hover:underline focus:outline-none focus:underline" onclick="toggleAllExistingFiles()">
+                                        Seleccionar todos
+                                    </button>
+                                </div>
                                 @php
                                     // Get file requirements and count files by type
                                     $requirements = \App\Config\ReportFileRequirements::getRequirements('alcoholimetria');
@@ -433,7 +469,7 @@
                                     <span class="text-sm font-medium text-[#404041] font-lora">Fotografía</span>
                                 </div>
                                 <span id="photo-status" class="text-xs px-2 py-1 bg-yellow-100 text-yellow-800 rounded font-lora">
-                                    0/1
+                                    Pendiente
                                 </span>
                             </div>
                             <p class="text-xs text-gray-600 font-lora">Formatos: JPG, JPEG, PNG (1 foto obligatoria)</p>
@@ -446,7 +482,7 @@
                             @if(isset($publication))
                                 Agregar nuevos archivos (opcional)
                             @else
-                                Subir archivos <span class="text-red-600">*</span>
+                                Subir archivos (selección múltiple) <span class="text-red-600">*</span>
                             @endif
                         </label>
                         
@@ -476,6 +512,16 @@
                         </div>
                         
                         <!-- Información de archivos seleccionados -->
+                        <div id="file-error" class="mt-3 hidden rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700 font-lora"></div>
+
+                        @if($fileErrors->isNotEmpty())
+                            <div class="mt-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700 font-lora space-y-1">
+                                @foreach($fileErrors as $error)
+                                    <div>{{ $error }}</div>
+                                @endforeach
+                            </div>
+                        @endif
+
                         <div id="file-list" class="mt-4 hidden">
                             <div class="bg-gray-50 border border-gray-200 rounded-lg p-4">
                                 <p class="font-medium mb-3 font-lora text-sm text-[#404041] flex items-center">
@@ -540,16 +586,124 @@
             // Map municipality_id -> district_id
             const muniToJur = @json($municipalities->mapWithKeys(function($m){ return [$m->id => $m->district_id]; }));
             const jurisNames = @json($districts->mapWithKeys(function($j){ return [$j->id => $j->name]; }));
+            const districtOptions = @json($districts->map(function($j){ return ['id' => (string) $j->id, 'name' => $j->name]; })->values());
             // Jurisdicción del usuario (puede ser null)
             const currentJurisdiction = @json(optional(auth()->user())->district_id);
             const isAdminOrCoordinator = @json($isAdminOrCoordinator ?? false);
-            const initialDistrict = @json(old('distrito', isset($report) ? $report->district_id : ''));
+            const initialDistrict = @json(old('jurisdiccion', isset($report) ? $report->district_id : ''));
 
             const alcoholMuni = document.getElementById('alcohol_municipality_select');
             const jurisdictionSelect = document.getElementById('jurisdiction_select_alcohol');
             const jurisdictionDisplay = document.getElementById('jurisdiction_display_alcohol');
             const hiddenJur = document.getElementById('jurisdiction_input_alcohol');
             let syncingDistrictFromMunicipality = false;
+
+            function getTomSelectWrapper(select) {
+                return select?.tomselect?.wrapper || select?.nextElementSibling || null;
+            }
+
+            function getTomSelectValidityInput(select) {
+                return select?.tomselect?.control_input || select?.tomselect?.input || select || null;
+            }
+
+            function showTomSelectError(select, message) {
+                if (!select) return;
+                const wrapper = getTomSelectWrapper(select);
+                const validityInput = getTomSelectValidityInput(select);
+                wrapper?.classList.add('border-red-500', 'ring-2', 'ring-red-100');
+                if (validityInput?.setCustomValidity) {
+                    validityInput.setCustomValidity(message);
+                }
+            }
+
+            function clearTomSelectError(select) {
+                if (!select) return;
+                const wrapper = getTomSelectWrapper(select);
+                const validityInput = getTomSelectValidityInput(select);
+                wrapper?.classList.remove('border-red-500', 'ring-2', 'ring-red-100');
+                if (validityInput?.setCustomValidity) {
+                    validityInput.setCustomValidity('');
+                }
+            }
+
+            function focusTomSelect(select) {
+                if (select?.tomselect) {
+                    select.tomselect.focus();
+                } else {
+                    select?.focus();
+                }
+            }
+
+            function reportTomSelectValidity(select) {
+                const validityInput = getTomSelectValidityInput(select);
+                focusTomSelect(select);
+                if (validityInput?.reportValidity) {
+                    validityInput.reportValidity();
+                } else if (select?.reportValidity) {
+                    select.reportValidity();
+                }
+            }
+
+            function validateRequiredTomSelect(select, message) {
+                if (!select || !select.hasAttribute('required') || select.value) {
+                    if (select) clearTomSelectError(select);
+                    return true;
+                }
+                showTomSelectError(select, message);
+                return false;
+            }
+
+            function validateAlcoholTomSelects(focusFirst = false) {
+                const fields = [
+                    { select: alcoholMuni, message: 'Seleccione un municipio.' },
+                    { select: isAdminOrCoordinator ? jurisdictionSelect : null, message: 'Seleccione un distrito.' },
+                ];
+                let firstInvalid = null;
+
+                fields.forEach(({ select, message }) => {
+                    if (!validateRequiredTomSelect(select, message) && !firstInvalid) {
+                        firstInvalid = select;
+                    }
+                });
+
+                if (focusFirst && firstInvalid) {
+                    reportTomSelectValidity(firstInvalid);
+                }
+
+                return !firstInvalid;
+            }
+
+            window.resetAlcoholimetriaTomSelects = function() {
+                clearTomSelectError(alcoholMuni);
+                clearTomSelectError(jurisdictionSelect);
+
+                if (isAdminOrCoordinator && jurisdictionSelect?.tomselect) {
+                    syncingDistrictFromMunicipality = true;
+                    jurisdictionSelect.tomselect.clear(true);
+                    syncingDistrictFromMunicipality = false;
+                } else if (jurisdictionSelect) {
+                    jurisdictionSelect.value = '';
+                }
+
+                if (alcoholMuni?.tomselect) {
+                    alcoholMuni.tomselect.clear(true);
+                    alcoholMuni.tomselect.clearOptions();
+                    if (typeof alcoholMuni.tomselect.clearCache === 'function') {
+                        alcoholMuni.tomselect.clearCache();
+                    }
+                    alcoholMuni.tomselect.refreshOptions(false);
+                } else if (alcoholMuni) {
+                    alcoholMuni.value = '';
+                }
+
+                if (!isAdminOrCoordinator && currentJurisdiction) {
+                    if (hiddenJur) hiddenJur.value = currentJurisdiction;
+                    if (jurisdictionDisplay) jurisdictionDisplay.value = jurisNames[currentJurisdiction] || '';
+                } else {
+                    if (hiddenJur) hiddenJur.value = '';
+                    if (jurisdictionDisplay) jurisdictionDisplay.value = 'Pendiente (seleccione municipio)';
+                }
+            };
 
             function setJurisdictionBasedOnMunicipality() {
                 const mid = alcoholMuni?.value || '';
@@ -564,7 +718,9 @@
                         } else {
                             jurisdictionSelect.value = jid;
                         }
+                        clearTomSelectError(jurisdictionSelect);
                         syncingDistrictFromMunicipality = false;
+                        loadMunicipalityOptions(false);
                     } else {
                         // Para operadores: actualizar el campo hidden y display
                         if (hiddenJur) hiddenJur.value = jid;
@@ -572,13 +728,7 @@
                     }
                 } else {
                     if (isAdminOrCoordinator && jurisdictionSelect) {
-                        syncingDistrictFromMunicipality = true;
-                        if (jurisdictionSelect.tomselect) {
-                            jurisdictionSelect.tomselect.setValue('', true);
-                        } else {
-                            jurisdictionSelect.value = '';
-                        }
-                        syncingDistrictFromMunicipality = false;
+                        return;
                     } else {
                         if (hiddenJur) hiddenJur.value = '';
                         if (jurisdictionDisplay) jurisdictionDisplay.value = 'Pendiente (seleccione municipio)';
@@ -595,18 +745,16 @@
                     maxOptions: 20,
                     maxItems: 1,
                     create: false,
-                    preload: true,
-                    load: function(query, callback) {
-                        let url = '/api/districts/search?q=' + encodeURIComponent(query);
-                        fetch(url).then(r => r.json()).then(items => callback(items)).catch(() => callback());
-                    },
+                    options: districtOptions,
                     onChange: function(value) {
                         if (syncingDistrictFromMunicipality) {
                             return;
                         }
+                        clearTomSelectError(jurisdictionSelect);
                         // Limpiar el municipio cuando cambia el distrito
                         if (alcoholMuni && alcoholMuni.tomselect) {
                             alcoholMuni.tomselect.setValue('');
+                            loadMunicipalityOptions(false);
                         }
                     }
                 });
@@ -624,7 +772,7 @@
 
             // Initialize Tom Select for municipality
             function fetchMunicipalities(q) {
-                let url = '/api/municipalities/search?q=' + encodeURIComponent(q);
+                let url = '/api/municipalities/search?q=' + encodeURIComponent(q) + '&limit=100';
                 if (!isAdminOrCoordinator && currentJurisdiction) {
                     // Para operadores: filtrar por su distrito
                     url += '&district_id=' + encodeURIComponent(currentJurisdiction);
@@ -638,20 +786,36 @@
                 return fetch(url).then(r => r.json());
             }
 
+            function loadMunicipalityOptions(openDropdown = false) {
+                if (!alcoholMuni?.tomselect) return;
+
+                const tomSelect = alcoholMuni.tomselect;
+                fetchMunicipalities('').then(items => {
+                    tomSelect.clearOptions();
+                    items.forEach(item => tomSelect.addOption(item));
+                    tomSelect.refreshOptions(openDropdown);
+                    if (openDropdown) tomSelect.open();
+                }).catch(() => {});
+            }
+
             if (alcoholMuni) {
                 const ts = new TomSelect(alcoholMuni, {
                     valueField: 'id',
                     labelField: 'name',
                     searchField: 'name',
-                    maxOptions: 20,
+                    maxOptions: 100,
                     maxItems: 1,
                     create: false,
                     preload: true,
                     load: function(query, callback) {
                         fetchMunicipalities(query).then(items => callback(items)).catch(() => callback());
                     },
+                    onDropdownOpen: function() {
+                        loadMunicipalityOptions(true);
+                    },
                     onChange: function(value) {
                         alcoholMuni.value = value;
+                        clearTomSelectError(alcoholMuni);
                         const evt = new Event('change', { bubbles: true });
                         alcoholMuni.dispatchEvent(evt);
                     }
@@ -670,9 +834,14 @@
                 jurisdictionSelect.addEventListener('change', function() {
                     // Limpiar la selección de municipio cuando cambia el distrito
                     if (alcoholMuni && alcoholMuni.tomselect) {
+                        alcoholMuni.tomselect.clear(true);
+                        alcoholMuni.value = '';
+                        alcoholMuni.tomselect.setTextboxValue('');
                         alcoholMuni.tomselect.clearOptions();
-                        alcoholMuni.tomselect.setValue('');
-                        alcoholMuni.tomselect.load('', function(callback) {});
+                        if (typeof alcoholMuni.tomselect.clearCache === 'function') {
+                            alcoholMuni.tomselect.clearCache();
+                        }
+                        loadMunicipalityOptions(false);
                     }
                 });
             }
@@ -690,7 +859,25 @@
             const isEditMode = {{ isset($publication) ? 'true' : 'false' }};
             
             if (mainForm) {
+                mainForm.addEventListener('invalid', function(e) {
+                    if (e.target === alcoholMuni) {
+                        e.preventDefault();
+                        showTomSelectError(alcoholMuni, 'Seleccione un municipio.');
+                        reportTomSelectValidity(alcoholMuni);
+                    }
+                    if (e.target === jurisdictionSelect) {
+                        e.preventDefault();
+                        showTomSelectError(jurisdictionSelect, 'Seleccione un distrito.');
+                        reportTomSelectValidity(jurisdictionSelect);
+                    }
+                }, true);
+
                 mainForm.addEventListener('submit', function(e) {
+                    if (!validateAlcoholTomSelects(true)) {
+                        e.preventDefault();
+                        return false;
+                    }
+
                     // Actualizar files_to_delete SIEMPRE (tanto en creación como en edición)
                     if (isEditMode && document.getElementById('files-to-delete')) {
                         const filesToDeleteIds = [];
@@ -709,13 +896,51 @@
     <script>
         let selectedFiles = [];
 
+        function showFileError(message) {
+            const fileError = document.getElementById('file-error');
+            const fileInput = document.getElementById('file-input');
+            if (!fileError) return;
+
+            fileError.textContent = message;
+            fileError.classList.remove('hidden');
+            fileError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            try { fileInput?.focus(); } catch (err) {}
+        }
+
+        function clearFileError() {
+            const fileError = document.getElementById('file-error');
+            if (!fileError) return;
+
+            fileError.textContent = '';
+            fileError.classList.add('hidden');
+        }
+
         function addFiles(files) {
+            clearFileError();
             // Agregar nuevos archivos al array
             for (let file of files) {
-                selectedFiles.push(file);
+                const extension = file.name.split('.').pop().toLowerCase();
+                const allowedExtensions = ['xlsx', 'xls', 'jpg', 'jpeg', 'png'];
+                const maxBytes = 10 * 1024 * 1024;
+
+                if (!allowedExtensions.includes(extension)) {
+                    showFileError('Formato no válido. Solo se permiten Excel (XLSX, XLS) y fotos (JPG, JPEG, PNG).');
+                    continue;
+                }
+
+                if (file.size > maxBytes) {
+                    showFileError('El archivo ' + file.name + ' excede el tamaño máximo permitido (10 MB).');
+                    continue;
+                }
+
+                const exists = selectedFiles.some(f => f.name === file.name && f.size === file.size);
+                if (!exists) {
+                    selectedFiles.push(file);
+                }
             }
             updateFileDisplay();
             updateFileCounters();
+            document.getElementById('file-input').value = '';
         }
 
         function updateFileCounters() {
@@ -767,10 +992,10 @@
                 statusText = current === required ? 'Completado' : `${current}/${required}`;
                 badgeClass = 'bg-green-100 text-green-800';
             } else if (current > 0) {
-                statusText = type === 'photo' ? `${current}/${required}` : 'Incompleto';
+                statusText = required > 1 ? `${current}/${required}` : 'Incompleto';
                 badgeClass = 'bg-yellow-100 text-yellow-800';
             } else {
-                statusText = type === 'photo' ? `${current}/${required}` : 'Pendiente';
+                statusText = required > 1 ? `${current}/${required}` : 'Pendiente';
                 badgeClass = 'bg-yellow-100 text-yellow-800';
             }
             
@@ -789,7 +1014,7 @@
                 fileList.classList.add('hidden');
                 document.getElementById('excel-status').textContent = 'Pendiente';
                 document.getElementById('excel-status').className = 'text-xs px-2 py-1 bg-yellow-100 text-yellow-800 rounded font-lora';
-                document.getElementById('photo-status').textContent = '0/1';
+                document.getElementById('photo-status').textContent = 'Pendiente';
                 document.getElementById('photo-status').className = 'text-xs px-2 py-1 bg-yellow-100 text-yellow-800 rounded font-lora';
                 return;
             }
@@ -837,8 +1062,39 @@
             document.getElementById('excel-status').textContent = excelCount >= 1 ? (excelCount === 1 ? 'Completado' : `${excelCount}/1`) : 'Pendiente';
             document.getElementById('excel-status').className = excelCount >= 1 ? 'text-xs px-2 py-1 bg-green-100 text-green-800 rounded font-lora' : 'text-xs px-2 py-1 bg-yellow-100 text-yellow-800 rounded font-lora';
             
-            document.getElementById('photo-status').textContent = photoCount >= 1 ? (photoCount === 1 ? 'Completado' : `${photoCount}/1`) : '0/1';
+            document.getElementById('photo-status').textContent = photoCount >= 1 ? (photoCount === 1 ? 'Completado' : `${photoCount}/1`) : 'Pendiente';
             document.getElementById('photo-status').className = photoCount >= 1 ? 'text-xs px-2 py-1 bg-green-100 text-green-800 rounded font-lora' : 'text-xs px-2 py-1 bg-yellow-100 text-yellow-800 rounded font-lora';
+        }
+
+        function updateFilesToDeleteInput() {
+            const filesToDeleteInput = document.getElementById('files-to-delete');
+            if (!filesToDeleteInput) return;
+
+            const filesToDeleteIds = [];
+            document.querySelectorAll('#existing-files-list .file-delete-checkbox:checked').forEach(checkbox => {
+                const fileId = checkbox.closest('.file-item').dataset.fileId;
+                if (fileId) filesToDeleteIds.push(fileId);
+            });
+            filesToDeleteInput.value = filesToDeleteIds.join(',');
+        }
+
+        function syncSelectAllExistingFiles() {
+            const selectAll = document.getElementById('select-all-existing-files');
+            const checkboxes = Array.from(document.querySelectorAll('#existing-files-list .file-delete-checkbox'));
+            if (!selectAll || checkboxes.length === 0) return;
+
+            const checkedCount = checkboxes.filter(checkbox => checkbox.checked).length;
+            const allSelected = checkedCount === checkboxes.length;
+            selectAll.textContent = allSelected ? 'Deseleccionar todos' : 'Seleccionar todos';
+            selectAll.setAttribute('aria-pressed', allSelected ? 'true' : 'false');
+        }
+
+        function toggleAllExistingFiles() {
+            const checkboxes = Array.from(document.querySelectorAll('#existing-files-list .file-delete-checkbox'));
+            const shouldCheck = !checkboxes.every(checkbox => checkbox.checked);
+            checkboxes.forEach(checkbox => checkbox.checked = shouldCheck);
+            checkboxes.forEach(checkbox => toggleFileStrikethrough(checkbox));
+            syncSelectAllExistingFiles();
         }
 
         function toggleFileStrikethrough(checkbox) {
@@ -854,19 +1110,15 @@
                 fileItem.classList.remove('opacity-75');
             }
             
-            // Actualizar el input hidden con archivos a eliminar
-            const filesToDeleteIds = [];
-            document.querySelectorAll('#existing-files-list .file-delete-checkbox:checked').forEach(checkbox => {
-                const fileId = checkbox.closest('.file-item').dataset.fileId;
-                if (fileId) filesToDeleteIds.push(fileId);
-            });
-            document.getElementById('files-to-delete').value = filesToDeleteIds.join(',');
+            updateFilesToDeleteInput();
+            syncSelectAllExistingFiles();
             
             // Actualizar contadores
             updateFileCounters();
         }
 
         function removeFile(index) {
+            clearFileError();
             selectedFiles.splice(index, 1);
             updateFileDisplay();
             updateFileCounters();
@@ -877,6 +1129,9 @@
                 const form = document.getElementById('alcoholimetriaForm');
                 if (form) {
                     form.reset();
+                }
+                if (window.resetAlcoholimetriaTomSelects) {
+                    window.resetAlcoholimetriaTomSelects();
                 }
                 selectedFiles = [];
                 updateFileDisplay();
@@ -945,7 +1200,7 @@
                     if (!isEditMode) {
                         if (selectedFiles.length === 0) {
                             e.preventDefault();
-                            alert('Debe incluir al menos 1 archivo Excel y 1 fotografía.');
+                            showFileError('El reporte requiere: archivo Excel (0/1), fotografías (0/1).');
                             return false;
                         }
                         
@@ -960,35 +1215,15 @@
                         
                         if (excelCount < 1) {
                             e.preventDefault();
-                            alert('Debe incluir al menos 1 archivo Excel (XLSX).');
+                            showFileError('Debe incluir al menos 1 archivo Excel (XLSX).');
                             return false;
                         }
                         
                         if (photoCount < 1) {
                             e.preventDefault();
-                            alert('Debe incluir 1 fotografía (JPG, JPEG o PNG).');
+                            showFileError('Debe incluir 1 fotografía (JPG, JPEG o PNG).');
                             return false;
                         }
-                        
-                        // Validar tamaño y formato
-                        selectedFiles.forEach(file => {
-                            const ext = file.name.split('.').pop().toLowerCase();
-                            const allowedExcel = ['xlsx','xls'];
-                            const allowedPhoto = ['jpg','jpeg','png'];
-                            const maxBytes = 10 * 1024 * 1024;
-                            
-                            if (!allowedExcel.includes(ext) && !allowedPhoto.includes(ext)) {
-                                e.preventDefault();
-                                alert('Formato no válido. Solo se permiten Excel (XLSX, XLS) y fotos (JPG, JPEG, PNG).');
-                                return false;
-                            }
-                            
-                            if (file.size > maxBytes) {
-                                e.preventDefault();
-                                alert('El archivo ' + file.name + ' excede el tamaño máximo permitido (10 MB).');
-                                return false;
-                            }
-                        });
                         
                         // Asignar los archivos seleccionados al input file existente
                         const dataTransfer = new DataTransfer();

@@ -81,6 +81,7 @@ Route::middleware('auth')->group(function () {
                 'importFileName' => $importFileName,
                 'municipalities' => $municipalities,
                 'districts' => $districts,
+                'jurisdictions' => $districts,
                 'locations' => $locations,
                 'causes' => $causes,
             ]);

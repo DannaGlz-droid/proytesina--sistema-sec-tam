@@ -2,6 +2,7 @@
     'tipo' => '',
     'titulo' => '',
     'fecha' => '',
+    'actualizado' => '',
     'usuario' => '',
     'usuario_full' => '',
     'descripcion' => '',
@@ -18,7 +19,15 @@
     // show small red dot when the publication has comments (boolean)
     'hasComments' => false,
     'hasUnread' => false,
+    'commentsCount' => 0,
 ])
+
+@php
+    $commentsCount = (int) $commentsCount;
+    $commentsTooltip = $commentsCount === 1
+        ? '1 comentario'
+        : ($commentsCount > 1 ? "{$commentsCount} comentarios" : 'Sin comentarios');
+@endphp
 
 <div {{ $attributes->merge(['class' => 'border border-[#404041] rounded-lg p-5 bg-white transition-all duration-300 hover:-translate-y-1 hover:shadow-lg group flex flex-col h-full relative publication-card']) }}>
     <div class="flex-grow min-w-0">
@@ -34,7 +43,7 @@
             <div class="flex items-center gap-2">
                 {{-- Ícono de comentarios --}}
                 <div class="relative">
-                    <button type="button" class="open-comments relative w-5 h-5 flex items-center justify-center text-gray-500">
+                    <button type="button" class="open-comments relative w-5 h-5 flex items-center justify-center text-gray-500 cursor-help" title="{{ $commentsTooltip }}" aria-label="{{ $commentsTooltip }}">
                         <i class="fas fa-comment-alt text-sm"></i>
                         @if(($hasUnread ?? false) || ($hasComments && !isset($hasUnread)))
                             <div class="absolute -top-0.5 -right-0.5 w-2 h-2 bg-red-500 rounded-full border border-white"></div>
@@ -79,6 +88,12 @@
                     {{-- cargo removed from card; shown in modal only --}}
                 </div>
             </div>
+            @if(!empty($actualizado))
+                <div class="flex items-center gap-2 text-gray-500 text-xs font-lora mt-2">
+                    <i class="fas fa-edit text-[#404041] w-4"></i>
+                    <span class="block truncate" title="Última actualización: {{ $actualizado }}">Actualizado: <span class="font-semibold">{{ $actualizado }}</span></span>
+                </div>
+            @endif
         </div>
     </div>
 

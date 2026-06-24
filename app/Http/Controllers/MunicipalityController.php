@@ -14,6 +14,8 @@ class MunicipalityController extends Controller
     {
         $q = $request->get('q', '');
         $districtId = $request->get('district_id');
+        $limit = min(max((int) $request->get('limit', 20), 1), 100);
+
         $items = Municipality::when($q, function($query) use ($q) {
                     $query->where('name', 'like', "%{$q}%");
                 })
@@ -21,7 +23,7 @@ class MunicipalityController extends Controller
                     $query->where('district_id', $districtId);
                 })
                 ->orderBy('name')
-                ->limit(20)
+                ->limit($limit)
                 ->get(['id', 'name']);
 
         // Return results as array (do NOT append a "No encontrado" option)

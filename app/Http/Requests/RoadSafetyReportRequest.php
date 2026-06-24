@@ -27,14 +27,14 @@ class RoadSafetyReportRequest extends FormRequest
         $isUpdate = $publication !== null;
 
         return [
-            'tema' => 'required|string|min:3|max:255',
+            'tema' => 'required|string|min:3|max:150',
             'fecha' => 'required|date|before_or_equal:today',
-            'lugar' => 'required|string|min:3|max:255',
+            'lugar' => 'required|string|min:3|max:180',
             'activity_type_id' => 'required|exists:activity_types,id',
             'participantes' => 'required|integer|min:1|max:9999',
-            'promotor' => 'required|string|min:3|max:255',
-            'municipio' => 'nullable|exists:municipalities,id',
-            'jurisdiccion' => 'nullable|exists:districts,id',
+            'promotor' => 'required|string|min:3|max:180',
+            'municipio' => 'required|exists:municipalities,id',
+            'jurisdiccion' => 'required|exists:districts,id',
             'descripcion' => 'nullable|string|max:5000',
             // En modo edición, los archivos son opcionales
             'archivos' => $isUpdate ? 'nullable|array' : 'required|array|min:1',
@@ -52,9 +52,7 @@ class RoadSafetyReportRequest extends FormRequest
     {
         return [
             function ($validator) {
-                // Solo validar en modo actualización
-                if ($this->route('publication')) {
-                    $publication = $this->route('publication');
+                $publication = $this->route('publication');
                     
                     // Obtener archivos a eliminar
                     $filesToDeleteIds = [];
@@ -66,9 +64,9 @@ class RoadSafetyReportRequest extends FormRequest
                     }
                     
                     // Contar archivos existentes que NO van a ser eliminados
-                    $remainingFiles = $publication->files
-                        ->whereNotIn('id', $filesToDeleteIds)
-                        ->all();
+                    $remainingFiles = $publication
+                        ? $publication->files->whereNotIn('id', $filesToDeleteIds)->all()
+                        : [];
                     
                     // Contar archivos nuevos por tipo
                     $newFiles = $this->file('archivos', []);
@@ -107,7 +105,6 @@ class RoadSafetyReportRequest extends FormRequest
                         
                         $validator->errors()->add('archivos', $missingMessage);
                     }
-                }
             },
         ];
     }
@@ -122,13 +119,13 @@ class RoadSafetyReportRequest extends FormRequest
         return [
             'tema.required' => 'El tema es obligatorio.',
             'tema.min' => 'El tema debe tener al menos 3 caracteres.',
-            'tema.max' => 'El tema no puede exceder 255 caracteres.',
+            'tema.max' => 'El tema no puede exceder 150 caracteres.',
             'fecha.required' => 'La fecha de la actividad es obligatoria.',
             'fecha.date' => 'La fecha debe ser una fecha válida.',
             'fecha.before_or_equal' => 'La fecha no puede ser futura.',
             'lugar.required' => 'El lugar es obligatorio.',
             'lugar.min' => 'El lugar debe tener al menos 3 caracteres.',
-            'lugar.max' => 'El lugar no puede exceder 255 caracteres.',
+            'lugar.max' => 'El lugar no puede exceder 180 caracteres.',
             'activity_type_id.required' => 'El tipo de actividad es obligatorio.',
             'activity_type_id.exists' => 'El tipo de actividad seleccionado no es válido.',
             'participantes.required' => 'El número de participantes es obligatorio.',
@@ -137,8 +134,10 @@ class RoadSafetyReportRequest extends FormRequest
             'participantes.max' => 'El número de participantes no puede exceder 9999.',
             'promotor.required' => 'El promotor es obligatorio.',
             'promotor.min' => 'El promotor debe tener al menos 3 caracteres.',
-            'promotor.max' => 'El promotor no puede exceder 255 caracteres.',
+            'promotor.max' => 'El promotor no puede exceder 180 caracteres.',
+            'municipio.required' => 'El municipio es obligatorio.',
             'municipio.exists' => 'El municipio seleccionado no es válido.',
+            'jurisdiccion.required' => 'La jurisdicción es obligatoria.',
             'jurisdiccion.exists' => 'La jurisdicción seleccionada no es válida.',
             'descripcion.max' => 'La descripción no puede exceder 5000 caracteres.',
             'archivos.required' => 'Debe subir al menos un archivo.',

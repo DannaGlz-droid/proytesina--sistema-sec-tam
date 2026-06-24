@@ -1,5 +1,5 @@
 @extends('layouts.principal')
-@section('title', isset($publication) ? 'Editar Observatorio de Lesiones' : 'Registro de Observatorio de Lesiones')
+@section('title', isset($publication) ? 'Editar reporte de observatorio de lesiones' : 'Registrar reporte de observatorio de lesiones')
 @section('content')
 
     <style>
@@ -27,9 +27,19 @@
 
     <div class="px-4 lg:pl-10 pt-6 lg:pt-10 pb-8 lg:pb-12">
         <h1 class="text-2xl lg:text-3xl font-lora font-bold text-[#404041] mb-3">
-            {{ isset($publication) ? 'Editar observatorio de lesiones' : 'Registro de observatorio de lesiones' }}
+            {{ isset($publication) ? 'Editar reporte de observatorio de lesiones' : 'Registrar reporte de observatorio de lesiones' }}
         </h1>
-        <p class="text-sm lg:text-base text-[#404041] font-lora mb-6">Complete el formulario para {{ isset($publication) ? 'actualizar' : 'registrar' }} los datos del observatorio de lesiones.</p>
+        <p class="text-sm lg:text-base text-[#404041] font-lora mb-6">{{ isset($publication) ? 'Actualiza la información y administra los archivos adjuntos de este reporte.' : 'Captura la información y adjunta los archivos requeridos para enviar este reporte.' }}</p>
+
+        <!-- Mensajes de error -->
+        @if(session('error'))
+            <div class="mb-6 bg-red-50 border-l-4 border-red-500 p-4 rounded-lg shadow-sm">
+                <div class="flex items-center">
+                    <i class="fas fa-exclamation-circle text-red-500 text-xl mr-3"></i>
+                    <p class="text-sm text-red-800 font-lora font-medium">{{ session('error') }}</p>
+                </div>
+            </div>
+        @endif
 
         <!-- Cuadro del formulario responsive -->
         <form id="observatorioForm" action="{{ isset($publication) ? route('reportes.observatorio.update', $publication) : route('reportes.observatorio.store') }}" method="POST" enctype="multipart/form-data">
@@ -38,29 +48,27 @@
                 @method('PUT')
             @endif
 
-            @if($errors->any())
-            <div class="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
-                <div class="flex items-center mb-2">
-                    <ion-icon name="alert-circle" class="text-red-500 text-lg mr-2"></ion-icon>
-                    <h3 class="text-red-800 font-semibold text-sm">Errores de validación</h3>
+            @php
+                $validationMessages = collect($errors->getMessages());
+                $generalErrors = $validationMessages->reject(fn($messages, $field) => str_starts_with($field, 'archivos'))->flatten();
+                $fileErrors = $validationMessages->filter(fn($messages, $field) => str_starts_with($field, 'archivos'))->flatten();
+            @endphp
+            @if($generalErrors->isNotEmpty())
+            <div class="mb-6 bg-red-50 border-l-4 border-red-500 p-4 rounded-lg shadow-sm">
+                <div class="flex items-start">
+                    <ion-icon name="alert-circle" class="text-red-500 text-xl mr-3 mt-0.5"></ion-icon>
+                    <div>
+                        <p class="text-sm text-red-800 font-lora font-semibold mb-2">Errores de validación:</p>
+                        <ul class="list-disc list-inside text-sm text-red-700 font-lora space-y-1">
+                            @foreach($generalErrors as $error)
+                                <li>{{ $error }}</li>
+                            @endforeach
+                        </ul>
+                    </div>
                 </div>
-                <ul class="list-disc list-inside text-red-600 text-sm space-y-1">
-                    @foreach($errors->all() as $error)
-                        <li>{{ $error }}</li>
-                    @endforeach
-                </ul>
             </div>
             @endif
 
-            @if(session('error'))
-            <div class="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
-                <div class="flex items-center">
-                    <ion-icon name="alert-circle" class="text-red-500 text-lg mr-2"></ion-icon>
-                    <p class="text-red-600 text-sm">{{ session('error') }}</p>
-                </div>
-            </div>
-            @endif
-            
         <div class="border border-[#404041] rounded-lg lg:rounded-xl p-4 lg:p-6 bg-white bg-opacity-95 max-w-7xl shadow-md">
             
             <!-- Sección 1: Información general -->
@@ -80,7 +88,7 @@
                                    class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora" 
                                    placeholder="Ej: Análisis de lesiones por accidentes"
                                    value="{{ old('tema', isset($publication) ? $publication->topic : '') }}"
-                                   required minlength="3" maxlength="146">
+                                   required minlength="3" maxlength="150">
                         </div>
                         <div>
                             <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Municipio <span class="text-red-600">*</span></label>
@@ -148,7 +156,7 @@
                 <div class="space-y-3">
                     <div>
                         <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Descripción</label>
-                        <textarea id="descripcion" name="descripcion" class="w-full px-3 py-2 text-xs lg:text-sm border border-[#404041] rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora break-words whitespace-normal description-scroll" rows="4" placeholder="Describa los detalles, contexto, objetivos, resultados, etc. (opcional)" maxlength="5000">{{ old('descripcion', isset($publication) && $publication->description !== 'Sin descripción adicional.' ? $publication->description : '') }}</textarea>
+                            <textarea id="descripcion" name="descripcion" class="w-full px-3 py-2 text-xs lg:text-sm border border-[#404041] rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora break-words whitespace-normal description-scroll" rows="4" placeholder="Agregue contexto, resultados u observaciones relevantes" maxlength="5000">{{ old('descripcion', isset($publication) && $publication->description !== 'Sin descripción adicional.' ? $publication->description : '') }}</textarea>
                     </div>
                 </div>
             </div>
@@ -169,10 +177,15 @@
                     @if(isset($publication) && $publication->files->count() > 0)
                         <div class="mb-4">
                             <div class="bg-gray-50 border border-gray-200 rounded-lg p-4">
-                                <p class="font-medium mb-3 font-lora text-sm text-[#404041] flex items-center">
-                                    <ion-icon name="folder-open-outline" class="text-lg mr-2"></ion-icon>
-                                    Archivos actuales ({{ $publication->files->count() }})
-                                </p>
+                                <div class="mb-3 flex flex-wrap items-center justify-between gap-3">
+                                    <p class="font-medium font-lora text-sm text-[#404041] flex items-center">
+                                        <ion-icon name="folder-open-outline" class="text-lg mr-2"></ion-icon>
+                                        Archivos actuales ({{ $publication->files->count() }})
+                                    </p>
+                                    <button id="select-all-existing-files" type="button" class="text-sm text-[#611132] font-lora font-semibold underline-offset-4 hover:underline focus:outline-none focus:underline" onclick="toggleAllExistingFiles()">
+                                        Seleccionar todos
+                                    </button>
+                                </div>
                                 @php
                                     // Get file requirements and count files by type
                                     $requirements = \App\Config\ReportFileRequirements::getRequirements('observatorio');
@@ -240,15 +253,6 @@
                         </label>
                         
                         <!-- Mensaje si hay old input (después de error de validación) -->
-                        @if(old('tema'))
-                            <div class="mb-3 p-3 bg-amber-50 border border-amber-200 rounded-lg">
-                                <p class="text-xs text-amber-700 font-lora flex items-center">
-                                    <ion-icon name="alert-circle-outline" class="mr-1 text-sm"></ion-icon>
-                                    Los archivos seleccionados anteriormente se perdieron. Por favor, vuelva a seleccionar los archivos.
-                                </p>
-                            </div>
-                        @endif
-
                         <!-- Cuadro punteado para arrastrar y soltar -->
                         <div class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-[#404041] transition-colors duration-200 bg-gray-50">
                             <input type="file" 
@@ -272,10 +276,18 @@
                                     Puede seleccionar múltiples archivos a la vez
                                 </p>
                             </div>
-                            <div id="file-error" class="mt-2 text-xs text-red-600 font-lora hidden"></div>
                         </div>
+                        <div id="file-error" class="mt-3 hidden rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700 font-lora"></div>
                         
                         <!-- Información del archivo seleccionado -->
+                        @if($fileErrors->isNotEmpty())
+                            <div class="mt-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700 font-lora space-y-1">
+                                @foreach($fileErrors as $error)
+                                    <div>{{ $error }}</div>
+                                @endforeach
+                            </div>
+                        @endif
+
                         <div id="file-list" class="mt-4 hidden">
                             <div class="bg-gray-50 border border-gray-200 rounded-lg p-4">
                                 <p class="font-medium mb-3 font-lora text-sm text-[#404041] flex items-center">
@@ -338,11 +350,44 @@
     <script>
         // Array para almacenar todos los archivos seleccionados
         let selectedFiles = [];
+
+        function showFileError(message) {
+            const fileError = document.getElementById('file-error');
+            const fileInput = document.getElementById('file-input');
+            if (!fileError) return;
+
+            fileError.textContent = message;
+            fileError.classList.remove('hidden');
+            fileError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            try { fileInput?.focus(); } catch (err) {}
+        }
+
+        function clearFileError() {
+            const fileError = document.getElementById('file-error');
+            if (!fileError) return;
+
+            fileError.textContent = '';
+            fileError.classList.add('hidden');
+        }
         
         function addFiles(newFiles) {
+            clearFileError();
             // Agregar nuevos archivos al array
             for (let i = 0; i < newFiles.length; i++) {
                 const file = newFiles[i];
+                const extension = file.name.split('.').pop().toLowerCase();
+                const allowedExtensions = ['xlsx', 'xls'];
+                const maxBytes = 10 * 1024 * 1024;
+
+                if (!allowedExtensions.includes(extension)) {
+                    showFileError('Formato no válido. Solo se permiten archivos Excel (XLSX, XLS).');
+                    continue;
+                }
+
+                if (file.size > maxBytes) {
+                    showFileError('El archivo ' + file.name + ' excede el tamaño máximo permitido (10 MB).');
+                    continue;
+                }
                 // Verificar que el archivo no esté ya en la lista
                 const exists = selectedFiles.some(f => f.name === file.name && f.size === file.size);
                 if (!exists) {
@@ -359,11 +404,43 @@
         }
         
         function removeFile(index) {
+            clearFileError();
             selectedFiles.splice(index, 1);
             updateFileStatus();
             updateFileCounters();
         }
         
+        function updateFilesToDeleteInput() {
+            const filesToDeleteInput = document.getElementById('files-to-delete');
+            if (!filesToDeleteInput) return;
+
+            const filesToDeleteIds = [];
+            document.querySelectorAll('#existing-files-list .file-delete-checkbox:checked').forEach(checkbox => {
+                const fileId = checkbox.closest('.file-item').dataset.fileId;
+                if (fileId) filesToDeleteIds.push(fileId);
+            });
+            filesToDeleteInput.value = filesToDeleteIds.join(',');
+        }
+
+        function syncSelectAllExistingFiles() {
+            const selectAll = document.getElementById('select-all-existing-files');
+            const checkboxes = Array.from(document.querySelectorAll('#existing-files-list .file-delete-checkbox'));
+            if (!selectAll || checkboxes.length === 0) return;
+
+            const checkedCount = checkboxes.filter(checkbox => checkbox.checked).length;
+            const allSelected = checkedCount === checkboxes.length;
+            selectAll.textContent = allSelected ? 'Deseleccionar todos' : 'Seleccionar todos';
+            selectAll.setAttribute('aria-pressed', allSelected ? 'true' : 'false');
+        }
+
+        function toggleAllExistingFiles() {
+            const checkboxes = Array.from(document.querySelectorAll('#existing-files-list .file-delete-checkbox'));
+            const shouldCheck = !checkboxes.every(checkbox => checkbox.checked);
+            checkboxes.forEach(checkbox => checkbox.checked = shouldCheck);
+            checkboxes.forEach(checkbox => toggleFileStrikethrough(checkbox));
+            syncSelectAllExistingFiles();
+        }
+
         function toggleFileStrikethrough(checkbox) {
             const fileItem = checkbox.closest('.file-item');
             const fileInfo = fileItem.querySelector('.file-info');
@@ -377,13 +454,8 @@
                 fileItem.classList.remove('opacity-75');
             }
             
-            // Actualizar el input hidden con archivos a eliminar
-            const filesToDeleteIds = [];
-            document.querySelectorAll('#existing-files-list .file-delete-checkbox:checked').forEach(checkbox => {
-                const fileId = checkbox.closest('.file-item').dataset.fileId;
-                if (fileId) filesToDeleteIds.push(fileId);
-            });
-            document.getElementById('files-to-delete').value = filesToDeleteIds.join(',');
+            updateFilesToDeleteInput();
+            syncSelectAllExistingFiles();
             
             // Actualizar contadores
             updateFileCounters();
@@ -526,13 +598,7 @@
         function handleDrop(e) {
             const dt = e.dataTransfer;
             const files = dt.files;
-            if (files.length === 1) {
-                fileInput.files = files;
-                updateFileStatus();
-                updateFileCounters();
-            } else if (files.length > 1) {
-                alert('Solo se permite subir un archivo a la vez');
-            }
+            addFiles(files);
         }
     });
     </script>
@@ -582,6 +648,7 @@
             // Map municipality_id -> district_id
             const muniToJur = @json($municipalities->mapWithKeys(function($m){ return [$m->id => $m->district_id]; }));
             const jurisNames = @json($districts->mapWithKeys(function($j){ return [$j->id => $j->name]; }));
+            const districtOptions = @json($districts->map(function($j){ return ['id' => (string) $j->id, 'name' => $j->name]; })->values());
             // Jurisdicción del usuario (puede ser null)
             const currentJurisdiction = @json(optional(auth()->user())->district_id);
             const isAdminOrCoordinator = @json($isAdminOrCoordinator ?? false);
@@ -590,6 +657,111 @@
             const jurisdictionSelect = document.getElementById('jurisdiction_select');
             const jurisdictionDisplay = document.getElementById('jurisdiction_display');
             const hiddenJur = document.getElementById('jurisdiction_input');
+
+            function getTomSelectWrapper(select) {
+                return select?.tomselect?.wrapper || select?.nextElementSibling || null;
+            }
+
+            function getTomSelectValidityInput(select) {
+                return select?.tomselect?.control_input || select?.tomselect?.input || select || null;
+            }
+
+            function showTomSelectError(select, message) {
+                if (!select) return;
+                const wrapper = getTomSelectWrapper(select);
+                const validityInput = getTomSelectValidityInput(select);
+                wrapper?.classList.add('border-red-500', 'ring-2', 'ring-red-100');
+                if (validityInput?.setCustomValidity) {
+                    validityInput.setCustomValidity(message);
+                }
+            }
+
+            function clearTomSelectError(select) {
+                if (!select) return;
+                const wrapper = getTomSelectWrapper(select);
+                const validityInput = getTomSelectValidityInput(select);
+                wrapper?.classList.remove('border-red-500', 'ring-2', 'ring-red-100');
+                if (validityInput?.setCustomValidity) {
+                    validityInput.setCustomValidity('');
+                }
+            }
+
+            function focusTomSelect(select) {
+                if (select?.tomselect) {
+                    select.tomselect.focus();
+                } else {
+                    select?.focus();
+                }
+            }
+
+            function reportTomSelectValidity(select) {
+                const validityInput = getTomSelectValidityInput(select);
+                focusTomSelect(select);
+                if (validityInput?.reportValidity) {
+                    validityInput.reportValidity();
+                } else if (select?.reportValidity) {
+                    select.reportValidity();
+                }
+            }
+
+            function validateRequiredTomSelect(select, message) {
+                if (!select || !select.hasAttribute('required') || select.value) {
+                    if (select) clearTomSelectError(select);
+                    return true;
+                }
+                showTomSelectError(select, message);
+                return false;
+            }
+
+            function validateObservatorioTomSelects(focusFirst = false) {
+                const fields = [
+                    { select: deathMuni, message: 'Seleccione un municipio.' },
+                    { select: isAdminOrCoordinator ? jurisdictionSelect : null, message: 'Seleccione un distrito.' },
+                ];
+                let firstInvalid = null;
+
+                fields.forEach(({ select, message }) => {
+                    if (!validateRequiredTomSelect(select, message) && !firstInvalid) {
+                        firstInvalid = select;
+                    }
+                });
+
+                if (focusFirst && firstInvalid) {
+                    reportTomSelectValidity(firstInvalid);
+                }
+
+                return !firstInvalid;
+            }
+
+            window.resetObservatorioTomSelects = function() {
+                clearTomSelectError(deathMuni);
+                clearTomSelectError(jurisdictionSelect);
+
+                if (isAdminOrCoordinator && jurisdictionSelect?.tomselect) {
+                    jurisdictionSelect.tomselect.clear(true);
+                } else if (jurisdictionSelect) {
+                    jurisdictionSelect.value = '';
+                }
+
+                if (deathMuni?.tomselect) {
+                    deathMuni.tomselect.clear(true);
+                    deathMuni.tomselect.clearOptions();
+                    if (typeof deathMuni.tomselect.clearCache === 'function') {
+                        deathMuni.tomselect.clearCache();
+                    }
+                    deathMuni.tomselect.refreshOptions(false);
+                } else if (deathMuni) {
+                    deathMuni.value = '';
+                }
+
+                if (!isAdminOrCoordinator && currentJurisdiction) {
+                    if (hiddenJur) hiddenJur.value = currentJurisdiction;
+                    if (jurisdictionDisplay) jurisdictionDisplay.value = jurisNames[currentJurisdiction] || '';
+                } else {
+                    if (hiddenJur) hiddenJur.value = '';
+                    if (jurisdictionDisplay) jurisdictionDisplay.value = 'Pendiente (seleccione municipio)';
+                }
+            };
 
             // Guardar old('jurisdiccion') para evitar que el cambio de municipio lo sobrescriba
             const oldJurisdiccion = '{{ old('jurisdiccion', '') }}';
@@ -615,6 +787,8 @@
                         } else {
                             jurisdictionSelect.value = jid;
                         }
+                        clearTomSelectError(jurisdictionSelect);
+                        loadMunicipalityOptions(false);
                     } else {
                         // Para operadores: actualizar el campo hidden y display
                         if (hiddenJur) hiddenJur.value = jid;
@@ -622,11 +796,7 @@
                     }
                 } else {
                     if (isAdminOrCoordinator && jurisdictionSelect) {
-                        if (jurisdictionSelect.tomselect) {
-                            jurisdictionSelect.tomselect.setValue('', true);
-                        } else {
-                            jurisdictionSelect.value = '';
-                        }
+                        return;
                     } else {
                         if (hiddenJur) hiddenJur.value = '';
                         if (jurisdictionDisplay) jurisdictionDisplay.value = 'Pendiente (seleccione municipio)';
@@ -643,15 +813,13 @@
                     maxOptions: 20,
                     maxItems: 1,
                     create: false,
-                    preload: true,
-                    load: function(query, callback) {
-                        let url = '/api/districts/search?q=' + encodeURIComponent(query);
-                        fetch(url).then(r => r.json()).then(items => callback(items)).catch(() => callback());
-                    },
+                    options: districtOptions,
                     onChange: function(value) {
+                        clearTomSelectError(jurisdictionSelect);
                         // Limpiar el municipio cuando cambia el distrito
                         if (deathMuni && deathMuni.tomselect) {
                             deathMuni.tomselect.setValue('');
+                            loadMunicipalityOptions(false);
                         }
                     }
                 });
@@ -666,7 +834,7 @@
                         districtTs.setValue(String(oldJurisdiccion), true);
                     }
                 } else if (jurisdictionSelect.value) {
-                    districtTs.load(jurisdictionSelect.value, function(callback) {});
+                    districtTs.setValue(String(jurisdictionSelect.value), true);
                 }
             }
 
@@ -675,9 +843,14 @@
                 jurisdictionSelect.addEventListener('change', function() {
                     // Limpiar la selección de municipio cuando cambia el distrito
                     if (deathMuni && deathMuni.tomselect) {
+                        deathMuni.tomselect.clear(true);
+                        deathMuni.value = '';
+                        deathMuni.tomselect.setTextboxValue('');
                         deathMuni.tomselect.clearOptions();
-                        deathMuni.tomselect.setValue('');
-                        deathMuni.tomselect.load('', function(callback) {});
+                        if (typeof deathMuni.tomselect.clearCache === 'function') {
+                            deathMuni.tomselect.clearCache();
+                        }
+                        loadMunicipalityOptions(false);
                     }
                 });
             }
@@ -705,40 +878,9 @@
                     const desc = document.getElementById('descripcion');
                     if (desc) desc.value = '';
                     
-                    // Reinicializar Tom Select para que cargue todos los municipios de nuevo
-                    const deathMuni = document.getElementById('death_municipality_select');
-                    if (deathMuni && deathMuni.tomselect) {
-                        deathMuni.tomselect.destroy();
-                        deathMuni.tomselect = null;
-                        // Limpiar el valor
-                        deathMuni.value = '';
-                        // Reinicializar Tom Select
-                        const ts = new TomSelect(deathMuni, {
-                            valueField: 'id',
-                            labelField: 'name',
-                            searchField: 'name',
-                            maxOptions: 20,
-                            maxItems: 1,
-                            create: false,
-                            preload: true,
-                            load: function(query, callback) {
-                                let url = '/api/municipalities/search?q=' + encodeURIComponent(query);
-                                if (!isAdminOrCoordinator && currentJurisdiction) {
-                                    url += '&district_id=' + encodeURIComponent(currentJurisdiction);
-                                } else if (isAdminOrCoordinator && jurisdictionSelect) {
-                                    const selectedDistrict = jurisdictionSelect.value;
-                                    if (selectedDistrict) {
-                                        url += '&district_id=' + encodeURIComponent(selectedDistrict);
-                                    }
-                                }
-                                fetch(url).then(r => r.json()).then(items => callback(items)).catch(() => callback());
-                            },
-                            onChange: function(value) {
-                                const evt = new Event('change');
-                                deathMuni.dispatchEvent(evt);
-                            }
-                        });
-                        try { deathMuni.style.display = 'none'; } catch (e) {}
+                    // Limpiar Tom Select sin destruirlo, para conservar busqueda y validacion.
+                    if (window.resetObservatorioTomSelects) {
+                        window.resetObservatorioTomSelects();
                     }
                     
                     // Restaurar la jurisdicción del usuario (es fija y no debe cambiar)
@@ -760,7 +902,7 @@
 
             // Initialize Tom Select for municipality
             function fetchMunicipalities(q) {
-                let url = '/api/municipalities/search?q=' + encodeURIComponent(q);
+                let url = '/api/municipalities/search?q=' + encodeURIComponent(q) + '&limit=100';
                 if (!isAdminOrCoordinator && currentJurisdiction) {
                     // Para operadores: filtrar por su distrito
                     url += '&district_id=' + encodeURIComponent(currentJurisdiction);
@@ -774,20 +916,36 @@
                 return fetch(url).then(r => r.json());
             }
 
+            function loadMunicipalityOptions(openDropdown = false) {
+                if (!deathMuni?.tomselect) return;
+
+                const tomSelect = deathMuni.tomselect;
+                fetchMunicipalities('').then(items => {
+                    tomSelect.clearOptions();
+                    items.forEach(item => tomSelect.addOption(item));
+                    tomSelect.refreshOptions(openDropdown);
+                    if (openDropdown) tomSelect.open();
+                }).catch(() => {});
+            }
+
             if (deathMuni) {
                 const ts = new TomSelect(deathMuni, {
                     valueField: 'id',
                     labelField: 'name',
                     searchField: 'name',
-                    maxOptions: 20,
+                    maxOptions: 100,
                     maxItems: 1,
                     create: false,
                     preload: true,
                     load: function(query, callback) {
                         fetchMunicipalities(query).then(items => callback(items)).catch(() => callback());
                     },
+                    onDropdownOpen: function() {
+                        loadMunicipalityOptions(true);
+                    },
                     onChange: function(value) {
                         deathMuni.value = value;
+                        clearTomSelectError(deathMuni);
                         const evt = new Event('change', { bubbles: true });
                         deathMuni.dispatchEvent(evt);
                     }
@@ -795,20 +953,8 @@
                 deathMuni.classList.remove('tomselect-select');
                 try { deathMuni.style.display = 'none'; } catch (e) {}
                 
-                // Restaurar old('municipio') después de inicializar Tom Select
                 if (oldMunicipio) {
-                    // Cargar el municipio específico por su ID
-                    fetch('/api/municipalities/search?q=' + encodeURIComponent(oldMunicipio))
-                        .then(r => r.json())
-                        .then(items => {
-                            if (items && items.length > 0) {
-                                ts.clearOptions();
-                                ts.addOption(items[0]);
-                                // Usar setValue con silent=true para NO disparar onChange
-                                ts.setValue(oldMunicipio, true);
-                            }
-                        })
-                        .catch(() => {});
+                    ts.setValue(oldMunicipio, true);
                 }
             }
 
@@ -826,7 +972,25 @@
             const isEditMode = {{ isset($publication) ? 'true' : 'false' }};
             
             if (mainForm) {
+                mainForm.addEventListener('invalid', function(e) {
+                    if (e.target === deathMuni) {
+                        e.preventDefault();
+                        showTomSelectError(deathMuni, 'Seleccione un municipio.');
+                        reportTomSelectValidity(deathMuni);
+                    }
+                    if (e.target === jurisdictionSelect) {
+                        e.preventDefault();
+                        showTomSelectError(jurisdictionSelect, 'Seleccione un distrito.');
+                        reportTomSelectValidity(jurisdictionSelect);
+                    }
+                }, true);
+
                 mainForm.addEventListener('submit', function(e) {
+                    if (!validateObservatorioTomSelects(true)) {
+                        e.preventDefault();
+                        return false;
+                    }
+
                     // Actualizar files_to_delete SIEMPRE (tanto en creación como en edición)
                     if (isEditMode && document.getElementById('files-to-delete')) {
                         const filesToDeleteIds = [];
@@ -842,7 +1006,7 @@
                         // Si no hay archivos seleccionados, evitar envío y mostrar mensaje
                         if (selectedFiles.length === 0) {
                             e.preventDefault();
-                            alert('Debe incluir al menos 1 archivo Excel (XLSX).');
+                            showFileError('El reporte requiere: archivo Excel (0/1).');
                             try { fileInput.focus(); } catch (err) {}
                             return false;
                         }

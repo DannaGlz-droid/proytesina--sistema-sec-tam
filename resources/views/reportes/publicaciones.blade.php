@@ -30,7 +30,7 @@
         @endif
 
         <!-- Contenedor principal -->
-        <div class="border border-[#404041] rounded-lg lg:rounded-xl bg-white bg-opacity-95 max-w-full shadow-md overflow-visible">
+        <div id="reportes-publicaciones-panel" class="border border-[#404041] rounded-lg lg:rounded-xl bg-white bg-opacity-95 max-w-full shadow-md overflow-visible">
             
             <!-- PESTAÑAS INTEGRADAS AL CONTENEDOR -->
             <div class="border-b border-gray-300 bg-gray-50 px-4 lg:px-6 pt-4">
@@ -82,14 +82,17 @@
                         </div>
 
                         <!-- Distrito -->
-                        <div class="flex-1 min-w-0 w-full sm:w-auto sm:flex-1 sm:max-w-[160px]">
+                        <div class="district-filter-field flex-1 min-w-0 w-full sm:w-auto sm:flex-1 sm:max-w-[160px]">
                             <label class="block text-xs font-semibold text-[#404041] mb-1 font-lora">Distrito</label>
-                            <select id="district_id" name="district_id" class="tomselect-select" data-placeholder="Todos los distritos">
+                            <select id="district_id" name="district_id" class="tomselect-select" data-placeholder="Todos los distritos" style="display: none;">
                                 <option value="">Todos los distritos</option>
                                 @foreach($districts as $district)
                                     <option value="{{ $district->id }}" {{ request('district_id') == $district->id ? 'selected' : '' }}>{{ $district->name }}</option>
                                 @endforeach
                             </select>
+                            <div class="district-select-skeleton" aria-hidden="true">
+                                <span>{{ optional($districts->firstWhere('id', request('district_id')))->name ?? 'Todos los distritos' }}</span>
+                            </div>
                         </div>
 
                         <!-- Periodo de fechas predefinido -->
@@ -126,7 +129,7 @@
                                 <i class="fas fa-filter text-xs"></i>
                                 Aplicar
                             </button>
-                            <a href="{{ route('reportes.index') }}" class="border border-[#404041] text-[#404041] px-3 py-1.5 rounded-lg text-xs font-semibold hover:bg-gray-50 transition-all duration-300 font-lora flex items-center gap-1 whitespace-nowrap">
+                            <a href="{{ route('reportes.index', ['tipo' => request('tipo', 'todos')]) }}" class="border border-[#404041] text-[#404041] px-3 py-1.5 rounded-lg text-xs font-semibold hover:bg-gray-50 transition-all duration-300 font-lora flex items-center gap-1 whitespace-nowrap">
                                 <i class="fas fa-redo text-xs"></i>
                                 Limpiar
                             </a>
@@ -337,6 +340,7 @@
                             :tipo="$tipoDisplay"
                             :titulo="$pub->topic"
                             :fecha="$pub->publication_date->locale('es')->isoFormat('dddd, D [de] MMMM [de] YYYY')"
+                            :actualizado="$pub->updated_at->locale('es')->isoFormat('D MMM YYYY, HH:mm')"
                             :usuario="$uShort"
                             :usuario_full="$uFull"
                             :descripcion="$activityInfo"
@@ -344,6 +348,7 @@
                             :badgeClass="$badgeClass"
                             :badgeBorderClass="$badgeBorderClass"
                             :has-comments="count($pub->comentarios_json ?? []) > 0"
+                            :comments-count="count($pub->comentarios_json ?? [])"
                             :has-unread="$hasUnread"
                             :status="$pub->status"
                             :approvedBy="optional($pub->approver)->full_name"
@@ -359,6 +364,7 @@
                                         data-titulo="{{ $pub->topic }}"
                                         data-fecha="{{ $pub->publication_date->format('d/m/Y') }}"
                                         data-fecha-actividad="{{ $pub->activity_date->locale('es')->isoFormat('dddd, D [de] MMMM [de] YYYY') }}"
+                                        data-actualizado="{{ $pub->updated_at->locale('es')->isoFormat('D MMM YYYY, HH:mm') }}"
                                         data-usuario="{{ $uFull ?: ($pub->user->name ?? 'Usuario') }}"
                                         data-position="{{ $pub->user->position->name ?? '' }}"
                                         data-descripcion="{{ $pub->description ?? '' }}"
@@ -434,12 +440,15 @@
 
     <!-- INCLUIR TODOS LOS COMPONENTES DE MODALES -->
 <!-- Modal de rechazo -->
-<div id="reject-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-[999999] flex items-center justify-center p-4">
-    <div class="bg-white rounded-xl max-w-2xl w-full p-6 border border-gray-200 border-t-4 border-t-[#611132] shadow-[0_20px_45px_rgba(17,24,39,0.18),0_2px_8px_rgba(17,24,39,0.08)] ring-1 ring-black/5">
+<div id="reject-modal" class="government-confirm-modal hidden fixed inset-0 z-[999999] flex items-center justify-center p-4">
+    <div class="government-confirm-card bg-white max-w-2xl w-full p-6 border border-gray-200 border-t-4 border-t-[#611132] ring-1 ring-black/5">
         <div class="flex items-center justify-between mb-4 pb-4 border-b border-gray-300">
-            <h3 class="text-xl font-bold text-[#404041] font-lora">Rechazar Reporte</h3>
-            <button onclick="closeRejectModal()" class="text-gray-500 hover:text-gray-700 transition-colors duration-200 w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-200">
-                <i class="fas fa-times text-lg"></i>
+            <div>
+                <p class="text-[11px] uppercase font-semibold text-[#611132] font-lora mb-1">Validacion del reporte</p>
+                <h3 class="text-xl font-bold text-[#303236] font-lora">Rechazar reporte</h3>
+            </div>
+            <button onclick="closeRejectModal()" class="modal-cerrar text-gray-500 hover:text-gray-700 transition-colors duration-200 w-9 h-9 flex items-center justify-center rounded-lg" aria-label="Cerrar modal">
+                <i class="fas fa-times text-base"></i>
             </button>
         </div>
         
@@ -451,7 +460,7 @@
             <textarea 
                 id="rejection-reason"
                 rows="6"
-                class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg bg-gray-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#611132] focus:border-transparent font-lora resize-none shadow-sm"
+                class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-[#611132]/25 focus:border-[#611132] font-lora resize-none"
                 placeholder="Explique brevemente por qué se rechaza este reporte..."
                 maxlength="500"
                 required></textarea>
@@ -460,11 +469,11 @@
         
         <div class="flex gap-3 pt-4 border-t border-gray-300">
             <button onclick="closeRejectModal()" 
-                    class="flex-1 px-4 py-2 border border-gray-300 text-[#404041] rounded-lg font-semibold hover:bg-gray-50 hover:border-[#611132]/40 transition-all duration-300 font-lora text-sm shadow-sm">
+                    class="flex-1 px-4 py-2 border border-gray-300 text-[#404041] rounded-lg font-semibold hover:bg-gray-50 hover:border-[#611132]/40 transition-all duration-200 font-lora text-sm">
                 Cancelar
             </button>
             <button onclick="submitRejection()" 
-                    class="flex-1 px-4 py-2 bg-[#AB1A1A] text-white rounded-lg font-semibold hover:bg-[#8b1515] transition-all duration-300 font-lora text-sm flex items-center justify-center gap-2">
+                    class="flex-1 px-4 py-2 bg-[#AB1A1A] text-white rounded-lg font-semibold hover:bg-[#8b1515] transition-all duration-200 font-lora text-sm flex items-center justify-center gap-2">
                 <i class="fas fa-times-circle"></i>Rechazar
             </button>
         </div>
@@ -472,12 +481,12 @@
 </div>
 
 <!-- Modal de eliminación -->
-<div id="delete-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-[999999] flex items-center justify-center p-4">
-    <div class="bg-white rounded-xl max-w-2xl w-full p-6 border border-gray-200 border-t-4 border-t-[#611132] shadow-[0_20px_45px_rgba(17,24,39,0.18),0_2px_8px_rgba(17,24,39,0.08)] ring-1 ring-black/5">
+<div id="delete-modal" class="government-confirm-modal hidden fixed inset-0 z-[999999] flex items-center justify-center p-4">
+    <div class="government-confirm-card bg-white max-w-2xl w-full p-6 border border-gray-200 border-t-4 border-t-[#611132] ring-1 ring-black/5">
         <div class="flex items-center justify-between mb-4 pb-4 border-b border-gray-300">
             <h3 class="text-xl font-bold text-[#404041] font-lora">Eliminar Publicación</h3>
-            <button onclick="closeDeleteModal()" class="text-gray-500 hover:text-gray-700 transition-colors duration-200 w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-200">
-                <i class="fas fa-times text-lg"></i>
+            <button onclick="closeDeleteModal()" class="modal-cerrar text-gray-500 hover:text-gray-700 transition-colors duration-200 w-9 h-9 flex items-center justify-center rounded-lg" aria-label="Cerrar modal">
+                <i class="fas fa-times text-base"></i>
             </button>
         </div>
         
@@ -505,7 +514,7 @@
                     id="deletion-reason"
                     name="deletion_reason"
                     rows="4"
-                    class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg bg-gray-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#611132] focus:border-transparent font-lora resize-none shadow-sm"
+                    class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-[#611132]/25 focus:border-[#611132] font-lora resize-none"
                     placeholder="Opcionalmente, explica por qué eliminas esta publicación..."
                     maxlength="500"></textarea>
                 <p class="text-xs text-gray-500 mt-1">Máximo 500 caracteres</p>
@@ -513,11 +522,11 @@
             
             <div class="flex gap-3 pt-4 border-t border-gray-300">
                 <button type="button" onclick="closeDeleteModal()" 
-                        class="flex-1 px-4 py-2 border border-gray-300 text-[#404041] rounded-lg font-semibold hover:bg-gray-50 hover:border-[#611132]/40 transition-all duration-300 font-lora text-sm shadow-sm">
+                        class="flex-1 px-4 py-2 border border-gray-300 text-[#404041] rounded-lg font-semibold hover:bg-gray-50 hover:border-[#611132]/40 transition-all duration-200 font-lora text-sm">
                     Cancelar
                 </button>
                 <button type="submit" 
-                        class="flex-1 px-4 py-2 bg-[#AB1A1A] text-white rounded-lg font-semibold hover:bg-[#8b1515] transition-all duration-300 font-lora text-sm flex items-center justify-center gap-2">
+                        class="flex-1 px-4 py-2 bg-[#AB1A1A] text-white rounded-lg font-semibold hover:bg-[#8b1515] transition-all duration-200 font-lora text-sm flex items-center justify-center gap-2">
                     <i class="fas fa-trash"></i>Eliminar
                 </button>
             </div>
@@ -669,6 +678,259 @@ document.addEventListener('DOMContentLoaded', function() {
     let currentPublicationId = null; // Agregar variable para rastrear el ID actual
     let currentModalType = null;
     window.isNavigating = false; // Flag para detectar si estamos navegando
+    const reportesIndexPath = new URL('{{ route("reportes.index") }}', window.location.origin).pathname;
+    let reportesPanelAbortController = null;
+    const reportesPanelCache = new Map();
+
+    function getReportesPanel() {
+        return document.getElementById('reportes-publicaciones-panel');
+    }
+
+    function isReportesIndexUrl(url) {
+        try {
+            const parsed = new URL(url, window.location.origin);
+            return parsed.origin === window.location.origin && parsed.pathname === reportesIndexPath;
+        } catch (error) {
+            return false;
+        }
+    }
+
+    function buildReportesUrlFromForm(form) {
+        const url = new URL(form.action || window.location.href, window.location.origin);
+        const params = new URLSearchParams();
+        new FormData(form).forEach((value, key) => {
+            if (key === 'page') return;
+            const stringValue = String(value ?? '').trim();
+            if (stringValue !== '') {
+                params.append(key, stringValue);
+            }
+        });
+        url.search = params.toString();
+        return url.toString();
+    }
+
+    function setReportesPanelLoading(isLoading) {
+        const panel = getReportesPanel();
+        if (!panel) return;
+        panel.setAttribute('aria-busy', isLoading ? 'true' : 'false');
+    }
+
+    function replaceReportesPanelFromHtml(html, url, options = {}) {
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(html, 'text/html');
+        const nextPanel = doc.getElementById('reportes-publicaciones-panel');
+        const currentPanel = getReportesPanel();
+
+        if (!nextPanel || !currentPanel) {
+            window.location.href = url;
+            return false;
+        }
+
+        currentPanel.replaceWith(nextPanel);
+        if (options.push !== false && window.location.href !== url) {
+            history.pushState({ reportesAjax: true }, '', url);
+        }
+        initializeReportesDynamicArea({ scroll: options.scroll === true });
+        return true;
+    }
+
+    function loadReportesPanel(url, options = {}) {
+        if (!isReportesIndexUrl(url)) {
+            window.location.href = url;
+            return Promise.resolve(false);
+        }
+
+        const targetUrl = new URL(url, window.location.origin).toString();
+        if (reportesPanelCache.has(targetUrl) && options.cache !== false) {
+            return Promise.resolve(replaceReportesPanelFromHtml(reportesPanelCache.get(targetUrl), targetUrl, options));
+        }
+
+        if (reportesPanelAbortController) {
+            reportesPanelAbortController.abort();
+        }
+        reportesPanelAbortController = new AbortController();
+        setReportesPanelLoading(true);
+
+        return fetch(targetUrl, {
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'Accept': 'text/html'
+            },
+            signal: reportesPanelAbortController.signal
+        })
+        .then(response => {
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            return response.text().then(html => ({ html, finalUrl: response.url || targetUrl }));
+        })
+        .then(({ html, finalUrl }) => {
+            reportesPanelCache.set(finalUrl, html);
+            reportesPanelCache.set(targetUrl, html);
+            return replaceReportesPanelFromHtml(html, finalUrl, options);
+        })
+        .catch(error => {
+            if (error.name === 'AbortError') return false;
+            console.error('Error cargando reportes sin recargar:', error);
+            window.location.href = targetUrl;
+            return false;
+        })
+        .finally(() => {
+            setReportesPanelLoading(false);
+            reportesPanelAbortController = null;
+        });
+    }
+
+    function prefetchReportesPanel(url) {
+        if (!isReportesIndexUrl(url)) return;
+        const targetUrl = new URL(url, window.location.origin).toString();
+        if (reportesPanelCache.has(targetUrl)) return;
+
+        fetch(targetUrl, {
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'Accept': 'text/html'
+            }
+        })
+        .then(response => {
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            return response.text().then(html => ({ html, finalUrl: response.url || targetUrl }));
+        })
+        .then(({ html, finalUrl }) => {
+            reportesPanelCache.set(targetUrl, html);
+            reportesPanelCache.set(finalUrl, html);
+        })
+        .catch(() => {});
+    }
+
+    function buildTabPrefetchUrl(tabButton) {
+        const panel = getReportesPanel();
+        const form = panel?.querySelector('form[action*="publicaciones"]');
+        if (!form) return null;
+
+        const clone = form.cloneNode(true);
+        const tipoInput = clone.querySelector('#filter-tipo-input');
+        if (tipoInput) tipoInput.value = tabButton.getAttribute('data-tipo') || 'todos';
+        const search = clone.querySelector('#search');
+        if (search) search.value = '';
+        const status = clone.querySelector('select[name="status"]');
+        if (status) status.value = '';
+        const district = clone.querySelector('select[name="district_id"]');
+        if (district) district.value = '';
+        const dateFilter = clone.querySelector('select[name="date_filter"]');
+        if (dateFilter) dateFilter.value = '';
+        const orderBy = clone.querySelector('select[name="order_by"]');
+        if (orderBy) orderBy.value = 'updated_at:desc';
+
+        return buildReportesUrlFromForm(clone);
+    }
+
+    function scheduleReportesPrefetch() {
+        const run = () => {
+            const panel = getReportesPanel();
+            if (!panel) return;
+
+            panel.querySelectorAll('.tab-filter').forEach(tabButton => {
+                const url = buildTabPrefetchUrl(tabButton);
+                if (url) prefetchReportesPanel(url);
+            });
+
+            panel.querySelectorAll('a[href]').forEach(link => {
+                if (isReportesIndexUrl(link.href)) {
+                    prefetchReportesPanel(link.href);
+                }
+            });
+        };
+
+        if ('requestIdleCallback' in window) {
+            window.requestIdleCallback(run, { timeout: 1200 });
+        } else {
+            window.setTimeout(run, 300);
+        }
+    }
+
+    function refreshReportesPanel(options = {}) {
+        reportesPanelCache.clear();
+        return loadReportesPanel(window.location.href, {
+            push: false,
+            scroll: false,
+            cache: false,
+            ...options
+        });
+    }
+
+    function updateActiveTabFromUrl(url = window.location.href) {
+        const tabButtons = document.querySelectorAll('.tab-filter');
+        const currentTipo = new URL(url, window.location.origin).searchParams.get('tipo') || 'todos';
+        const activeButton = Array.from(tabButtons).find(btn => btn.getAttribute('data-tipo') === currentTipo) || tabButtons[0];
+        if (activeButton) {
+            updateActiveTab(activeButton);
+        }
+    }
+
+    function initializeReportesDynamicArea(options = {}) {
+        const currentPanel = getReportesPanel();
+        if (currentPanel) {
+            reportesPanelCache.set(new URL(window.location.href, window.location.origin).toString(), currentPanel.outerHTML);
+        }
+        updateActiveTabFromUrl();
+        collectAllReportButtons();
+        if (typeof window.initializeReportesTomSelect === 'function') {
+            window.initializeReportesTomSelect();
+        }
+        if (typeof toggleBulkToolbar === 'function') {
+            toggleBulkToolbar();
+        }
+        if (options.scroll) {
+            getReportesPanel()?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+        scheduleReportesPrefetch();
+    }
+
+    document.addEventListener('submit', function(e) {
+        const form = e.target.closest('form[action*="publicaciones"]');
+        if (!form || !getReportesPanel()?.contains(form)) return;
+
+        e.preventDefault();
+        loadReportesPanel(buildReportesUrlFromForm(form), { push: true, scroll: false });
+    });
+
+    document.addEventListener('click', function(e) {
+        const tabButton = e.target.closest('.tab-filter');
+        if (tabButton && getReportesPanel()?.contains(tabButton)) {
+            updateActiveTab(tabButton);
+            const url = buildTabPrefetchUrl(tabButton);
+            if (url) loadReportesPanel(url, { push: true, scroll: false });
+            return;
+        }
+
+        const link = e.target.closest('a[href]');
+        if (!link || !getReportesPanel()?.contains(link)) return;
+        const href = link.getAttribute('href');
+        if (!href || href.startsWith('#') || link.target || link.hasAttribute('download')) return;
+        if (!isReportesIndexUrl(link.href)) return;
+
+        e.preventDefault();
+        loadReportesPanel(link.href, { push: true, scroll: true });
+    });
+
+    document.addEventListener('mouseover', function(e) {
+        const tabButton = e.target.closest('.tab-filter');
+        if (tabButton && getReportesPanel()?.contains(tabButton)) {
+            const url = buildTabPrefetchUrl(tabButton);
+            if (url) prefetchReportesPanel(url);
+            return;
+        }
+
+        const link = e.target.closest('a[href]');
+        if (link && getReportesPanel()?.contains(link) && isReportesIndexUrl(link.href)) {
+            prefetchReportesPanel(link.href);
+        }
+    });
+
+    window.addEventListener('popstate', function() {
+        if (isReportesIndexUrl(window.location.href)) {
+            loadReportesPanel(window.location.href, { push: false, scroll: false });
+        }
+    });
     
     function collectAllReportButtons() {
         // Recolectar todos los botones de reporte en orden
@@ -839,7 +1101,7 @@ document.addEventListener('DOMContentLoaded', function() {
             setTimeout(() => {
                 const content = modal.querySelector('div > div');
                 if (content) {
-                    content.style.transform = 'scale(1)';
+                    content.style.transform = 'translateY(0) scale(1)';
                     content.style.opacity = '1';
                 }
             }, 50);
@@ -847,7 +1109,7 @@ document.addEventListener('DOMContentLoaded', function() {
             // Si es navegación, mostrar sin animación
             const content = modal.querySelector('div > div');
             if (content) {
-                content.style.transform = 'scale(1)';
+                content.style.transform = 'translateY(0) scale(1)';
                 content.style.opacity = '1';
             }
         }
@@ -884,7 +1146,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (modal) {
             const content = modal.querySelector('div > div');
             if (content) {
-                content.style.transform = 'scale(0.95)';
+                content.style.transform = 'translateY(12px) scale(0.985)';
                 content.style.opacity = '0';
             }
             
@@ -1146,6 +1408,7 @@ document.addEventListener('DOMContentLoaded', function() {
             'modal-fecha-actividad': dataset.fechaActividad || dataset.fecha,
             // La fecha de publicación se muestra en la zona superior derecha (reemplaza 'Subido por')
             'modal-fecha-publicacion': dataset.fecha,
+            'modal-actualizado': dataset.actualizado,
             'modal-usuario': dataset.usuario
         };
         
@@ -1186,9 +1449,9 @@ document.addEventListener('DOMContentLoaded', function() {
             if (status === 'aprobado') {
                 const approvedBy = dataset.approvedBy || 'Administrador';
                 statusHTML = `
-                    <div class="rounded-lg border border-[#404041] p-3 bg-white">
-                        <div class="flex items-center gap-3">
-                            <span class="w-8 h-8 rounded-full bg-green-50 text-green-700 flex items-center justify-center">
+                    <div class="status-card status-approved rounded-lg border border-[#404041] p-3 bg-white">
+                        <div class="contents">
+                            <span class="status-icon bg-green-50 text-green-700">
                                 <i class="fas fa-check text-sm"></i>
                             </span>
                             <div>
@@ -1202,9 +1465,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 const rejectedBy = dataset.rejectedBy || 'Administrador';
                 const rejectionReason = dataset.rejectionReason || 'No se proporciono motivo';
                 statusHTML = `
-                    <div class="rounded-lg border border-[#404041] p-3 bg-white">
-                        <div class="flex items-center gap-3">
-                            <span class="w-8 h-8 rounded-full bg-red-50 text-red-700 flex items-center justify-center">
+                    <div class="status-card status-rejected rounded-lg border border-[#404041] p-3 bg-white">
+                        <div class="contents">
+                            <span class="status-icon bg-red-50 text-red-700">
                                 <i class="fas fa-times text-sm"></i>
                             </span>
                             <div>
@@ -1220,9 +1483,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 `;
             } else {
                 statusHTML = `
-                    <div class="rounded-lg border border-[#404041] p-3 bg-white">
-                        <div class="flex items-center gap-3">
-                            <span class="w-8 h-8 rounded-full bg-yellow-50 text-yellow-700 flex items-center justify-center">
+                    <div class="status-card status-pending rounded-lg border border-[#404041] p-3 bg-white">
+                        <div class="contents">
+                            <span class="status-icon bg-yellow-50 text-yellow-700">
                                 <i class="fas fa-clock text-sm"></i>
                             </span>
                             <div>
@@ -1263,7 +1526,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 approvalContainer.style.display = 'flex';
                 approvalContainer.innerHTML = `
                     <button onclick="resubmitReport(${publicationId})" class="reenviar-reporte min-w-[190px] justify-center border border-[#404041] text-[#404041] px-4 py-2 rounded-lg text-xs lg:text-sm font-semibold hover:bg-gray-100 transition-all duration-300 font-lora whitespace-nowrap inline-flex items-center gap-2">
-                        <i class="fas fa-paper-plane"></i>Reenviar para revisión
+                        <i class="fas fa-paper-plane"></i>Reenviar para revision
                     </button>
                 `;
             }
@@ -1344,23 +1607,39 @@ document.addEventListener('DOMContentLoaded', function() {
                     const { icono, color } = obtenerEstiloArchivo(extension);
                     const canPreview = archivo.canPreview;
                     const safeFileName = escapeHtml(fileName);
+                    const fileSize = obtenerTamañoAleatorio();
+                    const thumbHtml = getAttachmentThumbHtml(archivo, icono, color, safeFileName);
+                    const previewTitle = canPreview ? 'Previsualizar archivo' : 'Previsualizacion no disponible';
                     
                     archivosContainer.innerHTML += `
-                        <div class="archivo-preview-card bg-white rounded-xl border border-[#404041] overflow-hidden transition-all duration-300 hover:shadow-lg group ${canPreview ? 'cursor-pointer' : ''}" data-file-id="${fileId}" data-file-name="${safeFileName}" data-extension="${extension}" data-file-index="${index}" title="${canPreview ? 'Abrir previsualizacion' : 'Previsualizacion no disponible'}" onclick="window.openArchivoPreviewFromCard(this, event)">
-                            <div class="${color} h-20 flex items-center justify-center">
-                                <i class="${icono} text-3xl text-white"></i>
+                        <div class="archivo-preview-card bg-white rounded-lg border border-[#404041] overflow-hidden transition-all duration-200 group ${canPreview ? 'cursor-pointer' : ''}" data-file-id="${fileId}" data-file-name="${safeFileName}" data-extension="${extension}" data-file-index="${index}" title="${canPreview ? 'Abrir previsualizacion' : 'Previsualizacion no disponible'}" onclick="if (!event.target.closest('.archivo-action')) window.openArchivoPreviewFromCard(this, event)">
+                            <div class="archivo-thumb" data-thumbnail-index="${index}">
+                                ${thumbHtml}
                             </div>
-                            <div class="p-4">
+                            <div class="archivo-actions" aria-label="Acciones del archivo">
+                                <button type="button" class="archivo-action archivo-view" title="${previewTitle}" aria-label="${previewTitle}" ${canPreview ? '' : 'disabled'}>
+                                    <i class="fas fa-eye text-xs"></i>
+                                </button>
+                                <button type="button" class="archivo-action descargar-archivo" title="Descargar" aria-label="Descargar" data-file-id="${fileId}">
+                                    <i class="fas fa-download text-xs"></i>
+                                </button>
+                                <button type="button" class="archivo-action archivo-info" title="Datos del archivo" aria-label="Datos del archivo">
+                                    <i class="fas fa-info text-xs"></i>
+                                </button>
+                                <div class="archivo-info-popover font-lora">
+                                    <div><strong>Nombre:</strong> ${safeFileName}</div>
+                                    <div><strong>Tipo:</strong> ${extension.toUpperCase()}</div>
+                                    <div><strong>Tamano:</strong> ${fileSize}</div>
+                                    <div><strong>Vista previa:</strong> ${canPreview ? 'Disponible' : 'No disponible'}</div>
+                                </div>
+                            </div>
+                            <div class="archivo-meta">
                                 <p class="text-sm font-semibold text-[#404041] font-lora truncate mb-1" title="${safeFileName}">
                                     ${safeFileName}
                                 </p>
-                                <p class="text-xs text-gray-500 font-lora mb-3">
-                                    ${extension.toUpperCase()} • ${obtenerTamañoAleatorio()}
+                                <p class="text-xs text-gray-500 font-lora">
+                                    ${extension.toUpperCase()} - ${fileSize}
                                 </p>
-                                <button class="descargar-archivo w-full px-3 py-2 bg-[#404041] text-white text-xs font-semibold rounded-lg hover:bg-[#2a2a2a] transition-all duration-200 flex items-center justify-center gap-2" data-file-id="${fileId}">
-                                    <i class="fas fa-download text-xs"></i>
-                                    Descargar
-                                </button>
                             </div>
                         </div>
                     `;
@@ -1380,7 +1659,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     card.addEventListener('focusin', preloadFromCard, { once: true });
 
                     card.addEventListener('click', function(event) {
-                        if (event.target.closest('.descargar-archivo')) {
+                        if (event.target.closest('.archivo-action') || event.target.closest('.descargar-archivo')) {
                             return;
                         }
 
@@ -1388,6 +1667,8 @@ document.addEventListener('DOMContentLoaded', function() {
                         window.openArchivoPreviewFromCard(this, event);
                     });
                 });
+
+                hydrateAttachmentThumbnails(archivosContainer, previewFiles);
 
                 const btnDescargarTodos = modal.querySelector('.descargar-todos-archivos');
                 if (btnDescargarTodos) {
@@ -1698,6 +1979,76 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function getFileCacheKey(file) {
         return `${file.extension}:${file.id}:${file.name}`;
+    }
+
+    function getAttachmentThumbHtml(file, icono, color, safeFileName) {
+        if (file.canPreview && ['jpg', 'jpeg', 'png'].includes(file.extension)) {
+            return `<img src="${getPreviewUrl(file)}" alt="Vista previa de ${safeFileName}" loading="lazy">`;
+        }
+
+        if (file.canPreview && file.extension === 'pdf') {
+            return `
+                <div class="archivo-thumb-fallback archivo-pdf-thumb" data-pdf-thumb="true">
+                    <i class="${icono} text-red-600"></i>
+                </div>
+            `;
+        }
+
+        if (['xlsx', 'xls'].includes(file.extension)) {
+            const cells = Array.from({ length: 25 }, () => '<span></span>').join('');
+            return `
+                <div class="archivo-sheet-thumb" aria-hidden="true">
+                    <div class="archivo-sheet-bar"></div>
+                    <div class="archivo-sheet-grid">${cells}</div>
+                </div>
+            `;
+        }
+
+        return `
+            <div class="archivo-thumb-fallback ${color}">
+                <i class="${icono} text-white"></i>
+            </div>
+        `;
+    }
+
+    function hydrateAttachmentThumbnails(container, files) {
+        if (!container || !Array.isArray(files)) return;
+
+        container.querySelectorAll('[data-thumbnail-index]').forEach((thumb) => {
+            const index = Number(thumb.dataset.thumbnailIndex || 0);
+            const file = files[index];
+
+            if (!file || file.extension !== 'pdf' || !file.canPreview) return;
+            renderPdfAttachmentThumbnail(file, thumb);
+        });
+    }
+
+    async function renderPdfAttachmentThumbnail(file, thumb) {
+        try {
+            const pdfjsLib = await ensurePdfJsLoaded();
+            const pdf = await pdfjsLib.getDocument({ url: encodeURI(getPdfUrl(file)), withCredentials: true }).promise;
+            const page = await pdf.getPage(1);
+            const viewport = page.getViewport({ scale: 0.42 });
+            const canvas = document.createElement('canvas');
+            const context = canvas.getContext('2d');
+
+            canvas.width = Math.floor(viewport.width);
+            canvas.height = Math.floor(viewport.height);
+            await page.render({ canvasContext: context, viewport }).promise;
+
+            thumb.innerHTML = '';
+            thumb.appendChild(canvas);
+        } catch (error) {
+            console.warn('No se pudo generar miniatura PDF:', error);
+        }
+    }
+
+    function preRenderPdfToCache(file) {
+        if (!file || archivoPreviewCache.pdfLoading.has(getFileCacheKey(file))) return;
+
+        const key = getFileCacheKey(file);
+        const task = renderPdfAttachmentThumbnail(file, document.createElement('div')).catch(() => {});
+        archivoPreviewCache.pdfLoading.set(key, task);
     }
 
     function getPreviewCacheHost() {
@@ -2096,17 +2447,24 @@ document.addEventListener('DOMContentLoaded', function() {
             console.error('openPublicationFromNotification error:', e);
         }
 
-        // Fallback: navigate to page with query params
-        window.location = '/reportes/publicaciones?publication=' + publicationId + (commentId ? ('&comment=' + commentId) : '');
+        // Fallback: cargar la pagina de publicaciones sin refrescar todo el layout.
+        const fallbackUrl = '/reportes/publicaciones?publication=' + publicationId + (commentId ? ('&comment=' + commentId) : '');
+        if (isReportesIndexUrl(fallbackUrl)) {
+            loadReportesPanel(fallbackUrl, { push: true, scroll: false }).then(() => {
+                const refreshedBtn = document.querySelector(`button[data-publication-id="${publicationId}"]`);
+                if (refreshedBtn) refreshedBtn.click();
+            });
+            return;
+        }
+
+        window.location.href = fallbackUrl;
     }
     
     // === SISTEMA DE FILTRADO POR PESTAÑAS (SERVER-SIDE) ===
-    const tabButtons = document.querySelectorAll('.tab-filter');
-    const filterForm = document.querySelector('form[action*="publicaciones"]');
-    const tipoInput = document.getElementById('filter-tipo-input');
     
     // Función para actualizar estilos de pestañas activas
     function updateActiveTab(activeButton) {
+        const tabButtons = document.querySelectorAll('.tab-filter');
         const colorMap = {
             'todos': '#404041',
             'seguridad_vial': '#4C8CC4',
@@ -2133,31 +2491,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    // Inicializar pestaña activa según parámetro URL
-    const currentTipo = new URLSearchParams(window.location.search).get('tipo') || 'todos';
-    tabButtons.forEach(btn => {
-        if (btn.getAttribute('data-tipo') === currentTipo) {
-            updateActiveTab(btn);
-        }
-    });
-    
-    // Agregar event listeners a las pestañas
-    tabButtons.forEach(button => {
-        button.addEventListener('click', function(e) {
-            e.preventDefault();
-            const tipo = this.getAttribute('data-tipo');
-            
-            // Limpiar todos los filtros al cambiar de pestaña
-            document.getElementById('search').value = '';
-            document.querySelector('select[name="status"]').value = '';
-            document.querySelector('select[name="date_filter"]').value = '';
-            document.querySelector('select[name="order_by"]').value = 'updated_at:desc';
-            
-            // Actualizar input oculto y enviar formulario
-            tipoInput.value = tipo;
-            filterForm.submit();
-        });
-    });
+    initializeReportesDynamicArea();
     
     console.log('=== SISTEMA DE FILTRADO SERVER-SIDE INICIALIZADO ===');
 
@@ -2324,15 +2658,27 @@ document.addEventListener('DOMContentLoaded', function() {
     // === SISTEMA DE DESCARGA DE ARCHIVOS ===
     document.addEventListener('click', function(e) {
         // Abrir previsualizacion al hacer click en la tarjeta del archivo
-        if (e.target.closest('.archivo-preview-card') && !e.target.closest('.descargar-archivo')) {
+        if (e.target.closest('.archivo-preview-card') && !e.target.closest('.archivo-action') && !e.target.closest('.descargar-archivo')) {
             e.preventDefault();
             const card = e.target.closest('.archivo-preview-card');
             window.openArchivoPreviewFromCard(card, e);
         }
 
+        // Abrir previsualizacion desde el boton flotante
+        if (e.target.closest('.archivo-view')) {
+            e.preventDefault();
+            e.stopPropagation();
+            const card = e.target.closest('.archivo-preview-card');
+            if (card && !e.target.closest('.archivo-view').disabled) {
+                window.openArchivoPreviewFromCard(card, e);
+            }
+            return;
+        }
+
         // Descargar archivo individual
         if (e.target.closest('.descargar-archivo')) {
             e.preventDefault();
+            e.stopPropagation();
             const button = e.target.closest('.descargar-archivo');
             const fileId = button.dataset.fileId;
             
@@ -2370,6 +2716,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (data.success) {
                 // Mostrar toast de éxito
                 showToast('✓ Reporte aprobado correctamente', 'success', 3000);
+                refreshReportesPanel();
                 
                 // Actualizar estado en el modal sin recargar
                 if (dataElement) {
@@ -2454,6 +2801,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (data.success) {
                 // Mostrar toast de éxito
                 showToast('✓ Reporte rechazado correctamente', 'success', 3000);
+                refreshReportesPanel();
                 
                 // Actualizar estado en el modal sin recargar
                 const modal = Array.from(document.querySelectorAll('[id^="modal"]')).find(m => !m.classList.contains('hidden') && m.id !== 'reject-modal' && m.id !== 'delete-modal');
@@ -2508,6 +2856,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (data.success) {
                 // Mostrar toast de éxito
                 showToast('✓ Reporte reenviado para revisión', 'success', 3000);
+                refreshReportesPanel();
                 
                 // Actualizar estado en el modal
                 if (dataElement) {
@@ -2546,47 +2895,34 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
 
-            // Intentar reutilizar el formulario #delete-form que ya existe en la página
-            const deleteForm = document.getElementById('delete-form');
-            if (deleteForm) {
-                deleteForm.action = deleteUrl;
-                // Establecer el redirect_tipo
-                const redirectTipoInput = deleteForm.querySelector('[name="redirect_tipo"]');
-                if (redirectTipoInput) redirectTipoInput.value = redirectTipo;
-                // limpiar motivo si existe
-                const reasonEl = deleteForm.querySelector('[name="deletion_reason"]');
-                if (reasonEl) reasonEl.value = '';
-                deleteForm.submit();
-                return;
-            }
+            const body = new URLSearchParams();
+            body.set('_method', 'DELETE');
+            body.set('redirect_tipo', redirectTipo || new URLSearchParams(window.location.search).get('tipo') || 'todos');
 
-            // Fallback: crear y enviar un formulario POST con _method=DELETE y CSRF
-            const form = document.createElement('form');
-            form.method = 'POST';
-            form.action = deleteUrl;
-            const tokenMeta = document.querySelector('meta[name="csrf-token"]');
-            const token = tokenMeta ? tokenMeta.getAttribute('content') : '';
-
-            const tokenInput = document.createElement('input');
-            tokenInput.type = 'hidden';
-            tokenInput.name = '_token';
-            tokenInput.value = token;
-            form.appendChild(tokenInput);
-
-            const methodInput = document.createElement('input');
-            methodInput.type = 'hidden';
-            methodInput.name = '_method';
-            methodInput.value = 'DELETE';
-            form.appendChild(methodInput);
-
-            const redirectTipoInput = document.createElement('input');
-            redirectTipoInput.type = 'hidden';
-            redirectTipoInput.name = 'redirect_tipo';
-            redirectTipoInput.value = redirectTipo;
-            form.appendChild(redirectTipoInput);
-
-            document.body.appendChild(form);
-            form.submit();
+            fetch(deleteUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'text/html'
+                },
+                body: body.toString()
+            })
+            .then(response => response.text().then(html => ({ response, html })))
+            .then(({ response, html }) => {
+                const replaced = replaceReportesPanelFromHtml(html, response.url || window.location.href, {
+                    push: false,
+                    scroll: false
+                });
+                if (replaced) {
+                    showToast('Publicación eliminada correctamente.', 'success', 3000);
+                }
+            })
+            .catch(error => {
+                console.error('Error eliminando reporte:', error);
+                showToast('Error al eliminar la publicación.', 'error', 3000);
+            });
         }
     });
 
@@ -2675,6 +3011,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const toolbar = document.getElementById('bulk-toolbar');
         const counter = document.getElementById('selected-count');
         const checked = document.querySelectorAll('.publication-check-btn:checked');
+        if (!toolbar || !counter) return;
         
         // Actualizar todas las tarjetas
         document.querySelectorAll('.publication-card-wrapper').forEach(card => {
@@ -2695,92 +3032,93 @@ document.addEventListener('DOMContentLoaded', function() {
             toolbar.style.display = 'none';
         }
     }
-
-    // Event listeners para checkboxes
-    document.querySelectorAll('.publication-check-btn').forEach(checkbox => {
-        checkbox.addEventListener('change', function() {
+    document.addEventListener('change', function(e) {
+        if (e.target.closest('.publication-check-btn') && getReportesPanel()?.contains(e.target)) {
             toggleBulkToolbar();
-        });
+        }
     });
 
-    // Botón para limpiar selección
-    document.getElementById('clear-selection').addEventListener('click', function() {
-        document.querySelectorAll('.publication-check-btn:checked').forEach(checkbox => {
-            checkbox.checked = false;
-        });
-        toggleBulkToolbar();
-    });
-
-    // Botón de eliminación masiva
-    document.getElementById('bulk-delete-reports').addEventListener('click', function() {
-        const checked = document.querySelectorAll('.publication-check-btn:checked');
-        if (checked.length === 0) {
-            alert('Selecciona al menos un reporte.');
+    document.addEventListener('click', function(e) {
+        const clearButton = e.target.closest('#clear-selection');
+        if (clearButton && getReportesPanel()?.contains(clearButton)) {
+            e.preventDefault();
+            document.querySelectorAll('.publication-check-btn:checked').forEach(checkbox => {
+                checkbox.checked = false;
+            });
+            toggleBulkToolbar();
             return;
         }
 
-        const ids = Array.from(checked).map(checkbox => checkbox.dataset.publicationId);
-        
-        if (!confirm(`¿Confirmas eliminar ${ids.length} reporte(s)? Esta acción no se puede deshacer.`)) {
-            return;
-        }
-
-        fetch('{{ route("reportes.massDelete") }}', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-            },
-            body: JSON.stringify({ ids: ids })
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.ok) {
-                alert(`Eliminados: ${data.deleted} reporte(s).${data.skipped > 0 ? ` ${data.skipped} no pudieron ser eliminados por permisos.` : ''}`);
-                window.location.reload();
-            } else {
-                alert(`Error al eliminar: ${data.error}`);
+        const bulkDeleteButton = e.target.closest('#bulk-delete-reports');
+        if (bulkDeleteButton && getReportesPanel()?.contains(bulkDeleteButton)) {
+            e.preventDefault();
+            const checked = document.querySelectorAll('.publication-check-btn:checked');
+            if (checked.length === 0) {
+                alert('Selecciona al menos un reporte.');
+                return;
             }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            alert('Error al eliminar los reportes.');
-        });
-    });
 
-    // Descargar archivos de múltiples reportes
-    document.getElementById('bulk-download-files').addEventListener('click', function() {
-        const checked = document.querySelectorAll('.publication-check-btn:checked');
-        if (checked.length === 0) {
-            alert('Selecciona al menos un reporte.');
+            const ids = Array.from(checked).map(checkbox => checkbox.dataset.publicationId);
+            if (!confirm(`Confirmas eliminar ${ids.length} reporte(s)? Esta accion no se puede deshacer.`)) {
+                return;
+            }
+
+            fetch('{{ route("reportes.massDelete") }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({ ids: ids })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.ok) {
+                    showToast(`Eliminados: ${data.deleted} reporte(s).${data.skipped > 0 ? ` ${data.skipped} no pudieron ser eliminados por permisos.` : ''}`, 'success', 3500);
+                    refreshReportesPanel();
+                } else {
+                    showToast(`Error al eliminar: ${data.error}`, 'error', 3500);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showToast('Error al eliminar los reportes.', 'error', 3500);
+            });
             return;
         }
 
-        const ids = Array.from(checked).map(checkbox => checkbox.dataset.publicationId);
-        
-        // Crear un formulario hidden para enviar el POST
-        const form = document.createElement('form');
-        form.method = 'POST';
-        form.action = '{{ route("reportes.massDownloadFiles") }}';
-        
-        // Agregar token CSRF
-        const csrfInput = document.createElement('input');
-        csrfInput.type = 'hidden';
-        csrfInput.name = '_token';
-        csrfInput.value = document.querySelector('meta[name="csrf-token"]').content;
-        form.appendChild(csrfInput);
-        
-        // Agregar IDs
-        const idsInput = document.createElement('input');
-        idsInput.type = 'hidden';
-        idsInput.name = 'publication_ids';
-        idsInput.value = JSON.stringify(ids);
-        form.appendChild(idsInput);
-        
-        // Enviar formulario
-        document.body.appendChild(form);
-        form.submit();
-        form.remove();
+        const bulkDownloadButton = e.target.closest('#bulk-download-files');
+        if (bulkDownloadButton && getReportesPanel()?.contains(bulkDownloadButton)) {
+            e.preventDefault();
+            const checked = document.querySelectorAll('.publication-check-btn:checked');
+            if (checked.length === 0) {
+                alert('Selecciona al menos un reporte.');
+                return;
+            }
+
+            const ids = Array.from(checked).map(checkbox => checkbox.dataset.publicationId);
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = '{{ route("reportes.massDownloadFiles") }}';
+
+            const csrfInput = document.createElement('input');
+            csrfInput.type = 'hidden';
+            csrfInput.name = '_token';
+            csrfInput.value = document.querySelector('meta[name="csrf-token"]').content;
+            form.appendChild(csrfInput);
+
+            const idsInput = document.createElement('input');
+            idsInput.type = 'hidden';
+            idsInput.name = 'publication_ids';
+            idsInput.value = JSON.stringify(ids);
+            form.appendChild(idsInput);
+
+            document.body.appendChild(form);
+            form.submit();
+            form.remove();
+        }
     });
 
     // === ABRIR REPORTE DESDE PARÁMETROS DE URL (desde notificaciones) ===
@@ -2858,6 +3196,74 @@ document.addEventListener('DOMContentLoaded', function() {
         visibility: hidden !important;
     }
 
+    .district-filter-field {
+        position: relative;
+    }
+
+    .district-filter-field > label {
+        margin-bottom: 0.25rem !important;
+        transform: translateY(5px);
+    }
+
+    .district-filter-field .ts-wrapper {
+        display: block !important;
+        width: 100% !important;
+        flex: 0 0 auto;
+        transform: translateY(6px);
+    }
+
+    .district-filter-field .ts-control,
+    .district-select-skeleton {
+        height: 30px !important;
+        min-height: 30px !important;
+        max-height: 30px !important;
+    }
+
+    .district-select-skeleton {
+        width: 100%;
+        border: 1px solid #404041;
+        border-radius: 0.5rem;
+        padding: 0.375rem 28px 0.375rem 0.75rem;
+        background: #ffffff;
+        color: #1f2937;
+        font-size: 0.75rem;
+        line-height: 1rem;
+        font-family: inherit;
+        display: flex;
+        align-items: center;
+        box-sizing: border-box;
+        position: relative;
+        transform: translateY(6px);
+        overflow: hidden;
+        white-space: nowrap;
+    }
+
+    .district-select-skeleton span {
+        display: block;
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .district-select-skeleton::after {
+        content: "▾";
+        position: absolute;
+        right: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #404041;
+        font-size: 0.6rem;
+        pointer-events: none;
+    }
+
+    .district-filter-field:not(.tomselect-ready) .ts-wrapper {
+        display: none !important;
+    }
+
+    .district-filter-field.tomselect-ready .district-select-skeleton {
+        display: none !important;
+    }
+
     .ts-wrapper { 
         display: contents !important;
         z-index: 9999 !important;
@@ -2890,6 +3296,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     .ts-control input::placeholder {
         color: #1f2937 !important;
+        opacity: 1 !important;
     }
 
     .ts-control .item {
@@ -2959,16 +3366,32 @@ document.addEventListener('DOMContentLoaded', function() {
 
 <script>
     // Initialize TomSelect for district filter
-    document.addEventListener('DOMContentLoaded', function() {
+    window.initializeReportesTomSelect = function() {
+        if (typeof TomSelect === 'undefined') return;
         const tomSelectElements = document.querySelectorAll('.tomselect-select');
         tomSelectElements.forEach(select => {
+            const field = select.closest('.district-filter-field');
+            field?.classList.remove('tomselect-ready');
+            select.style.display = 'none';
+            select.style.visibility = 'hidden';
+
+            if (select.tomselect) {
+                select.tomselect.destroy();
+            }
+
+            const staleWrapper = select.nextElementSibling;
+            if (staleWrapper?.classList.contains('ts-wrapper')) {
+                staleWrapper.remove();
+            }
+
             const instance = new TomSelect(select, {
                 create: false,
                 placeholder: select.dataset.placeholder || 'Selecciona una opción',
                 maxItems: select.hasAttribute('multiple') ? null : 1,
                 hidePlaceholder: true,
                 searchField: ['text', 'value'],
-                closeAfterSelect: true
+                closeAfterSelect: true,
+                dropdownParent: 'body'
             });
 
             // Posicionar el dropdown correctamente
@@ -2977,13 +3400,15 @@ document.addEventListener('DOMContentLoaded', function() {
 
             const positionDropdown = () => {
                 const rect = control.getBoundingClientRect();
-                dropdown.style.top = rect.bottom + 'px';
-                dropdown.style.left = rect.left + 'px';
-                dropdown.style.width = rect.width + 'px';
+                dropdown.style.top = `${rect.bottom}px`;
+                dropdown.style.left = `${rect.left}px`;
+                dropdown.style.width = `${rect.width}px`;
             };
 
             // Posicionar cuando se abre
             instance.on('dropdown_open', positionDropdown);
+            instance.on('type', positionDropdown);
+            instance.on('load', positionDropdown);
             
             // Re-posicionar al hacer scroll
             window.addEventListener('scroll', () => {
@@ -3003,6 +3428,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 ctrl.style.maxHeight = refHeight + 'px';
             });
         }
-    });
+
+        document.querySelectorAll('.district-filter-field').forEach(field => {
+            field.classList.add('tomselect-ready');
+        });
+    };
+
+    document.addEventListener('DOMContentLoaded', window.initializeReportesTomSelect);
 </script>
 @endsection

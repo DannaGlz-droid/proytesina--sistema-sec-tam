@@ -27,7 +27,7 @@ class InjuryObservatoryReportRequest extends FormRequest
         $isUpdate = $publication !== null;
 
         return [
-            'tema' => 'required|string|min:3|max:255',
+            'tema' => 'required|string|min:3|max:150',
             'fecha' => 'required|date|before_or_equal:today',
             'municipio' => 'required|exists:municipalities,id',
             'jurisdiccion' => 'required|exists:districts,id',
@@ -48,9 +48,7 @@ class InjuryObservatoryReportRequest extends FormRequest
     {
         return [
             function ($validator) {
-                // Solo validar en modo actualización
-                if ($this->route('publication')) {
-                    $publication = $this->route('publication');
+                $publication = $this->route('publication');
                     
                     // Obtener archivos a eliminar
                     $filesToDeleteIds = [];
@@ -62,9 +60,9 @@ class InjuryObservatoryReportRequest extends FormRequest
                     }
                     
                     // Contar archivos existentes que NO van a ser eliminados
-                    $remainingFiles = $publication->files
-                        ->whereNotIn('id', $filesToDeleteIds)
-                        ->all();
+                    $remainingFiles = $publication
+                        ? $publication->files->whereNotIn('id', $filesToDeleteIds)->all()
+                        : [];
                     
                     // Contar archivos nuevos por tipo
                     $newFiles = $this->file('archivos', []);
@@ -92,7 +90,6 @@ class InjuryObservatoryReportRequest extends FormRequest
                     if ($excelCount < $requirements['required_files']['excel']['min']) {
                         $validator->errors()->add('archivos', $missingMessage);
                     }
-                }
             },
         ];
     }
@@ -107,7 +104,7 @@ class InjuryObservatoryReportRequest extends FormRequest
         return [
             'tema.required' => 'El tema es obligatorio.',
             'tema.min' => 'El tema debe tener al menos 3 caracteres.',
-            'tema.max' => 'El tema no puede exceder 255 caracteres.',
+            'tema.max' => 'El tema no puede exceder 150 caracteres.',
             'fecha.required' => 'La fecha de la actividad es obligatoria.',
             'fecha.date' => 'La fecha debe ser una fecha válida.',
             'fecha.before_or_equal' => 'La fecha no puede ser futura.',
