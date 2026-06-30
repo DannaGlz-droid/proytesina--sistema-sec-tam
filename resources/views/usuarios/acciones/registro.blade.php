@@ -31,6 +31,7 @@
                                         class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora" 
                                         placeholder="Ej: María Elena"
                                         value="{{ old('name') }}">
+                                    @error('name') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
                                 </div>
                                 <div>
                                     <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Apellido materno</label>
@@ -38,6 +39,7 @@
                                         class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora" 
                                         placeholder="Ej: López"
                                         value="{{ old('second_last_name') }}">
+                                    @error('second_last_name') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
                                 </div>
                             </div>
                             
@@ -48,6 +50,7 @@
                                         class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora" 
                                         placeholder="Ej: García"
                                         value="{{ old('first_last_name') }}">
+                                    @error('first_last_name') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
                                 </div>
                                 <div>
                                     <div class="grid grid-cols-2 gap-3">
@@ -57,13 +60,15 @@
                                                 class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora"
                                                 placeholder="Ej: usuario@ejemplo.com"
                                                 value="{{ old('email') }}">
+                                            @error('email') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
                                         </div>
                                         <div>
                                             <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Teléfono</label>
-                                            <input id="phone" name="phone" type="tel" maxlength="20" pattern="[0-9+\-\(\)\s]{8,20}" inputmode="tel" autocomplete="tel"
+                                            <input id="phone" name="phone" type="tel" maxlength="10" pattern="[0-9]{10}" inputmode="numeric" autocomplete="tel" title="Capture exactamente 10 dígitos, sin espacios ni guiones"
                                                 class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora"
-                                                placeholder="Ej: 8123456789"
+                                                placeholder="10 dígitos, sin espacios"
                                                 value="{{ old('phone') }}">
+                                            @error('phone') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
                                         </div>
                                     </div>
                                 </div>
@@ -93,8 +98,8 @@
                                                 <option value="{{ $p->id }}" {{ old('position_id') == $p->id ? 'selected' : '' }}>{{ $p->name }}</option>
                                             @endforeach
                                         @endif
-                                        <option value="0">No definido</option>
                                     </select>
+                                    @error('position_id') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
                                 </div>
                             </div>
                             
@@ -109,6 +114,7 @@
                                             @endforeach
                                         @endif
                                     </select>
+                                    @error('district_id') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
                                 </div>
                             </div>
                         </div>
@@ -133,6 +139,7 @@
                                         class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora" 
                                         placeholder="Ej: mgarcia"
                                         value="{{ old('username') }}">
+                                    @error('username') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
                                 </div>
                                 <div>
                                     <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Contraseña <span class="text-red-600">*</span></label>
@@ -147,6 +154,7 @@
                                             <ion-icon name="eye-outline" class="text-lg"></ion-icon>
                                         </button>
                                     </div>
+                                    @error('password') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
                                 </div>
                             </div>
                             
@@ -161,6 +169,7 @@
                                             @endforeach
                                         @endif
                                     </select>
+                                    @error('role_id') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
                                 </div>
                                 <div>
                                     <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Confirmar contraseña <span class="text-red-600">*</span></label>
@@ -175,6 +184,7 @@
                                             <ion-icon name="eye-outline" class="text-lg"></ion-icon>
                                         </button>
                                     </div>
+                                    @error('password_confirmation') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
                                 </div>
                             </div>
                         </div>
@@ -195,7 +205,7 @@
                             <ul class="text-xs text-gray-600 space-y-1 font-lora">
                                 <li class="flex items-center">
                                     <ion-icon name="checkmark-circle-outline" class="text-green-500 mr-2"></ion-icon>
-                                    Mínimo 8 caracteres
+                                    Mínimo 12 caracteres
                                 </li>
                                 <li class="flex items-center">
                                     <ion-icon name="checkmark-circle-outline" class="text-green-500 mr-2"></ion-icon>
@@ -302,7 +312,7 @@
             let color = '';
             let text = '';
             
-            if (password.length >= 8) strength++;
+            if (password.length >= 12) strength++;
             if (/[a-z]/.test(password)) strength++;
             if (/[A-Z]/.test(password)) strength++;
             if (/[0-9]/.test(password)) strength++;
@@ -350,12 +360,18 @@
         });
 
             // Función para limpiar todos los campos del formulario actual (específica para registro de usuarios)
-            function clearRegistroForm(event) {
+            async function clearRegistroForm(event) {
                 event.preventDefault();
                 // Buscar el formulario más cercano al botón
                 const btn = event.currentTarget || event.target;
                 const form = btn.closest('form');
                 if (!form) return;
+
+                const canClear = window.confirmFormClear
+                    ? await window.confirmFormClear(form, 0)
+                    : true;
+
+                if (!canClear) return;
 
                 // Resetear el formulario nativo
                 form.reset();
@@ -365,12 +381,21 @@
                 elements.forEach(el => {
                     if (el.tagName.toLowerCase() === 'select') {
                         el.selectedIndex = 0;
+                        if (el.tomselect) {
+                            el.tomselect.clear(true);
+                            el.tomselect.setTextboxValue('');
+                            el.tomselect.refreshItems();
+                        }
                     } else if (el.type === 'checkbox' || el.type === 'radio') {
                         el.checked = false;
                     } else {
                         el.value = '';
                     }
                 });
+
+                if (typeof window.resetUsuarioRegistroTomSelects === 'function') {
+                    window.resetUsuarioRegistroTomSelects();
+                }
 
                 // Resetear indicadores de fortaleza y texto
                 const strengthBar = document.getElementById('password-strength-bar');
@@ -387,6 +412,10 @@
                 // Enfocar el primer campo
                 const firstInput = form.querySelector('input, select, textarea');
                 if (firstInput) firstInput.focus();
+
+                if (typeof window.showToast === 'function') {
+                    window.showToast('Formulario limpiado', 'info', 2400);
+                }
             }
     </script>
 
@@ -527,10 +556,10 @@
             min-height: 36px !important;
             transform: none !important;
         }
-        /* (No chevron unification) keep native select appearance for non-TomSelect selects */
     </style>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
+            const form = document.querySelector('form');
             const pos = document.getElementById('position_select');
             if (pos) {
                 try {
@@ -564,6 +593,105 @@
                     console.warn('TomSelect init failed for #district_id', e);
                 }
             }
+
+            function getTomSelectWrapper(select) {
+                return select?.tomselect?.wrapper || select?.nextElementSibling || null;
+            }
+
+            function getTomSelectValidityInput(select) {
+                return select?.tomselect?.control_input || select?.tomselect?.input || select || null;
+            }
+
+            function showTomSelectError(select, message) {
+                const validityInput = getTomSelectValidityInput(select);
+                if (validityInput?.setCustomValidity) {
+                    validityInput.setCustomValidity(message);
+                }
+            }
+
+            function clearTomSelectError(select) {
+                const validityInput = getTomSelectValidityInput(select);
+                if (validityInput?.setCustomValidity) {
+                    validityInput.setCustomValidity('');
+                }
+            }
+
+            function reportTomSelectValidity(select) {
+                if (select?.tomselect) {
+                    select.tomselect.focus();
+                }
+
+                const validityInput = getTomSelectValidityInput(select);
+                if (validityInput?.reportValidity) {
+                    validityInput.reportValidity();
+                } else if (select?.reportValidity) {
+                    select.reportValidity();
+                }
+            }
+
+            function validateRequiredTomSelect(select, message) {
+                if (!select || !select.hasAttribute('required') || select.value) {
+                    if (select) clearTomSelectError(select);
+                    return true;
+                }
+
+                showTomSelectError(select, message);
+                return false;
+            }
+
+            function validateUsuarioRegistroTomSelects(focusFirst = false) {
+                const requiredSelects = [
+                    { select: pos, message: 'Seleccione un cargo.' },
+                    { select: dist, message: 'Seleccione un distrito.' },
+                ];
+                let firstInvalid = null;
+
+                requiredSelects.forEach(({ select, message }) => {
+                    if (!validateRequiredTomSelect(select, message) && !firstInvalid) {
+                        firstInvalid = select;
+                    }
+                });
+
+                if (firstInvalid && focusFirst) {
+                    reportTomSelectValidity(firstInvalid);
+                }
+
+                return !firstInvalid;
+            }
+
+            window.resetUsuarioRegistroTomSelects = function() {
+                [pos, dist].forEach(select => {
+                    clearTomSelectError(select);
+                    if (select?.tomselect) {
+                        select.tomselect.clear(true);
+                        select.tomselect.setTextboxValue('');
+                        select.tomselect.refreshItems();
+                    } else if (select) {
+                        select.value = '';
+                    }
+                });
+            };
+
+            [pos, dist].forEach(select => {
+                if (!select) return;
+                select.addEventListener('change', () => clearTomSelectError(select));
+                select.addEventListener('invalid', function(event) {
+                    event.preventDefault();
+                    const message = select === pos ? 'Seleccione un cargo.' : 'Seleccione un distrito.';
+                    showTomSelectError(select, message);
+                    requestAnimationFrame(() => reportTomSelectValidity(select));
+                });
+                if (select.tomselect) {
+                    select.tomselect.on('change', () => clearTomSelectError(select));
+                }
+            });
+
+            form?.addEventListener('submit', function(event) {
+                if (!validateUsuarioRegistroTomSelects(true)) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                }
+            });
         });
     </script>
 

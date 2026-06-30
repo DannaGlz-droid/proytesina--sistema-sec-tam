@@ -27,6 +27,7 @@
                     <option value="7" {{ request('last_session') === '7' ? 'selected' : '' }}>Últimos 7 días</option>
                     <option value="30" {{ request('last_session') === '30' ? 'selected' : '' }}>Últimos 30 días</option>
                     <option value="90" {{ request('last_session') === '90' ? 'selected' : '' }}>Últimos 90 días</option>
+                    <option value="365" {{ request('last_session') === '365' ? 'selected' : '' }}>Último año</option>
                     <option value="never" {{ request('last_session') === 'never' ? 'selected' : '' }}>Nunca</option>
                 </select>
             </div>
@@ -43,6 +44,7 @@
                 <option value="30days" {{ request('date_range') === '30days' ? 'selected' : '' }}>Últimos 30 días</option>
                 <option value="90days" {{ request('date_range') === '90days' ? 'selected' : '' }}>Últimos 90 días</option>
                 <option value="6months" {{ request('date_range') === '6months' ? 'selected' : '' }}>Últimos 6 meses</option>
+                <option value="1year" {{ request('date_range') === '1year' ? 'selected' : '' }}>Último año</option>
                 <option value="custom" {{ request('date_range') === 'custom' ? 'selected' : '' }}>Personalizado</option>
             </select>
         </div>
@@ -66,11 +68,10 @@
             <select name="position_id" class="w-full border border-[#404041] rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-[#611132] focus:border-[#611132]" id="cargo">
                 <option value="" {{ request('position_id') === null || request('position_id') === '' ? 'selected' : '' }}>Todos los cargos</option>
                 @if(isset($positions) && $positions->isNotEmpty())
-                    @foreach($positions as $pos)
+                    @foreach($positions->reject(fn($pos) => in_array(mb_strtolower(trim((string) $pos->name)), ['administrador', 'admin', 'no definido'], true)) as $pos)
                         <option value="{{ $pos->id }}" {{ (string) request('position_id') === (string) $pos->id ? 'selected' : '' }}>{{ $pos->name }}</option>
                     @endforeach
                 @else
-                    <option>Administrador</option>
                     <option>Coordinador</option>
                     <option>Supervisor</option>
                     <option>Analista</option>

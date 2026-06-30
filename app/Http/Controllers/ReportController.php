@@ -155,18 +155,27 @@ class ReportController extends Controller
             $orderBy = $orderParam;
             $orderDir = $request->input('order_dir', 'desc');
         }
+        $orderDir = strtolower($orderDir) === 'asc' ? 'asc' : 'desc';
 
         // Mapear valores lógicos a columnas reales
         if ($orderBy === 'titulo') {
-            $query->orderBy('topic', $orderDir);
+            $query->orderBy('topic', $orderDir)
+                  ->orderBy('publications.id', $orderDir);
         } elseif ($orderBy === 'usuario') {
             // ordenar por nombre de usuario (join)
             $query->join('users', 'publications.user_id', '=', 'users.id')
                   ->orderBy('users.name', $orderDir)
+                  ->orderBy('publications.id', $orderDir)
                   ->select('publications.*');
         } else {
-            // Por defecto: usar la columna solicitada (p. ej. updated_at)
-            $query->orderBy($orderBy, $orderDir);
+            $allowedOrderColumns = ['updated_at', 'created_at', 'publication_date'];
+            if (!in_array($orderBy, $allowedOrderColumns, true)) {
+                $orderBy = 'updated_at';
+                $orderDir = 'desc';
+            }
+
+            $query->orderBy("publications.{$orderBy}", $orderDir)
+                  ->orderBy('publications.id', $orderDir);
         }
 
         $publications = $query->paginate(12)->withQueryString();
@@ -724,6 +733,8 @@ class ReportController extends Controller
                 }
             }
 
+            $publication->touch();
+
             DB::commit();
 
             return redirect()
@@ -945,6 +956,8 @@ class ReportController extends Controller
                     $this->storeFile($archivos, $publication, 'observatorio');
                 }
             }
+
+            $publication->touch();
 
             DB::commit();
 
@@ -1174,6 +1187,8 @@ class ReportController extends Controller
                 }
             }
 
+            $publication->touch();
+
             DB::commit();
 
             return redirect()
@@ -1365,6 +1380,8 @@ class ReportController extends Controller
                     $this->storeFile($file, $publication, 'grupos-vulnerables');
                 }
             }
+
+            $publication->touch();
 
             DB::commit();
 

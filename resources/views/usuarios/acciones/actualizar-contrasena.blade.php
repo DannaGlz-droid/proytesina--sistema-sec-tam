@@ -10,17 +10,28 @@
         <p class="text-sm lg:text-base text-[#404041] font-lora mb-6">Modifique la contraseña de acceso para el usuario registrado.</p>
 
         <!-- Información del usuario -->
-        <div class="mb-6 p-4 bg-gray-100 rounded-lg border border-gray-300 max-w-7xl">
-            <div class="flex items-center">
-                <ion-icon name="person-circle-outline" class="text-2xl text-gray-600 mr-3"></ion-icon>
-                <div>
-                    <h3 class="text-sm lg:text-base font-medium text-[#404041] font-lora">
-                        Usuario: {{ $user->name  }} {{ $user->first_last_name }} {{ $user->second_last_name }}
+        <div class="mb-6 max-w-7xl rounded-lg border border-gray-300 bg-gray-50 px-4 py-3">
+            <div class="flex flex-col gap-3 sm:flex-row sm:items-center">
+                <img
+                    src="{{ $user->profile_photo_path ? asset('storage/' . $user->profile_photo_path) : asset('images/default_pfp.svg.png') }}"
+                    alt="Foto de {{ $user->full_name ?: $user->username }}"
+                    class="h-14 w-14 flex-none rounded-full border-2 border-[#611132] bg-white object-cover"
+                >
+                <div class="min-w-0 flex-1">
+                    <p class="text-[11px] font-lora font-semibold uppercase tracking-wide text-[#611132]">Cuenta a modificar</p>
+                    <h3 class="mt-0.5 break-words font-lora text-base font-bold leading-snug text-[#404041]">
+                        {{ $user->full_name ?: $user->username }}
                     </h3>
-                    <p class="text-xs text-gray-600 mt-1 font-lora">
-                        Correo: {{ $user->email }} | 
-                        Usuario: {{ $user->username }}
-                    </p>
+                    <div class="mt-2 grid grid-cols-1 gap-2 text-xs text-gray-600 sm:grid-cols-2">
+                        <div class="flex min-w-0 items-center gap-2">
+                            <ion-icon name="mail-outline" class="flex-none text-sm text-[#611132]"></ion-icon>
+                            <span class="min-w-0 break-all">{{ $user->email }}</span>
+                        </div>
+                        <div class="flex min-w-0 items-center gap-2">
+                            <ion-icon name="person-outline" class="flex-none text-sm text-[#611132]"></ion-icon>
+                            <span class="min-w-0 break-all">{{ $user->username }}</span>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -53,15 +64,15 @@
                         autocomplete="new-password"
                                        class="w-full px-3 py-2 pr-10 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora" 
                                        placeholder="Ingrese la nueva contraseña">
-                    @error('password')
-                     <p class="text-xs text-red-600 mt-1">{{ $message }}</p>
-                    @enderror
                                 <button type="button" 
                                         onclick="togglePassword('password')"
                                         class="absolute inset-y-0 right-0 flex items-center justify-center w-10 text-gray-500 hover:text-[#404041] transition-colors duration-200">
                                     <ion-icon name="eye-outline" class="text-lg"></ion-icon>
                                 </button>
                             </div>
+                            @error('password')
+                                <p class="text-xs text-red-600 mt-1">{{ $message }}</p>
+                            @enderror
                         </div>
                     </div>
                     
@@ -78,15 +89,15 @@
                         autocomplete="new-password"
                                        class="w-full px-3 py-2 pr-10 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora" 
                                        placeholder="Confirme la nueva contraseña">
-                    @error('password_confirmation')
-                     <p class="text-xs text-red-600 mt-1">{{ $message }}</p>
-                    @enderror
                                 <button type="button" 
                                         onclick="togglePassword('password_confirmation')"
                                         class="absolute inset-y-0 right-0 flex items-center justify-center w-10 text-gray-500 hover:text-[#404041] transition-colors duration-200">
                                     <ion-icon name="eye-outline" class="text-lg"></ion-icon>
                                 </button>
                             </div>
+                            @error('password_confirmation')
+                                <p class="text-xs text-red-600 mt-1">{{ $message }}</p>
+                            @enderror
                         </div>
                     </div>
                 </div>
@@ -107,7 +118,7 @@
                     <ul class="text-xs text-gray-600 space-y-1 font-lora">
                         <li class="flex items-center">
                             <ion-icon name="checkmark-circle-outline" class="text-green-500 mr-2"></ion-icon>
-                            Mínimo 8 caracteres
+                            Mínimo 12 caracteres
                         </li>
                         <li class="flex items-center">
                             <ion-icon name="checkmark-circle-outline" class="text-green-500 mr-2"></ion-icon>
@@ -196,6 +207,8 @@
             
             // Actualizar indicador de fortaleza
             checkPasswordStrength(password);
+            document.getElementById('password').setCustomValidity('');
+            document.getElementById('password_confirmation').setCustomValidity('');
         }
 
         // Función para verificar fortaleza de contraseña
@@ -252,6 +265,67 @@
         // Inicializar el indicador de fortaleza
         document.addEventListener('DOMContentLoaded', function() {
             checkPasswordStrength('');
+
+            const form = document.querySelector('form');
+            const passwordField = document.getElementById('password');
+            const confirmPasswordField = document.getElementById('password_confirmation');
+
+            @if($errors->any())
+                const errors = @json($errors->messages());
+                const fieldMap = {
+                    'password': 'password',
+                    'password_confirmation': 'password_confirmation'
+                };
+
+                Object.keys(errors).forEach(fieldName => {
+                    const fieldId = fieldMap[fieldName];
+                    if (!fieldId) return;
+
+                    const field = document.getElementById(fieldId);
+                    if (field && errors[fieldName][0]) {
+                        field.setCustomValidity(errors[fieldName][0]);
+                        field.reportValidity();
+                    }
+                });
+
+                const firstErrorField = Object.keys(errors)[0];
+                if (firstErrorField && fieldMap[firstErrorField]) {
+                    const field = document.getElementById(fieldMap[firstErrorField]);
+                    if (field) {
+                        field.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        field.focus();
+                    }
+                }
+            @endif
+
+            function validatePasswordMatch() {
+                if (!passwordField || !confirmPasswordField) return true;
+
+                if (confirmPasswordField.value && confirmPasswordField.value !== passwordField.value) {
+                    confirmPasswordField.setCustomValidity('Las contraseñas no coinciden');
+                    return false;
+                }
+
+                confirmPasswordField.setCustomValidity('');
+                return true;
+            }
+
+            [passwordField, confirmPasswordField].forEach(field => {
+                if (!field) return;
+
+                field.addEventListener('input', function() {
+                    this.setCustomValidity('');
+                    validatePasswordMatch();
+                });
+            });
+
+            form?.addEventListener('submit', function(event) {
+                if (!validatePasswordMatch()) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    confirmPasswordField.reportValidity();
+                }
+            });
         });
     </script>
 

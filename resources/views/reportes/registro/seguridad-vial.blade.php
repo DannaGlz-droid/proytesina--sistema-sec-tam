@@ -734,9 +734,12 @@
             updateCounterDisplay('photos', photoCount, 4);
         }
         
-        function clearSeguridadVialForm() {
-            if (confirm('¿Está seguro de que desea limpiar todos los campos del formulario?')) {
-                const form = document.getElementById('seguridadVialForm');
+        async function clearSeguridadVialForm() {
+            const form = document.getElementById('seguridadVialForm');
+            const canClear = window.confirmFormClear
+                ? await window.confirmFormClear(form, selectedFiles.length)
+                : false;
+            if (canClear) {
                 if (form) {
                     form.reset();
                 }
@@ -754,6 +757,10 @@
                 
                 if (typeof window.resetSeguridadVialTomSelects === 'function') {
                     window.resetSeguridadVialTomSelects();
+                }
+
+                if (typeof window.showToast === 'function') {
+                    window.showToast('Formulario limpiado', 'info', 2400);
                 }
             }
         }
@@ -1075,12 +1082,7 @@
             function showTomSelectError(select, message) {
                 if (!select) return;
 
-                const wrapper = getTomSelectWrapper(select);
                 const validityInput = getTomSelectValidityInput(select);
-
-                if (wrapper) {
-                    wrapper.classList.add('border-red-500', 'ring-2', 'ring-red-100');
-                }
 
                 if (validityInput) {
                     validityInput.setCustomValidity(message);
@@ -1090,12 +1092,7 @@
             function clearTomSelectError(select) {
                 if (!select) return;
 
-                const wrapper = getTomSelectWrapper(select);
                 const validityInput = getTomSelectValidityInput(select);
-
-                if (wrapper) {
-                    wrapper.classList.remove('border-red-500', 'ring-2', 'ring-red-100');
-                }
 
                 if (validityInput) {
                     validityInput.setCustomValidity('');

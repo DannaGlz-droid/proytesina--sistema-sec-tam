@@ -88,12 +88,6 @@
                     {{-- cargo removed from card; shown in modal only --}}
                 </div>
             </div>
-            @if(!empty($actualizado))
-                <div class="flex items-center gap-2 text-gray-500 text-xs font-lora mt-2">
-                    <i class="fas fa-edit text-[#404041] w-4"></i>
-                    <span class="block truncate" title="Última actualización: {{ $actualizado }}">Actualizado: <span class="font-semibold">{{ $actualizado }}</span></span>
-                </div>
-            @endif
         </div>
     </div>
 

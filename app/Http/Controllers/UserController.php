@@ -18,6 +18,13 @@ use Illuminate\Validation\Rules\Password;
 
 class UserController extends Controller
 {
+    private function allowedPositions()
+    {
+        return Position::whereNotIn(DB::raw('LOWER(name)'), ['administrador', 'admin', 'no definido'])
+            ->orderBy('name')
+            ->get();
+    }
+
     /**
      * Search users by name (for AJAX autocomplete in filters)
      */
@@ -182,6 +189,7 @@ class UserController extends Controller
                 '30days' => 30,
                 '90days' => 90,
                 '6months' => 180,
+                '1year' => 365,
             ];
             if (isset($daysMap[$dr])) {
                 $days = $daysMap[$dr];
@@ -217,7 +225,7 @@ class UserController extends Controller
                        ->withQueryString();
 
         // lookup data for filters
-        $positions = Position::all();
+        $positions = $this->allowedPositions();
         $districts = District::all();
         $roles = Role::all();
 
@@ -246,25 +254,27 @@ class UserController extends Controller
         $orderColIdx = isset($order[0]['column']) ? (int) $order[0]['column'] : 1;
         $orderDir = isset($order[0]['dir']) && in_array(strtolower($order[0]['dir']), ['asc','desc']) ? $order[0]['dir'] : 'desc';
 
-        // Map DataTables column index to DB column name (account for checkbox column at index 0)
+        // Map DataTables column index to DB column name (details + checkbox columns first)
         $columnsMap = [
-            0 => 'id', // checkbox
-            1 => 'id',
-            2 => 'username',
-            3 => 'name',
-            4 => 'first_last_name',
-            5 => 'second_last_name',
-            6 => 'email',
-            7 => 'phone',
-            8 => 'position_id',
-            9 => 'district_id',
-            10 => 'registration_date',
-            11 => 'role_id',
-            12 => 'is_active',
-            13 => 'last_session',
+            0 => 'id', // details toggle
+            1 => 'id', // checkbox
+            2 => 'id',
+            3 => 'username',
+            4 => 'name',
+            5 => 'first_last_name',
+            6 => 'second_last_name',
+            7 => 'email',
+            8 => null,
+            9 => 'position_id',
+            10 => 'district_name',
+            11 => 'registration_date',
+            12 => 'role_id',
+            13 => 'is_active',
+            14 => 'last_session',
         ];
 
         $orderColumn = $columnsMap[$orderColIdx] ?? 'id';
+        $orderColumn = $orderColumn ?: 'id';
 
         $query = User::query();
 
@@ -323,6 +333,7 @@ class UserController extends Controller
                 '30days' => 30,
                 '90days' => 90,
                 '6months' => 180,
+                '1year' => 365,
             ];
             if (isset($daysMap[$dr])) {
                 $days = $daysMap[$dr];
@@ -340,9 +351,38 @@ class UserController extends Controller
         $recordsTotal = User::count();
         $recordsFiltered = $query->count();
 
-        $users = $query->with(['role', 'position', 'district'])
-                       ->orderBy($orderColumn, $orderDir)
-                       ->skip($start)
+        $query->with(['role', 'position', 'district']);
+
+        if ($orderColumn === 'district_name') {
+            $districtOrderCase = "
+                CASE
+                    WHEN order_districts.name LIKE 'I -%' OR order_districts.name LIKE 'I-%' THEN 1
+                    WHEN order_districts.name LIKE 'II -%' OR order_districts.name LIKE 'II-%' THEN 2
+                    WHEN order_districts.name LIKE 'III -%' OR order_districts.name LIKE 'III-%' THEN 3
+                    WHEN order_districts.name LIKE 'IV -%' OR order_districts.name LIKE 'IV-%' THEN 4
+                    WHEN order_districts.name LIKE 'V -%' OR order_districts.name LIKE 'V-%' THEN 5
+                    WHEN order_districts.name LIKE 'VI -%' OR order_districts.name LIKE 'VI-%' THEN 6
+                    WHEN order_districts.name LIKE 'VII -%' OR order_districts.name LIKE 'VII-%' THEN 7
+                    WHEN order_districts.name LIKE 'VIII -%' OR order_districts.name LIKE 'VIII-%' THEN 8
+                    WHEN order_districts.name LIKE 'IX -%' OR order_districts.name LIKE 'IX-%' THEN 9
+                    WHEN order_districts.name LIKE 'X -%' OR order_districts.name LIKE 'X-%' THEN 10
+                    WHEN order_districts.name LIKE 'XI -%' OR order_districts.name LIKE 'XI-%' THEN 11
+                    WHEN order_districts.name LIKE 'XII -%' OR order_districts.name LIKE 'XII-%' THEN 12
+                    ELSE 999
+                END
+            ";
+
+            $query->leftJoin('districts as order_districts', 'order_districts.id', '=', 'users.district_id')
+                ->select('users.*')
+                ->orderByRaw("CASE WHEN ({$districtOrderCase}) = 999 THEN 1 ELSE 0 END ASC")
+                ->orderByRaw("({$districtOrderCase}) " . strtoupper($orderDir))
+                ->orderBy('order_districts.name')
+                ->orderBy('users.username');
+        } else {
+            $query->orderBy($orderColumn, $orderDir);
+        }
+
+        $users = $query->skip($start)
                        ->take($length)
                        ->get();
 
@@ -366,21 +406,57 @@ class UserController extends Controller
             $isActive = (bool) $user->is_active;
             $statusText = $isActive ? 'Activo' : 'Inactivo';
             $statusDot = $isActive ? 'bg-emerald-500' : 'bg-rose-500';
+            $hasActiveSession = DB::table('sessions')
+                ->where('user_id', $user->id)
+                ->where('last_activity', '>=', now()->subHours(24)->timestamp)
+                ->exists();
+
+            if ($hasActiveSession) {
+                $lastSession = '<span class="dt-session-badge dt-session-online" title="Sesión activa">En línea</span>';
+            } elseif ($user->last_session) {
+                try {
+                    $lastSessionDate = $user->last_session instanceof \DateTimeInterface
+                        ? \Carbon\Carbon::instance($user->last_session)
+                        : \Carbon\Carbon::parse($user->last_session);
+                    $diff = $lastSessionDate->diff(now());
+
+                    if ($diff->y > 0) {
+                        $shortDiff = $diff->y . ' a';
+                    } elseif ($diff->m > 0) {
+                        $shortDiff = $diff->m . ' m';
+                    } elseif ($diff->d > 0) {
+                        $shortDiff = $diff->d . ' d';
+                    } elseif ($diff->h > 0) {
+                        $shortDiff = $diff->h . ' h';
+                    } elseif ($diff->i > 0) {
+                        $shortDiff = $diff->i . ' min';
+                    } else {
+                        $shortDiff = 'ahora';
+                    }
+
+                    $lastSessionTitle = e('Última sesión: ' . $lastSessionDate->format('d/m/Y H:i'));
+                    $lastSession = '<span class="dt-session-badge dt-session-away" title="' . $lastSessionTitle . '">Hace ' . $shortDiff . '</span>';
+                } catch (\Throwable $e) {
+                    $lastSession = '<span class="dt-session-badge dt-session-empty">—</span>';
+                }
+            } else {
+                $lastSession = '<span class="dt-session-badge dt-session-empty" title="Sin sesiones registradas">Nunca</span>';
+            }
 
             return [
                 'id' => $user->id,
                 'username' => $user->username,
                 'name' => $user->name,
                 'first_last_name' => $user->first_last_name,
-                'second_last_name' => $user->second_last_name,
+                'second_last_name' => $user->second_last_name ?: '—',
                 'email' => $user->email,
-                'phone' => $user->phone,
+                'phone' => $user->phone ?: '—',
                 'position' => optional($user->position)->name ?? '—',
                 'district' => optional($user->district)->name ?? '—',
                 'registration_date' => $user->formatted_registration_date ?? $user->registration_date,
-                'role' => "<span class='inline-block px-3 py-1 rounded-full text-xs font-bold {$roleClasses}'>{$roleName}</span>",
-                'status' => "<div class='flex items-center gap-1'><span class='w-2 h-2 rounded-full {$statusDot}'></span><span class='text-xs'>{$statusText}</span></div>",
-                'last_session' => $user->last_session_diff ?? $user->last_session,
+                'role' => "<span class='inline-flex items-center justify-center px-3 py-1 rounded-full text-xs leading-none font-bold whitespace-nowrap {$roleClasses}'>{$roleName}</span>",
+                'status' => "<div class='flex items-center gap-1 whitespace-nowrap'><span class='w-2 h-2 rounded-full {$statusDot}'></span><span class='text-xs'>{$statusText}</span></div>",
+                'last_session' => $lastSession,
                 'actions' => view('usuarios.partials.table-actions', compact('user'))->render(),
             ];
         });
@@ -414,7 +490,7 @@ class UserController extends Controller
     public function create()
     {
 
-        $positions = Position::all();
+        $positions = $this->allowedPositions();
         // Solo mostrar jurisdicciones numeradas (I - XII), excluir opciones genéricas
         $districts = District::whereNotIn('name', ['OTRO', 'Sin jurisdicción', 'NO ENCONTRADO', 'NO ENCONTRADO', 'Otra', 'otra'])
                                       ->orderBy('name')
@@ -443,11 +519,6 @@ class UserController extends Controller
          // hash password (even if User has 'password' => 'hashed' cast)
          $data['password'] = Hash::make($data['password']);
 
-         // Convert position_id = 0 to NULL (No definido)
-         if (isset($data['position_id']) && $data['position_id'] == 0) {
-             $data['position_id'] = null;
-         }
-
          // Ensure registration_date is set: prefer submitted value, otherwise default to today
          if (empty($data['registration_date'])) {
              $data['registration_date'] = now()->toDateString();
@@ -456,12 +527,12 @@ class UserController extends Controller
          User::create($data);
 
          // Redirect to the user index (management) route
-         return redirect()->route('user.user-gestion')->with('success', 'User created successfully.');
+         return redirect()->route('user.user-gestion')->with('success', 'Usuario creado.');
     }
 
     public function edit(User $user)
     {
-        $positions = Position::all();
+        $positions = $this->allowedPositions();
         // Solo mostrar jurisdicciones numeradas (I - XII), excluir opciones genéricas
         $districts = District::whereNotIn('name', ['OTRO', 'Sin jurisdicción', 'NO ENCONTRADO', 'NO ENCONTRADO', 'Otra', 'otra'])
                                       ->orderBy('name')
@@ -486,11 +557,6 @@ class UserController extends Controller
 
         $data['is_active'] = $request->has('is_active') ? (bool) $request->input('is_active') : false;
 
-        // Convert position_id = 0 to NULL (No definido)
-        if (isset($data['position_id']) && $data['position_id'] == 0) {
-            $data['position_id'] = null;
-        }
-
         if (!empty($data['password'])) {
             $data['password'] = Hash::make($data['password']);
         } else {
@@ -504,7 +570,7 @@ class UserController extends Controller
             $user->forceFill(['remember_token' => null])->save();
         }
 
-        return redirect()->route('user.user-gestion')->with('success', 'User updated successfully.');
+        return redirect()->route('user.user-gestion')->with('success', 'Usuario actualizado.');
 
     }
 
@@ -540,7 +606,7 @@ class UserController extends Controller
         $user->save();
         DB::table('sessions')->where('user_id', $user->id)->delete();
 
-        return redirect()->route('user.user-gestion')->with('success', 'Password updated successfully.');
+        return redirect()->route('user.user-gestion')->with('success', 'Contraseña actualizada.');
     }
 
     public function destroy(Request $request, User $user)
@@ -554,6 +620,13 @@ class UserController extends Controller
 
         $user->delete();
 
-        return redirect()->route('user.user-gestion')->with('success', 'User deleted successfully.');
+        if ($request->expectsJson() || $request->ajax()) {
+            return response()->json([
+                'ok' => true,
+                'message' => 'Usuario eliminado.',
+            ]);
+        }
+
+        return redirect()->route('user.user-gestion')->with('success', 'Usuario eliminado.');
     }
 }

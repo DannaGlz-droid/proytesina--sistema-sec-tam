@@ -117,6 +117,16 @@
         font-weight: 700;
     }
 
+    @media (min-width: 768px) {
+        .publication-detail-modal .report-meta-grid.has-update {
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+
+        .publication-detail-modal .report-meta-grid.has-update .modal-publication-meta {
+            text-align: center;
+        }
+    }
+
     .publication-detail-modal .report-body {
         background:
             linear-gradient(90deg, #f7f8fa 0, #f7f8fa 12px, transparent 12px),
@@ -555,18 +565,18 @@
 
         <!-- INFORMACIÓN ADICIONAL -->
         <div class="report-meta-bar px-5 md:px-7 py-3 flex-shrink-0">
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <div class="report-meta-grid grid grid-cols-1 md:grid-cols-2 gap-3">
                 <div class="text-left">
                     <p class="report-meta-label font-lora">Subido por</p>
                     <p class="report-meta-value text-sm font-lora modal-usuario">Usuario</p>
                 </div>
-                <div class="md:text-center">
-                    <p class="report-meta-label font-lora">Fecha de publicacion</p>
+                <div class="md:text-right modal-publication-meta">
+                    <p class="report-meta-label font-lora">Fecha de publicación</p>
                     <p class="report-meta-value text-sm font-lora modal-fecha-publicacion">Usuario</p>
                 </div>
-                <div class="md:text-right">
+                <div class="md:text-right modal-updated-meta hidden">
                     <p class="report-meta-label font-lora">Última actualización</p>
-                    <p class="report-meta-value text-sm font-lora modal-actualizado">Sin cambios recientes</p>
+                    <p class="report-meta-value text-sm font-lora modal-actualizado"></p>
                 </div>
             </div>
         </div>

@@ -272,6 +272,48 @@
         .error {
             color: #991b1b;
         }
+
+        .state-card {
+            max-width: 520px;
+            border: 1px solid #fecaca;
+            border-left: 4px solid #ef4444;
+            border-radius: 10px;
+            background: #fef2f2;
+            padding: 16px 18px;
+            color: #991b1b;
+            font-family: Georgia, 'Times New Roman', serif;
+            font-size: 14px;
+            line-height: 1.45;
+            box-shadow: 0 8px 24px rgba(31, 41, 55, 0.08);
+        }
+
+        .state-card-title {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin: 0 0 6px;
+            font-weight: 700;
+            color: #7f1d1d;
+        }
+
+        .state-card-title::before {
+            content: '!';
+            width: 18px;
+            height: 18px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 999px;
+            background: #ef4444;
+            color: #ffffff;
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        .state-card-message {
+            margin: 0;
+        }
     </style>
 </head>
 <body>
@@ -292,7 +334,12 @@
 
         <div id="sheet-content" class="sheet-content">
             @if(!empty($error))
-                <div class="error">{{ $error }}</div>
+                <div class="error">
+                    <div class="state-card" role="alert">
+                        <p class="state-card-title">No se pudo previsualizar el archivo</p>
+                        <p class="state-card-message">{{ $error }}</p>
+                    </div>
+                </div>
             @elseif(empty($rows))
                 <div class="empty">El archivo no contiene datos visibles para previsualizar.</div>
             @else

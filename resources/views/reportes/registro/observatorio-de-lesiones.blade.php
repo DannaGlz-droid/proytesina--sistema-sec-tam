@@ -56,7 +56,7 @@
             @if($generalErrors->isNotEmpty())
             <div class="mb-6 bg-red-50 border-l-4 border-red-500 p-4 rounded-lg shadow-sm">
                 <div class="flex items-start">
-                    <ion-icon name="alert-circle" class="text-red-500 text-xl mr-3 mt-0.5"></ion-icon>
+                    <i class="fas fa-exclamation-circle text-red-500 text-xl mr-3 mt-0.5"></i>
                     <div>
                         <p class="text-sm text-red-800 font-lora font-semibold mb-2">Errores de validación:</p>
                         <ul class="list-disc list-inside text-sm text-red-700 font-lora space-y-1">
@@ -668,9 +668,7 @@
 
             function showTomSelectError(select, message) {
                 if (!select) return;
-                const wrapper = getTomSelectWrapper(select);
                 const validityInput = getTomSelectValidityInput(select);
-                wrapper?.classList.add('border-red-500', 'ring-2', 'ring-red-100');
                 if (validityInput?.setCustomValidity) {
                     validityInput.setCustomValidity(message);
                 }
@@ -678,9 +676,7 @@
 
             function clearTomSelectError(select) {
                 if (!select) return;
-                const wrapper = getTomSelectWrapper(select);
                 const validityInput = getTomSelectValidityInput(select);
-                wrapper?.classList.remove('border-red-500', 'ring-2', 'ring-red-100');
                 if (validityInput?.setCustomValidity) {
                     validityInput.setCustomValidity('');
                 }
@@ -863,9 +859,12 @@
                 }
             }
 
-            window.clearObservatorioLesionesForm = function() {
-                if (confirm('¿Está seguro de que desea limpiar todos los campos del formulario?')) {
-                    const form = document.querySelector('form');
+            window.clearObservatorioLesionesForm = async function() {
+                const form = document.getElementById('observatorioForm') || document.querySelector('form');
+                const canClear = window.confirmFormClear
+                    ? await window.confirmFormClear(form, selectedFiles.length)
+                    : false;
+                if (canClear) {
                     if (form) form.reset();
                     
                     // Limpiar explícitamente los campos
@@ -897,6 +896,10 @@
                     document.getElementById('file-input').value = '';
                     updateFileStatus();
                     updateFileCounters();
+
+                    if (typeof window.showToast === 'function') {
+                        window.showToast('Formulario limpiado', 'info', 2400);
+                    }
                 }
             }
 

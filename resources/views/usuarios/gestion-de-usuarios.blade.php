@@ -47,7 +47,7 @@
                                     </div>
                                 </div>
 
-                                <div class="ml-0 sm:ml-auto flex items-center space-x-3">
+                                <div class="ml-0 sm:ml-auto flex flex-wrap items-center justify-end gap-3">
                                     <div class="flex items-center space-x-2">
                                         <span class="text-sm text-gray-700 font-lora">Mostrar</span>
                                         <select id="dt-per-page" class="bg-gray-50 border border-[#404041] text-gray-900 text-sm rounded-lg focus:ring-[#611132] focus:border-[#611132] block w-24 p-2">
@@ -58,7 +58,34 @@
                                         </select>
                                     </div>
                                     <!-- Botón eliminar seleccionados -->
+                                    <div id="bulk-selection-bar" class="hidden items-center gap-3">
+                                        <div class="flex items-center gap-2">
+                                            <span class="w-2 h-2 rounded-full bg-[#611132] flex-shrink-0"></span>
+                                            <span id="bulk-selected-count" class="text-xs font-lora text-gray-600 whitespace-nowrap"></span>
+                                        </div>
+                                        <span class="hidden xl:inline text-xs font-lora text-gray-500">En esta pagina</span>
+                                    <button id="clear-selected-users" type="button" class="hidden text-xs font-semibold font-lora text-[#611132] hover:underline whitespace-nowrap" title="Quitar selección">
+                                        Quitar selección
+                                    </button>
                                     <button id="bulk-delete-users" type="button" class="bg-[#AB1A1A] text-white px-4 py-2.5 rounded-lg text-xs font-semibold hover:bg-[#8B1515] transition-all duration-300 font-lora items-center gap-2 whitespace-nowrap shadow-sm" title="Eliminar seleccionados" style="display: none;">
+                                        <i class="fas fa-trash text-xs"></i>
+                                        <span>Eliminar</span>
+                                    </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div id="unused-bulk-selection-bar-bottom" class="hidden mx-4 mb-3 rounded-lg border border-[#ead5dd] bg-[#fbf7f9] px-3 py-2 items-center justify-between gap-3 shadow-sm">
+                                <div class="flex items-center gap-2 min-w-0">
+                                    <span class="w-2 h-2 rounded-full bg-[#611132] flex-shrink-0"></span>
+                                    <span id="unused-bulk-selected-count-bottom" class="text-xs font-lora font-semibold text-[#404041] whitespace-nowrap"></span>
+                                    <span class="hidden sm:inline text-xs font-lora text-gray-500">Seleccionados en esta página</span>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <button id="unused-clear-selected-users-bottom" type="button" class="hidden text-xs font-semibold font-lora text-[#611132] hover:underline whitespace-nowrap" title="Quitar selección">
+                                        Quitar selección
+                                    </button>
+                                    <button id="unused-bulk-delete-users-bottom" type="button" class="bg-[#AB1A1A] text-white px-3 py-1.5 rounded-md text-xs font-semibold hover:bg-[#8B1515] transition-all duration-300 font-lora items-center gap-2 whitespace-nowrap shadow-sm" title="Eliminar seleccionados" style="display: none;">
                                         <i class="fas fa-trash text-xs"></i>
                                         <span>Eliminar</span>
                                     </button>
@@ -70,12 +97,13 @@
                         <table id="users-table" class="min-w-full w-full text-sm text-left text-gray-500">
                             <thead class="text-xs text-gray-700 uppercase bg-gray-50 border-b border-[#404041]">
                                 <tr>
+                                    <th scope="col" class="px-2 py-2 font-lora whitespace-nowrap text-xs" data-orderable="false"></th>
                                     <th scope="col" class="px-3 py-2 font-lora whitespace-nowrap text-xs"><input id="select-all-users" type="checkbox" /></th>
                                     <th scope="col" class="px-3 py-2 font-lora whitespace-nowrap text-xs">ID</th>
                                     <th scope="col" class="px-3 py-2 font-lora whitespace-nowrap text-xs">Usuario</th>
                                     <th scope="col" class="px-3 py-2 font-lora whitespace-nowrap text-xs">Nombre(s)</th>
-                                    <th scope="col" class="px-3 py-2 font-lora whitespace-nowrap text-xs">Apellido P.</th>
-                                    <th scope="col" class="px-3 py-2 font-lora whitespace-nowrap text-xs">Apellido M.</th>
+                                    <th scope="col" class="px-3 py-2 font-lora whitespace-nowrap text-xs">Apellido paterno</th>
+                                    <th scope="col" class="px-3 py-2 font-lora whitespace-nowrap text-xs">Apellido materno</th>
                                     <th scope="col" class="px-3 py-2 font-lora whitespace-nowrap text-xs">Correo</th>
                                     <th scope="col" class="px-3 py-2 font-lora whitespace-nowrap text-xs">Teléfono</th>
                                     <th scope="col" class="px-3 py-2 font-lora whitespace-nowrap text-xs">Cargo</th>
@@ -120,10 +148,78 @@
         
         /* DataTables + Tailwind table styling */
         #users-table.dataTable tbody tr { transition: background-color .15s ease; }
-        #users-table.dataTable tbody tr:hover { background-color: #f9fafb; }
-        #users-table.dataTable tbody tr:nth-child(even) { background-color: #f9fafb; }
+        #users-table.dataTable tbody tr:hover { background-color: #eef2f7; }
+        #users-table.dataTable tbody tr:nth-child(even) { background-color: #f3f4f6; }
         #users-table.dataTable tbody tr:nth-child(odd) { background-color: white; }
+        #users-table.dataTable tbody tr { border-bottom: 1px solid #e5e7eb; }
         #users-table.dataTable thead th { background: #f8fafc; border-bottom: 1px solid #d1d5db; cursor: pointer; }
+        #users-table {
+            table-layout: fixed;
+            width: 100% !important;
+        }
+        #users-table.dataTable thead th,
+        #users-table.dataTable tbody td {
+            padding-left: 0.5rem;
+            padding-right: 0.5rem;
+            white-space: normal;
+            overflow-wrap: break-word;
+            word-break: normal;
+            vertical-align: middle;
+        }
+        #users-table.dataTable thead th {
+            padding-top: 0.72rem;
+            padding-bottom: 0.72rem;
+        }
+        #users-table.dataTable tbody td {
+            padding-top: 0.58rem;
+            padding-bottom: 0.58rem;
+            line-height: 1.2;
+        }
+        #users-table.dataTable tbody td.dt-username-cell {
+            overflow-wrap: anywhere;
+            word-break: break-word;
+            padding-right: 0.9rem;
+            color: #111827;
+            font-weight: 600;
+            line-height: 1.25;
+        }
+        #users-table.dataTable tbody td.dt-role-cell {
+            white-space: nowrap;
+            overflow: visible;
+        }
+        #users-table.dataTable tbody td.dt-phone-cell,
+        #users-table.dataTable tbody td.dt-status-cell,
+        #users-table.dataTable tbody td.dt-last-session-cell {
+            white-space: nowrap;
+            overflow-wrap: normal;
+        }
+        .dt-session-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 1.5rem;
+            padding: 0.25rem 0.55rem;
+            border-radius: 0.25rem;
+            font-size: 0.6875rem;
+            line-height: 1;
+            white-space: nowrap;
+        }
+        .dt-session-online {
+            border: 1px solid #bbf7d0;
+            background: #ecfdf5;
+            color: #047857;
+            font-weight: 600;
+        }
+        .dt-session-away {
+            border: 1px dashed #cbd5e1;
+            background: #f8fafc;
+            color: #475569;
+        }
+        .dt-session-empty {
+            border: 1px solid #e5e7eb;
+            background: #f3f4f6;
+            color: #475569;
+        }
         #users-table.dataTable thead th.sorting:after,
         #users-table.dataTable thead th.sorting_asc:after,
         #users-table.dataTable thead th.sorting_desc:after {
@@ -131,25 +227,80 @@
             font-family: 'Font Awesome 6 Free';
             font-weight: 900;
         }
+        .dt-details-toggle {
+            width: 1.3rem;
+            height: 1.3rem;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 0.25rem;
+            color: #6b7280;
+            transition: background-color .15s ease, color .15s ease, transform .15s ease;
+        }
+        .dt-details-toggle:hover {
+            background: #f3f4f6;
+            color: #611132;
+        }
+        .dt-details-toggle i {
+            font-size: 0.7rem;
+            transition: transform .15s ease;
+        }
+        tr.dt-details-open .dt-details-toggle i {
+            transform: rotate(90deg);
+        }
+        #users-table tbody tr.child-row td {
+            background: #fbfcfd;
+            padding: 0;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        .dt-user-details {
+            display: grid;
+            grid-template-columns: repeat(5, minmax(0, 1fr));
+            gap: 0.55rem 1rem;
+            padding: 0.7rem 1rem 0.85rem 4.35rem;
+            font-family: 'Lora', serif;
+        }
+        .dt-user-details dt {
+            font-size: 0.68rem;
+            font-weight: 700;
+            color: #6b7280;
+            text-transform: uppercase;
+            margin-bottom: 0.18rem;
+        }
+        .dt-user-details dd {
+            font-size: 0.78rem;
+            color: #374151;
+            line-height: 1.25;
+            overflow-wrap: anywhere;
+        }
+        @media (max-width: 1280px) {
+            .dt-user-details {
+                grid-template-columns: repeat(3, minmax(0, 1fr));
+            }
+        }
     </style>
 
     <script>
-        function clearSearch(btn) {
-            try {
-                const form = btn.closest('form');
-                if (!form) return;
-                const q = form.querySelector('input[name="q"]');
-                if (q) q.value = '';
-                form.submit();
-            } catch (e) {
-                console.error('clearSearch error', e);
-            }
-        }
-
         document.addEventListener('DOMContentLoaded', function() {
             if (!window.jQuery || !$.fn.DataTable) {
                 console.error('jQuery or DataTables not loaded');
                 return;
+            }
+
+            function notifyUser(message, type = 'success', duration = 3000) {
+                if (typeof window.showToast === 'function') {
+                    window.showToast(message, type, duration);
+                } else {
+                    console[type === 'error' ? 'error' : 'log'](message);
+                }
+            }
+
+            async function confirmUserAction(options) {
+                if (typeof window.confirmDialog === 'function') {
+                    return window.confirmDialog(options);
+                }
+
+                return window.confirm(options.message || 'Confirma la accion para continuar.');
             }
 
             // We will read current filter form values on each AJAX request
@@ -162,6 +313,25 @@
                 }
             });
 
+            function escapeHtml(value) {
+                return $('<div>').text(value == null || value === '' ? '—' : value).html();
+            }
+
+            function userDetailItem(label, value, isHtml = false) {
+                const content = isHtml ? (value || '—') : escapeHtml(value);
+                return `<div><dt>${escapeHtml(label)}</dt><dd>${content}</dd></div>`;
+            }
+
+            function formatUserDetails(row) {
+                return `
+                    <dl class="dt-user-details">
+                        ${userDetailItem('Cargo', row.position)}
+                        ${userDetailItem('Fecha alta', row.registration_date)}
+                        ${userDetailItem('Ultima sesion', row.last_session, true)}
+                    </dl>
+                `;
+            }
+
             // Initialize DataTables with server-side processing
             const table = $('#users-table').DataTable({
                 serverSide: true,
@@ -172,12 +342,7 @@
                 searching: true,  // Enable DataTables search
                 lengthChange: false, // Disable DataTables length (use custom)
                 dom: 't', // Only show table
-                responsive: {
-                    details: {
-                        type: 'inline',
-                        target: 'tr'
-                    }
-                },
+                responsive: false,
                 ajax: {
                     url: '{{ route('user.datatable') }}',
                     type: 'POST',
@@ -205,10 +370,11 @@
                     },
                     error: function(xhr, error, thrown) {
                         console.error('DataTables AJAX error:', error, thrown);
-                        alert('Error al cargar datos. Por favor, recarga la página.');
+                        notifyUser('No se pudieron cargar los usuarios. Intenta nuevamente.', 'error');
                     }
                 },
                 columns: [
+                    { data: null, name: 'details', orderable: false, searchable: false, defaultContent: '<button type="button" class="dt-details-toggle" title="Ver detalles" aria-label="Ver detalles"><i class="fas fa-chevron-right"></i></button>' },
                     { data: 'id', name: 'id', orderable: false, searchable: false, render: function(data, type, row) { return '<input class="row-check-user" data-id="'+data+'" type="checkbox" />'; } },
                     { data: 'id', name: 'id' },
                     { data: 'username', name: 'username' },
@@ -216,9 +382,9 @@
                     { data: 'first_last_name', name: 'first_last_name' },
                     { data: 'second_last_name', name: 'second_last_name' },
                     { data: 'email', name: 'email' },
-                    { data: 'phone', name: 'phone' },
+                    { data: 'phone', name: 'phone', orderable: false },
                     { data: 'position', name: 'position_id', orderable: false },
-                    { data: 'district', name: 'district_id', orderable: false },
+                    { data: 'district', name: 'district_name' },
                     { data: 'registration_date', name: 'registration_date' },
                     { data: 'role', name: 'role_id', orderable: false },
                     { data: 'status', name: 'is_active', orderable: false },
@@ -227,26 +393,25 @@
                 ],
                 // Hide the ID column visually (we still include it in data for checkbox rendering)
                 columnDefs: [
-                    { targets: 0, responsivePriority: 1 },
-                    { targets: 1, visible: false, searchable: false },
-                    { targets: 2, responsivePriority: 1 },
-                    { targets: 3, responsivePriority: 2 },
-                    { targets: 4, responsivePriority: 10 },
-                    { targets: 5, responsivePriority: 11 },
-                    { targets: 6, responsivePriority: 8 },
-                    { targets: 7, responsivePriority: 9 },
-                    { targets: 8, responsivePriority: 10 },
-                    { targets: 9, responsivePriority: 10 },
-                    { targets: 10, responsivePriority: 7 },
-                    { targets: 11, responsivePriority: 1 },
-                    { targets: 12, responsivePriority: 5 },
-                    { targets: 13, responsivePriority: 6 },
-                    { targets: 14, responsivePriority: 1 }
+                    { targets: 0, width: '2rem', className: 'text-center', orderable: false, searchable: false },
+                    { targets: 1, width: '2.25rem', className: 'text-center' },
+                    { targets: 2, visible: false, searchable: false },
+                    { targets: 3, width: '12%', className: 'dt-username-cell' },
+                    { targets: 4, width: '10%' },
+                    { targets: 5, width: '8.5%' },
+                    { targets: 6, width: '8.5%' },
+                    { targets: 8, width: '7%', className: 'dt-phone-cell' },
+                    { targets: [9, 11, 14], visible: false },
+                    { targets: 7, width: '18%' },
+                    { targets: 10, width: '13%' },
+                    { targets: 12, width: '10%', className: 'dt-role-cell' },
+                    { targets: 13, width: '7%', className: 'dt-status-cell' },
+                    { targets: 15, width: '6.75rem', className: 'text-right' }
                 ],
                 pageLength: 25,
                 // Default: registration_date desc so newest users appear first.
-                // registration_date is column index 10 (accounting for leading checkbox column at index 0).
-                order: [[10, 'desc']],
+                // registration_date is column index 11 (details + checkbox + hidden id included).
+                order: [[11, 'desc']],
                 language: {
                     emptyTable: 'No se encontraron registros coincidentes',
                     loadingRecords: 'Cargando...',
@@ -257,8 +422,11 @@
                     updateEmptyState(this.api());
                     updateCustomInfo(this.api());
                     updateCustomPagination(this.api());
-                    try { toggleBulkDeleteUsersButton(); } catch (e) { console.error('toggleBulkDeleteUsersButton error', e); }
-                    try { $('#select-all-users').prop('checked', false); } catch (e) {}
+                    try {
+                        clearVisibleUserSelection();
+                    } catch (e) {
+                        console.error('clearVisibleUserSelection error', e);
+                    }
                 }
             });
 
@@ -293,48 +461,104 @@
 
             // Checkbox selection for users table
             $('#select-all-users').on('change', function() {
-                const checked = $(this).is(':checked');
-                $('#users-table tbody .row-check-user').prop('checked', checked);
-                toggleBulkDeleteUsersButton();
+                const visibleChecks = $('#users-table tbody .row-check-user');
+                const checkedCount = visibleChecks.filter(':checked').length;
+                const shouldCheck = checkedCount !== visibleChecks.length;
+                visibleChecks.prop('checked', shouldCheck);
+                updateUserSelectionState();
             });
 
             // Prevent row-expansion clicks when interacting with checkboxes or action buttons
-            $('#users-table tbody').on('click', 'input.row-check-user, button, a', function(e) {
+            $('#users-table tbody').on('click', 'input.row-check-user, button:not(.dt-details-toggle), a', function(e) {
                 e.stopPropagation();
             });
 
-            $('#users-table tbody').on('change', '.row-check-user', function() {
-                if (!$(this).is(':checked')) {
-                    $('#select-all-users').prop('checked', false);
+            $('#users-table tbody').on('click', 'button.dt-details-toggle', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+
+                const tr = $(this).closest('tr');
+                const row = table.row(tr);
+
+                if (row.child.isShown()) {
+                    row.child.hide();
+                    tr.removeClass('dt-details-open');
+                } else {
+                    row.child(formatUserDetails(row.data()), 'child-row').show();
+                    tr.addClass('dt-details-open');
                 }
-                toggleBulkDeleteUsersButton();
+            });
+
+            $('#users-table tbody').on('change', '.row-check-user', function() {
+                updateUserSelectionState();
+            });
+
+            $('#clear-selected-users').on('click', function() {
+                clearVisibleUserSelection();
             });
 
             function toggleBulkDeleteUsersButton() {
-                const any = $('#users-table tbody .row-check-user:checked').length > 0;
-                if (any) {
+                updateUserSelectionState();
+            }
+
+            function updateUserSelectionState() {
+                const visibleChecks = $('#users-table tbody .row-check-user');
+                const checkedCount = visibleChecks.filter(':checked').length;
+                const totalVisible = visibleChecks.length;
+                const hasSelection = checkedCount > 0;
+                const allSelected = totalVisible > 0 && checkedCount === totalVisible;
+                const selectAll = $('#select-all-users');
+
+                selectAll.prop('checked', allSelected);
+                selectAll.prop('indeterminate', hasSelection && !allSelected);
+
+                if (hasSelection) {
+                    $('#bulk-selection-bar').removeClass('hidden').addClass('flex');
                     $('#bulk-delete-users').css('display', 'flex');
+                    $('#clear-selected-users').removeClass('hidden');
+                    $('#bulk-selected-count')
+                        .text(checkedCount + ' seleccionado' + (checkedCount === 1 ? '' : 's'));
                 } else {
+                    $('#bulk-selection-bar').addClass('hidden').removeClass('flex');
                     $('#bulk-delete-users').css('display', 'none');
+                    $('#clear-selected-users').addClass('hidden');
+                    $('#bulk-selected-count').text('');
                 }
+            }
+
+            function clearVisibleUserSelection() {
+                $('#users-table tbody .row-check-user').prop('checked', false);
+                updateUserSelectionState();
             }
 
             function updateEmptyState(api) {
                 const info = api.page.info();
                 const tbody = $('#users-table tbody');
                 if (info.recordsDisplay === 0) {
-                    tbody.html('<tr class="users-empty-row"><td colspan="15" class="text-center py-4 text-gray-500">No se encontraron registros coincidentes</td></tr>');
+                    tbody.html('<tr class="users-empty-row"><td colspan="16" class="text-center py-4 text-gray-500">No se encontraron registros coincidentes</td></tr>');
                 }
             }
 
-            $('#bulk-delete-users').on('click', function() {
+            $('#bulk-delete-users').on('click', async function() {
                 const ids = [];
                 $('#users-table tbody .row-check-user:checked').each(function() {
                     const id = $(this).data('id');
                     if (id) ids.push(id);
                 });
-                if (!ids.length) { alert('Selecciona al menos un usuario.'); return; }
-                if (!confirm('¿Confirmas eliminar ' + ids.length + ' usuario(s)? Esta acción no se puede deshacer.')) return;
+                if (!ids.length) {
+                    notifyUser('Selecciona al menos un usuario.', 'warning');
+                    return;
+                }
+
+                const confirmed = await confirmUserAction({
+                    title: 'Eliminar usuarios',
+                    message: 'Se eliminaran ' + ids.length + ' usuario' + (ids.length === 1 ? '' : 's') + '. Esta accion no se puede deshacer.',
+                    confirmText: 'Eliminar',
+                    cancelText: 'Cancelar',
+                    variant: 'danger'
+                });
+
+                if (!confirmed) return;
 
                 $.ajax({
                     url: '{{ route('user.massDelete') }}',
@@ -342,17 +566,49 @@
                     data: { ids: ids },
                     success: function(res) {
                         if (res && res.ok) {
-                            alert('Eliminados: ' + (res.deleted || 0));
+                            notifyUser('Usuarios eliminados: ' + (res.deleted || 0), 'success');
                             table.ajax.reload(null, false);
-                            $('#select-all-users').prop('checked', false);
+                            clearVisibleUserSelection();
                         } else {
-                            alert('Error al eliminar. Revisa la consola.');
+                            notifyUser('No se pudieron eliminar los usuarios.', 'error');
                             console.error(res);
                         }
                     },
                     error: function(xhr) {
                         console.error(xhr);
-                        alert('Error del servidor: ' + (xhr.responseText || xhr.statusText));
+                        notifyUser('Error del servidor al eliminar usuarios.', 'error');
+                    }
+                });
+            });
+
+            $('#users-table tbody').on('submit', '.js-delete-user-form', async function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+
+                const form = this;
+                const userName = form.dataset.userName || 'este usuario';
+                const confirmed = await confirmUserAction({
+                    title: 'Eliminar usuario',
+                    message: 'Se eliminara ' + userName + '. Esta accion no se puede deshacer.',
+                    confirmText: 'Eliminar',
+                    cancelText: 'Cancelar',
+                    variant: 'danger'
+                });
+
+                if (!confirmed) return;
+
+                $.ajax({
+                    url: form.action,
+                    method: 'POST',
+                    data: $(form).serialize(),
+                    success: function(res) {
+                        notifyUser((res && res.message) ? res.message : 'Usuario eliminado.', 'success');
+                        table.ajax.reload(null, false);
+                        clearVisibleUserSelection();
+                    },
+                    error: function(xhr) {
+                        console.error(xhr);
+                        notifyUser('No se pudo eliminar el usuario.', 'error');
                     }
                 });
             });

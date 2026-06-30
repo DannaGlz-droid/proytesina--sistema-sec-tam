@@ -50,7 +50,7 @@
                             </div>
                         </div>
 
-                        <div class="ml-0 sm:ml-auto flex items-center space-x-3">
+                        <div class="ml-0 sm:ml-auto flex flex-wrap items-center justify-end gap-3">
                             <div class="flex items-center space-x-2">
                                 <span class="text-sm text-gray-700 font-lora">Mostrar</span>
                                 <select id="per-page-imports" class="bg-gray-50 border border-[#404041] text-gray-900 text-sm rounded-lg focus:ring-[#611132] focus:border-[#611132] block w-24 p-2">
@@ -60,17 +60,27 @@
                                     <option value="100">100</option>
                                 </select>
                             </div>
-                            <button id="bulk-delete-imports" type="button" class="bg-[#AB1A1A] text-white px-4 py-2.5 rounded-lg text-xs font-semibold hover:bg-[#8B1515] transition-all duration-300 font-lora items-center gap-2 whitespace-nowrap shadow-sm" title="Eliminar seleccionados" style="display: none;">
-                                <i class="fas fa-trash text-xs"></i>
-                                <span>Eliminar</span>
-                            </button>
+                            <div id="bulk-selection-bar-imports" class="hidden items-center gap-3">
+                                <div class="flex items-center gap-2">
+                                    <span class="w-2 h-2 rounded-full bg-[#611132] flex-shrink-0"></span>
+                                    <span id="bulk-selected-count-imports" class="text-xs font-lora text-gray-600 whitespace-nowrap"></span>
+                                </div>
+                                <span class="hidden xl:inline text-xs font-lora text-gray-500">En esta página</span>
+                                <button id="clear-selected-imports" type="button" class="hidden text-xs font-semibold font-lora text-[#611132] hover:underline whitespace-nowrap" title="Quitar selección">
+                                    Quitar selección
+                                </button>
+                                <button id="bulk-delete-imports" type="button" class="bg-[#AB1A1A] text-white px-4 py-2.5 rounded-lg text-xs font-semibold hover:bg-[#8B1515] transition-all duration-300 font-lora items-center gap-2 whitespace-nowrap shadow-sm" title="Eliminar seleccionados" style="display: none;">
+                                    <i class="fas fa-trash text-xs"></i>
+                                    <span>Eliminar</span>
+                                </button>
+                            </div>
                         </div>
                     </div>
 
                     <!-- Table wrapper -->
                     <div class="overflow-x-auto min-w-0">
                         <table id="imports-table" class="min-w-full w-full text-sm text-left text-gray-500">
-                            <thead class="text-xs text-gray-700 uppercase bg-gray-50 border-b border-[#404041]">
+                            <thead class="text-xs text-gray-700 uppercase bg-gray-50">
                                 <tr>
                                     <th scope="col" class="px-3 py-2 font-lora whitespace-nowrap text-xs"><input id="select-all-imports" type="checkbox" /></th>
                                     <th scope="col" class="px-3 py-2 font-lora whitespace-nowrap text-xs sorting sortable" data-sort-key="original_name">Archivo</th>
@@ -147,8 +157,8 @@
 
         /* Table alternating rows */
         #imports-tbody tr { transition: background-color .15s ease; }
-        #imports-tbody tr:hover { background-color: #f9fafb; }
-        #imports-tbody tr:nth-child(even) { background-color: #f9fafb; }
+        #imports-tbody tr:hover { background-color: #eef2f7; }
+        #imports-tbody tr:nth-child(even) { background-color: #f3f4f6; }
         #imports-tbody tr:nth-child(odd) { background-color: white; }
 
         /* Hide ALL DataTables native controls */
@@ -163,13 +173,31 @@
             transition: background-color .15s ease; 
         }
         #imports-table.dataTable tbody tr:hover { 
-            background-color: #f9fafb; 
+            background-color: #eef2f7; 
         }
         #imports-table.dataTable tbody tr:nth-child(even) { 
-            background-color: #f9fafb; 
+            background-color: #f3f4f6; 
         }
         #imports-table.dataTable tbody tr:nth-child(odd) { 
             background-color: white; 
+        }
+
+        #imports-table thead {
+            border-bottom: 1px solid #d1d5db;
+        }
+
+        #imports-table thead th {
+            background: #f8fafc;
+            color: #111827;
+            padding-top: 0.72rem;
+            padding-bottom: 0.72rem;
+            vertical-align: middle;
+        }
+
+        #imports-table tbody td {
+            padding-top: 0.58rem;
+            padding-bottom: 0.58rem;
+            line-height: 1.2;
         }
 
         /* Sorting style aligned with existing DataTables tables */
@@ -241,6 +269,23 @@ document.addEventListener('DOMContentLoaded', function () {
         key: 'created_at',
         direction: 'desc'
     };
+
+    function notifyImport(message, type = 'success', duration = 3000) {
+        if (typeof window.showToast === 'function') {
+            window.showToast(message, type, duration);
+            return;
+        }
+
+        console[type === 'error' ? 'error' : 'log'](message);
+    }
+
+    async function confirmImportAction(options) {
+        if (typeof window.confirmDialog === 'function') {
+            return window.confirmDialog(options);
+        }
+
+        return window.confirm(options.message || 'Confirma la accion para continuar.');
+    }
 
     // Load imports on page load
     loadImports();
@@ -359,23 +404,30 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     });
 
-    // Checkbox selection: select-all for visible page
+    // Checkbox selection: select-all toggles the visible page
     $('#select-all-imports').on('change', function() {
-        const checked = $(this).is(':checked');
-        $('#imports-table tbody .row-check-import').prop('checked', checked);
-        toggleBulkDeleteImportsButton();
+        const visibleChecks = $('#imports-table tbody .row-check-import');
+        const checkedCount = visibleChecks.filter(':checked').length;
+        const shouldCheck = checkedCount !== visibleChecks.length;
+        visibleChecks.prop('checked', shouldCheck);
+        updateImportSelectionState();
     });
 
     // Delegate click for row checkboxes
     $('#imports-table tbody').on('change', '.row-check-import', function() {
-        if (!$(this).is(':checked')) {
-            $('#select-all-imports').prop('checked', false);
-        }
-        toggleBulkDeleteImportsButton();
+        updateImportSelectionState();
+    });
+
+    $('#imports-table tbody').on('click', 'input.row-check-import, button, a', function(e) {
+        e.stopPropagation();
+    });
+
+    $('#clear-selected-imports').on('click', function() {
+        clearVisibleImportSelection();
     });
 
     // Bulk delete action
-    $('#bulk-delete-imports').on('click', function() {
+    $('#bulk-delete-imports').on('click', async function() {
         const ids = [];
         $('#imports-table tbody .row-check-import:checked').each(function() {
             const id = $(this).data('id');
@@ -383,13 +435,19 @@ document.addEventListener('DOMContentLoaded', function () {
         });
 
         if (!ids.length) {
-            alert('Selecciona al menos un registro.');
+            notifyImport('Selecciona al menos una importacion.', 'warning');
             return;
         }
 
-        if (!confirm('¿Confirmas eliminar ' + ids.length + ' registro(s) del historial? Esta acción no se puede deshacer.')) {
-            return;
-        }
+        const confirmed = await confirmImportAction({
+            title: 'Eliminar importaciones',
+            message: 'Se eliminaran ' + ids.length + ' importacion' + (ids.length === 1 ? '' : 'es') + ' del historial. Esta accion no se puede deshacer.',
+            confirmText: 'Eliminar',
+            cancelText: 'Cancelar',
+            variant: 'danger'
+        });
+
+        if (!confirmed) return;
 
         $.ajax({
             url: '{{ route('statistic.import-history.massDelete') }}',
@@ -400,17 +458,17 @@ document.addEventListener('DOMContentLoaded', function () {
             data: { ids: ids },
             success: function(res) {
                 if (res && res.ok) {
-                    alert('Eliminados: ' + (res.deleted || 0));
-                    $('#select-all-imports').prop('checked', false);
+                    notifyImport('Importaciones eliminadas: ' + (res.deleted || 0), 'success');
+                    clearVisibleImportSelection();
                     loadImports();
                 } else {
-                    alert('Error al eliminar. Revisa la consola.');
+                    notifyImport('No se pudieron eliminar las importaciones.', 'error');
                     console.error(res);
                 }
             },
             error: function(xhr) {
                 console.error(xhr);
-                alert('Error del servidor: ' + (xhr.responseText || xhr.statusText));
+                notifyImport('Error del servidor al eliminar importaciones.', 'error');
             }
         });
     });
@@ -621,8 +679,7 @@ document.addEventListener('DOMContentLoaded', function () {
         if (filteredImports.length === 0) {
             tbody.innerHTML = '<tr><td colspan="10" class="text-center py-4 text-gray-500">No se encontraron registros coincidentes</td></tr>';
             updatePaginationInfo();
-            toggleBulkDeleteImportsButton();
-            try { $('#select-all-imports').prop('checked', false); } catch (e) {}
+            clearVisibleImportSelection();
             return;
         }
 
@@ -684,8 +741,7 @@ document.addEventListener('DOMContentLoaded', function () {
         updatePaginationInfo();
         renderPagination();
         updateSearchButton();
-        toggleBulkDeleteImportsButton();
-        try { $('#select-all-imports').prop('checked', false); } catch (e) {}
+        clearVisibleImportSelection();
     }
 
     function updateSearchButton() {
@@ -707,12 +763,35 @@ document.addEventListener('DOMContentLoaded', function () {
         document.getElementById('info-imports').innerHTML = `Mostrando <span class="font-semibold text-gray-900">${start}-${end}</span> de <span class="font-semibold text-gray-900">${total}</span> entradas`;
     }
 
-    function toggleBulkDeleteImportsButton() {
-        const any = $('#imports-table tbody .row-check-import:checked').length > 0;
+    function updateImportSelectionState() {
+        const visibleChecks = $('#imports-table tbody .row-check-import');
+        const checkedCount = visibleChecks.filter(':checked').length;
+        const totalVisible = visibleChecks.length;
+        const hasSelection = checkedCount > 0;
+        const allSelected = totalVisible > 0 && checkedCount === totalVisible;
+        const selectAll = $('#select-all-imports');
         const button = document.getElementById('bulk-delete-imports');
-        if (!button) return;
 
-        button.style.display = any ? 'flex' : 'none';
+        selectAll.prop('checked', allSelected);
+        selectAll.prop('indeterminate', hasSelection && !allSelected);
+
+        if (hasSelection) {
+            $('#bulk-selection-bar-imports').removeClass('hidden').addClass('flex');
+            $('#clear-selected-imports').removeClass('hidden');
+            $('#bulk-selected-count-imports')
+                .text(checkedCount + ' seleccionada' + (checkedCount === 1 ? '' : 's'));
+            if (button) button.style.display = 'flex';
+        } else {
+            $('#bulk-selection-bar-imports').addClass('hidden').removeClass('flex');
+            $('#clear-selected-imports').addClass('hidden');
+            $('#bulk-selected-count-imports').text('');
+            if (button) button.style.display = 'none';
+        }
+    }
+
+    function clearVisibleImportSelection() {
+        $('#imports-table tbody .row-check-import').prop('checked', false);
+        updateImportSelectionState();
     }
 
     function renderPagination() {
@@ -807,7 +886,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function showError(msg) {
-        alert(msg);
+        notifyImport(msg, 'error');
     }
 
     function debounce(func, delay) {
@@ -817,69 +896,82 @@ document.addEventListener('DOMContentLoaded', function () {
             timeoutId = setTimeout(() => func(...args), delay);
         };
     }
+
+    window.reverseImport = async function(importId) {
+        const confirmed = await confirmImportAction({
+            title: 'Revertir importacion',
+            message: 'Se eliminaran los registros creados por esta importacion. Esta accion no se puede deshacer.',
+            confirmText: 'Revertir',
+            cancelText: 'Cancelar',
+            variant: 'warning'
+        });
+
+        if (!confirmed) return;
+
+        const url = `/api/estadisticas/revertir-importacion/${importId}`;
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '{{ csrf_token() }}';
+
+        fetch(url, {
+            method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': csrfToken,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({})
+        })
+        .then(res => res.json())
+        .then(json => {
+            if (json.ok) {
+                notifyImport(json.message || 'Importacion revertida.', 'success');
+                loadImports();
+            } else {
+                notifyImport(json.message || 'No se pudo revertir la importacion.', 'error');
+            }
+        })
+        .catch(err => {
+            console.error(err);
+            notifyImport('Error al procesar la solicitud.', 'error');
+        });
+    };
+
+    window.deleteImport = async function(importId) {
+        const confirmed = await confirmImportAction({
+            title: 'Eliminar importacion',
+            message: 'Se eliminara este registro del historial. Esta accion no se puede deshacer.',
+            confirmText: 'Eliminar',
+            cancelText: 'Cancelar',
+            variant: 'danger'
+        });
+
+        if (!confirmed) return;
+
+        const url = `/api/estadisticas/importaciones/${importId}/delete`;
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '{{ csrf_token() }}';
+
+        fetch(url, {
+            method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': csrfToken,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({})
+        })
+        .then(res => res.json())
+        .then(json => {
+            if (json.ok) {
+                notifyImport('El registro del historial fue eliminado.', 'success');
+                loadImports();
+            } else {
+                notifyImport(json.message || 'No se pudo eliminar el registro.', 'error');
+            }
+        })
+        .catch(err => {
+            console.error(err);
+            notifyImport('Error al procesar la solicitud.', 'error');
+        });
+    };
 });
 
-function reverseImport(importId) {
-    if (!confirm('¿Estás seguro de que deseas revertir esta importación? Esto eliminará todos los registros importados.')) {
-        return;
-    }
-
-    const url = `/api/estadisticas/revertir-importacion/${importId}`;
-    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '{{ csrf_token() }}';
-
-    fetch(url, {
-        method: 'POST',
-        headers: {
-            'X-CSRF-TOKEN': csrfToken,
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({})
-    })
-    .then(res => res.json())
-    .then(json => {
-        if (json.ok) {
-            alert(json.message);
-            location.reload();
-        } else {
-            alert('Error: ' + (json.message || 'Error desconocido'));
-        }
-    })
-    .catch(err => {
-        console.error(err);
-        alert('Error al procesar la solicitud');
-    });
-}
-
-function deleteImport(importId) {
-    if (!confirm('¿Confirmas eliminar este registro del historial? Esta acción no puede deshacerse.')) {
-        return;
-    }
-
-    const url = `/api/estadisticas/importaciones/${importId}/delete`;
-    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '{{ csrf_token() }}';
-
-    fetch(url, {
-        method: 'POST',
-        headers: {
-            'X-CSRF-TOKEN': csrfToken,
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({})
-    })
-    .then(res => res.json())
-    .then(json => {
-        if (json.ok) {
-            alert('El registro del historial fue eliminado');
-            location.reload();
-        } else {
-            alert('Error: ' + (json.message || 'Error desconocido'));
-        }
-    })
-    .catch(err => {
-        console.error(err);
-        alert('Error al procesar la solicitud');
-    });
-}
 </script>
 @endpush
 

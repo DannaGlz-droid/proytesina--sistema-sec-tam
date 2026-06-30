@@ -65,9 +65,9 @@
                                 </div>
                                 <div>
                                      <label for="phone" class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Teléfono</label>
-                                     <input id="phone" name="phone" type="tel" inputmode="tel" autocomplete="tel" maxlength="20" pattern="[0-9+\-\(\)\s]{8,20}"
+                                     <input id="phone" name="phone" type="tel" inputmode="numeric" autocomplete="tel" maxlength="10" pattern="[0-9]{10}" title="Capture exactamente 10 dígitos, sin espacios ni guiones"
                                          class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora"
-                                         placeholder="Ej: 8123456789"
+                                         placeholder="10 dígitos, sin espacios"
                                          value="{{ old('phone', $user->phone) }}">
                                      @error('phone') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
                                 </div>
@@ -92,7 +92,7 @@
                     <div class="space-y-3">
                         <div>
                             <label for="position_select" class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Cargo <span class="text-red-600">*</span></label>
-                            <select id="position_select" class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora tomselect-select" name="position_id">
+                            <select id="position_select" class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora tomselect-select" name="position_id" required>
                                 <option value="">Seleccione un cargo</option>
                                 @if(isset($positions))
                                     @foreach($positions as $p)
@@ -140,6 +140,7 @@
                                    class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora" 
                                    placeholder="Ej: mgarcia"
                     value="{{ old('username', $user->username ?? '') }}">
+                            @error('username') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
                         </div>
                         
                         <!-- Switch para estado activo/inactivo -->
@@ -175,6 +176,7 @@
                                     @endforeach
                                 @endif
                             </select>
+                            @error('role_id') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
                         </div>
                     </div>
                 </div>
@@ -363,6 +365,7 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
+            const form = document.querySelector('form');
             const pos = document.getElementById('position_select');
             if (pos) {
                 try {
@@ -396,6 +399,92 @@
                     console.warn('TomSelect init failed for #district_id', e);
                 }
             }
+
+            function getTomSelectWrapper(select) {
+                return select?.tomselect?.wrapper || select?.nextElementSibling || null;
+            }
+
+            function getTomSelectValidityInput(select) {
+                return select?.tomselect?.control_input || select?.tomselect?.input || select || null;
+            }
+
+            function showTomSelectError(select, message) {
+                const validityInput = getTomSelectValidityInput(select);
+                if (validityInput?.setCustomValidity) {
+                    validityInput.setCustomValidity(message);
+                }
+            }
+
+            function clearTomSelectError(select) {
+                const validityInput = getTomSelectValidityInput(select);
+                if (validityInput?.setCustomValidity) {
+                    validityInput.setCustomValidity('');
+                }
+            }
+
+            function reportTomSelectValidity(select) {
+                if (select?.tomselect) {
+                    select.tomselect.focus();
+                }
+
+                const validityInput = getTomSelectValidityInput(select);
+                if (validityInput?.reportValidity) {
+                    validityInput.reportValidity();
+                } else if (select?.reportValidity) {
+                    select.reportValidity();
+                }
+            }
+
+            function validateRequiredTomSelect(select, message) {
+                if (!select || !select.hasAttribute('required') || select.value) {
+                    if (select) clearTomSelectError(select);
+                    return true;
+                }
+
+                showTomSelectError(select, message);
+                return false;
+            }
+
+            function validateUsuarioEditTomSelects(focusFirst = false) {
+                const requiredSelects = [
+                    { select: pos, message: 'Seleccione un cargo.' },
+                    { select: dist, message: 'Seleccione un distrito.' },
+                ];
+                let firstInvalid = null;
+
+                requiredSelects.forEach(({ select, message }) => {
+                    if (!validateRequiredTomSelect(select, message) && !firstInvalid) {
+                        firstInvalid = select;
+                    }
+                });
+
+                if (firstInvalid && focusFirst) {
+                    reportTomSelectValidity(firstInvalid);
+                }
+
+                return !firstInvalid;
+            }
+
+            [pos, dist].forEach(select => {
+                if (!select) return;
+                select.addEventListener('change', () => clearTomSelectError(select));
+                select.addEventListener('invalid', function(event) {
+                    event.preventDefault();
+                    const message = select === pos ? 'Seleccione un cargo.' : 'Seleccione un distrito.';
+                    showTomSelectError(select, message);
+                    requestAnimationFrame(() => reportTomSelectValidity(select));
+                });
+                if (select.tomselect) {
+                    select.tomselect.on('change', () => clearTomSelectError(select));
+                }
+            });
+
+            form?.addEventListener('submit', function(event) {
+                if (!validateUsuarioEditTomSelects(true)) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                }
+            });
         });
     </script>
 

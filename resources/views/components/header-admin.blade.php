@@ -1,14 +1,15 @@
 <div class="bg-header text-white p-2 lg:p-3 w-full h-14 lg:h-16 font-sans flex items-center justify-between">
     <!-- Logos a la izquierda: Tamaulipas | Separador | Secretaría de Salud -->
-    <a href="{{ auth()->check() ? (auth()->user()->hasAnyRole(['Administrador','Coordinador']) ? route('statistic.data') : route('reportes.index')) : route('login') }}" class="flex items-center ml-3 lg:ml-6">
-        <!-- Logo Tamaulipas Gobierno del Estado (más grande) -->
-        <img src="{{ asset('images/tam_logo.png') }}" alt="Tamaulipas Gobierno del Estado" class="h-10 lg:h-13 object-contain">
-        
-        <!-- Línea separadora vertical (color consistente con acento) -->
-        <div class="h-9 lg:h-12 w-px bg-[#bc955c] mx-3 lg:mx-4"></div>
-        
-        <!-- Logo Secretaría de Salud (más pequeño) -->
-        <img src="{{ asset('images/logo-secretaria.png') }}" alt="Secretaría de Salud" class="h-6 lg:h-8 object-contain">
+    <a href="{{ auth()->check() ? (auth()->user()->hasAnyRole(['Administrador','Coordinador']) ? route('statistic.data') : route('reportes.index')) : route('login') }}" class="flex items-center gap-2.5 lg:gap-3 ml-3 lg:ml-6">
+        <span class="flex h-10 w-28 lg:h-11 lg:w-32 items-center justify-end">
+            <img src="{{ asset('images/tam_logo.png') }}" alt="Tamaulipas Gobierno del Estado" class="max-h-9 lg:max-h-10 max-w-full object-contain">
+        </span>
+
+        <span class="h-9 lg:h-10 w-px bg-[#bc955c]"></span>
+
+        <span class="flex h-10 w-28 lg:h-11 lg:w-32 items-center justify-start">
+            <img src="{{ asset('images/logo-secretaria.png') }}" alt="Secretaría de Salud" class="max-h-9 lg:max-h-10 max-w-full object-contain">
+        </span>
     </a>
 
     <!-- Botones y usuario a la derecha -->
@@ -67,8 +68,8 @@
                 <ion-icon name="notifications" class="text-xl lg:text-2xl"></ion-icon>
                 <!-- Indicador de notificaciones nuevas -->
                 <span x-show="unreadCount > 0" 
-                      x-text="unreadCount > 9 ? '9+' : unreadCount"
-                      class="absolute -top-1 -right-1 bg-red-500 text-xs text-white rounded-full h-3 w-3 lg:h-4 lg:w-4 flex items-center justify-center text-[8px] lg:text-[10px]"></span>
+                      x-text="unreadCount > 99 ? '99+' : unreadCount"
+                      class="absolute -top-1.5 -right-2 min-w-[1rem] h-4 px-1 rounded-full bg-[#e5484d] text-white text-[10px] font-bold leading-none flex items-center justify-center border border-[#74103a] shadow-sm tabular-nums"></span>
             </button>
 
             <!-- Menú desplegable de notificaciones responsive -->
@@ -178,19 +179,26 @@
 
         <!-- Avatar y nombre del usuario con dropdown responsive -->
         <div class="relative flex items-center ml-1 lg:ml-2" x-data="{ openProfile: false }">
+            @php
+                $headerGivenNames = trim(auth()->user()->name ?? '');
+                $headerLastNames = trim(implode(' ', array_filter([auth()->user()->first_last_name, auth()->user()->second_last_name])));
+                $headerFirstName = preg_split('/\s+/', $headerGivenNames, -1, PREG_SPLIT_NO_EMPTY)[0] ?? $headerGivenNames;
+                $headerShortName = trim(implode(' ', array_filter([$headerFirstName, auth()->user()->first_last_name])));
+                $headerFullName = trim(implode(' ', array_filter([auth()->user()->name, auth()->user()->first_last_name, auth()->user()->second_last_name])));
+            @endphp
             <!-- Área clickeable SOLO para ir al perfil -->
-            <a href="{{ route('usuario.miperfil') }}" class="flex items-center gap-2.5 lg:gap-3.5">
+            <a href="{{ route('usuario.miperfil') }}" class="flex items-center gap-2.5 lg:gap-3.5 min-w-0" title="{{ $headerFullName }}">
                 <!-- Avatar circular más grande -->
                 <div class="w-9 h-9 lg:w-11 lg:h-11 rounded-full overflow-hidden flex-shrink-0 bg-[#611132] flex items-center justify-center">
                     @if(auth()->user()->profile_photo_path)
-                        <img src="{{ asset('storage/' . auth()->user()->profile_photo_path) }}" alt="Foto de perfil" class="w-full h-full object-cover">
+                        <img src="{{ asset('storage/' . auth()->user()->profile_photo_path) }}" alt="Foto de perfil" class="w-full h-full object-cover" data-profile-avatar>
                     @else
-                        <img src="{{ asset('images/default_pfp.svg.png') }}" alt="Avatar predeterminado" class="w-full h-full object-cover">
+                        <img src="{{ asset('images/default_pfp.svg.png') }}" alt="Avatar predeterminado" class="w-full h-full object-cover" data-profile-avatar>
                     @endif
                 </div>
                 <!-- Nombre y cargo - se oculta en mobile -->
                 <div class="text-left hidden lg:block min-w-0 w-44 h-8 overflow-hidden">
-                    <p class="text-sm font-semibold leading-tight truncate">{{ trim(implode(' ', array_filter([auth()->user()->name, auth()->user()->first_last_name]))) }}</p>
+                    <p class="text-sm font-semibold leading-tight truncate">{{ $headerShortName ?: 'Usuario' }}</p>
                     <p class="text-xs text-gray-300 leading-tight truncate">{{ auth()->user()->position->name ?? 'Sin cargo' }}</p>
                 </div>
             </a>
@@ -209,38 +217,51 @@
                  x-transition:leave="transition ease-in duration-100"
                  x-transition:leave-start="opacity-100 transform scale-100"
                  x-transition:leave-end="opacity-0 transform scale-95"
-                 class="absolute right-0 top-full mt-2 w-56 lg:w-64 bg-white rounded-lg shadow-xl py-2 z-50 border border-gray-200"
+                 class="absolute right-0 top-full mt-2 w-64 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-2xl ring-1 ring-black/5 z-50"
                  style="display: none;">
                  
                 <!-- Encabezado del menú -->
-                <div class="px-3 lg:px-4 py-2 lg:py-3 border-b border-gray-100 bg-gray-50">
-                    <p class="text-xs lg:text-sm font-medium text-gray-600">Cuenta</p>
-                    <p class="text-xs text-gray-500 mt-1">{{ trim(implode(' ', array_filter([auth()->user()->name, auth()->user()->first_last_name, auth()->user()->second_last_name]))) }}</p>
+                <div class="border-b border-gray-100 bg-gray-50/90 px-4 py-3">
+                    <p class="font-lora text-xs font-semibold uppercase text-[#611132]">Cuenta</p>
+                    <div class="mt-1 font-lora leading-snug">
+                        <p class="text-sm font-semibold text-[#404041] break-words [overflow-wrap:anywhere]">{{ $headerGivenNames ?: ($headerFullName ?: 'Usuario') }}</p>
+                        @if($headerLastNames)
+                            <p class="text-xs text-gray-600 break-words [overflow-wrap:anywhere]">{{ $headerLastNames }}</p>
+                        @endif
+                    </div>
                 </div>
 
                 <!-- Opciones del menú -->
-                <a href="{{ route('usuario.miperfil') }}" class="flex items-center px-3 lg:px-4 py-2 lg:py-3 text-xs lg:text-sm text-gray-700 hover:bg-blue-50 transition-colors group">
-                    <ion-icon name="person" class="text-gray-400 group-hover:text-blue-600 mr-2 lg:mr-3 text-sm lg:text-base"></ion-icon>
-                    <span class="font-medium">Mi Perfil</span>
+                <div class="py-1.5">
+                <a href="{{ route('usuario.miperfil') }}" class="mx-1.5 flex items-center gap-3 rounded-lg px-3 py-2.5 font-lora text-sm text-[#404041] transition-colors hover:bg-[#611132]/5 hover:text-[#611132] focus:bg-[#611132]/5 focus:outline-none group">
+                    <span class="flex h-7 w-7 items-center justify-center rounded-lg bg-gray-100 text-gray-500 transition-colors group-hover:bg-[#611132]/10 group-hover:text-[#611132]">
+                        <ion-icon name="person" class="text-base"></ion-icon>
+                    </span>
+                    <span class="font-semibold">Mi Perfil</span>
                 </a>
 
                 {{-- Gestión de Usuarios: Solo Administrador --}}
                 @if(auth()->user()->isAdmin())
-                    <a href="{{ route('user.user-gestion') }}" class="flex items-center px-3 lg:px-4 py-2 lg:py-3 text-xs lg:text-sm text-gray-700 hover:bg-blue-50 transition-colors group">
-                        <ion-icon name="people" class="text-gray-400 group-hover:text-blue-600 mr-2 lg:mr-3 text-sm lg:text-base"></ion-icon>
-                        <span class="font-medium">Gestión de Usuarios</span>
+                    <a href="{{ route('user.user-gestion') }}" class="mx-1.5 flex items-center gap-3 rounded-lg px-3 py-2.5 font-lora text-sm text-[#404041] transition-colors hover:bg-[#611132]/5 hover:text-[#611132] focus:bg-[#611132]/5 focus:outline-none group">
+                        <span class="flex h-7 w-7 items-center justify-center rounded-lg bg-gray-100 text-gray-500 transition-colors group-hover:bg-[#611132]/10 group-hover:text-[#611132]">
+                            <ion-icon name="people" class="text-base"></ion-icon>
+                        </span>
+                        <span class="font-semibold">Gestión de Usuarios</span>
                     </a>
                 @endif
+                </div>
 
                 <!-- Separador -->
-                <div class="border-t border-gray-100 my-1 lg:my-2"></div>
+                <div class="border-t border-gray-100"></div>
 
                 <!-- Cerrar sesión -->
                 <form method="POST" action="{{ route('logout') }}">
                     @csrf
-                    <button type="submit" class="w-full flex items-center px-3 lg:px-4 py-2 lg:py-3 text-xs lg:text-sm text-red-600 hover:bg-red-50 transition-colors group text-left">
-                        <ion-icon name="log-out" class="text-red-400 group-hover:text-red-600 mr-2 lg:mr-3 text-sm lg:text-base"></ion-icon>
-                        <span class="font-medium">Cerrar Sesión</span>
+                    <button type="submit" class="flex w-full items-center gap-3 px-4 py-3 font-lora text-sm font-semibold text-red-700 transition-colors hover:bg-red-50 focus:bg-red-50 focus:outline-none group text-left">
+                        <span class="flex h-7 w-7 items-center justify-center rounded-lg bg-red-50 text-red-600 transition-colors group-hover:bg-red-100">
+                            <ion-icon name="log-out" class="text-base"></ion-icon>
+                        </span>
+                        <span>Cerrar Sesión</span>
                     </button>
                 </form>
             </div>

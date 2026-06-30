@@ -1,6 +1,5 @@
 <?php
 
-use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\UserController;
 
@@ -11,25 +10,12 @@ Route::get('/', function () {
         : redirect()->route('login');
 });
 
-// Dashboard predeterminado de Laravel (comentado - no se usa)
-// Route::get('/dashboard', function () {
-//     return view('dashboard');
-// })->middleware(['auth', 'verified'])->name('dashboard');
-
-Route::middleware('auth')->group(function () {
-    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
-    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
-    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
-});
-
-
-Route::view('/prueba', 'landing.prueba')->name('prueba');
-
 // CONTROLADORES  ---------------------------------------------------
 
 // ========== RUTAS PROTEGIDAS (REQUIEREN AUTENTICACIÓN) ==========
 Route::middleware('auth')->group(function () {
-    
+    Route::redirect('/profile', 'usuario/miperfil')->name('profile.redirect');
+
     // ========== GESTIÓN DE USUARIOS (Solo Administrador) ==========
     Route::middleware('role:Administrador')->group(function () {
         Route::get('usuario/gestion-de-usuarios', [UserController::class, 'index'])->name('user.user-gestion');
@@ -41,9 +27,7 @@ Route::middleware('auth')->group(function () {
         Route::put('/usuario/gestion-de-usuarios/actualizar-registro/{user}', [UserController::class, 'update'])->name('user.update');
         Route::get('usuario/gestion-de-usuarios/actualizar-contrasena/{user?}', [UserController::class, 'password'])->name('user.update-password');
         Route::put('usuario/gestion-de-usuarios/actualizar-contrasena/{user}', [UserController::class, 'updatePassword'])->name('user.update-password.update');
-        Route::get('/usuario/gestion-de-usuarios/mostrar/{user}', [UserController::class, 'show'])->name('user.show');
         Route::delete('/usuario/gestion-de-usuarios/eliminar/{user}', [UserController::class, 'destroy'])->name('user.destroy');
-        Route::get('usuario/gestion-de-usuarios/actualizar-registro/{id}', [App\Http\Controllers\UserController::class, 'edit'])->name('usuario.actualizar-registro');
     });
 
     // ========== ESTADÍSTICAS (Administrador y Coordinador) ==========
@@ -105,8 +89,6 @@ Route::middleware('auth')->group(function () {
 
     // ========== REPORTES - CREAR, EDITAR, ELIMINAR (Administrador, Coordinador y Operador - NO Invitado) ==========
     Route::middleware('role:Administrador,Coordinador,Operador')->group(function () {
-        Route::view('reportes/centro-de-control', 'reportes.centro-de-control')->name('reportes.centro-de-control');
-
         // Crear reportes (formularios)
         Route::get('reportes/registro/seguridad-vial', [App\Http\Controllers\ReportController::class, 'createSeguridadVial'])->name('reportes.seguridad-vial');
         Route::get('reportes/registro/observatorio-de-lesiones', [App\Http\Controllers\ReportController::class, 'createObservatorio'])->name('reportes.observatorio-de-lesiones');

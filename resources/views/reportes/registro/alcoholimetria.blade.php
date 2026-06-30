@@ -608,9 +608,7 @@
 
             function showTomSelectError(select, message) {
                 if (!select) return;
-                const wrapper = getTomSelectWrapper(select);
                 const validityInput = getTomSelectValidityInput(select);
-                wrapper?.classList.add('border-red-500', 'ring-2', 'ring-red-100');
                 if (validityInput?.setCustomValidity) {
                     validityInput.setCustomValidity(message);
                 }
@@ -618,9 +616,7 @@
 
             function clearTomSelectError(select) {
                 if (!select) return;
-                const wrapper = getTomSelectWrapper(select);
                 const validityInput = getTomSelectValidityInput(select);
-                wrapper?.classList.remove('border-red-500', 'ring-2', 'ring-red-100');
                 if (validityInput?.setCustomValidity) {
                     validityInput.setCustomValidity('');
                 }
@@ -873,6 +869,11 @@
                 }, true);
 
                 mainForm.addEventListener('submit', function(e) {
+                    if (!validateAlcoholTotals(true)) {
+                        e.preventDefault();
+                        return false;
+                    }
+
                     if (!validateAlcoholTomSelects(true)) {
                         e.preventDefault();
                         return false;
@@ -895,6 +896,62 @@
     <!-- Script para manejo de archivos -->
     <script>
         let selectedFiles = [];
+
+        function getAlcoholNumber(name) {
+            const input = document.querySelector(`[name="${name}"]`);
+            return input ? Number(input.value || 0) : 0;
+        }
+
+        function clearAlcoholTotalsValidity() {
+            const totalInput = document.querySelector('[name="conductores_no_aptos"]');
+            if (totalInput) totalInput.setCustomValidity('');
+        }
+
+        function validateAlcoholTotals(focusFirst = false) {
+            const totalInput = document.querySelector('[name="conductores_no_aptos"]');
+            if (!totalInput) return true;
+
+            const tests = getAlcoholNumber('pruebas_realizadas');
+            const total = getAlcoholNumber('conductores_no_aptos');
+            const genderTotal = getAlcoholNumber('mujeres_no_aptas') + getAlcoholNumber('hombres_no_aptos');
+            const vehicleTotal = getAlcoholNumber('automoviles_camionetas')
+                + getAlcoholNumber('motocicletas')
+                + getAlcoholNumber('transporte_colectivo')
+                + getAlcoholNumber('transporte_individual')
+                + getAlcoholNumber('transporte_carga')
+                + getAlcoholNumber('vehiculos_emergencia');
+
+            let message = '';
+            if (total > tests) {
+                message = 'Los conductores no aptos no pueden ser mayores que las pruebas realizadas.';
+            } else if (genderTotal !== total) {
+                message = 'Mujeres y hombres no aptos deben sumar el total de conductores no aptos.';
+            } else if (vehicleTotal !== total) {
+                message = 'Los tipos de vehículo deben sumar el total de conductores no aptos.';
+            }
+
+            totalInput.setCustomValidity(message);
+            if (message && focusFirst) {
+                totalInput.reportValidity();
+            }
+
+            return message === '';
+        }
+
+        document.querySelectorAll([
+            '[name="pruebas_realizadas"]',
+            '[name="conductores_no_aptos"]',
+            '[name="mujeres_no_aptas"]',
+            '[name="hombres_no_aptos"]',
+            '[name="automoviles_camionetas"]',
+            '[name="motocicletas"]',
+            '[name="transporte_colectivo"]',
+            '[name="transporte_individual"]',
+            '[name="transporte_carga"]',
+            '[name="vehiculos_emergencia"]'
+        ].join(',')).forEach(input => {
+            input.addEventListener('input', clearAlcoholTotalsValidity);
+        });
 
         function showFileError(message) {
             const fileError = document.getElementById('file-error');
@@ -1124,9 +1181,12 @@
             updateFileCounters();
         }
 
-        function clearAlcoholimetriaForm() {
-            if (confirm('¿Está seguro de que desea limpiar todos los campos del formulario?')) {
-                const form = document.getElementById('alcoholimetriaForm');
+        async function clearAlcoholimetriaForm() {
+            const form = document.getElementById('alcoholimetriaForm');
+            const canClear = window.confirmFormClear
+                ? await window.confirmFormClear(form, selectedFiles.length)
+                : false;
+            if (canClear) {
                 if (form) {
                     form.reset();
                 }
@@ -1136,6 +1196,10 @@
                 selectedFiles = [];
                 updateFileDisplay();
                 updateFileCounters();
+
+                if (typeof window.showToast === 'function') {
+                    window.showToast('Formulario limpiado', 'info', 2400);
+                }
             }
         }
         
@@ -1186,6 +1250,10 @@
             
             if (mainForm) {
                 mainForm.addEventListener('submit', function(e) {
+                    if (e.defaultPrevented) {
+                        return false;
+                    }
+
                     // Actualizar files_to_delete SIEMPRE (tanto en creación como en edición)
                     if (isEditMode && document.getElementById('files-to-delete')) {
                         const filesToDeleteIds = [];

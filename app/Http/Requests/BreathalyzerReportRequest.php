@@ -103,6 +103,38 @@ class BreathalyzerReportRequest extends FormRequest
     {
         return [
             function ($validator) {
+                $testsPerformed = (int) $this->input('pruebas_realizadas', 0);
+                $driversNotFit = (int) $this->input('conductores_no_aptos', 0);
+                $genderTotal = (int) $this->input('mujeres_no_aptas', 0)
+                    + (int) $this->input('hombres_no_aptos', 0);
+                $vehicleTotal = (int) $this->input('automoviles_camionetas', 0)
+                    + (int) $this->input('motocicletas', 0)
+                    + (int) $this->input('transporte_colectivo', 0)
+                    + (int) $this->input('transporte_individual', 0)
+                    + (int) $this->input('transporte_carga', 0)
+                    + (int) $this->input('vehiculos_emergencia', 0);
+
+                if (!$validator->errors()->has('conductores_no_aptos') && $driversNotFit > $testsPerformed) {
+                    $validator->errors()->add(
+                        'conductores_no_aptos',
+                        'Los conductores no aptos no pueden ser mayores que las pruebas realizadas.'
+                    );
+                }
+
+                if (!$validator->errors()->has('conductores_no_aptos') && $genderTotal !== $driversNotFit) {
+                    $validator->errors()->add(
+                        'conductores_no_aptos',
+                        'La suma de mujeres y hombres no aptos debe coincidir con el total de conductores no aptos.'
+                    );
+                }
+
+                if (!$validator->errors()->has('conductores_no_aptos') && $vehicleTotal !== $driversNotFit) {
+                    $validator->errors()->add(
+                        'conductores_no_aptos',
+                        'La suma por tipo de vehículo debe coincidir con el total de conductores no aptos.'
+                    );
+                }
+
                 $publication = $this->route('publication');
                     
                     // Obtener archivos a eliminar

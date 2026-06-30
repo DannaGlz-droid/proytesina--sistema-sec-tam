@@ -4,7 +4,6 @@
 
     @include('components.header-admin')
     @include('components.nav-reportes')
-    @include('components.toast')
 
     <div class="px-4 lg:pl-10 pt-6 lg:pt-10 pb-8 lg:pb-12">
         <h1 class="text-2xl lg:text-3xl font-lora font-bold text-[#404041] mb-3">Centro de Control</h1>
@@ -12,12 +11,13 @@
 
         <!-- Mensajes de éxito y error -->
         @if(session('success'))
-            <div class="mb-6 bg-green-50 border-l-4 border-green-500 p-4 rounded-lg shadow-sm">
-                <div class="flex items-center">
-                    <i class="fas fa-check-circle text-green-500 text-xl mr-3"></i>
-                    <p class="text-sm text-green-800 font-lora font-medium">{{ session('success') }}</p>
-                </div>
-            </div>
+            <script>
+                document.addEventListener('DOMContentLoaded', () => {
+                    if (typeof window.showToast === 'function') {
+                        window.showToast(@json(session('success')), 'success', 3200);
+                    }
+                });
+            </script>
         @endif
 
         @if(session('error'))
@@ -113,7 +113,6 @@
                             <label class="block text-xs font-semibold text-[#404041] mb-1 font-lora">Ordenar</label>
                             <select name="order_by" class="w-full border border-[#404041] rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-[#611132] focus:border-transparent">
                                 <option value="updated_at:desc" {{ request('order_by', 'updated_at:desc') === 'updated_at:desc' ? 'selected' : '' }}>Última actualización (recientes)</option>
-                                <option value="updated_at:asc" {{ request('order_by') === 'updated_at:asc' ? 'selected' : '' }}>Última actualización (antiguos)</option>
                                 <option value="created_at:desc" {{ request('order_by') === 'created_at:desc' ? 'selected' : '' }}>Fecha creación (recientes)</option>
                                 <option value="created_at:asc" {{ request('order_by') === 'created_at:asc' ? 'selected' : '' }}>Fecha creación (antiguos)</option>
                                 <option value="titulo:asc" {{ request('order_by') === 'titulo:asc' ? 'selected' : '' }}>Título (A → Z)</option>
@@ -333,6 +332,9 @@
                             if ($pub->id == 10) {
                                 \Log::info("Publication #10 hasUnread result for user #{$currentUserId}: " . ($hasUnread ? 'TRUE' : 'FALSE'));
                             }
+
+                            $wasUpdated = $pub->created_at && $pub->updated_at && $pub->updated_at->gt($pub->created_at->copy()->addMinute());
+                            $updatedDisplay = $wasUpdated ? $pub->updated_at->locale('es')->isoFormat('D MMM YYYY, HH:mm') : '';
                         @endphp
 
                         <x-publicacion-card
@@ -340,7 +342,7 @@
                             :tipo="$tipoDisplay"
                             :titulo="$pub->topic"
                             :fecha="$pub->publication_date->locale('es')->isoFormat('dddd, D [de] MMMM [de] YYYY')"
-                            :actualizado="$pub->updated_at->locale('es')->isoFormat('D MMM YYYY, HH:mm')"
+                            :actualizado="$updatedDisplay"
                             :usuario="$uShort"
                             :usuario_full="$uFull"
                             :descripcion="$activityInfo"
@@ -358,13 +360,15 @@
                             class="publication-card-wrapper">
 
                             <div class="flex justify-end gap-2">
-                                <button class="w-8 h-8 flex items-center justify-center rounded-lg border border-[#404041] text-[#404041] transition-all duration-300 hover:bg-[#404041] hover:text-white {{ $claseModal }}" 
+                                <button class="hidden {{ $claseModal }}" 
                                         title="Ver detalles"
+                                        tabindex="-1"
+                                        aria-hidden="true"
                                         data-tipo="{{ $pub->publication_type }}"
                                         data-titulo="{{ $pub->topic }}"
                                         data-fecha="{{ $pub->publication_date->format('d/m/Y') }}"
                                         data-fecha-actividad="{{ $pub->activity_date->locale('es')->isoFormat('dddd, D [de] MMMM [de] YYYY') }}"
-                                        data-actualizado="{{ $pub->updated_at->locale('es')->isoFormat('D MMM YYYY, HH:mm') }}"
+                                        data-actualizado="{{ $updatedDisplay }}"
                                         data-usuario="{{ $uFull ?: ($pub->user->name ?? 'Usuario') }}"
                                         data-position="{{ $pub->user->position->name ?? '' }}"
                                         data-descripcion="{{ $pub->description ?? '' }}"
@@ -379,7 +383,6 @@
                                         @foreach($dataAttributes as $key => $value)
                                             {{ $key }}="{{ $value }}"
                                         @endforeach>
-                                    <i class="fas fa-eye text-sm"></i>
                                 </button>
                                 @php
                                     $canEdit = $pub->canBeEditedBy(auth()->id());
@@ -477,60 +480,6 @@
                 <i class="fas fa-times-circle"></i>Rechazar
             </button>
         </div>
-    </div>
-</div>
-
-<!-- Modal de eliminación -->
-<div id="delete-modal" class="government-confirm-modal hidden fixed inset-0 z-[999999] flex items-center justify-center p-4">
-    <div class="government-confirm-card bg-white max-w-2xl w-full p-6 border border-gray-200 border-t-4 border-t-[#611132] ring-1 ring-black/5">
-        <div class="flex items-center justify-between mb-4 pb-4 border-b border-gray-300">
-            <h3 class="text-xl font-bold text-[#404041] font-lora">Eliminar Publicación</h3>
-            <button onclick="closeDeleteModal()" class="modal-cerrar text-gray-500 hover:text-gray-700 transition-colors duration-200 w-9 h-9 flex items-center justify-center rounded-lg" aria-label="Cerrar modal">
-                <i class="fas fa-times text-base"></i>
-            </button>
-        </div>
-        
-        <form id="delete-form" method="POST" action="">
-            @csrf
-            @method('DELETE')
-            
-            <input type="hidden" id="delete-modal-publication-id">
-            <input type="hidden" id="delete-modal-redirect-tipo" name="redirect_tipo">
-            
-            <div class="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg shadow-sm">
-                <p class="text-sm text-red-700 font-lora">
-                    <i class="fas fa-exclamation-triangle mr-2"></i>
-                    ¿Estás seguro de eliminar esta publicación? Esta acción no se puede deshacer fácilmente.
-                </p>
-            </div>
-            
-            <p class="text-sm text-gray-600 mb-4 font-lora">
-                Publicación: <span id="delete-modal-title" class="font-semibold"></span>
-            </p>
-            
-            <div class="mb-6">
-                <label class="block text-sm font-medium text-[#404041] mb-2 font-lora">Motivo de eliminación (opcional)</label>
-                <textarea 
-                    id="deletion-reason"
-                    name="deletion_reason"
-                    rows="4"
-                    class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-[#611132]/25 focus:border-[#611132] font-lora resize-none"
-                    placeholder="Opcionalmente, explica por qué eliminas esta publicación..."
-                    maxlength="500"></textarea>
-                <p class="text-xs text-gray-500 mt-1">Máximo 500 caracteres</p>
-            </div>
-            
-            <div class="flex gap-3 pt-4 border-t border-gray-300">
-                <button type="button" onclick="closeDeleteModal()" 
-                        class="flex-1 px-4 py-2 border border-gray-300 text-[#404041] rounded-lg font-semibold hover:bg-gray-50 hover:border-[#611132]/40 transition-all duration-200 font-lora text-sm">
-                    Cancelar
-                </button>
-                <button type="submit" 
-                        class="flex-1 px-4 py-2 bg-[#AB1A1A] text-white rounded-lg font-semibold hover:bg-[#8b1515] transition-all duration-200 font-lora text-sm flex items-center justify-center gap-2">
-                    <i class="fas fa-trash"></i>Eliminar
-                </button>
-            </div>
-        </form>
     </div>
 </div>
 
@@ -1419,6 +1368,19 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         });
 
+        modal.querySelectorAll('.modal-updated-meta').forEach((element) => {
+            const updatedValue = dataset.actualizado || '';
+            element.classList.toggle('hidden', !updatedValue);
+            const valueElement = element.querySelector('.modal-actualizado');
+            if (valueElement) {
+                valueElement.textContent = updatedValue;
+            }
+        });
+
+        modal.querySelectorAll('.report-meta-grid').forEach((element) => {
+            element.classList.toggle('has-update', !!dataset.actualizado);
+        });
+
         const descripcion = (dataset.descripcion || '').trim();
         const hasDescription = descripcion.length > 0 && descripcion !== 'Sin descripción adicional.';
         const descripcionSection = modal.querySelector('.descripcion-section');
@@ -1890,7 +1852,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const selectedIndex = supportedFiles.findIndex((file) => String(file.id) === String(selectedId));
 
         if (!selected || !selected.canPreview || selectedIndex < 0) {
-            alert('Este archivo no tiene previsualizacion disponible');
+            showToast('Este archivo no tiene previsualización disponible.', 'warning', 3000);
             return;
         }
 
@@ -1927,7 +1889,7 @@ document.addEventListener('DOMContentLoaded', function() {
             openArchivoPreview(files, fileIndex);
         } catch (error) {
             console.error('Error abriendo previsualizacion:', error);
-            alert('No se pudo identificar el archivo para previsualizar');
+            showToast('No se pudo identificar el archivo para previsualizar.', 'error', 3200);
         }
     };
 
@@ -2517,12 +2479,12 @@ document.addEventListener('DOMContentLoaded', function() {
             console.log('📝 Datos:', { publicationId, comment: comment.substring(0, 50) });
 
             if (!comment) {
-                alert('Por favor escribe un comentario');
+                showToast('Escribe un comentario antes de enviarlo.', 'warning', 2800);
                 return;
             }
             
             if (!publicationId) {
-                alert('Error: ID de publicación no encontrado');
+                showToast('No se pudo identificar la publicación.', 'error', 3200);
                 return;
             }
 
@@ -2626,14 +2588,15 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                     
                     console.log('✅ Comentario agregado exitosamente');
+                    showToast('Comentario enviado correctamente', 'success', 2600);
                 } else {
-                    alert(data.message || 'Error al enviar el comentario');
+                    showToast(data.message || 'Error al enviar el comentario', 'error', 3200);
                 }
             })
             .catch(error => {
                 console.error('❌ Error enviando comentario:', error);
                 // Mostrar mensaje más informativo al usuario cuando sea posible
-                alert('Error al enviar el comentario. ' + (error.message || 'Por favor, intenta de nuevo.'));
+                showToast('Error al enviar el comentario. ' + (error.message || 'Por favor, intenta de nuevo.'), 'error', 3600);
             })
             .finally(() => {
                 button.disabled = false;
@@ -2685,7 +2648,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (fileId && fileId !== 'null') {
                 window.location.href = `/reportes/file/${fileId}/download`;
             } else {
-                alert('No se pudo identificar el archivo para descargar');
+                showToast('No se pudo identificar el archivo para descargar.', 'error', 3200);
             }
         }
     });
@@ -2693,11 +2656,18 @@ document.addEventListener('DOMContentLoaded', function() {
     console.log('=== SISTEMA DE COMENTARIOS Y DESCARGAS INICIALIZADO ===');
 
     // === SISTEMA DE APROBACIÓN/RECHAZO DE REPORTES ===
-    window.approveReport = function(publicationId) {
-        if (!confirm('¿Aprobar este reporte?')) return;
+    window.approveReport = async function(publicationId) {
+        const confirmed = await window.confirmDialog({
+            title: 'Aprobar reporte',
+            message: 'El reporte quedara marcado como aprobado y visible con ese estado.',
+            confirmText: 'Aprobar',
+            cancelText: 'Cancelar',
+            variant: 'success'
+        });
+        if (!confirmed) return;
         
         // Buscar el modal abierto para extraer datos del reporte
-        const modal = Array.from(document.querySelectorAll('[id^="modal"]')).find(m => !m.classList.contains('hidden') && m.id !== 'reject-modal' && m.id !== 'delete-modal');
+        const modal = Array.from(document.querySelectorAll('[id^="modal"]')).find(m => !m.classList.contains('hidden') && m.id !== 'reject-modal');
         if (!modal) return;
 
         // Obtener elemento del dataset
@@ -2715,7 +2685,7 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(data => {
             if (data.success) {
                 // Mostrar toast de éxito
-                showToast('✓ Reporte aprobado correctamente', 'success', 3000);
+                showToast('Reporte aprobado correctamente', 'success', 3000);
                 refreshReportesPanel();
                 
                 // Actualizar estado en el modal sin recargar
@@ -2747,7 +2717,7 @@ document.addEventListener('DOMContentLoaded', function() {
     window.showRejectModal = function(publicationId, publicationTitle) {
         // Guardar cuál modal de detalles estaba abierto
         document.querySelectorAll('[id^="modal"]').forEach(modal => {
-            if (modal.id !== 'reject-modal' && modal.id !== 'delete-modal' && !modal.classList.contains('hidden')) {
+            if (modal.id !== 'reject-modal' && !modal.classList.contains('hidden')) {
                 previousModalId = modal.id;
                 closeModal(modal.id);
             }
@@ -2800,11 +2770,11 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(data => {
             if (data.success) {
                 // Mostrar toast de éxito
-                showToast('✓ Reporte rechazado correctamente', 'success', 3000);
+                showToast('Reporte rechazado correctamente', 'success', 3000);
                 refreshReportesPanel();
                 
                 // Actualizar estado en el modal sin recargar
-                const modal = Array.from(document.querySelectorAll('[id^="modal"]')).find(m => !m.classList.contains('hidden') && m.id !== 'reject-modal' && m.id !== 'delete-modal');
+                const modal = Array.from(document.querySelectorAll('[id^="modal"]')).find(m => !m.classList.contains('hidden') && m.id !== 'reject-modal');
                 if (modal) {
                     const dataElement = modal.querySelector('[data-status]');
                     if (dataElement) {
@@ -2819,7 +2789,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 // Cerrar modal anterior después de 1s
                 setTimeout(() => {
-                    const mainModal = Array.from(document.querySelectorAll('[id^="modal"]')).find(m => !m.classList.contains('hidden') && m.id !== 'reject-modal' && m.id !== 'delete-modal');
+                    const mainModal = Array.from(document.querySelectorAll('[id^="modal"]')).find(m => !m.classList.contains('hidden') && m.id !== 'reject-modal');
                     if (mainModal) {
                         closeModal(mainModal.id);
                     }
@@ -2834,11 +2804,18 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     };
 
-    window.resubmitReport = function(publicationId) {
-        if (!confirm('¿Reenviar este reporte para revisión? Asegúrate de haber corregido los problemas mencionados.')) return;
+    window.resubmitReport = async function(publicationId) {
+        const confirmed = await window.confirmDialog({
+            title: 'Reenviar reporte',
+            message: 'El reporte volvera a quedar pendiente de revision.',
+            confirmText: 'Reenviar',
+            cancelText: 'Cancelar',
+            variant: 'warning'
+        });
+        if (!confirmed) return;
         
         // Buscar el modal abierto
-        const modal = Array.from(document.querySelectorAll('[id^="modal"]')).find(m => !m.classList.contains('hidden') && m.id !== 'reject-modal' && m.id !== 'delete-modal');
+        const modal = Array.from(document.querySelectorAll('[id^="modal"]')).find(m => !m.classList.contains('hidden') && m.id !== 'reject-modal');
         if (!modal) return;
 
         const dataElement = modal.querySelector('[data-status]');
@@ -2855,7 +2832,7 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(data => {
             if (data.success) {
                 // Mostrar toast de éxito
-                showToast('✓ Reporte reenviado para revisión', 'success', 3000);
+                showToast('Reporte reenviado para revision', 'success', 3000);
                 refreshReportesPanel();
                 
                 // Actualizar estado en el modal
@@ -2881,17 +2858,22 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     };
 
-    // === SISTEMA DE ELIMINACIÓN (confirm simple) ===
-    // Reemplaza el modal por un confirm() nativo: si el usuario confirma, se envía el formulario de eliminación.
-    document.addEventListener('click', function(e) {
+    // === SISTEMA DE ELIMINACION ===
+    document.addEventListener('click', async function(e) {
         if (e.target.closest('.eliminar-reporte')) {
             e.preventDefault();
             const button = e.target.closest('.eliminar-reporte');
             const deleteUrl = button.dataset.deleteUrl;
             const redirectTipo = button.dataset.redirectTipo;
 
-            const message = '¿Estás seguro de eliminar esta publicación? Esta acción no se puede deshacer fácilmente.';
-            if (!confirm(message)) {
+            const confirmed = await window.confirmDialog({
+                title: 'Eliminar publicacion',
+                message: 'Esta accion no se puede deshacer. La publicacion y sus archivos dejaran de estar disponibles.',
+                confirmText: 'Eliminar',
+                cancelText: 'Cancelar',
+                variant: 'danger'
+            });
+            if (!confirmed) {
                 return;
             }
 
@@ -2925,42 +2907,6 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         }
     });
-
-    window.showDeleteModal = function(publicationId, publicationTitle, deleteUrl) {
-        // Guardar cuál modal de detalles estaba abierto
-        document.querySelectorAll('[id^="modal"]').forEach(modal => {
-            if (modal.id !== 'reject-modal' && modal.id !== 'delete-modal' && !modal.classList.contains('hidden')) {
-                previousModalId = modal.id;
-                closeModal(modal.id);
-            }
-        });
-        
-        // Pequeño delay para que se cierre el modal anterior antes de abrir el de eliminación
-        setTimeout(() => {
-            document.getElementById('delete-modal-publication-id').value = publicationId;
-            document.getElementById('delete-modal-title').textContent = publicationTitle;
-            document.getElementById('delete-form').action = deleteUrl;
-            document.getElementById('delete-modal').classList.remove('hidden');
-            // Desactivar scroll de la página
-            document.body.style.overflow = 'hidden';
-        }, 350);
-    };
-
-    window.closeDeleteModal = function(returnToPrevious = true) {
-        document.getElementById('delete-modal').classList.add('hidden');
-        document.getElementById('deletion-reason').value = '';
-        
-        // Si se cancela, regresar al modal anterior
-        if (returnToPrevious && previousModalId) {
-            // showModal habilitará el overflow hidden nuevamente
-            showModal(previousModalId);
-            previousModalId = null;
-        } else {
-            // Si no regresamos a un modal anterior, restaurar el scroll
-            document.body.style.overflow = 'auto';
-            previousModalId = null;
-        }
-    };
 
     // === Abrir modal desde área de archivos o icono de comentarios ===
     document.addEventListener('click', function(e) {
@@ -3038,7 +2984,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    document.addEventListener('click', function(e) {
+    document.addEventListener('click', async function(e) {
         const clearButton = e.target.closest('#clear-selection');
         if (clearButton && getReportesPanel()?.contains(clearButton)) {
             e.preventDefault();
@@ -3054,12 +3000,19 @@ document.addEventListener('DOMContentLoaded', function() {
             e.preventDefault();
             const checked = document.querySelectorAll('.publication-check-btn:checked');
             if (checked.length === 0) {
-                alert('Selecciona al menos un reporte.');
+                showToast('Selecciona al menos un reporte.', 'warning', 2800);
                 return;
             }
 
             const ids = Array.from(checked).map(checkbox => checkbox.dataset.publicationId);
-            if (!confirm(`Confirmas eliminar ${ids.length} reporte(s)? Esta accion no se puede deshacer.`)) {
+            const confirmed = await window.confirmDialog({
+                title: 'Eliminar reportes',
+                message: `Se eliminaran ${ids.length} reporte(s). Esta accion no se puede deshacer.`,
+                confirmText: 'Eliminar',
+                cancelText: 'Cancelar',
+                variant: 'danger'
+            });
+            if (!confirmed) {
                 return;
             }
 
@@ -3094,7 +3047,7 @@ document.addEventListener('DOMContentLoaded', function() {
             e.preventDefault();
             const checked = document.querySelectorAll('.publication-check-btn:checked');
             if (checked.length === 0) {
-                alert('Selecciona al menos un reporte.');
+                showToast('Selecciona al menos un reporte.', 'warning', 2800);
                 return;
             }
 

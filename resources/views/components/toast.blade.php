@@ -5,30 +5,35 @@
         const container = document.getElementById('toast-container');
         if (!container) return;
 
-        // Colores según tipo
-        const colors = {
-            'success': { bg: 'bg-green-500', icon: 'fas fa-check-circle' },
-            'error': { bg: 'bg-red-500', icon: 'fas fa-exclamation-circle' },
-            'warning': { bg: 'bg-yellow-500', icon: 'fas fa-exclamation-triangle' },
-            'info': { bg: 'bg-blue-500', icon: 'fas fa-info-circle' }
+        const variants = {
+            success: { surface: 'bg-emerald-50 border-emerald-300', icon: 'fas fa-check-circle text-emerald-700' },
+            error: { surface: 'bg-red-50 border-red-300', icon: 'fas fa-exclamation-circle text-red-700' },
+            warning: { surface: 'bg-amber-50 border-amber-300', icon: 'fas fa-exclamation-triangle text-amber-700' },
+            info: { surface: 'bg-blue-50 border-blue-300', icon: 'fas fa-info-circle text-blue-700' }
         };
 
-        const config = colors[type] || colors['success'];
-
-        // Crear elemento toast
+        const config = variants[type] || variants.success;
         const toast = document.createElement('div');
-        toast.className = `${config.bg} text-white px-4 py-3 rounded-lg shadow-lg flex items-center gap-3 pointer-events-auto animate-in fade-in slide-in-from-right-4 duration-300`;
-        toast.innerHTML = `
-            <i class="${config.icon} text-lg"></i>
-            <span class="text-sm font-medium">${message}</span>
-            <button onclick="this.parentElement.remove()" class="ml-auto opacity-70 hover:opacity-100 transition-opacity">
-                <i class="fas fa-times"></i>
-            </button>
-        `;
+        toast.className = `${config.surface} text-[#2f3337] border-l-4 border px-4 py-3 rounded-lg shadow-xl ring-1 ring-black/5 flex items-center gap-3 pointer-events-auto`;
+        toast.style.animation = 'toastEnter 0.24s ease-out forwards';
 
+        const icon = document.createElement('i');
+        icon.className = `${config.icon} text-base flex-none`;
+
+        const text = document.createElement('span');
+        text.className = 'text-sm font-lora font-medium leading-snug';
+        text.textContent = message;
+
+        const closeButton = document.createElement('button');
+        closeButton.type = 'button';
+        closeButton.className = 'ml-auto text-gray-400 hover:text-gray-700 transition-colors';
+        closeButton.setAttribute('aria-label', 'Cerrar notificacion');
+        closeButton.innerHTML = '<i class="fas fa-times text-xs"></i>';
+        closeButton.addEventListener('click', () => toast.remove());
+
+        toast.append(icon, text, closeButton);
         container.appendChild(toast);
 
-        // Auto-remover después de duración especificada
         if (duration > 0) {
             setTimeout(() => {
                 toast.style.animation = 'fadeOut 0.3s ease-out forwards';
@@ -37,7 +42,6 @@
         }
     };
 
-    // Agregue estilos de animación
     if (!document.getElementById('toast-styles')) {
         const style = document.createElement('style');
         style.id = 'toast-styles';
@@ -48,7 +52,36 @@
                     transform: translateX(100%);
                 }
             }
+
+            @keyframes toastEnter {
+                from {
+                    opacity: 0;
+                    transform: translate3d(18px, 6px, 0) scale(0.98);
+                }
+                to {
+                    opacity: 1;
+                    transform: translate3d(0, 0, 0) scale(1);
+                }
+            }
         `;
         document.head.appendChild(style);
     }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        @if(session('success'))
+            window.showToast(@json(session('success')), 'success');
+        @endif
+
+        @if(session('error'))
+            window.showToast(@json(session('error')), 'error');
+        @endif
+
+        @if(session('warning'))
+            window.showToast(@json(session('warning')), 'warning');
+        @endif
+
+        @if(session('info'))
+            window.showToast(@json(session('info')), 'info');
+        @endif
+    });
 </script>

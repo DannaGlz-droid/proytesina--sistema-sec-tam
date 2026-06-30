@@ -33,6 +33,9 @@
     <script src="https://cdn.jsdelivr.net/npm/tom-select/dist/js/tom-select.complete.min.js"></script>
 </head>
 <body>
+    @include('components.toast')
+    @include('components.confirm-dialog')
+
     @yield('content')
     {{-- Scripts pushed from child views --}}
     @stack('scripts')
