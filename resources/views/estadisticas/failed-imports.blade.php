@@ -43,7 +43,7 @@
                         <span id="showing-count" class="text-gray-500">• Mostrando 0-0</span>
                     </div>
                 </div>
-                <div id="pagination-top" class="flex justify-center gap-2"></div>
+                <div id="pagination-top" class="app-pagination"></div>
             </div>
 
             <!-- Records List (with empty state) -->
@@ -59,7 +59,7 @@
             </div>
 
             <!-- Paginación Inferior -->
-            <div id="pagination-bottom" class="flex justify-center gap-2 mt-8"></div>
+            <div id="pagination-bottom" class="app-pagination mt-8"></div>
         </div>
     </div>
 
@@ -722,19 +722,10 @@ const muniToJurName = @json(
     })
 );
 
-console.log('Municipality to Jurisdiction map (' + Object.keys(muniToJurName).length + ' entries):');
-Object.entries(muniToJurName).slice(0, 10).forEach(([k, v]) => {
-    console.log('  ' + k + ' -> ' + v);
-});
-
 // Build data for Tom Select
 const municipalitiesData = @json($municipalities);
 const locationsData = @json($locations);
 const causesData = @json($causes);
-
-console.log('Municipalities available:', municipalitiesData.length);
-console.log('Locations available:', locationsData.length);
-console.log('Causes available:', causesData.length);
 
 // Function to initialize Tom Select for a specific select element
 function initializeTomSelect(selector, data, labelField = 'name', valueField = 'id') {
@@ -765,6 +756,24 @@ document.addEventListener('DOMContentLoaded', function() {
     let currentPage = 1;
     let isInitialLoad = true;
 
+    function notifyFailedImport(message, type = 'success', duration = 3000) {
+        if (typeof window.showToast === 'function') {
+            window.showToast(message, type, duration);
+            return;
+        }
+
+        const logger = type === 'error' ? console.error : console.log;
+        logger(message);
+    }
+
+    async function confirmFailedImportAction(options) {
+        if (typeof window.confirmDialog === 'function') {
+            return window.confirmDialog(options);
+        }
+
+        return window.confirm(options.message || 'Confirma la accion para continuar.');
+    }
+
     function loadFailedRecords(page = 1) {
         const loadingState = document.getElementById('loading-state');
         const recordsContainer = document.getElementById('records-container');
@@ -780,11 +789,8 @@ document.addEventListener('DOMContentLoaded', function() {
             recordsList.style.transition = 'opacity 0.2s ease-out';
         }
 
-        console.log('Loading failed records for import:', importId, 'page:', page);
-
         // Get CSRF token from meta tag
         const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
-        console.log('CSRF Token found:', !!csrfToken);
 
         fetch(`/api/estadisticas/importaciones/${importId}/registros-fallidos?page=${page}`, {
             method: 'GET',
@@ -796,15 +802,12 @@ document.addEventListener('DOMContentLoaded', function() {
             credentials: 'same-origin' // Include cookies for authentication
         })
             .then(response => {
-                console.log('Response status:', response.status, response.statusText);
                 if (!response.ok) {
                     throw new Error(`HTTP Error: ${response.status} ${response.statusText}`);
                 }
                 return response.json();
             })
             .then(data => {
-                console.log('Full response data:', data);
-                
                 loadingState.classList.add('hidden');
                 recordsContainer.classList.remove('hidden');
                 
@@ -826,16 +829,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 // Safely access nested data
                 if (!data.data) {
-                    console.warn('No data.data in response');
                     document.getElementById('empty-state').classList.remove('hidden');
                     return;
                 }
-
                 // Check if this is a paginated response (Laravel pagination object)
                 const records = Array.isArray(data.data) ? data.data : (data.data.data || []);
                 
                 if (records.length > 0) {
-                    console.log('Rendering', records.length, 'records');
                     recordsList.innerHTML = '';
                     
                     renderRecords(records);
@@ -854,7 +854,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                     currentPage = page;
                 } else {
-                    console.log('No records found');
                     // Show only the empty state
                     recordsList.innerHTML = `
                         <div id="empty-state" class="col-span-full text-center py-12">
@@ -869,10 +868,18 @@ document.addEventListener('DOMContentLoaded', function() {
             })
             .catch(error => {
                 console.error('Error loading failed records:', error);
+                notifyFailedImport('No se pudieron cargar los registros fallidos.', 'error');
                 loadingState.classList.add('hidden');
                 recordsContainer.classList.remove('hidden');
                 isInitialLoad = false;
                 recordsList.style.opacity = '1';
+                document.getElementById('records-list').innerHTML = `
+                    <div class="col-span-full bg-red-50 border border-red-200 rounded-lg p-6 text-center">
+                        <p class="text-red-700 font-semibold text-base mb-2">No se pudieron cargar los registros</p>
+                        <p class="text-red-600 text-sm">Intente nuevamente en unos momentos.</p>
+                    </div>
+                `;
+                return;
                 document.getElementById('records-list').innerHTML = `
                     <div class="bg-red-50 border border-red-300 rounded-lg p-6 text-center">
                         <p class="text-red-700 font-semibold text-base mb-2">❌ Error cargando registros</p>
@@ -1404,8 +1411,24 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // Discard Record
         if (btnDiscard) {
-            btnDiscard.addEventListener('click', (e) => {
+            btnDiscard.addEventListener('click', async (e) => {
                 e.preventDefault();
+                const confirmed = await confirmFailedImportAction({
+                    type: 'warning',
+                    title: 'Descartar registro',
+                    message: 'Este registro fallido se quitara de la lista y no podra recuperarse.',
+                    confirmText: 'Descartar',
+                    cancelText: 'Cancelar'
+                });
+
+                if (!confirmed) {
+                    return;
+                }
+
+                if (confirmed) {
+                    discardRecord(recordId, card);
+                    return;
+                }
                 if (confirm('¿Descartar este registro? No podrá ser recuperado.')) {
                     discardRecord(recordId, card);
                 }
@@ -1508,11 +1531,11 @@ document.addEventListener('DOMContentLoaded', function() {
                         const recordsList = document.getElementById('records-list');
                         if (recordsList.children.length === 0) {
                             // Reload current page or go to previous page if this was last item
-                            const currentPageNum = parseInt(new URLSearchParams(window.location.search).get('page') || '1');
+                            const currentPageNum = currentPage;
                             loadFailedRecords(currentPageNum > 1 ? currentPageNum - 1 : currentPageNum);
                         }
                     }, 300);
-                    alert('✓ Registro importado exitosamente');
+                    notifyFailedImport('Registro importado correctamente.', 'success');
                 } else {
                     card.classList.remove('in-edit');
                     validationErrors.classList.add('hidden');
@@ -1545,7 +1568,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             displayElement.textContent = displayValue;
                         }
                     });
-                    alert('✓ Correcciones guardadas');
+                    notifyFailedImport('Correcciones guardadas.', 'success');
                 }
             } else {
                 if (data.errors && Array.isArray(data.errors)) {
@@ -1558,13 +1581,13 @@ document.addEventListener('DOMContentLoaded', function() {
                     });
                     validationErrors.classList.remove('hidden');
                 } else {
-                    alert('❌ Error: ' + (data.message || 'Error desconocido'));
+                    notifyFailedImport(data.message || 'No se pudieron guardar los cambios.', 'error');
                 }
             }
         })
         .catch(error => {
             console.error('Error:', error);
-            alert('❌ Error: ' + error.message);
+            notifyFailedImport(error.message || 'No se pudieron guardar los cambios.', 'error');
         });
     }
 
@@ -1581,6 +1604,7 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(response => response.json())
         .then(data => {
             if (data.ok) {
+                notifyFailedImport('Registro descartado.', 'success');
                 // Animate removal
                 card.style.transition = 'opacity 0.3s ease-out';
                 card.style.opacity = '0';
@@ -1590,15 +1614,18 @@ document.addEventListener('DOMContentLoaded', function() {
                     const recordsList = document.getElementById('records-list');
                     if (recordsList.children.length === 0) {
                         // Reload current page or go to previous page if this was last item
-                        const currentPageNum = parseInt(new URLSearchParams(window.location.search).get('page') || '1');
+                        const currentPageNum = currentPage;
                         loadFailedRecords(currentPageNum > 1 ? currentPageNum - 1 : currentPageNum);
                     }
                 }, 300);
             } else {
-                alert('❌ Error: ' + data.message);
+                notifyFailedImport(data.message || 'No se pudo descartar el registro.', 'error');
             }
         })
-        .catch(error => console.error('Error:', error));
+        .catch(error => {
+            console.error('Error:', error);
+            notifyFailedImport('No se pudo descartar el registro.', 'error');
+        });
     }
 
     function renderPagination(data) {
@@ -1623,56 +1650,90 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
 
-        // Function to render pagination in a container
+        const paginationItems = getPaginationItems(data.current_page, data.last_page);
+        const createButton = (label, page, options = {}) => {
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = options.active ? 'app-page-item is-active' : options.disabled ? 'app-page-item is-disabled' : 'app-page-item';
+            btn.innerHTML = label;
+            btn.disabled = !!options.disabled;
+            if (options.ariaLabel) btn.setAttribute('aria-label', options.ariaLabel);
+            if (!options.disabled && !options.active) {
+                btn.addEventListener('click', () => loadFailedRecords(page));
+            }
+            return btn;
+        };
+
+        const createEllipsis = () => {
+            const span = document.createElement('span');
+            span.className = 'app-page-ellipsis';
+            span.textContent = '...';
+            return span;
+        };
+
         const renderPaginationButtons = (container) => {
-            // Previous button
-            if (data.current_page > 1) {
-                const btn = document.createElement('button');
-                btn.type = 'button';
-                btn.className = 'w-9 h-9 flex items-center justify-center rounded-md bg-white border border-[#404041] text-gray-700 hover:bg-[#404041] hover:text-white transition font-lora';
-                btn.innerHTML = '<svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>';
-                btn.addEventListener('click', () => loadFailedRecords(data.current_page - 1));
-                container.appendChild(btn);
-            } else {
-                const span = document.createElement('span');
-                span.className = 'w-9 h-9 flex items-center justify-center rounded-md bg-white border border-[#404041] text-gray-400 opacity-50 cursor-not-allowed';
-                span.innerHTML = '<svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>';
-                container.appendChild(span);
-            }
+            container.innerHTML = '';
+            container.appendChild(createButton(
+                '<svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>',
+                data.current_page - 1,
+                { disabled: data.current_page <= 1, ariaLabel: 'Pagina anterior' }
+            ));
 
-            // Page numbers
-            for (let i = 1; i <= data.last_page; i++) {
-                const btn = document.createElement('button');
-                btn.type = 'button';
-                if (i === data.current_page) {
-                    btn.className = 'px-3 py-2 rounded-md bg-[#404041] text-white font-lora text-sm';
-                } else {
-                    btn.className = 'px-3 py-2 rounded-md bg-white border border-[#404041] text-gray-700 hover:bg-[#404041] hover:text-white transition font-lora text-sm';
+            paginationItems.forEach(item => {
+                if (item === 'ellipsis') {
+                    container.appendChild(createEllipsis());
+                    return;
                 }
-                btn.textContent = i;
-                btn.addEventListener('click', () => loadFailedRecords(i));
-                container.appendChild(btn);
-            }
 
-            // Next button
-            if (data.current_page < data.last_page) {
-                const btn = document.createElement('button');
-                btn.type = 'button';
-                btn.className = 'w-9 h-9 flex items-center justify-center rounded-md bg-white border border-[#404041] text-gray-700 hover:bg-[#404041] hover:text-white transition font-lora';
-                btn.innerHTML = '<svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>';
-                btn.addEventListener('click', () => loadFailedRecords(data.current_page + 1));
-                container.appendChild(btn);
-            } else {
-                const span = document.createElement('span');
-                span.className = 'w-9 h-9 flex items-center justify-center rounded-md bg-white border border-[#404041] text-gray-400 opacity-50 cursor-not-allowed';
-                span.innerHTML = '<svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>';
-                container.appendChild(span);
-            }
+                container.appendChild(createButton(String(item), item, { active: item === data.current_page }));
+            });
+
+            container.appendChild(createButton(
+                '<svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>',
+                data.current_page + 1,
+                { disabled: data.current_page >= data.last_page, ariaLabel: 'Pagina siguiente' }
+            ));
         };
 
         // Render in both top and bottom
         renderPaginationButtons(paginationTop);
         renderPaginationButtons(paginationBottom);
+    }
+
+    function getPaginationItems(currentPage, lastPage) {
+        if (lastPage <= 7) {
+            return Array.from({ length: lastPage }, (_, index) => index + 1);
+        }
+
+        const pages = new Set([1, lastPage]);
+        const start = Math.max(2, currentPage - 1);
+        const end = Math.min(lastPage - 1, currentPage + 1);
+
+        for (let page = start; page <= end; page++) {
+            pages.add(page);
+        }
+
+        if (currentPage <= 4) {
+            [2, 3, 4, 5].forEach(page => pages.add(page));
+        }
+
+        if (currentPage >= lastPage - 3) {
+            [lastPage - 4, lastPage - 3, lastPage - 2, lastPage - 1].forEach(page => {
+                if (page > 1) pages.add(page);
+            });
+        }
+
+        const sortedPages = Array.from(pages)
+            .filter(page => page >= 1 && page <= lastPage)
+            .sort((a, b) => a - b);
+
+        return sortedPages.reduce((items, page, index) => {
+            if (index > 0 && page - sortedPages[index - 1] > 1) {
+                items.push('ellipsis');
+            }
+            items.push(page);
+            return items;
+        }, []);
     }
 
     loadFailedRecords(1);

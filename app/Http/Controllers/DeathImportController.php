@@ -828,7 +828,20 @@ class DeathImportController extends Controller
 
             $imports = DB::table('imports')
                 ->whereIn('id', $ids)
-                ->get(['id', 'path', 'error_csv_path']);
+                ->get(['id', 'path', 'error_csv_path', 'status', 'rows_imported', 'is_reversed']);
+
+            $blocked = $imports->filter(function ($import) {
+                return !$this->canDeleteImportHistory($import);
+            });
+
+            if ($blocked->isNotEmpty()) {
+                DB::rollBack();
+
+                return response()->json([
+                    'ok' => false,
+                    'message' => 'Primero revierte las importaciones que tienen registros importados antes de eliminarlas del historial.',
+                ], 422);
+            }
 
             $pathsToDelete = [];
             foreach ($imports as $import) {
@@ -864,9 +877,18 @@ class DeathImportController extends Controller
         try {
             DB::beginTransaction();
 
-            $import = DB::table('imports')->where('id', $importId)->first(['id', 'path', 'error_csv_path']);
+            $import = DB::table('imports')->where('id', $importId)->first(['id', 'path', 'error_csv_path', 'status', 'rows_imported', 'is_reversed']);
             if (!$import) {
                 return response()->json(['ok' => false, 'message' => 'Importación no encontrada'], 404);
+            }
+
+            if (!$this->canDeleteImportHistory($import)) {
+                DB::rollBack();
+
+                return response()->json([
+                    'ok' => false,
+                    'message' => 'Primero revierte esta importacion antes de eliminarla del historial.',
+                ], 422);
             }
 
             $pathsToDelete = [];
@@ -887,6 +909,19 @@ class DeathImportController extends Controller
             Log::error('destroy import error: ' . $e->getMessage());
             return response()->json(['ok' => false, 'message' => 'Error al eliminar el historial de importación'], 500);
         }
+    }
+
+    private function canDeleteImportHistory($import): bool
+    {
+        if ((bool) ($import->is_reversed ?? false)) {
+            return true;
+        }
+
+        if (($import->status ?? null) === 'processing') {
+            return false;
+        }
+
+        return (int) ($import->rows_imported ?? 0) === 0;
     }
 
     /**

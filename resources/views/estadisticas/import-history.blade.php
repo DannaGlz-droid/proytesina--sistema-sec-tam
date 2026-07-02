@@ -78,9 +78,9 @@
                     </div>
 
                     <!-- Table wrapper -->
-                    <div class="overflow-x-auto min-w-0">
-                        <table id="imports-table" class="min-w-full w-full text-sm text-left text-gray-500">
-                            <thead class="text-xs text-gray-700 uppercase bg-gray-50">
+                    <div class="app-table-shell overflow-x-auto min-w-0">
+                        <table id="imports-table" class="app-data-table min-w-full w-full text-sm text-left text-gray-500">
+                            <thead class="text-xs border-b border-[#404041]">
                                 <tr>
                                     <th scope="col" class="px-3 py-2 font-lora whitespace-nowrap text-xs"><input id="select-all-imports" type="checkbox" /></th>
                                     <th scope="col" class="px-3 py-2 font-lora whitespace-nowrap text-xs sorting sortable" data-sort-key="original_name">Archivo</th>
@@ -90,8 +90,7 @@
                                     <th scope="col" class="px-3 py-2 font-lora whitespace-nowrap text-xs">Importados</th>
                                     <th scope="col" class="px-3 py-2 font-lora whitespace-nowrap text-xs">Fallidos</th>
                                     <th scope="col" class="px-3 py-2 font-lora whitespace-nowrap text-xs">Estado</th>
-                                    <th scope="col" class="px-3 py-2 font-lora whitespace-nowrap text-xs">Revertido</th>
-                                    <th scope="col" class="px-3 py-2 font-lora whitespace-nowrap text-xs text-right w-32" data-orderable="false">Acciones</th>
+                                    <th scope="col" class="px-3 py-2 font-lora whitespace-nowrap text-xs text-right w-24" data-orderable="false">Acciones</th>
                                 </tr>
                             </thead>
                             <tbody id="imports-tbody">
@@ -155,49 +154,63 @@
             color: inherit !important;
         }
 
-        /* Table alternating rows */
-        #imports-tbody tr { transition: background-color .15s ease; }
-        #imports-tbody tr:hover { background-color: #eef2f7; }
-        #imports-tbody tr:nth-child(even) { background-color: #f3f4f6; }
-        #imports-tbody tr:nth-child(odd) { background-color: white; }
-
-        /* Hide ALL DataTables native controls */
-        .dataTables_wrapper .dataTables_length,
-        .dataTables_wrapper .dataTables_filter,
-        .dataTables_wrapper .dataTables_info,
-        .dataTables_wrapper .dataTables_paginate {
-            display: none !important;
+        #imports-table thead th:nth-child(1),
+        #imports-table tbody td:nth-child(1) {
+            width: 2.25rem;
+            text-align: center;
+            padding-left: 0.75rem;
         }
 
-        #imports-table.dataTable tbody tr { 
-            transition: background-color .15s ease; 
-        }
-        #imports-table.dataTable tbody tr:hover { 
-            background-color: #eef2f7; 
-        }
-        #imports-table.dataTable tbody tr:nth-child(even) { 
-            background-color: #f3f4f6; 
-        }
-        #imports-table.dataTable tbody tr:nth-child(odd) { 
-            background-color: white; 
+        #imports-table thead th:nth-child(2),
+        #imports-table tbody td:nth-child(2) {
+            width: 32%;
         }
 
-        #imports-table thead {
-            border-bottom: 1px solid #d1d5db;
+        #imports-table thead th:nth-child(3),
+        #imports-table tbody td:nth-child(3) {
+            width: 16%;
         }
 
-        #imports-table thead th {
-            background: #f8fafc;
-            color: #111827;
-            padding-top: 0.72rem;
-            padding-bottom: 0.72rem;
-            vertical-align: middle;
+        #imports-table thead th:nth-child(4),
+        #imports-table tbody td:nth-child(4) {
+            width: 8.5%;
+            white-space: nowrap;
         }
 
-        #imports-table tbody td {
-            padding-top: 0.58rem;
-            padding-bottom: 0.58rem;
-            line-height: 1.2;
+        #imports-table thead th:nth-child(5),
+        #imports-table tbody td:nth-child(5) {
+            width: 5%;
+            text-align: center;
+        }
+
+        #imports-table thead th:nth-child(6),
+        #imports-table tbody td:nth-child(6) {
+            width: 7%;
+            text-align: center;
+        }
+
+        #imports-table thead th:nth-child(7),
+        #imports-table tbody td:nth-child(7) {
+            width: 6%;
+            text-align: center;
+        }
+
+        #imports-table thead th:nth-child(8),
+        #imports-table tbody td:nth-child(8) {
+            width: 8%;
+            white-space: nowrap;
+        }
+
+        #imports-table thead th:nth-child(9),
+        #imports-table tbody td:nth-child(9) {
+            width: 7%;
+            text-align: center;
+        }
+
+        #imports-table thead th:nth-child(10),
+        #imports-table tbody td:nth-child(10) {
+            width: 6.75rem;
+            white-space: nowrap;
         }
 
         /* Sorting style aligned with existing DataTables tables */
@@ -287,6 +300,68 @@ document.addEventListener('DOMContentLoaded', function () {
         return window.confirm(options.message || 'Confirma la accion para continuar.');
     }
 
+    function importsLoadingRow() {
+        return `
+            <tr class="app-table-loading-row">
+                <td colspan="9">
+                    <span class="app-table-loading-inline">
+                        <span>Cargando datos</span>
+                        <span class="inline-flex items-center gap-1">
+                            <span class="app-table-loading-dot"></span>
+                            <span class="app-table-loading-dot"></span>
+                            <span class="app-table-loading-dot"></span>
+                        </span>
+                    </span>
+                </td>
+            </tr>
+        `;
+    }
+
+    function importsMessageRow(message, tone = 'muted') {
+        const toneClass = tone === 'error' ? 'text-red-700' : 'text-gray-500';
+
+        return `
+            <tr>
+                <td colspan="9" class="text-center py-4 ${toneClass}">
+                    ${escapeHtml(message)}
+                </td>
+            </tr>
+        `;
+    }
+
+    function setImportsTableLoading(isLoading) {
+        if (!isLoading) return;
+
+        const tbody = document.getElementById('imports-tbody');
+        if (!tbody) return;
+
+        tbody.innerHTML = importsLoadingRow();
+    }
+
+    function showImportsLoadError() {
+        allImports = [];
+        filteredImports = [];
+        currentPage = 1;
+
+        const tbody = document.getElementById('imports-tbody');
+        if (tbody) tbody.innerHTML = importsMessageRow('No se pudieron cargar las importaciones.', 'error');
+
+        updatePaginationInfo();
+        clearVisibleImportSelection();
+    }
+
+    function canDeleteImportHistory(imp) {
+        if (imp.is_reversed) {
+            return true;
+        }
+
+        if (imp.status === 'processing') {
+            return false;
+        }
+
+        return Number(imp.rows_imported || 0) === 0;
+    }
+
     // Load imports on page load
     loadImports();
 
@@ -307,6 +382,16 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Helper function to apply filters
     function applyFilters() {
+        if (dateRangeSelect?.value === 'custom' && startDateInput?.value && endDateInput?.value) {
+            const start = new Date(startDateInput.value);
+            const end = new Date(endDateInput.value);
+
+            if (start > end) {
+                notifyImport('La fecha inicial no puede ser mayor que la fecha final.', 'warning');
+                return;
+            }
+        }
+
         filterImports();
         sortImports();
         currentPage = 1;
@@ -406,7 +491,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Checkbox selection: select-all toggles the visible page
     $('#select-all-imports').on('change', function() {
-        const visibleChecks = $('#imports-table tbody .row-check-import');
+        const visibleChecks = $('#imports-table tbody .row-check-import:not(:disabled)');
         const checkedCount = visibleChecks.filter(':checked').length;
         const shouldCheck = checkedCount !== visibleChecks.length;
         visibleChecks.prop('checked', shouldCheck);
@@ -435,14 +520,14 @@ document.addEventListener('DOMContentLoaded', function () {
         });
 
         if (!ids.length) {
-            notifyImport('Selecciona al menos una importacion.', 'warning');
+            notifyImport('Selecciona al menos una importacion que pueda eliminarse del historial.', 'warning');
             return;
         }
 
         const confirmed = await confirmImportAction({
-            title: 'Eliminar importaciones',
-            message: 'Se eliminaran ' + ids.length + ' importacion' + (ids.length === 1 ? '' : 'es') + ' del historial. Esta accion no se puede deshacer.',
-            confirmText: 'Eliminar',
+            title: 'Eliminar historial',
+            message: 'Se quitaran ' + ids.length + ' importacion' + (ids.length === 1 ? '' : 'es') + ' del historial. Solo se permite cuando ya fueron revertidas o no dejaron registros importados.',
+            confirmText: 'Eliminar historial',
             cancelText: 'Cancelar',
             variant: 'danger'
         });
@@ -462,13 +547,13 @@ document.addEventListener('DOMContentLoaded', function () {
                     clearVisibleImportSelection();
                     loadImports();
                 } else {
-                    notifyImport('No se pudieron eliminar las importaciones.', 'error');
+                    notifyImport(res.message || 'No se pudieron eliminar las importaciones.', 'error');
                     console.error(res);
                 }
             },
             error: function(xhr) {
                 console.error(xhr);
-                notifyImport('Error del servidor al eliminar importaciones.', 'error');
+                notifyImport(xhr.responseJSON?.message || 'Error del servidor al eliminar importaciones.', 'error');
             }
         });
     });
@@ -575,6 +660,7 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     function loadImports() {
+        setImportsTableLoading(true);
         const url = '{{ route("statistic.import-history") }}';
         fetch(url, {
             headers: {
@@ -592,11 +678,13 @@ document.addEventListener('DOMContentLoaded', function () {
                 renderTable();
             } else {
                 showError('Error al cargar importaciones');
+                showImportsLoadError();
             }
         })
         .catch(err => {
             console.error(err);
             showError('Error al cargar datos');
+            showImportsLoadError();
         });
     }
 
@@ -677,7 +765,7 @@ document.addEventListener('DOMContentLoaded', function () {
         tbody.innerHTML = '';
 
         if (filteredImports.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="10" class="text-center py-4 text-gray-500">No se encontraron registros coincidentes</td></tr>';
+            tbody.innerHTML = importsMessageRow('No se encontraron registros coincidentes');
             updatePaginationInfo();
             clearVisibleImportSelection();
             return;
@@ -701,38 +789,51 @@ document.addEventListener('DOMContentLoaded', function () {
             const statusText = imp.is_reversed ? 'Revertido' : (imp.status === 'completed' ? 'Completado' : imp.status === 'processing' ? 'Procesando' : 'Fallido');
             
             const canReverse = !imp.is_reversed && imp.status === 'completed';
+            const canDeleteHistory = canDeleteImportHistory(imp);
+            const deleteHistoryTitle = canDeleteHistory
+                ? 'Eliminar historial'
+                : 'Primero revierte esta importacion para conservar la trazabilidad de los datos';
 
             row.innerHTML = `
-                <td class="px-3 py-2"><input class="row-check-import" data-id="${imp.id}" type="checkbox" /></td>
-                <td class="px-3 py-2 font-semibold text-gray-900">${escapeHtml(imp.original_name)}</td>
-                <td class="px-3 py-2">
+                <td><input class="row-check-import" data-id="${imp.id}" type="checkbox" ${canDeleteHistory ? '' : 'disabled'} title="${deleteHistoryTitle}" /></td>
+                <td class="app-cell-wrap app-cell-strong">${escapeHtml(imp.original_name)}</td>
+                <td class="app-cell-wrap">
                     <div class="flex flex-col leading-tight">
                         <span class="font-medium text-gray-900">${escapeHtml(createdByName)}</span>
                         ${createdByUsername ? `<span class="text-[11px] text-gray-500">${escapeHtml(createdByUsername)}</span>` : ''}
                     </div>
                 </td>
-                <td class="px-3 py-2 whitespace-nowrap text-xs">${createdDate.toLocaleDateString('es-ES')} ${createdDate.toLocaleTimeString('es-ES', {hour: '2-digit', minute: '2-digit'})}</td>
-                <td class="px-3 py-2 text-center font-semibold">${imp.rows_total}</td>
-                <td class="px-3 py-2 text-center"><span class="text-green-600 font-semibold">${imp.rows_imported}</span></td>
-                <td class="px-3 py-2 text-center"><span class="${imp.rows_failed > 0 ? 'text-red-600 font-semibold' : 'text-gray-500'}">${imp.rows_failed > 0 ? imp.rows_failed : 0}</span></td>
-                <td class="px-3 py-2"><span class="status-badge ${statusClass}">${statusText}</span></td>
-                <td class="px-3 py-2 text-center">${imp.is_reversed ? '<i class="fas fa-check-circle text-green-600" title="Revertido" aria-label="Revertido"></i>' : '<i class="fas fa-circle text-gray-400" title="No revertido" aria-label="No revertido"></i>'}</td>
-                <td class="px-3 py-2 text-right flex gap-2 justify-end">
+                <td class="app-cell-nowrap text-xs">${createdDate.toLocaleDateString('es-ES')} ${createdDate.toLocaleTimeString('es-ES', {hour: '2-digit', minute: '2-digit'})}</td>
+                <td class="text-center font-semibold">${imp.rows_total}</td>
+                <td class="text-center"><span class="text-green-600 font-semibold">${imp.rows_imported}</span></td>
+                <td class="text-center">
                     ${imp.rows_failed > 0 ? `
+                        <a href="/estadisticas/importaciones/${imp.id}/registros-fallidos"
+                           class="inline-flex items-center justify-center text-red-600 font-semibold underline-offset-4 hover:underline hover:text-red-700 transition"
+                           title="Ver registros fallidos" aria-label="Ver ${imp.rows_failed} registros fallidos de la importacion ${imp.id}">
+                            ${imp.rows_failed}
+                        </a>
+                    ` : '<span class="text-gray-500">0</span>'}
+                </td>
+                <td class="app-cell-nowrap"><span class="status-badge ${statusClass}">${statusText}</span></td>
+                <td class="app-cell-nowrap text-right">
+                    <div class="flex gap-2 justify-end">
+                    ${false ? `
                         <a href="/estadisticas/importaciones/${imp.id}/registros-fallidos" 
                            class="w-7 h-7 flex items-center justify-center rounded border border-[#404041] text-[#404041] hover:bg-[#404041] hover:text-white transition-all duration-200 ${canReverse ? '' : 'action-btn-disabled'}" 
                            ${canReverse ? '' : 'onclick="return false;" style="pointer-events: none; cursor: not-allowed;"'}
                            title="${canReverse ? 'Ver registros fallidos' : 'No disponible (importación revertida)'}" aria-label="Registros fallidos ${imp.id}">
                             <i class="fas fa-exclamation-circle text-xs"></i>
                         </a>
-                    ` : `<div class="w-7"></div>`}
-                    <button class="w-7 h-7 flex items-center justify-center rounded border border-[#404041] text-[#404041] hover:bg-[#404041] hover:text-white transition-all duration-200 ${canReverse ? '' : 'action-btn-disabled'}"
+                    ` : ``}
+                    <button class="w-7 h-7 flex items-center justify-center rounded border border-[#D99A00] text-[#B7791F] hover:bg-[#D99A00] hover:text-white transition-all duration-200 ${canReverse ? '' : 'action-btn-disabled'}"
                             onclick="reverseImport(${imp.id})" ${canReverse ? '' : 'disabled'} title="${canReverse ? 'Revertir esta importación' : 'No se puede revertir'}" aria-label="Revertir ${imp.id}">
                         <i class="fas fa-undo text-xs"></i>
                     </button>
-                    <button class="w-7 h-7 flex items-center justify-center rounded border border-[#AB1A1A] text-[#AB1A1A] hover:bg-[#AB1A1A] hover:text-white transition-all duration-200" onclick="deleteImport(${imp.id})" title="Eliminar del historial (no elimina registros importados)" aria-label="Eliminar historial ${imp.id}">
+                    <button class="w-7 h-7 flex items-center justify-center rounded border border-[#AB1A1A] text-[#AB1A1A] hover:bg-[#AB1A1A] hover:text-white transition-all duration-200 ${canDeleteHistory ? '' : 'action-btn-disabled'}" onclick="deleteImport(${imp.id})" ${canDeleteHistory ? '' : 'disabled'} title="${deleteHistoryTitle}" aria-label="Eliminar historial ${imp.id}">
                         <i class="fas fa-trash text-xs"></i>
                     </button>
+                    </div>
                 </td>
             `;
             tbody.appendChild(row);
@@ -764,16 +865,24 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function updateImportSelectionState() {
-        const visibleChecks = $('#imports-table tbody .row-check-import');
+        const visibleChecks = $('#imports-table tbody .row-check-import:not(:disabled)');
         const checkedCount = visibleChecks.filter(':checked').length;
         const totalVisible = visibleChecks.length;
         const hasSelection = checkedCount > 0;
         const allSelected = totalVisible > 0 && checkedCount === totalVisible;
         const selectAll = $('#select-all-imports');
         const button = document.getElementById('bulk-delete-imports');
+        const hasSelectableRows = totalVisible > 0;
 
         selectAll.prop('checked', allSelected);
         selectAll.prop('indeterminate', hasSelection && !allSelected);
+        selectAll.prop('disabled', !hasSelectableRows);
+        selectAll.attr(
+            'title',
+            hasSelectableRows
+                ? 'Seleccionar importaciones eliminables en esta pagina'
+                : 'No hay importaciones eliminables en esta pagina'
+        );
 
         if (hasSelection) {
             $('#bulk-selection-bar-imports').removeClass('hidden').addClass('flex');
@@ -790,7 +899,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function clearVisibleImportSelection() {
-        $('#imports-table tbody .row-check-import').prop('checked', false);
+        $('#imports-table tbody .row-check-import:not(:disabled)').prop('checked', false);
         updateImportSelectionState();
     }
 
@@ -936,9 +1045,9 @@ document.addEventListener('DOMContentLoaded', function () {
 
     window.deleteImport = async function(importId) {
         const confirmed = await confirmImportAction({
-            title: 'Eliminar importacion',
-            message: 'Se eliminara este registro del historial. Esta accion no se puede deshacer.',
-            confirmText: 'Eliminar',
+            title: 'Eliminar historial',
+            message: 'Se quitara este registro del historial. Solo se permite si la importacion ya fue revertida o no dejo registros importados.',
+            confirmText: 'Eliminar historial',
             cancelText: 'Cancelar',
             variant: 'danger'
         });

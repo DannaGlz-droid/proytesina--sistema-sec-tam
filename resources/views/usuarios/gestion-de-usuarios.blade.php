@@ -93,9 +93,9 @@
                             </div>
 
                             <!-- Table wrapper -->
-                            <div class="overflow-x-hidden min-w-0">
-                        <table id="users-table" class="min-w-full w-full text-sm text-left text-gray-500">
-                            <thead class="text-xs text-gray-700 uppercase bg-gray-50 border-b border-[#404041]">
+                            <div class="app-table-shell overflow-x-hidden min-w-0">
+                        <table id="users-table" class="app-data-table min-w-full w-full text-sm text-left text-gray-500">
+                            <thead class="text-xs border-b border-[#404041]">
                                 <tr>
                                     <th scope="col" class="px-2 py-2 font-lora whitespace-nowrap text-xs" data-orderable="false"></th>
                                     <th scope="col" class="px-3 py-2 font-lora whitespace-nowrap text-xs"><input id="select-all-users" type="checkbox" /></th>
@@ -138,50 +138,20 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
     <style>
-        /* Hide ALL DataTables native controls */
-        .dataTables_wrapper .dataTables_length,
-        .dataTables_wrapper .dataTables_filter,
-        .dataTables_wrapper .dataTables_info,
-        .dataTables_wrapper .dataTables_paginate {
-            display: none !important;
-        }
-        
-        /* DataTables + Tailwind table styling */
-        #users-table.dataTable tbody tr { transition: background-color .15s ease; }
-        #users-table.dataTable tbody tr:hover { background-color: #eef2f7; }
-        #users-table.dataTable tbody tr:nth-child(even) { background-color: #f3f4f6; }
-        #users-table.dataTable tbody tr:nth-child(odd) { background-color: white; }
-        #users-table.dataTable tbody tr { border-bottom: 1px solid #e5e7eb; }
-        #users-table.dataTable thead th { background: #f8fafc; border-bottom: 1px solid #d1d5db; cursor: pointer; }
-        #users-table {
-            table-layout: fixed;
-            width: 100% !important;
-        }
-        #users-table.dataTable thead th,
-        #users-table.dataTable tbody td {
-            padding-left: 0.5rem;
-            padding-right: 0.5rem;
-            white-space: normal;
-            overflow-wrap: break-word;
-            word-break: normal;
-            vertical-align: middle;
-        }
-        #users-table.dataTable thead th {
-            padding-top: 0.72rem;
-            padding-bottom: 0.72rem;
-        }
-        #users-table.dataTable tbody td {
-            padding-top: 0.58rem;
-            padding-bottom: 0.58rem;
-            line-height: 1.2;
+        #users-table.dataTable thead th { cursor: pointer; }
+        #users-table.dataTable tbody td.dt-username-cell,
+        #users-table.dataTable tbody td.dt-email-cell,
+        #users-table.dataTable tbody td.dt-district-cell,
+        #users-table.dataTable tbody td.dt-name-cell {
+            line-height: 1.25;
         }
         #users-table.dataTable tbody td.dt-username-cell {
-            overflow-wrap: anywhere;
-            word-break: break-word;
             padding-right: 0.9rem;
             color: #111827;
             font-weight: 600;
-            line-height: 1.25;
+        }
+        #users-table.dataTable tbody td.dt-email-cell {
+            padding-right: 0.75rem;
         }
         #users-table.dataTable tbody td.dt-role-cell {
             white-space: nowrap;
@@ -332,10 +302,37 @@
                 `;
             }
 
+            function usersLoadingRow() {
+                return `
+                    <tr class="app-table-loading-row">
+                        <td colspan="16">
+                            <span class="app-table-loading-inline">
+                                <span>Cargando datos</span>
+                                <span class="inline-flex items-center gap-1">
+                                    <span class="app-table-loading-dot"></span>
+                                    <span class="app-table-loading-dot"></span>
+                                    <span class="app-table-loading-dot"></span>
+                                </span>
+                            </span>
+                        </td>
+                    </tr>
+                `;
+            }
+
+            $('#users-table').on('processing.dt', function(e, settings, processing) {
+                if (processing) {
+                    $('#users-table tbody').html(usersLoadingRow());
+                }
+            });
+            $('#users-table').on('preXhr.dt', function() {
+                $('#users-table tbody').html(usersLoadingRow());
+            });
+            $('#users-table tbody').html(usersLoadingRow());
+
             // Initialize DataTables with server-side processing
             const table = $('#users-table').DataTable({
                 serverSide: true,
-                processing: true,
+                processing: false,
                 scrollX: false,
                 autoWidth: false,
                 deferredRender: true,
@@ -396,16 +393,16 @@
                     { targets: 0, width: '2rem', className: 'text-center', orderable: false, searchable: false },
                     { targets: 1, width: '2.25rem', className: 'text-center' },
                     { targets: 2, visible: false, searchable: false },
-                    { targets: 3, width: '12%', className: 'dt-username-cell' },
-                    { targets: 4, width: '10%' },
-                    { targets: 5, width: '8.5%' },
-                    { targets: 6, width: '8.5%' },
-                    { targets: 8, width: '7%', className: 'dt-phone-cell' },
+                    { targets: 3, width: '12%', className: 'dt-username-cell app-cell-wrap app-cell-strong' },
+                    { targets: 4, width: '10%', className: 'dt-name-cell app-cell-wrap' },
+                    { targets: 5, width: '8.5%', className: 'dt-name-cell app-cell-wrap' },
+                    { targets: 6, width: '8.5%', className: 'dt-name-cell app-cell-wrap' },
+                    { targets: 8, width: '7%', className: 'dt-phone-cell app-cell-nowrap' },
                     { targets: [9, 11, 14], visible: false },
-                    { targets: 7, width: '18%' },
-                    { targets: 10, width: '13%' },
-                    { targets: 12, width: '10%', className: 'dt-role-cell' },
-                    { targets: 13, width: '7%', className: 'dt-status-cell' },
+                    { targets: 7, width: '18%', className: 'dt-email-cell app-cell-wrap' },
+                    { targets: 10, width: '13%', className: 'dt-district-cell app-cell-wrap' },
+                    { targets: 12, width: '10%', className: 'dt-role-cell app-cell-nowrap' },
+                    { targets: 13, width: '7%', className: 'dt-status-cell app-cell-nowrap' },
                     { targets: 15, width: '6.75rem', className: 'text-right' }
                 ],
                 pageLength: 25,
