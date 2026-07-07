@@ -9,8 +9,8 @@
         <!-- HEADER CON TÍTULO Y BOTÓN -->
         <div class="flex flex-col lg:flex-row lg:justify-between lg:items-center gap-4 mb-6">
             <div>
-                <h1 class="text-2xl lg:text-3xl font-lora font-bold text-[#404041] mb-2">Gestión de Usuarios</h1>
-                <p class="text-sm lg:text-base text-[#404041] font-lora">
+                <h1 class="app-page-title">Gestión de Usuarios</h1>
+                <p class="app-page-subtitle">
                     Administre y gestione todos los usuarios del sistema con permisos y roles específicos.
                 </p>
             </div>
@@ -29,28 +29,25 @@
                         <!-- Custom controls wrapper styled like the site -->
                         <div class="bg-white relative shadow-md sm:rounded-lg overflow-hidden border border-[#404041]">
                             <!-- Custom search, per-page and sort controls -->
-                            <div class="flex flex-row flex-wrap items-center justify-between gap-3 p-4">
+                            <div class="app-table-toolbar flex flex-row flex-wrap items-center justify-between gap-3 p-4">
                                 <div class="flex-1 min-w-0 sm:w-1/3 lg:w-1/2">
-                                    <div class="relative w-full max-w-xl">
-                                        <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                                            <i class="fas fa-search text-gray-400 text-sm"></i>
+                                    <div class="app-table-search">
+                                        <div class="app-table-search-icon">
+                                            <i class="fas fa-search"></i>
                                         </div>
-                                        <input type="text" id="dt-search-users" class="bg-gray-50 border border-[#404041] text-gray-900 text-sm rounded-lg focus:ring-[#611132] focus:border-[#611132] block w-full pl-10 pr-24 p-2.5" placeholder="Buscar usuarios...">
-                                        <div class="absolute inset-y-0 right-0 flex items-center pr-2 space-x-1">
-                                            <button type="button" id="dt-search-btn" class="h-8 px-3 bg-[#611132] text-white rounded-lg text-xs font-semibold hover:bg-[#4a0e26] transition-all duration-150" title="Buscar">
-                                                <i class="fas fa-search text-xs"></i>
-                                            </button>
-                                            <button type="button" id="dt-clear-btn" class="h-8 px-2 bg-white border border-[#404041] text-gray-700 rounded-lg text-xs hover:bg-gray-100 hidden" title="Limpiar búsqueda">
+                                        <input type="text" id="dt-search-users" class="app-table-search-input" placeholder="Buscar usuarios...">
+                                        <div class="app-table-search-actions">
+                                            <button type="button" id="dt-clear-btn" class="app-table-clear-button hidden" title="Limpiar búsqueda">
                                                 <i class="fas fa-times text-xs"></i>
                                             </button>
                                         </div>
                                     </div>
                                 </div>
 
-                                <div class="ml-0 sm:ml-auto flex flex-wrap items-center justify-end gap-3">
-                                    <div class="flex items-center space-x-2">
-                                        <span class="text-sm text-gray-700 font-lora">Mostrar</span>
-                                        <select id="dt-per-page" class="bg-gray-50 border border-[#404041] text-gray-900 text-sm rounded-lg focus:ring-[#611132] focus:border-[#611132] block w-24 p-2">
+                                <div class="app-table-controls ml-0 sm:ml-auto flex flex-wrap items-center justify-end gap-3">
+                                    <div class="app-table-page-size">
+                                        <span>Mostrar</span>
+                                        <select id="dt-per-page">
                                             <option value="10">10</option>
                                             <option value="25" selected>25</option>
                                             <option value="50">50</option>
@@ -58,16 +55,16 @@
                                         </select>
                                     </div>
                                     <!-- Botón eliminar seleccionados -->
-                                    <div id="bulk-selection-bar" class="hidden items-center gap-3">
+                                    <div id="bulk-selection-bar" class="app-table-bulk-inline hidden items-center gap-3">
                                         <div class="flex items-center gap-2">
-                                            <span class="w-2 h-2 rounded-full bg-[#611132] flex-shrink-0"></span>
-                                            <span id="bulk-selected-count" class="text-xs font-lora text-gray-600 whitespace-nowrap"></span>
+                                            <span class="app-table-selection-marker"></span>
+                                            <span id="bulk-selected-count" class="app-table-selection-count text-xs font-lora whitespace-nowrap"></span>
                                         </div>
                                         <span class="hidden xl:inline text-xs font-lora text-gray-500">En esta pagina</span>
                                     <button id="clear-selected-users" type="button" class="hidden text-xs font-semibold font-lora text-[#611132] hover:underline whitespace-nowrap" title="Quitar selección">
                                         Quitar selección
                                     </button>
-                                    <button id="bulk-delete-users" type="button" class="bg-[#AB1A1A] text-white px-4 py-2.5 rounded-lg text-xs font-semibold hover:bg-[#8B1515] transition-all duration-300 font-lora items-center gap-2 whitespace-nowrap shadow-sm" title="Eliminar seleccionados" style="display: none;">
+                                    <button id="bulk-delete-users" type="button" class="app-table-bulk-danger items-center gap-2" title="Eliminar seleccionados" style="display: none;">
                                         <i class="fas fa-trash text-xs"></i>
                                         <span>Eliminar</span>
                                     </button>
@@ -257,6 +254,13 @@
                 return;
             }
 
+            const bulkSelectionBar = document.getElementById('bulk-selection-bar');
+            const tableToolbar = bulkSelectionBar?.closest('.app-table-toolbar');
+
+            if (bulkSelectionBar && tableToolbar) {
+                tableToolbar.insertAdjacentElement('afterend', bulkSelectionBar);
+            }
+
             function notifyUser(message, type = 'success', duration = 3000) {
                 if (typeof window.showToast === 'function') {
                     window.showToast(message, type, duration);
@@ -437,12 +441,6 @@
                     table.search(val).draw();
                     $('#dt-clear-btn').toggleClass('hidden', !val);
                 }
-            });
-
-            $('#dt-search-btn').on('click', function() {
-                const val = $('#dt-search-users').val();
-                table.search(val).draw();
-                $('#dt-clear-btn').toggleClass('hidden', !val);
             });
 
             $('#dt-clear-btn').on('click', function() {

@@ -9,8 +9,8 @@
         <!-- HEADER CON TÍTULO Y BOTONES -->
         <div class="flex flex-col lg:flex-row lg:justify-between lg:items-center gap-4 mb-6">
             <div>
-                <h1 class="text-2xl lg:text-3xl font-lora font-bold text-[#404041] mb-2">Datos de Defunciones</h1>
-                <p class="text-sm lg:text-base text-[#404041] font-lora">
+                <h1 class="app-page-title">Datos de Defunciones</h1>
+                <p class="app-page-subtitle">
                     En esta sección puede cargar archivos Excel (.xlsx, .xls), aplicar filtros y consultar los registros en la tabla.
                 </p>
             </div>
@@ -22,7 +22,7 @@
                 </a>
                 <a href="{{ route('statistic.create') }}" class="bg-[#611132] text-white px-4 py-2.5 rounded-lg text-xs font-semibold hover:bg-[#4a0e26] transition-all duration-300 font-lora flex items-center gap-2 whitespace-nowrap shadow-sm">
                     <i class="fas fa-plus text-xs"></i>
-                    Reg. Def.
+                    Registrar
                 </a>
             </div>
            
@@ -62,54 +62,60 @@
 
             <!-- Columna Derecha - Tabla -->
             <div class="flex-1 min-w-0">
-                <div class="bg-white relative shadow-lg shadow-gray-200/80 sm:rounded-xl overflow-hidden border border-gray-300 border-t-4 border-t-[#611132]">
+                <div class="bg-white relative shadow-md sm:rounded-lg overflow-hidden border border-[#404041]">
                     <!-- Custom search, per-page controls -->
-                    <div class="flex flex-row flex-wrap items-center justify-between gap-3 p-4 bg-gray-50/80 border-b border-gray-200">
+                    <div class="app-table-toolbar flex flex-row flex-wrap items-center justify-between gap-3 p-4">
                         <div class="flex-1 min-w-0 sm:w-1/3 lg:w-1/2">
-                            <div class="relative w-full max-w-xl min-w-0">
-                                <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                                    <i class="fas fa-search text-gray-400 text-sm"></i>
+                            <div class="app-table-search">
+                                <div class="app-table-search-icon">
+                                    <i class="fas fa-search"></i>
                                 </div>
-                                <input type="text" id="dt-search-deaths" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-[#611132] focus:border-[#611132] block w-full pl-10 pr-24 p-2.5" placeholder="Buscar en defunciones...">
-                                <div class="absolute inset-y-0 right-0 flex items-center pr-2 space-x-1">
-                                    <button type="button" id="dt-search-deaths-btn" class="h-8 px-3 bg-[#611132] text-white rounded-lg text-xs font-semibold hover:bg-[#4a0e26] transition-all duration-150" title="Buscar">
-                                        <i class="fas fa-search text-xs"></i>
-                                    </button>
-                                    <button type="button" id="dt-clear-deaths-btn" class="h-8 px-2 bg-white border border-gray-300 text-gray-700 rounded-lg text-xs hover:bg-gray-100 hidden" title="Limpiar búsqueda">
+                                <input type="text" id="dt-search-deaths" class="app-table-search-input" placeholder="Buscar en defunciones...">
+                                <div class="app-table-search-actions">
+                                    <button type="button" id="dt-clear-deaths-btn" class="app-table-clear-button hidden" title="Limpiar búsqueda">
                                         <i class="fas fa-times text-xs"></i>
                                     </button>
                                 </div>
                             </div>
                         </div>
 
-                        <div class="ml-0 sm:ml-auto flex items-center space-x-3">
-                            <div class="flex items-center space-x-2">
-                                <span class="text-sm text-gray-700 font-lora">Mostrar</span>
-                                <select id="dt-per-page-deaths" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-[#611132] focus:border-[#611132] block w-24 p-2">
+                        <div class="app-table-controls ml-0 sm:ml-auto flex flex-wrap items-center justify-end gap-3">
+                            <div class="app-table-page-size">
+                                <span>Mostrar</span>
+                                <select id="dt-per-page-deaths">
                                     <option value="25" selected>25</option>
                                     <option value="50">50</option>
                                     <option value="100">100</option>
                                     <option value="250">250</option>
                                 </select>
                             </div>
-                            <!-- Botón eliminar seleccionados - integrado en header -->
-                            <button id="bulk-delete-deaths" type="button" class="bg-[#AB1A1A] text-white px-4 py-2.5 rounded-lg text-xs font-semibold hover:bg-[#8B1515] transition-all duration-300 font-lora items-center gap-2 whitespace-nowrap shadow-sm" title="Eliminar seleccionados" style="display: none;">
-                                <i class="fas fa-trash text-xs"></i>
-                                <span>Eliminar</span>
-                            </button>
+                            <div id="bulk-selection-bar-deaths" class="app-table-bulk-inline hidden items-center gap-3">
+                                <div class="flex items-center gap-2">
+                                    <span class="app-table-selection-marker"></span>
+                                    <span id="bulk-selected-count-deaths" class="app-table-selection-count text-xs font-lora whitespace-nowrap"></span>
+                                </div>
+                                <span class="hidden xl:inline text-xs font-lora text-gray-500">En esta página</span>
+                                <button id="clear-selected-deaths" type="button" class="hidden text-xs font-semibold font-lora text-[#611132] hover:underline whitespace-nowrap" title="Quitar selección">
+                                    Quitar selección
+                                </button>
+                                <button id="bulk-delete-deaths" type="button" class="app-table-bulk-danger items-center gap-2" title="Eliminar seleccionados" style="display: none;">
+                                    <i class="fas fa-trash text-xs"></i>
+                                    <span>Eliminar</span>
+                                </button>
+                            </div>
                         </div>
                     </div>
 
                     <!-- Table wrapper -->
-                    <div class="overflow-x-auto min-w-0">
-                    <table id="deaths-table" class="min-w-full w-full text-sm text-left text-gray-500">
-                        <thead class="text-xs text-gray-800 uppercase bg-gray-100 border-b border-gray-400">
+                    <div class="app-table-shell overflow-x-auto min-w-0">
+                    <table id="deaths-table" class="app-data-table min-w-full w-full text-sm text-left text-gray-500">
+                        <thead class="text-xs border-b border-[#404041]">
                             <tr>
-                                <th scope="col" class="px-3 py-2 font-lora whitespace-nowrap text-xs"><input id="select-all-deaths" type="checkbox" /></th>
+                                <th scope="col" class="app-cell-check font-lora whitespace-nowrap text-xs"><input id="select-all-deaths" type="checkbox" /></th>
                                 <th scope="col" class="px-3 py-2 font-lora whitespace-nowrap text-xs">Folio</th>
                                 <th scope="col" class="px-3 py-2 font-lora whitespace-nowrap text-xs">Nombre(s)</th>
-                                <th scope="col" class="px-3 py-2 font-lora whitespace-nowrap text-xs">Apellido P.</th>
-                                <th scope="col" class="px-3 py-2 font-lora whitespace-nowrap text-xs">Apellido M.</th>
+                                <th scope="col" class="px-3 py-2 font-lora whitespace-nowrap text-xs">Apellido paterno</th>
+                                <th scope="col" class="px-3 py-2 font-lora whitespace-nowrap text-xs">Apellido materno</th>
                                 <th scope="col" class="px-3 py-2 font-lora whitespace-nowrap text-xs">Edad</th>
                                 <th scope="col" class="px-3 py-2 font-lora whitespace-nowrap text-xs">Sexo</th>
                                 <th scope="col" class="px-3 py-2 font-lora whitespace-nowrap text-xs">Fecha def.</th>
@@ -128,7 +134,7 @@
                     </div>
                         
                     <!-- Custom pagination -->
-                    <nav class="flex flex-row flex-wrap items-center justify-between gap-3 p-4 border-t border-gray-200">
+                    <nav class="flex flex-row flex-wrap items-center justify-between gap-3 p-4 border-t border-[#404041]">
                         <span class="text-sm font-normal text-gray-500 font-lora flex-1 min-w-0" id="dt-info-deaths">
                             Mostrando <span class="font-semibold text-gray-900">0-0</span> de <span class="font-semibold text-gray-900">0</span> entradas
                         </span>
@@ -142,29 +148,6 @@
     <!-- AGREGAR FONT AWESOME -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
-    <style>
-        /* Hide ALL DataTables native controls */
-        .dataTables_wrapper .dataTables_length,
-        .dataTables_wrapper .dataTables_filter,
-        .dataTables_wrapper .dataTables_info,
-        .dataTables_wrapper .dataTables_paginate {
-            display: none !important;
-        }
-        
-        /* DataTables + Tailwind table styling */
-        #deaths-table.dataTable tbody tr { transition: background-color .15s ease; }
-        #deaths-table.dataTable tbody tr:hover { background-color: #f3f4f6; }
-        #deaths-table.dataTable tbody tr:nth-child(even) { background-color: #f9fafb; }
-        #deaths-table.dataTable tbody tr:nth-child(odd) { background-color: white; }
-        #deaths-table.dataTable thead th { background: #f3f4f6; border-bottom: 1px solid #9ca3af; color: #1f2937; cursor: pointer; }
-        #deaths-table.dataTable thead th.sorting:after,
-        #deaths-table.dataTable thead th.sorting_asc:after,
-        #deaths-table.dataTable thead th.sorting_desc:after {
-            opacity: 0.5;
-            font-family: 'Font Awesome 6 Free';
-            font-weight: 900;
-        }
-    </style>
 @endsection
 
 @push('scripts')
@@ -295,10 +278,44 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     });
 
+    const bulkSelectionBarDeaths = document.getElementById('bulk-selection-bar-deaths');
+    const tableToolbarDeaths = bulkSelectionBarDeaths?.closest('.app-table-toolbar');
+
+    if (bulkSelectionBarDeaths && tableToolbarDeaths) {
+        tableToolbarDeaths.insertAdjacentElement('afterend', bulkSelectionBarDeaths);
+    }
+
+    function deathsLoadingRow() {
+        return `
+            <tr class="app-table-loading-row">
+                <td colspan="14">
+                    <span class="app-table-loading-inline">
+                        <span>Cargando datos</span>
+                        <span class="inline-flex items-center gap-1">
+                            <span class="app-table-loading-dot"></span>
+                            <span class="app-table-loading-dot"></span>
+                            <span class="app-table-loading-dot"></span>
+                        </span>
+                    </span>
+                </td>
+            </tr>
+        `;
+    }
+
+    $('#deaths-table').on('processing.dt', function(e, settings, processing) {
+        if (processing) {
+            $('#deaths-table tbody').html(deathsLoadingRow());
+        }
+    });
+    $('#deaths-table').on('preXhr.dt', function() {
+        $('#deaths-table tbody').html(deathsLoadingRow());
+    });
+    $('#deaths-table tbody').html(deathsLoadingRow());
+
     // Initialize DataTables with server-side processing
     window.deathsTable = $('#deaths-table').DataTable({
         serverSide: true,
-        processing: true,
+        processing: false,
         scrollX: true,
         deferredRender: true,
         searching: true,  // Enable DataTables search
@@ -317,7 +334,7 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         },
         columns: [
-            { data: 'id', name: 'id', orderable: false, searchable: false, render: function(data, type, row) { return '<input class="row-check" data-id="'+data+'" type="checkbox" />'; } },
+            { data: 'id', name: 'id', orderable: false, searchable: false, width: '2.25rem', render: function(data, type, row) { return '<input class="row-check" data-id="'+data+'" type="checkbox" />'; } },
             { data: 'gov_folio', name: 'gov_folio' },
             { data: 'name', name: 'name' },
             { data: 'first_last_name', name: 'first_last_name' },
@@ -331,6 +348,12 @@ document.addEventListener('DOMContentLoaded', function () {
             { data: 'death_location', name: 'death_location_id', orderable: false },
             { data: 'death_cause', name: 'death_cause_id', orderable: false },
             { data: 'actions', name: 'actions', orderable: false, searchable: false }
+        ],
+        columnDefs: [
+            { targets: [0], className: 'app-cell-check app-cell-nowrap' },
+            { targets: [5, 6, 7, 13], className: 'app-cell-nowrap' },
+            { targets: [1], className: 'app-cell-wrap app-cell-strong' },
+            { targets: [2, 3, 4, 8, 9, 10, 11, 12], className: 'app-cell-wrap' }
         ],
         pageLength: 25,
         // Default: death_date desc — death_date is the 8th column (index 7) because
@@ -348,7 +371,7 @@ document.addEventListener('DOMContentLoaded', function () {
             // Ensure bulk-delete visibility is refreshed after each draw
             try { toggleBulkDeleteButton(); } catch (e) { console.error('toggleBulkDeleteButton error', e); }
             // Uncheck header select-all when page changes (to avoid stale state)
-            try { $('#select-all-deaths').prop('checked', false); } catch (e) {}
+            try { $('#select-all-deaths').prop('checked', false).prop('indeterminate', false); } catch (e) {}
         }
     });
 
@@ -358,16 +381,10 @@ document.addEventListener('DOMContentLoaded', function () {
     // Custom search functionality
     $('#dt-search-deaths').on('keyup', function(e) {
         const val = $(this).val();
+        $('#dt-clear-deaths-btn').toggleClass('hidden', !val);
         if (e.key === 'Enter') {
             window.deathsTable.search(val).draw();
-            $('#dt-clear-deaths-btn').toggleClass('hidden', !val);
         }
-    });
-
-    $('#dt-search-deaths-btn').on('click', function() {
-        const val = $('#dt-search-deaths').val();
-        window.deathsTable.search(val).draw();
-        $('#dt-clear-deaths-btn').toggleClass('hidden', !val);
     });
 
     // Checkbox selection: select-all for visible page
@@ -381,19 +398,44 @@ document.addEventListener('DOMContentLoaded', function () {
     $('#deaths-table tbody').on('change', '.row-check', function() {
         // If any checkbox unchecked, uncheck select-all header
         if (!$(this).is(':checked')) {
-            $('#select-all-deaths').prop('checked', false);
+            $('#select-all-deaths').prop('checked', false).prop('indeterminate', false);
         }
         toggleBulkDeleteButton();
     });
 
     function toggleBulkDeleteButton() {
-        const any = $('#deaths-table tbody .row-check:checked').length > 0;
+        const visibleChecks = $('#deaths-table tbody .row-check');
+        const checkedCount = visibleChecks.filter(':checked').length;
+        const any = checkedCount > 0;
+        const allSelected = visibleChecks.length > 0 && checkedCount === visibleChecks.length;
+        const selectAll = $('#select-all-deaths');
+
+        selectAll.prop('checked', allSelected);
+        selectAll.prop('indeterminate', any && !allSelected);
+
         if (any) {
+            $('#bulk-selection-bar-deaths').removeClass('hidden').addClass('flex');
+            $('#clear-selected-deaths').removeClass('hidden');
+            $('#bulk-selected-count-deaths')
+                .text(checkedCount + ' seleccionada' + (checkedCount === 1 ? '' : 's'));
             $('#bulk-delete-deaths').css('display', 'flex');
         } else {
+            $('#bulk-selection-bar-deaths').addClass('hidden').removeClass('flex');
+            $('#clear-selected-deaths').addClass('hidden');
+            $('#bulk-selected-count-deaths').text('');
             $('#bulk-delete-deaths').css('display', 'none');
         }
     }
+
+    function clearVisibleDeathSelection() {
+        $('#deaths-table tbody .row-check').prop('checked', false);
+        $('#select-all-deaths').prop('checked', false).prop('indeterminate', false);
+        toggleBulkDeleteButton();
+    }
+
+    $('#clear-selected-deaths').on('click', function() {
+        clearVisibleDeathSelection();
+    });
 
     // Bulk delete action
     $('#bulk-delete-deaths').on('click', function() {
@@ -418,7 +460,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     // reload current page of table
                     window.deathsTable.ajax.reload(null, false);
                     // reset header checkbox
-                    $('#select-all-deaths').prop('checked', false);
+                    clearVisibleDeathSelection();
                 } else {
                     alert('Error al eliminar. Revisa la consola.');
                     console.error(res);

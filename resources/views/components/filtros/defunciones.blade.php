@@ -12,31 +12,31 @@
         </button>
     </x-slot>
 
-    <!-- Fechas (usando la lógica del demo que funciona) -->
+    <!-- Fechas -->
     <form id="filters-form" method="GET" action="{{ route('statistic.data') }}">
     <x-filtros.seccion icono="calendar-alt" titulo="Fecha de defunción" abierto="true">
         <div class="space-y-2">
             <div class="filter-group">
                 <label class="block text-xs text-gray-600 font-lora mb-1">Rango:</label>
                 <select id="dateRange" name="dateRange" class="w-full border border-gray-300 bg-white rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-[#611132] focus:border-[#611132]">
-                    <option value="all">Todas</option>
-                    <option value="year">Año específico</option>
-                    <option value="month">Mes específico</option>
-                    <option value="multiple-months">Múltiples meses</option>
-                    <option value="quarter">Trimestre</option>
-                    <option value="custom">Personalizado</option>
+                    <option value="all" @selected(!request('dateRange') || request('dateRange') === 'all')>Todas las fechas</option>
+                    <option value="years" @selected(in_array(request('dateRange'), ['year', 'years'], true))>Año(s)</option>
+                    <option value="months" @selected(in_array(request('dateRange'), ['month', 'months', 'multiple-months'], true))>Mes(es)</option>
+                    <option value="quarter" @selected(request('dateRange') === 'quarter')>Trimestre</option>
+                    <option value="custom" @selected(request('dateRange') === 'custom')>Personalizado</option>
                 </select>
             </div>
 
             <!-- Selectores condicionales: empezamos con display:none (como el demo que funciona) -->
                 <div class="filter-group" id="yearSelector" style="display: none;">
-                <label class="block text-xs text-gray-600 font-lora mb-1">Año de defunción:</label>
+                <label class="block text-xs text-gray-600 font-lora mb-1">Año(s) de defunción:</label>
                 @php $currentYear = now()->year; $minYear = 1950; @endphp
-                <input type="number" id="year" name="year" min="{{ $minYear }}" max="{{ $currentYear }}" value="{{ request('year') }}" class="w-full border border-gray-300 bg-white rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-[#611132] focus:border-[#611132]" placeholder="Ej: {{ $currentYear }}">
+                <input type="text" id="year" name="year" value="{{ request('year') }}" class="w-full border border-gray-300 bg-white rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-[#611132] focus:border-[#611132]" placeholder="Ej: {{ $currentYear }}, {{ $currentYear - 2 }}-{{ $currentYear }} o {{ $currentYear - 1 }}, {{ $currentYear }}">
+                <p class="mt-1 text-[11px] text-gray-500 font-lora">Puede ingresar un año, un rango o varios años separados por coma.</p>
             </div>
 
             <div class="filter-group" id="monthSelector" style="display: none;">
-                <label class="block text-xs text-gray-600 font-lora mb-1">Mes de defunción:</label>
+                <label class="block text-xs text-gray-600 font-lora mb-1">Mes(es) de defunción:</label>
                 <input type="hidden" id="monthHidden" name="month" value="{{ request('month') }}">
                 <div class="grid grid-cols-3 gap-2 mt-2 months-container">
                     @php
@@ -49,7 +49,7 @@
                     @endphp
                     @foreach($months as $mval => $mlabel)
                         <div>
-                            <input type="checkbox" id="month-{{ $mval }}" name="selectedMonths[]" class="month-checkbox" value="{{ $mval }}" {{ in_array($mval, $selectedMonths) || ($singleMonth === $mval) ? 'checked' : '' }}>
+                            <input type="checkbox" id="month-{{ $mval }}" name="selectedMonths[]" class="month-checkbox" value="{{ $mval }}" {{ in_array($mval, $selectedMonths) || ((int) $singleMonth === (int) $mval) ? 'checked' : '' }}>
                             <label for="month-{{ $mval }}" class="month-label block text-center text-xs py-1.5 bg-gray-100 border border-gray-300 rounded cursor-pointer hover:bg-gray-200">{{ $mlabel }}</label>
                         </div>
                     @endforeach
@@ -62,21 +62,21 @@
                 <label class="block text-xs text-gray-600 font-lora mb-1">Trimestre de defunción:</label>
                 <select id="quarter" name="quarter" class="w-full border border-gray-300 bg-white rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-[#611132] focus:border-[#611132]">
                     <option value="">Seleccionar trimestre</option>
-                    <option value="1">Q1 (Ene-Mar)</option>
-                    <option value="2">Q2 (Abr-Jun)</option>
-                    <option value="3">Q3 (Jul-Sep)</option>
-                    <option value="4">Q4 (Oct-Dic)</option>
+                    <option value="1" @selected(request('quarter') === '1')>Q1 (Ene-Mar)</option>
+                    <option value="2" @selected(request('quarter') === '2')>Q2 (Abr-Jun)</option>
+                    <option value="3" @selected(request('quarter') === '3')>Q3 (Jul-Sep)</option>
+                    <option value="4" @selected(request('quarter') === '4')>Q4 (Oct-Dic)</option>
                 </select>
             </div>
 
             <div id="customRangeSelector" style="display: none;">
                 <div class="filter-group">
                     <label class="block text-xs text-gray-600 font-lora mb-1">Desde (fecha de defunción):</label>
-                    <input type="date" id="startDate" name="startDate" class="w-full border border-gray-300 bg-white rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-[#611132] focus:border-[#611132]">
+                    <input type="date" id="startDate" name="startDate" value="{{ request('startDate') }}" class="w-full border border-gray-300 bg-white rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-[#611132] focus:border-[#611132]">
                 </div>
                 <div class="filter-group">
                     <label class="block text-xs text-gray-600 font-lora mb-1">Hasta (fecha de defunción):</label>
-                    <input type="date" id="endDate" name="endDate" class="w-full border border-gray-300 bg-white rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-[#611132] focus:border-[#611132]">
+                    <input type="date" id="endDate" name="endDate" value="{{ request('endDate') }}" class="w-full border border-gray-300 bg-white rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-[#611132] focus:border-[#611132]">
                 </div>
             </div>
         </div>
@@ -245,12 +245,11 @@ document.addEventListener('DOMContentLoaded', function() {
     const dateRange = document.getElementById('dateRange');
     const yearSelector = document.getElementById('yearSelector');
     const monthSelector = document.getElementById('monthSelector');
-    const multipleMonthsSelector = document.getElementById('multipleMonthsSelector');
     const quarterSelector = document.getElementById('quarterSelector');
     const customRangeSelector = document.getElementById('customRangeSelector');
 
     function hideAll() {
-        [yearSelector, monthSelector, multipleMonthsSelector, quarterSelector, customRangeSelector].forEach(el => {
+        [yearSelector, monthSelector, quarterSelector, customRangeSelector].forEach(el => {
             if (!el) return;
             el.style.display = 'none';
         });
@@ -259,16 +258,14 @@ document.addEventListener('DOMContentLoaded', function() {
     function showFor(value) {
         hideAll();
         switch(value) {
+            case 'years':
             case 'year':
                 if (yearSelector) yearSelector.style.display = 'block';
                 break;
+            case 'months':
             case 'month':
-                if (yearSelector) yearSelector.style.display = 'block';
-                if (monthSelector) monthSelector.style.display = 'block';
-                break;
             case 'multiple-months':
                 if (yearSelector) yearSelector.style.display = 'block';
-                // reuse monthSelector grid for multiple months too
                 if (monthSelector) monthSelector.style.display = 'block';
                 break;
             case 'quarter':
@@ -301,24 +298,6 @@ document.addEventListener('DOMContentLoaded', function() {
         showFor(dateRange.value);
     }
 
-    // Spinner behavior for year input: if empty, set to current year on first interaction so arrows start from current year
-    (function() {
-        const yearInput = document.getElementById('year');
-        const currentYear = {{ $currentYear ?? now()->year }};
-        if (!yearInput) return;
-
-        function ensureCurrentYear() {
-            if (yearInput.value === '' || yearInput.value === null) {
-                yearInput.value = currentYear;
-            }
-        }
-
-    yearInput.addEventListener('focus', ensureCurrentYear, { once: true });
-    yearInput.addEventListener('click', ensureCurrentYear, { once: true });
-    yearInput.addEventListener('mousedown', ensureCurrentYear, { once: true });
-    yearInput.addEventListener('touchstart', ensureCurrentYear, { once: true });
-    })();
-
     // Mantener comportamiento del demo para labels de meses (input + label)
     document.querySelectorAll('.month-checkbox').forEach(cb => {
         const label = document.querySelector(`label[for="${cb.id}"]`);
@@ -343,8 +322,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (monthHidden) monthHidden.value = cb.checked ? cb.value : '';
             }
 
-            // If in multiple-months mode, keep monthHidden cleared (controller uses selectedMonths[])
-            if (mode === 'multiple-months') {
+            // El modo actual usa selectedMonths[]; el campo oculto queda sólo para URLs antiguas.
+            if (mode === 'months' || mode === 'multiple-months') {
                 const monthHidden = document.getElementById('monthHidden');
                 if (monthHidden) monthHidden.value = '';
             }
@@ -410,7 +389,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const filtros = {
             dateRange: dateRange?.value,
             year: document.getElementById('year')?.value,
-            month: document.getElementById('month')?.value,
+            month: document.getElementById('monthHidden')?.value,
             selectedMonths: Array.from(document.querySelectorAll('.month-checkbox:checked')).map(i => i.value),
             quarter: document.getElementById('quarter')?.value,
             startDate: document.getElementById('startDate')?.value,

@@ -218,12 +218,6 @@
               </a>
             </div>
 
-            <div class="mt-8 rounded-lg border border-[#bc955c]/40 bg-[#fffaf2] px-4 py-3">
-              <p class="text-xs leading-5 text-gray-700">
-                Por seguridad, el sistema no confirma si el correo existe o no.
-              </p>
-            </div>
-
             <div class="privacy-notice">
               <strong>Aviso de privacidad</strong>
               El uso de este sistema es de carácter institucional y confidencial. El aviso de privacidad del correo electrónico institucional del Gobierno del Estado de Tamaulipas está disponible en el siguiente

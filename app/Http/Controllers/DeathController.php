@@ -57,45 +57,7 @@ class DeathController extends Controller
         }
         
         // Apply existing filters from form (same as index method)
-        $dateRange = $request->input('dateRange');
-        if ($dateRange && $dateRange !== 'custom') {
-            if (is_numeric($dateRange)) {
-                $days = (int) $dateRange;
-                $query->whereDate('death_date', '>=', now()->subDays($days));
-            } elseif ($dateRange === 'year') {
-                $year = $request->input('year') ? (int) $request->input('year') : now()->year;
-                $query->whereYear('death_date', $year);
-            } elseif ($dateRange === 'month') {
-                $year = $request->input('year') ? (int) $request->input('year') : now()->year;
-                $month = $request->input('month');
-                if ($month) {
-                    $query->whereYear('death_date', $year)->whereMonth('death_date', $month);
-                }
-            } elseif ($dateRange === 'multiple-months') {
-                $year = $request->input('year') ? (int) $request->input('year') : now()->year;
-                $months = $request->input('selectedMonths', []);
-                if (!empty($months)) {
-                    $query->whereYear('death_date', $year)
-                          ->whereIn(\DB::raw('MONTH(death_date)'), array_map('intval', $months));
-                }
-            } elseif ($dateRange === 'quarter') {
-                $year = $request->input('year') ? (int) $request->input('year') : now()->year;
-                $quarter = (int) $request->input('quarter');
-                if ($quarter >= 1 && $quarter <= 4) {
-                    $startMonth = ($quarter - 1) * 3 + 1;
-                    $endMonth = $startMonth + 2;
-                    $query->whereYear('death_date', $year)
-                          ->whereBetween(\DB::raw('MONTH(death_date)'), [$startMonth, $endMonth]);
-                }
-            }
-        } elseif ($dateRange === 'custom') {
-            if ($request->filled('startDate')) {
-                $query->whereDate('death_date', '>=', $request->input('startDate'));
-            }
-            if ($request->filled('endDate')) {
-                $query->whereDate('death_date', '<=', $request->input('endDate'));
-            }
-        }
+        $this->applyDateFilters($query, $request);
         
         if ($request->filled('jurisdiccion')) {
             $val = $request->input('jurisdiccion');
@@ -222,7 +184,7 @@ class DeathController extends Controller
             'per_page' => ['nullable', 'in:25,50,100,250'],
             'sort' => ['nullable', 'string'],
             'dateRange' => ['nullable', 'string'],
-            'year' => ['nullable', 'integer'],
+            'year' => ['nullable', 'string', 'max:255'],
             'month' => ['nullable', 'string'],
             'selectedMonths' => ['nullable', 'array'],
             'selectedMonths.*' => ['nullable', 'string'],
@@ -257,50 +219,7 @@ class DeathController extends Controller
             });
         }
 
-        // Date filters (based on dateRange / year / month / selectedMonths / quarter / custom range)
-        $dateRange = $request->input('dateRange');
-        if ($dateRange && $dateRange !== 'custom') {
-            // If dateRange is numeric treat as days
-            if (is_numeric($dateRange)) {
-                $days = (int) $dateRange;
-                $query->whereDate('death_date', '>=', now()->subDays($days));
-            } elseif ($dateRange === 'year') {
-                $year = $request->input('year') ? (int) $request->input('year') : now()->year;
-                $query->whereYear('death_date', $year);
-            } elseif ($dateRange === 'month') {
-                $year = $request->input('year') ? (int) $request->input('year') : now()->year;
-                $month = $request->input('month');
-                if ($month) {
-                    $query->whereYear('death_date', $year)->whereMonth('death_date', $month);
-                }
-            } elseif ($dateRange === 'multiple-months') {
-                $year = $request->input('year') ? (int) $request->input('year') : now()->year;
-                $months = $request->input('selectedMonths', []);
-                if (!empty($months)) {
-                    $query->whereYear('death_date', $year)
-                          ->whereIn(
-                              \DB::raw('MONTH(death_date)'),
-                              array_map('intval', $months)
-                          );
-                }
-            } elseif ($dateRange === 'quarter') {
-                $year = $request->input('year') ? (int) $request->input('year') : now()->year;
-                $quarter = (int) $request->input('quarter');
-                if ($quarter >= 1 && $quarter <= 4) {
-                    $startMonth = ($quarter - 1) * 3 + 1;
-                    $endMonth = $startMonth + 2;
-                    $query->whereYear('death_date', $year)
-                          ->whereBetween(\DB::raw('MONTH(death_date)'), [$startMonth, $endMonth]);
-                }
-            }
-        } elseif ($dateRange === 'custom') {
-            if ($request->filled('startDate')) {
-                $query->whereDate('death_date', '>=', $request->input('startDate'));
-            }
-            if ($request->filled('endDate')) {
-                $query->whereDate('death_date', '<=', $request->input('endDate'));
-            }
-        }
+        $this->applyDateFilters($query, $request);
 
         // Jurisdiction / Municipality (residence) / death municipality filters
         if ($request->filled('jurisdiccion')) {
@@ -387,8 +306,8 @@ class DeathController extends Controller
         $deaths = $deaths->paginate($perPage)->withQueryString();
 
         // Lookup data used by filters (small lists)
-        $causes = DeathCause::all();
-        $districts = District::all();
+        $causes = DeathCause::allowedCatalog();
+        $districts = District::statisticsCatalog();
         $municipalities = Municipality::all();
 
         // Get count of unresolved import failures
@@ -410,8 +329,8 @@ class DeathController extends Controller
     public function create()
     {
         // Show the form for creating a new death record
-        $causes = DeathCause::all();
-        $districts = District::all();
+        $causes = DeathCause::allowedCatalog();
+        $districts = District::statisticsCatalog();
         $municipalities = Municipality::all();
         $locations = DeathLocation::all();
 
@@ -444,9 +363,9 @@ class DeathController extends Controller
                     $fail('El municipio seleccionado no es válido.');
                 }
             }],
-            'district_id' => ['nullable','integer','exists:districts,id'],
+            'district_id' => $this->allowedStatisticsDistrictValidationRules(),
             'death_location_id' => ['required','integer','exists:death_locations,id'],
-            'death_cause_id' => ['required','integer','exists:death_causes,id'],
+            'death_cause_id' => $this->allowedDeathCauseValidationRules(),
             'death_date' => ['required','date','before_or_equal:today'],
         ]);
 
@@ -511,7 +430,7 @@ class DeathController extends Controller
             }
         }
         // Determine jurisdiction: derive from residence municipality when possible
-        // If not found, use explicit `district_id` from the form; otherwise assign a default 'NO ENCONTRADO'
+        // If not found, use explicit `district_id` from the form; otherwise assign OTRO.
         $districtId = null;
         if (!empty($data['residence_municipality_id'])) {
             $resMun = Municipality::find($data['residence_municipality_id']);
@@ -521,7 +440,7 @@ class DeathController extends Controller
             $districtId = $data['district_id'];
         }
         if (is_null($districtId)) {
-            $defaultJur = District::firstOrCreate(['name' => 'NO ENCONTRADO']);
+            $defaultJur = District::firstOrCreate(['name' => District::OTHER_NAME]);
             $districtId = $defaultJur->id;
         }
 
@@ -573,9 +492,9 @@ class DeathController extends Controller
                     $fail('El municipio seleccionado no es válido.');
                 }
             }],
-            'district_id' => ['nullable','integer','exists:districts,id'],
+            'district_id' => $this->allowedStatisticsDistrictValidationRules(),
             'death_location_id' => ['required','integer','exists:death_locations,id'],
-            'death_cause_id' => ['required','integer','exists:death_causes,id'],
+            'death_cause_id' => $this->allowedDeathCauseValidationRules(),
             'death_date' => ['required','date','before_or_equal:today'],
         ]);
 
@@ -638,7 +557,7 @@ class DeathController extends Controller
             }
         }
         // Determine jurisdiction: derive from residence municipality when possible
-        // If not found, use explicit `district_id` from the form; otherwise assign a default 'NO ENCONTRADO'
+        // If not found, use explicit `district_id` from the form; otherwise assign OTRO.
         $districtId = null;
         if (!empty($data['residence_municipality_id'])) {
             $resMun = Municipality::find($data['residence_municipality_id']);
@@ -648,7 +567,7 @@ class DeathController extends Controller
             $districtId = $data['district_id'];
         }
         if (is_null($districtId)) {
-            $defaultJur = District::firstOrCreate(['name' => 'NO ENCONTRADO']);
+            $defaultJur = District::firstOrCreate(['name' => District::OTHER_NAME]);
             $districtId = $defaultJur->id;
         }
 
@@ -677,14 +596,170 @@ class DeathController extends Controller
     public function edit(Death $death)
     {
         // Show the form for editing an existing death record
-        $causes = DeathCause::all();
-        $districts = District::all();
+        $causes = DeathCause::allowedCatalog();
+        $districts = District::statisticsCatalog();
         $municipalities = Municipality::all();
         $locations = DeathLocation::all();
 
         // The update view expects a variable named $defuncion (existing views use Spanish variable)
         $defuncion = $death;
         return view('estadisticas.acciones.actualizar-registro', compact('defuncion', 'causes', 'districts', 'municipalities', 'locations'));
+    }
+
+    private function allowedDeathCauseValidationRules(): array
+    {
+        return [
+            'required',
+            'integer',
+            function ($attribute, $value, $fail) {
+                $isAllowed = DeathCause::query()
+                    ->whereKey($value)
+                    ->whereIn('name', DeathCause::allowedNames())
+                    ->exists();
+
+                if (!$isAllowed) {
+                    $fail('La causa seleccionada no es válida.');
+                }
+            },
+        ];
+    }
+
+    private function allowedStatisticsDistrictValidationRules(): array
+    {
+        return [
+            'nullable',
+            'integer',
+            function ($attribute, $value, $fail) {
+                if ($value === null || $value === '') {
+                    return;
+                }
+
+                $allowedIds = District::statisticsCatalog()->pluck('id')->map(fn ($id) => (int) $id)->all();
+
+                if (!in_array((int) $value, $allowedIds, true)) {
+                    $fail('El distrito seleccionado no es válido.');
+                }
+            },
+        ];
+    }
+
+    private function applyDateFilters($query, Request $request): void
+    {
+        $dateRange = $request->input('dateRange');
+
+        if (!$dateRange || $dateRange === 'all') {
+            return;
+        }
+
+        if (is_numeric($dateRange)) {
+            $query->whereDate('death_date', '>=', now()->subDays((int) $dateRange));
+            return;
+        }
+
+        if ($dateRange === 'custom') {
+            if ($request->filled('startDate')) {
+                $query->whereDate('death_date', '>=', $request->input('startDate'));
+            }
+
+            if ($request->filled('endDate')) {
+                $query->whereDate('death_date', '<=', $request->input('endDate'));
+            }
+
+            return;
+        }
+
+        $years = $this->parseYears($request->input('year'));
+        if (empty($years)) {
+            $years = [now()->year];
+        }
+
+        if (in_array($dateRange, ['year', 'years'], true)) {
+            $this->applyYearFilter($query, $years);
+            return;
+        }
+
+        if (in_array($dateRange, ['month', 'months', 'multiple-months'], true)) {
+            $months = $this->parseMonths($request->input('selectedMonths', []), $request->input('month'));
+            if (!empty($months)) {
+                $this->applyYearFilter($query, $years);
+                $query->whereIn(DB::raw('MONTH(death_date)'), $months);
+            }
+
+            return;
+        }
+
+        if ($dateRange === 'quarter') {
+            $quarter = (int) $request->input('quarter');
+            if ($quarter >= 1 && $quarter <= 4) {
+                $startMonth = ($quarter - 1) * 3 + 1;
+                $endMonth = $startMonth + 2;
+                $this->applyYearFilter($query, $years);
+                $query->whereBetween(DB::raw('MONTH(death_date)'), [$startMonth, $endMonth]);
+            }
+        }
+    }
+
+    private function parseYears($value): array
+    {
+        if (is_array($value)) {
+            $value = implode(',', $value);
+        }
+
+        $currentYear = now()->year;
+        $years = [];
+        $parts = preg_split('/[,\s]+/', (string) $value, -1, PREG_SPLIT_NO_EMPTY);
+
+        foreach ($parts as $part) {
+            $part = trim($part);
+
+            if (preg_match('/^(\d{4})-(\d{4})$/', $part, $matches)) {
+                $start = (int) $matches[1];
+                $end = (int) $matches[2];
+
+                if ($start > $end) {
+                    [$start, $end] = [$end, $start];
+                }
+
+                $years = array_merge($years, range($start, $end));
+                continue;
+            }
+
+            if (preg_match('/^\d{4}$/', $part)) {
+                $years[] = (int) $part;
+            }
+        }
+
+        return collect($years)
+            ->filter(fn ($year) => $year >= 1950 && $year <= $currentYear)
+            ->unique()
+            ->values()
+            ->all();
+    }
+
+    private function parseMonths($selectedMonths, $singleMonth = null): array
+    {
+        $months = is_array($selectedMonths) ? $selectedMonths : [$selectedMonths];
+
+        if (empty(array_filter($months)) && $singleMonth) {
+            $months = [$singleMonth];
+        }
+
+        return collect($months)
+            ->map(fn ($month) => (int) $month)
+            ->filter(fn ($month) => $month >= 1 && $month <= 12)
+            ->unique()
+            ->values()
+            ->all();
+    }
+
+    private function applyYearFilter($query, array $years): void
+    {
+        if (count($years) === 1) {
+            $query->whereYear('death_date', $years[0]);
+            return;
+        }
+
+        $query->whereIn(DB::raw('YEAR(death_date)'), $years);
     }
 
     public function show(Death $death)

@@ -14,7 +14,7 @@ class LookupController extends Controller
     public function searchCauses(Request $request)
     {
         $q = trim((string)$request->get('q', ''));
-        $query = DeathCause::query();
+        $query = DeathCause::query()->whereIn('name', DeathCause::allowedNames());
 
         if ($q !== '') {
             $query->where('name', 'like', "%{$q}%");

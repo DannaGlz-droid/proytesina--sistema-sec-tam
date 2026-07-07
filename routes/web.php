@@ -55,9 +55,9 @@ Route::middleware('auth')->group(function () {
         })->name('statistic.import-history-view');
         Route::get('estadisticas/importaciones/{importId}/registros-fallidos', function ($importId) {
             $municipalities = \App\Models\Municipality::all();
-            $districts = \App\Models\District::all();
+            $districts = \App\Models\District::statisticsCatalog();
             $locations = \App\Models\DeathLocation::all();
-            $causes = \App\Models\DeathCause::all();
+            $causes = \App\Models\DeathCause::allowedCatalog();
             $import = \Illuminate\Support\Facades\DB::table('imports')->find($importId);
             $importFileName = $import->original_name ?? 'Importación #' . $importId;
             return view('estadisticas.failed-imports', [

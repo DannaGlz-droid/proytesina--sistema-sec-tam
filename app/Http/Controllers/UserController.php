@@ -31,16 +31,27 @@ class UserController extends Controller
     public function search(Request $request)
     {
         $q = $request->get('q', '');
-        $items = User::when($q, function($query) use ($q) {
-                    $query->where('name', 'like', "%{$q}%")
-                          ->orWhere('first_last_name', 'like', "%{$q}%")
-                          ->orWhere('second_last_name', 'like', "%{$q}%")
-                          ->orWhere('username', 'like', "%{$q}%")
-                          ->orWhere('email', 'like', "%{$q}%");
-                })
-                ->orderBy('name')
-                ->limit(20)
-                ->get(['id', 'name', 'first_last_name', 'second_last_name', 'username']);
+        $query = User::query();
+
+        if ($request->boolean('importers_only')) {
+            $query->whereHas('role', function ($roleQuery) {
+                $roleQuery->whereIn('name', ['Administrador', 'Coordinador']);
+            });
+        }
+
+        if ($q) {
+            $query->where(function ($searchQuery) use ($q) {
+                $searchQuery->where('name', 'like', "%{$q}%")
+                    ->orWhere('first_last_name', 'like', "%{$q}%")
+                    ->orWhere('second_last_name', 'like', "%{$q}%")
+                    ->orWhere('username', 'like', "%{$q}%")
+                    ->orWhere('email', 'like', "%{$q}%");
+            });
+        }
+
+        $items = $query->orderBy('name')
+            ->limit(20)
+            ->get(['id', 'name', 'first_last_name', 'second_last_name', 'username']);
 
         $items = $items->map(function ($user) {
             $fullName = trim($user->name . ' ' . $user->first_last_name . ' ' . ($user->second_last_name ?? ''));
@@ -226,7 +237,7 @@ class UserController extends Controller
 
         // lookup data for filters
         $positions = $this->allowedPositions();
-        $districts = District::all();
+        $districts = District::userAssignmentCatalog();
         $roles = Role::all();
 
         // Renderizar la vista con el paginador (helpers firstItem/lastItem/total disponibles)
@@ -491,16 +502,7 @@ class UserController extends Controller
     {
 
         $positions = $this->allowedPositions();
-        // Solo mostrar jurisdicciones numeradas (I - XII), excluir opciones genéricas
-        $districts = District::whereNotIn('name', ['OTRO', 'Sin jurisdicción', 'NO ENCONTRADO', 'NO ENCONTRADO', 'Otra', 'otra'])
-                                      ->orderBy('name')
-                                      ->get();
-        
-        // Agregar opción "Oficina Central" para admins y coordinadores
-        $centralOffice = new District();
-        $centralOffice->id = 999;
-        $centralOffice->name = 'Oficina Central';
-        $districts->push($centralOffice);
+        $districts = District::userAssignmentCatalog();
         
         // Solo mostrar: Administrador, Operador, Coordinador (usar nombres canónicos en español)
         $roles = Role::whereIn('name', ['Administrador', 'Operador', 'Coordinador', 'administrador', 'operador', 'coordinador'])->get();
@@ -533,16 +535,7 @@ class UserController extends Controller
     public function edit(User $user)
     {
         $positions = $this->allowedPositions();
-        // Solo mostrar jurisdicciones numeradas (I - XII), excluir opciones genéricas
-        $districts = District::whereNotIn('name', ['OTRO', 'Sin jurisdicción', 'NO ENCONTRADO', 'NO ENCONTRADO', 'Otra', 'otra'])
-                                      ->orderBy('name')
-                                      ->get();
-        
-        // Agregar opción "Oficina Central" para admins y coordinadores
-        $centralOffice = new District();
-        $centralOffice->id = 999;
-        $centralOffice->name = 'Oficina Central';
-        $districts->push($centralOffice);
+        $districts = District::userAssignmentCatalog();
         
         // Solo mostrar: Administrador, Operador, Coordinador (usar nombres canónicos en español)
         $roles = Role::whereIn('name', ['Administrador', 'Operador', 'Coordinador', 'administrador', 'operador', 'coordinador'])->get();

@@ -308,7 +308,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 },
                 load: function(query, callback) {
                     // Allow empty query so TomSelect can preload all users
-                    fetch('/api/users/search?q=' + encodeURIComponent(query))
+                    fetch('/api/users/search?importers_only=1&q=' + encodeURIComponent(query))
                         .then(res => {
                             if (!res.ok) throw new Error('Network error');
                             return res.json();

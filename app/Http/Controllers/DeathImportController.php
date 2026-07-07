@@ -194,10 +194,7 @@ class DeathImportController extends Controller
             $deathLocationLookup[mb_strtolower(trim($loc->name))] = $loc;
         }
 
-        $deathCauseLookup = [];
-        foreach (DeathCause::all() as $c) {
-            $deathCauseLookup[mb_strtolower(trim($c->name))] = $c;
-        }
+        $deathCauseLookup = $this->buildAllowedDeathCauseLookup();
 
         $rowsTotal = 0;
         $rowsImported = 0;
@@ -220,20 +217,13 @@ class DeathImportController extends Controller
                 $map[$i] = $h; // keep normalized header
             }
 
-                // Determine cause from sheet name if available and require it exists (strict)
+                // Determine cause from sheet name. Causes are a closed catalog; do not create arbitrary causes.
                 $causeName = isset($sheetNames[$sheetIndex]) ? trim($sheetNames[$sheetIndex]) : ('Causa ' . ($sheetIndex + 1));
-                $normCause = mb_strtolower($causeName);
 
                 // Detect default sheet names (Sheet1, Hoja1, Worksheet) — if so, require per-row 'causa' column
                 $isDefaultSheetName = false;
                 if ($causeName === '' || preg_match('/^(sheet|hoja|worksheet)\d*$/i', $causeName)) {
                     $isDefaultSheetName = true;
-                }
-
-                $deathCause = null;
-                if (! $isDefaultSheetName) {
-                    $deathCause = $deathCauseLookup[$normCause] ?? null;
-                    // if not found, we'll create it later if needed
                 }
 
             foreach ($sheet as $rowNum => $row) {
@@ -323,7 +313,7 @@ class DeathImportController extends Controller
                 $residenceMunicipality = null;
                 $deathMunicipality = null;
 
-                $otherJur = District::firstOrCreate(['name' => 'OTRO']);
+                $otherJur = District::firstOrCreate(['name' => District::OTHER_NAME]);
 
                 if ($residenceMunicipalityName) {
                     $norm = $this->normalizeMunicipalityName($residenceMunicipalityName);
@@ -390,26 +380,29 @@ class DeathImportController extends Controller
                     $errors[] = 'Lugar de defunción vacío';
                 }
 
-                // map or create cause: prefer per-row 'causa' column.
-                // If sheet name is default (Sheet1/Hoja1) and no per-row causa, reject the row.
-                if (!empty($rowAssoc['causa']) && trim((string)$rowAssoc['causa']) !== '') {
-                    $rowCauseName = trim((string)$rowAssoc['causa']);
-                    $dcNorm = mb_strtolower($rowCauseName);
-                    $deathCause = $deathCauseLookup[$dcNorm] ?? null;
-                    if (!$deathCause) {
-                        $deathCause = DeathCause::firstOrCreate(['name' => $rowCauseName]);
-                        $deathCauseLookup[mb_strtolower(trim($deathCause->name))] = $deathCause;
-                    }
-                } else {
-                    if ($isDefaultSheetName) {
-                        $errors[] = 'Causa no indicada en la hoja ni en la fila (hoja con nombre por defecto).';
-                    } else {
-                        // Sheet has a meaningful name — create or reuse sheet-level cause
-                        if (empty($deathCause)) {
-                            $deathCause = DeathCause::firstOrCreate(['name' => $causeName]);
-                            $deathCauseLookup[mb_strtolower(trim($deathCause->name))] = $deathCause;
+                // Resolve cause against the closed catalog. Accept row value first, then sheet name.
+                $causeCandidates = [
+                    $rowAssoc['causa'] ?? null,
+                    $rowAssoc['causadefuncion'] ?? null,
+                    $rowAssoc['causadefunciond'] ?? null,
+                    $isDefaultSheetName ? null : $causeName,
+                    $rowAssoc['ciecausabasicad'] ?? null,
+                ];
+                $deathCause = $this->resolveAllowedDeathCause($causeCandidates, $deathCauseLookup);
+
+                if (!$deathCause) {
+                    $causeSource = '';
+                    foreach ($causeCandidates as $candidate) {
+                        $candidate = is_scalar($candidate) ? trim((string)$candidate) : '';
+                        if ($candidate !== '') {
+                            $causeSource = $candidate;
+                            break;
                         }
                     }
+
+                    $errors[] = $causeSource
+                        ? 'Causa no reconocida: "' . $causeSource . '". Use una de las causas permitidas.'
+                        : 'Causa no indicada en la hoja ni en la fila.';
                 }
 
                 // If the folio is duplicated inside the uploaded file, reject ALL its occurrences
@@ -615,10 +608,10 @@ class DeathImportController extends Controller
                     $d->district_id = $residenceMunicipality->district_id;
                 } elseif ($residenceMunicipality && mb_strtolower(trim($residenceMunicipality->name)) === 'otro') {
                     // Ensure 'OTRO' jurisdiction exists and assign it
-                    $otroJur = District::firstOrCreate(['name' => 'OTRO']);
+                    $otroJur = District::firstOrCreate(['name' => District::OTHER_NAME]);
                     $d->district_id = $otroJur->id;
                 } else {
-                    $defaultJur = District::firstOrCreate(['name' => 'NO ENCONTRADO']);
+                    $defaultJur = District::firstOrCreate(['name' => District::OTHER_NAME]);
                     $d->district_id = $defaultJur->id;
                 }
                 $d->death_location_id = $deathLocation ? $deathLocation->id : null;
@@ -1124,38 +1117,24 @@ class DeathImportController extends Controller
                 }
                 $death->death_location_id = $deathLocation->id;
                 
-                // Try to find cause using the sheet name (like the main import does)
-                // Sheet name was stored as 'sheet' key in original data
+                // Resolve cause using the same closed catalog as the main import.
                 $sheetCauseName = trim((string)($rowData['sheet'] ?? '')) ?: null;
-                
-                // If no sheet name, try to use code or full description
-                $causeCode = trim((string)($rowData['ciecausabasica'] ?? '')) ?: null;
-                $causeName = trim((string)($rowData['causa'] ?? $rowData['ciecausabasicad'] ?? '')) ?: null;
-                
-                $deathCause = null;
-                
-                // First, try to find by sheet name (like main import does)
-                if ($sheetCauseName && $sheetCauseName !== 'Causa ') {
-                    $deathCause = DeathCause::where('name', 'like', '%' . trim($sheetCauseName) . '%')->first();
-                }
-                
-                // If not found by sheet name, try by code
-                if (!$deathCause && $causeCode) {
-                    $deathCause = DeathCause::where('code', $causeCode)->first();
-                }
-                
-                // If not found by code, try by full name description
-                if (!$deathCause && $causeName) {
-                    $deathCause = DeathCause::where('name', 'like', '%' . $causeName . '%')->first();
-                }
-                
-                // If still not found, create one with sheet name if available
+                $deathCauseLookup = $this->buildAllowedDeathCauseLookup();
+                $deathCause = $this->resolveAllowedDeathCause([
+                    $rowData['causa'] ?? null,
+                    $rowData['causadefuncion'] ?? null,
+                    $rowData['causadefunciond'] ?? null,
+                    $sheetCauseName,
+                    $rowData['ciecausabasicad'] ?? null,
+                ], $deathCauseLookup);
+
                 if (!$deathCause) {
-                    $createName = $sheetCauseName ?: ($causeName ?: 'NO ESPECIFICADA');
-                    $deathCause = DeathCause::firstOrCreate(
-                        ['name' => $createName],
-                        ['code' => $causeCode]
-                    );
+                    DB::rollBack();
+
+                    return response()->json([
+                        'ok' => false,
+                        'message' => 'Causa no reconocida. Use una de las causas permitidas.',
+                    ], 422);
                 }
                 
                 $death->death_cause_id = $deathCause->id;
@@ -1163,7 +1142,7 @@ class DeathImportController extends Controller
                 // Set municipalities (try to find them, use OTRO as default)
                 $residenceMunicipalityName = trim((string)($rowData['municipioresidenciad'] ?? '')) ?: null;
                 $deathMunicipalityName = trim((string)($rowData['municipiodefunciond'] ?? '')) ?: null;
-                $otherJur = District::firstOrCreate(['name' => 'OTRO']);
+                $otherJur = District::firstOrCreate(['name' => District::OTHER_NAME]);
                 $otherMuni = Municipality::firstOrCreate(['name' => 'OTRO'], ['district_id' => $otherJur->id]);
                 
                 if ($residenceMunicipalityName) {
@@ -1256,6 +1235,140 @@ class DeathImportController extends Controller
             Log::error("Error discarding failed record: " . $e->getMessage());
             return response()->json(['ok' => false, 'message' => $e->getMessage()], 500);
         }
+    }
+
+    /**
+     * Closed death-cause catalog accepted by imports.
+     */
+    private function allowedDeathCauseNames(): array
+    {
+        return DeathCause::allowedNames();
+    }
+
+    /**
+     * Build lookup for allowed causes only. This seeds missing catalog entries but never creates arbitrary causes.
+     */
+    private function buildAllowedDeathCauseLookup(): array
+    {
+        $lookup = [];
+
+        foreach ($this->allowedDeathCauseNames() as $name) {
+            $cause = DeathCause::firstOrCreate(['name' => $name]);
+            $lookup[$this->normalizeDeathCauseName($name)] = $cause;
+        }
+
+        foreach ($this->deathCauseAliases() as $alias => $canonicalName) {
+            $canonicalKey = $this->normalizeDeathCauseName($canonicalName);
+            if (isset($lookup[$canonicalKey])) {
+                $lookup[$this->normalizeDeathCauseName($alias)] = $lookup[$canonicalKey];
+            }
+        }
+
+        return $lookup;
+    }
+
+    /**
+     * Common spelling variants and short labels that should map to the fixed catalog.
+     */
+    private function deathCauseAliases(): array
+    {
+        return [
+            'PEATON' => 'PEATON RESIDENCIA',
+            'PEATON RES' => 'PEATON RESIDENCIA',
+            'PEATONES RESIDENCIA' => 'PEATON RESIDENCIA',
+            'PEATÓN RESIDENCIA' => 'PEATON RESIDENCIA',
+            'VEHICULO DE MOTOR' => 'VEHICULO DE MOTOR RESIDENCIA',
+            'VEHICULO MOTOR' => 'VEHICULO DE MOTOR RESIDENCIA',
+            'VEHICULOS DE MOTOR RESIDENCIA' => 'VEHICULO DE MOTOR RESIDENCIA',
+            'VEHÍCULO DE MOTOR RESIDENCIA' => 'VEHICULO DE MOTOR RESIDENCIA',
+            'EXPO FUEGO HUMO RESIDENCIA' => 'EXPO FUEGO Y HUMO RESIDENCIA',
+            'EXPOSICION FUEGO HUMO RESIDENCIA' => 'EXPO FUEGO Y HUMO RESIDENCIA',
+            'EXPOSICIÓN FUEGO HUMO RESIDENCIA' => 'EXPO FUEGO Y HUMO RESIDENCIA',
+            'FUEGO Y HUMO RESIDENCIA' => 'EXPO FUEGO Y HUMO RESIDENCIA',
+            'CAIDAS' => 'CAIDAS ACCIDENTALES',
+            'CAIDA ACCIDENTAL' => 'CAIDAS ACCIDENTALES',
+            'CAÍDAS ACCIDENTALES' => 'CAIDAS ACCIDENTALES',
+            'AHOGAMIENTO' => 'AHOGAMIENTO RESIDENCIA',
+            'AHOGAMIENTO RES' => 'AHOGAMIENTO RESIDENCIA',
+            'ENVENENAMIENTO' => 'ENVENENAMIENTO RES',
+            'ENVENENAMIENTO RESIDENCIA' => 'ENVENENAMIENTO RES',
+            'ENVENAMIENTO RES' => 'ENVENENAMIENTO RES',
+            'OTROS ACIDENTES' => 'OTROS ACCIDENTES',
+            'OTRO ACCIDENTE' => 'OTROS ACCIDENTES',
+            'OTROS ACCIDENTE' => 'OTROS ACCIDENTES',
+            'OTROS ACCIDENTES RESIDENCIA' => 'OTROS ACCIDENTES',
+        ];
+    }
+
+    /**
+     * Resolve a cause from multiple possible sources with typo tolerance, without leaving the allowed catalog.
+     */
+    private function resolveAllowedDeathCause(array $candidates, array $lookup): ?DeathCause
+    {
+        $normalizedCandidates = [];
+
+        foreach ($candidates as $candidate) {
+            $norm = $this->normalizeDeathCauseName(is_scalar($candidate) ? (string)$candidate : '');
+            if ($norm === '') {
+                continue;
+            }
+
+            $normalizedCandidates[] = $norm;
+
+            if (isset($lookup[$norm])) {
+                return $lookup[$norm];
+            }
+
+            foreach ($lookup as $key => $cause) {
+                if ($key === '' || min(strlen($norm), strlen($key)) < 5) {
+                    continue;
+                }
+
+                if (str_contains($norm, $key) || str_contains($key, $norm)) {
+                    return $cause;
+                }
+            }
+        }
+
+        foreach ($normalizedCandidates as $norm) {
+            $bestCause = null;
+            $bestScore = 0.0;
+
+            foreach ($lookup as $key => $cause) {
+                $maxLength = max(strlen($norm), strlen($key));
+                if ($maxLength === 0) {
+                    continue;
+                }
+
+                $levenshteinScore = 1 - (levenshtein($norm, $key) / $maxLength);
+                similar_text($norm, $key, $similarPercent);
+                $score = max($levenshteinScore, $similarPercent / 100);
+
+                if ($score > $bestScore) {
+                    $bestScore = $score;
+                    $bestCause = $cause;
+                }
+            }
+
+            if ($bestCause && $bestScore >= 0.82) {
+                return $bestCause;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Normalize death-cause labels for matching: uppercase, accentless, punctuation-free.
+     */
+    private function normalizeDeathCauseName(?string $name): string
+    {
+        if (!$name) return '';
+        $s = mb_strtoupper(trim($name));
+        $s = iconv('UTF-8', 'ASCII//TRANSLIT', $s) ?: $s;
+        $s = preg_replace('/[^A-Z0-9\s]/', ' ', $s);
+        $s = preg_replace('/\s+/', ' ', $s);
+        return trim($s);
     }
 
     /**

@@ -18,6 +18,33 @@ class DeathCause extends Model
         'name'
     ];
 
+    public const ALLOWED_NAMES = [
+        'PEATON RESIDENCIA',
+        'VEHICULO DE MOTOR RESIDENCIA',
+        'EXPO FUEGO Y HUMO RESIDENCIA',
+        'CAIDAS ACCIDENTALES',
+        'AHOGAMIENTO RESIDENCIA',
+        'ENVENENAMIENTO RES',
+        'OTROS ACCIDENTES',
+    ];
+
+    public static function allowedNames(): array
+    {
+        return self::ALLOWED_NAMES;
+    }
+
+    public static function allowedCatalog()
+    {
+        foreach (self::ALLOWED_NAMES as $name) {
+            self::firstOrCreate(['name' => $name]);
+        }
+
+        return self::query()
+            ->whereIn('name', self::ALLOWED_NAMES)
+            ->orderBy('name')
+            ->get();
+    }
+
     /**
      * Relationship: DeathCause has many Deaths
      */

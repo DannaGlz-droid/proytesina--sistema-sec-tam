@@ -9,8 +9,8 @@
         <!-- HEADER CON TÍTULO -->
         <div class="flex flex-col lg:flex-row lg:justify-between lg:items-center gap-4 mb-6">
             <div>
-                <h1 class="text-2xl lg:text-3xl font-lora font-bold text-[#404041] mb-2">Historial de Importaciones</h1>
-                <p class="text-sm lg:text-base text-[#404041] font-lora">
+                <h1 class="app-page-title">Historial de Importaciones</h1>
+                <p class="app-page-subtitle">
                     Visualiza todas las importaciones realizadas, filtra por fecha y estado, y revierte las que desees deshacer.
                 </p>
             </div>
@@ -32,44 +32,41 @@
             <div class="flex-1 min-w-0">
                 <div class="bg-white relative shadow-md sm:rounded-lg overflow-hidden border border-[#404041]">
                     <!-- Custom search, per-page controls -->
-                    <div class="flex flex-row flex-wrap items-center justify-between gap-3 p-4">
+                    <div class="app-table-toolbar flex flex-row flex-wrap items-center justify-between gap-3 p-4">
                         <div class="flex-1 min-w-0 sm:w-1/3 lg:w-1/2">
-                            <div class="relative w-full max-w-xl min-w-0">
-                                <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                                    <i class="fas fa-search text-gray-400 text-sm"></i>
+                            <div class="app-table-search">
+                                <div class="app-table-search-icon">
+                                    <i class="fas fa-search"></i>
                                 </div>
-                                <input type="text" id="search-imports" class="bg-gray-50 border border-[#404041] text-gray-900 text-sm rounded-lg focus:ring-[#611132] focus:border-[#611132] block w-full pl-10 pr-24 p-2.5" placeholder="Buscar en importaciones...">
-                                <div class="absolute inset-y-0 right-0 flex items-center pr-2 space-x-1">
-                                    <button type="button" id="search-imports-btn" class="h-8 px-3 bg-[#611132] text-white rounded-lg text-xs font-semibold hover:bg-[#4a0e26] transition-all duration-150" title="Buscar">
-                                        <i class="fas fa-search text-xs"></i>
-                                    </button>
-                                    <button type="button" id="clear-imports-btn" class="h-8 px-2 bg-white border border-[#404041] text-gray-700 rounded-lg text-xs hover:bg-gray-100 hidden" title="Limpiar búsqueda">
+                                <input type="text" id="search-imports" class="app-table-search-input" placeholder="Buscar en importaciones...">
+                                <div class="app-table-search-actions">
+                                    <button type="button" id="clear-imports-btn" class="app-table-clear-button hidden" title="Limpiar búsqueda">
                                         <i class="fas fa-times text-xs"></i>
                                     </button>
                                 </div>
                             </div>
                         </div>
 
-                        <div class="ml-0 sm:ml-auto flex flex-wrap items-center justify-end gap-3">
-                            <div class="flex items-center space-x-2">
-                                <span class="text-sm text-gray-700 font-lora">Mostrar</span>
-                                <select id="per-page-imports" class="bg-gray-50 border border-[#404041] text-gray-900 text-sm rounded-lg focus:ring-[#611132] focus:border-[#611132] block w-24 p-2">
+                        <div class="app-table-controls ml-0 sm:ml-auto flex flex-wrap items-center justify-end gap-3">
+                            <div class="app-table-page-size">
+                                <span>Mostrar</span>
+                                <select id="per-page-imports">
                                     <option value="10" selected>10</option>
                                     <option value="25">25</option>
                                     <option value="50">50</option>
                                     <option value="100">100</option>
                                 </select>
                             </div>
-                            <div id="bulk-selection-bar-imports" class="hidden items-center gap-3">
+                            <div id="bulk-selection-bar-imports" class="app-table-bulk-inline hidden items-center gap-3">
                                 <div class="flex items-center gap-2">
-                                    <span class="w-2 h-2 rounded-full bg-[#611132] flex-shrink-0"></span>
-                                    <span id="bulk-selected-count-imports" class="text-xs font-lora text-gray-600 whitespace-nowrap"></span>
+                                    <span class="app-table-selection-marker"></span>
+                                    <span id="bulk-selected-count-imports" class="app-table-selection-count text-xs font-lora whitespace-nowrap"></span>
                                 </div>
                                 <span class="hidden xl:inline text-xs font-lora text-gray-500">En esta página</span>
                                 <button id="clear-selected-imports" type="button" class="hidden text-xs font-semibold font-lora text-[#611132] hover:underline whitespace-nowrap" title="Quitar selección">
                                     Quitar selección
                                 </button>
-                                <button id="bulk-delete-imports" type="button" class="bg-[#AB1A1A] text-white px-4 py-2.5 rounded-lg text-xs font-semibold hover:bg-[#8B1515] transition-all duration-300 font-lora items-center gap-2 whitespace-nowrap shadow-sm" title="Eliminar seleccionados" style="display: none;">
+                                <button id="bulk-delete-imports" type="button" class="app-table-bulk-danger items-center gap-2" title="Eliminar seleccionados" style="display: none;">
                                     <i class="fas fa-trash text-xs"></i>
                                     <span>Eliminar</span>
                                 </button>
@@ -80,9 +77,20 @@
                     <!-- Table wrapper -->
                     <div class="app-table-shell overflow-x-auto min-w-0">
                         <table id="imports-table" class="app-data-table min-w-full w-full text-sm text-left text-gray-500">
+                            <colgroup>
+                                <col style="width: 3rem;">
+                                <col style="width: 34%;">
+                                <col style="width: 16%;">
+                                <col style="width: 9%;">
+                                <col style="width: 6%;">
+                                <col style="width: 7%;">
+                                <col style="width: 7%;">
+                                <col style="width: 9%;">
+                                <col style="width: 9%;">
+                            </colgroup>
                             <thead class="text-xs border-b border-[#404041]">
                                 <tr>
-                                    <th scope="col" class="px-3 py-2 font-lora whitespace-nowrap text-xs"><input id="select-all-imports" type="checkbox" /></th>
+                                    <th scope="col" class="px-2 py-2 font-lora whitespace-nowrap text-xs text-center"><input id="select-all-imports" type="checkbox" /></th>
                                     <th scope="col" class="px-3 py-2 font-lora whitespace-nowrap text-xs sorting sortable" data-sort-key="original_name">Archivo</th>
                                     <th scope="col" class="px-3 py-2 font-lora whitespace-nowrap text-xs sorting sortable" data-sort-key="created_by">Cargado por</th>
                                     <th scope="col" class="px-3 py-2 font-lora whitespace-nowrap text-xs sorting_desc sortable" data-sort-key="created_at">Fecha</th>
@@ -367,7 +375,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Event listeners for filters
     const searchInput = document.getElementById('search-imports');
-    const searchBtn = document.getElementById('search-imports-btn');
     const clearBtn = document.getElementById('clear-imports-btn');
     const dateRangeSelect = document.getElementById('dateRangeImports');
     const startDateInput = document.getElementById('startDateImports');
@@ -379,6 +386,12 @@ document.addEventListener('DOMContentLoaded', function () {
     const aplicarBtn = document.getElementById('aplicarFiltrosImportaciones');
     const limpiarBtn = document.getElementById('limpiarFiltrosImportaciones');
     const sortableHeaders = document.querySelectorAll('#imports-table thead th.sortable');
+    const bulkSelectionBar = document.getElementById('bulk-selection-bar-imports');
+    const tableToolbar = bulkSelectionBar?.closest('.app-table-toolbar');
+
+    if (bulkSelectionBar && tableToolbar) {
+        tableToolbar.insertAdjacentElement('afterend', bulkSelectionBar);
+    }
 
     // Helper function to apply filters
     function applyFilters() {
@@ -438,6 +451,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Search input - applies only on Enter key
     if (searchInput) {
+        searchInput.addEventListener('input', updateSearchButton);
+
         searchInput.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') {
                 applyFilters();
@@ -445,17 +460,11 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    // Search button
-    if (searchBtn) {
-        searchBtn.addEventListener('click', () => {
-            applyFilters();
-        });
-    }
-
     // Clear search button
     if (clearBtn) {
         clearBtn.addEventListener('click', () => {
             if (searchInput) searchInput.value = '';
+            updateSearchButton();
             applyFilters();
         });
     }
@@ -795,7 +804,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 : 'Primero revierte esta importacion para conservar la trazabilidad de los datos';
 
             row.innerHTML = `
-                <td><input class="row-check-import" data-id="${imp.id}" type="checkbox" ${canDeleteHistory ? '' : 'disabled'} title="${deleteHistoryTitle}" /></td>
+                <td class="text-center"><input class="row-check-import" data-id="${imp.id}" type="checkbox" ${canDeleteHistory ? '' : 'disabled'} title="${deleteHistoryTitle}" /></td>
                 <td class="app-cell-wrap app-cell-strong">${escapeHtml(imp.original_name)}</td>
                 <td class="app-cell-wrap">
                     <div class="flex flex-col leading-tight">
@@ -848,12 +857,10 @@ document.addEventListener('DOMContentLoaded', function () {
     function updateSearchButton() {
         const searchInput = document.getElementById('search-imports');
         const clearBtn = document.getElementById('clear-imports-btn');
-        
-        if (searchInput.value) {
-            clearBtn.style.display = 'block';
-        } else {
-            clearBtn.style.display = 'none';
-        }
+
+        if (!searchInput || !clearBtn) return;
+
+        clearBtn.classList.toggle('hidden', !searchInput.value);
     }
 
     function updatePaginationInfo() {

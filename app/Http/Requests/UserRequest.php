@@ -79,7 +79,9 @@ class UserRequest extends FormRequest
                 }
             }],
             'district_id' => ['required', function ($attribute, $value, $fail) {
-                if ($value != 999 && !District::where('id', $value)->exists()) {
+                $allowedIds = District::userAssignmentCatalog()->pluck('id')->map(fn ($id) => (int) $id)->all();
+
+                if (!in_array((int) $value, $allowedIds, true)) {
                     $fail('El distrito seleccionado no es válido.');
                 }
             }],
