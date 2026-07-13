@@ -54,7 +54,7 @@
                         <i class="fas fa-check-circle text-6xl"></i>
                     </div>
                     <p class="text-lg font-lora text-gray-600">No hay registros fallidos para esta importación</p>
-                    <p class="text-sm text-gray-500 font-lora mt-2">Todos los registros se importaron correctamente</p>
+                    <p class="text-sm text-gray-500 font-lora mt-2">No hay registros fallidos por revisar</p>
                 </div>
             </div>
 
@@ -861,14 +861,14 @@ document.addEventListener('DOMContentLoaded', function() {
                                 <i class="fas fa-check-circle text-6xl"></i>
                             </div>
                             <p class="text-lg font-lora text-gray-600">No hay registros fallidos para esta importación</p>
-                            <p class="text-sm text-gray-500 font-lora mt-2">Todos los registros se importaron correctamente</p>
+                            <p class="text-sm text-gray-500 font-lora mt-2">No hay registros fallidos por revisar</p>
                         </div>
                     `;
                 }
             })
             .catch(error => {
                 console.error('Error loading failed records:', error);
-                notifyFailedImport('No se pudieron cargar los registros fallidos.', 'error');
+                notifyFailedImport('No se pudieron cargar los registros fallidos. Intenta nuevamente.', 'error');
                 loadingState.classList.add('hidden');
                 recordsContainer.classList.remove('hidden');
                 isInitialLoad = false;
@@ -1535,7 +1535,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             loadFailedRecords(currentPageNum > 1 ? currentPageNum - 1 : currentPageNum);
                         }
                     }, 300);
-                    notifyFailedImport('Registro importado correctamente.', 'success');
+                    notifyFailedImport('Registro importado.', 'success');
                 } else {
                     card.classList.remove('in-edit');
                     validationErrors.classList.add('hidden');
@@ -1568,7 +1568,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             displayElement.textContent = displayValue;
                         }
                     });
-                    notifyFailedImport('Correcciones guardadas.', 'success');
+                    notifyFailedImport('Cambios guardados.', 'success');
                 }
             } else {
                 if (data.errors && Array.isArray(data.errors)) {
@@ -1581,13 +1581,13 @@ document.addEventListener('DOMContentLoaded', function() {
                     });
                     validationErrors.classList.remove('hidden');
                 } else {
-                    notifyFailedImport(data.message || 'No se pudieron guardar los cambios.', 'error');
+                    notifyFailedImport(data.message || 'No se pudieron guardar los cambios. Intenta nuevamente.', 'error');
                 }
             }
         })
         .catch(error => {
             console.error('Error:', error);
-            notifyFailedImport(error.message || 'No se pudieron guardar los cambios.', 'error');
+            notifyFailedImport(error.message || 'No se pudieron guardar los cambios. Intenta nuevamente.', 'error');
         });
     }
 

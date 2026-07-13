@@ -407,16 +407,17 @@ class UserController extends Controller
             } elseif (in_array($roleLower, ['operador'])) {
                 $roleClasses = 'bg-[#fef3c7] text-[#92400e]';
             } elseif ($roleLower === 'invitado') {
-                $roleClasses = 'bg-[#fee2e2] text-[#991b1b]';
+                $roleClasses = 'bg-slate-100 text-slate-600';
             } elseif (in_array($roleLower, ['usuario', 'user'])) {
-                $roleClasses = 'bg-[#f8f1f4] text-[#611132]';
+                $roleClasses = 'bg-slate-100 text-slate-700';
             } else {
                 $roleClasses = 'bg-slate-100 text-slate-700';
             }
 
             $isActive = (bool) $user->is_active;
             $statusText = $isActive ? 'Activo' : 'Inactivo';
-            $statusDot = $isActive ? 'bg-emerald-500' : 'bg-rose-500';
+            $statusDot = $isActive ? 'bg-emerald-500' : 'bg-slate-400';
+            $statusClass = $isActive ? 'user-status-active' : 'user-status-inactive';
             $hasActiveSession = DB::table('sessions')
                 ->where('user_id', $user->id)
                 ->where('last_activity', '>=', now()->subHours(24)->timestamp)
@@ -465,8 +466,9 @@ class UserController extends Controller
                 'position' => optional($user->position)->name ?? '—',
                 'district' => optional($user->district)->name ?? '—',
                 'registration_date' => $user->formatted_registration_date ?? $user->registration_date,
-                'role' => "<span class='inline-flex items-center justify-center px-3 py-1 rounded-full text-xs leading-none font-bold whitespace-nowrap {$roleClasses}'>{$roleName}</span>",
-                'status' => "<div class='flex items-center gap-1 whitespace-nowrap'><span class='w-2 h-2 rounded-full {$statusDot}'></span><span class='text-xs'>{$statusText}</span></div>",
+                'profile_photo_url' => $user->profile_photo_path ? asset('storage/' . $user->profile_photo_path) : null,
+                'role' => "<span class='inline-flex items-center justify-center px-3 py-1 rounded-full text-xs leading-none font-medium whitespace-nowrap {$roleClasses}'>{$roleName}</span>",
+                'status' => "<div class='flex items-center gap-1 whitespace-nowrap {$statusClass}'><span class='w-2 h-2 rounded-full {$statusDot}'></span><span class='text-xs'>{$statusText}</span></div>",
                 'last_session' => $lastSession,
                 'actions' => view('usuarios.partials.table-actions', compact('user'))->render(),
             ];

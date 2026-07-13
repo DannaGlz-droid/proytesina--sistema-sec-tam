@@ -148,19 +148,19 @@ class DeathController extends Controller
             
             return [
                 'id' => $death->id,
-                'gov_folio' => optional($death)->gov_folio ?? '—',
-                'name' => $death->name ?? '—',
-                'first_last_name' => $death->first_last_name ?? '—',
-                'second_last_name' => $death->second_last_name ?? '—',
+                'gov_folio' => $this->displayValue($death->gov_folio),
+                'name' => $this->displayValue($death->name_formatted),
+                'first_last_name' => $this->displayValue($death->first_last_name_formatted),
+                'second_last_name' => $this->displayValue($death->second_last_name_formatted),
                 'age' => $ageDaysTotal,  // Valor numérico en días para ordenamiento
                 'age_display' => $death->pretty_age ?? '—',  // Valor formateado para mostrar
-                'sex' => $death->sex ?? '—',
+                'sex' => $this->displaySex($death->sex),
                 'death_date' => $death->death_date ? $death->death_date->format('d/m/Y') : '—',
-                'residence_municipality' => optional($death->residenceMunicipality)->name ?? '—',
-                'death_municipality' => optional($death->deathMunicipality)->name ?? '—',
-                'district' => optional($death->district)->name ?? '—',
-                'death_location' => optional($death->deathLocation)->name ?? '—',
-                'death_cause' => optional($death->deathCause)->name ?? '—',
+                'residence_municipality' => $this->displayTitleText(optional($death->residenceMunicipality)->name),
+                'death_municipality' => $this->displayTitleText(optional($death->deathMunicipality)->name),
+                'district' => $this->displayDistrict(optional($death->district)->name),
+                'death_location' => $this->displayTitleText(optional($death->deathLocation)->name),
+                'death_cause' => $this->displayCause(optional($death->deathCause)->name),
                 'actions' => view('estadisticas.partials.table-actions', compact('death'))->render(),
             ];
         });
@@ -760,6 +760,67 @@ class DeathController extends Controller
         }
 
         $query->whereIn(DB::raw('YEAR(death_date)'), $years);
+    }
+
+    private function displayValue($value): string
+    {
+        $value = is_string($value) ? trim($value) : $value;
+
+        return ($value === null || $value === '') ? '—' : (string) $value;
+    }
+
+    private function displayTitleText($value): string
+    {
+        $value = $this->displayValue($value);
+
+        return $value === '—' ? $value : Death::formatPersonName($value);
+    }
+
+    private function displayDistrict($value): string
+    {
+        $value = $this->displayValue($value);
+
+        if ($value === '—') {
+            return $value;
+        }
+
+        $normalized = mb_strtoupper($value, 'UTF-8');
+
+        if (preg_match('/^([IVXLCDM]+)\s*-\s*(.+)$/u', $normalized, $matches)) {
+            return $matches[1] . ' - ' . $matches[2];
+        }
+
+        return Death::formatPersonName($value);
+    }
+
+    private function displayCause($value): string
+    {
+        $formatted = $this->displayTitleText($value);
+
+        if ($formatted === '—') {
+            return $formatted;
+        }
+
+        foreach (['Imss', 'Issste', 'Sedena', 'Insabi'] as $acronym) {
+            $formatted = preg_replace('/\b' . preg_quote($acronym, '/') . '\b/u', mb_strtoupper($acronym, 'UTF-8'), $formatted);
+        }
+
+        return $formatted;
+    }
+
+    private function displaySex($value): string
+    {
+        $value = $this->displayValue($value);
+
+        if ($value === '—') {
+            return $value;
+        }
+
+        return match (mb_strtoupper($value, 'UTF-8')) {
+            'M', 'MASCULINO', 'HOMBRE' => 'M',
+            'F', 'FEMENINO', 'MUJER' => 'F',
+            default => Death::formatPersonName($value),
+        };
     }
 
     public function show(Death $death)

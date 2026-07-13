@@ -1,13 +1,13 @@
-<div class="bg-header text-white p-2 lg:p-3 w-full h-14 lg:h-16 font-sans flex items-center justify-between">
+<div class="app-top-header bg-header text-white p-2 lg:p-3 w-full h-14 lg:h-16 font-sans flex items-center justify-between">
     <!-- Logos a la izquierda: Tamaulipas | Separador | Secretaría de Salud -->
-    <a href="{{ auth()->check() ? (auth()->user()->hasAnyRole(['Administrador','Coordinador']) ? route('statistic.data') : route('reportes.index')) : route('login') }}" class="flex items-center gap-2.5 lg:gap-3 ml-3 lg:ml-6">
-        <span class="flex h-10 w-28 lg:h-11 lg:w-32 items-center justify-end">
+    <a href="{{ auth()->check() ? (auth()->user()->hasAnyRole(['Administrador','Coordinador']) ? route('statistic.data') : route('reportes.index')) : route('login') }}" class="app-header-brand flex items-center gap-2.5 lg:gap-3 ml-3 lg:ml-6">
+        <span class="app-header-logo app-header-logo-state flex h-10 w-28 lg:h-11 lg:w-32 items-center justify-end">
             <img src="{{ asset('images/tam_logo.png') }}" alt="Tamaulipas Gobierno del Estado" class="max-h-9 lg:max-h-10 max-w-full object-contain">
         </span>
 
-        <span class="h-9 lg:h-10 w-px bg-[#bc955c]"></span>
+        <span class="app-header-logo-separator h-9 lg:h-10 w-px bg-[#bc955c]"></span>
 
-        <span class="flex h-10 w-28 lg:h-11 lg:w-32 items-center justify-start">
+        <span class="app-header-logo app-header-logo-health flex h-10 w-28 lg:h-11 lg:w-32 items-center justify-start">
             <img src="{{ asset('images/logo-secretaria.png') }}" alt="Secretaría de Salud" class="max-h-9 lg:max-h-10 max-w-full object-contain">
         </span>
     </a>
@@ -81,7 +81,7 @@
                  x-transition:leave="transition ease-in duration-100"
                  x-transition:leave-start="opacity-100 transform scale-100"
                  x-transition:leave-end="opacity-0 transform scale-95"
-                 class="absolute right-0 top-full mt-2 w-80 lg:w-96 bg-white rounded-md shadow-lg py-1 z-50 border border-gray-200"
+                 class="app-notifications-panel absolute right-0 top-full mt-2 w-80 lg:w-96 bg-white rounded-md shadow-lg py-1 z-50 border border-gray-200"
                  style="display: none;">
                  
                 <!-- Encabezado de notificaciones -->
@@ -217,7 +217,7 @@
                  x-transition:leave="transition ease-in duration-100"
                  x-transition:leave-start="opacity-100 transform scale-100"
                  x-transition:leave-end="opacity-0 transform scale-95"
-                 class="absolute right-0 top-full mt-2 w-64 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-2xl ring-1 ring-black/5 z-50"
+                 class="app-profile-panel absolute right-0 top-full mt-2 w-64 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-2xl ring-1 ring-black/5 z-50"
                  style="display: none;">
                  
                 <!-- Encabezado del menú -->

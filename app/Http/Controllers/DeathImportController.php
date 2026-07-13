@@ -69,35 +69,23 @@ class DeathImportController extends Controller
                 throw new \Exception('No se pudo leer el archivo de importación: ' . $e->getMessage());
             }
 
-            // VALIDATION: Check that at least the first sheet has the required columns
-            // This prevents processing files with completely wrong structure (e.g., disease tables instead of deaths)
-            // Use flexible matching to handle variations in column names (e.g., "SEXO" vs "SEXOD", spaces, underscores)
+            // VALIDATION: accept extra columns, but require the base death-record structure.
             $hasValidColumns = false;
+            $missingRequiredColumns = [];
             foreach ($sheets as $sheetIndex => $sheet) {
                 if (empty($sheet)) continue;
                 
                 $headerRow = $sheet[0] ?? [];
-                $headers = array_map(function ($h) {
-                    return strtolower(trim(str_replace([' ', '_'], '', (string)$h)));
-                }, $headerRow ?: []);
-                
-                // Check if all critical required columns exist (flexible matching)
-                $hasNombre = in_array('nombre', $headers);
-                $hasPrimerApellido = in_array('primerapellido', $headers);
-                $hasFecha = in_array('fechadefuncion', $headers);
-                
-                // Check if at least one of the municipality columns exists (flexible matching)
-                $hasMunicipio = false;
-                foreach ($headers as $h) {
-                    if (strpos($h, 'municipio') !== false) {
-                        $hasMunicipio = true;
-                        break;
-                    }
-                }
-                
-                if ($hasNombre && $hasPrimerApellido && $hasFecha && $hasMunicipio) {
+                $headers = array_map(fn ($h) => $this->normalizeImportHeader($h), $headerRow ?: []);
+                $missing = $this->missingRequiredImportColumns($headers);
+
+                if (empty($missing)) {
                     $hasValidColumns = true;
                     break;
+                }
+
+                if (empty($missingRequiredColumns) || count($missing) < count($missingRequiredColumns)) {
+                    $missingRequiredColumns = $missing;
                 }
             }
             
@@ -106,9 +94,11 @@ class DeathImportController extends Controller
                 Storage::delete($path);
                 DB::table('imports')->where('id', $importId)->update(['status' => 'failed']);
                 
-                throw new \Exception(
-                    'El archivo no contiene los datos necesarios.'
-                );
+                $missingMessage = !empty($missingRequiredColumns)
+                    ? ' Faltan columnas obligatorias: ' . implode(', ', $missingRequiredColumns) . '.'
+                    : '';
+
+                throw new \Exception('El archivo no contiene la estructura requerida para importar defunciones.' . $missingMessage);
             }
 
             // Preliminary pass: count occurrences of gov_folio across all sheets
@@ -148,36 +138,31 @@ class DeathImportController extends Controller
                 }
             }
 
-        // Pre-scan: Check if most records are duplicates (already exist in database)
-        // If >90% are duplicates, reject the entire import to avoid cluttering failed_import_records
-        $duplicateCount = 0;
-        $totalRecordsInFile = array_sum($folioCounts); // sum of all record counts
+        // Existing folios are checked during row processing so accumulated files can add only new records
+        // and changed records can be reported without overwriting historical data.
+        $existingDeathsByFolio = collect();
         
-        if ($totalRecordsInFile > 0) {
-            // Get all existing folios from database
-            $existingFolios = Death::whereNotNull('gov_folio')
-                ->pluck('gov_folio')
-                ->toArray();
-            $existingFoliosSet = array_flip($existingFolios); // flip for O(1) lookup
-            
-            // Count how many records from the file already exist
-            foreach ($folioCounts as $folio => $count) {
-                if (isset($existingFoliosSet[$folio])) {
-                    $duplicateCount += $count;
-                }
-            }
-            
-            // If >90% are duplicates, reject entirely
-            $duplicatePercentage = ($totalRecordsInFile > 0) ? ($duplicateCount / $totalRecordsInFile) * 100 : 0;
-            if ($duplicatePercentage > 90) {
-                // Delete the temporary file and mark import as failed
-                Storage::delete($path);
-                DB::table('imports')->where('id', $importId)->update(['status' => 'failed']);
-                
-                throw new \Exception(
-                    'Este archivo ya ha sido importado. No se procesarán los datos.'
-                );
-            }
+        if (!empty($folioCounts)) {
+            $existingDeathsByFolio = Death::whereNotNull('gov_folio')
+                ->get([
+                    'id',
+                    'gov_folio',
+                    'name',
+                    'first_last_name',
+                    'second_last_name',
+                    'age',
+                    'age_years',
+                    'age_months',
+                    'age_days',
+                    'sex',
+                    'death_date',
+                    'residence_municipality_id',
+                    'death_municipality_id',
+                    'district_id',
+                    'death_location_id',
+                    'death_cause_id',
+                ])
+                ->keyBy(fn ($death) => strtoupper((string) $death->gov_folio));
         }
 
         // Prepare municipalities lookup with normalized keys for matching (STRICT mode: do not create fallback)
@@ -199,6 +184,8 @@ class DeathImportController extends Controller
         $rowsTotal = 0;
         $rowsImported = 0;
         $rowsFailed = 0;
+        $rowsSkippedDuplicates = 0;
+        $rowsChangedExisting = 0;
         $rowsConvertedMonths = 0;
         $failedRows = [];
 
@@ -261,7 +248,7 @@ class DeathImportController extends Controller
                 }
                 // Accept both correct header names and older/mistyped ones for backwards compatibility
                 $first = trim((string)(($rowAssoc['primerapellido'] ?? $rowAssoc['primerapellid'] ?? ''))) ?: null;
-                $second = trim((string)(($rowAssoc['segundoapellido'] ?? $rowAssoc['segundoapellid'] ?? ''))) ?: null;
+                $second = $this->normalizeOptionalSecondLastName($rowAssoc['segundoapellido'] ?? $rowAssoc['segundoapellid'] ?? null);
                 $age = isset($rowAssoc['edad']) ? (int)$rowAssoc['edad'] : null;
                 $claveEdad = isset($rowAssoc['claveedadd']) ? trim((string)$rowAssoc['claveedadd']) : null;
                 $sex = isset($rowAssoc['sexod']) ? strtoupper(trim((string)$rowAssoc['sexod'])) : null;
@@ -444,23 +431,6 @@ class DeathImportController extends Controller
 
                 // deathLocation was mapped earlier in strict mode; $deathLocation is set
 
-                // Deduplication: DO NOT update an existing record when a government folio is provided.
-                $existingDeath = null;
-                $existsByFolio = Death::where('gov_folio', $folio)->exists();
-                if ($existsByFolio) {
-                    $rowsFailed++;
-                    $rowData = array_merge(['sheet' => $causeName, 'row' => $rowNum + 2], $rowAssoc);
-                    $failedRows[] = $rowData;
-                    // Save to failed_import_records table for manual correction
-                    FailedImportRecord::create([
-                        'import_id' => $importId,
-                        'original_row_data' => $rowData,
-                        'error_message' => 'Duplicado detectado: folio existente',
-                        'status' => 'pending',
-                    ]);
-                    continue;
-                }
-
                 // Determine normalized age fields: age_years / age_months / age_days
                 // Note: DB does not currently store age_days; we validate it and keep age fields compatible.
                 $ageYears = null;
@@ -578,12 +548,47 @@ class DeathImportController extends Controller
                     }
                 }
 
-                // create or update death (prefer gov_folio upsert)
-                if ($existingDeath) {
-                    $d = $existingDeath;
+                $incomingDistrictId = null;
+                if ($residenceMunicipality && $residenceMunicipality->district_id) {
+                    $incomingDistrictId = $residenceMunicipality->district_id;
+                } elseif ($residenceMunicipality && mb_strtolower(trim($residenceMunicipality->name)) === 'otro') {
+                    $incomingDistrictId = District::firstOrCreate(['name' => District::OTHER_NAME])->id;
                 } else {
-                    $d = new Death();
+                    $incomingDistrictId = District::firstOrCreate(['name' => District::OTHER_NAME])->id;
                 }
+
+                // Accumulated files can contain previous folios. Identical records are omitted;
+                // changed records are reported for review, but never overwritten automatically.
+                $existingDeath = $existingDeathsByFolio->get(strtoupper((string) $folio));
+                if ($existingDeath) {
+                    $incomingDeathData = [
+                        'name' => $name,
+                        'first_last_name' => $first,
+                        'second_last_name' => $second,
+                        'age' => $ageYears ?? $age,
+                        'age_years' => $ageYears,
+                        'age_months' => $ageMonths,
+                        'age_days' => $ageDays,
+                        'sex' => $sex,
+                        'death_date' => $deathDate ? $deathDate->format('Y-m-d') : null,
+                        'residence_municipality_id' => $residenceMunicipality ? $residenceMunicipality->id : null,
+                        'death_municipality_id' => $deathMunicipality ? $deathMunicipality->id : null,
+                        'district_id' => $incomingDistrictId,
+                        'death_location_id' => $deathLocation ? $deathLocation->id : null,
+                        'death_cause_id' => $deathCause ? $deathCause->id : null,
+                    ];
+
+                    if ($this->deathImportDataHasDifferences($existingDeath, $incomingDeathData)) {
+                        $rowsChangedExisting++;
+                    } else {
+                        $rowsSkippedDuplicates++;
+                    }
+
+                    continue;
+                }
+
+                // Create only new deaths.
+                $d = new Death();
                 $d->name = $name;
                 if ($folio) $d->gov_folio = (string)$folio;
                 $d->first_last_name = $first;
@@ -602,18 +607,7 @@ class DeathImportController extends Controller
                 $d->death_date = $deathDate ? $deathDate->format('Y-m-d') : null;
                 $d->residence_municipality_id = $residenceMunicipality ? $residenceMunicipality->id : null;
                 $d->death_municipality_id = $deathMunicipality->id;
-                // Derive jurisdiction from municipality of residence when possible.
-                // If residence municipality is the generic 'OTRO', explicitly set jurisdiction to 'OTRO'.
-                if ($residenceMunicipality && $residenceMunicipality->district_id) {
-                    $d->district_id = $residenceMunicipality->district_id;
-                } elseif ($residenceMunicipality && mb_strtolower(trim($residenceMunicipality->name)) === 'otro') {
-                    // Ensure 'OTRO' jurisdiction exists and assign it
-                    $otroJur = District::firstOrCreate(['name' => District::OTHER_NAME]);
-                    $d->district_id = $otroJur->id;
-                } else {
-                    $defaultJur = District::firstOrCreate(['name' => District::OTHER_NAME]);
-                    $d->district_id = $defaultJur->id;
-                }
+                $d->district_id = $incomingDistrictId;
                 $d->death_location_id = $deathLocation ? $deathLocation->id : null;
                 $d->death_cause_id = $deathCause->id;
                 // Track which import batch this record came from
@@ -643,6 +637,8 @@ class DeathImportController extends Controller
             'rows_total' => $rowsTotal,
             'rows_imported' => $rowsImported,
             'rows_failed' => $rowsFailed,
+            'rows_skipped_duplicates' => $rowsSkippedDuplicates,
+            'rows_changed_existing' => $rowsChangedExisting,
             'error_csv_path' => $errorCsvPath,
             'updated_at' => now(),
         ]);
@@ -659,6 +655,8 @@ class DeathImportController extends Controller
             'total' => $rowsTotal,
             'imported' => $rowsImported,
             'failed' => $rowsFailed,
+            'skipped_duplicates' => $rowsSkippedDuplicates,
+            'changed_existing' => $rowsChangedExisting,
             'converted_months' => $rowsConvertedMonths,
             'errors_file' => $errorCsvPath ? Storage::url($errorCsvPath) : null,
         ]);
@@ -780,6 +778,8 @@ class DeathImportController extends Controller
                     'imports.rows_total',
                     'imports.rows_imported',
                     'imports.rows_failed',
+                    'imports.rows_skipped_duplicates',
+                    'imports.rows_changed_existing',
                     'imports.is_reversed',
                     'imports.created_at',
                     'imports.updated_at',
@@ -1089,7 +1089,7 @@ class DeathImportController extends Controller
                 $death->name = $name;
                 $death->gov_folio = (string)$folio;
                 $death->first_last_name = $first;
-                $death->second_last_name = trim((string)(($rowData['segundoapellido'] ?? $rowData['segundoapellid'] ?? ''))) ?: null;
+                $death->second_last_name = $this->normalizeOptionalSecondLastName($rowData['segundoapellido'] ?? $rowData['segundoapellid'] ?? null);
                 
                 // Handle age fields - check both 'edad' (original) and 'edad_valor' (corrected form)
                 // Age was already validated to not be null above
@@ -1237,6 +1237,77 @@ class DeathImportController extends Controller
         }
     }
 
+    private function normalizeImportHeader($header): string
+    {
+        return strtolower(trim(str_replace([' ', '_'], '', (string) $header)));
+    }
+
+    private function requiredImportColumns(): array
+    {
+        return [
+            'FOLIO' => ['folio', 'folio_gob', 'folio_gubernamental', 'folio_gobierno', 'id', 'numero', 'nfolio', 'no_folio'],
+            'NOMBRE' => ['nombre'],
+            'PRIMERAPELLIDO' => ['primerapellido', 'primerapellid'],
+            'SEXOD' => ['sexod', 'sexo'],
+            'EDAD' => ['edad'],
+            'CLAVEEDADD' => ['claveedadd', 'claveedad'],
+            'MUNICIPIORESIDENCIAD' => ['municipioresidenciad', 'municipioresidencia'],
+            'MUNICIPIODEFUNCIOND' => ['municipiodefunciond', 'municipiodefuncion'],
+            'FECHADEFUNCION' => ['fechadefuncion'],
+            'CIECAUSABASICA' => ['ciecausabasica'],
+            'CIECAUSABASICAD' => ['ciecausabasicad'],
+            'SITIODEFUNCIOND' => ['sitiodefunciond', 'sitiodefuncion'],
+        ];
+    }
+
+    private function missingRequiredImportColumns(array $headers): array
+    {
+        $headerSet = array_flip($headers);
+        $missing = [];
+
+        foreach ($this->requiredImportColumns() as $label => $aliases) {
+            foreach ($aliases as $alias) {
+                if (isset($headerSet[$this->normalizeImportHeader($alias)])) {
+                    continue 2;
+                }
+            }
+
+            $missing[] = $label;
+        }
+
+        return $missing;
+    }
+
+    private function normalizeOptionalSecondLastName($value): ?string
+    {
+        $raw = trim((string) ($value ?? ''));
+        if ($raw === '') {
+            return null;
+        }
+
+        $normalized = mb_strtoupper($raw);
+        $normalized = iconv('UTF-8', 'ASCII//TRANSLIT', $normalized) ?: $normalized;
+        $normalized = preg_replace('/[^A-Z0-9]/', '', $normalized);
+
+        if ($normalized === '' || preg_match('/^X+$/', $normalized)) {
+            return null;
+        }
+
+        if (in_array($normalized, [
+            'NA',
+            'NOAPLICA',
+            'NOAPLICABLE',
+            'SINDATO',
+            'SEIGNORA',
+            'NOESPECIFICADO',
+            'SINSEGUNDOAPELLIDO',
+        ], true)) {
+            return null;
+        }
+
+        return $raw;
+    }
+
     /**
      * Closed death-cause catalog accepted by imports.
      */
@@ -1356,6 +1427,64 @@ class DeathImportController extends Controller
         }
 
         return null;
+    }
+
+    private function deathImportDataHasDifferences(Death $death, array $incoming): bool
+    {
+        foreach (['name', 'first_last_name', 'second_last_name', 'sex'] as $field) {
+            if ($this->normalizeImportCompareString($death->{$field}) !== $this->normalizeImportCompareString($incoming[$field] ?? null)) {
+                return true;
+            }
+        }
+
+        foreach ([
+            'age',
+            'age_years',
+            'age_months',
+            'age_days',
+            'residence_municipality_id',
+            'death_municipality_id',
+            'district_id',
+            'death_location_id',
+            'death_cause_id',
+        ] as $field) {
+            if ($this->normalizeImportCompareInt($death->{$field}) !== $this->normalizeImportCompareInt($incoming[$field] ?? null)) {
+                return true;
+            }
+        }
+
+        return $this->normalizeImportCompareDate($death->death_date) !== $this->normalizeImportCompareDate($incoming['death_date'] ?? null);
+    }
+
+    private function normalizeImportCompareString($value): string
+    {
+        if ($value === null) {
+            return '';
+        }
+
+        return mb_strtolower(trim(preg_replace('/\s+/u', ' ', (string) $value)));
+    }
+
+    private function normalizeImportCompareInt($value): ?int
+    {
+        if ($value === null || $value === '') {
+            return null;
+        }
+
+        return (int) $value;
+    }
+
+    private function normalizeImportCompareDate($value): ?string
+    {
+        if ($value === null || $value === '') {
+            return null;
+        }
+
+        try {
+            return Carbon::parse($value)->format('Y-m-d');
+        } catch (\Throwable $e) {
+            return trim((string) $value);
+        }
     }
 
     /**

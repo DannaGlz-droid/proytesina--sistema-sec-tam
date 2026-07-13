@@ -5,19 +5,23 @@
     @include('components.header-admin')
     @include('components.nav-usuario')
 
-    <div class="px-4 lg:pl-10 pt-6 lg:pt-10 pb-8 lg:pb-12">
-        <h1 class="text-2xl lg:text-3xl font-lora font-bold text-[#404041] mb-3">Registro de usuario</h1>
-        <p class="text-sm lg:text-base text-[#404041] font-lora mb-6">Complete el formulario para registrar un usuario en el sistema.</p>
+    <div class="users-form-page px-4 sm:px-6 lg:px-10 pt-6 lg:pt-8 pb-8 lg:pb-10">
+        <div class="users-form-header">
+            <div>
+                <h1 class="users-form-title text-2xl lg:text-3xl font-lora font-bold text-[#404041] mb-3">Registro de usuario</h1>
+                <p class="users-form-subtitle text-sm lg:text-base text-[#404041] font-lora mb-6">Complete el formulario para registrar un usuario en el sistema.</p>
+            </div>
+        </div>
 
         <!-- Cuadro del formulario responsive -->
-        <div class="border border-[#404041] rounded-lg lg:rounded-xl p-4 lg:p-6 bg-white bg-opacity-95 max-w-7xl shadow-md">
+        <div class="users-form-card border border-[#404041] rounded-lg lg:rounded-xl p-4 lg:p-6 bg-white bg-opacity-95 max-w-7xl shadow-md">
 
             <form action="{{ route('user.store') }}" method="POST" id="userRegistroForm">
                     
                 @csrf
                     <!-- Sección 1: Información del usuario -->
-                    <div class="mb-6 lg:mb-8">
-                        <div class="flex items-center mb-4">
+                    <div class="users-form-section mb-6 lg:mb-8">
+                        <div class="users-form-section-header flex items-center mb-4">
                             <ion-icon name="person-outline" class="text-xl lg:text-xl text-[#404041] mr-2"></ion-icon>
                             <h2 class="text-lg lg:text-xl font-lora font-bold text-[#404041]">Información del usuario</h2>
                             <div class="flex-1 h-[1px] bg-[#404041] ml-3"></div>
@@ -77,11 +81,11 @@
                     </div>
 
                     <!-- Línea separadora -->
-                    <div class="h-[1px] bg-gray-300 my-4 lg:my-6"></div>
+                    <div class="users-form-divider h-[1px] bg-gray-300 my-4 lg:my-6"></div>
 
                     <!-- Sección 2: Información laboral -->
-                    <div class="mb-6 lg:mb-8">
-                        <div class="flex items-center mb-4">
+                    <div class="users-form-section mb-6 lg:mb-8">
+                        <div class="users-form-section-header flex items-center mb-4">
                             <ion-icon name="business-outline" class="text-xl lg:text-xl text-[#404041] mr-2"></ion-icon>
                             <h2 class="text-lg lg:text-xl font-lora font-bold text-[#404041]">Información laboral</h2>
                             <div class="flex-1 h-[1px] bg-[#404041] ml-3"></div>
@@ -121,11 +125,11 @@
                     </div>
 
                     <!-- Línea separadora -->
-                    <div class="h-[1px] bg-gray-300 my-4 lg:my-6"></div>
+                    <div class="users-form-divider h-[1px] bg-gray-300 my-4 lg:my-6"></div>
 
                     <!-- Sección 3: Configuración de cuenta -->
-                    <div class="mb-6 lg:mb-8">
-                        <div class="flex items-center mb-4">
+                    <div class="users-form-section mb-6 lg:mb-8">
+                        <div class="users-form-section-header flex items-center mb-4">
                             <ion-icon name="settings-outline" class="text-xl lg:text-xl text-[#404041] mr-2"></ion-icon>
                             <h2 class="text-lg lg:text-xl font-lora font-bold text-[#404041]">Configuración de cuenta</h2>
                             <div class="flex-1 h-[1px] bg-[#404041] ml-3"></div>
@@ -190,17 +194,18 @@
                         </div>
 
                         <!-- Indicador de fortaleza de contraseña -->
-                        <div class="mt-4">
-                            <div class="flex items-center justify-between mb-1">
+                        <div class="users-password-meter mt-4">
+                            <div class="users-password-meter-header flex items-center justify-between mb-1">
+                                <span class="users-password-meter-title">Seguridad de contrase&ntilde;a</span>
                                 <span id="password-strength" class="text-xs font-medium font-lora">-</span>
                             </div>
-                            <div class="w-full bg-gray-200 rounded-full h-2">
+                            <div class="users-password-meter-track w-full bg-gray-200 rounded-full h-2">
                                 <div id="password-strength-bar" class="h-2 rounded-full transition-all duration-300"></div>
                             </div>
                         </div>
 
                         <!-- Requisitos de seguridad -->
-                        <div class="mt-4 p-3 bg-gray-50 rounded-lg border border-gray-200">
+                        <div class="users-password-requirements mt-4 p-3 bg-gray-50 rounded-lg border border-gray-200">
                             <h3 class="text-xs lg:text-sm font-medium text-[#404041] mb-2 font-lora">Requisitos de seguridad:</h3>
                             <ul class="text-xs text-gray-600 space-y-1 font-lora">
                                 <li class="flex items-center">
@@ -223,10 +228,10 @@
                         </div>
 
                         <!-- Botón para generar contraseña -->
-                                <div class="mt-4 flex justify-start">
+                                <div class="users-generate-password-row mt-4 flex justify-start">
                                     <button type="button"
                                             onclick="generatePassword()"
-                                            class="text-xs px-3 py-1 border border-[#404041] text-[#404041] rounded-lg hover:bg-[#404041] hover:text-white transition-all duration-200 flex items-center mr-3 font-lora">
+                                            class="users-generate-password text-xs px-3 py-1 border border-[#404041] text-[#404041] rounded-lg hover:bg-[#404041] hover:text-white transition-all duration-200 flex items-center mr-3 font-lora">
                                         <ion-icon name="refresh-outline" class="mr-1"></ion-icon>
                                         Generar contraseña
                                     </button>
@@ -234,7 +239,7 @@
                     </div>
 
                     <!-- Línea separadora para botones -->
-                    <div class="h-[1px] bg-gray-300 my-4 lg:my-6"></div>
+                    <div class="users-form-divider h-[1px] bg-gray-300 my-4 lg:my-6"></div>
 
                     <label class="inline-flex items-center space-x-2">
                         <!-- is_active is handled server-side (new users are active by default) -->
@@ -242,6 +247,7 @@
 
                     <!-- USAR COMPONENTE DE BOTONES PERSONALIZADO -->
                     <x-form-buttons 
+                        class="users-form-actions"
                         primaryText="Guardar registro"
                         secondaryText="Limpiar formulario"
                         secondaryOnclick="clearRegistroForm(event)"
@@ -250,9 +256,8 @@
                         primaryType="submit"
                         secondaryType="button"
                     />
-                </div>
-
             </form>
+        </div>
     </div>
 
     <!-- Scripts para funcionalidades -->
@@ -414,7 +419,7 @@
                 if (firstInput) firstInput.focus();
 
                 if (typeof window.showToast === 'function') {
-                    window.showToast('Formulario limpiado', 'info', 2400);
+                    window.showToast('Formulario limpiado.', 'info', 2400);
                 }
             }
     </script>

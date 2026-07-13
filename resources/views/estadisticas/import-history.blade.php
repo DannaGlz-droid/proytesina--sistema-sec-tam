@@ -30,7 +30,7 @@
 
             <!-- Columna Derecha - Tabla -->
             <div class="flex-1 min-w-0">
-                <div class="bg-white relative shadow-md sm:rounded-lg overflow-hidden border border-[#404041]">
+                <div class="app-table-card">
                     <!-- Custom search, per-page controls -->
                     <div class="app-table-toolbar flex flex-row flex-wrap items-center justify-between gap-3 p-4">
                         <div class="flex-1 min-w-0 sm:w-1/3 lg:w-1/2">
@@ -78,15 +78,16 @@
                     <div class="app-table-shell overflow-x-auto min-w-0">
                         <table id="imports-table" class="app-data-table min-w-full w-full text-sm text-left text-gray-500">
                             <colgroup>
-                                <col style="width: 3rem;">
-                                <col style="width: 34%;">
-                                <col style="width: 16%;">
-                                <col style="width: 9%;">
+                                <col style="width: 2.75rem;">
+                                <col style="width: 32%;">
+                                <col style="width: 15%;">
+                                <col style="width: 8%;">
+                                <col style="width: 5%;">
+                                <col style="width: 10%;">
                                 <col style="width: 6%;">
-                                <col style="width: 7%;">
-                                <col style="width: 7%;">
-                                <col style="width: 9%;">
-                                <col style="width: 9%;">
+                                <col style="width: 6%;">
+                                <col style="width: 8%;">
+                                <col style="width: 6.75rem;">
                             </colgroup>
                             <thead class="text-xs border-b border-[#404041]">
                                 <tr>
@@ -96,6 +97,7 @@
                                     <th scope="col" class="px-3 py-2 font-lora whitespace-nowrap text-xs sorting_desc sortable" data-sort-key="created_at">Fecha</th>
                                     <th scope="col" class="px-3 py-2 font-lora whitespace-nowrap text-xs">Total</th>
                                     <th scope="col" class="px-3 py-2 font-lora whitespace-nowrap text-xs">Importados</th>
+                                    <th scope="col" class="px-3 py-2 font-lora whitespace-nowrap text-xs" title="Folios existentes omitidos o detectados con datos distintos">Observaciones</th>
                                     <th scope="col" class="px-3 py-2 font-lora whitespace-nowrap text-xs">Fallidos</th>
                                     <th scope="col" class="px-3 py-2 font-lora whitespace-nowrap text-xs">Estado</th>
                                     <th scope="col" class="px-3 py-2 font-lora whitespace-nowrap text-xs text-right w-24" data-orderable="false">Acciones</th>
@@ -164,7 +166,7 @@
 
         #imports-table thead th:nth-child(1),
         #imports-table tbody td:nth-child(1) {
-            width: 2.25rem;
+            width: 2.75rem;
             text-align: center;
             padding-left: 0.75rem;
         }
@@ -176,12 +178,12 @@
 
         #imports-table thead th:nth-child(3),
         #imports-table tbody td:nth-child(3) {
-            width: 16%;
+            width: 15%;
         }
 
         #imports-table thead th:nth-child(4),
         #imports-table tbody td:nth-child(4) {
-            width: 8.5%;
+            width: 8%;
             white-space: nowrap;
         }
 
@@ -193,30 +195,28 @@
 
         #imports-table thead th:nth-child(6),
         #imports-table tbody td:nth-child(6) {
-            width: 7%;
-            text-align: center;
-        }
-
-        #imports-table thead th:nth-child(7),
-        #imports-table tbody td:nth-child(7) {
             width: 6%;
             text-align: center;
         }
 
+        #imports-table thead th:nth-child(7),
+        #imports-table tbody td:nth-child(7),
         #imports-table thead th:nth-child(8),
-        #imports-table tbody td:nth-child(8) {
-            width: 8%;
-            white-space: nowrap;
-        }
-
+        #imports-table tbody td:nth-child(8),
         #imports-table thead th:nth-child(9),
         #imports-table tbody td:nth-child(9) {
-            width: 7%;
+            width: 6%;
             text-align: center;
         }
 
         #imports-table thead th:nth-child(10),
         #imports-table tbody td:nth-child(10) {
+            width: 8%;
+            white-space: nowrap;
+        }
+
+        #imports-table thead th:nth-child(11),
+        #imports-table tbody td:nth-child(11) {
             width: 6.75rem;
             white-space: nowrap;
         }
@@ -311,7 +311,7 @@ document.addEventListener('DOMContentLoaded', function () {
     function importsLoadingRow() {
         return `
             <tr class="app-table-loading-row">
-                <td colspan="9">
+                <td colspan="10">
                     <span class="app-table-loading-inline">
                         <span>Cargando datos</span>
                         <span class="inline-flex items-center gap-1">
@@ -330,7 +330,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         return `
             <tr>
-                <td colspan="9" class="text-center py-4 ${toneClass}">
+                <td colspan="10" class="text-center py-4 ${toneClass}">
                     ${escapeHtml(message)}
                 </td>
             </tr>
@@ -529,13 +529,13 @@ document.addEventListener('DOMContentLoaded', function () {
         });
 
         if (!ids.length) {
-            notifyImport('Selecciona al menos una importacion que pueda eliminarse del historial.', 'warning');
+            notifyImport('Selecciona al menos una importación eliminable.', 'warning');
             return;
         }
 
         const confirmed = await confirmImportAction({
             title: 'Eliminar historial',
-            message: 'Se quitaran ' + ids.length + ' importacion' + (ids.length === 1 ? '' : 'es') + ' del historial. Solo se permite cuando ya fueron revertidas o no dejaron registros importados.',
+            message: 'Se quitarán ' + ids.length + ' importación' + (ids.length === 1 ? '' : 'es') + ' del historial. Solo se permite cuando ya fueron revertidas o no dejaron registros importados.',
             confirmText: 'Eliminar historial',
             cancelText: 'Cancelar',
             variant: 'danger'
@@ -552,17 +552,17 @@ document.addEventListener('DOMContentLoaded', function () {
             data: { ids: ids },
             success: function(res) {
                 if (res && res.ok) {
-                    notifyImport('Importaciones eliminadas: ' + (res.deleted || 0), 'success');
+                    notifyImport('Se eliminaron ' + (res.deleted || 0) + ' importaciones del historial.', 'success');
                     clearVisibleImportSelection();
                     loadImports();
                 } else {
-                    notifyImport(res.message || 'No se pudieron eliminar las importaciones.', 'error');
+                    notifyImport(res.message || 'No se pudieron eliminar las importaciones. Intenta nuevamente.', 'error');
                     console.error(res);
                 }
             },
             error: function(xhr) {
                 console.error(xhr);
-                notifyImport(xhr.responseJSON?.message || 'Error del servidor al eliminar importaciones.', 'error');
+                notifyImport(xhr.responseJSON?.message || 'No se pudieron eliminar las importaciones. Intenta nuevamente.', 'error');
             }
         });
     });
@@ -686,13 +686,13 @@ document.addEventListener('DOMContentLoaded', function () {
                 currentPage = 1;
                 renderTable();
             } else {
-                showError('Error al cargar importaciones');
+                showError('No se pudieron cargar las importaciones.');
                 showImportsLoadError();
             }
         })
         .catch(err => {
             console.error(err);
-            showError('Error al cargar datos');
+            showError('No se pudieron cargar los datos.');
             showImportsLoadError();
         });
     }
@@ -794,6 +794,18 @@ document.addEventListener('DOMContentLoaded', function () {
                     .join(' ') || 'Sistema';
                 const createdByUsername = imp.created_by_username ? `@${imp.created_by_username}` : '';
             
+            const skippedDuplicates = Number(imp.rows_skipped_duplicates || imp.skipped_duplicates || 0);
+            const changedExisting = Number(imp.rows_changed_existing || imp.changed_existing || 0);
+            const observationParts = [];
+            if (skippedDuplicates > 0) {
+                observationParts.push(`<span class="text-gray-700 font-semibold">${skippedDuplicates} omitidos</span>`);
+            }
+            if (changedExisting > 0) {
+                observationParts.push(`<span class="text-amber-700 font-semibold" title="Folios existentes con datos distintos. No se sobrescribieron automaticamente.">${changedExisting} cambios</span>`);
+            }
+            const observationsHtml = observationParts.length
+                ? observationParts.join('<span class="text-gray-300 px-1">/</span>')
+                : '<span class="text-gray-500">-</span>';
             const statusClass = imp.is_reversed ? 'status-reversed' : `status-${imp.status}`;
             const statusText = imp.is_reversed ? 'Revertido' : (imp.status === 'completed' ? 'Completado' : imp.status === 'processing' ? 'Procesando' : 'Fallido');
             
@@ -801,7 +813,7 @@ document.addEventListener('DOMContentLoaded', function () {
             const canDeleteHistory = canDeleteImportHistory(imp);
             const deleteHistoryTitle = canDeleteHistory
                 ? 'Eliminar historial'
-                : 'Primero revierte esta importacion para conservar la trazabilidad de los datos';
+                : 'Primero revierte esta importación para conservar la trazabilidad de los datos';
 
             row.innerHTML = `
                 <td class="text-center"><input class="row-check-import" data-id="${imp.id}" type="checkbox" ${canDeleteHistory ? '' : 'disabled'} title="${deleteHistoryTitle}" /></td>
@@ -815,11 +827,17 @@ document.addEventListener('DOMContentLoaded', function () {
                 <td class="app-cell-nowrap text-xs">${createdDate.toLocaleDateString('es-ES')} ${createdDate.toLocaleTimeString('es-ES', {hour: '2-digit', minute: '2-digit'})}</td>
                 <td class="text-center font-semibold">${imp.rows_total}</td>
                 <td class="text-center"><span class="text-green-600 font-semibold">${imp.rows_imported}</span></td>
+                <td class="text-center" title="Folios que ya existían y se omitieron para evitar duplicados">
+                    ${observationsHtml}
+                </td>
+                <td class="text-center" style="display:none">
+                    ${changedExisting > 0 ? `<span class="text-amber-700 font-semibold" title="Folios existentes con datos distintos. No se sobrescribieron automáticamente.">${changedExisting}</span>` : '<span class="text-gray-500">0</span>'}
+                </td>
                 <td class="text-center">
                     ${imp.rows_failed > 0 ? `
                         <a href="/estadisticas/importaciones/${imp.id}/registros-fallidos"
                            class="inline-flex items-center justify-center text-red-600 font-semibold underline-offset-4 hover:underline hover:text-red-700 transition"
-                           title="Ver registros fallidos" aria-label="Ver ${imp.rows_failed} registros fallidos de la importacion ${imp.id}">
+                           title="Ver registros fallidos" aria-label="Ver ${imp.rows_failed} registros fallidos de la importación ${imp.id}">
                             ${imp.rows_failed}
                         </a>
                     ` : '<span class="text-gray-500">0</span>'}
@@ -887,8 +905,8 @@ document.addEventListener('DOMContentLoaded', function () {
         selectAll.attr(
             'title',
             hasSelectableRows
-                ? 'Seleccionar importaciones eliminables en esta pagina'
-                : 'No hay importaciones eliminables en esta pagina'
+                ? 'Seleccionar importaciones eliminables en esta página'
+                : 'No hay importaciones eliminables en esta página'
         );
 
         if (hasSelection) {
@@ -1015,8 +1033,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
     window.reverseImport = async function(importId) {
         const confirmed = await confirmImportAction({
-            title: 'Revertir importacion',
-            message: 'Se eliminaran los registros creados por esta importacion. Esta accion no se puede deshacer.',
+            title: 'Revertir importación',
+            message: 'Se eliminarán los registros creados por esta importación. Esta acción no se puede deshacer.',
             confirmText: 'Revertir',
             cancelText: 'Cancelar',
             variant: 'warning'
@@ -1038,22 +1056,22 @@ document.addEventListener('DOMContentLoaded', function () {
         .then(res => res.json())
         .then(json => {
             if (json.ok) {
-                notifyImport(json.message || 'Importacion revertida.', 'success');
+                notifyImport(json.message || 'Importación revertida.', 'success');
                 loadImports();
             } else {
-                notifyImport(json.message || 'No se pudo revertir la importacion.', 'error');
+                notifyImport(json.message || 'No se pudo revertir la importación.', 'error');
             }
         })
         .catch(err => {
             console.error(err);
-            notifyImport('Error al procesar la solicitud.', 'error');
+            notifyImport('No se pudo completar la acción. Intenta nuevamente.', 'error');
         });
     };
 
     window.deleteImport = async function(importId) {
         const confirmed = await confirmImportAction({
             title: 'Eliminar historial',
-            message: 'Se quitara este registro del historial. Solo se permite si la importacion ya fue revertida o no dejo registros importados.',
+            message: 'Se quitará este registro del historial. Solo se permite si la importación ya fue revertida o no dejó registros importados.',
             confirmText: 'Eliminar historial',
             cancelText: 'Cancelar',
             variant: 'danger'
@@ -1075,7 +1093,7 @@ document.addEventListener('DOMContentLoaded', function () {
         .then(res => res.json())
         .then(json => {
             if (json.ok) {
-                notifyImport('El registro del historial fue eliminado.', 'success');
+                notifyImport('El registro se eliminó del historial.', 'success');
                 loadImports();
             } else {
                 notifyImport(json.message || 'No se pudo eliminar el registro.', 'error');
@@ -1083,7 +1101,7 @@ document.addEventListener('DOMContentLoaded', function () {
         })
         .catch(err => {
             console.error(err);
-            notifyImport('Error al procesar la solicitud.', 'error');
+            notifyImport('No se pudo completar la acción. Intenta nuevamente.', 'error');
         });
     };
 });

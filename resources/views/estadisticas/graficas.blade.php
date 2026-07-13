@@ -1808,14 +1808,14 @@
                 .then(response => response.json())
                 .then(data => {
                     if (data.error) {
-                        showErrorMessage(data.message || 'Error al obtener datos');
+                        showErrorMessage(data.message || 'No se pudieron obtener los datos.');
                     } else {
                         renderChart(data);
                     }
                 })
                 .catch(error => {
                     console.error('Error:', error);
-                    showErrorMessage('Error al cargar los datos');
+                    showErrorMessage('No se pudieron cargar los datos. Intenta nuevamente.');
                 });
         }
 

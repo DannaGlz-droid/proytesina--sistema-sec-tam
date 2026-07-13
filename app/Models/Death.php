@@ -82,22 +82,27 @@ class Death extends Model
         $days = $this->age_days;
 
         if (!is_null($years) && $years >= 1) {
-            return $years . ' años';
+            return $this->formatAgeUnit($years, 'año', 'años');
         }
 
         if (!is_null($months) && $months > 0) {
-            return $months . ' meses';
+            return $this->formatAgeUnit($months, 'mes', 'meses');
         }
 
         if (!is_null($days) && $days > 0) {
-            return $days . ' días';
+            return $this->formatAgeUnit($days, 'día', 'días');
         }
 
         if (!is_null($this->age) && $this->age > 0) {
-            return $this->age . ' años';
+            return $this->formatAgeUnit($this->age, 'año', 'años');
         }
 
         return null;
+    }
+
+    private function formatAgeUnit(int $value, string $singular, string $plural): string
+    {
+        return $value . ' ' . ($value === 1 ? $singular : $plural);
     }
 
     /**

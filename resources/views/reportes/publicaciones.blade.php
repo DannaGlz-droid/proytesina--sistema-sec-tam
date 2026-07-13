@@ -2588,15 +2588,15 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                     
                     console.log('✅ Comentario agregado exitosamente');
-                    showToast('Comentario enviado correctamente', 'success', 2600);
+                    showToast('Comentario enviado.', 'success', 2600);
                 } else {
-                    showToast(data.message || 'Error al enviar el comentario', 'error', 3200);
+                    showToast(data.message || 'No se pudo enviar el comentario.', 'error', 3200);
                 }
             })
             .catch(error => {
                 console.error('❌ Error enviando comentario:', error);
                 // Mostrar mensaje más informativo al usuario cuando sea posible
-                showToast('Error al enviar el comentario. ' + (error.message || 'Por favor, intenta de nuevo.'), 'error', 3600);
+                showToast('No se pudo enviar el comentario. Intenta nuevamente.', 'error', 3600);
             })
             .finally(() => {
                 button.disabled = false;
@@ -2685,7 +2685,7 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(data => {
             if (data.success) {
                 // Mostrar toast de éxito
-                showToast('Reporte aprobado correctamente', 'success', 3000);
+                showToast('Reporte aprobado.', 'success', 3000);
                 refreshReportesPanel();
                 
                 // Actualizar estado en el modal sin recargar
@@ -2702,12 +2702,12 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                 }, 1000);
             } else {
-                showToast(data.message || 'Error al aprobar el reporte', 'error', 3000);
+                showToast(data.message || 'No se pudo aprobar el reporte.', 'error', 3000);
             }
         })
         .catch(error => {
             console.error('Error:', error);
-            showToast('Error al aprobar el reporte', 'error', 3000);
+            showToast('No se pudo aprobar el reporte.', 'error', 3000);
         });
     };
 
@@ -2754,7 +2754,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const reason = document.getElementById('rejection-reason').value.trim();
         
         if (!reason) {
-            showToast('Por favor ingrese una razón de rechazo', 'warning', 3000);
+            showToast('Escribe la razón de rechazo.', 'warning', 3000);
             return;
         }
         
@@ -2770,7 +2770,7 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(data => {
             if (data.success) {
                 // Mostrar toast de éxito
-                showToast('Reporte rechazado correctamente', 'success', 3000);
+                showToast('Reporte rechazado.', 'success', 3000);
                 refreshReportesPanel();
                 
                 // Actualizar estado en el modal sin recargar
@@ -2795,12 +2795,12 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                 }, 1000);
             } else {
-                showToast(data.message || 'Error al rechazar el reporte', 'error', 3000);
+                showToast(data.message || 'No se pudo rechazar el reporte.', 'error', 3000);
             }
         })
         .catch(error => {
             console.error('Error:', error);
-            showToast('Error al rechazar el reporte', 'error', 3000);
+            showToast('No se pudo rechazar el reporte.', 'error', 3000);
         });
     };
 
@@ -2832,7 +2832,7 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(data => {
             if (data.success) {
                 // Mostrar toast de éxito
-                showToast('Reporte reenviado para revision', 'success', 3000);
+                showToast('Reporte reenviado para revisión.', 'success', 3000);
                 refreshReportesPanel();
                 
                 // Actualizar estado en el modal
@@ -2849,12 +2849,12 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                 }, 1000);
             } else {
-                showToast(data.message || 'Error al reenviar el reporte', 'error', 3000);
+                showToast(data.message || 'No se pudo reenviar el reporte.', 'error', 3000);
             }
         })
         .catch(error => {
             console.error('Error:', error);
-            showToast('Error al reenviar el reporte', 'error', 3000);
+            showToast('No se pudo reenviar el reporte.', 'error', 3000);
         });
     };
 
@@ -2867,8 +2867,8 @@ document.addEventListener('DOMContentLoaded', function() {
             const redirectTipo = button.dataset.redirectTipo;
 
             const confirmed = await window.confirmDialog({
-                title: 'Eliminar publicacion',
-                message: 'Esta accion no se puede deshacer. La publicacion y sus archivos dejaran de estar disponibles.',
+                title: 'Eliminar publicación',
+                message: 'Esta acción no se puede deshacer. La publicación y sus archivos dejarán de estar disponibles.',
                 confirmText: 'Eliminar',
                 cancelText: 'Cancelar',
                 variant: 'danger'
@@ -2898,12 +2898,12 @@ document.addEventListener('DOMContentLoaded', function() {
                     scroll: false
                 });
                 if (replaced) {
-                    showToast('Publicación eliminada correctamente.', 'success', 3000);
+                    showToast('Publicación eliminada.', 'success', 3000);
                 }
             })
             .catch(error => {
                 console.error('Error eliminando reporte:', error);
-                showToast('Error al eliminar la publicación.', 'error', 3000);
+                showToast('No se pudo eliminar la publicación.', 'error', 3000);
             });
         }
     });
@@ -3007,7 +3007,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const ids = Array.from(checked).map(checkbox => checkbox.dataset.publicationId);
             const confirmed = await window.confirmDialog({
                 title: 'Eliminar reportes',
-                message: `Se eliminaran ${ids.length} reporte(s). Esta accion no se puede deshacer.`,
+                message: `Se eliminarán ${ids.length} reportes. Esta acción no se puede deshacer.`,
                 confirmText: 'Eliminar',
                 cancelText: 'Cancelar',
                 variant: 'danger'
@@ -3029,15 +3029,15 @@ document.addEventListener('DOMContentLoaded', function() {
             .then(response => response.json())
             .then(data => {
                 if (data.ok) {
-                    showToast(`Eliminados: ${data.deleted} reporte(s).${data.skipped > 0 ? ` ${data.skipped} no pudieron ser eliminados por permisos.` : ''}`, 'success', 3500);
+                    showToast(`Se eliminaron ${data.deleted} reportes.${data.skipped > 0 ? ` ${data.skipped} no se eliminaron por permisos.` : ''}`, 'success', 3500);
                     refreshReportesPanel();
                 } else {
-                    showToast(`Error al eliminar: ${data.error}`, 'error', 3500);
+                    showToast(data.error || 'No se pudieron eliminar los reportes.', 'error', 3500);
                 }
             })
             .catch(error => {
                 console.error('Error:', error);
-                showToast('Error al eliminar los reportes.', 'error', 3500);
+                showToast('No se pudieron eliminar los reportes.', 'error', 3500);
             });
             return;
         }

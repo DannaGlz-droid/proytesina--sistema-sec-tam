@@ -1198,7 +1198,7 @@
                 updateFileCounters();
 
                 if (typeof window.showToast === 'function') {
-                    window.showToast('Formulario limpiado', 'info', 2400);
+                    window.showToast('Formulario limpiado.', 'info', 2400);
                 }
             }
         }

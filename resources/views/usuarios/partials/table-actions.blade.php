@@ -1,15 +1,20 @@
-<div class="flex items-center justify-end space-x-1">
-    <a href="{{ route('user.edit', $user->id) }}" class="w-7 h-7 flex items-center justify-center rounded border border-[#404041] text-[#404041] hover:bg-[#404041] hover:text-white transition-all duration-200" title="Editar" aria-label="Editar usuario {{ $user->id }}">
-        <i class="fas fa-edit text-xs"></i>
-    </a>
-    <a href="{{ route('user.update-password', $user->id) }}" class="w-7 h-7 flex items-center justify-center rounded border border-[#C08400] text-[#C08400] hover:bg-[#C08400] hover:text-white transition-all duration-200" title="Cambiar contraseña" aria-label="Cambiar contraseña usuario {{ $user->id }}">
-        <i class="fas fa-key text-xs"></i>
-    </a>
-    <form method="POST" action="{{ route('user.destroy', $user->id) }}" class="js-delete-user-form" data-user-name="{{ trim($user->name . ' ' . $user->first_last_name) ?: $user->username }}">
-        @csrf
-        @method('DELETE')
-        <button type="submit" class="w-7 h-7 flex items-center justify-center rounded border border-[#AB1A1A] text-[#AB1A1A] hover:bg-[#AB1A1A] hover:text-white transition-all duration-200" title="Eliminar" aria-label="Eliminar usuario {{ $user->id }}">
-            <i class="fas fa-trash text-xs"></i>
-        </button>
-    </form>
+<div class="users-row-actions">
+    <button type="button" class="users-row-menu-button" title="Acciones" aria-label="Abrir acciones del usuario {{ $user->id }}" aria-expanded="false">
+        <i class="fas fa-ellipsis-v"></i>
+    </button>
+    <div class="users-row-menu hidden" role="menu">
+        <a href="{{ route('user.edit', $user->id) }}" class="users-row-menu-item" role="menuitem">
+            <span>Editar</span>
+        </a>
+        <a href="{{ route('user.update-password', $user->id) }}" class="users-row-menu-item" role="menuitem">
+            <span>Cambiar contraseña</span>
+        </a>
+        <form method="POST" action="{{ route('user.destroy', $user->id) }}" class="js-delete-user-form" data-user-name="{{ trim($user->name . ' ' . $user->first_last_name) ?: $user->username }}">
+            @csrf
+            @method('DELETE')
+            <button type="submit" class="users-row-menu-item users-row-menu-item-muted" role="menuitem">
+                <span>Eliminar</span>
+            </button>
+        </form>
+    </div>
 </div>

@@ -377,10 +377,12 @@ document.addEventListener('DOMContentLoaded', function() {
         });
 
         console.log('Filtros limpiados');
-        // After cleaning, submit the form so the listing updates immediately
+        // After cleaning, dispatch the form submit event so the listing updates via AJAX.
         const filtersForm = document.getElementById('filters-form');
         if (filtersForm) {
-            setTimeout(() => filtersForm.submit(), 50);
+            setTimeout(() => {
+                filtersForm.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+            }, 50);
         }
     });
 

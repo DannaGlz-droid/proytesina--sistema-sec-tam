@@ -326,14 +326,14 @@
                             if (deletePhotoBtn) {
                                 deletePhotoBtn.classList.remove('hidden');
                             }
-                            notify(data.message || 'Foto de perfil actualizada correctamente', 'success', 2800);
+                            notify(data.message || 'Foto de perfil actualizada.', 'success', 2800);
                         } else {
-                            notify(data.message || 'Error al subir la foto', 'error', 3200);
+                            notify(data.message || 'No se pudo subir la foto.', 'error', 3200);
                         }
                     })
                     .catch(error => {
                         console.error('Error:', error);
-                        notify(error.message || 'Error al subir la foto', 'error', 3200);
+                        notify(error.message || 'No se pudo subir la foto. Intenta nuevamente.', 'error', 3200);
                     })
                     .finally(() => {
                         uploadBtn.disabled = false;
@@ -375,14 +375,14 @@
                         if (data.success) {
                             updateProfileAvatars(defaultAvatarUrl, 'Avatar predeterminado');
                             deleteBtn.classList.add('hidden');
-                            notify(data.message || 'Foto de perfil eliminada correctamente', 'success', 2800);
+                            notify(data.message || 'Foto de perfil eliminada.', 'success', 2800);
                         } else {
-                            notify(data.message || 'Error al eliminar la foto', 'error', 3200);
+                            notify(data.message || 'No se pudo eliminar la foto.', 'error', 3200);
                         }
                     })
                     .catch(error => {
                         console.error('Error:', error);
-                        notify(error.message || 'Error al eliminar la foto', 'error', 3200);
+                        notify(error.message || 'No se pudo eliminar la foto. Intenta nuevamente.', 'error', 3200);
                     })
                     .finally(() => {
                         if (deleteBtn.isConnected) {

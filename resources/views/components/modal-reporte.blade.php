@@ -392,7 +392,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 console.log('Editando reporte de alcoholimetría...');
                 
                 // Simular funcionalidad de edición
-                alert('Funcionalidad de edición: Se abriría un formulario para modificar los datos del reporte.');
+                if (typeof window.showToast === 'function') {
+                    window.showToast('La edición se abrirá desde el formulario del reporte.', 'info', 3000);
+                } else {
+                    alert('La edición se abrirá desde el formulario del reporte.');
+                }
                 
                 // En una implementación real, esto podría:
                 // 1. Abrir un modal de edición
@@ -414,7 +418,11 @@ document.addEventListener('DOMContentLoaded', function() {
                     console.log('Eliminando reporte de alcoholimetría...');
                     
                     // Simular eliminación exitosa
-                    alert('Reporte eliminado correctamente.');
+                    if (typeof window.showToast === 'function') {
+                        window.showToast('Reporte eliminado.', 'success', 3000);
+                    } else {
+                        alert('Reporte eliminado.');
+                    }
                     
                     // En una implementación real, esto podría:
                     // 1. Enviar solicitud DELETE al servidor
@@ -437,14 +445,22 @@ document.addEventListener('DOMContentLoaded', function() {
                 const archivos = archivosContainer.querySelectorAll('.bg-white');
                 
                 if (archivos.length === 0) {
-                    alert('No hay archivos adjuntos para descargar.');
+                    if (typeof window.showToast === 'function') {
+                        window.showToast('No hay archivos adjuntos para descargar.', 'warning', 3000);
+                    } else {
+                        alert('No hay archivos adjuntos para descargar.');
+                    }
                     return;
                 }
                 
                 console.log('Iniciando descarga de todos los archivos...');
                 
                 // Simular descarga de archivos
-                alert(`Descargando ${archivos.length} archivo(s) adjuntos en un ZIP...`);
+                if (typeof window.showToast === 'function') {
+                    window.showToast(`Preparando ${archivos.length} archivo(s) adjuntos.`, 'info', 3000);
+                } else {
+                    alert(`Preparando ${archivos.length} archivo(s) adjuntos.`);
+                }
                 
                 // En una implementación real, esto podría:
                 // 1. Crear un ZIP con todos los archivos
@@ -461,7 +477,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 // Simular proceso de descarga
                 setTimeout(() => {
-                    alert(`Se ha descargado un archivo ZIP con ${archivos.length} archivos adjuntos.`);
+                    if (typeof window.showToast === 'function') {
+                        window.showToast(`Descarga preparada con ${archivos.length} archivo(s).`, 'success', 3000);
+                    } else {
+                        alert(`Descarga preparada con ${archivos.length} archivo(s).`);
+                    }
                 }, 1000);
             });
         }
@@ -474,7 +494,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 console.log(`Descargando archivo individual: ${nombreArchivo}`);
                 
                 // Simular descarga individual
-                alert(`Descargando archivo: ${nombreArchivo}`);
+                if (typeof window.showToast === 'function') {
+                    window.showToast(`Preparando descarga: ${nombreArchivo}`, 'info', 3000);
+                } else {
+                    alert(`Preparando descarga: ${nombreArchivo}`);
+                }
                 
                 // En una implementación real, esto podría:
                 // 1. Hacer una solicitud al servidor para el archivo específico
@@ -620,7 +644,11 @@ document.addEventListener('DOMContentLoaded', function() {
                     console.log('Enviando comentario:', mensaje);
                     
                     // Simular envío exitoso
-                    alert('Comentario enviado correctamente');
+                    if (typeof window.showToast === 'function') {
+                        window.showToast('Comentario enviado.', 'success', 2600);
+                    } else {
+                        alert('Comentario enviado.');
+                    }
                     textarea.value = '';
                     textarea.style.height = 'auto';
                     botonEnviar.disabled = true;

@@ -41,13 +41,23 @@
                     
                     <div class="space-y-3">
                         <!-- Compact Drag & Drop area (unified style with reportes, simpler) -->
-                        <div id="deaths-drop-area" class="border-2 border-dashed border-gray-300 rounded-lg px-4 py-3 text-center cursor-pointer bg-white transition-all duration-200 hover:border-[#611132]/50 hover:bg-gray-50">
+                        <div id="deaths-drop-area" class="min-h-[76px] border-2 border-dashed border-gray-300 rounded-lg px-4 py-3 text-center cursor-pointer bg-white transition-all duration-200 hover:border-[#611132]/50 hover:bg-gray-50">
                             <input id="fileInput" type="file" name="file" accept=".xlsx,.xls" class="hidden" />
-                            <div class="flex items-center justify-center gap-3">
+                            <div data-import-default class="flex items-center justify-center gap-3">
                                 <i class="fas fa-cloud-upload-alt text-lg text-gray-400"></i>
                                 <div class="text-left">
                                     <p class="text-sm text-gray-700 font-lora mb-0">Arrastre el archivo aquí o haga clic para seleccionar</p>
                                     <p class="text-xs text-gray-500">Solo Excel (.xlsx, .xls) · Máx. 10MB</p>
+                                </div>
+                            </div>
+                            <div data-import-loading class="hidden items-center justify-center gap-3">
+                                <span class="relative flex h-9 w-9 items-center justify-center rounded-full bg-[#f8f1f4] text-[#611132]">
+                                    <span class="absolute h-9 w-9 animate-spin rounded-full border-2 border-[#611132]/20 border-t-[#611132]"></span>
+                                    <i class="fas fa-file-excel text-sm"></i>
+                                </span>
+                                <div class="text-left">
+                                    <p class="text-sm font-semibold text-[#404041] font-lora mb-0">Procesando archivo</p>
+                                    <p class="text-xs text-gray-500">Validando columnas y guardando registros...</p>
                                 </div>
                             </div>
                         </div>
@@ -153,13 +163,90 @@
 @push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function () {
+    function notifyDeaths(message, type = 'success', duration = 3500) {
+        if (typeof window.showToast === 'function') {
+            window.showToast(message, type, duration);
+            return;
+        }
+
+        console[type === 'error' ? 'error' : 'log'](message);
+    }
+
+    function pluralizeEs(count, singular, plural) {
+        return Number(count) === 1 ? singular : plural;
+    }
+
+    function buildDeathImportErrorMessage(rawMessage) {
+        var message = String(rawMessage || '').trim();
+        if (!message) {
+            return 'No se pudo importar el archivo. Revisa el formato e intenta nuevamente.';
+        }
+
+        var lower = message.toLowerCase();
+        if (lower.includes('estructura requerida') || lower.includes('columnas obligatorias')) {
+            return 'El archivo no tiene las columnas requeridas. Revisa que sea el formato oficial de defunciones.';
+        }
+
+        if (lower.includes('xlsx') || lower.includes('xls') || lower.includes('mimes')) {
+            return 'El archivo debe ser Excel (.xlsx o .xls).';
+        }
+
+        if (lower.includes('10 mb') || lower.includes('10240') || lower.includes('tamaño') || lower.includes('size')) {
+            return 'El archivo supera el límite de 10 MB.';
+        }
+
+        if (lower.includes('causa')) {
+            return 'No se pudo reconocer la causa del archivo. Revisa el nombre de la hoja.';
+        }
+
+        if (message.length > 140) {
+            return 'No se pudo importar el archivo. Revisa el formato e intenta nuevamente.';
+        }
+
+        return message;
+    }
+
+    async function confirmDeathAction(options) {
+        if (typeof window.confirmDialog === 'function') {
+            return window.confirmDialog(options);
+        }
+
+        return window.confirm(options.message || 'Confirma la accion para continuar.');
+    }
+
     // File upload functionality
     var selectBtn = document.getElementById('selectFileBtn');
     var fileInput = document.getElementById('fileInput');
+    var dropArea = document.getElementById('deaths-drop-area');
+    var importDefault = dropArea ? dropArea.querySelector('[data-import-default]') : null;
+    var importLoading = dropArea ? dropArea.querySelector('[data-import-loading]') : null;
     selectBtn && selectBtn.addEventListener('click', function () { fileInput.click(); });
 
+    function setDeathImporting(isImporting) {
+        if (importDefault) {
+            importDefault.classList.toggle('hidden', isImporting);
+            importDefault.classList.toggle('flex', !isImporting);
+        }
+
+        if (importLoading) {
+            importLoading.classList.toggle('hidden', !isImporting);
+            importLoading.classList.toggle('flex', isImporting);
+        }
+
+        if (fileInput) {
+            fileInput.disabled = isImporting;
+        }
+
+        if (dropArea) {
+            dropArea.classList.toggle('cursor-wait', isImporting);
+            dropArea.classList.toggle('pointer-events-none', isImporting);
+            dropArea.classList.toggle('border-[#611132]/60', isImporting);
+            dropArea.classList.toggle('bg-[#f8f1f4]/40', isImporting);
+            dropArea.setAttribute('aria-busy', isImporting ? 'true' : 'false');
+        }
+    }
+
     // Compact drag & drop handlers for the deaths upload area
-    var dropArea = document.getElementById('deaths-drop-area');
     if (dropArea && fileInput) {
         // Click on drop area opens file picker
         dropArea.addEventListener('click', function (e) { fileInput.click(); });
@@ -182,7 +269,7 @@ document.addEventListener('DOMContentLoaded', function () {
             if (!files || files.length === 0) return;
             // Only accept single file
             if (files.length > 1) {
-                alert('Solo se permite subir un archivo a la vez.');
+                notifyDeaths('Solo se permite subir un archivo a la vez.', 'warning');
                 return;
             }
             // Assign files to the hidden input and trigger change
@@ -192,23 +279,39 @@ document.addEventListener('DOMContentLoaded', function () {
                 fileInput.dispatchEvent(evt);
             } catch (err) {
                 // Some browsers may not allow setting fileInput.files; fallback to alert
-                alert('Arrastre detectado. Use el botón para seleccionar el archivo.');
+                notifyDeaths('Arrastre detectado. Usa el botón para seleccionar el archivo.', 'info');
             }
         }, false);
     }
 
-    fileInput && fileInput.addEventListener('change', function (e) {
+    fileInput && fileInput.addEventListener('change', async function (e) {
         var file = e.target.files[0];
         if (!file) return;
-        if (file.size > 10 * 1024 * 1024) { alert('El archivo supera el límite de 10MB.'); return; }
+        if (file.size > 10 * 1024 * 1024) {
+            notifyDeaths('El archivo supera el límite de 10 MB.', 'warning');
+            e.target.value = '';
+            return;
+        }
 
-        if (!confirm('¿Deseas importar este archivo ahora? Esto procesará y guardará los registros en la base de datos.')) return;
+        var confirmed = await confirmDeathAction({
+            title: 'Importar archivo',
+            message: 'Se procesara el archivo y se guardaran los registros validos en la base de datos.',
+            confirmText: 'Importar',
+            cancelText: 'Cancelar',
+            tone: 'warning'
+        });
+
+        if (!confirmed) {
+            e.target.value = '';
+            return;
+        }
 
         var fd = new FormData();
         fd.append('file', file);
         fd.append('_token', '{{ csrf_token() }}');
 
         var url = '{{ route("statistic.import") }}';
+        setDeathImporting(true);
         fetch(url, { method: 'POST', body: fd, headers: {} })
             .then(function (res) {
                 return res.text().then(function (text) {
@@ -216,10 +319,14 @@ document.addEventListener('DOMContentLoaded', function () {
                 });
             })
             .then(function (json) {
-                if (!json) { alert('Error inesperado'); return; }
+                if (!json) {
+                    notifyDeaths('No se pudo confirmar la importación. Intenta nuevamente.', 'error');
+                    return;
+                }
                 if (json.ok === false) {
                     var serverMsg = json.message || (json.error_message ? json.error_message : 'Error en el servidor');
-                    alert('Importación fallida:\n' + serverMsg);
+                    console.warn('Detalle de importación:', serverMsg);
+                    notifyDeaths(buildDeathImportErrorMessage(serverMsg), 'error', 5000);
                     if (json.errors_file) console.info('Archivo de errores:', json.errors_file);
                     return;
                 }
@@ -227,18 +334,31 @@ document.addEventListener('DOMContentLoaded', function () {
                 var total = typeof json.total !== 'undefined' ? json.total : 0;
                 var imported = typeof json.imported !== 'undefined' ? json.imported : 0;
                 var failed = typeof json.failed !== 'undefined' ? json.failed : 0;
+                var skippedDuplicates = typeof json.skipped_duplicates !== 'undefined' ? Number(json.skipped_duplicates) : 0;
+                var changedExisting = typeof json.changed_existing !== 'undefined' ? Number(json.changed_existing) : 0;
 
-                var msg = 'Importación completa: ' + imported + '/' + total + ' importadas — ' + failed + ' fallidas.';
-                if (failed > 0) msg += ' Ver historial.';
-                alert(msg);
+                var msg = failed > 0
+                    ? 'Importación finalizada con observaciones: ' + imported + ' ' + pluralizeEs(imported, 'registro guardado', 'registros guardados') + ' y ' + failed + ' ' + pluralizeEs(failed, 'con error', 'con errores') + '.'
+                    : 'Importación finalizada: ' + imported + ' ' + pluralizeEs(imported, 'registro guardado', 'registros guardados') + '.';
+                if (skippedDuplicates > 0) msg += ' ' + skippedDuplicates + ' ' + pluralizeEs(skippedDuplicates, 'folio existente omitido', 'folios existentes omitidos') + '.';
+                if (changedExisting > 0) msg += ' ' + changedExisting + ' ' + pluralizeEs(changedExisting, 'folio existente con cambios detectado', 'folios existentes con cambios detectados') + '.';
+                if (failed > 0 || changedExisting > 0) msg += ' Revisa el historial.';
+                notifyDeaths(msg, (failed > 0 || changedExisting > 0) ? 'warning' : 'success', 5000);
                 // Reload DataTables instead of full page reload
                 if (window.deathsTable) {
                     window.deathsTable.ajax.reload();
                 } else {
-                    window.location.reload();
+                    notifyDeaths('Los datos se guardaron, pero la tabla no se actualizó. Recarga la vista para ver los cambios.', 'info', 4500);
                 }
             })
-            .catch(function (err) { console.error(err); alert('Error al subir o procesar el archivo.'); });
+            .catch(function (err) {
+                console.error(err);
+                notifyDeaths('No se pudo subir el archivo. Intenta nuevamente.', 'error');
+            })
+            .finally(function () {
+                setDeathImporting(false);
+                e.target.value = '';
+            });
     });
 
     // Initialize DataTables
@@ -269,6 +389,80 @@ document.addEventListener('DOMContentLoaded', function () {
         }
         // single value
         filterData[key] = value;
+    }
+
+    function setDeathFilterValue(target, rawKey, value) {
+        if (value === null || value === undefined || value === '') return;
+
+        let key = rawKey;
+        if (key.endsWith('[]')) {
+            key = key.slice(0, -2);
+        }
+
+        const bracketIndex = key.indexOf('[');
+        if (bracketIndex !== -1) {
+            key = key.substring(0, bracketIndex);
+        }
+
+        if (target[key] !== undefined) {
+            if (!Array.isArray(target[key])) {
+                target[key] = [target[key]];
+            }
+            target[key].push(value);
+            return;
+        }
+
+        target[key] = value;
+    }
+
+    function readDeathFiltersFromForm() {
+        const form = document.getElementById('filters-form');
+        const data = {};
+        if (!form) return data;
+
+        const formData = new FormData(form);
+        for (const [key, value] of formData.entries()) {
+            setDeathFilterValue(data, key, value);
+        }
+
+        return data;
+    }
+
+    function buildDeathFilterQuery(data) {
+        const params = new URLSearchParams();
+
+        Object.entries(data).forEach(([key, value]) => {
+            if (Array.isArray(value)) {
+                value.forEach(item => {
+                    if (item !== null && item !== undefined && item !== '') {
+                        params.append(key + '[]', item);
+                    }
+                });
+                return;
+            }
+
+            if (value !== null && value !== undefined && value !== '') {
+                params.set(key, value);
+            }
+        });
+
+        return params;
+    }
+
+    function applyDeathFiltersWithoutReload() {
+        const nextFilters = readDeathFiltersFromForm();
+
+        Object.keys(filterData).forEach(key => delete filterData[key]);
+        Object.assign(filterData, nextFilters);
+
+        const params = buildDeathFilterQuery(filterData);
+        const nextUrl = params.toString()
+            ? `${window.location.pathname}?${params.toString()}`
+            : window.location.pathname;
+        window.history.pushState({}, '', nextUrl);
+
+        clearVisibleDeathSelection();
+        window.deathsTable.ajax.reload();
     }
 
     // Setup CSRF token for AJAX requests
@@ -330,7 +524,7 @@ document.addEventListener('DOMContentLoaded', function () {
             },
             error: function(xhr, error, thrown) {
                 console.error('DataTables AJAX error:', error, thrown);
-                alert('Error al cargar datos. Por favor, recarga la página.');
+                notifyDeaths('No se pudieron cargar las defunciones. Intenta nuevamente.', 'error');
             }
         },
         columns: [
@@ -438,14 +632,26 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     // Bulk delete action
-    $('#bulk-delete-deaths').on('click', function() {
+    $('#bulk-delete-deaths').on('click', async function() {
         const ids = [];
         $('#deaths-table tbody .row-check:checked').each(function() {
             const id = $(this).data('id');
             if (id) ids.push(id);
         });
-        if (!ids.length) { alert('Selecciona al menos un registro.'); return; }
-        if (!confirm('¿Confirmas eliminar ' + ids.length + ' registro(s)? Esta acción no se puede deshacer.')) return;
+        if (!ids.length) {
+            notifyDeaths('Selecciona al menos un registro.', 'warning');
+            return;
+        }
+
+        const confirmed = await confirmDeathAction({
+            title: 'Eliminar registros',
+            message: 'Se eliminarán ' + ids.length + ' registros. Esta acción no se puede deshacer.',
+            confirmText: 'Eliminar',
+            cancelText: 'Cancelar',
+            tone: 'danger'
+        });
+
+        if (!confirmed) return;
 
         $.ajax({
             url: '{{ route('statistic.massDelete') }}',
@@ -456,19 +662,22 @@ document.addEventListener('DOMContentLoaded', function () {
             data: { ids: ids },
             success: function(res) {
                 if (res && res.ok) {
-                    alert('Eliminados: ' + (res.deleted || 0));
+                    notifyDeaths('Se eliminaron ' + (res.deleted || 0) + ' registros.', 'success');
                     // reload current page of table
                     window.deathsTable.ajax.reload(null, false);
                     // reset header checkbox
                     clearVisibleDeathSelection();
                 } else {
-                    alert('Error al eliminar. Revisa la consola.');
+                    notifyDeaths('No se pudieron eliminar los registros.', 'error');
                     console.error(res);
                 }
             },
             error: function(xhr) {
                 console.error(xhr);
-                alert('Error del servidor: ' + (xhr.responseText || xhr.statusText));
+                const msg = xhr.responseJSON && xhr.responseJSON.message
+                    ? xhr.responseJSON.message
+                    : 'No se pudieron eliminar los registros. Intenta nuevamente.';
+                notifyDeaths(msg, 'error', 4500);
             }
         });
     });
@@ -576,9 +785,20 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    // When filters change, reload table with new parameters
-    $('form').on('submit', function(e) {
-        // Let form submit naturally to refresh filters
+    // Apply filters without refreshing the full page.
+    $('#filters-form').on('submit', function(e) {
+        e.preventDefault();
+
+        const dateRange = document.getElementById('dateRange')?.value;
+        const startDate = document.getElementById('startDate')?.value;
+        const endDate = document.getElementById('endDate')?.value;
+
+        if (dateRange === 'custom' && startDate && endDate && startDate > endDate) {
+            notifyDeaths('La fecha inicial no puede ser mayor que la fecha final.', 'warning');
+            return;
+        }
+
+        applyDeathFiltersWithoutReload();
     });
 });
 </script>

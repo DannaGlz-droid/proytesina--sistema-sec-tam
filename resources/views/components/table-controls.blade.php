@@ -36,7 +36,7 @@
     }
 @endphp
 
-<div class="bg-white relative shadow-md sm:rounded-lg overflow-hidden border border-[#404041]">
+<div class="app-table-card">
     <div class="flex flex-col md:flex-row items-center justify-between space-y-3 md:space-y-0 p-4">
     <form method="GET" action="{{ $action }}" class="w-full flex items-center gap-3">
             <div class="flex-1 md:w-1/2 lg:w-2/3">
