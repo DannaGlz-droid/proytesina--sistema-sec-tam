@@ -347,13 +347,11 @@
                 deletePhotoBtn.addEventListener('click', async function() {
                     closePhotoMenu();
 
-                    const confirmed = typeof window.confirmDialog === 'function'
-                        ? await window.confirmDialog({
+                    const confirmed = typeof window.confirmDeleteDialog === 'function'
+                        ? await window.confirmDeleteDialog({
                             title: 'Eliminar foto de perfil',
-                            message: 'Se quitará tu foto actual y se mostrará el avatar predeterminado.',
-                            confirmText: 'Eliminar',
-                            cancelText: 'Cancelar',
-                            variant: 'danger'
+                            subject: 'tu foto de perfil',
+                            description: 'Se mostrará el avatar predeterminado y la foto actual no podrá recuperarse.'
                         })
                         : false;
 

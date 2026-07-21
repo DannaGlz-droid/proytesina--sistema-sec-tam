@@ -206,14 +206,6 @@ document.addEventListener('DOMContentLoaded', function () {
         return message;
     }
 
-    async function confirmDeathAction(options) {
-        if (typeof window.confirmDialog === 'function') {
-            return window.confirmDialog(options);
-        }
-
-        return window.confirm(options.message || 'Confirma la accion para continuar.');
-    }
-
     // File upload functionality
     var selectBtn = document.getElementById('selectFileBtn');
     var fileInput = document.getElementById('fileInput');
@@ -293,12 +285,13 @@ document.addEventListener('DOMContentLoaded', function () {
             return;
         }
 
-        var confirmed = await confirmDeathAction({
+        var confirmed = await window.confirmDialog({
             title: 'Importar archivo',
-            message: 'Se procesara el archivo y se guardaran los registros validos en la base de datos.',
+            question: '¿Deseas importar este archivo?',
+            description: 'Se procesará el archivo y se guardarán los registros válidos en la base de datos.',
             confirmText: 'Importar',
             cancelText: 'Cancelar',
-            tone: 'warning'
+            variant: 'warning'
         });
 
         if (!confirmed) {
@@ -643,12 +636,10 @@ document.addEventListener('DOMContentLoaded', function () {
             return;
         }
 
-        const confirmed = await confirmDeathAction({
+        const confirmed = await window.confirmDeleteDialog({
             title: 'Eliminar registros',
-            message: 'Se eliminarán ' + ids.length + ' registros. Esta acción no se puede deshacer.',
-            confirmText: 'Eliminar',
-            cancelText: 'Cancelar',
-            tone: 'danger'
+            subject: ids.length + ' registro' + (ids.length === 1 ? '' : 's'),
+            description: 'Los registros seleccionados dejarán de estar disponibles de forma permanente.'
         });
 
         if (!confirmed) return;

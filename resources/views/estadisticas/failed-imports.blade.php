@@ -766,14 +766,6 @@ document.addEventListener('DOMContentLoaded', function() {
         logger(message);
     }
 
-    async function confirmFailedImportAction(options) {
-        if (typeof window.confirmDialog === 'function') {
-            return window.confirmDialog(options);
-        }
-
-        return window.confirm(options.message || 'Confirma la accion para continuar.');
-    }
-
     function loadFailedRecords(page = 1) {
         const loadingState = document.getElementById('loading-state');
         const recordsContainer = document.getElementById('records-container');
@@ -1413,25 +1405,18 @@ document.addEventListener('DOMContentLoaded', function() {
         if (btnDiscard) {
             btnDiscard.addEventListener('click', async (e) => {
                 e.preventDefault();
-                const confirmed = await confirmFailedImportAction({
-                    type: 'warning',
+                const confirmed = await window.confirmDeleteDialog({
                     title: 'Descartar registro',
-                    message: 'Este registro fallido se quitara de la lista y no podra recuperarse.',
-                    confirmText: 'Descartar',
-                    cancelText: 'Cancelar'
+                    subject: 'este registro fallido',
+                    description: 'Se quitará de la lista y no podrá recuperarse.',
+                    confirmText: 'Descartar'
                 });
 
                 if (!confirmed) {
                     return;
                 }
 
-                if (confirmed) {
-                    discardRecord(recordId, card);
-                    return;
-                }
-                if (confirm('¿Descartar este registro? No podrá ser recuperado.')) {
-                    discardRecord(recordId, card);
-                }
+                discardRecord(recordId, card);
             });
         }
     }

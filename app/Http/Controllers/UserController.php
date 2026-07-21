@@ -601,6 +601,13 @@ class UserController extends Controller
         $user->save();
         DB::table('sessions')->where('user_id', $user->id)->delete();
 
+        if ($request->expectsJson() || $request->ajax()) {
+            return response()->json([
+                'ok' => true,
+                'message' => 'Contraseña actualizada.',
+            ]);
+        }
+
         return redirect()->route('user.user-gestion')->with('success', 'Contraseña actualizada.');
     }
 

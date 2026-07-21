@@ -142,6 +142,8 @@
         </div>
     </div>
 
+    @include('components.user-password-dialog')
+
     <!-- AGREGAR FONT AWESOME -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
@@ -278,14 +280,6 @@
                 } else {
                     console[type === 'error' ? 'error' : 'log'](message);
                 }
-            }
-
-            async function confirmUserAction(options) {
-                if (typeof window.confirmDialog === 'function') {
-                    return window.confirmDialog(options);
-                }
-
-                return window.confirm(options.message || 'Confirma la accion para continuar.');
             }
 
             // We will read current filter form values on each AJAX request
@@ -975,12 +969,10 @@
                     return;
                 }
 
-                const confirmed = await confirmUserAction({
+                const confirmed = await window.confirmDeleteDialog({
                     title: 'Eliminar usuarios',
-                    message: 'Se eliminarán ' + ids.length + ' usuario' + (ids.length === 1 ? '' : 's') + '. Esta acción no se puede deshacer.',
-                    confirmText: 'Eliminar',
-                    cancelText: 'Cancelar',
-                    variant: 'danger'
+                    subject: ids.length + ' usuario' + (ids.length === 1 ? '' : 's'),
+                    description: 'Los usuarios seleccionados y su acceso al sistema se eliminarán de forma permanente.'
                 });
 
                 if (!confirmed) return;
@@ -1012,12 +1004,10 @@
 
                 const form = this;
                 const userName = form.dataset.userName || 'este usuario';
-                const confirmed = await confirmUserAction({
+                const confirmed = await window.confirmDeleteDialog({
                     title: 'Eliminar usuario',
-                    message: 'Se eliminará ' + userName + '. Esta acción no se puede deshacer.',
-                    confirmText: 'Eliminar',
-                    cancelText: 'Cancelar',
-                    variant: 'danger'
+                    subject: userName,
+                    messagePrefix: '¿Deseas eliminar a '
                 });
 
                 if (!confirmed) return;

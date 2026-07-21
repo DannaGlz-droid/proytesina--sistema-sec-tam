@@ -6,12 +6,12 @@
     @include('components.nav-usuario')
 
     <div class="users-form-page px-4 sm:px-6 lg:px-10 pt-6 lg:pt-8 pb-8 lg:pb-10">
-        <div class="users-form-header">
-            <div>
-                <h1 class="users-form-title text-2xl lg:text-3xl font-lora font-bold text-[#404041] mb-3">Registro de usuario</h1>
-                <p class="users-form-subtitle text-sm lg:text-base text-[#404041] font-lora mb-6">Complete el formulario para registrar un usuario en el sistema.</p>
-            </div>
-        </div>
+        <x-ui.page-header
+            title="Registro de usuario"
+            description="Complete el formulario para registrar un usuario en el sistema."
+            :back-href="route('user.user-gestion')"
+            back-label="Volver a Gestión de usuarios"
+        />
 
         <!-- Cuadro del formulario responsive -->
         <div class="users-form-card border border-[#404041] rounded-lg lg:rounded-xl p-4 lg:p-6 bg-white bg-opacity-95 max-w-7xl shadow-md">
@@ -146,7 +146,10 @@
                                     @error('username') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
                                 </div>
                                 <div>
-                                    <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Contraseña <span class="text-red-600">*</span></label>
+                                    <div class="users-password-label-row">
+                                        <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Contraseña <span class="text-red-600">*</span></label>
+                                        <span id="password-strength" data-level="empty" aria-live="polite">Sin evaluar</span>
+                                    </div>
                                     <div class="relative">
                                         <input name="password" type="password" required minlength="12" maxlength="255" autocomplete="new-password"
                                             id="password"
@@ -159,6 +162,28 @@
                                         </button>
                                     </div>
                                     @error('password') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
+                                    <div id="password-strength-track" class="users-password-meter-track" role="progressbar"
+                                        aria-label="Fortaleza de la contrase&ntilde;a" aria-valuemin="0" aria-valuemax="5" aria-valuenow="0">
+                                        <div id="password-strength-bar" data-level="empty"></div>
+                                    </div>
+                                    <ul class="users-password-compact-requirements" aria-label="Requisitos de seguridad">
+                                        <li data-password-rule="length" data-complete="false">
+                                            <ion-icon name="ellipse-outline" aria-hidden="true"></ion-icon>
+                                            <span>12 caracteres</span>
+                                        </li>
+                                        <li data-password-rule="case" data-complete="false">
+                                            <ion-icon name="ellipse-outline" aria-hidden="true"></ion-icon>
+                                            <span>May&uacute;scula y min&uacute;scula</span>
+                                        </li>
+                                        <li data-password-rule="number" data-complete="false">
+                                            <ion-icon name="ellipse-outline" aria-hidden="true"></ion-icon>
+                                            <span>Un n&uacute;mero</span>
+                                        </li>
+                                        <li data-password-rule="special" data-complete="false">
+                                            <ion-icon name="ellipse-outline" aria-hidden="true"></ion-icon>
+                                            <span>Un s&iacute;mbolo</span>
+                                        </li>
+                                    </ul>
                                 </div>
                             </div>
                             
@@ -189,53 +214,19 @@
                                         </button>
                                     </div>
                                     @error('password_confirmation') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
+                                    <div class="users-password-confirm-tools">
+                                        <span id="password-match-status" data-status="empty" aria-live="polite">
+                                            <ion-icon name="ellipse-outline" aria-hidden="true"></ion-icon>
+                                            <span>Confirme la contrase&ntilde;a</span>
+                                        </span>
+                                        <button type="button" onclick="generatePassword()" class="users-generate-password" title="Generar una contrase&ntilde;a segura">
+                                            <i class="fa-solid fa-key users-generate-password-icon" aria-hidden="true"></i>
+                                            Generar contrase&ntilde;a
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                         </div>
-
-                        <!-- Indicador de fortaleza de contraseña -->
-                        <div class="users-password-meter mt-4">
-                            <div class="users-password-meter-header flex items-center justify-between mb-1">
-                                <span class="users-password-meter-title">Seguridad de contrase&ntilde;a</span>
-                                <span id="password-strength" class="text-xs font-medium font-lora">-</span>
-                            </div>
-                            <div class="users-password-meter-track w-full bg-gray-200 rounded-full h-2">
-                                <div id="password-strength-bar" class="h-2 rounded-full transition-all duration-300"></div>
-                            </div>
-                        </div>
-
-                        <!-- Requisitos de seguridad -->
-                        <div class="users-password-requirements mt-4 p-3 bg-gray-50 rounded-lg border border-gray-200">
-                            <h3 class="text-xs lg:text-sm font-medium text-[#404041] mb-2 font-lora">Requisitos de seguridad:</h3>
-                            <ul class="text-xs text-gray-600 space-y-1 font-lora">
-                                <li class="flex items-center">
-                                    <ion-icon name="checkmark-circle-outline" class="text-green-500 mr-2"></ion-icon>
-                                    Mínimo 12 caracteres
-                                </li>
-                                <li class="flex items-center">
-                                    <ion-icon name="checkmark-circle-outline" class="text-green-500 mr-2"></ion-icon>
-                                    Al menos una letra mayúscula y una minúscula
-                                </li>
-                                <li class="flex items-center">
-                                    <ion-icon name="checkmark-circle-outline" class="text-green-500 mr-2"></ion-icon>
-                                    Incluir al menos un número
-                                </li>
-                                <li class="flex items-center">
-                                    <ion-icon name="checkmark-circle-outline" class="text-green-500 mr-2"></ion-icon>
-                                    Incluir al menos un carácter especial (!@#$%^&*)
-                                </li>
-                            </ul>
-                        </div>
-
-                        <!-- Botón para generar contraseña -->
-                                <div class="users-generate-password-row mt-4 flex justify-start">
-                                    <button type="button"
-                                            onclick="generatePassword()"
-                                            class="users-generate-password text-xs px-3 py-1 border border-[#404041] text-[#404041] rounded-lg hover:bg-[#404041] hover:text-white transition-all duration-200 flex items-center mr-3 font-lora">
-                                        <ion-icon name="refresh-outline" class="mr-1"></ion-icon>
-                                        Generar contraseña
-                                    </button>
-                                </div>
                     </div>
 
                     <!-- Línea separadora para botones -->
@@ -251,8 +242,6 @@
                         primaryText="Guardar registro"
                         secondaryText="Limpiar formulario"
                         secondaryOnclick="clearRegistroForm(event)"
-                        tertiaryText="Volver al listado"
-                        tertiaryHref="{{ route('user.user-gestion') }}"
                         primaryType="submit"
                         secondaryType="button"
                     />
@@ -276,7 +265,34 @@
             }
         }
 
-        // Función para generar contraseña segura
+        // Obtener un índice aleatorio sin sesgo usando Web Crypto.
+        function secureRandomIndex(max) {
+            const range = 0x100000000;
+            const limit = range - (range % max);
+            const values = new Uint32Array(1);
+            let value;
+
+            do {
+                window.crypto.getRandomValues(values);
+                value = values[0];
+            } while (value >= limit);
+
+            return value % max;
+        }
+
+        // Mezclar caracteres con Fisher-Yates y aleatoriedad criptográfica.
+        function secureShuffle(value) {
+            const characters = value.split('');
+
+            for (let i = characters.length - 1; i > 0; i--) {
+                const j = secureRandomIndex(i + 1);
+                [characters[i], characters[j]] = [characters[j], characters[i]];
+            }
+
+            return characters.join('');
+        }
+
+        // Función para generar una contraseña segura.
         function generatePassword() {
             const lowercase = 'abcdefghijklmnopqrstuvwxyz';
             const uppercase = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
@@ -286,19 +302,19 @@
             let password = '';
             
             // Asegurar al menos un carácter de cada tipo
-            password += uppercase[Math.floor(Math.random() * uppercase.length)];
-            password += lowercase[Math.floor(Math.random() * lowercase.length)];
-            password += numbers[Math.floor(Math.random() * numbers.length)];
-            password += symbols[Math.floor(Math.random() * symbols.length)];
+            password += uppercase[secureRandomIndex(uppercase.length)];
+            password += lowercase[secureRandomIndex(lowercase.length)];
+            password += numbers[secureRandomIndex(numbers.length)];
+            password += symbols[secureRandomIndex(symbols.length)];
             
             // Completar hasta 12 caracteres
             const allChars = lowercase + uppercase + numbers + symbols;
             for (let i = password.length; i < 12; i++) {
-                password += allChars[Math.floor(Math.random() * allChars.length)];
+                password += allChars[secureRandomIndex(allChars.length)];
             }
             
-            // Mezclar la contraseña
-            password = password.split('').sort(() => Math.random() - 0.5).join('');
+            // Mezclar la contraseña sin depender del orden inicial.
+            password = secureShuffle(password);
             
             // Establecer en ambos campos
             document.getElementById('password').value = password;
@@ -306,16 +322,25 @@
             
             // Actualizar indicador de fortaleza
             checkPasswordStrength(password);
+            checkPasswordMatch();
         }
 
         // Función para verificar fortaleza de contraseña
         function checkPasswordStrength(password) {
             const strengthBar = document.getElementById('password-strength-bar');
             const strengthText = document.getElementById('password-strength');
+            const strengthTrack = document.getElementById('password-strength-track');
+
+            const checks = {
+                length: password.length >= 12,
+                case: /[a-z]/.test(password) && /[A-Z]/.test(password),
+                number: /[0-9]/.test(password),
+                special: /[!@#$%^&*]/.test(password)
+            };
             
             let strength = 0;
-            let color = '';
-            let text = '';
+            let level = 'empty';
+            let text = 'Sin evaluar';
             
             if (password.length >= 12) strength++;
             if (/[a-z]/.test(password)) strength++;
@@ -325,39 +350,73 @@
             
             switch(strength) {
                 case 0:
+                    break;
                 case 1:
-                    color = 'bg-red-500';
+                case 2:
+                    level = 'weak';
                     text = 'Débil';
                     break;
-                case 2:
                 case 3:
-                    color = 'bg-yellow-500';
+                    level = 'medium';
                     text = 'Media';
                     break;
                 case 4:
-                    color = 'bg-gray-600';
+                    level = 'strong';
                     text = 'Fuerte';
                     break;
                 case 5:
-                    color = 'bg-green-500';
-                    text = 'Muy Fuerte';
+                    level = 'very-strong';
+                    text = 'Muy fuerte';
                     break;
             }
             
-            strengthBar.className = `h-2 rounded-full transition-all duration-300 ${color}`;
+            strengthBar.dataset.level = level;
             strengthBar.style.width = `${(strength / 5) * 100}%`;
             strengthText.textContent = text;
-            strengthText.className = `text-xs font-medium font-lora ${
-                strength <= 2 ? 'text-red-500' : 
-                strength <= 3 ? 'text-yellow-500' : 
-                strength <= 4 ? 'text-gray-600' : 'text-green-500'
-            }`;
+            strengthText.dataset.level = level;
+            strengthTrack.setAttribute('aria-valuenow', strength);
+            strengthTrack.setAttribute('aria-valuetext', text);
+
+            Object.entries(checks).forEach(([rule, complete]) => {
+                const item = document.querySelector(`[data-password-rule="${rule}"]`);
+                if (!item) return;
+
+                item.dataset.complete = complete ? 'true' : 'false';
+                const icon = item.querySelector('ion-icon');
+                if (icon) {
+                    icon.name = complete ? 'checkmark-circle' : 'ellipse-outline';
+                }
+            });
+        }
+
+        // Verificar que ambos campos de contraseña coincidan.
+        function checkPasswordMatch() {
+            const password = document.getElementById('password').value;
+            const confirmation = document.getElementById('password_confirmation').value;
+            const status = document.getElementById('password-match-status');
+            const icon = status.querySelector('ion-icon');
+            const text = status.querySelector('span');
+
+            if (!confirmation) {
+                status.dataset.status = 'empty';
+                icon.name = 'ellipse-outline';
+                text.textContent = 'Confirme la contraseña';
+                return;
+            }
+
+            const matches = password === confirmation;
+            status.dataset.status = matches ? 'match' : 'mismatch';
+            icon.name = matches ? 'checkmark-circle' : 'alert-circle-outline';
+            text.textContent = matches ? 'Las contraseñas coinciden' : 'Las contraseñas no coinciden';
         }
 
         // Event listener para verificar contraseña en tiempo real
         document.getElementById('password').addEventListener('input', function(e) {
             checkPasswordStrength(e.target.value);
+            checkPasswordMatch();
         });
+
+        document.getElementById('password_confirmation').addEventListener('input', checkPasswordMatch);
 
         // Inicializar el indicador de fortaleza
         document.addEventListener('DOMContentLoaded', function() {
@@ -402,17 +461,9 @@
                     window.resetUsuarioRegistroTomSelects();
                 }
 
-                // Resetear indicadores de fortaleza y texto
-                const strengthBar = document.getElementById('password-strength-bar');
-                const strengthText = document.getElementById('password-strength');
-                if (strengthBar) {
-                    strengthBar.className = 'h-2 rounded-full transition-all duration-300';
-                    strengthBar.style.width = '0%';
-                }
-                if (strengthText) {
-                    strengthText.textContent = '-';
-                    strengthText.className = 'text-xs font-medium font-lora';
-                }
+                // Resetear el asistente de seguridad.
+                checkPasswordStrength('');
+                checkPasswordMatch();
 
                 // Enfocar el primer campo
                 const firstInput = form.querySelector('input, select, textarea');
@@ -599,6 +650,23 @@
                 }
             }
 
+            const role = document.getElementById('role_id');
+            if (role) {
+                try {
+                    new TomSelect(role, {
+                        valueField: 'value',
+                        labelField: 'text',
+                        searchField: [],
+                        create: false,
+                        maxItems: 1,
+                        preload: false,
+                        maxOptions: 10
+                    });
+                } catch (e) {
+                    console.warn('TomSelect init failed for #role_id', e);
+                }
+            }
+
             function getTomSelectWrapper(select) {
                 return select?.tomselect?.wrapper || select?.nextElementSibling || null;
             }
@@ -648,6 +716,7 @@
                 const requiredSelects = [
                     { select: pos, message: 'Seleccione un cargo.' },
                     { select: dist, message: 'Seleccione un distrito.' },
+                    { select: role, message: 'Seleccione un rol.' },
                 ];
                 let firstInvalid = null;
 
@@ -665,7 +734,7 @@
             }
 
             window.resetUsuarioRegistroTomSelects = function() {
-                [pos, dist].forEach(select => {
+                [pos, dist, role].forEach(select => {
                     clearTomSelectError(select);
                     if (select?.tomselect) {
                         select.tomselect.clear(true);
@@ -677,12 +746,16 @@
                 });
             };
 
-            [pos, dist].forEach(select => {
+            [pos, dist, role].forEach(select => {
                 if (!select) return;
                 select.addEventListener('change', () => clearTomSelectError(select));
                 select.addEventListener('invalid', function(event) {
                     event.preventDefault();
-                    const message = select === pos ? 'Seleccione un cargo.' : 'Seleccione un distrito.';
+                    const message = select === pos
+                        ? 'Seleccione un cargo.'
+                        : select === dist
+                            ? 'Seleccione un distrito.'
+                            : 'Seleccione un rol.';
                     showTomSelectError(select, message);
                     requestAnimationFrame(() => reportTomSelectValidity(select));
                 });

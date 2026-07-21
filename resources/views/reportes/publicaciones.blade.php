@@ -2659,7 +2659,8 @@ document.addEventListener('DOMContentLoaded', function() {
     window.approveReport = async function(publicationId) {
         const confirmed = await window.confirmDialog({
             title: 'Aprobar reporte',
-            message: 'El reporte quedara marcado como aprobado y visible con ese estado.',
+            question: '¿Deseas aprobar este reporte?',
+            description: 'El reporte quedará marcado como aprobado y será visible con ese estado.',
             confirmText: 'Aprobar',
             cancelText: 'Cancelar',
             variant: 'success'
@@ -2807,7 +2808,8 @@ document.addEventListener('DOMContentLoaded', function() {
     window.resubmitReport = async function(publicationId) {
         const confirmed = await window.confirmDialog({
             title: 'Reenviar reporte',
-            message: 'El reporte volvera a quedar pendiente de revision.',
+            question: '¿Deseas reenviar este reporte?',
+            description: 'El reporte volverá a quedar pendiente de revisión.',
             confirmText: 'Reenviar',
             cancelText: 'Cancelar',
             variant: 'warning'
@@ -2866,12 +2868,10 @@ document.addEventListener('DOMContentLoaded', function() {
             const deleteUrl = button.dataset.deleteUrl;
             const redirectTipo = button.dataset.redirectTipo;
 
-            const confirmed = await window.confirmDialog({
+            const confirmed = await window.confirmDeleteDialog({
                 title: 'Eliminar publicación',
-                message: 'Esta acción no se puede deshacer. La publicación y sus archivos dejarán de estar disponibles.',
-                confirmText: 'Eliminar',
-                cancelText: 'Cancelar',
-                variant: 'danger'
+                subject: 'esta publicación',
+                description: 'La publicación y sus archivos dejarán de estar disponibles de forma permanente.'
             });
             if (!confirmed) {
                 return;
@@ -3005,12 +3005,10 @@ document.addEventListener('DOMContentLoaded', function() {
             }
 
             const ids = Array.from(checked).map(checkbox => checkbox.dataset.publicationId);
-            const confirmed = await window.confirmDialog({
+            const confirmed = await window.confirmDeleteDialog({
                 title: 'Eliminar reportes',
-                message: `Se eliminarán ${ids.length} reportes. Esta acción no se puede deshacer.`,
-                confirmText: 'Eliminar',
-                cancelText: 'Cancelar',
-                variant: 'danger'
+                subject: `${ids.length} reporte${ids.length === 1 ? '' : 's'}`,
+                description: 'Los reportes seleccionados dejarán de estar disponibles de forma permanente.'
             });
             if (!confirmed) {
                 return;

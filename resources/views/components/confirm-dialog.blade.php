@@ -1,25 +1,20 @@
 <div id="report-confirm-dialog" class="hidden fixed inset-0 z-[1000000] items-center justify-center p-4" aria-hidden="true">
-    <div class="absolute inset-0 bg-[#1f2328]/45 backdrop-blur-[2px]" data-confirm-cancel></div>
-    <section class="relative w-full max-w-md rounded-xl border border-gray-200 bg-white shadow-2xl ring-1 ring-black/5 overflow-hidden confirm-dialog-card" role="dialog" aria-modal="true" aria-labelledby="report-confirm-title" aria-describedby="report-confirm-message">
-        <div class="p-5">
-            <div class="flex items-start gap-3">
-                <div id="report-confirm-icon-wrap" class="mt-0.5 flex h-10 w-10 flex-none items-center justify-center rounded-lg bg-[#611132]/10 text-[#611132]">
-                    <i id="report-confirm-icon" class="fas fa-question-circle text-base"></i>
-                </div>
-                <div class="min-w-0 flex-1">
-                    <h2 id="report-confirm-title" class="font-lora text-lg font-bold text-[#2f3337] leading-tight">Confirmar accion</h2>
-                    <p id="report-confirm-message" class="mt-1 font-lora text-sm leading-relaxed text-gray-600">Revisa la accion antes de continuar.</p>
-                </div>
-                <button type="button" id="report-confirm-close" class="flex h-8 w-8 flex-none items-center justify-center rounded-lg text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#611132]/30" aria-label="Cerrar confirmacion">
-                    <i class="fas fa-times text-sm"></i>
-                </button>
+    <div class="confirm-dialog-overlay absolute inset-0" data-confirm-cancel></div>
+    <section class="confirm-dialog-card relative w-full border bg-white" role="dialog" aria-modal="true" aria-labelledby="report-confirm-title" aria-describedby="report-confirm-message">
+        <div class="confirm-dialog-content">
+            <div class="confirm-dialog-heading flex items-start">
+                <i id="report-confirm-icon" class="confirm-dialog-icon fas fa-question-circle" aria-hidden="true"></i>
+                <h2 id="report-confirm-title" class="confirm-dialog-title min-w-0">Confirmar acción</h2>
             </div>
-
-            <div class="mt-5 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-                <button type="button" id="report-confirm-cancel" class="rounded-lg border border-gray-300 px-4 py-2 font-lora text-sm font-semibold text-[#404041] transition-all duration-200 hover:border-[#611132]/40 hover:bg-gray-50 active:scale-[0.99] focus:outline-none focus:ring-2 focus:ring-[#611132]/25">
+            <div id="report-confirm-message" class="confirm-dialog-body">
+                <p id="report-confirm-question" class="confirm-dialog-question hidden"></p>
+                <p id="report-confirm-description" class="confirm-dialog-description">Revisa la acción antes de continuar.</p>
+            </div>
+            <div class="confirm-dialog-actions flex flex-col-reverse sm:flex-row sm:justify-end">
+                <button type="button" id="report-confirm-cancel" class="confirm-dialog-button confirm-dialog-button-secondary">
                     Cancelar
                 </button>
-                <button type="button" id="report-confirm-accept" class="min-w-[92px] rounded-lg px-4 py-2 font-lora text-sm font-semibold text-white shadow-sm transition-all duration-200 active:scale-[0.99] focus:outline-none focus:ring-2">
+                <button type="button" id="report-confirm-accept" class="confirm-dialog-button confirm-dialog-button-primary">
                     Confirmar
                 </button>
             </div>
@@ -33,44 +28,42 @@
 
         const variants = {
             danger: {
-                accentColor: '#AB1A1A',
-                iconBg: '#FEF2F2',
                 iconColor: '#AB1A1A',
-                icon: 'fas fa-trash-alt text-base',
+                icon: 'fas fa-exclamation-circle',
                 buttonBg: '#AB1A1A',
                 buttonHover: '#8F1616',
                 focusColor: 'rgba(171, 26, 26, 0.28)'
             },
             warning: {
-                accentColor: '#B38E1A',
-                iconBg: '#FFF8E1',
                 iconColor: '#9A7610',
-                icon: 'fas fa-exclamation-triangle text-base',
+                icon: 'fas fa-exclamation-triangle',
                 buttonBg: '#7A5B00',
                 buttonHover: '#624900',
                 focusColor: 'rgba(179, 142, 26, 0.32)'
             },
             success: {
-                accentColor: '#237A3B',
-                iconBg: '#ECFDF3',
                 iconColor: '#237A3B',
-                icon: 'fas fa-check-circle text-base',
+                icon: 'fas fa-check-circle',
                 buttonBg: '#237A3B',
                 buttonHover: '#1D6531',
                 focusColor: 'rgba(35, 122, 59, 0.28)'
             },
             neutral: {
-                accentColor: '#611132',
-                iconBg: 'rgba(97, 17, 50, 0.10)',
                 iconColor: '#611132',
-                icon: 'fas fa-question-circle text-base',
+                icon: 'fas fa-question-circle',
                 buttonBg: '#611132',
                 buttonHover: '#4A0E26',
                 focusColor: 'rgba(97, 17, 50, 0.30)'
             }
         };
 
-        const state = { resolver: null, previousFocus: null };
+        const state = {
+            resolver: null,
+            previousFocus: null,
+            previousBodyOverflow: '',
+            isClosing: false,
+            closeTimer: null
+        };
 
         function getDialogParts() {
             const root = document.getElementById('report-confirm-dialog');
@@ -79,24 +72,25 @@
             return {
                 root,
                 title: document.getElementById('report-confirm-title'),
-                message: document.getElementById('report-confirm-message'),
-                iconWrap: document.getElementById('report-confirm-icon-wrap'),
+                question: document.getElementById('report-confirm-question'),
+                description: document.getElementById('report-confirm-description'),
                 icon: document.getElementById('report-confirm-icon'),
                 cancel: document.getElementById('report-confirm-cancel'),
-                accept: document.getElementById('report-confirm-accept'),
-                close: document.getElementById('report-confirm-close'),
-                card: root.querySelector('.confirm-dialog-card')
+                accept: document.getElementById('report-confirm-accept')
             };
         }
 
-        function resolveDialog(value) {
+        function finishResolve(value) {
             const parts = getDialogParts();
             if (!parts) return;
 
+            parts.root.classList.remove('is-open', 'is-closing');
             parts.root.classList.add('hidden');
             parts.root.classList.remove('flex');
             parts.root.setAttribute('aria-hidden', 'true');
-            document.removeEventListener('keydown', handleKeydown);
+            document.body.style.overflow = state.previousBodyOverflow;
+            state.isClosing = false;
+            state.closeTimer = null;
 
             if (state.previousFocus && typeof state.previousFocus.focus === 'function') {
                 state.previousFocus.focus();
@@ -109,10 +103,41 @@
             }
         }
 
+        function resolveDialog(value) {
+            const parts = getDialogParts();
+            if (!parts || state.isClosing || parts.root.classList.contains('hidden')) return;
+
+            state.isClosing = true;
+            parts.root.classList.remove('is-open');
+            parts.root.classList.add('is-closing');
+            document.removeEventListener('keydown', handleKeydown);
+
+            const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+            state.closeTimer = window.setTimeout(() => finishResolve(value), reducedMotion ? 0 : 130);
+        }
+
         function handleKeydown(event) {
             if (event.key === 'Escape') {
                 event.preventDefault();
                 resolveDialog(false);
+                return;
+            }
+
+            if (event.key === 'Tab') {
+                const parts = getDialogParts();
+                if (!parts) return;
+
+                const focusable = [parts.cancel, parts.accept].filter(element => element && !element.disabled);
+                const first = focusable[0];
+                const last = focusable[focusable.length - 1];
+
+                if (event.shiftKey && document.activeElement === first) {
+                    event.preventDefault();
+                    last.focus();
+                } else if (!event.shiftKey && document.activeElement === last) {
+                    event.preventDefault();
+                    first.focus();
+                }
             }
         }
 
@@ -121,16 +146,39 @@
             if (!parts) return Promise.resolve(false);
 
             const config = variants[options.variant || 'neutral'] || variants.neutral;
+            if (state.closeTimer) window.clearTimeout(state.closeTimer);
+            state.isClosing = false;
             state.previousFocus = document.activeElement;
+            state.previousBodyOverflow = document.body.style.overflow;
 
-            parts.title.textContent = options.title || 'Confirmar accion';
-            parts.message.textContent = options.message || 'Revisa la accion antes de continuar.';
+            parts.title.textContent = options.title || 'Confirmar acción';
+            if (options.subject) {
+                const subject = document.createElement('strong');
+                subject.className = 'confirm-dialog-subject';
+                subject.textContent = String(options.subject);
+
+                parts.question.replaceChildren(
+                    document.createTextNode(options.messagePrefix || '¿Deseas eliminar '),
+                    subject,
+                    document.createTextNode(options.questionSuffix || '?')
+                );
+                parts.question.classList.remove('hidden');
+                parts.description.textContent = options.description || options.messageSuffix || 'Esta acción es permanente y no se puede deshacer.';
+            } else if (options.question) {
+                parts.question.textContent = options.question;
+                parts.question.classList.remove('hidden');
+                parts.description.textContent = options.description || options.messageSuffix || 'Esta acción es permanente y no se puede deshacer.';
+            } else {
+                parts.question.replaceChildren();
+                parts.question.classList.add('hidden');
+                parts.description.textContent = options.message || 'Revisa la acción antes de continuar.';
+            }
             parts.cancel.textContent = options.cancelText || 'Cancelar';
             parts.accept.textContent = options.confirmText || 'Confirmar';
 
-            parts.iconWrap.style.backgroundColor = config.iconBg;
-            parts.iconWrap.style.color = config.iconColor;
             parts.icon.className = config.icon;
+            parts.icon.classList.add('confirm-dialog-icon');
+            parts.icon.style.color = config.iconColor;
             parts.accept.style.backgroundColor = config.buttonBg;
             parts.accept.style.borderColor = config.buttonBg;
             parts.accept.style.color = '#FFFFFF';
@@ -152,12 +200,28 @@
 
             parts.root.classList.remove('hidden');
             parts.root.classList.add('flex');
+            parts.root.classList.remove('is-closing');
             parts.root.setAttribute('aria-hidden', 'false');
-            parts.card.style.animation = 'confirmEnter 0.2s ease-out forwards';
+            document.body.style.overflow = 'hidden';
 
             document.addEventListener('keydown', handleKeydown);
+            requestAnimationFrame(() => {
+                parts.root.classList.add('is-open');
+                parts.cancel.focus();
+            });
             return new Promise(resolve => {
                 state.resolver = resolve;
+            });
+        };
+
+        window.confirmDeleteDialog = function(options = {}) {
+            return window.confirmDialog({
+                ...options,
+                title: options.title || 'Eliminar elemento',
+                description: options.description || 'Esta acción es permanente y no se puede deshacer.',
+                confirmText: options.confirmText || 'Eliminar',
+                cancelText: options.cancelText || 'Cancelar',
+                variant: 'danger'
             });
         };
 
@@ -176,15 +240,33 @@
 
             return window.confirmDialog({
                 title: 'Limpiar formulario',
-                message: 'Se quitaran los datos capturados y los archivos seleccionados en este formulario.',
+                question: '¿Deseas limpiar el formulario?',
+                description: 'Se quitarán los datos capturados y los archivos seleccionados.',
                 confirmText: 'Limpiar',
                 cancelText: 'Cancelar',
                 variant: 'warning'
             });
         };
 
+        document.addEventListener('submit', async function(event) {
+            const form = event.target.closest('form[data-confirm-delete-form]');
+            if (!form || form.dataset.confirmDeleteApproved === 'true') return;
+
+            event.preventDefault();
+            const confirmed = await window.confirmDeleteDialog({
+                title: form.dataset.confirmTitle || 'Eliminar registro',
+                subject: form.dataset.confirmSubject || 'este registro',
+                description: form.dataset.confirmDescription || undefined,
+                confirmText: form.dataset.confirmText || 'Eliminar'
+            });
+
+            if (!confirmed) return;
+            form.dataset.confirmDeleteApproved = 'true';
+            form.requestSubmit();
+        });
+
         document.addEventListener('click', function(event) {
-            if (event.target.closest('[data-confirm-cancel], #report-confirm-cancel, #report-confirm-close')) {
+            if (event.target.closest('[data-confirm-cancel], #report-confirm-cancel')) {
                 resolveDialog(false);
             }
 
@@ -193,22 +275,5 @@
             }
         });
 
-        if (!document.getElementById('report-confirm-styles')) {
-            const style = document.createElement('style');
-            style.id = 'report-confirm-styles';
-            style.textContent = `
-                @keyframes confirmEnter {
-                    from {
-                        opacity: 0;
-                        transform: translate3d(0, 10px, 0) scale(0.98);
-                    }
-                    to {
-                        opacity: 1;
-                        transform: translate3d(0, 0, 0) scale(1);
-                    }
-                }
-            `;
-            document.head.appendChild(style);
-        }
     })();
 </script>

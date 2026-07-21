@@ -6,7 +6,13 @@
         <a href="{{ route('user.edit', $user->id) }}" class="users-row-menu-item" role="menuitem">
             <span>Editar</span>
         </a>
-        <a href="{{ route('user.update-password', $user->id) }}" class="users-row-menu-item" role="menuitem">
+        <a href="{{ route('user.update-password', $user->id) }}"
+           class="users-row-menu-item js-change-password"
+           role="menuitem"
+           data-password-update-url="{{ route('user.update-password.update', $user->id) }}"
+           data-user-name="{{ trim($user->name . ' ' . $user->first_last_name . ' ' . $user->second_last_name) ?: $user->username }}"
+           data-username="{{ $user->username }}"
+           data-user-photo="{{ $user->profile_photo_path ? asset('storage/' . $user->profile_photo_path) : asset('images/default_pfp.svg.png') }}">
             <span>Cambiar contraseña</span>
         </a>
         <form method="POST" action="{{ route('user.destroy', $user->id) }}" class="js-delete-user-form" data-user-name="{{ trim($user->name . ' ' . $user->first_last_name) ?: $user->username }}">

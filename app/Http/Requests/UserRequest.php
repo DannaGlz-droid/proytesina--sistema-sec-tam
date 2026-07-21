@@ -69,7 +69,7 @@ class UserRequest extends FormRequest
             'phone' => 'nullable|string|regex:/^[0-9]{10}$/',
             'username' => ['required', 'string', 'min:3', 'max:50', 'regex:/^[a-zA-Z0-9_.-]+$/', Rule::unique('users', 'username')->ignore($userId)],
             'password' => $passwordRule,
-            'is_active' => 'nullable|boolean',
+            'is_active' => $userId ? 'required|boolean' : 'nullable|boolean',
             'position_id' => ['required', function ($attribute, $value, $fail) {
                 $position = Position::find($value);
                 $blocked = ['administrador', 'admin', 'no definido'];

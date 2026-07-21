@@ -10,6 +10,274 @@
 	overflow: hidden;
 }
 
+/* User registration password assistant: one compact, stateful surface. */
+.users-form-page .users-password-assistant {
+  margin: 0.78rem 0.9rem 0.9rem;
+  overflow: hidden;
+  border: 1px solid var(--users-border, #d8e1ec);
+  border-radius: 8px;
+  background: #f8fafc;
+}
+
+.users-form-page .users-password-assistant-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.72rem 0.82rem;
+  border-bottom: 1px solid #e2e8f0;
+  background: #ffffff;
+}
+
+.users-form-page .users-password-assistant-heading {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.users-form-page .users-password-assistant-icon {
+  display: inline-flex;
+  width: 2rem;
+  height: 2rem;
+  flex: 0 0 2rem;
+  align-items: center;
+  justify-content: center;
+  border-radius: 7px;
+  background: #f5e9ee;
+  color: var(--users-accent, #6f0d37);
+}
+
+.users-form-page .users-password-assistant-icon ion-icon {
+  font-size: 1rem;
+}
+
+.users-form-page .users-password-assistant-heading h3,
+.users-form-page .users-password-assistant-heading p,
+.users-form-page .users-password-requirements p {
+  margin: 0;
+  font-family: "Open Sans", system-ui, sans-serif;
+}
+
+.users-form-page .users-password-assistant-heading h3 {
+  font-size: 0.78rem;
+  font-weight: 700;
+  line-height: 1.25;
+  color: var(--users-text, #10233f);
+}
+
+.users-form-page .users-password-assistant-heading p {
+  margin-top: 0.12rem;
+  font-size: 0.68rem;
+  font-weight: 500;
+  line-height: 1.3;
+  color: #64748b;
+}
+
+.users-form-page .users-password-assistant .users-generate-password {
+  display: inline-flex !important;
+  min-height: 32px !important;
+  height: 32px !important;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  gap: 0.38rem;
+  margin: 0 !important;
+  padding: 0 0.7rem !important;
+  border: 1px solid #cbd5e1 !important;
+  border-radius: 7px !important;
+  background: #ffffff !important;
+  color: #26384f !important;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04) !important;
+  font-family: "Open Sans", system-ui, sans-serif !important;
+  font-size: 0.72rem !important;
+  font-weight: 700 !important;
+  line-height: 1 !important;
+  white-space: nowrap;
+  transition: border-color 0.16s ease, background-color 0.16s ease, color 0.16s ease, transform 0.1s ease !important;
+}
+
+.users-form-page .users-password-assistant .users-generate-password:hover {
+  border-color: var(--users-accent, #6f0d37) !important;
+  background: #fdf8fa !important;
+  color: var(--users-accent, #6f0d37) !important;
+}
+
+.users-form-page .users-password-assistant .users-generate-password:focus-visible {
+  outline: 2px solid var(--users-accent, #6f0d37) !important;
+  outline-offset: 2px;
+}
+
+.users-form-page .users-password-assistant .users-generate-password:active {
+  transform: translateY(1px);
+}
+
+.users-form-page .users-password-assistant .users-password-meter {
+  width: auto !important;
+  margin: 0 !important;
+  padding: 0.68rem 0.82rem 0.58rem !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.users-form-page .users-password-assistant .users-password-meter-header {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  justify-content: space-between;
+  gap: 0.75rem !important;
+  margin: 0 0 0.38rem !important;
+}
+
+.users-form-page .users-password-assistant .users-password-meter-title {
+  font-size: 0.7rem !important;
+  font-weight: 600 !important;
+  color: #526278 !important;
+}
+
+.users-form-page .users-password-assistant #password-strength {
+  display: inline-flex !important;
+  min-height: 1.25rem !important;
+  align-items: center;
+  margin: 0 !important;
+  padding: 0.12rem 0.48rem !important;
+  border: 1px solid #d8e1ec !important;
+  border-radius: 999px !important;
+  background: #ffffff !important;
+  color: #64748b !important;
+  font-size: 0.67rem !important;
+  font-weight: 700 !important;
+  line-height: 1 !important;
+}
+
+.users-form-page .users-password-assistant #password-strength[data-level="weak"] {
+  border-color: #fecaca !important;
+  background: #fef2f2 !important;
+  color: #b91c1c !important;
+}
+
+.users-form-page .users-password-assistant #password-strength[data-level="medium"] {
+  border-color: #fde68a !important;
+  background: #fffbeb !important;
+  color: #92400e !important;
+}
+
+.users-form-page .users-password-assistant #password-strength[data-level="strong"],
+.users-form-page .users-password-assistant #password-strength[data-level="very-strong"] {
+  border-color: #bbf7d0 !important;
+  background: #f0fdf4 !important;
+  color: #166534 !important;
+}
+
+.users-form-page .users-password-assistant .users-password-meter-track {
+  height: 4px !important;
+  margin: 0 !important;
+  overflow: hidden;
+  border-radius: 999px !important;
+  background: #e2e8f0 !important;
+  box-shadow: none !important;
+}
+
+.users-form-page .users-password-assistant #password-strength-bar {
+  width: 0;
+  height: 4px !important;
+  border-radius: 999px !important;
+  background: #94a3b8;
+  transition: width 0.2s ease, background-color 0.2s ease !important;
+}
+
+.users-form-page .users-password-assistant #password-strength-bar[data-level="weak"] {
+  background: #dc2626;
+}
+
+.users-form-page .users-password-assistant #password-strength-bar[data-level="medium"] {
+  background: #d97706;
+}
+
+.users-form-page .users-password-assistant #password-strength-bar[data-level="strong"],
+.users-form-page .users-password-assistant #password-strength-bar[data-level="very-strong"] {
+  background: #16a34a;
+}
+
+.users-form-page .users-password-assistant .users-password-requirements {
+  margin: 0 !important;
+  padding: 0.1rem 0.82rem 0.74rem !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+}
+
+.users-form-page .users-password-assistant .users-password-requirements > p {
+  margin-bottom: 0.42rem !important;
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: #64748b;
+}
+
+.users-form-page .users-password-assistant .users-password-requirements ul {
+  display: grid !important;
+  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  gap: 0.38rem 0.75rem !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+.users-form-page .users-password-assistant .users-password-requirements li {
+  display: flex;
+  min-width: 0;
+  align-items: center !important;
+  gap: 0.38rem !important;
+  color: #68788d !important;
+  font-size: 0.69rem !important;
+  font-weight: 500 !important;
+  line-height: 1.25 !important;
+  transition: color 0.16s ease;
+}
+
+.users-form-page .users-password-assistant .users-password-requirements li ion-icon {
+  flex: 0 0 auto !important;
+  margin: 0 !important;
+  color: #94a3b8;
+  font-size: 0.88rem !important;
+  transition: color 0.16s ease;
+}
+
+.users-form-page .users-password-assistant .users-password-requirements li[data-complete="true"] {
+  color: #166534 !important;
+}
+
+.users-form-page .users-password-assistant .users-password-requirements li[data-complete="true"] ion-icon {
+  color: #16a34a !important;
+}
+
+@media (max-width: 980px) {
+  .users-form-page .users-password-assistant .users-password-requirements ul {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+}
+
+@media (max-width: 560px) {
+  .users-form-page .users-password-assistant {
+    margin: 0.7rem 0.62rem 0.8rem;
+  }
+
+  .users-form-page .users-password-assistant-header {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 0.62rem;
+  }
+
+  .users-form-page .users-password-assistant .users-generate-password {
+    width: 100%;
+  }
+
+  .users-form-page .users-password-assistant .users-password-requirements ul {
+    grid-template-columns: 1fr !important;
+  }
+}
+
 /* Shared data-table foundation used by user and import tables. */
 .dataTables_wrapper .dataTables_length,
 .dataTables_wrapper .dataTables_filter,
@@ -2132,14 +2400,15 @@
 	align-items: center;
 	justify-content: center;
 	gap: 0.42rem;
-	min-height: 1.9rem;
-	padding: 0 0.72rem;
+	height: 34px;
+	min-height: 34px;
+	padding: 0 0.82rem;
 	border: 1px solid #d1d5db;
-	border-radius: 0.38rem;
+	border-radius: 7px;
 	background: #ffffff;
 	color: #334155;
 	font-family: 'Open Sans', sans-serif;
-	font-size: 0.74rem;
+	font-size: 0.78rem;
 	font-weight: 700;
 	line-height: 1;
 	white-space: nowrap;
@@ -6773,4 +7042,1055 @@ Legacy fallback kept inert; the visible search loader uses .users-search-progres
   .users-form-page .users-password-requirements ul {
     grid-template-columns: 1fr !important;
   }
+}
+
+/* Password assistant: final compact layout. */
+.users-form-page .users-form-section > .users-password-assistant {
+  display: grid;
+  grid-template-columns: minmax(10.5rem, 0.75fr) minmax(34rem, 3fr) auto;
+  align-items: center;
+  gap: 0.75rem 1rem;
+  margin: 0.72rem 0.9rem 0.8rem !important;
+  padding: 0.56rem 0.68rem;
+  overflow: visible;
+  border: 1px solid var(--users-border, #d8e1ec);
+  border-radius: 7px;
+  background: #f8fafc;
+}
+
+.users-form-page .users-password-assistant > .users-password-meter {
+  width: auto !important;
+  min-width: 0;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.users-form-page .users-password-assistant > .users-password-meter .users-password-meter-header {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  justify-content: space-between;
+  gap: 0.5rem !important;
+  margin: 0 0 0.3rem !important;
+}
+
+.users-form-page .users-password-assistant > .users-password-meter .users-password-meter-title {
+  font-size: 0.69rem !important;
+  font-weight: 600 !important;
+  line-height: 1 !important;
+  color: #526278 !important;
+}
+
+.users-form-page .users-password-assistant > .users-password-meter #password-strength {
+  min-height: 1.1rem !important;
+  padding: 0.08rem 0.4rem !important;
+  font-size: 0.64rem !important;
+}
+
+.users-form-page .users-password-assistant > .users-password-meter .users-password-meter-track,
+.users-form-page .users-password-assistant > .users-password-meter #password-strength-bar {
+  height: 3px !important;
+}
+
+.users-form-page .users-password-assistant > .users-password-requirements {
+  min-width: 0;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+}
+
+.users-form-page .users-password-assistant > .users-password-requirements > p {
+  display: none !important;
+}
+
+.users-form-page .users-password-assistant > .users-password-requirements ul {
+  display: grid !important;
+  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  gap: 0.3rem 0.7rem !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+.users-form-page .users-password-assistant > .users-password-requirements li {
+  gap: 0.3rem !important;
+  font-size: 0.67rem !important;
+  line-height: 1.2 !important;
+  white-space: nowrap;
+}
+
+.users-form-page .users-password-assistant > .users-password-requirements li ion-icon {
+  font-size: 0.8rem !important;
+}
+
+.users-form-page .users-password-assistant > .users-generate-password {
+  display: inline-flex !important;
+  width: auto;
+  min-height: 30px !important;
+  height: 30px !important;
+  align-items: center;
+  justify-content: center;
+  gap: 0.34rem;
+  margin: 0 !important;
+  padding: 0 0.68rem !important;
+  border: 1px solid #cbd5e1 !important;
+  border-radius: 7px !important;
+  background: #ffffff !important;
+  color: #26384f !important;
+  box-shadow: none !important;
+  font-size: 0.69rem !important;
+  font-weight: 700 !important;
+  line-height: 1 !important;
+  white-space: nowrap;
+}
+
+.users-form-page .users-password-assistant > .users-generate-password:hover {
+  border-color: var(--users-accent, #6f0d37) !important;
+  background: #fdf8fa !important;
+  color: var(--users-accent, #6f0d37) !important;
+}
+
+.users-form-page .users-password-assistant > .users-generate-password:focus-visible {
+  outline: 2px solid var(--users-accent, #6f0d37) !important;
+  outline-offset: 2px;
+}
+
+.users-form-page .users-password-assistant > .users-generate-password:active {
+  transform: translateY(1px);
+}
+
+@media (max-width: 1280px) {
+  .users-form-page .users-form-section > .users-password-assistant {
+    grid-template-columns: minmax(10rem, 0.75fr) minmax(22rem, 2fr) auto;
+  }
+
+  .users-form-page .users-password-assistant > .users-password-requirements ul {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+}
+
+@media (max-width: 760px) {
+  .users-form-page .users-form-section > .users-password-assistant {
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 0.55rem 0.75rem;
+    margin: 0.68rem 0.62rem 0.76rem !important;
+  }
+
+  .users-form-page .users-password-assistant > .users-password-requirements {
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
+
+  .users-form-page .users-password-assistant > .users-generate-password {
+    grid-column: 2;
+    grid-row: 1;
+  }
+}
+
+@media (max-width: 520px) {
+  .users-form-page .users-form-section > .users-password-assistant {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .users-form-page .users-password-assistant > .users-password-requirements,
+  .users-form-page .users-password-assistant > .users-generate-password {
+    grid-column: 1;
+    grid-row: auto;
+  }
+
+  .users-form-page .users-password-assistant > .users-password-requirements ul {
+    grid-template-columns: 1fr !important;
+  }
+
+  .users-form-page .users-password-assistant > .users-generate-password {
+    width: 100%;
+  }
+}
+
+/* Password field helper: keep feedback attached to the field it describes. */
+.users-form-page .users-password-label-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.users-form-page .users-password-label-row label {
+  margin-bottom: 0.32rem !important;
+}
+
+.users-form-page .users-password-label-row #password-strength {
+  display: inline-flex !important;
+  min-height: 1rem !important;
+  align-items: center;
+  margin: 0 0 0.32rem !important;
+  padding: 0.06rem 0.36rem !important;
+  border: 1px solid #d8e1ec !important;
+  border-radius: 999px !important;
+  background: #f8fafc !important;
+  color: #64748b !important;
+  font-family: "Open Sans", system-ui, sans-serif !important;
+  font-size: 0.61rem !important;
+  font-weight: 700 !important;
+  line-height: 1 !important;
+}
+
+.users-form-page .users-password-label-row #password-strength[data-level="weak"] {
+  border-color: #fecaca !important;
+  background: #fef2f2 !important;
+  color: #b91c1c !important;
+}
+
+.users-form-page .users-password-label-row #password-strength[data-level="medium"] {
+  border-color: #fde68a !important;
+  background: #fffbeb !important;
+  color: #92400e !important;
+}
+
+.users-form-page .users-password-label-row #password-strength[data-level="strong"],
+.users-form-page .users-password-label-row #password-strength[data-level="very-strong"] {
+  border-color: #bbf7d0 !important;
+  background: #f0fdf4 !important;
+  color: #166534 !important;
+}
+
+.users-form-page .users-password-label-row + .relative + p + .users-password-meter-track,
+.users-form-page .users-password-label-row + .relative + .users-password-meter-track,
+.users-form-page #password-strength-track {
+  width: 100%;
+  height: 3px !important;
+  margin: 0.32rem 0 0 !important;
+  overflow: hidden;
+  border-radius: 999px !important;
+  background: #e2e8f0 !important;
+  box-shadow: none !important;
+}
+
+.users-form-page #password-strength-track #password-strength-bar {
+  width: 0;
+  height: 3px !important;
+  border-radius: 999px !important;
+  background: #94a3b8;
+  transition: width 0.2s ease, background-color 0.2s ease !important;
+}
+
+.users-form-page #password-strength-track #password-strength-bar[data-level="weak"] {
+  background: #dc2626;
+}
+
+.users-form-page #password-strength-track #password-strength-bar[data-level="medium"] {
+  background: #d97706;
+}
+
+.users-form-page #password-strength-track #password-strength-bar[data-level="strong"],
+.users-form-page #password-strength-track #password-strength-bar[data-level="very-strong"] {
+  background: #16a34a;
+}
+
+.users-form-page .users-password-tools {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem 1.25rem;
+  margin: 0.56rem 0.9rem 0.22rem;
+  padding-top: 0.52rem;
+  border-top: 1px solid #e2e8f0;
+}
+
+.users-form-page .users-password-compact-requirements {
+  display: flex;
+  min-width: 0;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.38rem 1.15rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.users-form-page .users-password-compact-requirements li {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  color: #68788d;
+  font-family: "Open Sans", system-ui, sans-serif;
+  font-size: 0.67rem;
+  font-weight: 500;
+  line-height: 1.2;
+  white-space: nowrap;
+  transition: color 0.16s ease;
+}
+
+.users-form-page .users-password-compact-requirements li ion-icon {
+  flex: 0 0 auto;
+  color: #94a3b8;
+  font-size: 0.8rem;
+  transition: color 0.16s ease;
+}
+
+.users-form-page .users-password-compact-requirements li[data-complete="true"] {
+  color: #166534;
+}
+
+.users-form-page .users-password-compact-requirements li[data-complete="true"] ion-icon {
+  color: #16a34a;
+}
+
+.users-form-page .users-password-tools > .users-generate-password {
+  display: inline-flex !important;
+  width: auto;
+  min-height: 29px !important;
+  height: 29px !important;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  gap: 0.32rem;
+  margin: 0 !important;
+  padding: 0 0.66rem !important;
+  border: 1px solid #cbd5e1 !important;
+  border-radius: 7px !important;
+  background: #ffffff !important;
+  color: #26384f !important;
+  box-shadow: none !important;
+  font-size: 0.68rem !important;
+  font-weight: 700 !important;
+  line-height: 1 !important;
+  white-space: nowrap;
+}
+
+.users-form-page .users-password-tools > .users-generate-password:hover {
+  border-color: var(--users-accent, #6f0d37) !important;
+  background: #fdf8fa !important;
+  color: var(--users-accent, #6f0d37) !important;
+}
+
+.users-form-page .users-password-tools > .users-generate-password:focus-visible {
+  outline: 2px solid var(--users-accent, #6f0d37) !important;
+  outline-offset: 2px;
+}
+
+.users-form-page .users-password-tools > .users-generate-password:active {
+  transform: translateY(1px);
+}
+
+@media (max-width: 760px) {
+  .users-form-page .users-password-tools {
+    align-items: flex-start;
+    flex-direction: column;
+    margin-right: 0.62rem;
+    margin-left: 0.62rem;
+  }
+
+  .users-form-page .users-password-tools > .users-generate-password {
+    align-self: flex-start;
+  }
+}
+
+@media (max-width: 520px) {
+  .users-form-page .users-password-compact-requirements {
+    display: grid;
+    width: 100%;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* Password pair: feedback belongs to each respective field. */
+.users-form-page #password-strength-track + .users-password-compact-requirements {
+  margin-top: 0.42rem;
+}
+
+.users-form-page .users-password-confirm-tools {
+  display: flex;
+  min-height: 29px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-top: 0.38rem;
+}
+
+.users-form-page #password-match-status {
+  display: inline-flex;
+  min-width: 0;
+  align-items: center;
+  gap: 0.32rem;
+  color: #68788d;
+  font-family: "Open Sans", system-ui, sans-serif;
+  font-size: 0.67rem;
+  font-weight: 500;
+  line-height: 1.2;
+  transition: color 0.16s ease;
+}
+
+.users-form-page #password-match-status ion-icon {
+  flex: 0 0 auto;
+  color: #94a3b8;
+  font-size: 0.82rem;
+  transition: color 0.16s ease;
+}
+
+.users-form-page #password-match-status[data-status="match"] {
+  color: #166534;
+}
+
+.users-form-page #password-match-status[data-status="match"] ion-icon {
+  color: #16a34a;
+}
+
+.users-form-page #password-match-status[data-status="mismatch"] {
+  color: #b91c1c;
+}
+
+.users-form-page #password-match-status[data-status="mismatch"] ion-icon {
+  color: #dc2626;
+}
+
+.users-form-page .users-password-confirm-tools > .users-generate-password {
+  display: inline-flex !important;
+  width: auto;
+  min-height: 27px !important;
+  height: 27px !important;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  gap: 0.3rem;
+  margin: 0 !important;
+  padding: 0 0.58rem !important;
+  border: 1px solid #cbd5e1 !important;
+  border-radius: 7px !important;
+  background: #ffffff !important;
+  color: #26384f !important;
+  box-shadow: none !important;
+  font-size: 0.66rem !important;
+  font-weight: 700 !important;
+  line-height: 1 !important;
+  white-space: nowrap;
+}
+
+.users-form-page .users-password-confirm-tools > .users-generate-password:hover {
+  border-color: var(--users-accent, #6f0d37) !important;
+  background: #fdf8fa !important;
+  color: var(--users-accent, #6f0d37) !important;
+}
+
+.users-form-page .users-password-confirm-tools > .users-generate-password:focus-visible {
+  outline: 2px solid var(--users-accent, #6f0d37) !important;
+  outline-offset: 2px;
+}
+
+.users-form-page .users-password-confirm-tools > .users-generate-password:active {
+  transform: translateY(1px);
+}
+
+@media (max-width: 1120px) {
+  .users-form-page #password-strength-track + .users-password-compact-requirements {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* Shared users-page heading scale: management and registration stay identical. */
+.users-management-page .app-page-title,
+.users-form-page .app-page-title {
+  margin-bottom: 0.5rem;
+  color: #404041;
+  font-family: "Lora", serif;
+  font-size: 1.32rem !important;
+  font-weight: 700;
+  line-height: 1.15;
+}
+
+.users-management-page .app-page-subtitle,
+.users-form-page .app-page-subtitle {
+  margin-top: 0.3rem;
+  color: #404041;
+  font-family: "Lora", serif;
+  font-size: 0.78rem !important;
+  line-height: 1.35;
+}
+
+/* Registration form palette: reserve wine for the primary save action. */
+.users-form-page {
+  --users-form-focus: #475569;
+  --users-form-focus-ring: rgba(71, 85, 105, 0.18);
+}
+
+.users-form-page label span.text-red-600 {
+  color: #dc2626 !important;
+}
+
+.users-form-page input:not([type="checkbox"]):not([type="radio"]):focus,
+.users-form-page textarea:focus,
+.users-form-page select:focus {
+  border-color: var(--users-form-focus) !important;
+  background: #ffffff !important;
+  box-shadow: 0 0 0 2px var(--users-form-focus-ring) !important;
+  outline: 0 !important;
+}
+
+.users-form-page .users-form-card form .ts-wrapper.focus .ts-control,
+.users-form-page .users-form-card form .ts-wrapper.dropdown-active .ts-control {
+  border-color: var(--users-form-focus) !important;
+  background: #ffffff !important;
+  box-shadow: 0 0 0 2px var(--users-form-focus-ring) !important;
+}
+
+.users-form-page .users-form-card form .ts-dropdown .option.active,
+.users-form-page .users-form-card form .ts-dropdown .option.selected {
+  background: #f1f5f9 !important;
+  color: #0f1f35 !important;
+}
+
+.users-form-page button[onclick^="togglePassword"]:hover {
+  color: #1f2f46 !important;
+}
+
+.users-form-page .users-password-confirm-tools > .users-generate-password:hover {
+  border-color: #94a3b8 !important;
+  background: #f8fafc !important;
+  color: #10233f !important;
+}
+
+.users-form-page .users-password-confirm-tools > .users-generate-password:focus-visible {
+  outline-color: var(--users-form-focus) !important;
+}
+
+/* Registration navigation: keep page exit separate from form actions. */
+.users-form-page .users-form-back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.38rem;
+  margin-bottom: 0.7rem;
+  color: #526278;
+  font-family: "Open Sans", system-ui, sans-serif;
+  font-size: 0.72rem;
+  font-weight: 600;
+  line-height: 1.2;
+  text-decoration: none;
+  transition: color 0.16s ease;
+}
+
+.users-form-page .users-form-back-link ion-icon {
+  flex: 0 0 auto;
+  font-size: 0.92rem;
+  transition: transform 0.16s ease;
+}
+
+.users-form-page .users-form-back-link:hover {
+  color: #10233f;
+}
+
+.users-form-page .users-form-back-link:hover ion-icon {
+  transform: translateX(-2px);
+}
+
+.users-form-page .users-form-back-link:focus-visible {
+  border-radius: 3px;
+  outline: 2px solid var(--users-form-focus);
+  outline-offset: 3px;
+}
+
+.users-form-page .users-generate-password-icon {
+  flex: 0 0 auto;
+  font-size: 0.7rem;
+}
+
+/* Pilot action typography: emphasis comes from hierarchy and color, not heavy text. */
+.users-management-page .users-page-create-btn,
+.users-management-page .users-table-create-btn,
+.users-management-page .users-table-card .users-filter-toggle,
+.users-management-page .users-table-card .users-filter-clear,
+.users-management-page .users-table-card .users-filter-secondary,
+.users-management-page .users-table-card .users-filter-apply,
+.users-management-page .app-table-bulk-danger,
+.users-form-page .users-generate-password,
+.users-form-page .users-form-actions > a,
+.users-form-page .users-form-actions > button {
+  font-weight: 600 !important;
+}
+
+.users-management-page .users-page-size-button,
+.users-management-page .users-page-size-option,
+.users-management-page .users-filter-option {
+  font-weight: 500 !important;
+}
+
+.users-management-page .users-page-size-button strong,
+.users-management-page .users-page-size-option.is-active {
+  font-weight: 700 !important;
+}
+
+/* Shared confirmation modal: calibrated for the interface at 100% browser zoom. */
+.confirm-dialog-overlay {
+  background: rgba(15, 23, 42, 0.34);
+  opacity: 0;
+  transition: opacity 130ms ease-out;
+}
+
+.confirm-dialog-card {
+  max-width: 26rem;
+  border-color: #d8dee8 !important;
+  border-radius: 7px;
+  background: #ffffff;
+  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.12), 0 1px 3px rgba(15, 23, 42, 0.06);
+  color: #10233f;
+  font-family: "Open Sans", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  opacity: 0;
+  transform: translateY(4px);
+  transition: opacity 150ms ease-out, transform 150ms ease-out;
+}
+
+#report-confirm-dialog.is-open .confirm-dialog-overlay {
+  opacity: 1;
+}
+
+#report-confirm-dialog.is-open .confirm-dialog-card {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+#report-confirm-dialog.is-closing .confirm-dialog-overlay {
+  opacity: 0;
+  transition-duration: 120ms;
+}
+
+#report-confirm-dialog.is-closing .confirm-dialog-card {
+  opacity: 0;
+  transform: translateY(3px);
+  transition-duration: 120ms;
+}
+
+.confirm-dialog-content {
+  padding: 1.125rem 1.25rem 1rem;
+}
+
+.confirm-dialog-heading {
+  gap: 0.625rem;
+}
+
+.confirm-dialog-icon {
+  width: 1rem;
+  margin-top: 0.16rem;
+  flex: 0 0 1rem;
+  font-size: 0.8125rem;
+  line-height: 1;
+  text-align: center;
+}
+
+.confirm-dialog-title {
+  margin: 0;
+  color: #10233f;
+  font-family: inherit;
+  font-size: 0.9375rem;
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+.confirm-dialog-body {
+  margin: 0.5rem 0 0 1.625rem;
+}
+
+.confirm-dialog-question,
+.confirm-dialog-description {
+  margin: 0;
+  font-family: inherit;
+  font-size: 0.8125rem;
+  line-height: 1.45;
+}
+
+.confirm-dialog-question {
+  color: #1f2f46;
+  font-weight: 500;
+}
+
+.confirm-dialog-description {
+  margin-top: 0.22rem;
+  color: #526278;
+  font-weight: 400;
+}
+
+.confirm-dialog-question.hidden + .confirm-dialog-description {
+  margin-top: 0;
+}
+
+.confirm-dialog-subject {
+  color: #10233f;
+  font-weight: 600;
+}
+
+.confirm-dialog-button-secondary:focus-visible {
+  outline: 2px solid #475569;
+  outline-offset: 2px;
+}
+
+.confirm-dialog-actions {
+  gap: 0.5rem;
+  margin: 0.9rem 0 0;
+  padding-top: 0.75rem;
+  border-top: 1px solid #e5e7eb;
+}
+
+.confirm-dialog-button {
+  display: inline-flex;
+  min-width: 0;
+  height: 34px;
+  min-height: 34px;
+  align-items: center;
+  justify-content: center;
+  padding: 0 0.82rem;
+  border: 1px solid transparent;
+  border-radius: 7px;
+  font-family: inherit;
+  font-size: 0.78rem;
+  font-weight: 600;
+  line-height: 1;
+  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease, transform 0.1s ease;
+}
+
+.confirm-dialog-button:active {
+  transform: translateY(1px);
+}
+
+.confirm-dialog-button-secondary {
+  border-color: #cbd5e1;
+  background: #ffffff;
+  color: #1f2f46;
+}
+
+.confirm-dialog-button-secondary:hover {
+  border-color: #bdc8d5;
+  background: #f3f6f9;
+  color: #10233f;
+}
+
+.confirm-dialog-button-primary {
+  min-width: 5.75rem;
+  color: #ffffff;
+}
+
+@media (max-width: 639px) {
+  .confirm-dialog-content {
+    padding: 1rem;
+  }
+
+  .confirm-dialog-body {
+    margin-left: 1.625rem;
+  }
+
+  .confirm-dialog-button {
+    width: 100%;
+    height: 40px;
+    min-height: 40px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .confirm-dialog-overlay,
+  .confirm-dialog-card {
+    transition-duration: 1ms !important;
+  }
+
+  .confirm-dialog-card,
+  #report-confirm-dialog.is-closing .confirm-dialog-card {
+    transform: none;
+  }
+}
+
+/* Contextual task modal used from the user table. */
+.user-password-dialog {
+  z-index: 999990;
+  font-family: "Open Sans", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+.user-password-dialog-overlay {
+  background: rgba(15, 23, 42, 0.34);
+  opacity: 0;
+  transition: opacity 130ms ease-out;
+}
+
+.user-password-dialog-card {
+  max-width: 33.75rem;
+  max-height: calc(100dvh - 2rem);
+  overflow: auto;
+  border: 1px solid #d8dee8;
+  border-radius: 7px;
+  background: #ffffff;
+  color: #10233f;
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.14), 0 1px 3px rgba(15, 23, 42, 0.06);
+  opacity: 0;
+  transform: translateY(4px);
+  transition: opacity 150ms ease-out, transform 150ms ease-out;
+}
+
+.user-password-dialog.is-open .user-password-dialog-overlay { opacity: 1; }
+.user-password-dialog.is-open .user-password-dialog-card { opacity: 1; transform: translateY(0); }
+.user-password-dialog.is-closing .user-password-dialog-overlay { opacity: 0; transition-duration: 120ms; }
+.user-password-dialog.is-closing .user-password-dialog-card { opacity: 0; transform: translateY(3px); transition-duration: 120ms; }
+
+.user-password-dialog-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1.125rem 1.25rem 0.9rem;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.user-password-dialog-header h2 {
+  margin: 0;
+  color: #10233f;
+  font-size: 0.9375rem;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.user-password-dialog-header p {
+  margin: 0.2rem 0 0;
+  color: #526278;
+  font-size: 0.78rem;
+  line-height: 1.45;
+}
+
+.user-password-dialog-close,
+.user-password-dialog-visibility {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  background: transparent;
+  color: #718096;
+}
+
+.user-password-dialog-close {
+  width: 2rem;
+  height: 2rem;
+  flex: 0 0 2rem;
+  border-radius: 6px;
+  font-size: 0.75rem;
+}
+
+.user-password-dialog-close:hover,
+.user-password-dialog-visibility:hover { background: #f3f6f9; color: #10233f; }
+
+.user-password-dialog-close:focus-visible,
+.user-password-dialog-visibility:focus-visible,
+#user-password-dialog-generate:focus-visible,
+.user-password-dialog-button:focus-visible {
+  outline: 2px solid #475569;
+  outline-offset: 2px;
+}
+
+.user-password-dialog-body { padding: 1.15rem 1.25rem 1.3rem; }
+
+.user-password-dialog-account {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1.25rem;
+  padding: 0.7rem 0.8rem;
+  border: 1px solid #e2e8f0;
+  background: #f6f8fa;
+}
+
+.user-password-dialog-account img {
+  width: 2.75rem;
+  height: 2.75rem;
+  flex: 0 0 2.75rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 50%;
+  background: #ffffff;
+  object-fit: cover;
+}
+
+.user-password-dialog-account strong {
+  display: block;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  color: #10233f;
+  font-size: 0.82rem;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.user-password-dialog-account small {
+  display: block;
+  margin-top: 0.18rem;
+  color: #64748b;
+  font-size: 0.72rem;
+}
+
+.user-password-dialog-error {
+  margin-bottom: 0.85rem;
+  padding: 0.6rem 0.7rem;
+  border: 1px solid #fecaca;
+  border-radius: 6px;
+  background: #fef2f2;
+  color: #991b1b;
+  font-size: 0.75rem;
+  line-height: 1.4;
+}
+
+.user-password-dialog-field + .user-password-dialog-field { margin-top: 1.2rem; }
+.user-password-dialog-label-row { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; }
+
+.user-password-dialog-field label {
+  display: block;
+  margin-bottom: 0.32rem;
+  color: #10233f;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.user-password-dialog-field label > span { color: #dc2626; }
+
+#user-password-dialog-strength {
+  padding: 0.12rem 0.45rem;
+  border: 1px solid #d8dee8;
+  border-radius: 999px;
+  background: #f8fafc;
+  color: #64748b;
+  font-size: 0.65rem;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+#user-password-dialog-strength[data-level="weak"] { border-color: #fecaca; background: #fef2f2; color: #b91c1c; }
+#user-password-dialog-strength[data-level="medium"] { border-color: #fde68a; background: #fffbeb; color: #92400e; }
+#user-password-dialog-strength[data-level="strong"],
+#user-password-dialog-strength[data-level="very-strong"] { border-color: #bbf7d0; background: #f0fdf4; color: #15803d; }
+
+.user-password-dialog-input-wrap { position: relative; }
+
+.user-password-dialog-input-wrap input {
+  width: 100%;
+  height: 40px;
+  padding: 0 2.6rem 0 0.75rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 7px;
+  background: #ffffff;
+  color: #10233f;
+  font-size: 0.8rem;
+  transition: border-color 150ms ease, box-shadow 150ms ease;
+}
+
+.user-password-dialog-input-wrap input::placeholder { color: #8190a5; }
+.user-password-dialog-input-wrap input:focus { border-color: #64748b; box-shadow: 0 0 0 2px rgba(100, 116, 139, 0.16); outline: none; }
+
+.user-password-dialog-visibility {
+  position: absolute;
+  inset: 0 0 0 auto;
+  width: 2.5rem;
+  border-radius: 0 7px 7px 0;
+  font-size: 0.75rem;
+}
+
+.user-password-dialog-field-error { margin: 0.28rem 0 0; color: #b91c1c; font-size: 0.7rem; }
+
+.user-password-dialog-meter {
+  height: 3px;
+  margin-top: 0.38rem;
+  overflow: hidden;
+  background: #e2e8f0;
+}
+
+.user-password-dialog-meter > span { display: block; height: 100%; width: 0; background: #94a3b8; transition: width 180ms ease, background-color 180ms ease; }
+.user-password-dialog-meter > span[data-level="weak"] { background: #dc2626; }
+.user-password-dialog-meter > span[data-level="medium"] { background: #d97706; }
+.user-password-dialog-meter > span[data-level="strong"],
+.user-password-dialog-meter > span[data-level="very-strong"] { background: #16a34a; }
+
+.user-password-dialog-rules {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.45rem 1.1rem;
+  margin: 0.65rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.user-password-dialog-rules li,
+#user-password-dialog-match {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  color: #64748b;
+  font-size: 0.68rem;
+  line-height: 1.3;
+}
+
+.user-password-dialog-rules li i,
+#user-password-dialog-match i { width: 0.75rem; flex: 0 0 0.75rem; font-size: 0.62rem; }
+.user-password-dialog-rules li[data-complete="true"],
+#user-password-dialog-match[data-status="match"] { color: #15803d; }
+#user-password-dialog-match[data-status="mismatch"] { color: #b91c1c; }
+
+.user-password-dialog-confirm-tools {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-top: 0.6rem;
+}
+
+#user-password-dialog-generate {
+  display: inline-flex;
+  height: 30px;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0 0.65rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  background: #ffffff;
+  color: #334155;
+  font-size: 0.68rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+#user-password-dialog-generate:hover { border-color: #aebaca; background: #f3f6f9; }
+
+.user-password-dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  padding: 0.95rem 1.25rem 1.05rem;
+  border-top: 1px solid #e5e7eb;
+}
+
+.user-password-dialog-button {
+  display: inline-flex;
+  height: 34px;
+  align-items: center;
+  justify-content: center;
+  padding: 0 0.85rem;
+  border: 1px solid transparent;
+  border-radius: 7px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.user-password-dialog-button:active { transform: translateY(1px); }
+.user-password-dialog-cancel { border-color: #cbd5e1; background: #ffffff; color: #1f2f46; }
+.user-password-dialog-cancel:hover { background: #f3f6f9; }
+.user-password-dialog-save { border-color: #611132; background: #611132; color: #ffffff; }
+.user-password-dialog-save:hover { border-color: #4a0e26; background: #4a0e26; }
+.user-password-dialog-save:disabled { cursor: wait; opacity: 0.65; }
+
+@media (max-width: 639px) {
+  .user-password-dialog { align-items: flex-end; padding: 0; }
+  .user-password-dialog-card { max-height: calc(100dvh - 1rem); border-radius: 7px 7px 0 0; }
+  .user-password-dialog-rules { grid-template-columns: 1fr; }
+  .user-password-dialog-confirm-tools { align-items: flex-start; flex-direction: column; }
+  .user-password-dialog-actions { flex-direction: column-reverse; }
+  .user-password-dialog-button { width: 100%; height: 40px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .user-password-dialog-overlay,
+  .user-password-dialog-card { transition-duration: 1ms !important; }
+  .user-password-dialog-card,
+  .user-password-dialog.is-closing .user-password-dialog-card { transform: none; }
 }

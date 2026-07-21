@@ -409,9 +409,14 @@ document.addEventListener('DOMContentLoaded', function() {
         // Botón Eliminar (Rojo)
         const botonEliminar = document.querySelector('.eliminar-reporte');
         if (botonEliminar) {
-            botonEliminar.addEventListener('click', function() {
-                // Confirmación antes de eliminar
-                const confirmar = confirm('¿Estás seguro de que deseas eliminar este reporte de alcoholimetría? Esta acción no se puede deshacer.');
+            botonEliminar.addEventListener('click', async function() {
+                const confirmar = typeof window.confirmDeleteDialog === 'function'
+                    ? await window.confirmDeleteDialog({
+                        title: 'Eliminar reporte',
+                        subject: 'este reporte de alcoholimetría',
+                        description: 'El reporte dejará de estar disponible de forma permanente.'
+                    })
+                    : false;
                 
                 if (confirmar) {
                     // Aquí iría la lógica para eliminar el reporte

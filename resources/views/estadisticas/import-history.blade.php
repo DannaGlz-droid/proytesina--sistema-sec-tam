@@ -300,14 +300,6 @@ document.addEventListener('DOMContentLoaded', function () {
         console[type === 'error' ? 'error' : 'log'](message);
     }
 
-    async function confirmImportAction(options) {
-        if (typeof window.confirmDialog === 'function') {
-            return window.confirmDialog(options);
-        }
-
-        return window.confirm(options.message || 'Confirma la accion para continuar.');
-    }
-
     function importsLoadingRow() {
         return `
             <tr class="app-table-loading-row">
@@ -533,12 +525,11 @@ document.addEventListener('DOMContentLoaded', function () {
             return;
         }
 
-        const confirmed = await confirmImportAction({
+        const confirmed = await window.confirmDeleteDialog({
             title: 'Eliminar historial',
-            message: 'Se quitarán ' + ids.length + ' importación' + (ids.length === 1 ? '' : 'es') + ' del historial. Solo se permite cuando ya fueron revertidas o no dejaron registros importados.',
+            subject: ids.length + ' importación' + (ids.length === 1 ? '' : 'es') + ' del historial',
+            description: 'Solo pueden eliminarse importaciones revertidas o que no dejaron registros importados.',
             confirmText: 'Eliminar historial',
-            cancelText: 'Cancelar',
-            variant: 'danger'
         });
 
         if (!confirmed) return;
@@ -1032,9 +1023,10 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     window.reverseImport = async function(importId) {
-        const confirmed = await confirmImportAction({
+        const confirmed = await window.confirmDialog({
             title: 'Revertir importación',
-            message: 'Se eliminarán los registros creados por esta importación. Esta acción no se puede deshacer.',
+            question: '¿Deseas revertir esta importación?',
+            description: 'Los registros creados por la importación se eliminarán de forma permanente.',
             confirmText: 'Revertir',
             cancelText: 'Cancelar',
             variant: 'warning'
@@ -1069,12 +1061,11 @@ document.addEventListener('DOMContentLoaded', function () {
     };
 
     window.deleteImport = async function(importId) {
-        const confirmed = await confirmImportAction({
+        const confirmed = await window.confirmDeleteDialog({
             title: 'Eliminar historial',
-            message: 'Se quitará este registro del historial. Solo se permite si la importación ya fue revertida o no dejó registros importados.',
+            subject: 'este registro del historial',
+            description: 'Solo puede eliminarse si la importación fue revertida o no dejó registros importados.',
             confirmText: 'Eliminar historial',
-            cancelText: 'Cancelar',
-            variant: 'danger'
         });
 
         if (!confirmed) return;
