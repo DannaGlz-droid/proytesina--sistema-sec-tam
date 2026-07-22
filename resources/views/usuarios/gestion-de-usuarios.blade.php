@@ -1,26 +1,24 @@
 @extends('layouts.principal')
-@section('title', 'Gestión de Usuarios')
+@section('title', 'Gestión de usuarios')
 @section('content')
 
     @include('components.header-admin')
     @include('components.nav-usuario')
 
     <div class="users-management-page px-4 lg:pl-10 pt-5 lg:pt-7 pb-8 lg:pb-10">
-        <!-- HEADER CON TÍTULO Y BOTÓN -->
-        <div class="flex flex-col lg:flex-row lg:justify-between lg:items-center gap-4 mb-6">
-            <div>
-                <h1 class="app-page-title">Gestión de Usuarios</h1>
-                <p class="app-page-subtitle">
-                    Administre y gestione todos los usuarios del sistema con permisos y roles específicos.
-                </p>
-            </div>
-            
-            <!-- BOTÓN CREAR USUARIO -->
-                <a href="{{ route('user.create') }}" class="users-page-create-btn" title="Crear Usuario">
-                <i class="fas fa-plus text-xs"></i>
-                Crear Usuario
+        <x-ui.page-header
+            class="users-management-header"
+            title="Gestión de usuarios"
+            description="Administre y gestione todos los usuarios del sistema con permisos y roles específicos."
+        >
+            <x-slot:actions>
+                <a href="{{ route('user.create') }}" class="users-page-create-btn" title="Crear usuario">
+                    <i class="fas fa-plus text-xs" aria-hidden="true"></i>
+                    Crear usuario
                 </a>
-            </div>
+            </x-slot:actions>
+        </x-ui.page-header>
+
                 <div class="space-y-4">
                     <div class="min-w-0">
                         <!-- Custom controls wrapper styled like the site -->
@@ -29,69 +27,17 @@
                             <div class="app-table-toolbar flex flex-row flex-wrap items-center justify-between gap-3 p-4">
                                 <x-filtros.usuarios :positions="$positions" :districts="$districts" :roles="$roles" />
 
-                                <div class="users-toolbar-right hidden items-center gap-3">
-                                    <div class="app-table-page-size">
-                                        <select id="unused-dt-per-page" class="users-native-page-size" aria-hidden="true" tabindex="-1">
-                                            <option value="10">10</option>
-                                            <option value="25" selected>25</option>
-                                            <option value="50">50</option>
-                                            <option value="100">100</option>
-                                        </select>
-                                        <div class="users-page-size-dropdown">
-                                            <button id="unused-dt-per-page-button" type="button" class="users-page-size-button" aria-haspopup="listbox" aria-expanded="false">
-                                                <span>Mostrar</span>
-                                                <strong id="unused-dt-per-page-label">25</strong>
-                                                <i class="fas fa-chevron-down" aria-hidden="true"></i>
-                                            </button>
-                                            <div id="unused-dt-per-page-menu" class="users-page-size-menu hidden" role="listbox" aria-labelledby="unused-dt-per-page-button">
-                                                <button type="button" role="option" class="users-page-size-option" data-value="10">10</button>
-                                                <button type="button" role="option" class="users-page-size-option is-active" data-value="25">25</button>
-                                                <button type="button" role="option" class="users-page-size-option" data-value="50">50</button>
-                                                <button type="button" role="option" class="users-page-size-option" data-value="100">100</button>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="relative hidden">
-                                        <div class="absolute inset-y-0 start-0 flex items-center ps-3 pointer-events-none">
-                                            <i class="fas fa-search text-gray-400" style="font-size:0.7rem"></i>
-                                        </div>
-                                        <input type="text" id="unused-dt-search-users" class="users-search-input" placeholder="Buscar usuarios...">
-                                        <div class="absolute inset-y-0 end-0 flex items-center pe-1.5">
-                                            <button type="button" id="unused-dt-clear-btn" class="dt-action-btn hidden" title="Limpiar búsqueda" style="width:1.5rem;height:1.5rem">
-                                                <i class="fas fa-times" style="font-size:0.6rem"></i>
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-
                                 <!-- Bulk selection bar (JS moves this after the toolbar) -->
                                 <div id="bulk-selection-bar" class="app-table-bulk-inline hidden items-center gap-3">
                                     <div class="flex items-center gap-2">
                                         <span class="app-table-selection-marker"></span>
-                                        <span id="bulk-selected-count" class="app-table-selection-count text-xs font-lora whitespace-nowrap"></span>
+                                        <span id="bulk-selected-count" class="app-table-selection-count text-xs whitespace-nowrap"></span>
                                     </div>
-                                    <span class="hidden xl:inline text-xs font-lora text-gray-500">En esta pagina</span>
-                                    <button id="clear-selected-users" type="button" class="hidden text-xs font-semibold font-lora text-slate-600 hover:underline whitespace-nowrap" title="Quitar selección">
+                                    <span class="hidden xl:inline text-xs text-gray-500">En esta página</span>
+                                    <button id="clear-selected-users" type="button" class="hidden text-xs font-semibold text-slate-600 hover:underline whitespace-nowrap" title="Quitar selección">
                                         Quitar selección
                                     </button>
-                                    <button id="bulk-delete-users" type="button" class="app-table-bulk-danger items-center gap-2" title="Eliminar seleccionados" style="display: none;">
-                                        <i class="fas fa-trash text-xs"></i>
-                                        <span>Eliminar</span>
-                                    </button>
-                                </div>
-                            </div>
-
-                            <div id="unused-bulk-selection-bar-bottom" class="hidden mx-4 mb-3 rounded-lg border border-[#ead5dd] bg-[#fbf7f9] px-3 py-2 items-center justify-between gap-3 shadow-sm">
-                                <div class="flex items-center gap-2 min-w-0">
-                                    <span class="w-2 h-2 rounded-full bg-slate-500 flex-shrink-0"></span>
-                                    <span id="unused-bulk-selected-count-bottom" class="text-xs font-lora font-semibold text-[#404041] whitespace-nowrap"></span>
-                                    <span class="hidden sm:inline text-xs font-lora text-gray-500">Seleccionados en esta página</span>
-                                </div>
-                                <div class="flex items-center gap-2">
-                                    <button id="unused-clear-selected-users-bottom" type="button" class="hidden text-xs font-semibold font-lora text-slate-600 hover:underline whitespace-nowrap" title="Quitar selección">
-                                        Quitar selección
-                                    </button>
-                                    <button id="unused-bulk-delete-users-bottom" type="button" class="bg-slate-700 text-white px-3 py-1.5 rounded-md text-xs font-semibold hover:bg-slate-800 transition-all duration-300 font-lora items-center gap-2 whitespace-nowrap shadow-sm" title="Eliminar seleccionados" style="display: none;">
+                                    <button id="bulk-delete-users" type="button" class="app-table-bulk-danger hidden items-center gap-2" title="Eliminar seleccionados">
                                         <i class="fas fa-trash text-xs"></i>
                                         <span>Eliminar</span>
                                     </button>
@@ -103,22 +49,22 @@
                         <table id="users-table" class="app-data-table min-w-full w-full text-sm text-left text-gray-500">
                             <thead class="text-xs">
                                 <tr>
-                                    <th scope="col" class="px-4 py-2 font-lora whitespace-nowrap text-xs" data-orderable="false"></th>
-                                    <th scope="col" class="dt-checkbox-cell px-3 py-2 font-lora whitespace-nowrap text-xs text-center"><input id="select-all-users" type="checkbox" /></th>
-                                    <th scope="col" class="px-3 py-2 font-lora whitespace-nowrap text-xs">ID</th>
-                                    <th scope="col" class="px-3 py-2 font-lora whitespace-nowrap text-xs">Usuario</th>
-                                    <th scope="col" class="px-3 py-2 font-lora whitespace-nowrap text-xs">Nombre(s)</th>
-                                    <th scope="col" class="px-3 py-2 font-lora whitespace-nowrap text-xs">Apellido paterno</th>
-                                    <th scope="col" class="px-3 py-2 font-lora whitespace-nowrap text-xs">Apellido materno</th>
-                                    <th scope="col" class="px-3 py-2 font-lora whitespace-nowrap text-xs">Correo</th>
-                                    <th scope="col" class="px-3 py-2 font-lora whitespace-nowrap text-xs">Teléfono</th>
-                                    <th scope="col" class="px-3 py-2 font-lora whitespace-nowrap text-xs">Cargo</th>
-                                    <th scope="col" class="px-3 py-2 font-lora whitespace-nowrap text-xs">Distrito</th>
-                                    <th scope="col" class="px-3 py-3 font-lora whitespace-nowrap text-xs">Fecha alta</th>
-                                    <th scope="col" class="px-3 py-2 font-lora whitespace-nowrap text-xs">Rol</th>
-                                    <th scope="col" class="px-3 py-2 font-lora whitespace-nowrap text-xs">Estado</th>
-                                    <th scope="col" class="px-3 py-2 font-lora whitespace-nowrap text-xs">Últ. sesión</th>
-                                    <th scope="col" class="px-3 py-2 font-lora whitespace-nowrap text-xs text-center" data-orderable="false">
+                                    <th scope="col" class="px-4 py-2 whitespace-nowrap text-xs" data-orderable="false"></th>
+                                    <th scope="col" class="dt-checkbox-cell px-3 py-2 whitespace-nowrap text-xs text-center"><input id="select-all-users" type="checkbox" /></th>
+                                    <th scope="col" class="px-3 py-2 whitespace-nowrap text-xs">ID</th>
+                                    <th scope="col" class="px-3 py-2 whitespace-nowrap text-xs">Usuario</th>
+                                    <th scope="col" class="px-3 py-2 whitespace-nowrap text-xs">Nombre(s)</th>
+                                    <th scope="col" class="px-3 py-2 whitespace-nowrap text-xs">Apellido paterno</th>
+                                    <th scope="col" class="px-3 py-2 whitespace-nowrap text-xs">Apellido materno</th>
+                                    <th scope="col" class="px-3 py-2 whitespace-nowrap text-xs">Correo</th>
+                                    <th scope="col" class="px-3 py-2 whitespace-nowrap text-xs">Teléfono</th>
+                                    <th scope="col" class="px-3 py-2 whitespace-nowrap text-xs">Cargo</th>
+                                    <th scope="col" class="px-3 py-2 whitespace-nowrap text-xs">Distrito</th>
+                                    <th scope="col" class="px-3 py-3 whitespace-nowrap text-xs">Fecha alta</th>
+                                    <th scope="col" class="px-3 py-2 whitespace-nowrap text-xs">Rol</th>
+                                    <th scope="col" class="px-3 py-2 whitespace-nowrap text-xs">Estado</th>
+                                    <th scope="col" class="px-3 py-2 whitespace-nowrap text-xs">Últ. sesión</th>
+                                    <th scope="col" class="px-3 py-2 whitespace-nowrap text-xs text-center" data-orderable="false">
                                         <span class="sr-only">Acciones</span>
                                     </th>
                                 </tr>
@@ -131,134 +77,83 @@
 
                             <!-- Custom pagination styled like the site -->
                             <nav class="users-table-footer flex flex-row flex-wrap items-center justify-between gap-3 p-4 border-t border-gray-100">
-                                <span class="text-sm font-normal text-gray-500 font-lora flex-1 min-w-0 is-loading" id="dt-info">
+                                <span class="text-sm font-normal text-gray-500 flex-1 min-w-0 is-loading" id="dt-info">
                                     Preparando tabla
                                 </span>
                                 <div id="dt-pagination" class="flex-none"></div>
                             </nav>
                         </div>
+                        <script>
+                            (function restoreUsersTableSnapshot() {
+                                const snapshotKey = 'sistema-sec-tam.users-table-snapshot.v1.{{ auth()->id() }}';
+                                const dataCacheKey = 'sistema-sec-tam.users-table-data.v1.{{ auth()->id() }}';
+                                const restoreIntentKey = 'sistema-sec-tam.users-table-restore-intent.v1';
+
+                                try {
+                                    window.shouldRestoreUsersTableState = false;
+                                    const restoreIntent = JSON.parse(sessionStorage.getItem(restoreIntentKey) || 'null');
+                                    sessionStorage.removeItem(restoreIntentKey);
+
+                                    @if(session('invalidate_users_table_cache'))
+                                        sessionStorage.removeItem(snapshotKey);
+                                        sessionStorage.removeItem(dataCacheKey);
+                                        return;
+                                    @endif
+
+                                    const currentTarget = `${window.location.pathname}${window.location.search}`;
+                                    const shouldRestore = restoreIntent
+                                        && Number.isFinite(restoreIntent.createdAt)
+                                        && Date.now() - restoreIntent.createdAt <= 30 * 1000
+                                        && restoreIntent.target === currentTarget;
+
+                                    window.shouldRestoreUsersTableState = Boolean(shouldRestore);
+                                    if (!shouldRestore) return;
+
+                                    const snapshot = JSON.parse(sessionStorage.getItem(snapshotKey) || 'null');
+                                    const card = document.querySelector('.users-table-card');
+                                    const isValid = snapshot
+                                        && Number.isFinite(snapshot.savedAt)
+                                        && Date.now() - snapshot.savedAt <= 5 * 60 * 1000
+                                        && typeof snapshot.html === 'string'
+                                        && snapshot.html.length > 0
+                                        && card;
+
+                                    if (!isValid) {
+                                        sessionStorage.removeItem(snapshotKey);
+                                        return;
+                                    }
+
+                                    const template = document.createElement('template');
+                                    template.innerHTML = snapshot.html;
+                                    template.content.querySelectorAll('[id]').forEach((element) => element.removeAttribute('id'));
+                                    template.content.querySelectorAll('a, button, input, select, textarea').forEach((element) => {
+                                        element.setAttribute('tabindex', '-1');
+                                        element.setAttribute('aria-hidden', 'true');
+                                    });
+
+                                    const overlay = document.createElement('div');
+                                    overlay.id = 'users-table-restore-snapshot';
+                                    overlay.className = 'users-table-restore-snapshot';
+                                    overlay.setAttribute('aria-hidden', 'true');
+                                    overlay.appendChild(template.content);
+                                    card.style.minHeight = `${Math.max(Number(snapshot.height) || 0, card.offsetHeight)}px`;
+                                    card.appendChild(overlay);
+                                    window.usersTableSnapshotFallback = window.setTimeout(() => {
+                                        overlay.remove();
+                                        card.style.removeProperty('min-height');
+                                    }, 8000);
+                                } catch (error) {
+                                    window.shouldRestoreUsersTableState = false;
+                                    try { sessionStorage.removeItem(snapshotKey); } catch (storageError) {}
+                                }
+                            })();
+                        </script>
                 </div>
             </div>
         </div>
     </div>
 
     @include('components.user-password-dialog')
-
-    <!-- AGREGAR FONT AWESOME -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-
-    <style>
-        #users-table.dataTable thead th { cursor: pointer; }
-        #users-table.dataTable tbody td.dt-username-cell,
-        #users-table.dataTable tbody td.dt-email-cell,
-        #users-table.dataTable tbody td.dt-district-cell,
-        #users-table.dataTable tbody td.dt-name-cell {
-            line-height: 1.25;
-        }
-        #users-table.dataTable tbody td.dt-username-cell {
-            padding-right: 0.9rem;
-            color: #111827;
-            font-weight: 600;
-        }
-        #users-table.dataTable tbody td.dt-email-cell {
-            padding-right: 0.75rem;
-        }
-        #users-table.dataTable tbody td.dt-role-cell {
-            white-space: nowrap;
-            overflow: visible;
-        }
-        #users-table.dataTable tbody td.dt-phone-cell,
-        #users-table.dataTable tbody td.dt-status-cell,
-        #users-table.dataTable tbody td.dt-last-session-cell {
-            white-space: nowrap;
-            overflow-wrap: normal;
-        }
-        .dt-session-badge {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            min-height: 1.5rem;
-            padding: 0.25rem 0.55rem;
-            border-radius: 0.25rem;
-            font-size: 0.6875rem;
-            line-height: 1;
-            white-space: nowrap;
-        }
-        .dt-session-online {
-            border: 1px solid #bbf7d0;
-            background: #ecfdf5;
-            color: #047857;
-            font-weight: 600;
-        }
-        .dt-session-away {
-            border: 1px dashed #cbd5e1;
-            background: #f8fafc;
-            color: #475569;
-        }
-        .dt-session-empty {
-            border: 1px solid #e5e7eb;
-            background: #f3f4f6;
-            color: #475569;
-        }
-        #users-table.dataTable thead th.sorting:after,
-        #users-table.dataTable thead th.sorting_asc:after,
-        #users-table.dataTable thead th.sorting_desc:after {
-            opacity: 0.5;
-            font-family: 'Font Awesome 6 Free';
-            font-weight: 900;
-        }
-        .dt-details-toggle {
-            width: 1.3rem;
-            height: 1.3rem;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 0.25rem;
-            color: #6b7280;
-            transition: background-color .15s ease, color .15s ease, transform .15s ease;
-        }
-        .dt-details-toggle:hover {
-            background: #f3f4f6;
-            color: #475569;
-        }
-        .dt-details-toggle i {
-            font-size: 0.7rem;
-            transition: transform .15s ease;
-        }
-        tr.dt-details-open .dt-details-toggle i {
-            transform: rotate(90deg);
-        }
-        #users-table tbody tr.child-row td {
-            background: #fbfcfd;
-            padding: 0;
-            border-bottom: 1px solid #e5e7eb;
-        }
-        .dt-user-details {
-            display: grid;
-            grid-template-columns: repeat(5, minmax(0, 1fr));
-            gap: 0.55rem 1rem;
-            padding: 0.7rem 1rem 0.85rem 4.35rem;
-            font-family: 'Lora', serif;
-        }
-        .dt-user-details dt {
-            font-size: 0.68rem;
-            font-weight: 700;
-            color: #6b7280;
-            text-transform: uppercase;
-            margin-bottom: 0.18rem;
-        }
-        .dt-user-details dd {
-            font-size: 0.78rem;
-            color: #374151;
-            line-height: 1.25;
-            overflow-wrap: anywhere;
-        }
-        @media (max-width: 1280px) {
-            .dt-user-details {
-                grid-template-columns: repeat(3, minmax(0, 1fr));
-            }
-        }
-    </style>
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
@@ -454,6 +349,93 @@
                 });
             });
 
+            const usersTableDataCacheKey = 'sistema-sec-tam.users-table-data.v1.{{ auth()->id() }}';
+            const usersTableSnapshotKey = 'sistema-sec-tam.users-table-snapshot.v1.{{ auth()->id() }}';
+            const usersTableDataCacheTtl = 5 * 60 * 1000;
+
+            @if(session('invalidate_users_table_cache'))
+                try { sessionStorage.removeItem(usersTableDataCacheKey); } catch (e) {}
+            @endif
+
+            function readUsersTableDataCache() {
+                try {
+                    const cached = JSON.parse(sessionStorage.getItem(usersTableDataCacheKey) || 'null');
+                    const isValid = cached
+                        && Number.isFinite(cached.savedAt)
+                        && Date.now() - cached.savedAt <= usersTableDataCacheTtl
+                        && Number.isInteger(cached.cacheLower)
+                        && Number.isInteger(cached.cacheUpper)
+                        && cached.cacheLastRequest
+                        && cached.cacheLastJson
+                        && Array.isArray(cached.cacheLastJson.data);
+
+                    if (isValid) return cached;
+                    sessionStorage.removeItem(usersTableDataCacheKey);
+                } catch (e) {
+                    try { sessionStorage.removeItem(usersTableDataCacheKey); } catch (storageError) {}
+                }
+
+                return null;
+            }
+
+            function saveUsersTableDataCache(cacheLower, cacheUpper, cacheLastRequest, cacheLastJson) {
+                try {
+                    sessionStorage.setItem(usersTableDataCacheKey, JSON.stringify({
+                        savedAt: Date.now(),
+                        cacheLower,
+                        cacheUpper,
+                        cacheLastRequest,
+                        cacheLastJson
+                    }));
+                } catch (e) {
+                    // The in-memory pipeline still works if session storage is unavailable or full.
+                }
+            }
+
+            function removeUsersTableRestoreSnapshot() {
+                window.clearTimeout(window.usersTableSnapshotFallback);
+                document.getElementById('users-table-restore-snapshot')?.remove();
+                document.querySelector('.users-table-card')?.style.removeProperty('min-height');
+            }
+
+            function saveUsersTableRenderSnapshot() {
+                const card = document.querySelector('.users-table-card');
+                if (!card || document.getElementById('users-table-restore-snapshot')) return;
+
+                try {
+                    const clone = card.cloneNode(true);
+                    const sourceControls = card.querySelectorAll('input, select, textarea');
+                    const clonedControls = clone.querySelectorAll('input, select, textarea');
+
+                    sourceControls.forEach((source, index) => {
+                        const target = clonedControls[index];
+                        if (!target) return;
+
+                        if (source.matches('input[type="checkbox"], input[type="radio"]')) {
+                            target.toggleAttribute('checked', source.checked);
+                            return;
+                        }
+
+                        if (source.tagName === 'SELECT') {
+                            Array.from(target.options).forEach((option, optionIndex) => {
+                                option.toggleAttribute('selected', source.options[optionIndex]?.selected === true);
+                            });
+                            return;
+                        }
+
+                        target.setAttribute('value', source.value);
+                    });
+
+                    sessionStorage.setItem(usersTableSnapshotKey, JSON.stringify({
+                        savedAt: Date.now(),
+                        height: card.offsetHeight,
+                        html: clone.outerHTML
+                    }));
+                } catch (e) {
+                    // The data cache still avoids network waiting if the visual snapshot cannot be stored.
+                }
+            }
+
             function usersPipeline(opts) {
                 const conf = $.extend({
                     pages: 4,
@@ -462,10 +444,14 @@
                     data: null
                 }, opts);
 
-                let cacheLower = -1;
-                let cacheUpper = null;
-                let cacheLastRequest = null;
-                let cacheLastJson = null;
+                const persistedCache = window.shouldRestoreUsersTableState
+                    ? readUsersTableDataCache()
+                    : null;
+                let cacheLower = persistedCache?.cacheLower ?? -1;
+                let cacheUpper = persistedCache?.cacheUpper ?? null;
+                let cacheLastRequest = persistedCache?.cacheLastRequest ?? null;
+                let cacheLastJson = persistedCache?.cacheLastJson ?? null;
+                let revalidatePersistedCache = Boolean(persistedCache);
 
                 return function(request, drawCallback, settings) {
                     let ajax = false;
@@ -499,6 +485,8 @@
                     cacheLastRequest = $.extend(true, {}, requestSignature);
 
                     if (ajax) {
+                        revalidatePersistedCache = false;
+
                         if (requestStart < cacheLower) {
                             requestStart = requestStart - (requestLength * (conf.pages - 1));
                             if (requestStart < 0) requestStart = 0;
@@ -519,6 +507,7 @@
                             dataType: 'json',
                             success: function(json) {
                                 cacheLastJson = $.extend(true, {}, json);
+                                saveUsersTableDataCache(cacheLower, cacheUpper, cacheLastRequest, cacheLastJson);
 
                                 if (cacheLower !== drawStart) {
                                     json.data.splice(0, drawStart - cacheLower);
@@ -531,7 +520,7 @@
                             },
                             error: function(xhr, error, thrown) {
                                 console.error('DataTables AJAX error:', error, thrown);
-                                notifyUser('No se pudieron cargar los usuarios. Intenta nuevamente.', 'error');
+                                renderUsersTableState('error');
                                 usersTableCard.removeClass('is-refreshing');
                             }
                         });
@@ -542,6 +531,34 @@
                     json.data.splice(0, requestStart - cacheLower);
                     json.data.splice(requestLength, json.data.length);
                     drawCallback(json);
+
+                    if (revalidatePersistedCache) {
+                        revalidatePersistedCache = false;
+                        const backgroundLower = cacheLower;
+                        const backgroundUpper = cacheUpper;
+                        const backgroundSignature = $.extend(true, {}, cacheLastRequest);
+                        const backgroundRequest = $.extend(true, {}, requestWithFilters, {
+                            start: backgroundLower,
+                            length: backgroundUpper - backgroundLower
+                        });
+
+                        $.ajax({
+                            type: conf.method,
+                            url: conf.url,
+                            data: backgroundRequest,
+                            dataType: 'json',
+                            success: function(freshJson) {
+                                if (cacheLower !== backgroundLower
+                                    || cacheUpper !== backgroundUpper
+                                    || JSON.stringify(cacheLastRequest) !== JSON.stringify(backgroundSignature)) {
+                                    return;
+                                }
+
+                                cacheLastJson = $.extend(true, {}, freshJson);
+                                saveUsersTableDataCache(backgroundLower, backgroundUpper, backgroundSignature, cacheLastJson);
+                            }
+                        });
+                    }
                 };
             }
 
@@ -610,7 +627,7 @@
             }
 
             let usersSearchPending = false;
-            const usersTableCard = $('.users-table-card');
+            const usersTableCard = $('.users-table-card').first();
             $('#users-table').on('preXhr.dt', function() {
                 if (!usersSearchPending) {
                     usersTableCard.addClass('is-refreshing');
@@ -621,6 +638,7 @@
             });
 
             const usersTablePrefsKey = 'sistema-sec-tam.users-table-prefs';
+            const usersTableContextKey = 'sistema-sec-tam.users-table-context';
 
             function readUsersTablePrefs() {
                 try {
@@ -642,16 +660,76 @@
                 }
             }
 
+            function readUsersTableContext() {
+                try {
+                    return JSON.parse(sessionStorage.getItem(usersTableContextKey) || '{}');
+                } catch (e) {
+                    return {};
+                }
+            }
+
+            function currentUsersFilters() {
+                const values = {};
+                if (!filtersForm) return values;
+
+                $(filtersForm).serializeArray().forEach(function(item) {
+                    values[item.name] = item.value;
+                });
+
+                return values;
+            }
+
+            function restoreUsersFilters(values) {
+                if (!values || typeof values !== 'object') return;
+                Object.entries(values).forEach(function([name, value]) {
+                    setFilterValue(name, value);
+                });
+            }
+
+            function saveUsersTableContext(api) {
+                try {
+                    const info = api.page.info();
+                    sessionStorage.setItem(usersTableContextKey, JSON.stringify({
+                        page: info.page,
+                        pageLength: info.length,
+                        search: api.search(),
+                        order: api.order(),
+                        filters: currentUsersFilters()
+                    }));
+                } catch (e) {
+                    // Session storage is an enhancement; navigation still works without it.
+                }
+            }
+
             const usersTablePrefs = readUsersTablePrefs();
-            const initialPageLength = [10, 25, 50, 100].includes(Number(usersTablePrefs.pageLength))
-                ? Number(usersTablePrefs.pageLength)
+            const usersTableContext = readUsersTableContext();
+            restoreUsersFilters(usersTableContext.filters);
+
+            const initialPageLength = [10, 25, 50, 100].includes(Number(usersTableContext.pageLength))
+                ? Number(usersTableContext.pageLength)
+                : [10, 25, 50, 100].includes(Number(usersTablePrefs.pageLength))
+                    ? Number(usersTablePrefs.pageLength)
                 : 25;
-            const initialOrder = Array.isArray(usersTablePrefs.order)
-                && usersTablePrefs.order.length
-                && Number.isInteger(Number(usersTablePrefs.order[0]?.[0]))
-                && ['asc', 'desc'].includes(String(usersTablePrefs.order[0]?.[1]).toLowerCase())
-                    ? [[Number(usersTablePrefs.order[0][0]), String(usersTablePrefs.order[0][1]).toLowerCase()]]
+            const savedOrder = Array.isArray(usersTableContext.order) && usersTableContext.order.length
+                ? usersTableContext.order
+                : usersTablePrefs.order;
+            const initialOrder = Array.isArray(savedOrder)
+                && savedOrder.length
+                && Number.isInteger(Number(savedOrder[0]?.[0]))
+                && ['asc', 'desc'].includes(String(savedOrder[0]?.[1]).toLowerCase())
+                    ? [[Number(savedOrder[0][0]), String(savedOrder[0][1]).toLowerCase()]]
                     : [[11, 'desc']];
+            const initialPage = Number.isInteger(Number(usersTableContext.page)) && Number(usersTableContext.page) >= 0
+                ? Number(usersTableContext.page)
+                : 0;
+            const initialSearch = typeof usersTableContext.search === 'string'
+                ? usersTableContext.search
+                : '';
+
+            $('#users-table').one('init.dt', function() {
+                removeUsersTableRestoreSnapshot();
+                window.requestAnimationFrame(saveUsersTableRenderSnapshot);
+            });
 
             // Initialize DataTables with server-side processing
             const table = $('#users-table').DataTable({
@@ -664,6 +742,8 @@
                 lengthChange: false, // Disable DataTables length (use custom)
                 dom: 't', // Only show table
                 responsive: false,
+                displayStart: initialPage * initialPageLength,
+                search: { search: initialSearch },
                 ajax: usersPipeline({
                     url: '{{ route('user.datatable') }}',
                     method: 'POST',
@@ -714,15 +794,17 @@
                 // registration_date is column index 11 (details + checkbox + hidden id included).
                 order: initialOrder,
                 language: {
-                    emptyTable: 'No se encontraron registros coincidentes',
-                    loadingRecords: '<span class="app-table-loading-inline users-initial-loading-inline"><span>Cargando datos</span><span class="inline-flex items-center gap-1" aria-hidden="true"><span class="app-table-loading-dot"></span><span class="app-table-loading-dot"></span><span class="app-table-loading-dot"></span></span></span>',
+                    emptyTable: 'No hay usuarios registrados',
+                    loadingRecords: '<div class="users-table-skeleton" role="status" aria-label="Cargando usuarios"><span class="sr-only">Cargando usuarios</span><div></div><div></div><div></div><div></div><div></div></div>',
                     processing: 'Procesando...',
-                    zeroRecords: 'No se encontraron registros coincidentes'
+                    zeroRecords: 'No hay resultados para los criterios seleccionados'
                 },
                 drawCallback: function(settings) {
                     updateEmptyState(this.api());
                     updateCustomInfo(this.api());
                     updateCustomPagination(this.api());
+                    saveUsersTableContext(this.api());
+                    window.requestAnimationFrame(saveUsersTableRenderSnapshot);
                     try {
                         clearVisibleUserSelection();
                     } catch (e) {
@@ -752,6 +834,8 @@
 
             // Custom search functionality
             const usersSearchWrap = $('.users-filter-search');
+            $('#dt-search-users').val(initialSearch);
+            $('#dt-clear-btn').toggleClass('hidden', !initialSearch);
 
             $('#dt-search-users').on('keyup', function(e) {
                 const val = $(this).val();
@@ -818,6 +902,10 @@
                     const isOpen = !perPageMenu.classList.contains('hidden');
                     perPageMenu.classList.toggle('hidden', isOpen);
                     perPageButton.setAttribute('aria-expanded', isOpen ? 'false' : 'true');
+                    if (!isOpen) {
+                        const activeOption = perPageMenu.querySelector('[aria-selected="true"]') || perPageOptions[0];
+                        window.requestAnimationFrame(() => activeOption?.focus());
+                    }
                 });
 
                 perPageOptions.forEach(option => {
@@ -838,8 +926,22 @@
                 });
 
                 document.addEventListener('keydown', function(e) {
-                    if (e.key === 'Escape') {
+                    if (e.key === 'Escape' && !perPageMenu.classList.contains('hidden')) {
                         closePerPageMenu();
+                        perPageButton.focus();
+                        return;
+                    }
+
+                    if (!perPageMenu.classList.contains('hidden') && ['ArrowDown', 'ArrowUp', 'Home', 'End'].includes(e.key)) {
+                        e.preventDefault();
+                        const options = Array.from(perPageOptions);
+                        const currentIndex = Math.max(0, options.indexOf(document.activeElement));
+                        const nextIndex = e.key === 'Home'
+                            ? 0
+                            : e.key === 'End'
+                                ? options.length - 1
+                                : (currentIndex + (e.key === 'ArrowDown' ? 1 : -1) + options.length) % options.length;
+                        options[nextIndex]?.focus();
                     }
                 });
             }
@@ -883,7 +985,10 @@
 
             document.addEventListener('keydown', function(e) {
                 if (e.key === 'Escape') {
+                    const openMenu = document.querySelector('.users-row-menu:not(.hidden)');
+                    const trigger = openMenu?.closest('.users-row-actions')?.querySelector('.users-row-menu-button');
                     closeUserActionMenus();
+                    trigger?.focus();
                 }
             });
 
@@ -933,13 +1038,13 @@
 
                 if (hasSelection) {
                     $('#bulk-selection-bar').removeClass('hidden').addClass('flex');
-                    $('#bulk-delete-users').css('display', 'flex');
+                    $('#bulk-delete-users').removeClass('hidden').addClass('flex');
                     $('#clear-selected-users').removeClass('hidden');
                     $('#bulk-selected-count')
                         .text(checkedCount + ' seleccionado' + (checkedCount === 1 ? '' : 's'));
                 } else {
                     $('#bulk-selection-bar').addClass('hidden').removeClass('flex');
-                    $('#bulk-delete-users').css('display', 'none');
+                    $('#bulk-delete-users').addClass('hidden').removeClass('flex');
                     $('#clear-selected-users').addClass('hidden');
                     $('#bulk-selected-count').text('');
                 }
@@ -952,11 +1057,58 @@
 
             function updateEmptyState(api) {
                 const info = api.page.info();
-                const tbody = $('#users-table tbody');
                 if (info.recordsDisplay === 0) {
-                    tbody.html('<tr class="users-empty-row"><td colspan="16" class="text-center py-4 text-gray-500">No se encontraron registros coincidentes</td></tr>');
+                    renderUsersTableState(info.recordsTotal === 0 ? 'empty' : 'no-results');
                 }
             }
+
+            function renderUsersTableState(kind) {
+                const states = {
+                    empty: {
+                        icon: 'far fa-user',
+                        title: 'Aún no hay usuarios',
+                        message: 'Crea el primer usuario para comenzar a gestionar accesos y permisos.',
+                        action: '<a class="users-table-state-action" href="{{ route('user.create') }}">Crear usuario</a>'
+                    },
+                    'no-results': {
+                        icon: 'fas fa-search',
+                        title: 'No encontramos resultados',
+                        message: 'Prueba con otra búsqueda o elimina los filtros aplicados.',
+                        action: '<button class="users-table-state-action" type="button" data-clear-users-state>Limpiar búsqueda y filtros</button>'
+                    },
+                    error: {
+                        icon: 'fas fa-exclamation-circle',
+                        title: 'No pudimos cargar los usuarios',
+                        message: 'Revisa tu conexión e inténtalo nuevamente.',
+                        action: '<button class="users-table-state-action" type="button" data-retry-users-table>Reintentar</button>'
+                    }
+                };
+                const state = states[kind] || states.error;
+                $('#users-table tbody').html(`
+                    <tr class="users-table-state-row">
+                        <td colspan="16">
+                            <div class="users-table-state users-table-state--${kind}" role="${kind === 'error' ? 'alert' : 'status'}">
+                                <i class="${state.icon}" aria-hidden="true"></i>
+                                <strong>${state.title}</strong>
+                                <span>${state.message}</span>
+                                ${state.action}
+                            </div>
+                        </td>
+                    </tr>
+                `);
+                $('#dt-info').removeClass('is-loading').text(kind === 'error' ? 'Carga interrumpida' : '0 usuarios');
+                $('#dt-pagination').empty();
+            }
+
+            $('#users-table tbody').on('click', '[data-retry-users-table]', function() {
+                table.clearPipeline().ajax.reload();
+            });
+
+            $('#users-table tbody').on('click', '[data-clear-users-state]', function() {
+                $('#dt-search-users').val('');
+                table.search('');
+                $('#clearUsersFilters').trigger('click');
+            });
 
             $('#bulk-delete-users').on('click', async function() {
                 const ids = [];
@@ -1203,9 +1355,10 @@
             });
 
             $(document).on('keydown', function(e) {
-                if (e.key === 'Escape') {
+                if (e.key === 'Escape' && !$('#usersFilterPanel').hasClass('is-collapsed')) {
                     $('#usersFilterPanel').addClass('is-collapsed');
                     $('#usersFilterToggle').attr('aria-expanded', 'false');
+                    $('#usersFilterToggle').trigger('focus');
                 }
             });
 

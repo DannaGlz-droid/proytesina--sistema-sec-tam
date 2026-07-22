@@ -781,6 +781,36 @@
 
 /* Modern table skin for dense administrative screens. */
 :root {
+	--ui-text: #10233f;
+	--ui-text-secondary: #526278;
+	--ui-text-muted: #64748b;
+	--ui-border: #cbd5e1;
+	--ui-border-soft: #dbe3ec;
+	--ui-border-strong: var(--ui-border);
+	--ui-surface: #ffffff;
+	--ui-surface-soft: #f8fafc;
+	--ui-surface-section: #f3f4f6;
+	--ui-surface-hover: #f1f5f9;
+	--ui-focus: #475569;
+	--ui-focus-ring: rgba(71, 85, 105, 0.18);
+	--ui-success: #16a34a;
+	--ui-success-text: #166534;
+	--ui-success-soft: #f0fdf4;
+	--ui-success-border: #bbf7d0;
+	--ui-warning: #d97706;
+	--ui-warning-text: #92400e;
+	--ui-danger: #dc2626;
+	--ui-danger-text: #b91c1c;
+	--ui-info: #2563eb;
+	--ui-info-text: #1d4ed8;
+	--ui-required: var(--ui-danger);
+	--ui-radius-control: 7px;
+	--ui-radius-panel: 10px;
+	--brand-primary: #611132;
+	--brand-primary-hover: #4a0e26;
+	--brand-primary-soft: #f8f1f4;
+	--brand-shell-secondary: #3a0b1f;
+	--brand-on-primary: #ffffff;
 	--table-ink: #1f2937;
 	--table-muted: #667085;
 	--table-line: #d9e2ec;
@@ -793,6 +823,14 @@
 	--table-accent: #475569;
 	--table-accent-soft: #f1f5f9;
 	--table-shadow: 0 22px 48px rgba(31, 41, 55, 0.12), 0 1px 2px rgba(31, 41, 55, 0.06);
+}
+
+[data-ui-theme="tamaulipas-salud"] {
+	--brand-primary: #611132;
+	--brand-primary-hover: #4a0e26;
+	--brand-primary-soft: #f8f1f4;
+	--brand-shell-secondary: #3a0b1f;
+	--brand-on-primary: #ffffff;
 }
 
 .app-table-card,
@@ -1515,6 +1553,12 @@
 	color: #94a3b8;
 }
 
+.users-filter-search input[type="search"]::-webkit-search-cancel-button,
+.users-filter-search input[type="search"]::-webkit-search-decoration {
+	display: none;
+	-webkit-appearance: none;
+}
+
 .users-filter-search button {
 	position: absolute;
 	right: 0.45rem;
@@ -2165,6 +2209,7 @@
 .users-row-menu-item {
 	display: flex;
 	align-items: center;
+	gap: 0.55rem;
 	width: 100%;
 	min-height: 2.35rem;
 	padding: 0 0.85rem;
@@ -2189,6 +2234,30 @@
 
 .users-row-menu-item-muted {
 	color: #475569 !important;
+}
+
+.users-row-menu-icon {
+	flex: 0 0 0.9rem;
+	width: 0.9rem;
+	color: #64748b;
+	font-size: 0.72rem;
+	text-align: center;
+}
+
+.users-row-menu-item:hover .users-row-menu-icon,
+.users-row-menu-item:focus-visible .users-row-menu-icon {
+	color: currentColor;
+}
+
+.users-row-menu-item-danger,
+.users-row-menu-item-danger .users-row-menu-icon {
+	color: #b91c1c !important;
+}
+
+.users-row-menu-item-danger:hover,
+.users-row-menu-item-danger:focus-visible {
+	background: #fef2f2 !important;
+	color: #991b1b !important;
 }
 
 .users-table-card #users-table tbody .dt-date-cell,
@@ -3030,6 +3099,128 @@
 
 .users-table-card .dt-user-details {
 	padding: 1rem 1rem 1.1rem 5.35rem;
+}
+
+/* User table details and session indicators live with the shared pilot styles. */
+.users-management-page #users-table.dataTable thead th {
+	cursor: pointer;
+}
+
+.users-management-page #users-table.dataTable tbody td.dt-username-cell,
+.users-management-page #users-table.dataTable tbody td.dt-email-cell,
+.users-management-page #users-table.dataTable tbody td.dt-district-cell,
+.users-management-page #users-table.dataTable tbody td.dt-name-cell {
+	line-height: 1.25;
+}
+
+.users-management-page #users-table.dataTable tbody td.dt-username-cell {
+	padding-right: 0.9rem;
+	color: var(--ui-text);
+	font-weight: 600;
+}
+
+.users-management-page #users-table.dataTable tbody td.dt-email-cell {
+	padding-right: 0.75rem;
+}
+
+.users-management-page #users-table.dataTable tbody td.dt-role-cell,
+.users-management-page #users-table.dataTable tbody td.dt-phone-cell,
+.users-management-page #users-table.dataTable tbody td.dt-status-cell,
+.users-management-page #users-table.dataTable tbody td.dt-last-session-cell {
+	white-space: nowrap;
+	overflow-wrap: normal;
+}
+
+.users-management-page #users-table.dataTable tbody td.dt-role-cell {
+	overflow: visible;
+}
+
+.users-management-page .dt-session-badge {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	min-height: 1.5rem;
+	padding: 0.25rem 0.55rem;
+	line-height: 1;
+	white-space: nowrap;
+}
+
+.users-management-page .dt-session-online {
+	border: 1px solid var(--ui-success-border);
+	background: var(--ui-success-soft);
+	color: var(--ui-success);
+	font-weight: 600;
+}
+
+.users-management-page .dt-session-away {
+	border: 1px dashed var(--ui-border);
+	background: var(--ui-surface-soft);
+	color: var(--ui-text-secondary);
+}
+
+.users-management-page .dt-session-empty {
+	border: 1px solid var(--ui-border-soft);
+	background: var(--ui-surface-section);
+	color: var(--ui-text-secondary);
+}
+
+.users-management-page #users-table.dataTable thead th.sorting::after,
+.users-management-page #users-table.dataTable thead th.sorting_asc::after,
+.users-management-page #users-table.dataTable thead th.sorting_desc::after {
+	opacity: 0.5;
+	font-family: "Font Awesome 6 Free";
+	font-weight: 900;
+}
+
+.users-management-page .dt-details-toggle {
+	width: 1.3rem;
+	height: 1.3rem;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	color: var(--ui-text-muted);
+	transition: background-color 150ms ease, color 150ms ease, transform 150ms ease;
+}
+
+.users-management-page .dt-details-toggle i {
+	font-size: 0.7rem;
+	transition: transform 150ms ease;
+}
+
+.users-management-page tr.dt-details-open .dt-details-toggle i {
+	transform: rotate(90deg);
+}
+
+.users-management-page #users-table tbody tr.child-row td {
+	padding: 0;
+}
+
+.users-management-page .dt-user-details {
+	display: grid;
+	grid-template-columns: repeat(5, minmax(0, 1fr));
+	gap: 0.55rem 1rem;
+	font-family: "Open Sans", system-ui, sans-serif;
+}
+
+.users-management-page .dt-user-details dt {
+	margin-bottom: 0.18rem;
+	color: var(--ui-text-muted);
+	font-size: 0.68rem;
+	font-weight: 700;
+	text-transform: uppercase;
+}
+
+.users-management-page .dt-user-details dd {
+	color: var(--ui-text-secondary);
+	font-size: 0.78rem;
+	line-height: 1.25;
+	overflow-wrap: anywhere;
+}
+
+@media (max-width: 1280px) {
+	.users-management-page .dt-user-details {
+		grid-template-columns: repeat(3, minmax(0, 1fr));
+	}
 }
 
 /* Flowbite-style joined pagination */
@@ -4149,11 +4340,11 @@
 	border-color: #d5dde7 !important;
 }
 
-/* Search focus should match the base: blue border only, no outer halo. */
+/* Search focus uses the same neutral system as forms, selects and dialogs. */
 .users-management-page .users-table-card > .app-table-toolbar .users-filter-search:focus-within {
-	background: #f8fafc !important;
-	border-color: #2563eb !important;
-	box-shadow: none !important;
+	background: #ffffff !important;
+	border-color: var(--users-focus) !important;
+	box-shadow: 0 0 0 2px var(--users-focus-ring) !important;
 	outline: none !important;
 }
 
@@ -4163,6 +4354,25 @@
 }
 
 /* Keep current rows visible while server-side pagination/filter data refreshes. */
+.users-management-page .users-table-card {
+	position: relative;
+}
+
+.users-management-page .users-table-restore-snapshot {
+	position: absolute;
+	inset: 0 0 auto;
+	z-index: 20;
+	width: 100%;
+	background: #ffffff;
+	pointer-events: none;
+}
+
+.users-management-page .users-table-restore-snapshot > .users-table-card {
+	border: 0 !important;
+	border-radius: inherit !important;
+	box-shadow: none !important;
+}
+
 .users-management-page .users-table-card #users-table tbody {
 	transition: opacity 120ms ease;
 }
@@ -4965,6 +5175,8 @@
 /* Institutional accent for the users table controls.
    Keep it scoped here so future government color changes are easy. */
 .users-management-page {
+	--users-focus: #475569;
+	--users-focus-ring: rgba(71, 85, 105, 0.18);
 	--users-accent: #611132;
 	--users-accent-hover: #4a0e26;
 	--users-accent-soft: #f8f1f4;
@@ -5564,6 +5776,7 @@ Legacy fallback kept inert; the visible search loader uses .users-search-progres
 	--users-border-strong: #cbd5e1;
 	--users-surface-soft: #f8fafc;
 	--users-surface-hover: #f3f6f9;
+	--users-option-active: #e9eef4;
 	--users-text: #0f1f35;
 	--users-muted: #5f6d82;
 	color: var(--users-text);
@@ -5709,7 +5922,7 @@ Legacy fallback kept inert; the visible search loader uses .users-search-progres
 
 .users-form-page .relative button[type="button"]:hover {
 	background: transparent !important;
-	color: var(--users-accent) !important;
+	color: #334155 !important;
 }
 
 .users-form-page .ts-wrapper {
@@ -5836,28 +6049,26 @@ Legacy fallback kept inert; the visible search loader uses .users-search-progres
 	transition: background-color 0.12s ease, border-color 0.12s ease, color 0.12s ease, box-shadow 0.12s ease !important;
 }
 
-.users-form-page .users-form-actions a,
-.users-form-page .users-form-actions button:not(:last-child) {
+.users-form-page .users-form-actions > .ui-button--secondary {
 	border-color: var(--users-border-strong) !important;
 	background: #ffffff !important;
 	box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03);
 	color: #33435a !important;
 }
 
-.users-form-page .users-form-actions a:hover,
-.users-form-page .users-form-actions button:not(:last-child):hover {
+.users-form-page .users-form-actions > .ui-button--secondary:hover {
 	background: #eef2f6 !important;
 	color: var(--users-text) !important;
 }
 
-.users-form-page .users-form-actions button:last-child {
+.users-form-page .users-form-actions > .ui-button--primary {
 	border: 1px solid var(--users-accent) !important;
 	background: var(--users-accent) !important;
 	box-shadow: 0 1px 2px rgba(97, 17, 50, 0.14);
 	color: #ffffff !important;
 }
 
-.users-form-page .users-form-actions button:last-child:hover {
+.users-form-page .users-form-actions > .ui-button--primary:hover {
 	border-color: var(--users-accent-hover) !important;
 	background: var(--users-accent-hover) !important;
 }
@@ -6267,27 +6478,25 @@ Legacy fallback kept inert; the visible search loader uses .users-search-progres
 	transition: background-color 0.12s ease, border-color 0.12s ease, color 0.12s ease !important;
 }
 
-.users-form-page .users-form-actions > a,
-.users-form-page .users-form-actions > button:not([type="submit"]) {
+.users-form-page .users-form-actions > .ui-button--secondary {
 	border: 1px solid var(--users-border-strong) !important;
 	background: #ffffff !important;
 	color: #1f2f46 !important;
 }
 
-.users-form-page .users-form-actions > a:hover,
-.users-form-page .users-form-actions > button:not([type="submit"]):hover {
+.users-form-page .users-form-actions > .ui-button--secondary:hover {
 	border-color: #bdc8d5 !important;
 	background: #f3f6f9 !important;
 	color: var(--users-text) !important;
 }
 
-.users-form-page .users-form-actions > button[type="submit"] {
+.users-form-page .users-form-actions > .ui-button--primary {
 	border: 1px solid var(--users-accent) !important;
 	background: var(--users-accent) !important;
 	color: #ffffff !important;
 }
 
-.users-form-page .users-form-actions > button[type="submit"]:hover {
+.users-form-page .users-form-actions > .ui-button--primary:hover {
 	border-color: var(--users-accent-hover) !important;
 	background: var(--users-accent-hover) !important;
 }
@@ -7325,7 +7534,8 @@ Legacy fallback kept inert; the visible search loader uses .users-search-progres
   transition: color 0.16s ease;
 }
 
-.users-form-page .users-password-compact-requirements li ion-icon {
+.users-form-page .users-password-compact-requirements li ion-icon,
+.users-form-page .users-password-compact-requirements li i {
   flex: 0 0 auto;
   color: #94a3b8;
   font-size: 0.8rem;
@@ -7336,7 +7546,8 @@ Legacy fallback kept inert; the visible search loader uses .users-search-progres
   color: #166534;
 }
 
-.users-form-page .users-password-compact-requirements li[data-complete="true"] ion-icon {
+.users-form-page .users-password-compact-requirements li[data-complete="true"] ion-icon,
+.users-form-page .users-password-compact-requirements li[data-complete="true"] i {
   color: #16a34a;
 }
 
@@ -7425,7 +7636,8 @@ Legacy fallback kept inert; the visible search loader uses .users-search-progres
   transition: color 0.16s ease;
 }
 
-.users-form-page #password-match-status ion-icon {
+.users-form-page #password-match-status ion-icon,
+.users-form-page #password-match-status i {
   flex: 0 0 auto;
   color: #94a3b8;
   font-size: 0.82rem;
@@ -7436,7 +7648,8 @@ Legacy fallback kept inert; the visible search loader uses .users-search-progres
   color: #166534;
 }
 
-.users-form-page #password-match-status[data-status="match"] ion-icon {
+.users-form-page #password-match-status[data-status="match"] ion-icon,
+.users-form-page #password-match-status[data-status="match"] i {
   color: #16a34a;
 }
 
@@ -7444,7 +7657,8 @@ Legacy fallback kept inert; the visible search loader uses .users-search-progres
   color: #b91c1c;
 }
 
-.users-form-page #password-match-status[data-status="mismatch"] ion-icon {
+.users-form-page #password-match-status[data-status="mismatch"] ion-icon,
+.users-form-page #password-match-status[data-status="mismatch"] i {
   color: #dc2626;
 }
 
@@ -7538,10 +7752,34 @@ Legacy fallback kept inert; the visible search loader uses .users-search-progres
   box-shadow: 0 0 0 2px var(--users-form-focus-ring) !important;
 }
 
-.users-form-page .users-form-card form .ts-dropdown .option.active,
 .users-form-page .users-form-card form .ts-dropdown .option.selected {
-  background: #f1f5f9 !important;
-  color: #0f1f35 !important;
+  background: var(--users-surface-soft) !important;
+  color: var(--users-text) !important;
+  font-weight: 600 !important;
+}
+
+.users-form-page .users-form-card form .ts-dropdown .option.active {
+  background: var(--users-option-active) !important;
+  color: var(--users-text) !important;
+}
+
+/* Keep form dropdowns above subsequent sections and outside the card bounds. */
+.users-form-page .users-form-card {
+  overflow: visible !important;
+}
+
+.users-form-page .users-form-section {
+  position: relative;
+  z-index: 0;
+}
+
+.users-form-page .users-form-section:has(.ts-wrapper.dropdown-active) {
+  z-index: 80;
+}
+
+.users-form-page .users-form-card form .ts-wrapper.dropdown-active,
+.users-form-page .users-form-card form .ts-wrapper .ts-dropdown {
+  z-index: 80 !important;
 }
 
 .users-form-page button[onclick^="togglePassword"]:hover {
@@ -7591,6 +7829,193 @@ Legacy fallback kept inert; the visible search loader uses .users-search-progres
   border-radius: 3px;
   outline: 2px solid var(--users-form-focus);
   outline-offset: 3px;
+}
+
+/* Pilot foundation: shared tokens and one authoritative form geometry. */
+.users-form-page {
+  width: 100%;
+  max-width: 1440px;
+  margin-inline: auto;
+  --users-accent: var(--brand-primary);
+  --users-accent-hover: var(--brand-primary-hover);
+  --users-accent-soft: var(--brand-primary-soft);
+  --users-border: var(--ui-border-soft);
+  --users-border-strong: var(--ui-border);
+  --users-surface-soft: var(--ui-surface-soft);
+  --users-surface-hover: var(--ui-surface-hover);
+  --users-text: var(--ui-text);
+  --users-muted: var(--ui-text-muted);
+  --users-form-focus: var(--ui-focus);
+  --users-form-focus-ring: var(--ui-focus-ring);
+}
+
+.users-form-page .users-form-card {
+  width: 100%;
+  max-width: 1440px !important;
+  margin-inline: auto;
+}
+
+.users-form-page .users-form-section-header > i {
+  flex: 0 0 auto;
+  width: 1rem;
+  margin-right: 0 !important;
+  color: #31445d !important;
+  font-size: 0.82rem !important;
+  text-align: center;
+}
+
+.users-form-page .users-form-section-rule {
+  background: var(--ui-border-strong);
+}
+
+.users-form-page .users-form-back-link > i {
+  flex: 0 0 auto;
+  font-size: 0.78rem;
+  transition: transform 0.16s ease;
+}
+
+.users-form-page .users-form-back-link:hover > i {
+  transform: translateX(-2px);
+}
+
+.users-form-page label span.text-red-600 {
+  color: var(--ui-required) !important;
+}
+
+.users-form-page [aria-invalid="true"]:not([type="checkbox"]):not([type="radio"]),
+.users-form-page .ts-wrapper:has(select[aria-invalid="true"]) .ts-control {
+  border-color: var(--ui-danger) !important;
+}
+
+.users-form-page [aria-invalid="true"]:focus,
+.users-form-page .ts-wrapper:has(select[aria-invalid="true"]).focus .ts-control {
+  box-shadow: 0 0 0 2px rgba(185, 28, 28, 0.14) !important;
+}
+
+.app-toast-container {
+  width: min(25rem, calc(100vw - 2rem));
+}
+
+.app-toast {
+  font-family: "Open Sans", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  animation: appToastEnter 0.24s ease-out both;
+}
+
+.app-toast.is-leaving {
+  animation: appToastExit 0.22s ease-in both;
+}
+
+@keyframes appToastEnter {
+  from { opacity: 0; transform: translate3d(18px, 6px, 0) scale(0.98); }
+  to { opacity: 1; transform: translate3d(0, 0, 0) scale(1); }
+}
+
+@keyframes appToastExit {
+  to { opacity: 0; transform: translate3d(18px, 0, 0) scale(0.98); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .app-toast,
+  .app-toast.is-leaving {
+    animation-duration: 0.01ms;
+  }
+}
+
+.users-table-skeleton {
+  display: grid;
+  gap: 0.7rem;
+  width: 100%;
+  padding: 0.8rem 1rem;
+}
+
+.users-table-skeleton > div {
+  height: 1.75rem;
+  border-radius: 6px;
+  background: linear-gradient(90deg, #eef2f6 25%, #f8fafc 45%, #eef2f6 65%);
+  background-size: 240% 100%;
+  animation: usersSkeletonPulse 1.15s ease-in-out infinite;
+}
+
+.users-table-state-row > td {
+  padding: 0 !important;
+}
+
+.users-table-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 13rem;
+  padding: 2rem 1rem;
+  color: var(--ui-text-muted);
+  font-family: "Open Sans", system-ui, sans-serif;
+  text-align: center;
+}
+
+.users-table-state > i {
+  margin-bottom: 0.7rem;
+  color: #718096;
+  font-size: 1.15rem;
+}
+
+.users-table-state--error > i {
+  color: var(--ui-danger);
+}
+
+.users-table-state--error {
+  min-height: 9.5rem;
+  border-block: 1px solid #fecaca;
+  background: #fef2f2;
+}
+
+.users-table-state > strong {
+  margin-bottom: 0.28rem;
+  color: var(--ui-text);
+  font-size: 0.94rem;
+  font-weight: 600;
+}
+
+.users-table-state > span {
+  max-width: 31rem;
+  font-size: 0.8rem;
+  line-height: 1.5;
+}
+
+.users-table-state-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2.15rem;
+  margin-top: 1rem;
+  padding: 0.42rem 0.85rem;
+  border: 1px solid var(--ui-border-strong);
+  border-radius: var(--ui-radius-control);
+  background: var(--ui-surface);
+  color: var(--ui-text);
+  font-size: 0.78rem;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.users-table-state-action:hover {
+  border-color: #94a3b8;
+  background: var(--ui-surface-soft);
+}
+
+.users-table-state-action:focus-visible {
+  outline: 2px solid var(--ui-focus);
+  outline-offset: 2px;
+}
+
+@keyframes usersSkeletonPulse {
+  from { background-position: 100% 0; }
+  to { background-position: -100% 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .users-table-skeleton > div {
+    animation: none;
+  }
 }
 
 .users-form-page .users-generate-password-icon {
@@ -7722,7 +8147,7 @@ Legacy fallback kept inert; the visible search loader uses .users-search-progres
 }
 
 .confirm-dialog-button-secondary:focus-visible {
-  outline: 2px solid #475569;
+  outline: 2px solid var(--ui-focus);
   outline-offset: 2px;
 }
 
@@ -7812,7 +8237,7 @@ Legacy fallback kept inert; the visible search loader uses .users-search-progres
 }
 
 .user-password-dialog-card {
-  max-width: 33.75rem;
+  max-width: 30rem;
   max-height: calc(100dvh - 2rem);
   overflow: auto;
   border: 1px solid #d8dee8;
@@ -7854,8 +8279,43 @@ Legacy fallback kept inert; the visible search loader uses .users-search-progres
   line-height: 1.45;
 }
 
-.user-password-dialog-close,
-.user-password-dialog-visibility {
+.app-password-visibility {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  min-width: 2.5rem;
+  height: 100%;
+  border: 0;
+  background: transparent;
+  color: #718096;
+  font-size: 0.875rem;
+  line-height: 1;
+  cursor: pointer;
+  transition: color 150ms ease, background-color 150ms ease;
+}
+
+.users-form-page .app-password-visibility,
+.user-password-dialog .app-password-visibility {
+  width: 2.5rem !important;
+  min-width: 2.5rem !important;
+  background: transparent !important;
+  color: #718096 !important;
+}
+
+.users-form-page .app-password-visibility:hover,
+.user-password-dialog .app-password-visibility:hover {
+  background: transparent !important;
+  color: #334155 !important;
+}
+
+.app-password-visibility:focus-visible {
+  border-radius: 6px;
+  outline: 2px solid #64748b;
+  outline-offset: -4px;
+}
+
+.user-password-dialog-close {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -7872,24 +8332,22 @@ Legacy fallback kept inert; the visible search loader uses .users-search-progres
   font-size: 0.75rem;
 }
 
-.user-password-dialog-close:hover,
-.user-password-dialog-visibility:hover { background: #f3f6f9; color: #10233f; }
+.user-password-dialog-close:hover { background: #f3f6f9; color: #10233f; }
 
 .user-password-dialog-close:focus-visible,
-.user-password-dialog-visibility:focus-visible,
 #user-password-dialog-generate:focus-visible,
 .user-password-dialog-button:focus-visible {
-  outline: 2px solid #475569;
+  outline: 2px solid var(--ui-focus);
   outline-offset: 2px;
 }
 
-.user-password-dialog-body { padding: 1.15rem 1.25rem 1.3rem; }
+.user-password-dialog-body { padding: 1rem 1.25rem 1.15rem; }
 
 .user-password-dialog-account {
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  margin-bottom: 1.25rem;
+  margin-bottom: 1rem;
   padding: 0.7rem 0.8rem;
   border: 1px solid #e2e8f0;
   background: #f6f8fa;
@@ -7933,21 +8391,32 @@ Legacy fallback kept inert; the visible search loader uses .users-search-progres
   line-height: 1.4;
 }
 
-.user-password-dialog-field + .user-password-dialog-field { margin-top: 1.2rem; }
-.user-password-dialog-label-row { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; }
+.user-password-dialog-field + .user-password-dialog-field { margin-top: 1rem; }
+.user-password-dialog-label-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.4rem;
+}
 
 .user-password-dialog-field label {
   display: block;
   margin-bottom: 0.32rem;
   color: #10233f;
   font-size: 0.75rem;
-  font-weight: 600;
+  font-weight: 700;
 }
 
-.user-password-dialog-field label > span { color: #dc2626; }
+.user-password-dialog-field .user-password-dialog-label-row label { margin-bottom: 0; }
+
+.user-password-dialog-field label > span { color: var(--ui-required); }
 
 #user-password-dialog-strength {
-  padding: 0.12rem 0.45rem;
+  display: inline-flex;
+  min-height: 1.25rem;
+  align-items: center;
+  padding: 0.12rem 0.48rem;
   border: 1px solid #d8dee8;
   border-radius: 999px;
   background: #f8fafc;
@@ -7966,8 +8435,8 @@ Legacy fallback kept inert; the visible search loader uses .users-search-progres
 
 .user-password-dialog-input-wrap input {
   width: 100%;
-  height: 40px;
-  padding: 0 2.6rem 0 0.75rem;
+  height: 34px;
+  padding: 0 2.3rem 0 0.72rem;
   border: 1px solid #cbd5e1;
   border-radius: 7px;
   background: #ffffff;
@@ -7977,14 +8446,13 @@ Legacy fallback kept inert; the visible search loader uses .users-search-progres
 }
 
 .user-password-dialog-input-wrap input::placeholder { color: #8190a5; }
-.user-password-dialog-input-wrap input:focus { border-color: #64748b; box-shadow: 0 0 0 2px rgba(100, 116, 139, 0.16); outline: none; }
+.user-password-dialog-input-wrap input:focus { border-color: var(--ui-focus); box-shadow: 0 0 0 2px var(--ui-focus-ring); outline: none; }
 
 .user-password-dialog-visibility {
   position: absolute;
   inset: 0 0 0 auto;
   width: 2.5rem;
   border-radius: 0 7px 7px 0;
-  font-size: 0.75rem;
 }
 
 .user-password-dialog-field-error { margin: 0.28rem 0 0; color: #b91c1c; font-size: 0.7rem; }
@@ -8037,7 +8505,7 @@ Legacy fallback kept inert; the visible search loader uses .users-search-progres
 
 #user-password-dialog-generate {
   display: inline-flex;
-  height: 30px;
+  height: 34px;
   align-items: center;
   gap: 0.4rem;
   padding: 0 0.65rem;
@@ -8045,7 +8513,7 @@ Legacy fallback kept inert; the visible search loader uses .users-search-progres
   border-radius: 6px;
   background: #ffffff;
   color: #334155;
-  font-size: 0.68rem;
+  font-size: 0.72rem;
   font-weight: 600;
   white-space: nowrap;
 }
@@ -8075,13 +8543,15 @@ Legacy fallback kept inert; the visible search loader uses .users-search-progres
 .user-password-dialog-button:active { transform: translateY(1px); }
 .user-password-dialog-cancel { border-color: #cbd5e1; background: #ffffff; color: #1f2f46; }
 .user-password-dialog-cancel:hover { background: #f3f6f9; }
-.user-password-dialog-save { border-color: #611132; background: #611132; color: #ffffff; }
-.user-password-dialog-save:hover { border-color: #4a0e26; background: #4a0e26; }
+.user-password-dialog-save { border-color: var(--brand-primary); background: var(--brand-primary); color: var(--brand-on-primary); }
+.user-password-dialog-save:hover { border-color: var(--brand-primary-hover); background: var(--brand-primary-hover); }
 .user-password-dialog-save:disabled { cursor: wait; opacity: 0.65; }
 
 @media (max-width: 639px) {
   .user-password-dialog { align-items: flex-end; padding: 0; }
   .user-password-dialog-card { max-height: calc(100dvh - 1rem); border-radius: 7px 7px 0 0; }
+  .user-password-dialog-input-wrap input { height: 40px; padding-right: 2.6rem; }
+  .user-password-dialog-visibility { width: 2.5rem; }
   .user-password-dialog-rules { grid-template-columns: 1fr; }
   .user-password-dialog-confirm-tools { align-items: flex-start; flex-direction: column; }
   .user-password-dialog-actions { flex-direction: column-reverse; }
@@ -8093,4 +8563,91 @@ Legacy fallback kept inert; the visible search loader uses .users-search-progres
   .user-password-dialog-card { transition-duration: 1ms !important; }
   .user-password-dialog-card,
   .user-password-dialog.is-closing .user-password-dialog-card { transform: none; }
+}
+
+/* Shared action component. Variants are explicit; order never determines meaning. */
+.ui-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  min-height: 2.2rem;
+  padding: 0.48rem 0.95rem;
+  border: 1px solid transparent;
+  border-radius: var(--ui-radius-control);
+  font-family: "Open Sans", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-size: 0.78rem;
+  font-weight: 600;
+  line-height: 1.15;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: background-color 0.14s ease, border-color 0.14s ease, color 0.14s ease, box-shadow 0.14s ease;
+}
+
+.ui-button--secondary {
+  border-color: var(--ui-border);
+  background: var(--ui-surface);
+  color: var(--ui-text);
+}
+
+.ui-button--secondary:hover {
+  border-color: #94a3b8;
+  background: var(--ui-surface-soft);
+}
+
+.ui-button--primary {
+  border-color: var(--brand-primary);
+  background: var(--brand-primary);
+  color: var(--brand-on-primary);
+}
+
+.ui-button--primary:hover {
+  border-color: var(--brand-primary-hover);
+  background: var(--brand-primary-hover);
+}
+
+.ui-button:focus-visible {
+  outline: 2px solid var(--ui-focus);
+  outline-offset: 2px;
+}
+
+.ui-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.58;
+}
+
+.app-page-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.app-page-header-actions {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.users-management-header {
+  margin-bottom: 1.5rem;
+}
+
+@media (max-width: 639px) {
+  .app-page-header {
+    flex-direction: column;
+  }
+
+  .app-page-header-actions {
+    align-self: stretch;
+  }
+
+  .app-page-header-actions > * {
+    width: 100%;
+  }
+
+  .users-form-actions .ui-button {
+    width: 100%;
+  }
 }

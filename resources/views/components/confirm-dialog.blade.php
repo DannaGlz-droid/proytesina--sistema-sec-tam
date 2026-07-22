@@ -49,10 +49,10 @@
                 focusColor: 'rgba(35, 122, 59, 0.28)'
             },
             neutral: {
-                iconColor: '#611132',
+                iconColor: 'var(--brand-primary)',
                 icon: 'fas fa-question-circle',
-                buttonBg: '#611132',
-                buttonHover: '#4A0E26',
+                buttonBg: 'var(--brand-primary)',
+                buttonHover: 'var(--brand-primary-hover)',
                 focusColor: 'rgba(97, 17, 50, 0.30)'
             }
         };

@@ -531,7 +531,9 @@ class UserController extends Controller
          User::create($data);
 
          // Redirect to the user index (management) route
-         return redirect()->route('user.user-gestion')->with('success', 'Usuario creado.');
+         return redirect()->route('user.user-gestion')
+             ->with('success', 'Usuario creado.')
+             ->with('invalidate_users_table_cache', true);
     }
 
     public function edit(User $user)
@@ -565,7 +567,9 @@ class UserController extends Controller
             $user->forceFill(['remember_token' => null])->save();
         }
 
-        return redirect()->route('user.user-gestion')->with('success', 'Usuario actualizado.');
+        return redirect()->route('user.user-gestion')
+            ->with('success', 'Usuario actualizado.')
+            ->with('invalidate_users_table_cache', true);
 
     }
 
@@ -575,16 +579,12 @@ class UserController extends Controller
     }
 
     /**
-     * Show the password update form for a given user.
-     * If no user is provided, use the currently authenticated user.
+     * Keep the former password URL as a safe fallback.
+     * Password changes are handled from the management table modal.
      */
     public function password(?User $user = null)
     {
-        if (is_null($user)) {
-            $user = auth()->user();
-        }
-
-        return view('usuarios.acciones.actualizar-contrasena', compact('user'));
+        return redirect()->route('user.user-gestion');
     }
 
     /**
@@ -608,7 +608,9 @@ class UserController extends Controller
             ]);
         }
 
-        return redirect()->route('user.user-gestion')->with('success', 'Contraseña actualizada.');
+        return redirect()->route('user.user-gestion')
+            ->with('success', 'Contraseña actualizada.')
+            ->with('invalidate_users_table_cache', true);
     }
 
     public function destroy(Request $request, User $user)
@@ -629,6 +631,8 @@ class UserController extends Controller
             ]);
         }
 
-        return redirect()->route('user.user-gestion')->with('success', 'Usuario eliminado.');
+        return redirect()->route('user.user-gestion')
+            ->with('success', 'Usuario eliminado.')
+            ->with('invalidate_users_table_cache', true);
     }
 }

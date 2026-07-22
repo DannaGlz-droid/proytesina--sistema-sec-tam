@@ -33,8 +33,8 @@
                     </div>
                     <div class="user-password-dialog-input-wrap">
                         <input id="user-password-new" name="password" type="password" required minlength="12" maxlength="255" autocomplete="new-password" placeholder="Ingrese la nueva contraseña">
-                        <button type="button" class="user-password-dialog-visibility" data-password-toggle="user-password-new" aria-label="Mostrar contraseña">
-                            <i class="fas fa-eye" aria-hidden="true"></i>
+                        <button type="button" class="app-password-visibility user-password-dialog-visibility" data-password-toggle="user-password-new" aria-label="Mostrar contraseña" title="Mostrar contraseña">
+                            <i class="far fa-eye" aria-hidden="true"></i>
                         </button>
                     </div>
                     <p class="user-password-dialog-field-error hidden" data-error-for="password"></p>
@@ -53,8 +53,8 @@
                     <label for="user-password-confirm">Confirmar contraseña <span>*</span></label>
                     <div class="user-password-dialog-input-wrap">
                         <input id="user-password-confirm" name="password_confirmation" type="password" required minlength="12" maxlength="255" autocomplete="new-password" placeholder="Confirme la nueva contraseña">
-                        <button type="button" class="user-password-dialog-visibility" data-password-toggle="user-password-confirm" aria-label="Mostrar contraseña">
-                            <i class="fas fa-eye" aria-hidden="true"></i>
+                        <button type="button" class="app-password-visibility user-password-dialog-visibility" data-password-toggle="user-password-confirm" aria-label="Mostrar contraseña" title="Mostrar contraseña">
+                            <i class="far fa-eye" aria-hidden="true"></i>
                         </button>
                     </div>
                     <p class="user-password-dialog-field-error hidden" data-error-for="password_confirmation"></p>
@@ -241,8 +241,10 @@
                 const input = document.getElementById(toggle.dataset.passwordToggle);
                 const visible = input.type === 'text';
                 input.type = visible ? 'password' : 'text';
-                toggle.setAttribute('aria-label', visible ? 'Mostrar contraseña' : 'Ocultar contraseña');
-                toggle.querySelector('i').className = visible ? 'fas fa-eye' : 'fas fa-eye-slash';
+                const accessibleLabel = visible ? 'Mostrar contraseña' : 'Ocultar contraseña';
+                toggle.setAttribute('aria-label', accessibleLabel);
+                toggle.setAttribute('title', accessibleLabel);
+                toggle.querySelector('i').className = visible ? 'far fa-eye' : 'far fa-eye-slash';
                 return;
             }
             if (event.target.closest('#user-password-dialog-generate')) generatePassword();

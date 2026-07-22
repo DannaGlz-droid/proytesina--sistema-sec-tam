@@ -153,6 +153,7 @@ Reglas:
 
 - Listados raíz no llevan enlace de regreso.
 - Altas, ediciones y detalles llevan “← Volver a [nombre del módulo]” encima del título.
+- Al volver desde edición o detalle, los listados restauran durante la sesión la página, búsqueda, filtros, orden y cantidad de filas anteriores.
 - No repetir el regreso en el pie del formulario.
 - Una acción como “Crear usuario” puede ir a la derecha del encabezado.
 - Título y descripción deben usar siempre el componente compartido, no clases locales.
@@ -199,6 +200,10 @@ Excepciones:
 
 - Sin contenedor visual cuando el propósito es regresar o cambiar de sección.
 - Debe incluir texto; una flecha sola no es suficiente.
+- Al regresar sin guardar desde un formulario abierto en un listado, preferir navegación por historial para restaurar inmediatamente la tabla, su página, filtros, búsqueda y datos ya renderizados.
+- Cuando el navegador no conserve la página en memoria, reutilizar un caché de sesión breve del último bloque renderizado y revalidarlo silenciosamente, sin sustituir las filas por un loader.
+- Para evitar cambios de estructura durante la rehidratación al volver desde un formulario, conservar además una instantánea visual inerte del componente de tabla y retirarla en cuanto la tabla real termine su primer render. La instantánea nunca recibe foco ni interacción y no se reutiliza en una recarga explícita (F5) ni en un acceso directo, donde debe mostrarse el estado normal de carga con datos actualizados.
+- Conservar una URL de respaldo para accesos directos o cuando el historial no corresponda al listado esperado. Invalidar el caché después de una mutación y recargar los datos para evitar información obsoleta.
 
 **Peligro**
 
@@ -216,7 +221,9 @@ Excepciones:
 - La familia oficial es **Font Awesome**. Ya es la más utilizada por el sistema y está disponible desde el layout principal.
 - Los iconos apoyan la comprensión; no reemplazan etiquetas importantes.
 - Usar icono en Crear, Filtrar, Buscar, Descargar, menú de acciones y navegación de regreso.
+- En menús de acciones de tabla, usar icono más texto: lápiz para Editar, llave para Cambiar contraseña y papelera para Eliminar. Mantener los iconos alineados en una columna y reservar el rojo únicamente para la opción destructiva.
 - Usar una llave para Generar contraseña; evitar chispas u otros símbolos ambiguos.
+- En campos de contraseña, usar `far fa-eye` y `far fa-eye-slash` con color gris neutro, tamaño visual de 15–16 px y un área transparente de 40 × 40 px. El control debe actualizar `aria-label` y tooltip entre “Mostrar contraseña” y “Ocultar contraseña”; no usar el color institucional.
 - Guardar, Cancelar, Limpiar y Aplicar no necesitan icono si el texto es inequívoco.
 - No mezclar familias dentro de un mismo componente. Los Ionicons existentes se reemplazarán gradualmente al migrar cada pantalla, sin hacer una sustitución global riesgosa.
 - Mantener el mismo grosor visual y tamaño entre iconos equivalentes.
@@ -261,8 +268,13 @@ Estados:
 - Todos los selects visibles de una misma pantalla deben usar el mismo componente.
 - Usar Tom Select para consistencia visual entre navegadores.
 - Habilitar búsqueda cuando haya más de 10 opciones o la lista pueda crecer.
-- Deshabilitar búsqueda en listas cortas como Rol.
+- Deshabilitar búsqueda cuando haya 10 opciones o menos y el catálogo sea estable; activarla aunque la lista sea corta si se prevé un crecimiento considerable.
+- Configuración de los formularios de usuario: Distrito con búsqueda; Cargo, Rol y Estado sin búsqueda.
 - Conservar selección anterior, validación, navegación por teclado y limpieza del formulario.
+- “Seleccione…” funciona únicamente como placeholder; no debe aparecer como una opción elegible dentro del menú.
+- El menú debe mostrarse completo sobre las secciones y acciones siguientes; ningún contenedor del formulario puede recortarlo.
+- Diferenciar sin iconos el valor seleccionado y la opción activa: el seleccionado conserva un fondo neutral muy tenue y peso 600; la opción recorrida por cursor o teclado usa un gris ligeramente más marcado.
+- Si la opción seleccionada también está activa, prevalece el fondo del estado activo y se conserva el peso 600.
 - La opción activa usa azul grisáceo o neutral, no el color institucional.
 
 ### 6.4 Validación
@@ -281,6 +293,15 @@ Estados:
 - El generador debe llenar contraseña y confirmación y usar aleatoriedad criptográfica.
 - Mostrar contraseña es una acción de solo icono con etiqueta accesible.
 - Los estados de seguridad usan colores semánticos, nunca color de marca.
+
+### 6.6 Cambios sin guardar
+
+- Los formularios de edición comparan su estado actual con el estado inicial; abrir la vista sin modificarla nunca genera una advertencia.
+- Al intentar navegar mediante un enlace interno con cambios pendientes, usar el diálogo compartido “Descartar cambios”.
+- Al recargar, cerrar la pestaña o usar la navegación del navegador, usar la advertencia nativa mediante `beforeunload`.
+- Enviar correctamente el formulario no muestra una advertencia de salida.
+- “Restablecer cambios” solicita confirmación únicamente cuando existen cambios y devuelve todos los controles, incluidos los selects enriquecidos, a su valor inicial.
+- Si el usuario devuelve manualmente todos los campos a sus valores iniciales, el formulario deja de considerarse modificado.
 
 ## 7. Tablas y páginas de consulta
 
@@ -316,6 +337,8 @@ Estados:
 ### 7.4 Búsqueda y paginación
 
 - Buscar incluye icono, placeholder específico y botón para limpiar cuando exista texto.
+- Los buscadores de tablas usan `type="search"`, `autocomplete="off"`, no llevan `name` si no se envían con un formulario y desactivan corrección ortográfica y capitalización automática.
+- El foco del buscador usa el mismo borde `--ui-focus` y anillo `--ui-focus-ring` de campos, selects y controles de modal; no usar el azul predeterminado del navegador ni el color institucional.
 - Usar debounce y mostrar actividad sin bloquear la tabla.
 - “Mostrar 10” conserva una sola altura y estilo con el resto de la toolbar.
 - Pie: “Mostrando 1–10 de 40” a la izquierda y paginación a la derecha.

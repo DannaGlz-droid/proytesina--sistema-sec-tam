@@ -1,5 +1,5 @@
 @extends('layouts.principal')
-@section('title', 'Registrar Usuario')
+@section('title', 'Registrar usuario')
 @section('content')
 
     @include('components.header-admin')
@@ -11,91 +11,72 @@
             description="Complete el formulario para registrar un usuario en el sistema."
             :back-href="route('user.user-gestion')"
             back-label="Volver a Gestión de usuarios"
+            :prefer-history-back="true"
         />
 
         <!-- Cuadro del formulario responsive -->
-        <div class="users-form-card border border-[#404041] rounded-lg lg:rounded-xl p-4 lg:p-6 bg-white bg-opacity-95 max-w-7xl shadow-md">
+        <div class="users-form-card">
 
             <form action="{{ route('user.store') }}" method="POST" id="userRegistroForm">
                     
                 @csrf
                     <!-- Sección 1: Información del usuario -->
-                    <div class="users-form-section mb-6 lg:mb-8">
-                        <div class="users-form-section-header flex items-center mb-4">
-                            <ion-icon name="person-outline" class="text-xl lg:text-xl text-[#404041] mr-2"></ion-icon>
-                            <h2 class="text-lg lg:text-xl font-lora font-bold text-[#404041]">Información del usuario</h2>
-                            <div class="flex-1 h-[1px] bg-[#404041] ml-3"></div>
-                        </div>
-                        
-                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-3 lg:gap-4">
+                    <x-ui.form.section title="Información del usuario" icon="user">
                             <div class="space-y-3">
                                 <div>
-                                    <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Nombre(s) <span class="text-red-600">*</span></label>
-                                    <input id="name" name="name" type="text" required minlength="2" maxlength="191"
-                                        class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora" 
+                                    <label for="name" class="block">Nombre(s) <span class="text-red-600">*</span></label>
+                                    <input id="name" name="name" type="text" required minlength="2" maxlength="191" @error('name') aria-invalid="true" aria-describedby="name-error" @enderror
                                         placeholder="Ej: María Elena"
                                         value="{{ old('name') }}">
-                                    @error('name') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
+                                    @error('name') <p id="name-error" class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
                                 </div>
                                 <div>
-                                    <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Apellido materno</label>
-                                    <input id="second_last_name" name="second_last_name" type="text" minlength="2" maxlength="191"
-                                        class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora" 
+                                    <label for="second_last_name" class="block">Apellido materno</label>
+                                    <input id="second_last_name" name="second_last_name" type="text" minlength="2" maxlength="191" @error('second_last_name') aria-invalid="true" aria-describedby="second-last-name-error" @enderror
                                         placeholder="Ej: López"
                                         value="{{ old('second_last_name') }}">
-                                    @error('second_last_name') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
+                                    @error('second_last_name') <p id="second-last-name-error" class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
                                 </div>
                             </div>
                             
                             <div class="space-y-3">
                                 <div>
-                                    <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Apellido paterno <span class="text-red-600">*</span></label>
-                                    <input id="first_last_name" name="first_last_name" type="text" required minlength="2" maxlength="191"
-                                        class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora" 
+                                    <label for="first_last_name" class="block">Apellido paterno <span class="text-red-600">*</span></label>
+                                    <input id="first_last_name" name="first_last_name" type="text" required minlength="2" maxlength="191" @error('first_last_name') aria-invalid="true" aria-describedby="first-last-name-error" @enderror
                                         placeholder="Ej: García"
                                         value="{{ old('first_last_name') }}">
-                                    @error('first_last_name') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
+                                    @error('first_last_name') <p id="first-last-name-error" class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
                                 </div>
                                 <div>
-                                    <div class="grid grid-cols-2 gap-3">
+                                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                         <div>
-                                            <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Correo electrónico <span class="text-red-600">*</span></label>
-                                            <input id="email" name="email" type="email" required maxlength="255" autocomplete="email"
-                                                class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora"
+                                            <label for="email" class="block">Correo electrónico <span class="text-red-600">*</span></label>
+                                            <input id="email" name="email" type="email" required maxlength="255" autocomplete="email" @error('email') aria-invalid="true" aria-describedby="email-error" @enderror
                                                 placeholder="Ej: usuario@ejemplo.com"
                                                 value="{{ old('email') }}">
-                                            @error('email') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
+                                            @error('email') <p id="email-error" class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
                                         </div>
                                         <div>
-                                            <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Teléfono</label>
-                                            <input id="phone" name="phone" type="tel" maxlength="10" pattern="[0-9]{10}" inputmode="numeric" autocomplete="tel" title="Capture exactamente 10 dígitos, sin espacios ni guiones"
-                                                class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora"
+                                            <label for="phone" class="block">Teléfono</label>
+                                            <input id="phone" name="phone" type="tel" maxlength="10" pattern="[0-9]{10}" inputmode="numeric" autocomplete="tel" title="Capture exactamente 10 dígitos, sin espacios ni guiones" @error('phone') aria-invalid="true" aria-describedby="phone-error" @enderror
                                                 placeholder="10 dígitos, sin espacios"
                                                 value="{{ old('phone') }}">
-                                            @error('phone') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
+                                            @error('phone') <p id="phone-error" class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
                                         </div>
                                     </div>
                                 </div>
                             </div>
-                        </div>
-                    </div>
+                    </x-ui.form.section>
 
                     <!-- Línea separadora -->
-                    <div class="users-form-divider h-[1px] bg-gray-300 my-4 lg:my-6"></div>
+                    <div class="users-form-divider"></div>
 
                     <!-- Sección 2: Información laboral -->
-                    <div class="users-form-section mb-6 lg:mb-8">
-                        <div class="users-form-section-header flex items-center mb-4">
-                            <ion-icon name="business-outline" class="text-xl lg:text-xl text-[#404041] mr-2"></ion-icon>
-                            <h2 class="text-lg lg:text-xl font-lora font-bold text-[#404041]">Información laboral</h2>
-                            <div class="flex-1 h-[1px] bg-[#404041] ml-3"></div>
-                        </div>
-                        
-                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-3 lg:gap-4">
+                    <x-ui.form.section title="Información laboral" icon="work">
                             <div class="space-y-3">
                                 <div>
-                                    <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Cargo <span class="text-red-600">*</span></label>
-                                    <select id="position_select" class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora tomselect-select" name="position_id" required>
+                                    <label for="position_select" class="block">Cargo <span class="text-red-600">*</span></label>
+                                    <select id="position_select" class="tomselect-select" name="position_id" required @error('position_id') aria-invalid="true" aria-describedby="position-error" @enderror>
                                         <option value="">Seleccione un cargo</option>
                                         @if(isset($positions))
                                             @foreach($positions as $p)
@@ -103,14 +84,14 @@
                                             @endforeach
                                         @endif
                                     </select>
-                                    @error('position_id') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
+                                    @error('position_id') <p id="position-error" class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
                                 </div>
                             </div>
                             
                             <div class="space-y-3">
                                 <div>
-                                    <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Distrito <span class="text-red-600">*</span></label>
-                                    <select id="district_id" class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora tomselect-select" name="district_id" required>
+                                    <label for="district_id" class="block">Distrito <span class="text-red-600">*</span></label>
+                                    <select id="district_id" class="tomselect-select" name="district_id" required @error('district_id') aria-invalid="true" aria-describedby="district-error" @enderror>
                                         <option value="">Seleccione un distrito</option>
                                         @if(isset($districts))
                                             @foreach($districts as $j)
@@ -118,69 +99,61 @@
                                             @endforeach
                                         @endif
                                     </select>
-                                    @error('district_id') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
+                                    @error('district_id') <p id="district-error" class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
                                 </div>
                             </div>
-                        </div>
-                    </div>
+                    </x-ui.form.section>
 
                     <!-- Línea separadora -->
-                    <div class="users-form-divider h-[1px] bg-gray-300 my-4 lg:my-6"></div>
+                    <div class="users-form-divider"></div>
 
                     <!-- Sección 3: Configuración de cuenta -->
-                    <div class="users-form-section mb-6 lg:mb-8">
-                        <div class="users-form-section-header flex items-center mb-4">
-                            <ion-icon name="settings-outline" class="text-xl lg:text-xl text-[#404041] mr-2"></ion-icon>
-                            <h2 class="text-lg lg:text-xl font-lora font-bold text-[#404041]">Configuración de cuenta</h2>
-                            <div class="flex-1 h-[1px] bg-[#404041] ml-3"></div>
-                        </div>
-                        
-                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-3 lg:gap-4">
+                    <x-ui.form.section title="Configuración de cuenta" icon="settings">
                             <div class="space-y-3">
                                 <div>
-                                    <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Usuario <span class="text-red-600">*</span></label>
-                                    <input id="username" name="username" type="text" required minlength="3" maxlength="50" pattern="[a-zA-Z0-9_.-]+"
-                                        class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora" 
+                                    <label for="username" class="block">Usuario <span class="text-red-600">*</span></label>
+                                    <input id="username" name="username" type="text" required minlength="3" maxlength="50" pattern="[a-zA-Z0-9_.-]+" @error('username') aria-invalid="true" aria-describedby="username-error" @enderror
                                         placeholder="Ej: mgarcia"
                                         value="{{ old('username') }}">
-                                    @error('username') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
+                                    @error('username') <p id="username-error" class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
                                 </div>
                                 <div>
                                     <div class="users-password-label-row">
-                                        <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Contraseña <span class="text-red-600">*</span></label>
+                                        <label for="password" class="block">Contraseña <span class="text-red-600">*</span></label>
                                         <span id="password-strength" data-level="empty" aria-live="polite">Sin evaluar</span>
                                     </div>
                                     <div class="relative">
-                                        <input name="password" type="password" required minlength="12" maxlength="255" autocomplete="new-password"
+                                        <input name="password" type="password" required minlength="12" maxlength="255" autocomplete="new-password" @error('password') aria-invalid="true" aria-describedby="password-error" @enderror
                                             id="password"
-                                            class="w-full px-3 py-2 pr-10 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora" 
                                             placeholder="Ingrese su contraseña">
-                                        <button type="button" 
+                                        <button type="button"
                                                 onclick="togglePassword('password')"
-                                                class="absolute inset-y-0 right-0 flex items-center justify-center w-10 text-gray-500 hover:text-[#404041] transition-colors duration-200">
-                                            <ion-icon name="eye-outline" class="text-lg"></ion-icon>
+                                                class="app-password-visibility absolute inset-y-0 right-0"
+                                                aria-label="Mostrar contraseña"
+                                                title="Mostrar contraseña">
+                                            <i class="far fa-eye" aria-hidden="true"></i>
                                         </button>
                                     </div>
-                                    @error('password') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
+                                    @error('password') <p id="password-error" class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
                                     <div id="password-strength-track" class="users-password-meter-track" role="progressbar"
                                         aria-label="Fortaleza de la contrase&ntilde;a" aria-valuemin="0" aria-valuemax="5" aria-valuenow="0">
                                         <div id="password-strength-bar" data-level="empty"></div>
                                     </div>
                                     <ul class="users-password-compact-requirements" aria-label="Requisitos de seguridad">
                                         <li data-password-rule="length" data-complete="false">
-                                            <ion-icon name="ellipse-outline" aria-hidden="true"></ion-icon>
+                                            <i class="far fa-circle" aria-hidden="true"></i>
                                             <span>12 caracteres</span>
                                         </li>
                                         <li data-password-rule="case" data-complete="false">
-                                            <ion-icon name="ellipse-outline" aria-hidden="true"></ion-icon>
+                                            <i class="far fa-circle" aria-hidden="true"></i>
                                             <span>May&uacute;scula y min&uacute;scula</span>
                                         </li>
                                         <li data-password-rule="number" data-complete="false">
-                                            <ion-icon name="ellipse-outline" aria-hidden="true"></ion-icon>
+                                            <i class="far fa-circle" aria-hidden="true"></i>
                                             <span>Un n&uacute;mero</span>
                                         </li>
                                         <li data-password-rule="special" data-complete="false">
-                                            <ion-icon name="ellipse-outline" aria-hidden="true"></ion-icon>
+                                            <i class="far fa-circle" aria-hidden="true"></i>
                                             <span>Un s&iacute;mbolo</span>
                                         </li>
                                     </ul>
@@ -189,8 +162,8 @@
                             
                             <div class="space-y-3">
                                 <div>
-                                    <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Rol <span class="text-red-600">*</span></label>
-                                    <select id="role_id" class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora" name="role_id" required>
+                                    <label for="role_id" class="block">Rol <span class="text-red-600">*</span></label>
+                                    <select id="role_id" class="tomselect-select" name="role_id" required @error('role_id') aria-invalid="true" aria-describedby="role-error" @enderror>
                                         <option value="">Seleccione un rol</option>
                                         @if(isset($roles))
                                             @foreach($roles as $r)
@@ -198,25 +171,26 @@
                                             @endforeach
                                         @endif
                                     </select>
-                                    @error('role_id') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
+                                    @error('role_id') <p id="role-error" class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
                                 </div>
                                 <div>
-                                    <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Confirmar contraseña <span class="text-red-600">*</span></label>
+                                    <label for="password_confirmation" class="block">Confirmar contraseña <span class="text-red-600">*</span></label>
                                     <div class="relative">
-                                        <input name="password_confirmation" type="password" required minlength="12" maxlength="255" autocomplete="new-password"
+                                        <input name="password_confirmation" type="password" required minlength="12" maxlength="255" autocomplete="new-password" @error('password_confirmation') aria-invalid="true" aria-describedby="password-confirmation-error" @enderror
                                             id="password_confirmation"
-                                            class="w-full px-3 py-2 pr-10 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora" 
                                             placeholder="Confirme su contraseña">
-                                        <button type="button" 
+                                        <button type="button"
                                                 onclick="togglePassword('password_confirmation')"
-                                                class="absolute inset-y-0 right-0 flex items-center justify-center w-10 text-gray-500 hover:text-[#404041] transition-colors duration-200">
-                                            <ion-icon name="eye-outline" class="text-lg"></ion-icon>
+                                                class="app-password-visibility absolute inset-y-0 right-0"
+                                                aria-label="Mostrar contraseña"
+                                                title="Mostrar contraseña">
+                                            <i class="far fa-eye" aria-hidden="true"></i>
                                         </button>
                                     </div>
-                                    @error('password_confirmation') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
+                                    @error('password_confirmation') <p id="password-confirmation-error" class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
                                     <div class="users-password-confirm-tools">
                                         <span id="password-match-status" data-status="empty" aria-live="polite">
-                                            <ion-icon name="ellipse-outline" aria-hidden="true"></ion-icon>
+                                            <i class="far fa-circle" aria-hidden="true"></i>
                                             <span>Confirme la contrase&ntilde;a</span>
                                         </span>
                                         <button type="button" onclick="generatePassword()" class="users-generate-password" title="Generar una contrase&ntilde;a segura">
@@ -226,8 +200,7 @@
                                     </div>
                                 </div>
                             </div>
-                        </div>
-                    </div>
+                    </x-ui.form.section>
 
                     <!-- Línea separadora para botones -->
                     <div class="users-form-divider h-[1px] bg-gray-300 my-4 lg:my-6"></div>
@@ -254,15 +227,17 @@
         // Función para mostrar/ocultar contraseña
         function togglePassword(inputId) {
             const input = document.getElementById(inputId);
-            const icon = input.parentElement.querySelector('ion-icon');
-            
-            if (input.type === 'password') {
-                input.type = 'text';
-                icon.name = 'eye-off-outline';
-            } else {
-                input.type = 'password';
-                icon.name = 'eye-outline';
-            }
+            const toggle = input?.parentElement.querySelector('.app-password-visibility');
+            const icon = toggle?.querySelector('i');
+            if (!input || !toggle || !icon) return;
+
+            const willShow = input.type === 'password';
+            input.type = willShow ? 'text' : 'password';
+            icon.className = willShow ? 'far fa-eye-slash' : 'far fa-eye';
+
+            const accessibleLabel = willShow ? 'Ocultar contraseña' : 'Mostrar contraseña';
+            toggle.setAttribute('aria-label', accessibleLabel);
+            toggle.setAttribute('title', accessibleLabel);
         }
 
         // Obtener un índice aleatorio sin sesgo usando Web Crypto.
@@ -335,7 +310,7 @@
                 length: password.length >= 12,
                 case: /[a-z]/.test(password) && /[A-Z]/.test(password),
                 number: /[0-9]/.test(password),
-                special: /[!@#$%^&*]/.test(password)
+                special: /[^A-Za-z0-9]/.test(password)
             };
             
             let strength = 0;
@@ -346,7 +321,7 @@
             if (/[a-z]/.test(password)) strength++;
             if (/[A-Z]/.test(password)) strength++;
             if (/[0-9]/.test(password)) strength++;
-            if (/[!@#$%^&*]/.test(password)) strength++;
+            if (/[^A-Za-z0-9]/.test(password)) strength++;
             
             switch(strength) {
                 case 0:
@@ -382,9 +357,9 @@
                 if (!item) return;
 
                 item.dataset.complete = complete ? 'true' : 'false';
-                const icon = item.querySelector('ion-icon');
+                const icon = item.querySelector('i');
                 if (icon) {
-                    icon.name = complete ? 'checkmark-circle' : 'ellipse-outline';
+                    icon.className = complete ? 'fas fa-check-circle' : 'far fa-circle';
                 }
             });
         }
@@ -394,19 +369,19 @@
             const password = document.getElementById('password').value;
             const confirmation = document.getElementById('password_confirmation').value;
             const status = document.getElementById('password-match-status');
-            const icon = status.querySelector('ion-icon');
+            const icon = status.querySelector('i');
             const text = status.querySelector('span');
 
             if (!confirmation) {
                 status.dataset.status = 'empty';
-                icon.name = 'ellipse-outline';
+                icon.className = 'far fa-circle';
                 text.textContent = 'Confirme la contraseña';
                 return;
             }
 
             const matches = password === confirmation;
             status.dataset.status = matches ? 'match' : 'mismatch';
-            icon.name = matches ? 'checkmark-circle' : 'alert-circle-outline';
+            icon.className = matches ? 'fas fa-check-circle' : 'fas fa-exclamation-circle';
             text.textContent = matches ? 'Las contraseñas coinciden' : 'Las contraseñas no coinciden';
         }
 
@@ -475,144 +450,6 @@
             }
     </script>
 
-    <!-- Incluir Ionicons -->
-    <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
-    <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
-    <!-- Tom Select (only used for position select here) -->
-    <link href="https://cdn.jsdelivr.net/npm/tom-select/dist/css/tom-select.default.min.css" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/tom-select/dist/js/tom-select.complete.min.js"></script>
-    <style>
-        /* Make Tom Select control visually match your existing Tailwind input styles */
-        /* Tom Select control: try to match exact paddings/height of your native selects */
-        .ts-wrapper {
-            /* remove wrapper border so there's only one visible border (the control itself) */
-            border: none !important;
-            padding: 0 !important;
-            background: transparent !important;
-        }
-
-        /* Hide original select elements that are enhanced by Tom Select to avoid native arrow/box
-           (these selects have class "tomselect-select" in the template). We prefer an
-           accessible hide via the `sr-only` utility so the element remains in the DOM
-           for screen readers and form semantics. */
-        select.tomselect-select {
-            /* keep a minimal visual removal - TomSelect will still use the element */
-            position: absolute !important;
-            left: -9999px !important;
-            width: 1px !important;
-            height: 1px !important;
-            overflow: hidden !important;
-            opacity: 0 !important;
-            pointer-events: none !important;
-            border: 0 !important;
-            margin: 0 !important;
-            padding: 0 !important;
-            background: transparent !important;
-            -webkit-appearance: none !important;
-            -moz-appearance: none !important;
-            appearance: none !important;
-        }
-
-        /* remove the IE dropdown arrow */
-        select.tomselect-select::-ms-expand { display: none !important; }
-        /* safety: some browsers render a native background image for select arrows */
-        select.tomselect-select { background-image: none !important; }
-
-        .ts-wrapper { display: block; width: 100%; }
-
-        .ts-control {
-            /* Mirror your Tailwind input: use the same padding/line-height and let height be automatic */
-            border: 1px solid #d1d5db !important; /* gray-300 */
-            border-radius: 0.5rem !important; /* rounded-lg */
-            padding: 8px 12px !important; /* px-3 py-2 equivalent */
-            background: #ffffff !important;
-            font-family: inherit;
-            font-size: 0.875rem; /* 14px */
-            line-height: 1.25rem !important;
-            display: flex;
-            align-items: center;
-            justify-content: flex-start;
-            position: relative;
-            box-sizing: border-box;
-            margin: 0 !important;
-            /* remove any inner shadow so it matches native selects exactly */
-            box-shadow: none !important;
-            height: auto !important;
-            min-height: 36px !important;
-        }
-        /* internal input/item inside Tom Select: remove extra padding and align line-height */
-        .ts-control .item, .ts-control input {
-            padding: 0 !important;
-            margin: 0 !important;
-            height: auto !important;
-            line-height: 1.25rem !important;
-            font-size: inherit;
-            font-family: inherit;
-        }
-        /* hide common internal toggle elements Tom Select may use (best-effort) */
-        .ts-control .dropdown-toggle,
-        .ts-control .ts-dropdown-toggle,
-        .ts-control .dropdown_toggle,
-        .ts-control .ts-clear {
-            display: none !important;
-        }
-        .ts-dropdown {
-            border: 1px solid #d1d5db;
-            border-radius: 0.5rem;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.08);
-            max-height: 240px;
-            overflow: auto;
-        }
-        .ts-dropdown .ts-option {
-            padding: 0.5rem 0.75rem;
-        }
-        /* caret we will inject (right side) */
-        .tomselect-caret {
-            display: none !important; /* hide injected caret so native arrow remains */
-            position: absolute;
-            right: 12px; /* align with native select padding */
-            top: 50%;
-            transform: translateY(-50%);
-            color: #6b7280; /* gray-500 */
-            pointer-events: none;
-            font-size: 0.9rem;
-        }
-
-        /* Draw a native-looking chevron on Tom Select controls so they match other selects.
-           This uses an inline SVG encoded as a data URI to mimic the thin outlined chevron. */
-        .ts-control::after {
-            content: "";
-            position: absolute;
-            right: 12px;
-            top: 50%;
-            transform: translateY(-50%);
-            width: 18px;
-            height: 18px;
-            background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'/></svg>");
-            background-repeat: no-repeat;
-            background-position: center;
-            background-size: 12px 12px;
-            pointer-events: none;
-            opacity: 0.92;
-        }
-
-        /* Small tweak for exact vertical alignment: ensure the Tom Select control aligns to baseline
-           with other form controls in the grid */
-        .ts-wrapper, .ts-control { vertical-align: middle; }
-
-        /* Target the Tom Select control generated next to each original select by ID
-           and nudge the death municipality control 1px up if still slightly lower. */
-        /* Ensure generated TomSelect controls match their original select container width
-           and don't receive manual transforms that break alignment. */
-        #residence_municipality_select + .ts-control,
-        #death_municipality_select + .ts-control,
-        #position_select + .ts-control {
-            padding: 8px 12px !important;
-            height: auto !important;
-            min-height: 36px !important;
-            transform: none !important;
-        }
-    </style>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const form = document.querySelector('form');
@@ -622,7 +459,7 @@
                     new TomSelect(pos, {
                         valueField: 'value',
                         labelField: 'text',
-                        searchField: ['text'],
+                        searchField: [],
                         create: false,
                         maxItems: 1,
                         preload: false,

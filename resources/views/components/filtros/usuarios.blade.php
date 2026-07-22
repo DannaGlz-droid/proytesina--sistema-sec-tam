@@ -35,9 +35,9 @@
                     <div class="users-filter-native-controls" aria-hidden="true">
                         <select name="date_range" id="dateRange" tabindex="-1">
                             <option value="all" {{ $dateRangeValue === 'all' ? 'selected' : '' }}>Todas las fechas</option>
-                            <option value="7days" {{ $dateRangeValue === '7days' ? 'selected' : '' }}>Ultimos 7 dias</option>
-                            <option value="30days" {{ $dateRangeValue === '30days' ? 'selected' : '' }}>Ultimos 30 dias</option>
-                            <option value="90days" {{ $dateRangeValue === '90days' ? 'selected' : '' }}>Ultimos 90 dias</option>
+                            <option value="7days" {{ $dateRangeValue === '7days' ? 'selected' : '' }}>Últimos 7 días</option>
+                            <option value="30days" {{ $dateRangeValue === '30days' ? 'selected' : '' }}>Últimos 30 días</option>
+                            <option value="90days" {{ $dateRangeValue === '90days' ? 'selected' : '' }}>Últimos 90 días</option>
                             <option value="custom" {{ $dateRangeValue === 'custom' ? 'selected' : '' }}>Personalizado</option>
                         </select>
                         <select name="is_active" id="estadoCuenta" tabindex="-1">
@@ -48,8 +48,8 @@
                         <select name="last_session" id="ultimaSesion" tabindex="-1">
                             <option value="" {{ $lastSessionValue === null || $lastSessionValue === '' ? 'selected' : '' }}>Cualquier momento</option>
                             <option value="today" {{ $lastSessionValue === 'today' ? 'selected' : '' }}>Hoy</option>
-                            <option value="7" {{ $lastSessionValue === '7' ? 'selected' : '' }}>Ultimos 7 dias</option>
-                            <option value="30" {{ $lastSessionValue === '30' ? 'selected' : '' }}>Ultimos 30 dias</option>
+                            <option value="7" {{ $lastSessionValue === '7' ? 'selected' : '' }}>Últimos 7 días</option>
+                            <option value="30" {{ $lastSessionValue === '30' ? 'selected' : '' }}>Últimos 30 días</option>
                             <option value="never" {{ $lastSessionValue === 'never' ? 'selected' : '' }}>Nunca</option>
                         </select>
                         <select name="position_id" id="cargo" tabindex="-1">
@@ -92,9 +92,9 @@
                                 <div class="users-filter-options">
                                     @foreach([
                                         'all' => 'Todas las fechas',
-                                        '7days' => 'Ultimos 7 dias',
-                                        '30days' => 'Ultimos 30 dias',
-                                        '90days' => 'Ultimos 90 dias',
+                                        '7days' => 'Últimos 7 días',
+                                        '30days' => 'Últimos 30 días',
+                                        '90days' => 'Últimos 90 días',
                                         'custom' => 'Personalizado',
                                     ] as $value => $label)
                                         <button type="button" class="users-filter-option" data-filter-target="date_range" data-filter-value="{{ $value }}">
@@ -116,9 +116,9 @@
                             </div>
                         </div>
 
-                        <div class="users-filter-section {{ $districtValue === null || $districtValue === '' ? 'is-open' : '' }}" data-filter-section>
+                        <div class="users-filter-section {{ $activeValue !== null && $activeValue !== '' ? 'is-open' : '' }}" data-filter-section>
                             <button type="button" class="users-filter-section-toggle" data-filter-section-toggle>
-                                <i class="fas {{ $districtValue === null || $districtValue === '' ? 'fa-chevron-down' : 'fa-chevron-right' }}" aria-hidden="true"></i>
+                                <i class="fas {{ $activeValue !== null && $activeValue !== '' ? 'fa-chevron-down' : 'fa-chevron-right' }}" aria-hidden="true"></i>
                                 <span>Estado</span>
                             </button>
                             <div class="users-filter-section-content">
@@ -143,8 +143,8 @@
                                     @foreach([
                                         '' => 'Cualquier momento',
                                         'today' => 'Hoy',
-                                        '7' => 'Ultimos 7 dias',
-                                        '30' => 'Ultimos 30 dias',
+                                        '7' => 'Últimos 7 días',
+                                        '30' => 'Últimos 30 días',
                                         'never' => 'Nunca',
                                     ] as $value => $label)
                                         <button type="button" class="users-filter-option" data-filter-target="last_session" data-filter-value="{{ $value }}">
@@ -229,7 +229,8 @@
 
             <div class="users-filter-search">
                 <i class="fas fa-search" aria-hidden="true"></i>
-                <input type="text" id="dt-search-users" name="usuarios_busqueda_no_autofill" placeholder="Buscar usuarios..." autocomplete="new-password" autocorrect="off" autocapitalize="none" spellcheck="false">
+                <input type="search" id="dt-search-users" placeholder="Buscar usuarios..." aria-label="Buscar usuarios"
+                    autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false" enterkeyhint="search">
                 <span class="users-search-progress" aria-hidden="true">
                     <span></span><span></span><span></span>
                 </span>
