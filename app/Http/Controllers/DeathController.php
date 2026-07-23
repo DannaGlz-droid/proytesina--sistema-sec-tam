@@ -858,7 +858,7 @@ class DeathController extends Controller
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('massDelete deaths error: ' . $e->getMessage());
-            return response()->json(['ok' => false, 'message' => 'Error al eliminar registros de defunción'], 500);
+            return response()->json(['ok' => false, 'message' => 'No se pudieron eliminar los registros de defunción. Inténtalo nuevamente.'], 500);
         }
     }
 

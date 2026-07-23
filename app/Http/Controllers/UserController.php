@@ -93,7 +93,7 @@ class UserController extends Controller
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('massDelete users error: ' . $e->getMessage());
-            return response()->json(['ok' => false, 'message' => 'Error al eliminar usuarios'], 500);
+            return response()->json(['ok' => false, 'message' => 'No se pudieron eliminar los usuarios. Inténtalo nuevamente.'], 500);
         }
     }
 
@@ -532,7 +532,7 @@ class UserController extends Controller
 
          // Redirect to the user index (management) route
          return redirect()->route('user.user-gestion')
-             ->with('success', 'Usuario creado.')
+             ->with('success', 'El usuario se registró correctamente.')
              ->with('invalidate_users_table_cache', true);
     }
 
@@ -568,7 +568,7 @@ class UserController extends Controller
         }
 
         return redirect()->route('user.user-gestion')
-            ->with('success', 'Usuario actualizado.')
+            ->with('success', 'Los cambios del usuario se guardaron correctamente.')
             ->with('invalidate_users_table_cache', true);
 
     }
@@ -604,12 +604,12 @@ class UserController extends Controller
         if ($request->expectsJson() || $request->ajax()) {
             return response()->json([
                 'ok' => true,
-                'message' => 'Contraseña actualizada.',
+                'message' => 'La contraseña se actualizó correctamente.',
             ]);
         }
 
         return redirect()->route('user.user-gestion')
-            ->with('success', 'Contraseña actualizada.')
+            ->with('success', 'La contraseña se actualizó correctamente.')
             ->with('invalidate_users_table_cache', true);
     }
 
@@ -627,12 +627,12 @@ class UserController extends Controller
         if ($request->expectsJson() || $request->ajax()) {
             return response()->json([
                 'ok' => true,
-                'message' => 'Usuario eliminado.',
+                'message' => 'El usuario se eliminó correctamente.',
             ]);
         }
 
         return redirect()->route('user.user-gestion')
-            ->with('success', 'Usuario eliminado.')
+            ->with('success', 'El usuario se eliminó correctamente.')
             ->with('invalidate_users_table_cache', true);
     }
 }

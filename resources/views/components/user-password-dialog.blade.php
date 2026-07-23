@@ -306,7 +306,7 @@
                 }
                 state.dirty = false;
                 closeDialog(true);
-                window.showToast?.(data.message || 'Contraseña actualizada.', 'success');
+                window.showToast?.(data.message || 'La contraseña se actualizó correctamente.', 'success');
             } catch (error) {
                 errorBox.textContent = 'No se pudo actualizar la contraseña. Intenta nuevamente.';
                 errorBox.classList.remove('hidden');

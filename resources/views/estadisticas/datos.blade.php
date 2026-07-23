@@ -653,13 +653,19 @@ document.addEventListener('DOMContentLoaded', function () {
             data: { ids: ids },
             success: function(res) {
                 if (res && res.ok) {
-                    notifyDeaths('Se eliminaron ' + (res.deleted || 0) + ' registros.', 'success');
+                    const deletedRecords = Number(res.deleted || 0);
+                    notifyDeaths(
+                        deletedRecords === 1
+                            ? 'Se eliminó 1 registro.'
+                            : `Se eliminaron ${deletedRecords} registros.`,
+                        'success'
+                    );
                     // reload current page of table
                     window.deathsTable.ajax.reload(null, false);
                     // reset header checkbox
                     clearVisibleDeathSelection();
                 } else {
-                    notifyDeaths('No se pudieron eliminar los registros.', 'error');
+                    notifyDeaths('No se pudieron eliminar los registros. Inténtalo nuevamente.', 'error');
                     console.error(res);
                 }
             },

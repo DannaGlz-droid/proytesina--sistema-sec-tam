@@ -3,7 +3,10 @@
         <i class="fas fa-ellipsis-v"></i>
     </button>
     <div class="users-row-menu hidden" role="menu">
-        <a href="{{ route('user.edit', $user->id) }}" class="users-row-menu-item" role="menuitem">
+        <a href="{{ route('user.edit', $user->id) }}"
+           class="users-row-menu-item"
+           role="menuitem"
+           data-users-table-return="{{ route('user.user-gestion') }}">
             <i class="fas fa-edit users-row-menu-icon" aria-hidden="true"></i>
             <span>Editar</span>
         </a>

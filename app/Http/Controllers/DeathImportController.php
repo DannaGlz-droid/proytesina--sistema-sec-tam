@@ -693,7 +693,7 @@ class DeathImportController extends Controller
 
             // Only admins can reverse imports
             if (!$user) {
-                return response()->json(['ok' => false, 'message' => 'No autenticado'], 403);
+                return response()->json(['ok' => false, 'message' => 'Tu sesión ha expirado. Inicia sesión nuevamente.'], 403);
             }
             
             // El rol puede ser un objeto o un string, obtener el nombre
@@ -702,18 +702,18 @@ class DeathImportController extends Controller
             \Log::info("Intento de reversión - Usuario: {$user->name}, Rol: {$roleName}");
             
             if ($roleName !== 'Administrador') {
-                return response()->json(['ok' => false, 'message' => "No tienes permiso. Tu rol es: '{$roleName}' (se requiere 'Administrador')"], 403);
+                return response()->json(['ok' => false, 'message' => 'Necesitas el rol Administrador para revertir una importación.'], 403);
             }
 
             // Get import record
             $import = DB::table('imports')->where('id', $importId)->first();
             if (!$import) {
-                return response()->json(['ok' => false, 'message' => 'Importación no encontrada'], 404);
+                return response()->json(['ok' => false, 'message' => 'No se encontró la importación seleccionada.'], 404);
             }
 
             // Check if already reversed
             if ($import->is_reversed) {
-                return response()->json(['ok' => false, 'message' => 'Esta importación ya fue revertida'], 400);
+                return response()->json(['ok' => false, 'message' => 'Esta importación ya fue revertida.'], 400);
             }
 
             // Start transaction
@@ -746,19 +746,21 @@ class DeathImportController extends Controller
 
                 return response()->json([
                     'ok' => true,
-                    'message' => "Importación revertida correctamente. Se eliminaron {$deathCount} registros.",
+                    'message' => $deathCount === 1
+                        ? 'La importación se revirtió y se eliminó 1 registro.'
+                        : "La importación se revirtió y se eliminaron {$deathCount} registros.",
                     'deaths_deleted' => $deathCount,
                 ]);
 
             } catch (\Throwable $e) {
                 DB::rollBack();
                 Log::error("Failed to reverse import: " . $e->getMessage(), ['import_id' => $importId]);
-                return response()->json(['ok' => false, 'message' => 'Error al revertir: ' . $e->getMessage()], 500);
+                return response()->json(['ok' => false, 'message' => 'No se pudo revertir la importación. Inténtalo nuevamente.'], 500);
             }
 
         } catch (\Throwable $e) {
             Log::error("Reverse import error: " . $e->getMessage());
-            return response()->json(['ok' => false, 'message' => $e->getMessage()], 500);
+            return response()->json(['ok' => false, 'message' => 'No se pudo revertir la importación. Inténtalo nuevamente.'], 500);
         }
     }
 
@@ -800,7 +802,7 @@ class DeathImportController extends Controller
             return response()->json(['ok' => true, 'data' => $imports]);
         } catch (\Throwable $e) {
             Log::error("Error fetching import history: " . $e->getMessage());
-            return response()->json(['ok' => false, 'message' => $e->getMessage()], 500);
+            return response()->json(['ok' => false, 'message' => 'No se pudo cargar el historial de importaciones. Inténtalo nuevamente.'], 500);
         }
     }
 
@@ -858,7 +860,7 @@ class DeathImportController extends Controller
         } catch (\Throwable $e) {
             DB::rollBack();
             Log::error('massDelete imports error: ' . $e->getMessage());
-            return response()->json(['ok' => false, 'message' => 'Error al eliminar historial de importaciones'], 500);
+            return response()->json(['ok' => false, 'message' => 'No se pudieron eliminar las importaciones del historial. Inténtalo nuevamente.'], 500);
         }
     }
 
@@ -872,7 +874,7 @@ class DeathImportController extends Controller
 
             $import = DB::table('imports')->where('id', $importId)->first(['id', 'path', 'error_csv_path', 'status', 'rows_imported', 'is_reversed']);
             if (!$import) {
-                return response()->json(['ok' => false, 'message' => 'Importación no encontrada'], 404);
+                return response()->json(['ok' => false, 'message' => 'No se encontró la importación seleccionada.'], 404);
             }
 
             if (!$this->canDeleteImportHistory($import)) {
@@ -880,7 +882,7 @@ class DeathImportController extends Controller
 
                 return response()->json([
                     'ok' => false,
-                    'message' => 'Primero revierte esta importacion antes de eliminarla del historial.',
+                    'message' => 'Primero revierte esta importación antes de eliminarla del historial.',
                 ], 422);
             }
 
@@ -900,7 +902,7 @@ class DeathImportController extends Controller
         } catch (\Throwable $e) {
             DB::rollBack();
             Log::error('destroy import error: ' . $e->getMessage());
-            return response()->json(['ok' => false, 'message' => 'Error al eliminar el historial de importación'], 500);
+            return response()->json(['ok' => false, 'message' => 'No se pudo eliminar la importación del historial. Inténtalo nuevamente.'], 500);
         }
     }
 
@@ -931,7 +933,7 @@ class DeathImportController extends Controller
             return response()->json(['ok' => true, 'data' => $failedRecords]);
         } catch (\Throwable $e) {
             Log::error("Error fetching failed records: " . $e->getMessage());
-            return response()->json(['ok' => false, 'message' => $e->getMessage()], 500);
+            return response()->json(['ok' => false, 'message' => 'No se pudieron cargar los registros fallidos. Inténtalo nuevamente.'], 500);
         }
     }
 
@@ -954,12 +956,12 @@ class DeathImportController extends Controller
 
             return response()->json([
                 'ok' => true,
-                'message' => 'Correcciones guardadas exitosamente',
+                'message' => 'Los cambios se guardaron correctamente.',
                 'data' => $failedRecord,
             ]);
         } catch (\Throwable $e) {
             Log::error("Error saving correction: " . $e->getMessage());
-            return response()->json(['ok' => false, 'message' => $e->getMessage()], 500);
+            return response()->json(['ok' => false, 'message' => 'No se pudieron guardar los cambios. Inténtalo nuevamente.'], 500);
         }
     }
 
@@ -972,7 +974,7 @@ class DeathImportController extends Controller
             $failedRecord = FailedImportRecord::findOrFail($recordId);
 
             if ($failedRecord->status === 'discarded') {
-                return response()->json(['ok' => false, 'message' => 'Este registro fue descartado y no puede ser reintentado'], 400);
+                return response()->json(['ok' => false, 'message' => 'Este registro fue descartado y ya no puede importarse.'], 400);
             }
 
             // Use corrected data if available, otherwise use original
@@ -1194,17 +1196,17 @@ class DeathImportController extends Controller
 
                 return response()->json([
                     'ok' => true,
-                    'message' => 'Registro importado exitosamente',
+                    'message' => 'El registro se importó correctamente.',
                     'data' => $death,
                 ]);
             } catch (\Throwable $e) {
                 DB::rollBack();
                 Log::error("Error saving corrected record: " . $e->getMessage());
-                return response()->json(['ok' => false, 'message' => 'Error al guardar: ' . $e->getMessage()], 500);
+                return response()->json(['ok' => false, 'message' => 'No se pudo importar el registro. Revisa los datos e inténtalo nuevamente.'], 500);
             }
         } catch (\Throwable $e) {
             Log::error("Error retrying failed record: " . $e->getMessage());
-            return response()->json(['ok' => false, 'message' => $e->getMessage()], 500);
+            return response()->json(['ok' => false, 'message' => 'No se pudo importar el registro. Revisa los datos e inténtalo nuevamente.'], 500);
         }
     }
 
@@ -1229,11 +1231,11 @@ class DeathImportController extends Controller
 
             return response()->json([
                 'ok' => true,
-                'message' => 'Registro descartado',
+                'message' => 'El registro se descartó.',
             ]);
         } catch (\Throwable $e) {
             Log::error("Error discarding failed record: " . $e->getMessage());
-            return response()->json(['ok' => false, 'message' => $e->getMessage()], 500);
+            return response()->json(['ok' => false, 'message' => 'No se pudo descartar el registro. Inténtalo nuevamente.'], 500);
         }
     }
 

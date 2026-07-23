@@ -231,10 +231,8 @@
                 <i class="fas fa-search" aria-hidden="true"></i>
                 <input type="search" id="dt-search-users" placeholder="Buscar usuarios..." aria-label="Buscar usuarios"
                     autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false" enterkeyhint="search">
-                <span class="users-search-progress" aria-hidden="true">
-                    <span></span><span></span><span></span>
-                </span>
-                <button type="button" id="dt-clear-btn" class="hidden" title="Limpiar busqueda" aria-label="Limpiar busqueda">
+                <span class="users-search-progress" aria-hidden="true"></span>
+                <button type="button" id="dt-clear-btn" class="hidden" title="Limpiar búsqueda" aria-label="Limpiar búsqueda">
                     <i class="fas fa-times" aria-hidden="true"></i>
                 </button>
             </div>
@@ -250,7 +248,7 @@
                     <button id="dt-per-page-button" type="button" class="users-page-size-button" aria-haspopup="listbox" aria-expanded="false">
                         <span>Mostrar</span>
                         <strong id="dt-per-page-label">25</strong>
-                        <i class="fas fa-chevron-down" aria-hidden="true"></i>
+                        <i class="fas fa-list-ul users-page-size-icon" aria-hidden="true"></i>
                     </button>
                     <div id="dt-per-page-menu" class="users-page-size-menu hidden" role="listbox" aria-labelledby="dt-per-page-button">
                         <button type="button" role="option" class="users-page-size-option" data-value="10">10</button>

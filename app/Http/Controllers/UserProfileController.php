@@ -49,7 +49,7 @@ class UserProfileController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Foto de perfil actualizada correctamente',
+            'message' => 'La foto de perfil se actualizó correctamente.',
             'photo_url' => asset('storage/' . $path)
         ]);
     }
@@ -67,13 +67,13 @@ class UserProfileController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Foto de perfil eliminada correctamente'
+                'message' => 'La foto de perfil se eliminó correctamente.'
             ]);
         }
 
         return response()->json([
             'success' => false,
-            'message' => 'No hay foto de perfil para eliminar'
+            'message' => 'No hay una foto de perfil para eliminar.'
         ], 404);
     }
 }

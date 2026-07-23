@@ -9,25 +9,7 @@
         <h1 class="text-2xl lg:text-3xl font-lora font-bold text-[#404041] mb-3">Centro de Control</h1>
         <p class="text-sm lg:text-base text-[#404041] font-lora mb-6">Monitoreo y administración centralizada de reportes.</p>
 
-        <!-- Mensajes de éxito y error -->
-        @if(session('success'))
-            <script>
-                document.addEventListener('DOMContentLoaded', () => {
-                    if (typeof window.showToast === 'function') {
-                        window.showToast(@json(session('success')), 'success', 3200);
-                    }
-                });
-            </script>
-        @endif
-
-        @if(session('error'))
-            <div class="mb-6 bg-red-50 border-l-4 border-red-500 p-4 rounded-lg shadow-sm">
-                <div class="flex items-center">
-                    <i class="fas fa-exclamation-circle text-red-500 text-xl mr-3"></i>
-                    <p class="text-sm text-red-800 font-lora font-medium">{{ session('error') }}</p>
-                </div>
-            </div>
-        @endif
+        <!-- Los mensajes transitorios de sesión se muestran desde el componente global de toast. -->
 
         <!-- Contenedor principal -->
         <div id="reportes-publicaciones-panel" class="border border-[#404041] rounded-lg lg:rounded-xl bg-white bg-opacity-95 max-w-full shadow-md overflow-visible">
@@ -1889,7 +1871,9 @@ document.addEventListener('DOMContentLoaded', function() {
             openArchivoPreview(files, fileIndex);
         } catch (error) {
             console.error('Error abriendo previsualizacion:', error);
-            showToast('No se pudo identificar el archivo para previsualizar.', 'error', 3200);
+            showToast('No se pudo abrir la vista previa.', 'error', 4000, {
+                description: 'Actualiza la página e inténtalo nuevamente.'
+            });
         }
     };
 
@@ -2484,7 +2468,9 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             
             if (!publicationId) {
-                showToast('No se pudo identificar la publicación.', 'error', 3200);
+                showToast('No se encontró la publicación seleccionada.', 'error', 4000, {
+                    description: 'Actualiza la página e inténtalo nuevamente.'
+                });
                 return;
             }
 
@@ -2587,7 +2573,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         // ignore
                     }
                     
-                    console.log('✅ Comentario agregado exitosamente');
+                    console.log('Comentario agregado correctamente.');
                     showToast('Comentario enviado.', 'success', 2600);
                 } else {
                     showToast(data.message || 'No se pudo enviar el comentario.', 'error', 3200);
@@ -2648,7 +2634,9 @@ document.addEventListener('DOMContentLoaded', function() {
             if (fileId && fileId !== 'null') {
                 window.location.href = `/reportes/file/${fileId}/download`;
             } else {
-                showToast('No se pudo identificar el archivo para descargar.', 'error', 3200);
+                showToast('No se encontró el archivo seleccionado.', 'error', 4000, {
+                    description: 'Actualiza la página e inténtalo nuevamente.'
+                });
             }
         }
     });
@@ -3027,7 +3015,21 @@ document.addEventListener('DOMContentLoaded', function() {
             .then(response => response.json())
             .then(data => {
                 if (data.ok) {
-                    showToast(`Se eliminaron ${data.deleted} reportes.${data.skipped > 0 ? ` ${data.skipped} no se eliminaron por permisos.` : ''}`, 'success', 3500);
+                    const deletedReports = Number(data.deleted || 0);
+                    const skippedReports = Number(data.skipped || 0);
+                    const deletionMessage = deletedReports === 1
+                        ? 'Se eliminó 1 reporte.'
+                        : `Se eliminaron ${deletedReports} reportes.`;
+
+                    if (skippedReports > 0) {
+                        showToast(deletionMessage, 'warning', 5000, {
+                            description: skippedReports === 1
+                                ? '1 reporte no se eliminó porque no tienes permiso.'
+                                : `${skippedReports} reportes no se eliminaron porque no tienes permiso.`
+                        });
+                    } else {
+                        showToast(deletionMessage, 'success', 3500);
+                    }
                     refreshReportesPanel();
                 } else {
                     showToast(data.error || 'No se pudieron eliminar los reportes.', 'error', 3500);

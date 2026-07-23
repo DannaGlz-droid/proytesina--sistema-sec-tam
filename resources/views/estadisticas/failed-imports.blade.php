@@ -1572,7 +1572,7 @@ document.addEventListener('DOMContentLoaded', function() {
         })
         .catch(error => {
             console.error('Error:', error);
-            notifyFailedImport(error.message || 'No se pudieron guardar los cambios. Intenta nuevamente.', 'error');
+            notifyFailedImport('No se pudieron guardar los cambios. Inténtalo nuevamente.', 'error');
         });
     }
 
@@ -1604,12 +1604,12 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                 }, 300);
             } else {
-                notifyFailedImport(data.message || 'No se pudo descartar el registro.', 'error');
+                notifyFailedImport(data.message || 'No se pudo descartar el registro. Inténtalo nuevamente.', 'error');
             }
         })
         .catch(error => {
             console.error('Error:', error);
-            notifyFailedImport('No se pudo descartar el registro.', 'error');
+            notifyFailedImport('No se pudo descartar el registro. Inténtalo nuevamente.', 'error');
         });
     }
 

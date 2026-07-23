@@ -31,15 +31,7 @@
         </h1>
         <p class="text-sm lg:text-base text-[#404041] font-lora mb-6">{{ isset($publication) ? 'Actualiza la información y administra los archivos adjuntos de este reporte.' : 'Captura la información y adjunta los archivos requeridos para enviar este reporte.' }}</p>
 
-        <!-- Mensajes de error -->
-        @if(session('error'))
-            <div class="mb-6 bg-red-50 border-l-4 border-red-500 p-4 rounded-lg shadow-sm">
-                <div class="flex items-center">
-                    <i class="fas fa-exclamation-circle text-red-500 text-xl mr-3"></i>
-                    <p class="text-sm text-red-800 font-lora font-medium">{{ session('error') }}</p>
-                </div>
-            </div>
-        @endif
+        <!-- Los mensajes transitorios de sesión se muestran desde el componente global de toast. -->
 
         @php
             $validationMessages = collect($errors->getMessages());

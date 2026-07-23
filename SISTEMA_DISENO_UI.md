@@ -86,6 +86,7 @@ Los nombres expresan función, no un color específico.
   --brand-primary-hover: #4a0e26;
   --brand-primary-soft: #f8f1f4;
   --brand-shell-secondary: #3a0b1f;
+  --brand-shell-accent: #bc955c;
   --brand-on-primary: #ffffff;
 }
 ```
@@ -93,6 +94,7 @@ Los nombres expresan función, no un color específico.
 Uso permitido del color institucional:
 
 - Encabezado institucional y navegación principal.
+- Acentos pequeños y exclusivos del shell, como separadores e indicadores activos, mediante `--brand-shell-accent`.
 - Acción que confirma el objetivo: Guardar, Aplicar, Confirmar.
 - Indicadores activos directamente ligados a una acción de marca, cuando sea necesario.
 
@@ -134,6 +136,31 @@ Escala oficial: `4, 8, 12, 16, 24, 32 px`.
 - Radio de controles y botones: 7 px.
 - Radio de menús y paneles flotantes: 8–10 px.
 - Contenedores estructurales grandes: radio 0–10 px según jerarquía; no redondear todo por defecto.
+
+### 3.6 Shell institucional y navegación
+
+El encabezado global forma parte del sistema de diseño y no se ajusta de manera independiente por módulo.
+
+- Barra institucional: 56 px en escritorio, color `--brand-primary`, contenido alineado al padding horizontal de página.
+- Navegación secundaria: 41 px en escritorio, color `--brand-shell-secondary`.
+- Logotipos y colores del gobierno viven únicamente en el shell y se sustituyen mediante recursos y variables de marca.
+- Navegación, perfil, notificaciones y menús usan Open Sans; Lora queda reservada al encabezado editorial de cada página.
+- Enlaces del shell: 12–13 px, peso 600, área interactiva mínima de 36 px.
+- El elemento activo se comunica con texto blanco, fondo blanco translúcido tenue y un indicador inferior de 2.5 px en `--brand-shell-accent`; no depende sólo del hover.
+- En el encabezado superior, el hover de los enlaces de texto —por ejemplo, Reportes y Estadísticas— usa texto blanco y un subrayado blanco de 1.5 px, sin crear bloques ni pestañas.
+- En la navegación secundaria, el hover no altera el fondo ni el texto: muestra únicamente el indicador inferior dorado de 2.5 px. La sección activa conserva el mismo indicador y además utiliza texto blanco para distinguirse de una opción sólo apuntada.
+- Los controles del encabezado que sólo contienen un icono se aclaran al pasar el cursor, sin círculos ni fondos decorativos; su foco de teclado permanece visible.
+- El acento dorado no se propaga a formularios, tablas, botones, estados, modales ni contenido editorial.
+- Los paneles de notificaciones, cuenta y submenús usan superficie blanca, borde neutral, radio de 8–10 px y la misma elevación que los demás paneles flotantes.
+- Dentro de paneles desplegables no se usa el color institucional para hover, foco o texto general; se usan superficies y foco neutrales.
+- Los paneles se abren y cierran con una transición breve de opacidad y desplazamiento vertical; no escalan ni rebotan.
+- Las notificaciones usan títulos en escritura normal, acciones neutrales y un punto azul pequeño para distinguir las no leídas; el fondo completo no se colorea con la marca.
+- El menú de cuenta muestra una identidad compacta y opciones con iconos simples, sin recuadros decorativos. Sólo “Cerrar sesión” utiliza el color semántico de peligro.
+- Los pies de estos paneles describen el destino con precisión —por ejemplo, “Ver todas las notificaciones”— y no mezclan términos de otros módulos.
+- Notificaciones y perfil tienen botones con nombre accesible, `aria-expanded` y foco visible.
+- En móvil se conservan las rutas principales en una segunda línea del encabezado; no se ocultan destinos sin ofrecer una alternativa equivalente.
+- La barra secundaria permite desplazamiento horizontal cuando no caben sus opciones, sin truncarlas.
+- Toda animación dura 120–200 ms y se elimina con `prefers-reduced-motion`.
 - Sombra de controles: mínima, `0 1px 2px`.
 - Sombra de menús flotantes: visible pero fría, basada en azul grisáceo; no usar negro puro.
 
@@ -201,9 +228,12 @@ Excepciones:
 - Sin contenedor visual cuando el propósito es regresar o cambiar de sección.
 - Debe incluir texto; una flecha sola no es suficiente.
 - Al regresar sin guardar desde un formulario abierto en un listado, preferir navegación por historial para restaurar inmediatamente la tabla, su página, filtros, búsqueda y datos ya renderizados.
+- Preparar esa restauración desde el momento de entrar al formulario, no únicamente al pulsar su enlace interno de regreso, para que funcione también con el botón Atrás del navegador. Mantener la instantánea visual hasta 30 minutos; si los datos almacenados ya no son recientes, mostrarla mientras se revalida la tabla en segundo plano.
 - Cuando el navegador no conserve la página en memoria, reutilizar un caché de sesión breve del último bloque renderizado y revalidarlo silenciosamente, sin sustituir las filas por un loader.
 - Para evitar cambios de estructura durante la rehidratación al volver desde un formulario, conservar además una instantánea visual inerte del componente de tabla y retirarla en cuanto la tabla real termine su primer render. La instantánea nunca recibe foco ni interacción y no se reutiliza en una recarga explícita (F5) ni en un acceso directo, donde debe mostrarse el estado normal de carga con datos actualizados.
 - Conservar una URL de respaldo para accesos directos o cuando el historial no corresponda al listado esperado. Invalidar el caché después de una mutación y recargar los datos para evitar información obsoleta.
+- Separar por usuario autenticado todas las claves de almacenamiento de tablas. Cerrar sesión no equivale a cerrar la pestaña y no limpia automáticamente `sessionStorage` ni `localStorage`; ninguna cuenta debe heredar filtros, búsqueda, página, orden o cantidad de filas de otra.
+- Las preferencias estables —cantidad de filas y orden— pueden persistir para cada usuario entre visitas. El contexto temporal —búsqueda, filtros y página— se restaura al recargar o regresar desde una vista relacionada, pero se reinicia al entrar nuevamente al listado desde la navegación normal.
 
 **Peligro**
 
@@ -340,7 +370,9 @@ Estados:
 - Los buscadores de tablas usan `type="search"`, `autocomplete="off"`, no llevan `name` si no se envían con un formulario y desactivan corrección ortográfica y capitalización automática.
 - El foco del buscador usa el mismo borde `--ui-focus` y anillo `--ui-focus-ring` de campos, selects y controles de modal; no usar el azul predeterminado del navegador ni el color institucional.
 - Usar debounce y mostrar actividad sin bloquear la tabla.
-- “Mostrar 10” conserva una sola altura y estilo con el resto de la toolbar.
+- En actualizaciones posteriores a la carga inicial —ordenar, filtrar, buscar, paginar o cambiar la cantidad de filas— conservar los datos visibles, atenuarlos como máximo a 80 % y deshabilitar temporalmente las acciones de fila. Retrasar cualquier indicador unos 150 ms para evitar parpadeos en respuestas rápidas.
+- Para ordenar, filtrar, paginar o cambiar la cantidad de filas, mostrar una línea de progreso neutral en la parte superior de la tabla. Durante una búsqueda, sustituir esa línea por un único spinner neutral de 14–16 px dentro del campo; no mostrar ambos indicadores a la vez.
+- “Mostrar 10” conserva una sola altura y estilo con el resto de la toolbar. Usar un icono neutral de lista o filas para comunicar cantidad visible; no añadir otra flecha de despliegue ni animar el icono. En el menú, señalar la opción seleccionada solamente mediante fondo suave y peso de texto, sin palomita ni otro icono redundante; conservar `aria-selected`.
 - Pie: “Mostrando 1–10 de 40” a la izquierda y paginación a la derecha.
 - Anterior/Siguiente deshabilitados deben seguir siendo legibles.
 
@@ -348,6 +380,7 @@ Estados:
 
 - Carga inicial: skeleton de filas que conserva encabezado, columnas y altura aproximada; no usar una tabla vacía ni un spinner aislado.
 - Sin resultados: estado neutral dentro de la tabla, icono de búsqueda, mensaje breve y acción “Limpiar búsqueda y filtros”.
+- Los estados vacíos o sin resultados no reaccionan al hover: el contenedor mantiene la superficie blanca de la tabla porque no es una fila interactiva.
 - Sin datos: estado neutral dentro del contenedor, icono relacionado con el módulo, título, una oración y la acción principal pertinente.
 - Error: franja inline rojo suave, icono de advertencia, explicación directa y botón secundario “Reintentar”; no usar modal para errores de carga.
 - Selección múltiple: barra contextual con cantidad y acciones disponibles.
@@ -394,6 +427,28 @@ Estados:
 - Incluir estados de validación, envío, error y éxito dentro del flujo. No depender de alertas del navegador.
 - Si existen cambios escritos, cerrar, usar Escape o pulsar el overlay debe pedir confirmación antes de descartarlos.
 - La ruta de página debe conservarse como respaldo cuando JavaScript no esté disponible o se acceda mediante URL directa.
+
+### 8.3 Notificaciones toast
+
+- Usar exclusivamente el componente global `AppToast`; no crear variantes locales por vista ni usar `window.alert()` para mensajes transitorios.
+- La referencia de interacción es Sonner, adaptada a Blade y JavaScript sin depender de React: superficie compacta, pila con profundidad, expansión al interactuar y salida en la dirección de la posición.
+- Posición oficial: inferior derecha en escritorio e inferior centrada en pantallas menores de 640 px. Mantener separación de 20 px en escritorio y respetar el área segura del dispositivo.
+- Mostrar como máximo tres notificaciones en la pila compacta y conservar hasta cinco activas. Al pasar el cursor o llevar el foco a la pila, expandirlas con 10 px de separación.
+- Tipos oficiales: neutral, éxito, información, advertencia, error y carga. Los tipos semánticos usan fondo, borde, texto e icono suaves del sistema; el color institucional no comunica estados.
+- Cada toast admite título breve y descripción opcional. Evitar signos de exclamación, frases genéricas y detalles técnicos que no ayuden a resolver la situación.
+- Redactar el título como una oración breve y directa: qué ocurrió o qué requiere atención. Usar la descripción para explicar la consecuencia o el siguiente paso, no para repetir el título.
+- No mostrar excepciones, nombres de clases, rutas, identificadores internos ni respuestas crudas del servidor. El detalle técnico pertenece al registro de la aplicación.
+- Preferir “se guardó correctamente” frente a “guardado exitosamente” y conjugar singular y plural de forma natural; no usar fórmulas como `archivo(s)` o `registro(s)`.
+- Para fallos recuperables, indicar una acción concreta: “Revisa los datos e inténtalo nuevamente”. Los errores de campos específicos permanecen junto al campo y el toast solo resume el resultado.
+- Duración orientativa: 4 segundos para éxito e información, 5 segundos para advertencia y 6 segundos para error. Los estados de carga permanecen hasta actualizarse o cerrarse.
+- Incluir botón de cierre. En escritorio puede aparecer al interactuar con la pila; en dispositivos táctiles permanece visible.
+- Pausar el temporizador mientras la pila tiene hover o foco y cuando la pestaña no está visible.
+- Las notificaciones son transitorias: descartarlas al abandonar la página y no restaurarlas desde el historial o la caché de navegación (`bfcache`). Al regresar sin guardar desde crear o editar no debe reaparecer un éxito anterior.
+- Permitir deslizar horizontalmente para descartar. Respetar `prefers-reduced-motion` y mantener un cierre accesible por teclado.
+- Entrada oficial: desplazamiento vertical de 18 px, escala de 0.98 a 1 y opacidad, con 260 ms y desaceleración suave. Salida: 220 ms hacia el borde correspondiente, con leve reducción de escala. Nunca desactivar la salida salvo durante el arrastre directo.
+- Usar acciones solamente para una consecuencia inmediata y reversible, como “Deshacer” o “Reintentar”. No colocar dos botones ni usar el toast como sustituto de un modal de confirmación.
+- Para operaciones asíncronas, actualizar el mismo toast por ID de carga a éxito o error; no encadenar tres avisos independientes.
+- La API heredada `showToast(mensaje, tipo, duración)` se conserva para compatibilidad. El código nuevo debe preferir `AppToast.success()`, `info()`, `warning()`, `error()`, `loading()`, `promise()`, `update()` y `dismiss()`.
 
 ## 9. Responsive
 

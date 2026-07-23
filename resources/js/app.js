@@ -24,12 +24,15 @@ function canReturnThroughHistory(targetHref) {
     }
 }
 
-const usersTableRestoreIntentKey = 'sistema-sec-tam.users-table-restore-intent.v1';
+function usersTableRestoreIntentKey() {
+    const scope = document.documentElement.dataset.authStorageScope || 'guest';
+    return `sistema-sec-tam.users-table-restore-intent.v1.${scope}`;
+}
 
 function markUsersTableHistoryReturn(targetHref) {
     try {
         const targetUrl = new URL(targetHref, window.location.href);
-        sessionStorage.setItem(usersTableRestoreIntentKey, JSON.stringify({
+        sessionStorage.setItem(usersTableRestoreIntentKey(), JSON.stringify({
             target: `${targetUrl.pathname}${targetUrl.search}`,
             createdAt: Date.now(),
         }));
@@ -38,18 +41,30 @@ function markUsersTableHistoryReturn(targetHref) {
     }
 }
 
+function isPlainPrimaryNavigation(event, link) {
+    return !event.defaultPrevented
+        && event.button === 0
+        && !event.metaKey
+        && !event.ctrlKey
+        && !event.shiftKey
+        && !event.altKey
+        && link.target !== '_blank'
+        && !link.hasAttribute('download');
+}
+
 window.addEventListener('pageshow', (event) => {
     if (!event.persisted) return;
 
     try {
-        const restoreIntent = JSON.parse(sessionStorage.getItem(usersTableRestoreIntentKey) || 'null');
+        const restoreIntentKey = usersTableRestoreIntentKey();
+        const restoreIntent = JSON.parse(sessionStorage.getItem(restoreIntentKey) || 'null');
         const currentTarget = `${window.location.pathname}${window.location.search}`;
 
         if (restoreIntent?.target === currentTarget) {
-            sessionStorage.removeItem(usersTableRestoreIntentKey);
+            sessionStorage.removeItem(restoreIntentKey);
         }
     } catch (error) {
-        try { sessionStorage.removeItem(usersTableRestoreIntentKey); } catch (storageError) {}
+        try { sessionStorage.removeItem(usersTableRestoreIntentKey()); } catch (storageError) {}
     }
 });
 
@@ -64,17 +79,15 @@ window.navigateBackOrVisit = function navigateBackOrVisit(targetHref) {
 };
 
 document.addEventListener('click', (event) => {
+    const preserveLink = event.target.closest('a[data-users-table-return]');
+    if (preserveLink && isPlainPrimaryNavigation(event, preserveLink)) {
+        markUsersTableHistoryReturn(preserveLink.dataset.usersTableReturn);
+    }
+
     const link = event.target.closest('a[data-history-back="true"]');
 
     if (!link
-        || event.defaultPrevented
-        || event.button !== 0
-        || event.metaKey
-        || event.ctrlKey
-        || event.shiftKey
-        || event.altKey
-        || link.target === '_blank'
-        || link.hasAttribute('download')
+        || !isPlainPrimaryNavigation(event, link)
         || !canReturnThroughHistory(link.href)) {
         return;
     }

@@ -393,9 +393,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 // Simular funcionalidad de edición
                 if (typeof window.showToast === 'function') {
-                    window.showToast('La edición se abrirá desde el formulario del reporte.', 'info', 3000);
+                    window.showToast('Abriendo el formulario de edición.', 'info', 3000);
                 } else {
-                    alert('La edición se abrirá desde el formulario del reporte.');
+                    alert('Abriendo el formulario de edición.');
                 }
                 
                 // En una implementación real, esto podría:
@@ -460,11 +460,15 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 console.log('Iniciando descarga de todos los archivos...');
                 
+                const resumenArchivos = archivos.length === 1
+                    ? '1 archivo adjunto'
+                    : `${archivos.length} archivos adjuntos`;
+
                 // Simular descarga de archivos
                 if (typeof window.showToast === 'function') {
-                    window.showToast(`Preparando ${archivos.length} archivo(s) adjuntos.`, 'info', 3000);
+                    window.showToast(`Preparando ${resumenArchivos}.`, 'info', 3000);
                 } else {
-                    alert(`Preparando ${archivos.length} archivo(s) adjuntos.`);
+                    alert(`Preparando ${resumenArchivos}.`);
                 }
                 
                 // En una implementación real, esto podría:
@@ -483,9 +487,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Simular proceso de descarga
                 setTimeout(() => {
                     if (typeof window.showToast === 'function') {
-                        window.showToast(`Descarga preparada con ${archivos.length} archivo(s).`, 'success', 3000);
+                        window.showToast(`La descarga de ${resumenArchivos} está lista.`, 'success', 3000);
                     } else {
-                        alert(`Descarga preparada con ${archivos.length} archivo(s).`);
+                        alert(`La descarga de ${resumenArchivos} está lista.`);
                     }
                 }, 1000);
             });
@@ -500,9 +504,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 // Simular descarga individual
                 if (typeof window.showToast === 'function') {
-                    window.showToast(`Preparando descarga: ${nombreArchivo}`, 'info', 3000);
+                    window.showToast(`Preparando la descarga de «${nombreArchivo}».`, 'info', 3000);
                 } else {
-                    alert(`Preparando descarga: ${nombreArchivo}`);
+                    alert(`Preparando la descarga de «${nombreArchivo}».`);
                 }
                 
                 // En una implementación real, esto podría:

@@ -1,18 +1,24 @@
-<div class="app-subnav bg-nav text-white w-full font-sans">
-    <div class="app-subnav-inner flex items-center h-9 lg:h-11 space-x-1 lg:space-x-2 px-3 lg:px-5">
-    <a href="{{ route('usuario.miperfil') }}" class="app-subnav-link text-sm lg:text-base h-full text-white py-0.5 lg:py-1 px-6 lg:px-8 transition duration-200 ease-in-out flex items-center flex-shrink-0 relative group">
-            <span class="relative py-1.5">
-                Mi perfil
-                <span class="app-subnav-indicator absolute bottom-0 left-0 w-0 h-0.5 bg-[#bc955c] transition-all duration-200 group-hover:w-full"></span>
-            </span>
+@php
+    $profileNavActive = request()->routeIs('usuario.*');
+    $usersNavActive = request()->routeIs('user.*');
+@endphp
+
+<nav class="app-subnav bg-nav text-white w-full font-sans" aria-label="Navegación de usuarios">
+    <div class="app-subnav-inner">
+        <a href="{{ route('usuario.miperfil') }}"
+           @class(['app-subnav-link', 'is-active' => $profileNavActive])
+           @if($profileNavActive) aria-current="page" @endif>
+            <span>Mi perfil</span>
+            <span class="app-subnav-indicator" aria-hidden="true"></span>
         </a>
-    @if(auth()->user() && auth()->user()->isAdmin())
-        <a href="{{ route('user.user-gestion') }}" class="app-subnav-link text-sm lg:text-base h-full text-white py-0.5 lg:py-1 px-6 lg:px-8 transition duration-200 ease-in-out flex items-center flex-shrink-0 relative group">
-            <span class="relative py-1.5">
-                Gestión de usuarios
-                <span class="app-subnav-indicator absolute bottom-0 left-0 w-0 h-0.5 bg-[#bc955c] transition-all duration-200 group-hover:w-full"></span>
-            </span>
-        </a>
-    @endif
+
+        @if(auth()->user() && auth()->user()->isAdmin())
+            <a href="{{ route('user.user-gestion') }}"
+               @class(['app-subnav-link', 'is-active' => $usersNavActive])
+               @if($usersNavActive) aria-current="page" @endif>
+                <span>Gestión de usuarios</span>
+                <span class="app-subnav-indicator" aria-hidden="true"></span>
+            </a>
+        @endif
     </div>
-</div>
+</nav>

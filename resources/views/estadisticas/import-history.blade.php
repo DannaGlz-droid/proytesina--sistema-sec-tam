@@ -543,7 +543,13 @@ document.addEventListener('DOMContentLoaded', function () {
             data: { ids: ids },
             success: function(res) {
                 if (res && res.ok) {
-                    notifyImport('Se eliminaron ' + (res.deleted || 0) + ' importaciones del historial.', 'success');
+                    const deletedImports = Number(res.deleted || 0);
+                    notifyImport(
+                        deletedImports === 1
+                            ? 'Se eliminó 1 importación del historial.'
+                            : `Se eliminaron ${deletedImports} importaciones del historial.`,
+                        'success'
+                    );
                     clearVisibleImportSelection();
                     loadImports();
                 } else {

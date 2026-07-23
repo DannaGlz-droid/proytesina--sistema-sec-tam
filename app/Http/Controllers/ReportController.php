@@ -314,9 +314,10 @@ class ReportController extends Controller
 
         } catch (\Exception $e) {
             DB::rollBack();
+            Log::error('No se pudo eliminar la publicación.', ['exception' => $e]);
             return redirect()
                 ->route('reportes.index', ['tipo' => $redirectTipo])
-                ->with('error', 'Error al eliminar la publicación: ' . $e->getMessage());
+                ->with('error', 'No se pudo eliminar la publicación. Inténtalo nuevamente.');
         }
     }
 
@@ -418,7 +419,7 @@ class ReportController extends Controller
             \Log::error("Mass delete error: " . $e->getMessage());
             return response()->json([
                 'ok' => false,
-                'error' => 'Error al eliminar los reportes: ' . $e->getMessage()
+                'error' => 'No se pudieron eliminar los reportes. Inténtalo nuevamente.'
             ], 500);
         }
     }
@@ -472,9 +473,10 @@ class ReportController extends Controller
                 ->with('success', 'Archivo eliminado correctamente.');
 
         } catch (\Exception $e) {
+            Log::error('No se pudo eliminar el archivo de la publicación.', ['exception' => $e]);
             return redirect()
                 ->back()
-                ->with('error', 'Error al eliminar el archivo: ' . $e->getMessage());
+                ->with('error', 'No se pudo eliminar el archivo. Inténtalo nuevamente.');
         }
     }
 
@@ -593,14 +595,15 @@ class ReportController extends Controller
 
             return redirect()
                 ->route('reportes.index')
-                ->with('success', 'Reporte de Seguridad Vial registrado exitosamente');
+                ->with('success', 'El reporte de Seguridad Vial se registró correctamente.');
 
         } catch (\Exception $e) {
             DB::rollBack();
+            Log::error('No se pudo registrar el reporte de Seguridad Vial.', ['exception' => $e]);
             return redirect()
                 ->back()
                 ->withInput()
-                ->with('error', 'Error al registrar el reporte: ' . $e->getMessage());
+                ->with('error', 'No se pudo registrar el reporte. Revisa los datos e inténtalo nuevamente.');
         }
     }
 
@@ -613,7 +616,7 @@ class ReportController extends Controller
         if ($publication->publication_type !== 'seguridad_vial') {
             return redirect()
                 ->route('reportes.index')
-                ->with('error', 'Esta publicación no es de tipo Seguridad Vial');
+                ->with('error', 'Esta publicación no corresponde a Seguridad Vial.');
         }
 
         // Permitir edición solo al autor Y que NO esté aprobada
@@ -739,14 +742,15 @@ class ReportController extends Controller
 
             return redirect()
                 ->route('reportes.index', ['tipo' => request('redirect_tipo', 'seguridad_vial')])
-                ->with('success', 'Reporte de Seguridad Vial actualizado exitosamente');
+                ->with('success', 'El reporte de Seguridad Vial se actualizó correctamente.');
 
         } catch (\Exception $e) {
             DB::rollBack();
+            Log::error('No se pudo actualizar el reporte de Seguridad Vial.', ['exception' => $e]);
             return redirect()
                 ->back()
                 ->withInput()
-                ->with('error', 'Error al actualizar el reporte: ' . $e->getMessage());
+                ->with('error', 'No se pudo actualizar el reporte. Revisa los datos e inténtalo nuevamente.');
         }
     }
 
@@ -817,14 +821,15 @@ class ReportController extends Controller
 
             return redirect()
                 ->route('reportes.index')
-                ->with('success', 'Reporte de Observatorio de Lesiones registrado exitosamente');
+                ->with('success', 'El reporte de Observatorio de Lesiones se registró correctamente.');
 
         } catch (\Exception $e) {
             DB::rollBack();
+            Log::error('No se pudo registrar el reporte de Observatorio de Lesiones.', ['exception' => $e]);
             return redirect()
                 ->back()
                 ->withInput()
-                ->with('error', 'Error al registrar el reporte: ' . $e->getMessage());
+                ->with('error', 'No se pudo registrar el reporte. Revisa los datos e inténtalo nuevamente.');
         }
     }
 
@@ -837,7 +842,7 @@ class ReportController extends Controller
         if ($publication->publication_type !== 'observatorio') {
             return redirect()
                 ->route('reportes.index')
-                ->with('error', 'Esta publicación no es de tipo Observatorio');
+                ->with('error', 'Esta publicación no corresponde al Observatorio de Lesiones.');
         }
 
         // Permitir edición solo al autor Y que NO esté aprobada
@@ -963,14 +968,15 @@ class ReportController extends Controller
 
             return redirect()
                 ->route('reportes.index', ['tipo' => request('redirect_tipo', 'observatorio')])
-                ->with('success', 'Reporte de Observatorio actualizado exitosamente');
+                ->with('success', 'El reporte de Observatorio de Lesiones se actualizó correctamente.');
 
         } catch (\Exception $e) {
             DB::rollBack();
+            Log::error('No se pudo actualizar el reporte de Observatorio de Lesiones.', ['exception' => $e]);
             return redirect()
                 ->back()
                 ->withInput()
-                ->with('error', 'Error al actualizar el reporte: ' . $e->getMessage());
+                ->with('error', 'No se pudo actualizar el reporte. Revisa los datos e inténtalo nuevamente.');
         }
     }
 
@@ -1052,14 +1058,15 @@ class ReportController extends Controller
 
             return redirect()
                 ->route('reportes.index')
-                ->with('success', 'Reporte de Alcoholimetría registrado exitosamente');
+                ->with('success', 'El reporte de Alcoholimetría se registró correctamente.');
 
         } catch (\Exception $e) {
             DB::rollBack();
+            Log::error('No se pudo registrar el reporte de Alcoholimetría.', ['exception' => $e]);
             return redirect()
                 ->back()
                 ->withInput()
-                ->with('error', 'Error al registrar el reporte: ' . $e->getMessage());
+                ->with('error', 'No se pudo registrar el reporte. Revisa los datos e inténtalo nuevamente.');
         }
     }
 
@@ -1072,7 +1079,7 @@ class ReportController extends Controller
         if ($publication->publication_type !== 'alcoholimetria') {
             return redirect()
                 ->route('reportes.index')
-                ->with('error', 'Esta publicación no es de tipo Alcoholimetría');
+                ->with('error', 'Esta publicación no corresponde a Alcoholimetría.');
         }
 
         // Permitir edición solo al autor Y que NO esté aprobada
@@ -1193,14 +1200,15 @@ class ReportController extends Controller
 
             return redirect()
                 ->route('reportes.index', ['tipo' => request('redirect_tipo', 'alcoholimetria')])
-                ->with('success', 'Reporte de Alcoholimetría actualizado exitosamente');
+                ->with('success', 'El reporte de Alcoholimetría se actualizó correctamente.');
 
         } catch (\Exception $e) {
             DB::rollBack();
+            Log::error('No se pudo actualizar el reporte de Alcoholimetría.', ['exception' => $e]);
             return redirect()
                 ->back()
                 ->withInput()
-                ->with('error', 'Error al actualizar el reporte: ' . $e->getMessage());
+                ->with('error', 'No se pudo actualizar el reporte. Revisa los datos e inténtalo nuevamente.');
         }
     }
 
@@ -1270,14 +1278,15 @@ class ReportController extends Controller
 
             return redirect()
                 ->route('reportes.index')
-                ->with('success', 'Reporte de Grupos Vulnerables registrado exitosamente');
+                ->with('success', 'El reporte de Grupos Vulnerables se registró correctamente.');
 
         } catch (\Exception $e) {
             DB::rollBack();
+            Log::error('No se pudo registrar el reporte de Grupos Vulnerables.', ['exception' => $e]);
             return redirect()
                 ->back()
                 ->withInput()
-                ->with('error', 'Error al registrar el reporte: ' . $e->getMessage());
+                ->with('error', 'No se pudo registrar el reporte. Revisa los datos e inténtalo nuevamente.');
         }
     }
 
@@ -1387,14 +1396,15 @@ class ReportController extends Controller
 
             return redirect()
                 ->route('reportes.index', ['tipo' => request('redirect_tipo', 'grupos-vulnerables')])
-                ->with('success', 'Reporte de Grupos Vulnerables actualizado exitosamente');
+                ->with('success', 'El reporte de Grupos Vulnerables se actualizó correctamente.');
 
         } catch (\Exception $e) {
             DB::rollBack();
+            Log::error('No se pudo actualizar el reporte de Grupos Vulnerables.', ['exception' => $e]);
             return redirect()
                 ->back()
                 ->withInput()
-                ->with('error', 'Error al actualizar el reporte: ' . $e->getMessage());
+                ->with('error', 'No se pudo actualizar el reporte. Revisa los datos e inténtalo nuevamente.');
         }
     }
 
@@ -1405,13 +1415,13 @@ class ReportController extends Controller
     {
         // Verificar que sea del tipo correcto
         if ($publication->publication_type !== 'grupos-vulnerables') {
-            return response()->json(['success' => false, 'message' => 'Publicación no encontrada'], 404);
+            return response()->json(['success' => false, 'message' => 'No se encontró la publicación seleccionada.'], 404);
         }
 
         $report = $publication->gruposVulnerablesReport;
         
         if (!$report) {
-            return response()->json(['success' => false, 'message' => 'Reporte no encontrado'], 404);
+            return response()->json(['success' => false, 'message' => 'No se encontró el reporte seleccionado.'], 404);
         }
 
         return response()->json([
@@ -1845,7 +1855,7 @@ class ReportController extends Controller
         $files = $publication->files;
 
         if ($files->isEmpty()) {
-            return redirect()->back()->with('error', 'No hay archivos para descargar');
+            return redirect()->back()->with('error', 'Esta publicación no tiene archivos para descargar.');
         }
 
         // Si solo hay un archivo, descargarlo directamente
@@ -2013,7 +2023,7 @@ class ReportController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Reporte aprobado exitosamente.',
+            'message' => 'El reporte se aprobó correctamente.',
             'approved_by' => $user->full_name,
         ]);
     }
@@ -2122,7 +2132,7 @@ class ReportController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Reporte reenviado para revisión exitosamente.',
+            'message' => 'El reporte se envió nuevamente a revisión.',
         ]);
     }
 

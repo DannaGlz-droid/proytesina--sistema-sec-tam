@@ -1,5 +1,7 @@
 <!DOCTYPE html>
-<html lang="es" data-ui-theme="tamaulipas-salud">
+<html lang="es"
+      data-ui-theme="tamaulipas-salud"
+      @auth data-auth-storage-scope="{{ auth()->id() }}" @endauth>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">

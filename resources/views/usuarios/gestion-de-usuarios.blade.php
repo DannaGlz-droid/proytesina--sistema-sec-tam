@@ -12,7 +12,10 @@
             description="Administre y gestione todos los usuarios del sistema con permisos y roles específicos."
         >
             <x-slot:actions>
-                <a href="{{ route('user.create') }}" class="users-page-create-btn" title="Crear usuario">
+                <a href="{{ route('user.create') }}"
+                   class="users-page-create-btn"
+                   title="Crear usuario"
+                   data-users-table-return="{{ route('user.user-gestion') }}">
                     <i class="fas fa-plus text-xs" aria-hidden="true"></i>
                     Crear usuario
                 </a>
@@ -46,6 +49,8 @@
 
                             <!-- Table wrapper -->
                             <div class="app-table-shell overflow-x-hidden min-w-0">
+                                <div class="users-table-refresh-progress" aria-hidden="true"></div>
+                                <span id="users-table-refresh-status" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></span>
                         <table id="users-table" class="app-data-table min-w-full w-full text-sm text-left text-gray-500">
                             <thead class="text-xs">
                                 <tr>
@@ -87,7 +92,7 @@
                             (function restoreUsersTableSnapshot() {
                                 const snapshotKey = 'sistema-sec-tam.users-table-snapshot.v1.{{ auth()->id() }}';
                                 const dataCacheKey = 'sistema-sec-tam.users-table-data.v1.{{ auth()->id() }}';
-                                const restoreIntentKey = 'sistema-sec-tam.users-table-restore-intent.v1';
+                                const restoreIntentKey = 'sistema-sec-tam.users-table-restore-intent.v1.{{ auth()->id() }}';
 
                                 try {
                                     window.shouldRestoreUsersTableState = false;
@@ -101,9 +106,11 @@
                                     @endif
 
                                     const currentTarget = `${window.location.pathname}${window.location.search}`;
+                                    const restoreIntentTtl = 30 * 60 * 1000;
+                                    const snapshotTtl = 30 * 60 * 1000;
                                     const shouldRestore = restoreIntent
                                         && Number.isFinite(restoreIntent.createdAt)
-                                        && Date.now() - restoreIntent.createdAt <= 30 * 1000
+                                        && Date.now() - restoreIntent.createdAt <= restoreIntentTtl
                                         && restoreIntent.target === currentTarget;
 
                                     window.shouldRestoreUsersTableState = Boolean(shouldRestore);
@@ -113,7 +120,7 @@
                                     const card = document.querySelector('.users-table-card');
                                     const isValid = snapshot
                                         && Number.isFinite(snapshot.savedAt)
-                                        && Date.now() - snapshot.savedAt <= 5 * 60 * 1000
+                                        && Date.now() - snapshot.savedAt <= snapshotTtl
                                         && typeof snapshot.html === 'string'
                                         && snapshot.html.length > 0
                                         && card;
@@ -627,18 +634,50 @@
             }
 
             let usersSearchPending = false;
+            let usersSearchIndicatorTimer = null;
+            let usersTableHasRendered = false;
+            let usersTableRefreshTimer = null;
             const usersTableCard = $('.users-table-card').first();
+            const usersTableBody = document.querySelector('#users-table tbody');
+            const usersTableRefreshStatus = document.getElementById('users-table-refresh-status');
+
+            function scheduleUsersTableRefreshState() {
+                if (!usersTableHasRendered) return;
+
+                const isSearchRefresh = usersSearchPending;
+                window.clearTimeout(usersTableRefreshTimer);
+                usersTableCard.attr('aria-busy', 'true');
+                usersTableBody?.setAttribute('inert', '');
+                usersTableRefreshTimer = window.setTimeout(function() {
+                    usersTableCard
+                        .toggleClass('is-search-refresh', isSearchRefresh)
+                        .addClass('is-refreshing');
+                    if (usersTableRefreshStatus) {
+                        usersTableRefreshStatus.textContent = isSearchRefresh
+                            ? 'Buscando usuarios'
+                            : 'Actualizando usuarios';
+                    }
+                }, 150);
+            }
+
+            function clearUsersTableRefreshState() {
+                window.clearTimeout(usersTableRefreshTimer);
+                usersTableRefreshTimer = null;
+                usersTableCard.removeClass('is-refreshing is-search-refresh').attr('aria-busy', 'false');
+                usersTableBody?.removeAttribute('inert');
+                if (usersTableRefreshStatus) usersTableRefreshStatus.textContent = '';
+            }
+
             $('#users-table').on('preXhr.dt', function() {
-                if (!usersSearchPending) {
-                    usersTableCard.addClass('is-refreshing');
-                }
+                scheduleUsersTableRefreshState();
             });
-            $('#users-table').on('xhr.dt draw.dt error.dt', function() {
-                usersTableCard.removeClass('is-refreshing');
+            $('#users-table').on('draw.dt error.dt', function() {
+                clearUsersTableRefreshState();
             });
 
-            const usersTablePrefsKey = 'sistema-sec-tam.users-table-prefs';
-            const usersTableContextKey = 'sistema-sec-tam.users-table-context';
+            const usersTableStorageScope = '{{ auth()->id() }}';
+            const usersTablePrefsKey = `sistema-sec-tam.users-table-prefs.v1.${usersTableStorageScope}`;
+            const usersTableContextKey = `sistema-sec-tam.users-table-context.v1.${usersTableStorageScope}`;
 
             function readUsersTablePrefs() {
                 try {
@@ -701,8 +740,17 @@
                 }
             }
 
+            const usersNavigationEntry = window.performance?.getEntriesByType?.('navigation')?.[0];
+            const shouldRestoreUsersTableContext = Boolean(window.shouldRestoreUsersTableState)
+                || usersNavigationEntry?.type === 'reload';
             const usersTablePrefs = readUsersTablePrefs();
-            const usersTableContext = readUsersTableContext();
+            const usersTableContext = shouldRestoreUsersTableContext
+                ? readUsersTableContext()
+                : {};
+
+            if (!shouldRestoreUsersTableContext) {
+                try { sessionStorage.removeItem(usersTableContextKey); } catch (e) {}
+            }
             restoreUsersFilters(usersTableContext.filters);
 
             const initialPageLength = [10, 25, 50, 100].includes(Number(usersTableContext.pageLength))
@@ -727,6 +775,7 @@
                 : '';
 
             $('#users-table').one('init.dt', function() {
+                usersTableHasRendered = true;
                 removeUsersTableRestoreSnapshot();
                 window.requestAnimationFrame(saveUsersTableRenderSnapshot);
             });
@@ -834,14 +883,33 @@
 
             // Custom search functionality
             const usersSearchWrap = $('.users-filter-search');
+            const usersSearchInput = $('#dt-search-users');
+
+            function beginUsersSearch() {
+                usersSearchPending = true;
+                window.clearTimeout(usersSearchIndicatorTimer);
+                usersSearchInput.attr('aria-busy', 'true');
+                usersSearchIndicatorTimer = window.setTimeout(function() {
+                    if (usersSearchPending) usersSearchWrap.addClass('is-searching');
+                }, 150);
+            }
+
+            function finishUsersSearch() {
+                window.clearTimeout(usersSearchIndicatorTimer);
+                usersSearchIndicatorTimer = null;
+                usersSearchPending = false;
+                usersSearchWrap.removeClass('is-searching');
+                usersSearchInput.attr('aria-busy', 'false');
+            }
+
             $('#dt-search-users').val(initialSearch);
+            usersSearchInput.attr('aria-busy', 'false');
             $('#dt-clear-btn').toggleClass('hidden', !initialSearch);
 
             $('#dt-search-users').on('keyup', function(e) {
                 const val = $(this).val();
                 if (e.key === 'Enter') {
-                    usersSearchPending = true;
-                    usersSearchWrap.addClass('is-searching');
+                    beginUsersSearch();
                     table.search(val).draw();
                     $('#dt-clear-btn').toggleClass('hidden', !val);
                 }
@@ -849,16 +917,14 @@
 
             $('#dt-clear-btn').on('click', function() {
                 $('#dt-search-users').val('');
-                usersSearchPending = true;
-                usersSearchWrap.addClass('is-searching');
+                beginUsersSearch();
                 table.search('').draw();
                 $(this).addClass('hidden');
             });
 
             $('#users-table').on('draw.dt xhr.dt error.dt', function() {
                 if (!usersSearchPending) return;
-                usersSearchPending = false;
-                usersSearchWrap.removeClass('is-searching');
+                finishUsersSearch();
             });
 
             // Custom per-page change
@@ -1068,7 +1134,7 @@
                         icon: 'far fa-user',
                         title: 'Aún no hay usuarios',
                         message: 'Crea el primer usuario para comenzar a gestionar accesos y permisos.',
-                        action: '<a class="users-table-state-action" href="{{ route('user.create') }}">Crear usuario</a>'
+                        action: '<a class="users-table-state-action" href="{{ route('user.create') }}" data-users-table-return="{{ route('user.user-gestion') }}">Crear usuario</a>'
                     },
                     'no-results': {
                         icon: 'fas fa-search',
@@ -1135,7 +1201,13 @@
                     data: { ids: ids },
                     success: function(res) {
                         if (res && res.ok) {
-                            notifyUser('Se eliminaron ' + (res.deleted || 0) + ' usuarios.', 'success');
+                            const deletedUsers = Number(res.deleted || 0);
+                            notifyUser(
+                                deletedUsers === 1
+                                    ? 'Se eliminó 1 usuario.'
+                                    : `Se eliminaron ${deletedUsers} usuarios.`,
+                                'success'
+                            );
                             table.clearPipeline().ajax.reload(null, false);
                             clearVisibleUserSelection();
                         } else {
@@ -1169,13 +1241,13 @@
                     method: 'POST',
                     data: $(form).serialize(),
                     success: function(res) {
-                        notifyUser((res && res.message) ? res.message : 'Usuario eliminado.', 'success');
+                        notifyUser((res && res.message) ? res.message : 'El usuario se eliminó correctamente.', 'success');
                         table.clearPipeline().ajax.reload(null, false);
                         clearVisibleUserSelection();
                     },
                     error: function(xhr) {
                         console.error(xhr);
-                        notifyUser('No se pudo eliminar el usuario.', 'error');
+                        notifyUser('No se pudo eliminar el usuario. Inténtalo nuevamente.', 'error');
                     }
                 });
             });

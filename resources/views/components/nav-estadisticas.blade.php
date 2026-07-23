@@ -1,22 +1,35 @@
-<div class="bg-nav text-white w-full font-sans">
-    <div class="flex items-center h-9 lg:h-11 space-x-1 lg:space-x-2 px-3 lg:px-5">
-        <a href="{{ route('statistic.data') }}" class="text-sm lg:text-base h-full px-6 lg:px-8 transition duration-200 ease-in-out flex items-center flex-shrink-0 relative group">
-            <span class="relative py-1.5">
-                Datos
-                <span class="absolute bottom-0 left-0 w-0 h-0.5 bg-[#bc955c] transition-all duration-200 group-hover:w-full"></span>
-            </span>
+@php
+    $statisticsDataActive = request()->routeIs(
+        'statistic.data',
+        'statistic.edit',
+        'statistic.import-history-view',
+        'statistic.failed-imports-view'
+    );
+    $statisticsChartsActive = request()->routeIs('estadisticas.graficas');
+    $statisticsCreateActive = request()->routeIs('statistic.create');
+@endphp
+
+<nav class="app-subnav bg-nav text-white w-full font-sans" aria-label="Navegación de estadísticas">
+    <div class="app-subnav-inner">
+        <a href="{{ route('statistic.data') }}"
+           @class(['app-subnav-link', 'is-active' => $statisticsDataActive])
+           @if($statisticsDataActive) aria-current="page" @endif>
+            <span>Datos</span>
+            <span class="app-subnav-indicator" aria-hidden="true"></span>
         </a>
-        <a href="{{ route('estadisticas.graficas') }}" class="text-sm lg:text-base h-full px-6 lg:px-8 transition duration-200 ease-in-out flex items-center flex-shrink-0 relative group">
-            <span class="relative py-1.5">
-                Estadísticas
-                <span class="absolute bottom-0 left-0 w-0 h-0.5 bg-[#bc955c] transition-all duration-200 group-hover:w-full"></span>
-            </span>
+
+        <a href="{{ route('estadisticas.graficas') }}"
+           @class(['app-subnav-link', 'is-active' => $statisticsChartsActive])
+           @if($statisticsChartsActive) aria-current="page" @endif>
+            <span>Estadísticas</span>
+            <span class="app-subnav-indicator" aria-hidden="true"></span>
         </a>
-        <a href="{{ route('statistic.create') }}" class="text-sm lg:text-base h-full px-6 lg:px-8 transition duration-200 ease-in-out flex items-center flex-shrink-0 relative group">
-            <span class="relative py-1.5">
-                Nuevo registro
-                <span class="absolute bottom-0 left-0 w-0 h-0.5 bg-[#bc955c] transition-all duration-200 group-hover:w-full"></span>
-            </span>
+
+        <a href="{{ route('statistic.create') }}"
+           @class(['app-subnav-link', 'is-active' => $statisticsCreateActive])
+           @if($statisticsCreateActive) aria-current="page" @endif>
+            <span>Nuevo registro</span>
+            <span class="app-subnav-indicator" aria-hidden="true"></span>
         </a>
     </div>
-</div>
+</nav>

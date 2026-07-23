@@ -485,10 +485,10 @@ class StatisticsController extends Controller
         } catch (\Throwable $e) {
             // Log the error and return a clear JSON payload so the frontend debug box shows the cause
             \Log::error('chartsData error: ' . $e->getMessage(), ['exception' => $e]);
-            $debug = config('app.debug') ? $e->getMessage() . ' in ' . $e->getFile() . ':' . $e->getLine() : 'Database or configuration error';
+            $debug = config('app.debug') ? $e->getMessage() . ' in ' . $e->getFile() . ':' . $e->getLine() : null;
             return response()->json([
-                'error' => 'Could not fetch charts data',
-                'message' => $e->getMessage(),
+                'error' => 'No se pudieron obtener los datos de las gráficas.',
+                'message' => 'No se pudieron cargar los datos. Inténtalo nuevamente.',
                 'debug' => $debug,
             ], 500);
         }
@@ -641,14 +641,14 @@ class StatisticsController extends Controller
                     return $this->getChartComparativa($filters, $dateColumn, $munCol, $applyFilters, $limit);
                     
                 default:
-                    return response()->json(['error' => 'Tipo de gráfica no válido'], 400);
+                    return response()->json(['error' => 'El tipo de gráfica seleccionado no es válido.'], 400);
             }
         } catch (\Throwable $e) {
             \Log::error('getChartData error: ' . $e->getMessage(), ['exception' => $e]);
-            $debug = config('app.debug') ? $e->getMessage() . ' in ' . $e->getFile() . ':' . $e->getLine() : 'Error';
+            $debug = config('app.debug') ? $e->getMessage() . ' in ' . $e->getFile() . ':' . $e->getLine() : null;
             return response()->json([
-                'error' => 'Error al obtener datos de la gráfica',
-                'message' => $e->getMessage(),
+                'error' => 'No se pudieron obtener los datos de la gráfica.',
+                'message' => 'No se pudieron cargar los datos. Inténtalo nuevamente.',
                 'debug' => $debug,
             ], 500);
         }
@@ -889,7 +889,7 @@ class StatisticsController extends Controller
     private function getChartJurisdicciones($filters, $dateColumn, $applyFilters, $limit)
     {
         if (!Schema::hasTable('districts')) {
-            return response()->json(['error' => 'Tabla de jurisdicciones no existe'], 404);
+            return response()->json(['error' => 'No se pudo cargar la información de los distritos.'], 404);
         }
 
         $query = DB::table('deaths')
