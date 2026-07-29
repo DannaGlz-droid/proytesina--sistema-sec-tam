@@ -20,7 +20,14 @@
             <i class="fas fa-key users-row-menu-icon" aria-hidden="true"></i>
             <span>Cambiar contraseña</span>
         </a>
-        <form method="POST" action="{{ route('user.destroy', $user->id) }}" class="js-delete-user-form" data-user-name="{{ trim($user->name . ' ' . $user->first_last_name) ?: $user->username }}">
+        <form method="POST"
+              action="{{ route('user.destroy', $user->id) }}"
+              class="js-delete-user-form"
+              data-user-name="{{ trim($user->name . ' ' . $user->first_last_name) ?: $user->username }}"
+              data-confirm-delete-form
+              data-confirm-title="Eliminar usuario"
+              data-confirm-subject="{{ trim($user->name . ' ' . $user->first_last_name) ?: $user->username }}"
+              data-confirm-message-prefix="¿Deseas eliminar a ">
             @csrf
             @method('DELETE')
             <button type="submit" class="users-row-menu-item users-row-menu-item-danger" role="menuitem">

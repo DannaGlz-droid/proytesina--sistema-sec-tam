@@ -20,46 +20,42 @@
                 @method('PUT')
 
                 <x-ui.form.section title="Información del usuario" icon="user">
-                    <div class="space-y-3">
-                        <div>
-                            <label for="name" class="block">Nombre(s) <span class="text-red-600">*</span></label>
-                            <input id="name" name="name" type="text" required minlength="2" maxlength="191" @error('name') aria-invalid="true" aria-describedby="name-error" @enderror
-                                placeholder="Ej: María Elena" value="{{ old('name', $user->name) }}">
-                            @error('name') <p id="name-error" class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
-                        </div>
-
-                        <div>
-                            <label for="second_last_name" class="block">Apellido materno</label>
-                            <input id="second_last_name" name="second_last_name" type="text" minlength="2" maxlength="191" @error('second_last_name') aria-invalid="true" aria-describedby="second-last-name-error" @enderror
-                                placeholder="Ej: López" value="{{ old('second_last_name', $user->second_last_name) }}">
-                            @error('second_last_name') <p id="second-last-name-error" class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
-                        </div>
+                    <div>
+                        <label for="name" class="block">Nombre(s) <span class="text-red-600">*</span></label>
+                        <input id="name" name="name" type="text" required minlength="2" maxlength="191" @error('name') aria-invalid="true" aria-describedby="name-error" @enderror
+                            placeholder="Ej: María Elena" value="{{ old('name', $user->name) }}">
+                        @error('name') <p id="name-error" class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
                     </div>
 
-                    <div class="space-y-3">
+                    <div>
+                        <label for="first_last_name" class="block">Apellido paterno <span class="text-red-600">*</span></label>
+                        <input id="first_last_name" name="first_last_name" type="text" required minlength="2" maxlength="191" @error('first_last_name') aria-invalid="true" aria-describedby="first-last-name-error" @enderror
+                            placeholder="Ej: García" value="{{ old('first_last_name', $user->first_last_name) }}">
+                        @error('first_last_name') <p id="first-last-name-error" class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
+                    </div>
+
+                    <div>
+                        <label for="second_last_name" class="block">Apellido materno</label>
+                        <input id="second_last_name" name="second_last_name" type="text" minlength="2" maxlength="191" @error('second_last_name') aria-invalid="true" aria-describedby="second-last-name-error" @enderror
+                            placeholder="Ej: López" value="{{ old('second_last_name', $user->second_last_name) }}">
+                        @error('second_last_name') <p id="second-last-name-error" class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div>
-                            <label for="first_last_name" class="block">Apellido paterno <span class="text-red-600">*</span></label>
-                            <input id="first_last_name" name="first_last_name" type="text" required minlength="2" maxlength="191" @error('first_last_name') aria-invalid="true" aria-describedby="first-last-name-error" @enderror
-                                placeholder="Ej: García" value="{{ old('first_last_name', $user->first_last_name) }}">
-                            @error('first_last_name') <p id="first-last-name-error" class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
+                            <label for="email" class="block">Correo electrónico <span class="text-red-600">*</span></label>
+                            <input id="email" name="email" type="email" required maxlength="255" autocomplete="email" @error('email') aria-invalid="true" aria-describedby="email-error" @enderror
+                                placeholder="Ej: usuario@ejemplo.com" value="{{ old('email', $user->email) }}">
+                            @error('email') <p id="email-error" class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
                         </div>
 
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                            <div>
-                                <label for="email" class="block">Correo electrónico <span class="text-red-600">*</span></label>
-                                <input id="email" name="email" type="email" required maxlength="255" autocomplete="email" @error('email') aria-invalid="true" aria-describedby="email-error" @enderror
-                                    placeholder="Ej: usuario@ejemplo.com" value="{{ old('email', $user->email) }}">
-                                @error('email') <p id="email-error" class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
-                            </div>
-
-                            <div>
-                                <label for="phone" class="block">Teléfono</label>
-                                <input id="phone" name="phone" type="tel" maxlength="10" pattern="[0-9]{10}" @error('phone') aria-invalid="true" aria-describedby="phone-error" @enderror
-                                    inputmode="numeric" autocomplete="tel"
-                                    title="Capture exactamente 10 dígitos, sin espacios ni guiones"
-                                    placeholder="10 dígitos, sin espacios" value="{{ old('phone', $user->phone) }}">
-                                @error('phone') <p id="phone-error" class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
-                            </div>
+                        <div>
+                            <label for="phone" class="block">Teléfono</label>
+                            <input id="phone" name="phone" type="tel" maxlength="10" pattern="[0-9]{10}" @error('phone') aria-invalid="true" aria-describedby="phone-error" @enderror
+                                inputmode="numeric" autocomplete="tel"
+                                title="Capture exactamente 10 dígitos, sin espacios ni guiones"
+                                placeholder="10 dígitos, sin espacios" value="{{ old('phone', $user->phone) }}">
+                            @error('phone') <p id="phone-error" class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
                         </div>
                     </div>
                 </x-ui.form.section>

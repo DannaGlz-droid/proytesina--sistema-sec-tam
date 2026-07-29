@@ -285,6 +285,9 @@ Excepciones:
 - Cada sección usa una franja gris clara de 38 px, icono opcional y título.
 - Dos columnas desde 1024 px; una columna debajo de ese ancho.
 - Mantener campos relacionados en la misma fila: correo/teléfono, contraseña/confirmación.
+- El orden del DOM debe coincidir con la lectura y navegación por teclado en móvil; no reordenar campos únicamente con CSS.
+- Orden oficial de datos personales: Nombre(s), Apellido paterno, Apellido materno, Correo electrónico y Teléfono.
+- En alta de cuenta, usar: Usuario, Rol, Contraseña y Confirmar contraseña. En edición: Usuario, Rol y Estado.
 - Pie de acciones separado por borde superior.
 
 ### 6.2 Campos
@@ -364,6 +367,9 @@ Estados:
 - Selección de fila claramente distinguible sin saturar con marca.
 - Texto principal en azul oscuro; metadatos en gris.
 - En tablas de personas, usar avatares circulares de 40 px. Acompañarlos con nombre a 0.80 rem en peso 600 y metadato a 0.72 rem; esta escala conserva la fila base de 56 px y mejora el reconocimiento sin aumentar innecesariamente la densidad.
+- Jerarquía de ancho: `Usuario` tiene la mayor prioridad, seguida de `Cargo`; `Rol` y `Estado` usan anchos compactos. Selección y acciones son columnas utilitarias fijas de 44 px.
+- Mantener un espaciado horizontal uniforme; no añadir separaciones manuales asimétricas entre columnas.
+- En ventanas estrechas, conservar una retícula mínima proporcional y permitir desplazamiento horizontal antes que solapar datos, truncar controles o comprimir columnas por debajo de su contenido útil.
 - Fechas y números con cifras tabulares.
 - Columnas de estado y acciones no deben reordenarse.
 - Acción por fila mediante menú de tres puntos con etiqueta accesible.
@@ -385,8 +391,12 @@ Estados:
 - En actualizaciones posteriores a la carga inicial —ordenar, filtrar, buscar, paginar o cambiar la cantidad de filas— conservar los datos visibles, atenuarlos como máximo a 80 % y deshabilitar temporalmente las acciones de fila. Retrasar cualquier indicador unos 150 ms para evitar parpadeos en respuestas rápidas.
 - Para ordenar, filtrar, paginar o cambiar la cantidad de filas, mostrar una línea de progreso neutral en la parte superior de la tabla. Durante una búsqueda, sustituir esa línea por un único spinner neutral de 14–16 px dentro del campo; no mostrar ambos indicadores a la vez.
 - “Mostrar 10” conserva una sola altura y estilo con el resto de la toolbar. Usar un icono neutral de lista o filas para comunicar cantidad visible; no añadir otra flecha de despliegue ni animar el icono. En el menú, señalar la opción seleccionada solamente mediante fondo suave y peso de texto, sin palomita ni otro icono redundante; conservar `aria-selected`.
-- Pie: “Mostrando 1–10 de 40” a la izquierda y paginación a la derecha.
+- En móvil, el menú de “Mostrar” permanece anclado directamente debajo de su control y adopta su mismo ancho; nunca debe desplazarse debajo del buscador ni tomar como referencia toda la toolbar.
+- Los menús de acciones de fila se muestran en una capa vinculada al viewport, fuera del recorte de la tabla. Deben elegir automáticamente abrir arriba o abajo según el espacio disponible y nunca quedar ocultos detrás del pie, aunque una búsqueda deje una sola fila.
+- En móvil, la franja de filtros activos debe permanecer completamente dentro de los límites de la tarjeta y de su toolbar; no usar márgenes negativos que la hagan sobresalir.
+- Pie en escritorio: “Mostrando 1–10 de 40” a la izquierda y paginación a la derecha.
 - Anterior/Siguiente deshabilitados deben seguir siendo legibles.
+- Los checkbox conservan un tamaño visual sobrio, pero en dispositivos táctiles su etiqueta proporciona un área mínima de interacción de 44 × 44 px.
 
 ### 7.5 Estados obligatorios
 
@@ -476,6 +486,10 @@ Reglas:
 - No depender de hover para descubrir acciones.
 - No reducir texto por debajo de 12 px en controles importantes.
 - Priorizar columnas; si no caben, permitir desplazamiento horizontal explícito o una vista de detalle, nunca cortar datos silenciosamente.
+- En tablas, a menos de 640 px el resumen “Mostrando…” se centra en una línea propia sobre la paginación. Puede envolver únicamente entre el total filtrado y el contexto “(n totales)”, nunca dentro del rango o de una cifra. La paginación se centra y puede desplazarse horizontalmente si el ancho disponible no alcanza.
+- El encabezado institucional debe cubrir el área segura superior del dispositivo mediante `viewport-fit=cover` y un `theme-color` igual al color primario del shell; no dejar una franja blanca artificial sobre el encabezado.
+- El elemento raíz y `body` conservan el color institucional para que Safari pueda extenderlo al área segura superior. Todo el contenido de la aplicación debe montarse dentro de una superficie blanca explícita con altura mínima del viewport; el vino no debe aparecer como fondo visible debajo ni alrededor de la página.
+- En móvil, la bandeja de notificaciones comienza inmediatamente debajo de la fila superior del encabezado y no toma como referencia la altura completa de sus dos niveles de navegación.
 
 ## 10. Accesibilidad y comportamiento
 

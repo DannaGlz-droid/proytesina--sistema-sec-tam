@@ -256,6 +256,7 @@
             const confirmed = await window.confirmDeleteDialog({
                 title: form.dataset.confirmTitle || 'Eliminar registro',
                 subject: form.dataset.confirmSubject || 'este registro',
+                messagePrefix: form.dataset.confirmMessagePrefix || undefined,
                 description: form.dataset.confirmDescription || undefined,
                 confirmText: form.dataset.confirmText || 'Eliminar'
             });

@@ -841,6 +841,21 @@
 	--brand-on-primary: #ffffff;
 }
 
+html[data-ui-theme="tamaulipas-salud"] {
+	background-color: #611132;
+}
+
+html[data-ui-theme="tamaulipas-salud"] body {
+	min-height: 100%;
+	background-color: #611132;
+}
+
+html[data-ui-theme="tamaulipas-salud"] .app-document-surface {
+	min-height: 100vh;
+	min-height: 100dvh;
+	background-color: #ffffff;
+}
+
 .app-table-card,
 .app-table-shell,
 .app-data-table {
@@ -3506,10 +3521,11 @@
 	}
 
 	.app-top-header .app-notifications-panel {
-		top: calc(100% + 0.4rem) !important;
+		top: 2.9rem !important;
 		right: 0.75rem !important;
 		left: 0.75rem !important;
 		width: auto !important;
+		margin-top: 0 !important;
 	}
 
 	.app-subnav-inner {
@@ -3637,6 +3653,20 @@
 
 .users-management-page .users-row-menu::before {
 	right: 0.7rem;
+}
+
+.users-management-page .users-row-menu.opens-upward {
+	top: auto;
+	bottom: calc(100% + 0.3rem);
+	z-index: 70;
+}
+
+.users-management-page .users-row-menu.opens-upward::before {
+	top: auto;
+	bottom: -0.35rem;
+	border: 0;
+	border-right: 1px solid var(--ui-border-soft);
+	border-bottom: 1px solid var(--ui-border-soft);
 }
 
 .users-management-page .users-row-menu-item {
@@ -6101,9 +6131,20 @@
 
 .users-management-page .users-table-card #users-table th.dt-checkbox-cell,
 .users-management-page .users-table-card #users-table td.dt-checkbox-cell {
-	width: 2.8rem !important;
-	min-width: 2.8rem !important;
-	max-width: 2.8rem !important;
+	width: 2.75rem !important;
+	min-width: 2.75rem !important;
+	max-width: 2.75rem !important;
+	padding-left: 0 !important;
+	padding-right: 0 !important;
+	text-align: center !important;
+	vertical-align: middle !important;
+}
+
+.users-management-page .users-table-card #users-table th.dt-actions-cell,
+.users-management-page .users-table-card #users-table td.dt-actions-cell {
+	width: 2.75rem !important;
+	min-width: 2.75rem !important;
+	max-width: 2.75rem !important;
 	padding-left: 0 !important;
 	padding-right: 0 !important;
 	text-align: center !important;
@@ -6114,6 +6155,22 @@
 .users-management-page .users-table-card #users-table td.dt-checkbox-cell input[type="checkbox"] {
 	display: block !important;
 	margin: 0 auto !important;
+}
+
+.users-management-page .users-checkbox-hitbox {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	min-width: 2rem;
+	min-height: 2rem;
+	margin: 0 auto;
+	cursor: pointer;
+	touch-action: manipulation;
+}
+
+.users-management-page .users-table-info-main,
+.users-management-page .users-table-info-context {
+	white-space: nowrap;
 }
 
 /* Fine tune the users filter popover so its type matches the table rhythm. */
@@ -6244,51 +6301,51 @@
 @media (max-width: 1100px) {
 	.users-management-page .users-table-card #users-table {
 		table-layout: fixed !important;
-		min-width: 52rem !important;
-		width: 52rem !important;
+		min-width: 46rem !important;
+		width: 46rem !important;
 	}
 
 	.users-management-page .users-table-card #users-table thead th,
 	.users-management-page .users-table-card #users-table tbody td {
-		padding-left: 0.6rem !important;
-		padding-right: 0.6rem !important;
+		padding-left: 0.5rem !important;
+		padding-right: 0.5rem !important;
 	}
 
 	.users-management-page .users-table-card #users-table th.dt-username-cell,
 	.users-management-page .users-table-card #users-table td.dt-username-cell {
-		width: 18.5rem !important;
-		min-width: 18.5rem !important;
-		max-width: 18.5rem !important;
+		width: 17rem !important;
+		min-width: 17rem !important;
+		max-width: 17rem !important;
 	}
 
 	.users-management-page .users-table-card #users-table th.dt-title-cell,
 	.users-management-page .users-table-card #users-table td.dt-title-cell {
-		width: 11rem !important;
-		min-width: 11rem !important;
-		max-width: 11rem !important;
+		width: 10rem !important;
+		min-width: 10rem !important;
+		max-width: 10rem !important;
 	}
 
 	.users-management-page .users-table-card #users-table th.dt-role-cell,
 	.users-management-page .users-table-card #users-table td.dt-role-cell {
-		width: 8rem !important;
-		min-width: 8rem !important;
-		max-width: 8rem !important;
+		width: 7rem !important;
+		min-width: 7rem !important;
+		max-width: 7rem !important;
 	}
 
 	.users-management-page .users-table-card #users-table th.dt-status-cell,
 	.users-management-page .users-table-card #users-table td.dt-status-cell {
-		width: 7rem !important;
-		min-width: 7rem !important;
-		max-width: 7rem !important;
+		width: 6.5rem !important;
+		min-width: 6.5rem !important;
+		max-width: 6.5rem !important;
 	}
 
 	.users-management-page .users-table-card #users-table th.dt-actions-cell,
 	.users-management-page .users-table-card #users-table td.dt-actions-cell,
 	.users-management-page .users-table-card #users-table th:last-child,
 	.users-management-page .users-table-card #users-table td:last-child {
-		width: 2.8rem !important;
-		min-width: 2.8rem !important;
-		max-width: 2.8rem !important;
+		width: 2.75rem !important;
+		min-width: 2.75rem !important;
+		max-width: 2.75rem !important;
 	}
 
 	.users-management-page .users-table-card .users-name-row {
@@ -6297,7 +6354,7 @@
 	}
 
 	.users-management-page .users-table-card .users-name-row .users-name {
-		max-width: 12.75rem !important;
+		max-width: 11.75rem !important;
 		white-space: normal !important;
 		overflow-wrap: anywhere !important;
 	}
@@ -6310,40 +6367,40 @@
 
 @media (max-width: 760px) {
 	.users-management-page .users-table-card #users-table {
-		min-width: 48rem !important;
-		width: 48rem !important;
+		min-width: 42rem !important;
+		width: 42rem !important;
 	}
 
 	.users-management-page .users-table-card #users-table th.dt-username-cell,
 	.users-management-page .users-table-card #users-table td.dt-username-cell {
-		width: 16.5rem !important;
-		min-width: 16.5rem !important;
-		max-width: 16.5rem !important;
+		width: 14.5rem !important;
+		min-width: 14.5rem !important;
+		max-width: 14.5rem !important;
 	}
 
 	.users-management-page .users-table-card #users-table th.dt-title-cell,
 	.users-management-page .users-table-card #users-table td.dt-title-cell {
-		width: 9.4rem !important;
-		min-width: 9.4rem !important;
-		max-width: 9.4rem !important;
+		width: 8.75rem !important;
+		min-width: 8.75rem !important;
+		max-width: 8.75rem !important;
 	}
 
 	.users-management-page .users-table-card #users-table th.dt-role-cell,
 	.users-management-page .users-table-card #users-table td.dt-role-cell {
-		width: 8rem !important;
-		min-width: 8rem !important;
-		max-width: 8rem !important;
+		width: 6.75rem !important;
+		min-width: 6.75rem !important;
+		max-width: 6.75rem !important;
 	}
 
 	.users-management-page .users-table-card #users-table th.dt-status-cell,
 	.users-management-page .users-table-card #users-table td.dt-status-cell {
-		width: 7.2rem !important;
-		min-width: 7.2rem !important;
-		max-width: 7.2rem !important;
+		width: 6.5rem !important;
+		min-width: 6.5rem !important;
+		max-width: 6.5rem !important;
 	}
 
 	.users-management-page .users-table-card .users-name-row .users-name {
-		max-width: 11.9rem !important;
+		max-width: 10rem !important;
 	}
 
 	.users-management-page .users-table-card .users-name-row {
@@ -6353,7 +6410,7 @@
 	}
 
 	.users-management-page .users-table-card .users-username-badge {
-		max-width: 11.9rem !important;
+		max-width: 10rem !important;
 	}
 
 	.users-management-page .users-table-card .users-title-cell span,
@@ -6373,18 +6430,6 @@
 		min-width: 0 !important;
 		gap: 0.45rem !important;
 		justify-content: flex-start !important;
-	}
-}
-
-@media (max-width: 1100px) {
-	.users-management-page .users-table-card #users-table th.dt-role-cell,
-	.users-management-page .users-table-card #users-table td.dt-role-cell {
-		padding-right: 1rem !important;
-	}
-
-	.users-management-page .users-table-card #users-table th.dt-status-cell,
-	.users-management-page .users-table-card #users-table td.dt-status-cell {
-		padding-left: 1.35rem !important;
 	}
 }
 
@@ -9524,4 +9569,143 @@
   .users-form-actions .ui-button {
     width: 100%;
   }
+}
+
+/*
+ * Responsive refinements for the users pilot.
+ * Keep the page-size popover anchored to its trigger instead of the full
+ * toolbar, whose mobile layout spans more than one row.
+ */
+.users-management-page .users-table-card > .app-table-toolbar
+  .users-filter-page-size .users-page-size-dropdown {
+  position: relative !important;
+}
+
+.users-management-page .users-table-card > .app-table-toolbar
+  .users-filter-page-size .users-page-size-menu {
+  top: calc(100% + 0.4rem) !important;
+  right: 0 !important;
+  bottom: auto !important;
+  left: auto !important;
+  transform: none !important;
+}
+
+@media (max-width: 639px) {
+  .users-management-page .users-table-card > .app-table-toolbar
+    .users-filter-page-size .users-page-size-menu {
+    width: 100% !important;
+    min-width: 100% !important;
+    max-width: none !important;
+  }
+
+  .users-management-page .users-table-card > .users-table-footer {
+    flex-direction: column !important;
+    flex-wrap: nowrap !important;
+    align-items: center !important;
+    gap: 0.75rem !important;
+    padding: 0.9rem 0.75rem 1rem !important;
+  }
+
+  .users-management-page .users-table-card > .users-table-footer #dt-info {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    align-items: baseline !important;
+    justify-content: center !important;
+    column-gap: 0.3rem !important;
+    row-gap: 0.12rem !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    flex: 0 0 auto !important;
+    line-height: 1.35 !important;
+    text-align: center !important;
+    white-space: normal !important;
+  }
+
+  .users-management-page .users-table-card > .users-table-footer #dt-pagination {
+    display: flex !important;
+    width: 100% !important;
+    justify-content: center !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    padding-bottom: 0.1rem;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .users-management-page .users-table-card > .users-table-footer #dt-pagination::-webkit-scrollbar {
+    display: none;
+  }
+
+  .users-management-page .users-table-card > .users-table-footer .fb-pagination {
+    min-width: max-content !important;
+    margin-left: auto;
+    margin-right: auto;
+    flex: 0 0 auto !important;
+  }
+
+    .users-management-page .users-table-card #users-table th.dt-checkbox-cell,
+    .users-management-page .users-table-card #users-table td.dt-checkbox-cell {
+        width: 2.75rem !important;
+        min-width: 2.75rem !important;
+        max-width: 2.75rem !important;
+    }
+
+  .users-management-page .users-checkbox-hitbox {
+    width: 2.75rem;
+    height: 2.75rem;
+    min-width: 2.75rem;
+    min-height: 2.75rem;
+    margin: -0.35rem auto;
+  }
+
+  .users-management-page .users-checkbox-hitbox input[type="checkbox"] {
+    width: 1.125rem !important;
+    height: 1.125rem !important;
+  }
+
+  /*
+   * Keep the active-filter strip inside the table card. The desktop strip
+   * intentionally reaches the card edges, but its negative margins can
+   * protrude from the narrower mobile toolbar.
+   */
+  .users-management-page .users-table-card > .app-table-toolbar .users-filter-chips {
+    box-sizing: border-box !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0.58rem 0 0 !important;
+    padding: 0.48rem 0 0.5rem !important;
+  }
+}
+
+/*
+ * Row-action menus are portalled to the viewport while open so neither the
+ * table body nor its footer can clip them when a search leaves only one row.
+ * Repeat the compact pilot dimensions because the menu temporarily lives
+ * outside .users-management-page.
+ */
+.users-row-menu.is-viewport-positioned {
+  position: fixed !important;
+  z-index: 100001 !important;
+  width: 10.8rem !important;
+  padding: 0.35rem !important;
+  border-radius: 0.55rem !important;
+}
+
+.users-row-menu.is-viewport-positioned::before {
+  right: 0.7rem;
+}
+
+.users-row-menu.is-viewport-positioned.opens-upward::before {
+  top: auto;
+  bottom: -0.35rem;
+  border: 0;
+  border-right: 1px solid var(--ui-border-soft);
+  border-bottom: 1px solid var(--ui-border-soft);
+}
+
+.users-row-menu.is-viewport-positioned .users-row-menu-item {
+  min-height: 1.9rem;
+  padding: 0 0.65rem;
+  border-radius: 0.4rem;
+  font-size: 0.74rem;
 }

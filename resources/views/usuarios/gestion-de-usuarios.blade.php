@@ -55,7 +55,11 @@
                             <thead class="text-xs">
                                 <tr>
                                     <th scope="col" class="px-4 py-2 whitespace-nowrap text-xs" data-orderable="false"></th>
-                                    <th scope="col" class="dt-checkbox-cell px-3 py-2 whitespace-nowrap text-xs text-center"><input id="select-all-users" type="checkbox" /></th>
+                                    <th scope="col" class="dt-checkbox-cell px-3 py-2 whitespace-nowrap text-xs text-center">
+                                        <label class="users-checkbox-hitbox" for="select-all-users">
+                                            <input id="select-all-users" type="checkbox" aria-label="Seleccionar todos los usuarios visibles" />
+                                        </label>
+                                    </th>
                                     <th scope="col" class="px-3 py-2 whitespace-nowrap text-xs">ID</th>
                                     <th scope="col" class="px-3 py-2 whitespace-nowrap text-xs">Usuario</th>
                                     <th scope="col" class="px-3 py-2 whitespace-nowrap text-xs">Nombre(s)</th>
@@ -801,7 +805,9 @@
                 }),
                 columns: [
                     { data: null, name: 'details', orderable: false, searchable: false, defaultContent: '<button type="button" class="dt-details-toggle" title="Ver detalles" aria-label="Ver detalles"><i class="fas fa-chevron-right"></i></button>' },
-                    { data: 'id', name: 'id', orderable: false, searchable: false, render: function(data, type, row) { return '<input class="row-check-user" data-id="'+data+'" type="checkbox" />'; } },
+                    { data: 'id', name: 'id', orderable: false, searchable: false, render: function(data, type, row) {
+                        return '<label class="users-checkbox-hitbox"><input class="row-check-user" data-id="'+data+'" type="checkbox" aria-label="Seleccionar usuario" /></label>';
+                    } },
                     { data: 'id', name: 'id' },
                     { data: 'username', name: 'username', render: function(data, type, row) {
                         if (type !== 'display') return data;
@@ -826,17 +832,17 @@
                 // Hide the ID column visually (we still include it in data for checkbox rendering)
                 columnDefs: [
                     { targets: 0, visible: false, searchable: false, orderable: false },
-                    { targets: 1, width: '2.5rem', className: 'dt-checkbox-cell text-center' },
+                    { targets: 1, width: '2.75rem', className: 'dt-checkbox-cell text-center' },
                     { targets: 2, visible: false, searchable: false },
-                    { targets: 3, width: '28%', className: 'dt-username-cell app-cell-wrap app-cell-strong' },
+                    { targets: 3, width: '30%', className: 'dt-username-cell app-cell-wrap app-cell-strong' },
                     { targets: [4, 5, 6, 7, 10], visible: false },
-                    { targets: 8, width: '11%', className: 'dt-phone-cell app-cell-nowrap' },
-                    { targets: 9, width: '16%', className: 'dt-title-cell app-cell-wrap' },
-                    { targets: 11, width: '10%', className: 'dt-date-cell app-cell-nowrap' },
-                    { targets: 12, width: '11%', className: 'dt-role-cell app-cell-nowrap' },
-                    { targets: 13, width: '9%', className: 'dt-status-cell app-cell-nowrap' },
-                    { targets: 14, width: '10%', className: 'dt-last-session-cell app-cell-nowrap' },
-                    { targets: 15, width: '3.5rem', className: 'text-right' }
+                    { targets: 8, width: '9%', className: 'dt-phone-cell app-cell-nowrap' },
+                    { targets: 9, width: '15%', className: 'dt-title-cell app-cell-wrap' },
+                    { targets: 11, width: '9%', className: 'dt-date-cell app-cell-nowrap' },
+                    { targets: 12, width: '9%', className: 'dt-role-cell app-cell-nowrap' },
+                    { targets: 13, width: '8%', className: 'dt-status-cell app-cell-nowrap' },
+                    { targets: 14, width: '9%', className: 'dt-last-session-cell app-cell-nowrap' },
+                    { targets: 15, width: '2.75rem', className: 'dt-actions-cell text-center' }
                 ],
                 pageLength: initialPageLength,
                 // Default: registration_date desc so newest users appear first.
@@ -849,6 +855,7 @@
                     zeroRecords: 'No hay resultados para los criterios seleccionados'
                 },
                 drawCallback: function(settings) {
+                    closeUserActionMenus();
                     updateEmptyState(this.api());
                     updateCustomInfo(this.api());
                     updateCustomPagination(this.api());
@@ -1021,13 +1028,66 @@
                 updateUserSelectionState();
             });
 
+            function restoreUserActionMenu(menu) {
+                const host = menu._usersMenuHost;
+
+                menu.classList.remove('is-viewport-positioned', 'opens-upward');
+                menu.style.removeProperty('top');
+                menu.style.removeProperty('right');
+                menu.style.removeProperty('bottom');
+                menu.style.removeProperty('left');
+
+                if (host?.isConnected && menu.parentElement !== host) {
+                    host.appendChild(menu);
+                } else if (!host?.isConnected && menu.parentElement === document.body) {
+                    menu.remove();
+                }
+
+                delete menu._usersMenuHost;
+                delete menu._usersMenuTrigger;
+            }
+
             function closeUserActionMenus(exceptMenu) {
                 document.querySelectorAll('.users-row-menu').forEach(menu => {
                     if (menu !== exceptMenu) {
+                        const trigger = menu._usersMenuTrigger
+                            || menu.closest('.users-row-actions')?.querySelector('.users-row-menu-button');
+
                         menu.classList.add('hidden');
-                        menu.closest('.users-row-actions')?.querySelector('.users-row-menu-button')?.setAttribute('aria-expanded', 'false');
+                        trigger?.setAttribute('aria-expanded', 'false');
+                        restoreUserActionMenu(menu);
                     }
                 });
+            }
+
+            function positionUserActionMenu(menu, trigger) {
+                const viewportMargin = 8;
+                const spacing = 6;
+                const triggerRect = trigger.getBoundingClientRect();
+
+                menu._usersMenuHost = menu.parentElement;
+                menu._usersMenuTrigger = trigger;
+                document.body.appendChild(menu);
+                menu.classList.add('is-viewport-positioned');
+                menu.classList.remove('opens-upward');
+
+                const menuWidth = menu.offsetWidth;
+                const menuHeight = menu.offsetHeight;
+                const left = Math.min(
+                    window.innerWidth - menuWidth - viewportMargin,
+                    Math.max(viewportMargin, triggerRect.right - menuWidth)
+                );
+                let top = triggerRect.bottom + spacing;
+
+                if (top + menuHeight > window.innerHeight - viewportMargin) {
+                    top = Math.max(viewportMargin, triggerRect.top - menuHeight - spacing);
+                    menu.classList.add('opens-upward');
+                }
+
+                menu.style.left = `${left}px`;
+                menu.style.top = `${top}px`;
+                menu.style.right = 'auto';
+                menu.style.bottom = 'auto';
             }
 
             $('#users-table tbody').on('click', '.users-row-menu-button', function(e) {
@@ -1041,10 +1101,16 @@
                 closeUserActionMenus(menu);
                 menu.classList.toggle('hidden', isOpen);
                 this.setAttribute('aria-expanded', isOpen ? 'false' : 'true');
+
+                if (!isOpen) {
+                    positionUserActionMenu(menu, this);
+                } else {
+                    closeUserActionMenus();
+                }
             });
 
             document.addEventListener('click', function(e) {
-                if (!e.target.closest('.users-row-actions')) {
+                if (!e.target.closest('.users-row-actions, .users-row-menu')) {
                     closeUserActionMenus();
                 }
             });
@@ -1052,14 +1118,18 @@
             document.addEventListener('keydown', function(e) {
                 if (e.key === 'Escape') {
                     const openMenu = document.querySelector('.users-row-menu:not(.hidden)');
-                    const trigger = openMenu?.closest('.users-row-actions')?.querySelector('.users-row-menu-button');
+                    const trigger = openMenu?._usersMenuTrigger
+                        || openMenu?.closest('.users-row-actions')?.querySelector('.users-row-menu-button');
                     closeUserActionMenus();
                     trigger?.focus();
                 }
             });
 
+            window.addEventListener('resize', () => closeUserActionMenus());
+            window.addEventListener('scroll', () => closeUserActionMenus(), true);
+
             // Prevent row-expansion clicks when interacting with checkboxes or action buttons
-            $('#users-table tbody').on('click', 'input.row-check-user, button:not(.dt-details-toggle), a', function(e) {
+            $('#users-table tbody').on('click', '.users-checkbox-hitbox, input.row-check-user, button:not(.dt-details-toggle), a', function(e) {
                 e.stopPropagation();
             });
 
@@ -1222,7 +1292,9 @@
                 });
             });
 
-            $('#users-table tbody').on('submit', '.js-delete-user-form', async function(e) {
+            $('#users-table')
+                .off('submit.usersDelete', '.js-delete-user-form')
+                .on('submit.usersDelete', '.js-delete-user-form', async function(e) {
                 e.preventDefault();
                 e.stopPropagation();
 
@@ -1250,7 +1322,7 @@
                         notifyUser('No se pudo eliminar el usuario. Inténtalo nuevamente.', 'error');
                     }
                 });
-            });
+                });
 
             // Function to update custom info text
             function updateCustomInfo(api) {
@@ -1259,9 +1331,9 @@
                 const end = info.end;
                 const filteredTotal = info.recordsDisplay;
                 const totalAll = info.recordsTotal;
-                let text = `Mostrando <span class="font-semibold text-gray-900">${start}-${end}</span> de <span class="font-semibold text-gray-900">${filteredTotal}</span>`;
+                let text = `<span class="users-table-info-main">Mostrando <span class="font-semibold text-gray-900">${start}-${end}</span> de <span class="font-semibold text-gray-900">${filteredTotal}</span></span>`;
                 if (filteredTotal !== totalAll) {
-                    text += ` <span class="text-sm text-gray-400">(${totalAll} totales)</span>`;
+                    text += `<span class="users-table-info-context text-sm text-gray-400">(${totalAll} totales)</span>`;
                 }
                 $('#dt-info').removeClass('is-loading').html(text);
             }

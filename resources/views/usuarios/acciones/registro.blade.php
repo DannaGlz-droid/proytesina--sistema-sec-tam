@@ -22,47 +22,45 @@
                 @csrf
                     <!-- Sección 1: Información del usuario -->
                     <x-ui.form.section title="Información del usuario" icon="user">
-                            <div class="space-y-3">
-                                <div>
-                                    <label for="name" class="block">Nombre(s) <span class="text-red-600">*</span></label>
-                                    <input id="name" name="name" type="text" required minlength="2" maxlength="191" @error('name') aria-invalid="true" aria-describedby="name-error" @enderror
-                                        placeholder="Ej: María Elena"
-                                        value="{{ old('name') }}">
-                                    @error('name') <p id="name-error" class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
-                                </div>
-                                <div>
-                                    <label for="second_last_name" class="block">Apellido materno</label>
-                                    <input id="second_last_name" name="second_last_name" type="text" minlength="2" maxlength="191" @error('second_last_name') aria-invalid="true" aria-describedby="second-last-name-error" @enderror
-                                        placeholder="Ej: López"
-                                        value="{{ old('second_last_name') }}">
-                                    @error('second_last_name') <p id="second-last-name-error" class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
-                                </div>
+                            <div>
+                                <label for="name" class="block">Nombre(s) <span class="text-red-600">*</span></label>
+                                <input id="name" name="name" type="text" required minlength="2" maxlength="191" @error('name') aria-invalid="true" aria-describedby="name-error" @enderror
+                                    placeholder="Ej: María Elena"
+                                    value="{{ old('name') }}">
+                                @error('name') <p id="name-error" class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
                             </div>
-                            
-                            <div class="space-y-3">
-                                <div>
-                                    <label for="first_last_name" class="block">Apellido paterno <span class="text-red-600">*</span></label>
-                                    <input id="first_last_name" name="first_last_name" type="text" required minlength="2" maxlength="191" @error('first_last_name') aria-invalid="true" aria-describedby="first-last-name-error" @enderror
-                                        placeholder="Ej: García"
-                                        value="{{ old('first_last_name') }}">
-                                    @error('first_last_name') <p id="first-last-name-error" class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
-                                </div>
-                                <div>
-                                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                        <div>
-                                            <label for="email" class="block">Correo electrónico <span class="text-red-600">*</span></label>
-                                            <input id="email" name="email" type="email" required maxlength="255" autocomplete="email" @error('email') aria-invalid="true" aria-describedby="email-error" @enderror
-                                                placeholder="Ej: usuario@ejemplo.com"
-                                                value="{{ old('email') }}">
-                                            @error('email') <p id="email-error" class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
-                                        </div>
-                                        <div>
-                                            <label for="phone" class="block">Teléfono</label>
-                                            <input id="phone" name="phone" type="tel" maxlength="10" pattern="[0-9]{10}" inputmode="numeric" autocomplete="tel" title="Capture exactamente 10 dígitos, sin espacios ni guiones" @error('phone') aria-invalid="true" aria-describedby="phone-error" @enderror
-                                                placeholder="10 dígitos, sin espacios"
-                                                value="{{ old('phone') }}">
-                                            @error('phone') <p id="phone-error" class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
-                                        </div>
+
+                            <div>
+                                <label for="first_last_name" class="block">Apellido paterno <span class="text-red-600">*</span></label>
+                                <input id="first_last_name" name="first_last_name" type="text" required minlength="2" maxlength="191" @error('first_last_name') aria-invalid="true" aria-describedby="first-last-name-error" @enderror
+                                    placeholder="Ej: García"
+                                    value="{{ old('first_last_name') }}">
+                                @error('first_last_name') <p id="first-last-name-error" class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
+                            </div>
+
+                            <div>
+                                <label for="second_last_name" class="block">Apellido materno</label>
+                                <input id="second_last_name" name="second_last_name" type="text" minlength="2" maxlength="191" @error('second_last_name') aria-invalid="true" aria-describedby="second-last-name-error" @enderror
+                                    placeholder="Ej: López"
+                                    value="{{ old('second_last_name') }}">
+                                @error('second_last_name') <p id="second-last-name-error" class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
+                            </div>
+
+                            <div>
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                    <div>
+                                        <label for="email" class="block">Correo electrónico <span class="text-red-600">*</span></label>
+                                        <input id="email" name="email" type="email" required maxlength="255" autocomplete="email" @error('email') aria-invalid="true" aria-describedby="email-error" @enderror
+                                            placeholder="Ej: usuario@ejemplo.com"
+                                            value="{{ old('email') }}">
+                                        @error('email') <p id="email-error" class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
+                                    </div>
+                                    <div>
+                                        <label for="phone" class="block">Teléfono</label>
+                                        <input id="phone" name="phone" type="tel" maxlength="10" pattern="[0-9]{10}" inputmode="numeric" autocomplete="tel" title="Capture exactamente 10 dígitos, sin espacios ni guiones" @error('phone') aria-invalid="true" aria-describedby="phone-error" @enderror
+                                            placeholder="10 dígitos, sin espacios"
+                                            value="{{ old('phone') }}">
+                                        @error('phone') <p id="phone-error" class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
                                     </div>
                                 </div>
                             </div>
@@ -109,15 +107,28 @@
 
                     <!-- Sección 3: Configuración de cuenta -->
                     <x-ui.form.section title="Configuración de cuenta" icon="settings">
-                            <div class="space-y-3">
-                                <div>
-                                    <label for="username" class="block">Usuario <span class="text-red-600">*</span></label>
-                                    <input id="username" name="username" type="text" required minlength="3" maxlength="50" pattern="[a-zA-Z0-9_.-]+" @error('username') aria-invalid="true" aria-describedby="username-error" @enderror
-                                        placeholder="Ej: mgarcia"
-                                        value="{{ old('username') }}">
-                                    @error('username') <p id="username-error" class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
-                                </div>
-                                <div>
+                            <div>
+                                <label for="username" class="block">Usuario <span class="text-red-600">*</span></label>
+                                <input id="username" name="username" type="text" required minlength="3" maxlength="50" pattern="[a-zA-Z0-9_.-]+" @error('username') aria-invalid="true" aria-describedby="username-error" @enderror
+                                    placeholder="Ej: mgarcia"
+                                    value="{{ old('username') }}">
+                                @error('username') <p id="username-error" class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
+                            </div>
+
+                            <div>
+                                <label for="role_id" class="block">Rol <span class="text-red-600">*</span></label>
+                                <select id="role_id" class="tomselect-select" name="role_id" required @error('role_id') aria-invalid="true" aria-describedby="role-error" @enderror>
+                                    <option value="">Seleccione un rol</option>
+                                    @if(isset($roles))
+                                        @foreach($roles as $r)
+                                            <option value="{{ $r->id }}" {{ old('role_id') == $r->id ? 'selected' : '' }}>{{ $r->name }}</option>
+                                        @endforeach
+                                    @endif
+                                </select>
+                                @error('role_id') <p id="role-error" class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
+                            </div>
+
+                            <div>
                                     <div class="users-password-label-row">
                                         <label for="password" class="block">Contraseña <span class="text-red-600">*</span></label>
                                         <span id="password-strength" data-level="empty" aria-live="polite">Sin evaluar</span>
@@ -157,23 +168,9 @@
                                             <span>Un s&iacute;mbolo</span>
                                         </li>
                                     </ul>
-                                </div>
                             </div>
-                            
-                            <div class="space-y-3">
-                                <div>
-                                    <label for="role_id" class="block">Rol <span class="text-red-600">*</span></label>
-                                    <select id="role_id" class="tomselect-select" name="role_id" required @error('role_id') aria-invalid="true" aria-describedby="role-error" @enderror>
-                                        <option value="">Seleccione un rol</option>
-                                        @if(isset($roles))
-                                            @foreach($roles as $r)
-                                                <option value="{{ $r->id }}" {{ old('role_id') == $r->id ? 'selected' : '' }}>{{ $r->name }}</option>
-                                            @endforeach
-                                        @endif
-                                    </select>
-                                    @error('role_id') <p id="role-error" class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
-                                </div>
-                                <div>
+
+                            <div>
                                     <label for="password_confirmation" class="block">Confirmar contraseña <span class="text-red-600">*</span></label>
                                     <div class="relative">
                                         <input name="password_confirmation" type="password" required minlength="12" maxlength="255" autocomplete="new-password" @error('password_confirmation') aria-invalid="true" aria-describedby="password-confirmation-error" @enderror
@@ -198,7 +195,6 @@
                                             Generar contrase&ntilde;a
                                         </button>
                                     </div>
-                                </div>
                             </div>
                     </x-ui.form.section>
 
@@ -214,7 +210,7 @@
                         class="users-form-actions"
                         primaryText="Guardar registro"
                         secondaryText="Limpiar formulario"
-                        secondaryOnclick="clearRegistroForm(event)"
+                        secondaryOnclick="clearRegistroForm(this)"
                         primaryType="submit"
                         secondaryType="button"
                     />
@@ -399,11 +395,10 @@
         });
 
             // Función para limpiar todos los campos del formulario actual (específica para registro de usuarios)
-            async function clearRegistroForm(event) {
-                event.preventDefault();
-                // Buscar el formulario más cercano al botón
-                const btn = event.currentTarget || event.target;
-                const form = btn.closest('form');
+            window.clearRegistroForm = async function(button) {
+                // Recibir el botón directamente evita depender del objeto `event`
+                // implícito, que no está disponible de forma consistente en Safari móvil.
+                const form = button?.closest('form') || document.getElementById('userRegistroForm');
                 if (!form) return;
 
                 const canClear = window.confirmFormClear
@@ -427,6 +422,9 @@
                         }
                     } else if (el.type === 'checkbox' || el.type === 'radio') {
                         el.checked = false;
+                    } else if (el.type === 'hidden' || el.type === 'submit' || el.type === 'button') {
+                        // Mantener intactos el token CSRF y demás controles internos.
+                        return;
                     } else {
                         el.value = '';
                     }
@@ -447,7 +445,7 @@
                 if (typeof window.showToast === 'function') {
                     window.showToast('Formulario limpiado.', 'info', 2400);
                 }
-            }
+            };
     </script>
 
     <script>

@@ -4,8 +4,24 @@
       @auth data-auth-storage-scope="{{ auth()->id() }}" @endauth>
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#611132">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="csrf-token" content="{{ csrf_token() }}">
+    <style>
+        html,
+        body {
+            background: #611132;
+        }
+
+        .app-document-surface {
+            min-height: 100vh;
+            min-height: 100dvh;
+            background: #ffffff;
+        }
+    </style>
     <title>
         @yield('title')
     </title>
@@ -35,11 +51,13 @@
     <script src="https://cdn.jsdelivr.net/npm/tom-select/dist/js/tom-select.complete.min.js"></script>
 </head>
 <body>
-    @include('components.toast')
-    @include('components.confirm-dialog')
+    <div class="app-document-surface">
+        @include('components.toast')
+        @include('components.confirm-dialog')
 
-    @yield('content')
-    {{-- Scripts pushed from child views --}}
-    @stack('scripts')
+        @yield('content')
+        {{-- Scripts pushed from child views --}}
+        @stack('scripts')
+    </div>
 </body>
 </html>
