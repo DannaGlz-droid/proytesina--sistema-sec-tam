@@ -69,7 +69,7 @@
 .users-form-page .users-password-assistant-heading p {
   margin-top: 0.12rem;
   font-size: 0.68rem;
-  font-weight: 500;
+  font-weight: 600;
   line-height: 1.3;
   color: #64748b;
 }
@@ -375,7 +375,7 @@
 
 .app-data-table .app-cell-strong {
 	color: #111827;
-	font-weight: 600;
+	font-weight: 500;
 }
 
 .app-data-table .app-cell-nowrap {
@@ -2227,7 +2227,7 @@
 	color: #334155 !important;
 	font-family: 'Open Sans', sans-serif;
 	font-size: 0.86rem;
-	font-weight: 600;
+	font-weight: 500;
 	text-align: left;
 	text-decoration: none;
 	transition: background-color .15s ease, color .15s ease;
@@ -2922,7 +2922,7 @@
 }
 
 .app-top-header .app-notifications-panel {
-	width: min(24rem, calc(100vw - 2rem)) !important;
+	width: min(27rem, calc(100vw - 2rem)) !important;
 	overflow: hidden;
 	padding: 0 !important;
 	transform-origin: top right;
@@ -2963,6 +2963,11 @@
 	text-decoration: none;
 }
 
+.app-notifications-mark-all:disabled {
+	cursor: wait;
+	opacity: 0.6;
+}
+
 .app-notifications-mark-all:hover {
 	color: var(--ui-text);
 	text-decoration: underline;
@@ -2972,13 +2977,83 @@
 .app-notifications-list {
 	max-height: min(25rem, 60vh);
 	overflow-y: auto;
+	scrollbar-color: #a8b2c1 transparent;
+	scrollbar-width: thin;
 }
 
-.app-notifications-empty {
-	padding: 2rem 1rem;
+.app-notifications-list::-webkit-scrollbar {
+	width: 0.4rem;
+}
+
+.app-notifications-list::-webkit-scrollbar-track {
+	background: transparent;
+}
+
+.app-notifications-list::-webkit-scrollbar-thumb {
+	border: 0.08rem solid transparent;
+	border-radius: 999px;
+	background: #a8b2c1;
+	background-clip: padding-box;
+}
+
+.app-notifications-state {
+	display: flex;
+	min-height: 10.5rem;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	padding: 1.5rem;
 	color: var(--ui-text-muted);
-	font-size: 0.76rem;
 	text-align: center;
+}
+
+.app-notifications-state i {
+	margin-bottom: 0.65rem;
+	color: var(--ui-text-muted);
+	font-size: 1rem;
+}
+
+.app-notifications-state strong {
+	color: var(--ui-text);
+	font-size: 0.78rem;
+	font-weight: 600;
+}
+
+.app-notifications-state span {
+	max-width: 18rem;
+	margin-top: 0.28rem;
+	font-size: 0.7rem;
+	line-height: 1.45;
+}
+
+.app-notifications-state button {
+	margin-top: 0.7rem;
+	color: var(--ui-text-secondary);
+	font-size: 0.7rem;
+	font-weight: 600;
+	text-decoration: underline;
+	text-underline-offset: 0.16rem;
+}
+
+.app-notifications-loading {
+	display: grid;
+	gap: 0.75rem;
+	padding: 1rem 0.9rem;
+}
+
+.app-notifications-loading span {
+	display: block;
+	height: 3.8rem;
+	border-radius: 0.35rem;
+	background: linear-gradient(90deg, #f1f4f8 20%, #f8fafc 42%, #f1f4f8 64%);
+	background-size: 250% 100%;
+	animation: app-notification-shimmer 1.4s ease-in-out infinite;
+}
+
+@keyframes app-notification-shimmer {
+	to {
+		background-position: -150% 0;
+	}
 }
 
 .app-notification-item {
@@ -2989,11 +3064,15 @@
 }
 
 .app-notification-item.is-unread {
-	background: #f8fafc;
+	background: #f2f6fb;
 }
 
 .app-notification-item:hover {
-	background: var(--ui-surface-hover);
+	background: #f8fafc;
+}
+
+.app-notification-item.is-unread:hover {
+	background: #edf3f9;
 }
 
 .app-notification-heading {
@@ -3005,59 +3084,139 @@
 
 .app-notification-title-wrap {
 	display: flex;
-	align-items: baseline;
+	align-items: center;
 	min-width: 0;
-	gap: 0.45rem;
+	gap: 0.52rem;
 }
 
-.app-notification-unread-dot {
-	width: 0.38rem;
-	height: 0.38rem;
-	flex: 0 0 auto;
-	border-radius: 999px;
-	background: #3b82f6;
+.app-notification-type-icon {
+	display: inline-flex;
+	width: 1rem;
+	min-height: 1rem;
+	flex: 0 0 1rem;
+	align-items: center;
+	justify-content: center;
+	color: var(--ui-text-muted);
+	font-size: 0.76rem;
+	line-height: 1;
+}
+
+.app-notification-type-icon.is-success {
+	color: var(--ui-success);
+}
+
+.app-notification-type-icon.is-danger {
+	color: var(--ui-danger);
+}
+
+.app-notification-type-icon.is-warning {
+	color: #9a6700;
+}
+
+.app-notification-type-icon.is-info {
+	color: #46627f;
 }
 
 .app-notification-title {
 	min-width: 0;
+	margin: 0;
+	overflow: hidden;
 	color: var(--ui-text);
 	font-size: 0.7rem;
 	font-weight: 600;
 	line-height: 1.35;
-}
-
-.app-notification-title:hover {
-	text-decoration: underline;
-	text-underline-offset: 0.16rem;
+	text-overflow: ellipsis;
+	white-space: nowrap;
 }
 
 .app-notification-time {
-	flex: 0 0 auto;
 	color: var(--ui-text-muted);
 	font-size: 0.67rem;
 	line-height: 1.35;
 	white-space: nowrap;
 }
 
-.app-notification-subject-wrap {
+.app-notification-meta {
+	display: inline-flex;
+	flex: 0 0 auto;
+	align-items: center;
+	gap: 0.42rem;
+}
+
+.app-notification-action {
+	display: flex;
+	min-width: 0;
+	flex-wrap: wrap;
+	gap: 0 0.25rem;
 	margin-top: 0.42rem;
+	color: var(--ui-text-secondary);
+	font-size: 0.71rem;
+	line-height: 1.45;
+}
+
+.app-notification-action strong {
+	max-width: 13rem;
+	overflow: hidden;
+	color: var(--ui-text);
+	font-weight: 600;
+	text-overflow: ellipsis;
+	white-space: nowrap;
 }
 
 .app-notification-subject {
 	max-width: 100%;
-	margin: 0;
-	color: var(--ui-text);
-	font-size: 0.72rem;
+	margin: 0.38rem 0 0;
+	color: var(--ui-text-secondary);
+	font-size: 0.7rem;
 	font-style: normal;
-	font-weight: 500;
-	line-height: 1.4;
+	line-height: 1.42;
 }
 
-.app-notification-message {
-	margin: 0.32rem 0 0;
+.app-notification-subject span,
+.app-notification-detail > span {
+	display: block;
+	margin-bottom: 0.08rem;
+	color: var(--ui-text-muted);
+	font-size: 0.63rem;
+	font-weight: 600;
+	letter-spacing: 0.015em;
+}
+
+.app-notification-subject strong {
+	display: -webkit-box;
+	overflow: hidden;
+	color: var(--ui-text);
+	font-weight: 500;
+	-webkit-box-orient: vertical;
+	-webkit-line-clamp: 2;
+}
+
+.app-notification-subject strong.is-expanded {
+	display: block;
+	overflow: visible;
+	-webkit-line-clamp: unset;
+}
+
+.app-notification-detail {
+	margin-top: 0.38rem;
+}
+
+.app-notification-detail p {
+	display: -webkit-box;
+	margin: 0;
+	overflow: hidden;
 	color: var(--ui-text-secondary);
 	font-size: 0.7rem;
 	line-height: 1.45;
+	-webkit-box-orient: vertical;
+	-webkit-line-clamp: 2;
+	white-space: pre-line;
+}
+
+.app-notification-detail p.is-expanded {
+	display: block;
+	overflow: visible;
+	-webkit-line-clamp: unset;
 }
 
 .app-notification-actions {
@@ -3068,7 +3227,6 @@
 }
 
 .app-notification-actions button,
-.app-notification-actions a,
 .app-notifications-footer a {
 	color: var(--ui-text-secondary);
 	font-size: 0.69rem;
@@ -3076,7 +3234,6 @@
 }
 
 .app-notification-actions button:hover,
-.app-notification-actions a:hover,
 .app-notifications-footer a:hover {
 	color: var(--ui-text);
 	text-decoration: underline;
@@ -3093,51 +3250,6 @@
 	width: min(16.5rem, calc(100vw - 2rem)) !important;
 	overflow: hidden;
 	transform-origin: top right;
-}
-
-.app-profile-panel-header {
-	display: flex;
-	align-items: center;
-	gap: 0.7rem;
-	padding: 0.85rem 0.9rem;
-	border-bottom: 1px solid var(--ui-border-soft);
-	background: var(--ui-surface-section);
-}
-
-.app-profile-panel-avatar {
-	width: 2.25rem;
-	height: 2.25rem;
-	flex: 0 0 auto;
-	overflow: hidden;
-	border: 1px solid var(--ui-border);
-	border-radius: 999px;
-	background: var(--ui-surface);
-}
-
-.app-profile-panel-identity {
-	min-width: 0;
-}
-
-.app-profile-panel-identity p {
-	margin: 0;
-	overflow: hidden;
-	color: var(--ui-text);
-	font-size: 0.76rem;
-	font-weight: 600;
-	line-height: 1.3;
-	text-overflow: ellipsis;
-	white-space: nowrap;
-}
-
-.app-profile-panel-identity span {
-	display: block;
-	margin-top: 0.12rem;
-	overflow: hidden;
-	color: var(--ui-text-muted);
-	font-size: 0.68rem;
-	line-height: 1.3;
-	text-overflow: ellipsis;
-	white-space: nowrap;
 }
 
 .app-profile-menu {
@@ -3181,7 +3293,7 @@
 .app-profile-menu-item.is-danger {
 	margin: 0.35rem;
 	width: calc(100% - 0.7rem);
-	color: var(--ui-danger);
+	color: var(--ui-danger-text);
 }
 
 .app-profile-menu-item.is-danger i {
@@ -3191,7 +3303,7 @@
 .app-profile-menu-item.is-danger:hover,
 .app-profile-menu-item.is-danger:focus-visible {
 	background: var(--ui-danger-soft);
-	color: var(--ui-danger);
+	color: var(--ui-danger-text);
 }
 
 .app-subnav {
@@ -3419,8 +3531,19 @@
 	.app-subnav-link,
 	.app-subnav-indicator,
 	.app-subnav-chevron,
-	.app-subnav-dropdown a {
+	.app-subnav-dropdown a,
+	.app-notification-item {
 		transition: none !important;
+	}
+
+	.app-top-header .app-notifications-panel,
+	.app-top-header .app-profile-panel {
+		transform: none !important;
+		transition-duration: 1ms !important;
+	}
+
+	.app-notifications-loading span {
+		animation: none !important;
 	}
 }
 
@@ -6041,17 +6164,32 @@
 	font-weight: 600 !important;
 }
 
-/* Slightly larger profile photos/initials in the users table. */
+/* User identity scale: readable at 100% zoom without increasing table density. */
 .users-management-page .users-table-card .users-avatar {
-	flex-basis: 2rem !important;
-	width: 2rem !important;
-	height: 2rem !important;
-	font-size: 0.66rem !important;
+	flex-basis: 2.5rem !important;
+	width: 2.5rem !important;
+	height: 2.5rem !important;
+	font-size: 0.74rem !important;
 }
 
 .users-management-page .users-table-card .users-avatar-img {
-	width: 2rem !important;
-	height: 2rem !important;
+	width: 2.5rem !important;
+	height: 2.5rem !important;
+}
+
+.users-management-page .users-table-card .users-identity {
+	gap: 0.72rem !important;
+}
+
+.users-management-page .users-table-card .users-name {
+	font-size: 0.8rem !important;
+	line-height: 1.25 !important;
+}
+
+.users-management-page .users-table-card .users-meta {
+	margin-top: 0.12rem !important;
+	font-size: 0.72rem !important;
+	line-height: 1.25 !important;
 }
 
 /* Quiet search feedback: keep the table stable and show progress inside the input. */

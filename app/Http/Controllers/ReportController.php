@@ -1500,8 +1500,6 @@ class ReportController extends Controller
 
         // Crear notificaciones para todos los usuarios involucrados en la publicación
         // (dueño de la publicación + otros comentaristas), excepto quien comenta.
-        $senderName = Auth::user()->name;
-
         // Obtener ids de usuarios que han comentado en esta publicación
         $commenterIds = PublicationComment::where('publication_id', $publication->id)
             ->pluck('user_id')
@@ -1515,39 +1513,22 @@ class ReportController extends Controller
             return $id != Auth::id();
         });
 
-        // Crear una notificación por receptor (evitar duplicados gracias a array_unique)
-        // Incluir el título (topic) de la publicación para identificarla en la notificación
-        // Truncar el título en la propia notificación para evitar desbordes en la UI,
-        // pero conservar el título completo en la respuesta API (`publication_title`).
-        $fullTitle = $publication->topic ?? 'Publicación';
-        // Limitar a 80 caracteres para el título en la notificación
-        $pubTitle = Str::limit($fullTitle, 80);
-        // Preparar un extracto del comentario para incluir en la notificación
-        $commentExcerpt = Str::limit(strip_tags($comment->comment), 120);
-
+        // Crear una notificación por receptor (evitar duplicados gracias a array_unique).
+        // El comentario y el título completos se obtienen mediante sus relaciones en la API.
         foreach ($recipientIds as $recipientId) {
-            // Diferenciar mensajes según el receptor:
-            // - Si es el dueño de la publicación: notificar "Nuevo comentario en tu publicación" y mostrar extracto
-            // - Si es otro comentarista: notificar que alguien respondió en la publicación que comentaste
-            // - En otros casos (por seguridad), usar el formato genérico con título de publicación
+            // Diferenciar el mensaje según la relación del receptor con el reporte.
             $isOwner = $recipientId == $publication->user_id;
             $isOtherCommenter = in_array($recipientId, $commenterIds) && !$isOwner;
 
-            // Normalizar extracto (sin comillas) y fallback si está vacío
-            $excerpt = trim($commentExcerpt);
-            if ($excerpt === '') {
-                $excerpt = null;
-            }
-
             if ($isOwner) {
-                $nTitle = 'Nuevo comentario en tu publicación';
-                $nMessage = $excerpt ? "{$senderName} comentó: « {$excerpt} »" : "{$senderName} comentó";
+                $nTitle = 'Nuevo comentario';
+                $nMessage = "{$user->full_name} comentó en tu reporte.";
             } elseif ($isOtherCommenter) {
-                $nTitle = "{$senderName} respondió en una publicación que comentaste";
-                $nMessage = $excerpt ? "{$senderName} respondió: « {$excerpt} »" : "{$senderName} respondió";
+                $nTitle = 'Nueva respuesta';
+                $nMessage = "{$user->full_name} respondió en un reporte que sigues.";
             } else {
-                $nTitle = "Nuevo comentario";
-                $nMessage = $excerpt ? "{$senderName} comentó: « {$excerpt} »" : "{$senderName} comentó";
+                $nTitle = 'Nuevo comentario';
+                $nMessage = "{$user->full_name} comentó en un reporte.";
             }
 
             Notification::create([
@@ -1667,7 +1648,7 @@ class ReportController extends Controller
     public function getNotifications()
     {
         $notifications = Notification::where('recipient_user_id', Auth::id())
-            ->with(['sender', 'publication'])
+            ->with(['sender', 'publication', 'comment'])
             ->orderBy('created_at', 'desc')
             ->take(10)
             ->get();
@@ -1679,22 +1660,114 @@ class ReportController extends Controller
         return response()->json([
             'success' => true,
             'notifications' => $notifications->map(function ($n) {
+                $presentation = $this->notificationPresentation($n);
+
                 return [
                     'id' => $n->id,
                     'type' => $n->type,
-                    'title' => $n->title,
-                    'message' => $n->message,
                     'read' => $n->read,
                     'time_ago' => $n->created_at->diffForHumans(),
                     'created_at' => $n->created_at->toIso8601String(),
-                    'sender_name' => $n->sender ? $n->sender->name : 'Sistema',
+                    'created_at_label' => $n->created_at->translatedFormat('d M Y, H:i'),
                     'publication_id' => $n->publication_id,
-                        'comment_id' => $n->publication_comment_id,
+                    'comment_id' => $n->publication_comment_id,
                     'publication_title' => $n->publication ? ($n->publication->topic ?? null) : null,
-                ];
+                ] + $presentation;
             }),
             'unread_count' => $unreadCount,
         ]);
+    }
+
+    /**
+     * Present notification data as a stable UI contract.
+     */
+    private function notificationPresentation(Notification $notification): array
+    {
+        $actor = $this->notificationActor($notification->sender);
+        $isPublicationOwner = $notification->publication
+            && (int) $notification->publication->user_id === (int) Auth::id();
+
+        $base = [
+            'event_label' => $notification->title ?: 'Notificación',
+            'actor' => $actor,
+            'action_text' => $notification->message ?: 'Hay una actualización disponible.',
+            'detail_label' => null,
+            'detail' => null,
+            'tone' => 'neutral',
+            'icon' => 'fa-regular fa-bell',
+        ];
+
+        return match ($notification->type) {
+            'approval' => array_merge($base, [
+                'event_label' => 'Reporte aprobado',
+                'action_text' => 'aprobó tu reporte.',
+                'tone' => 'success',
+                'icon' => 'fa-solid fa-circle-check',
+            ]),
+            'rejection' => array_merge($base, [
+                'event_label' => 'Reporte rechazado',
+                'action_text' => 'rechazó tu reporte.',
+                'detail_label' => 'Motivo',
+                'detail' => $this->notificationRejectionReason($notification),
+                'tone' => 'danger',
+                'icon' => 'fa-solid fa-circle-xmark',
+            ]),
+            'resubmission' => array_merge($base, [
+                'event_label' => 'Reporte reenviado',
+                'action_text' => 'actualizó y reenvió el reporte para revisión.',
+                'tone' => 'warning',
+                'icon' => 'fa-solid fa-rotate',
+            ]),
+            'comment' => array_merge($base, [
+                'event_label' => $isPublicationOwner ? 'Nuevo comentario' : 'Nueva respuesta',
+                'action_text' => $isPublicationOwner
+                    ? 'comentó en tu reporte.'
+                    : 'respondió en un reporte que sigues.',
+                'detail_label' => 'Comentario',
+                'detail' => $notification->comment?->comment,
+                'tone' => 'info',
+                'icon' => 'fa-solid fa-comment',
+            ]),
+            'system' => array_merge($base, [
+                'event_label' => $notification->title ?: 'Aviso del sistema',
+                'actor' => null,
+                'action_text' => $notification->message ?: 'Hay una actualización del sistema.',
+                'tone' => 'neutral',
+                'icon' => 'fa-solid fa-circle-info',
+            ]),
+            default => $base,
+        };
+    }
+
+    private function notificationActor(?User $sender): ?array
+    {
+        if (! $sender) {
+            return null;
+        }
+
+        $givenNames = preg_split('/\s+/u', trim($sender->name ?? ''), -1, PREG_SPLIT_NO_EMPTY);
+        $displayName = trim(implode(' ', array_filter([
+            $givenNames[0] ?? null,
+            $sender->first_last_name,
+        ])));
+
+        return [
+            'display_name' => $displayName ?: 'Usuario',
+            'full_name' => $sender->full_name ?: $displayName ?: 'Usuario',
+        ];
+    }
+
+    private function notificationRejectionReason(Notification $notification): ?string
+    {
+        if ($notification->publication?->rejection_reason) {
+            return trim($notification->publication->rejection_reason);
+        }
+
+        if (preg_match('/Motivo:\s*[«"]?\s*(.+?)\s*[»"]?\s*$/ui', $notification->message ?? '', $matches)) {
+            return trim($matches[1], " \t\n\r\0\x0B«»\"");
+        }
+
+        return null;
     }
 
     /**
@@ -2017,7 +2090,7 @@ class ReportController extends Controller
             'publication_id' => $publication->id,
             'type' => 'approval',
             'title' => 'Reporte aprobado',
-            'message' => "{$user->name} aprobó tu reporte",
+            'message' => "{$user->full_name} aprobó tu reporte.",
             'read' => false,
         ]);
 
@@ -2066,7 +2139,7 @@ class ReportController extends Controller
             'publication_id' => $publication->id,
             'type' => 'rejection',
             'title' => 'Reporte rechazado',
-            'message' => "{$user->name} rechazó tu reporte. Motivo: « {$request->rejection_reason} »",
+            'message' => "{$user->full_name} rechazó tu reporte. Motivo: « {$request->rejection_reason} »",
             'read' => false,
         ]);
 
@@ -2125,7 +2198,7 @@ class ReportController extends Controller
                 'publication_id' => $publication->id,
                 'type' => 'resubmission',
                 'title' => 'Reporte reenviado para revisión',
-                'message' => "{$user->name} ha realizado cambios y reenviado",
+                'message' => "{$user->full_name} actualizó y reenvió el reporte para revisión.",
                 'read' => false,
             ]);
         }

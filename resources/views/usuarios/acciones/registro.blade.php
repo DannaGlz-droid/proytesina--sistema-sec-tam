@@ -1,5 +1,5 @@
 @extends('layouts.principal')
-@section('title', 'Registrar usuario')
+@section('title', 'Registro de usuario')
 @section('content')
 
     @include('components.header-admin')
@@ -10,7 +10,7 @@
             title="Registro de usuario"
             description="Complete el formulario para registrar un usuario en el sistema."
             :back-href="route('user.user-gestion')"
-            back-label="Volver a Gestión de usuarios"
+            back-label="Volver a gestión de usuarios"
             :prefer-history-back="true"
         />
 

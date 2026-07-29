@@ -2,38 +2,46 @@
 
 namespace App\Console\Commands;
 
-use Illuminate\Console\Command;
 use App\Models\Notification;
-use Carbon\Carbon;
+use Carbon\CarbonImmutable;
+use Illuminate\Console\Command;
+use Illuminate\Database\Eloquent\Builder;
 
 class PruneNotifications extends Command
 {
-    protected $signature = 'notifications:prune {--days=30}';
-    protected $description = 'Elimina permanentemente notificaciones antiguas';
+    protected $signature = 'notifications:prune
+                            {--months= : Retención para registros antiguos sin expires_at}';
 
-    public function handle()
+    protected $description = 'Elimina permanentemente las notificaciones cuya retención terminó';
+
+    public function handle(): int
     {
-        $days = (int) $this->option('days');
-        $threshold = Carbon::now()->subDays($days);
+        $timezone = config('notifications.timezone');
+        $months = $this->option('months') !== null
+            ? max(1, (int) $this->option('months'))
+            : config('notifications.retention_months');
+        $now = CarbonImmutable::now($timezone);
+        $legacyThreshold = $now->subMonthsNoOverflow($months);
 
-        // Obtener notificaciones a eliminar
-        $toDelete = Notification::where('created_at', '<=', $threshold)
-            ->withoutGlobalScopes()
-            ->get();
-
-        $count = $toDelete->count();
+        $count = Notification::query()
+            ->withTrashed()
+            ->where(function (Builder $query) use ($now, $legacyThreshold): void {
+                $query->where('expires_at', '<=', $now)
+                    ->orWhere(function (Builder $legacy) use ($legacyThreshold): void {
+                        $legacy->whereNull('expires_at')
+                            ->where('created_at', '<=', $legacyThreshold);
+                    });
+            })
+            ->forceDelete();
 
         if ($count === 0) {
-            $this->info('No hay notificaciones para eliminar.');
-            return 0;
+            $this->info("No hay notificaciones vencidas ({$timezone}).");
+
+            return self::SUCCESS;
         }
 
-        // Eliminar permanentemente (forzar, no soft delete)
-        foreach ($toDelete as $notification) {
-            $notification->forceDelete();
-        }
+        $this->info("Se eliminaron {$count} notificaciones vencidas.");
 
-        $this->info("✓ Eliminadas {$count} notificaciones con created_at <= {$threshold}.");
-        return 0;
+        return self::SUCCESS;
     }
 }

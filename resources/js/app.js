@@ -5,6 +5,174 @@ import Alpine from 'alpinejs';
 
 window.Alpine = Alpine;
 
+Alpine.data('notificationCenter', () => ({
+    openNotifications: false,
+    notifications: [],
+    unreadCount: 0,
+    loading: true,
+    loadError: false,
+    markingAll: false,
+    poller: null,
+
+    init() {
+        this.loadNotifications();
+        this.poller = window.setInterval(() => this.loadNotifications(true), 30000);
+    },
+
+    destroy() {
+        if (this.poller) {
+            window.clearInterval(this.poller);
+        }
+    },
+
+    toggleNotifications() {
+        if (this.openNotifications) {
+            this.closeNotifications();
+            return;
+        }
+
+        this.openNotifications = true;
+
+        this.$nextTick(() => {
+            const list = this.$refs.notificationsList;
+
+            if (list) {
+                list.scrollTop = 0;
+            }
+        });
+    },
+
+    closeNotifications(restoreFocus = false) {
+        if (!this.openNotifications) {
+            return;
+        }
+
+        this.openNotifications = false;
+
+        if (restoreFocus) {
+            this.$nextTick(() => this.$refs.notificationsTrigger?.focus());
+        }
+    },
+
+    async loadNotifications(silent = false) {
+        if (!silent || this.notifications.length === 0) {
+            this.loading = true;
+        }
+
+        try {
+            const response = await fetch('/notificaciones', {
+                headers: {
+                    Accept: 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest',
+                },
+            });
+
+            if (!response.ok) {
+                throw new Error('No se pudieron cargar las notificaciones.');
+            }
+
+            const data = await response.json();
+            this.notifications = Array.isArray(data.notifications) ? data.notifications : [];
+            this.unreadCount = Number(data.unread_count || 0);
+            this.loadError = false;
+        } catch (error) {
+            if (this.notifications.length === 0) {
+                this.loadError = true;
+            }
+        } finally {
+            this.loading = false;
+        }
+    },
+
+    async markRead(notification) {
+        if (!notification || notification.read) {
+            return;
+        }
+
+        try {
+            const response = await fetch(`/notificaciones/${notification.id}/marcar-leida`, {
+                method: 'POST',
+                headers: {
+                    Accept: 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '',
+                },
+            });
+
+            if (!response.ok) {
+                return;
+            }
+
+            notification.read = true;
+            this.unreadCount = Math.max(0, this.unreadCount - 1);
+        } catch (error) {
+            // Reading the notification remains possible even if this request fails.
+        }
+    },
+
+    async markAllRead() {
+        if (this.markingAll || this.unreadCount === 0) {
+            return;
+        }
+
+        this.markingAll = true;
+
+        try {
+            const response = await fetch('/notificaciones/marcar-todas-leidas', {
+                method: 'POST',
+                headers: {
+                    Accept: 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '',
+                },
+            });
+
+            if (!response.ok) {
+                return;
+            }
+
+            this.notifications.forEach((notification) => {
+                notification.read = true;
+            });
+            this.unreadCount = 0;
+        } finally {
+            this.markingAll = false;
+        }
+    },
+
+    openReport(notification) {
+        this.markRead(notification);
+
+        if (typeof window.openPublicationFromNotification === 'function') {
+            window.openPublicationFromNotification(notification.publication_id, notification.comment_id);
+            return;
+        }
+
+        const comment = notification.comment_id ? `&comment=${notification.comment_id}` : '';
+        window.location.assign(`/reportes/publicaciones?publication=${notification.publication_id}${comment}`);
+    },
+}));
+
+Alpine.data('accountMenu', () => ({
+    openProfile: false,
+
+    toggleProfile() {
+        this.openProfile = !this.openProfile;
+    },
+
+    closeProfile(restoreFocus = false) {
+        if (!this.openProfile) {
+            return;
+        }
+
+        this.openProfile = false;
+
+        if (restoreFocus) {
+            this.$nextTick(() => this.$refs.profileTrigger?.focus());
+        }
+    },
+}));
+
 Alpine.start();
 
 function canReturnThroughHistory(targetHref) {

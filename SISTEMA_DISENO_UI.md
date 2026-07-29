@@ -35,7 +35,7 @@ Las pantallas piloto son:
 | Título de página | Lora | 1.32rem (21 px) | 700 | 1.15 |
 | Descripción de página | Lora | 0.78rem (12.5 px) | 400 | 1.35 |
 | Título de sección | Open Sans | 0.82rem (13 px) | 700 | 1.20 |
-| Etiqueta de campo | Open Sans | 0.74rem (12 px) | 700 | 1.20 |
+| Etiqueta de campo | Open Sans | 0.74rem (12 px) | 600 | 1.20 |
 | Controles y botones | Open Sans | 0.78–0.80rem | 500–600 | 1.15 |
 | Tabla | Open Sans | 0.75–0.80rem | 400–700 | 1.25 |
 | Ayuda y metadatos | Open Sans | 0.68–0.72rem | 400–600 | 1.30 |
@@ -45,6 +45,7 @@ Reglas:
 - Usar Lora únicamente para el encabezado editorial de la página.
 - Usar Open Sans en navegación, formularios, tablas, botones, filtros y mensajes.
 - Escribir títulos y secciones en estilo oración: “Gestión de usuarios”, no “Gestión De Usuarios”.
+- Las opciones de menús contextuales y de cuenta usan peso 500. Reservar 600–700 para títulos, identidades principales, estados seleccionados y acciones con mayor jerarquía.
 - Las descripciones deben explicar el propósito en una sola oración, con máximo aproximado de 65 caracteres por línea.
 - No usar tamaños o familias distintas dentro de un mismo tipo de componente.
 
@@ -154,10 +155,20 @@ El encabezado global forma parte del sistema de diseño y no se ajusta de manera
 - Los paneles de notificaciones, cuenta y submenús usan superficie blanca, borde neutral, radio de 8–10 px y la misma elevación que los demás paneles flotantes.
 - Dentro de paneles desplegables no se usa el color institucional para hover, foco o texto general; se usan superficies y foco neutrales.
 - Los paneles se abren y cierran con una transición breve de opacidad y desplazamiento vertical; no escalan ni rebotan.
-- Las notificaciones usan títulos en escritura normal, acciones neutrales y un punto azul pequeño para distinguir las no leídas; el fondo completo no se colorea con la marca.
-- El menú de cuenta muestra una identidad compacta y opciones con iconos simples, sin recuadros decorativos. Sólo “Cerrar sesión” utiliza el color semántico de peligro.
-- Los pies de estos paneles describen el destino con precisión —por ejemplo, “Ver todas las notificaciones”— y no mezclan términos de otros módulos.
-- Notificaciones y perfil tienen botones con nombre accesible, `aria-expanded` y foco visible.
+- Las notificaciones usan títulos en escritura normal y acciones neutrales. Una notificación no leída se distingue mediante un fondo azul grisáceo muy tenue en toda la fila; no usa puntos adicionales ni el color institucional.
+- La bandeja de notificaciones usa un único componente compartido y un contrato de datos estructurado; las vistas no reconstruyen nombres, motivos ni comentarios a partir de una frase almacenada.
+- Anatomía oficial de cada notificación: icono semántico discreto y tipo de evento a la izquierda; fecha a la derecha; después, persona y acción, nombre del reporte, detalle opcional y acciones. El icono ocupa una columna fija de `1rem`, mantiene un tamaño óptico uniforme y no usa círculo, recuadro ni fondo decorativo. El estado no leído se comunica con la superficie tenue de la fila y también mediante texto accesible, sin sumar un segundo icono.
+- En escritorio la bandeja conserva un ancho de `27rem`, limitado por el viewport en pantallas pequeñas. Este ancho permite dos líneas útiles de contenido sin competir con la página principal.
+- El nombre visible se limita a primer nombre y primer apellido. El nombre completo permanece disponible como texto accesible o ayuda; una persona se menciona una sola vez por notificación.
+- Tipos semánticos: aprobación en verde, rechazo en rojo, reenvío o advertencia en ámbar, comentario o información en azul grisáceo y sistema en neutral. El color se aplica únicamente al icono pequeño, no a toda la tarjeta.
+- El tipo ocupa una línea, el reporte y el detalle un máximo inicial de dos. “Ver más” aparece sólo cuando el reporte, motivo o comentario tiene desbordamiento real y alterna con “Ver menos”; nunca se decide por una cantidad fija de caracteres.
+- La bandeja contempla carga inicial, vacío, error con reintento, elemento no leído, marcado individual y marcado total. Un reporte o remitente ausente no debe romper la presentación.
+- Cada vez que la bandeja se abre, la lista vuelve al inicio para mostrar completa la notificación más reciente; no debe abrirse dejando fragmentos de una fila anterior.
+- El desplazamiento de la lista permanece nativo, con barra neutral delgada; no se reemplaza con una barra JavaScript ni se oculta en dispositivos táctiles.
+- Las notificaciones son registros transitorios: cada una vence después de tres meses calendario y una tarea diaria las elimina a las 02:00, hora de Ciudad Victoria (`America/Monterrey`). Esta limpieza no elimina reportes, comentarios ni registros de auditoría relacionados.
+- El menú de cuenta muestra opciones con iconos simples y sin recuadros decorativos. Sólo “Cerrar sesión” utiliza el color semántico de peligro: sobre superficies claras, texto e icono usan `--ui-danger-text` y el hover utiliza `--ui-danger-soft`.
+- Los pies de estos paneles describen el destino con precisión —por ejemplo, “Ver todos los reportes” cuando enlaza al módulo de reportes— y no anuncian una pantalla distinta a la ruta real.
+- Notificaciones y perfil tienen botones con nombre accesible, `aria-expanded`, `aria-controls` y foco visible; cada panel expone un identificador y un rol semántico.
 - En móvil se conservan las rutas principales en una segunda línea del encabezado; no se ocultan destinos sin ofrecer una alternativa equivalente.
 - La barra secundaria permite desplazamiento horizontal cuando no caben sus opciones, sin truncarlas.
 - Toda animación dura 120–200 ms y se elimina con `prefers-reduced-motion`.
@@ -352,6 +363,7 @@ Estados:
 - Hover de fila neutral.
 - Selección de fila claramente distinguible sin saturar con marca.
 - Texto principal en azul oscuro; metadatos en gris.
+- En tablas de personas, usar avatares circulares de 40 px. Acompañarlos con nombre a 0.80 rem en peso 600 y metadato a 0.72 rem; esta escala conserva la fila base de 56 px y mejora el reconocimiento sin aumentar innecesariamente la densidad.
 - Fechas y números con cifras tabulares.
 - Columnas de estado y acciones no deben reordenarse.
 - Acción por fila mediante menú de tres puntos con etiqueta accesible.

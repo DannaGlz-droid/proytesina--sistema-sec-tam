@@ -2,22 +2,18 @@
 
 namespace App\Models;
 
+use Carbon\CarbonImmutable;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Prunable;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Notification extends Model
 {
-    use SoftDeletes, Prunable;
+    use Prunable, SoftDeletes;
 
-    /**
-     * The table associated with the model.
-     */
     protected $table = 'notifications';
 
-    /**
-     * The attributes that are mass assignable.
-     */
     protected $fillable = [
         'recipient_user_id',
         'sender_user_id',
@@ -27,26 +23,34 @@ class Notification extends Model
         'title',
         'message',
         'read',
+        'expires_at',
     ];
 
     protected $hidden = [
-        'recipient_user_id',  // FK sensible
-        'sender_user_id',     // FK sensible  
-        'publication_id',     // FK sensible
+        'recipient_user_id',
+        'sender_user_id',
+        'publication_id',
         'publication_comment_id',
-        'read'                // Estado interno del sistema
+        'read',
     ];
 
-    /**
-     * The attributes that should be cast.
-     */
     protected $casts = [
-        'read' => 'boolean',  // Convierte 1/0 a true/false
+        'read' => 'boolean',
+        'expires_at' => 'datetime',
     ];
 
-    /**
-     * Relationship: Notification belongs to Publication
-     */
+    protected static function booted(): void
+    {
+        static::creating(function (Notification $notification): void {
+            if ($notification->expires_at !== null) {
+                return;
+            }
+
+            $notification->expires_at = CarbonImmutable::now(config('notifications.timezone'))
+                ->addMonthsNoOverflow(config('notifications.retention_months'));
+        });
+    }
+
     public function publication()
     {
         return $this->belongsTo(Publication::class);
@@ -54,31 +58,36 @@ class Notification extends Model
 
     public function comment()
     {
-        return $this->belongsTo(\App\Models\PublicationComment::class, 'publication_comment_id');
+        return $this->belongsTo(PublicationComment::class, 'publication_comment_id');
     }
 
-    /**
-     * Relationship: Notification belongs to User (Sender)
-     */
     public function sender()
     {
         return $this->belongsTo(User::class, 'sender_user_id');
     }
 
-    /**
-     * Relationship: Notification belongs to User (Recipient)
-     */
     public function recipient()
     {
         return $this->belongsTo(User::class, 'recipient_user_id');
     }
 
     /**
-     * Definir qué registros deben ser prunados (eliminados permanentemente)
-     * Elimina notificaciones de más de 30 días
+     * Registros vencidos. Las notificaciones anteriores a expires_at
+     * conservan la retención calculada desde su fecha de creación.
      */
-    public function prunable()
+    public function prunable(): Builder
     {
-        return static::where('created_at', '<=', now()->subDays(30));
+        $now = CarbonImmutable::now(config('notifications.timezone'));
+        $legacyThreshold = $now->subMonthsNoOverflow(config('notifications.retention_months'));
+
+        return static::query()
+            ->withTrashed()
+            ->where(function (Builder $query) use ($now, $legacyThreshold): void {
+                $query->where('expires_at', '<=', $now)
+                    ->orWhere(function (Builder $legacy) use ($legacyThreshold): void {
+                        $legacy->whereNull('expires_at')
+                            ->where('created_at', '<=', $legacyThreshold);
+                    });
+            });
     }
 }

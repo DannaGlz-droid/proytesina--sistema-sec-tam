@@ -41,43 +41,16 @@
         </nav>
         
         <!-- Notificaciones con dropdown -->
-        <div class="app-header-notifications relative" x-data="{ openNotifications: false, notifications: [], unreadCount: 0 }"
-             @keydown.escape.window="openNotifications = false"
-             x-init="
-                 // Cargar notificaciones al iniciar
-                 fetch('/notificaciones', {
-                     headers: {
-                         'Accept': 'application/json',
-                         'X-Requested-With': 'XMLHttpRequest'
-                     }
-                 })
-                     .then(res => res.json())
-                     .then(data => {
-                         notifications = data.notifications;
-                         unreadCount = data.unread_count;
-                     });
-                 
-                 // Recargar cada 30 segundos
-                 setInterval(() => {
-                     fetch('/notificaciones', {
-                         headers: {
-                             'Accept': 'application/json',
-                             'X-Requested-With': 'XMLHttpRequest'
-                         }
-                     })
-                         .then(res => res.json())
-                         .then(data => {
-                             notifications = data.notifications;
-                             unreadCount = data.unread_count;
-                         });
-                 }, 30000);
-             ">
+        <div class="app-header-notifications relative" x-data="notificationCenter"
+             @keydown.escape.window="closeNotifications(true)">
             <!-- Botón de notificaciones -->
             <button type="button"
-                    @click="openNotifications = !openNotifications"
+                    x-ref="notificationsTrigger"
+                    @click="toggleNotifications()"
                     :aria-expanded="openNotifications.toString()"
                     aria-haspopup="true"
-                    aria-label="Abrir notificaciones"
+                    aria-controls="app-notifications-panel"
+                    :aria-label="openNotifications ? 'Cerrar notificaciones' : 'Abrir notificaciones'"
                     class="app-header-icon-button">
                 <i class="fa-solid fa-bell" aria-hidden="true"></i>
                 <!-- Indicador de notificaciones nuevas -->
@@ -88,7 +61,10 @@
 
             <!-- Menú desplegable de notificaciones responsive -->
             <div x-show="openNotifications" 
-                 @click.away="openNotifications = false"
+                 @click.away="closeNotifications()"
+                 id="app-notifications-panel"
+                 role="region"
+                 aria-label="Centro de notificaciones"
                  x-transition:enter="transition ease-out duration-200"
                  x-transition:enter-start="opacity-0 -translate-y-1"
                  x-transition:enter-end="opacity-100 translate-y-0"
@@ -97,104 +73,13 @@
                  x-transition:leave-end="opacity-0 -translate-y-1"
                  class="app-notifications-panel absolute right-0 top-full mt-2 z-50"
                  style="display: none;">
-                 
-                <!-- Encabezado de notificaciones -->
-                <div class="app-notifications-header">
-                    <div>
-                        <h3>Notificaciones</h3>
-                        <p x-text="unreadCount > 0 ? 'Tienes ' + unreadCount + ' notificación' + (unreadCount !== 1 ? 'es' : '') + ' nueva' + (unreadCount !== 1 ? 's' : '') : 'No hay notificaciones nuevas'"></p>
-                    </div>
-                    <button @click="
-                        fetch('/notificaciones/marcar-todas-leidas', { method: 'POST', headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}' } })
-                            .then(() => {
-                                notifications.forEach(n => n.read = true);
-                                unreadCount = 0;
-                            });
-                    " x-show="unreadCount > 0" class="app-notifications-mark-all">
-                        Marcar todas
-                    </button>
-                </div>
-
-                <!-- Lista de notificaciones -->
-                <div class="app-notifications-list">
-                    <template x-if="notifications.length === 0">
-                        <div class="app-notifications-empty">
-                            No tienes notificaciones
-                        </div>
-                    </template>
-                    
-                    <template x-for="notif in notifications" :key="notif.id">
-                        <div x-data="{ 
-                            expanded: false, 
-                            get isLong() { 
-                                return ((notif.message && notif.message.length > 120) || (notif.publication_title && notif.publication_title.length > 50)); 
-                            } 
-                        }" class="app-notification-item" :class="{ 'is-unread': !notif.read }">
-                            <!-- Encabezado: Tipo de acción y tiempo -->
-                            <div class="app-notification-heading">
-                                <div class="app-notification-title-wrap">
-                                    <span x-show="!notif.read" class="app-notification-unread-dot" aria-hidden="true"></span>
-                                    <a :href="'/reportes/publicaciones?publication=' + notif.publication_id" class="app-notification-title"
-                                       @click="
-                                           if (!notif.read) {
-                                               fetch('/notificaciones/' + notif.id + '/marcar-leida', { method: 'POST', headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}' } })
-                                                   .then(() => {
-                                                       notif.read = true;
-                                                       unreadCount = Math.max(0, unreadCount - 1);
-                                                   });
-                                           }
-                                       " x-text="notif.title"></a>
-                                </div>
-                                <span class="app-notification-time" x-text="notif.time_ago"></span>
-                            </div>
-
-                            <!-- Título del reporte en itálica y entre comillas francesas -->
-                            <div class="app-notification-subject-wrap">
-                                <p class="app-notification-subject" :class="expanded ? '' : 'truncate'">
-                                    « <span x-text="notif.publication_title"></span> »
-                                </p>
-                            </div>
-
-                            <!-- Mensaje/Descripción -->
-                            <div>
-                                <p class="app-notification-message" :class="expanded ? '' : 'line-clamp-2'" x-text="notif.message"></p>
-                            </div>
-
-                            <div class="app-notification-actions">
-                                <button x-show="isLong" @click.stop.prevent="expanded = !expanded">
-                                    <span x-text="expanded ? 'Ver menos' : 'Ver más'"></span>
-                                </button>
-                                <a href="#"
-                                   @click.prevent="
-                                       if (!notif.read) {
-                                           fetch('/notificaciones/' + notif.id + '/marcar-leida', { method: 'POST', headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}' } })
-                                               .then(() => {
-                                                   notif.read = true;
-                                                   unreadCount = Math.max(0, unreadCount - 1);
-                                               });
-                                       }
-                                       if (typeof window.openPublicationFromNotification === 'function') {
-                                           window.openPublicationFromNotification(notif.publication_id, notif.comment_id);
-                                       } else {
-                                           window.location = '/reportes/publicaciones?publication=' + notif.publication_id + '&comment=' + (notif.comment_id || '');
-                                       }
-                                    ">Ir a reporte</a>
-                            </div>
-                        </div>
-                    </template>
-                </div>
-
-                <!-- Pie del menú de notificaciones -->
-                <div class="app-notifications-footer">
-                    <a href="/reportes/publicaciones">
-                        Ver todas las notificaciones <span aria-hidden="true">&rarr;</span>
-                    </a>
-                </div>
+                @include('components.notifications-panel')
             </div>
         </div>
 
         <!-- Avatar y nombre del usuario con dropdown responsive -->
-        <div class="app-header-profile relative" x-data="{ openProfile: false }" @keydown.escape.window="openProfile = false">
+        <div class="app-header-profile relative" x-data="accountMenu"
+             @keydown.escape.window="closeProfile(true)">
             @php
                 $headerGivenNames = trim(auth()->user()->name ?? '');
                 $headerLastNames = trim(implode(' ', array_filter([auth()->user()->first_last_name, auth()->user()->second_last_name])));
@@ -221,17 +106,22 @@
 
             <!-- Botón separado SOLO para abrir el menú -->
             <button type="button"
-                    @click="openProfile = !openProfile"
+                    x-ref="profileTrigger"
+                    @click="toggleProfile()"
                     :aria-expanded="openProfile.toString()"
                     aria-haspopup="true"
-                    aria-label="Abrir menú de la cuenta"
+                    aria-controls="app-profile-panel"
+                    :aria-label="openProfile ? 'Cerrar menú de la cuenta' : 'Abrir menú de la cuenta'"
                     class="app-header-profile-trigger">
                 <i class="fa-solid fa-chevron-down" aria-hidden="true"></i>
             </button>
 
             <!-- Menú desplegable del perfil responsive -->
             <div x-show="openProfile" 
-                 @click.away="openProfile = false"
+                 @click.away="closeProfile()"
+                 id="app-profile-panel"
+                 role="region"
+                 aria-label="Menú de la cuenta"
                  x-transition:enter="transition ease-out duration-200"
                  x-transition:enter-start="opacity-0 -translate-y-1"
                  x-transition:enter-end="opacity-100 translate-y-0"
@@ -242,20 +132,6 @@
                  style="display: none;">
                  
                 <!-- Encabezado del menú -->
-                <div class="app-profile-panel-header">
-                    <div class="app-profile-panel-avatar">
-                        @if(auth()->user()->profile_photo_path)
-                            <img src="{{ asset('storage/' . auth()->user()->profile_photo_path) }}" alt="" class="w-full h-full object-cover">
-                        @else
-                            <img src="{{ asset('images/default_pfp.svg.png') }}" alt="" class="w-full h-full object-cover">
-                        @endif
-                    </div>
-                    <div class="app-profile-panel-identity">
-                        <p>{{ $headerFullName ?: 'Usuario' }}</p>
-                        <span>{{ auth()->user()->position->name ?? 'Sin cargo' }}</span>
-                    </div>
-                </div>
-
                 <!-- Opciones del menú -->
                 <div class="app-profile-menu">
                 <a href="{{ route('usuario.miperfil') }}" class="app-profile-menu-item">

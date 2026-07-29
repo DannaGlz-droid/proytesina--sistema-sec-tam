@@ -10,7 +10,7 @@
             title="Editar usuario"
             description="Actualice la información y los permisos de acceso de esta cuenta."
             :back-href="route('user.user-gestion')"
-            back-label="Volver a Gestión de usuarios"
+            back-label="Volver a gestión de usuarios"
             :prefer-history-back="true"
         />
 
