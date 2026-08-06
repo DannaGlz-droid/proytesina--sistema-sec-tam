@@ -48,7 +48,7 @@
                             </div>
 
                             <!-- Table wrapper -->
-                            <div class="app-table-shell overflow-x-hidden min-w-0">
+                            <div class="app-table-shell overflow-x-auto min-w-0">
                                 <div class="users-table-refresh-progress" aria-hidden="true"></div>
                                 <span id="users-table-refresh-status" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></span>
                         <table id="users-table" class="app-data-table min-w-full w-full text-sm text-left text-gray-500">
@@ -103,11 +103,15 @@
                                     const restoreIntent = JSON.parse(sessionStorage.getItem(restoreIntentKey) || 'null');
                                     sessionStorage.removeItem(restoreIntentKey);
 
-                                    @if(session('invalidate_users_table_cache'))
-                                        sessionStorage.removeItem(snapshotKey);
-                                        sessionStorage.removeItem(dataCacheKey);
-                                        return;
-                                    @endif
+    @if(session('invalidate_users_table_cache'))
+        sessionStorage.removeItem(snapshotKey);
+        sessionStorage.removeItem(dataCacheKey);
+        return;
+    @endif
+
+    @if(session('revalidate_users_table_cache'))
+        sessionStorage.removeItem(dataCacheKey);
+    @endif
 
                                     const currentTarget = `${window.location.pathname}${window.location.search}`;
                                     const restoreIntentTtl = 30 * 60 * 1000;
@@ -364,9 +368,9 @@
             const usersTableSnapshotKey = 'sistema-sec-tam.users-table-snapshot.v1.{{ auth()->id() }}';
             const usersTableDataCacheTtl = 5 * 60 * 1000;
 
-            @if(session('invalidate_users_table_cache'))
-                try { sessionStorage.removeItem(usersTableDataCacheKey); } catch (e) {}
-            @endif
+    @if(session('invalidate_users_table_cache') || session('revalidate_users_table_cache'))
+        try { sessionStorage.removeItem(usersTableDataCacheKey); } catch (e) {}
+    @endif
 
             function readUsersTableDataCache() {
                 try {
@@ -600,21 +604,23 @@
                 const tones = ['tone-1', 'tone-2', 'tone-3', 'tone-4'];
                 const tone = tones[Math.abs(Number(row.id || 0)) % tones.length];
 
+                const tooltip = escapeHtml(fullName + (username ? ' ' + username : '') + (email ? ' — ' + email : ''));
+
                 return `
-                    <div class="users-identity">
+                    <div class="users-identity" title="${tooltip}" aria-label="${tooltip}">
                         ${row.profile_photo_url
                             ? `<img class="users-avatar users-avatar-img" src="${escapeHtml(row.profile_photo_url)}" alt="Foto de ${escapeHtml(fullName)}" loading="lazy">`
                             : `<span class="users-avatar ${tone}">${escapeHtml(initials)}</span>`
                         }
-                        <span class="users-identity-copy">
-                            <span class="users-name-row">
-                                <span class="users-name">${escapeHtml(fullName)}</span>
-                                ${username ? `<span class="users-username-badge">${escapeHtml(username)}</span>` : ''}
-                            </span>
-                            <span class="users-meta">${escapeHtml(email || 'Sin correo')}</span>
-                        </span>
-                    </div>
-                `;
+        <span class="users-identity-copy">
+            <span class="users-name-row">
+                <span class="users-name">${escapeHtml(fullName)}</span>
+                ${username ? `<span class="users-username-badge">${escapeHtml(username)}</span>` : ''}
+            </span>
+            <span class="users-meta users-email">${escapeHtml(email || 'Sin correo')}</span>
+        </span>
+    </div>
+`;
             }
 
             function userTitleCell(row) {
@@ -869,21 +875,45 @@
                 }
             });
 
+            const usersResponsiveHost =
+                document.querySelector('.users-management-page .users-table-card') ||
+                document.querySelector('.users-management-page .app-table-shell') ||
+                document.querySelector('.users-management-page');
+
+            function getUsersTableAvailableWidth() {
+                const measuredWidth = usersResponsiveHost
+                    ? usersResponsiveHost.getBoundingClientRect().width
+                    : 0;
+
+                return measuredWidth > 0
+                    ? measuredWidth
+                    : (window.innerWidth || document.documentElement.clientWidth);
+            }
+
             function applyUsersResponsiveColumns() {
-                const width = window.innerWidth || document.documentElement.clientWidth;
-                table.column(8).visible(width >= 980, false);  // Teléfono
-                table.column(14).visible(width >= 820, false); // Últ. sesión
-                table.column(11).visible(width >= 900, false); // Fecha alta
-                table.column(9).visible(true, false);          // Cargo
+                // Mantener todas las columnas visibles en todo momento.
+                table.column(8).visible(true, false);  // Teléfono
+                table.column(14).visible(true, false); // Últ. sesión
+                table.column(11).visible(true, false); // Fecha alta
+                table.column(9).visible(true, false);  // Cargo
                 table.columns.adjust();
             }
 
-            applyUsersResponsiveColumns();
             let usersResponsiveTimer = null;
-            window.addEventListener('resize', function() {
+
+            function scheduleUsersResponsiveColumns() {
                 clearTimeout(usersResponsiveTimer);
-                usersResponsiveTimer = setTimeout(applyUsersResponsiveColumns, 140);
-            });
+                usersResponsiveTimer = setTimeout(applyUsersResponsiveColumns, 120);
+            }
+
+            applyUsersResponsiveColumns();
+
+            if ('ResizeObserver' in window && usersResponsiveHost) {
+                const usersTableResizeObserver = new ResizeObserver(scheduleUsersResponsiveColumns);
+                usersTableResizeObserver.observe(usersResponsiveHost);
+            }
+
+            window.addEventListener('resize', scheduleUsersResponsiveColumns);
 
             // Ensure button state after init
             try { toggleBulkDeleteUsersButton(); } catch (e) {}
@@ -997,6 +1027,8 @@
                         closePerPageMenu();
                     }
                 });
+
+            
 
                 document.addEventListener('keydown', function(e) {
                     if (e.key === 'Escape' && !perPageMenu.classList.contains('hidden')) {
@@ -1221,7 +1253,7 @@
                 };
                 const state = states[kind] || states.error;
                 $('#users-table tbody').html(`
-                    <tr class="users-table-state-row">
+                    <tr class="users-table-state-row users-table-state-row--${kind}">
                         <td colspan="16">
                             <div class="users-table-state users-table-state--${kind}" role="${kind === 'error' ? 'alert' : 'status'}">
                                 <i class="${state.icon}" aria-hidden="true"></i>

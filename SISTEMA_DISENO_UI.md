@@ -191,7 +191,7 @@ Reglas:
 
 - Listados raíz no llevan enlace de regreso.
 - Altas, ediciones y detalles llevan “← Volver a [nombre del módulo]” encima del título.
-- Al volver desde edición o detalle, los listados restauran durante la sesión la página, búsqueda, filtros, orden y cantidad de filas anteriores.
+- Al volver desde edición o detalle, incluso después de guardar una edición, los listados restauran durante la sesión la página, búsqueda, filtros, orden y cantidad de filas anteriores. La tabla puede mostrar su instantánea previa mientras revalida silenciosamente los datos modificados.
 - No repetir el regreso en el pie del formulario.
 - Una acción como “Crear usuario” puede ir a la derecha del encabezado.
 - Título y descripción deben usar siempre el componente compartido, no clases locales.
@@ -242,7 +242,7 @@ Excepciones:
 - Preparar esa restauración desde el momento de entrar al formulario, no únicamente al pulsar su enlace interno de regreso, para que funcione también con el botón Atrás del navegador. Mantener la instantánea visual hasta 30 minutos; si los datos almacenados ya no son recientes, mostrarla mientras se revalida la tabla en segundo plano.
 - Cuando el navegador no conserve la página en memoria, reutilizar un caché de sesión breve del último bloque renderizado y revalidarlo silenciosamente, sin sustituir las filas por un loader.
 - Para evitar cambios de estructura durante la rehidratación al volver desde un formulario, conservar además una instantánea visual inerte del componente de tabla y retirarla en cuanto la tabla real termine su primer render. La instantánea nunca recibe foco ni interacción y no se reutiliza en una recarga explícita (F5) ni en un acceso directo, donde debe mostrarse el estado normal de carga con datos actualizados.
-- Conservar una URL de respaldo para accesos directos o cuando el historial no corresponda al listado esperado. Invalidar el caché después de una mutación y recargar los datos para evitar información obsoleta.
+- Conservar una URL de respaldo para accesos directos o cuando el historial no corresponda al listado esperado. Invalidar el caché cuando una mutación altere la composición o paginación del listado, por ejemplo al crear o eliminar. Al editar un registro existente, conservar la instantánea visual y los controles del contexto, invalidar únicamente los datos en caché y consultarlos de nuevo para mostrar de inmediato los valores actualizados.
 - Separar por usuario autenticado todas las claves de almacenamiento de tablas. Cerrar sesión no equivale a cerrar la pestaña y no limpia automáticamente `sessionStorage` ni `localStorage`; ninguna cuenta debe heredar filtros, búsqueda, página, orden o cantidad de filas de otra.
 - Las preferencias estables —cantidad de filas y orden— pueden persistir para cada usuario entre visitas. El contexto temporal —búsqueda, filtros y página— se restaura al recargar o regresar desde una vista relacionada, pero se reinicia al entrar nuevamente al listado desde la navegación normal.
 
@@ -368,8 +368,17 @@ Estados:
 - Texto principal en azul oscuro; metadatos en gris.
 - En tablas de personas, usar avatares circulares de 40 px. Acompañarlos con nombre a 0.80 rem en peso 600 y metadato a 0.72 rem; esta escala conserva la fila base de 56 px y mejora el reconocimiento sin aumentar innecesariamente la densidad.
 - Jerarquía de ancho: `Usuario` tiene la mayor prioridad, seguida de `Cargo`; `Rol` y `Estado` usan anchos compactos. Selección y acciones son columnas utilitarias fijas de 44 px.
-- Mantener un espaciado horizontal uniforme; no añadir separaciones manuales asimétricas entre columnas.
+- En anchos estrechos, `Rol` y `Estado` conservan carriles independientes: la insignia de rol nunca debe tocar el indicador ni el texto del estado.
+- Mantener gutters horizontales uniformes y perceptibles entre columnas. La separación debe resolverse con padding de celda, nunca con márgenes negativos ni encogiendo insignias.
+- Las insignias de rol mantienen forma de píldora, altura mínima de 20 px y padding lateral suficiente incluso en anchos estrechos.
 - En ventanas estrechas, conservar una retícula mínima proporcional y permitir desplazamiento horizontal antes que solapar datos, truncar controles o comprimir columnas por debajo de su contenido útil.
+- Las columnas de datos con formato específico, como `Teléfono` y `Fecha alta`, deben mantenerse completas y sin cortes inarmónicos; preservar `white-space: nowrap` para esos campos e introducir scroll horizontal si hace falta.
+- Este mismo patrón de tablas debe aplicarse a otros listados y módulos del sistema: controles comunes, espacio entre columnas y comportamiento responsive deben ser consistentes con el piloto de Gestión de usuarios.
+
+- En contenedores amplios, la columna `Usuario` presenta el nombre como información principal, el `@usuario` como una insignia discreta junto al nombre y el correo en una segunda línea de menor contraste.
+- El `@usuario` permanece visible en todos los anchos. En contenedores estrechos, el nombre ocupa la primera línea, `@usuario` aparece debajo como etiqueta compacta y el correo usa una tercera línea secundaria; el correo puede truncarse y conserva el valor completo mediante `title`.
+- La visibilidad progresiva de columnas se decide con el ancho real del contenedor de la tabla, no con el ancho global de la ventana. Antes de comprometer las columnas principales, ocultar primero `Teléfono`, después `Últ. sesión` y finalmente `Fecha alta`; conservar siempre `Usuario`, `Cargo`, `Rol`, `Estado` y `Acciones`.
+- **Últ. sesión** usa texto temporal sin píldora: `En línea` en verde; después `Ahora mismo`, `Hace N min`, `Hace N h`, `Ayer` o `Hace N días`; a partir de siete días muestra la fecha `dd/mm/aaaa`. Cuando no existe actividad registrada usa `Sin registro` en color secundario. El detalle exacto de fecha y hora queda disponible al pasar el cursor.
 - Fechas y números con cifras tabulares.
 - Columnas de estado y acciones no deben reordenarse.
 - Acción por fila mediante menú de tres puntos con etiqueta accesible.

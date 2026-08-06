@@ -427,33 +427,38 @@ class UserController extends Controller
                 $lastSession = '<span class="dt-session-badge dt-session-online" title="Sesión activa">En línea</span>';
             } elseif ($user->last_session) {
                 try {
-                    $lastSessionDate = $user->last_session instanceof \DateTimeInterface
-                        ? \Carbon\Carbon::instance($user->last_session)
-                        : \Carbon\Carbon::parse($user->last_session);
-                    $diff = $lastSessionDate->diff(now());
+                $lastSessionDate = $user->last_session instanceof \DateTimeInterface
+                    ? \Carbon\Carbon::instance($user->last_session)
+                    : \Carbon\Carbon::parse($user->last_session);
+                $elapsedMinutes = intdiv(
+                    max(0, now()->timestamp - $lastSessionDate->timestamp),
+                    60
+                );
 
-                    if ($diff->y > 0) {
-                        $shortDiff = $diff->y . ' a';
-                    } elseif ($diff->m > 0) {
-                        $shortDiff = $diff->m . ' m';
-                    } elseif ($diff->d > 0) {
-                        $shortDiff = $diff->d . ' d';
-                    } elseif ($diff->h > 0) {
-                        $shortDiff = $diff->h . ' h';
-                    } elseif ($diff->i > 0) {
-                        $shortDiff = $diff->i . ' min';
-                    } else {
-                        $shortDiff = 'ahora';
-                    }
-
-                    $lastSessionTitle = e('Última sesión: ' . $lastSessionDate->format('d/m/Y H:i'));
-                    $lastSession = '<span class="dt-session-badge dt-session-away" title="' . $lastSessionTitle . '">Hace ' . $shortDiff . '</span>';
-                } catch (\Throwable $e) {
-                    $lastSession = '<span class="dt-session-badge dt-session-empty">—</span>';
+                if ($elapsedMinutes < 1) {
+                    $sessionLabel = 'Ahora mismo';
+                } elseif ($elapsedMinutes < 60) {
+                    $sessionLabel = 'Hace ' . $elapsedMinutes . ' min';
+                } elseif ($elapsedMinutes < 1440) {
+                    $sessionLabel = 'Hace ' . intdiv($elapsedMinutes, 60) . ' h';
+                } elseif ($lastSessionDate->isYesterday()) {
+                    $sessionLabel = 'Ayer';
+                } elseif ($elapsedMinutes < 10080) {
+                    $sessionLabel = 'Hace ' . intdiv($elapsedMinutes, 1440) . ' días';
+                } else {
+                    $sessionLabel = $lastSessionDate->format('d/m/Y');
                 }
-            } else {
-                $lastSession = '<span class="dt-session-badge dt-session-empty" title="Sin sesiones registradas">Nunca</span>';
+
+                $lastSessionTitle = e('Última sesión: ' . $lastSessionDate->format('d/m/Y H:i'));
+                $lastSession = '<time class="dt-session-badge dt-session-away" datetime="' .
+                    e($lastSessionDate->toIso8601String()) . '" title="' . $lastSessionTitle . '">' .
+                    e($sessionLabel) . '</time>';
+            } catch (\Throwable $e) {
+                $lastSession = '<span class="dt-session-badge dt-session-empty" title="Sin sesiones registradas">Sin registro</span>';
             }
+        } else {
+            $lastSession = '<span class="dt-session-badge dt-session-empty" title="Sin sesiones registradas">Sin registro</span>';
+        }
 
             return [
                 'id' => $user->id,
@@ -569,7 +574,7 @@ class UserController extends Controller
 
         return redirect()->route('user.user-gestion')
             ->with('success', 'Los cambios del usuario se guardaron correctamente.')
-            ->with('invalidate_users_table_cache', true);
+            ->with('revalidate_users_table_cache', true);
 
     }
 
