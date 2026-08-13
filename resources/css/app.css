@@ -1,3 +1,4 @@
+@import './pages/report-publications.css';
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -2820,10 +2821,13 @@ html[data-ui-theme="tamaulipas-salud"] .app-document-surface {
 }
 
 .app-header-nav-link.is-active {
-	background: rgba(255, 255, 255, 0.055);
-	box-shadow: inset 0 -2.5px var(--brand-shell-accent);
+	background: transparent;
+	box-shadow: none;
 	color: #fff;
-	text-decoration: none;
+	text-decoration-line: underline;
+	text-decoration-color: rgba(255, 255, 255, 0.78);
+	text-decoration-thickness: 1.5px;
+	text-underline-offset: 0.32rem;
 }
 
 .app-header-notifications {
@@ -3611,6 +3615,7 @@ html[data-ui-theme="tamaulipas-salud"] .app-document-surface {
 .users-management-page .users-table-card #users-table tbody .dt-phone-cell {
 	color: #475569;
 	font-weight: 500;
+	text-align: left !important;
 }
 
 .users-management-page .app-table-bulk-inline {
@@ -3746,6 +3751,10 @@ html[data-ui-theme="tamaulipas-salud"] .app-document-surface {
 .users-management-page #users-table.dataTable tbody td.dt-last-session-cell {
 	white-space: nowrap;
 	overflow-wrap: normal;
+}
+
+.users-management-page #users-table.dataTable tbody td.dt-phone-cell {
+	text-align: left !important;
 }
 
 .users-management-page #users-table.dataTable tbody td.dt-role-cell {
@@ -6192,6 +6201,10 @@ html[data-ui-theme="tamaulipas-salud"] .app-document-surface {
 	white-space: nowrap;
 }
 
+.users-management-page .users-table-info-context {
+	margin-left: 0.3rem;
+}
+
 /* Fine tune the users filter popover so its type matches the table rhythm. */
 .users-management-page .users-table-card > .app-table-toolbar .users-filter-menu .users-filter-panel-header h2 {
 	color: #0f172a !important;
@@ -6362,6 +6375,7 @@ html[data-ui-theme="tamaulipas-salud"] .app-document-surface {
 		width: 10rem !important;
 		min-width: 10rem !important;
 		max-width: 10rem !important;
+		text-align: left !important;
 	}
 
 	.users-management-page .users-table-card #users-table th.dt-date-cell,
@@ -6440,6 +6454,7 @@ html[data-ui-theme="tamaulipas-salud"] .app-document-surface {
 		width: 10rem !important;
 		min-width: 10rem !important;
 		max-width: 10rem !important;
+		text-align: left !important;
 	}
 
 	.users-management-page .users-table-card #users-table th.dt-date-cell,
@@ -6553,6 +6568,7 @@ html[data-ui-theme="tamaulipas-salud"] .app-document-surface {
 .users-management-page .users-table-card #users-table tbody td.dt-last-session-cell,
 .users-management-page .users-table-card #users-table tbody td.dt-phone-cell {
 	white-space: nowrap !important;
+	text-align: left !important;
 }
 
 .users-management-page .users-table-card #users-table thead th.dt-actions-cell,
@@ -6562,10 +6578,12 @@ html[data-ui-theme="tamaulipas-salud"] .app-document-surface {
 .users-management-page .users-table-card #users-table thead th.dt-last-session-cell,
 .users-management-page .users-table-card #users-table thead th.dt-phone-cell {
 	white-space: nowrap !important;
+	text-align: left !important;
 }
 
 .users-management-page .users-table-card #users-table tbody td.dt-phone-cell,
 .users-management-page .users-table-card #users-table thead th.dt-phone-cell {
+	text-align: left !important;
 	min-width: 10rem !important;
 }
 
@@ -6601,6 +6619,7 @@ html[data-ui-theme="tamaulipas-salud"] .app-document-surface {
 	.users-management-page .users-table-card #users-table thead th.dt-phone-cell {
 		white-space: nowrap !important;
 		min-width: 9.5rem !important;
+		text-align: left !important;
 	}
 
 	.users-management-page .users-table-card #users-table tbody td.dt-date-cell,

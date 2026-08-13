@@ -5,161 +5,213 @@
     @include('components.header-admin')
     @include('components.nav-reportes')
 
-    <div class="px-4 lg:pl-10 pt-6 lg:pt-10 pb-8 lg:pb-12">
-        <h1 class="text-2xl lg:text-3xl font-lora font-bold text-[#404041] mb-3">Centro de Control</h1>
-        <p class="text-sm lg:text-base text-[#404041] font-lora mb-6">Monitoreo y administración centralizada de reportes.</p>
+    @php
+        $activeFilterCount = collect(['status', 'district_id', 'date_filter'])->filter(fn ($key) => request()->filled($key))->count();
+        $hasActiveCriteria = request()->filled('q') || $activeFilterCount > 0 || request('tipo', 'todos') !== 'todos';
+        $districtLabel = optional($districts->firstWhere('id', request('district_id')))->name;
+    @endphp
 
-        <!-- Los mensajes transitorios de sesión se muestran desde el componente global de toast. -->
+    <main class="reports-publications-page px-4 lg:pl-10 pt-5 lg:pt-7 pb-8 lg:pb-10">
+        <x-ui.page-header
+            class="reports-publications-header"
+            title="Centro de control"
+            description="Monitoree y administre los reportes registrados en el sistema."
+        />
 
-        <!-- Contenedor principal -->
-        <div id="reportes-publicaciones-panel" class="border border-[#404041] rounded-lg lg:rounded-xl bg-white bg-opacity-95 max-w-full shadow-md overflow-visible">
-            
-            <!-- PESTAÑAS INTEGRADAS AL CONTENEDOR -->
-            <div class="border-b border-gray-300 bg-gray-50 px-4 lg:px-6 pt-4">
-                <nav class="flex space-x-1" aria-label="Tabs">
-                    <button data-tipo="todos" class="tab-filter px-4 py-2 text-sm font-medium font-lora rounded-t-lg bg-[#404041] text-white border border-b-0 border-gray-300 transition-all duration-200 hover:bg-[#2a2a2a]" style="border-bottom: 4px solid #404041;">
-                        Todos los tipos
+        <div id="reportes-publicaciones-panel" class="app-table-card reports-table-card">
+            <nav class="reports-type-tabs" aria-label="Tipos de reporte">
+                @foreach([
+                    'todos' => 'Todos',
+                    'seguridad_vial' => 'Seguridad vial',
+                    'observatorio' => 'Observatorio',
+                    'alcoholimetria' => 'Alcoholimetría',
+                    'grupos-vulnerables' => 'Grupos vulnerables',
+                ] as $typeValue => $typeLabel)
+                    <button type="button"
+                            data-tipo="{{ $typeValue }}"
+                            class="tab-filter {{ request('tipo', 'todos') === $typeValue ? 'is-active' : '' }}"
+                            aria-pressed="{{ request('tipo', 'todos') === $typeValue ? 'true' : 'false' }}">
+                        {{ $typeLabel }}
                     </button>
-                    <button data-tipo="seguridad_vial" class="tab-filter px-4 py-2 text-sm font-medium font-lora rounded-t-lg bg-white text-[#404041] border border-b-0 border-gray-300 transition-all duration-200 hover:bg-gray-100" style="border-bottom: 4px solid #4C8CC4;">
-                        Seguridad Vial
-                    </button>
-                    <button data-tipo="observatorio" class="tab-filter px-4 py-2 text-sm font-medium font-lora rounded-t-lg bg-white text-[#404041] border border-b-0 border-gray-300 transition-all duration-200 hover:bg-gray-100" style="border-bottom: 4px solid #75A84E;">
-                        Observatorio
-                    </button>
-                    <button data-tipo="alcoholimetria" class="tab-filter px-4 py-2 text-sm font-medium font-lora rounded-t-lg bg-white text-[#404041] border border-b-0 border-gray-300 transition-all duration-200 hover:bg-gray-100" style="border-bottom: 4px solid #9D2449;">
-                        Alcoholimetría
-                    </button>
-                    <button data-tipo="grupos-vulnerables" class="tab-filter px-4 py-2 text-sm font-medium font-lora rounded-t-lg bg-white text-[#404041] border border-b-0 border-gray-300 transition-all duration-200 hover:bg-gray-100" style="border-bottom: 4px solid #6B4C8A;">
-                        Grupos Vulnerables
-                    </button>
-                </nav>
-            </div>
+                @endforeach
+            </nav>
 
-            <!-- CONTENIDO INTERIOR DEL CONTENEDOR -->
-            <div class="p-4 lg:p-6">
-                <!-- FILTROS MEJORADOS - SERVER SIDE -->
-                <form method="GET" action="{{ route('reportes.index') }}" class="mb-6">
-                    <div class="flex flex-col sm:flex-row sm:flex-wrap gap-3 items-start sm:items-end">
-                        <!-- Buscar (misma línea que los filtros) -->
-                        <div class="flex-1 min-w-0 w-full sm:w-1/2 md:w-1/3 lg:max-w-[320px]">
-                            <label class="block text-xs font-semibold text-[#404041] mb-1 font-lora">Buscar</label>
-                            <div class="relative">
-                                <input type="text" name="q" id="search" value="{{ request('q') }}" placeholder="Buscar por título o autor..." class="w-full border border-[#404041] rounded-lg pl-10 pr-3 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-[#611132] focus:border-transparent">
-                                <div class="absolute inset-y-0 left-3 flex items-center pointer-events-none">
-                                    <svg class="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-                                    </svg>
+            <form id="reports-filter-form" method="GET" action="{{ route('reportes.index') }}" class="reports-filter-form">
+                <input type="hidden" name="tipo" id="filter-tipo-input" value="{{ request('tipo', 'todos') }}">
+
+                <div class="app-table-toolbar reports-toolbar">
+                    <div class="reports-filter-popover-wrap">
+                        <button type="button" id="reports-filter-toggle" class="reports-filter-toggle" aria-expanded="false" aria-controls="reports-filter-panel">
+                            <i class="fas fa-sliders-h" aria-hidden="true"></i>
+                            <span>Filtros</span>
+                            @if($activeFilterCount > 0)
+                                <span class="reports-filter-count">{{ $activeFilterCount }}</span>
+                            @endif
+                        </button>
+
+                        <div id="reports-filter-panel" class="reports-filter-panel hidden" role="dialog" aria-modal="false" aria-labelledby="reports-filter-title">
+                            <div class="reports-filter-panel-header">
+                                <h2 id="reports-filter-title">Filtros</h2>
+                                <a href="{{ route('reportes.index', array_filter(['tipo' => request('tipo', 'todos'), 'q' => request('q'), 'order_by' => request('order_by'), 'per_page' => request('per_page')])) }}">Limpiar</a>
+                            </div>
+                            <div class="reports-filter-native-controls" aria-hidden="true">
+                                <select name="status" tabindex="-1">
+                                    @foreach(['' => 'Todos', 'pendiente' => 'Pendiente', 'aprobado' => 'Aprobado', 'rechazado' => 'Rechazado'] as $value => $label)
+                                        <option value="{{ $value }}" {{ request('status') === $value ? 'selected' : '' }}>{{ $label }}</option>
+                                    @endforeach
+                                </select>
+                                <select name="date_filter" tabindex="-1">
+                                    @foreach(['' => 'Todas las fechas', 'hoy' => 'Hoy', 'semana' => 'Esta semana', 'mes' => 'Este mes', '3meses' => 'Últimos 3 meses', 'anio' => 'Este año'] as $value => $label)
+                                        <option value="{{ $value }}" {{ request('date_filter') === $value ? 'selected' : '' }}>{{ $label }}</option>
+                                    @endforeach
+                                </select>
+                                <select name="order_by" tabindex="-1">
+                                    @foreach(['updated_at:desc' => 'Última actualización', 'created_at:desc' => 'Creación, recientes', 'created_at:asc' => 'Creación, antiguos', 'titulo:asc' => 'Título, A-Z', 'titulo:desc' => 'Título, Z-A', 'usuario:asc' => 'Usuario, A-Z', 'usuario:desc' => 'Usuario, Z-A'] as $value => $label)
+                                        <option value="{{ $value }}" {{ request('order_by', 'updated_at:desc') === $value ? 'selected' : '' }}>{{ $label }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+
+                            <div class="reports-filter-panel-body">
+                                @foreach([
+                                    'status' => ['label' => 'Estado', 'value' => request('status', ''), 'options' => ['' => 'Todos', 'pendiente' => 'Pendiente', 'aprobado' => 'Aprobado', 'rechazado' => 'Rechazado']],
+                                    'date_filter' => ['label' => 'Periodo', 'value' => request('date_filter', ''), 'options' => ['' => 'Todas las fechas', 'hoy' => 'Hoy', 'semana' => 'Esta semana', 'mes' => 'Este mes', '3meses' => 'Últimos 3 meses', 'anio' => 'Este año']],
+                                ] as $target => $filter)
+                                    <div class="reports-filter-section {{ $filter['value'] !== '' ? 'is-open' : '' }}" data-reports-filter-section>
+                                        <button type="button" class="reports-filter-section-toggle" data-reports-filter-section-toggle>
+                                            <i class="fas {{ $filter['value'] !== '' ? 'fa-chevron-down' : 'fa-chevron-right' }}" aria-hidden="true"></i>
+                                            <span>{{ $filter['label'] }}</span>
+                                        </button>
+                                        <div class="reports-filter-section-content">
+                                            <div class="reports-filter-options">
+                                                @foreach($filter['options'] as $value => $label)
+                                                    <button type="button" class="reports-filter-option" data-reports-filter-target="{{ $target }}" data-reports-filter-value="{{ $value }}">
+                                                        <span class="reports-filter-check"><i class="fas fa-check" aria-hidden="true"></i></span>
+                                                        <span>{{ $label }}</span>
+                                                    </button>
+                                                @endforeach
+                                            </div>
+                                        </div>
+                                    </div>
+                                @endforeach
+
+                                <div class="reports-filter-section {{ request()->filled('district_id') ? 'is-open' : '' }}" data-reports-filter-section>
+                                    <button type="button" class="reports-filter-section-toggle" data-reports-filter-section-toggle>
+                                        <i class="fas {{ request()->filled('district_id') ? 'fa-chevron-down' : 'fa-chevron-right' }}" aria-hidden="true"></i>
+                                        <span>Distrito</span>
+                                    </button>
+                                    <div class="reports-filter-section-content district-filter-field">
+                                        <select id="district_id" name="district_id" class="reports-district-tomselect tomselect-select" data-placeholder="Todos">
+                                            <option value="">Todos</option>
+                                            @foreach($districts as $district)
+                                                <option value="{{ $district->id }}" {{ (string) request('district_id') === (string) $district->id ? 'selected' : '' }}>{{ $district->name }}</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div class="reports-filter-section {{ request('order_by', 'updated_at:desc') !== 'updated_at:desc' ? 'is-open' : '' }}" data-reports-filter-section>
+                                    <button type="button" class="reports-filter-section-toggle" data-reports-filter-section-toggle>
+                                        <i class="fas {{ request('order_by', 'updated_at:desc') !== 'updated_at:desc' ? 'fa-chevron-down' : 'fa-chevron-right' }}" aria-hidden="true"></i>
+                                        <span>Orden</span>
+                                    </button>
+                                    <div class="reports-filter-section-content">
+                                        <div class="reports-filter-options">
+                                            @foreach(['updated_at:desc' => 'Última actualización', 'created_at:desc' => 'Creación, recientes', 'created_at:asc' => 'Creación, antiguos', 'titulo:asc' => 'Título, A-Z', 'titulo:desc' => 'Título, Z-A', 'usuario:asc' => 'Usuario, A-Z', 'usuario:desc' => 'Usuario, Z-A'] as $value => $label)
+                                                <button type="button" class="reports-filter-option" data-reports-filter-target="order_by" data-reports-filter-value="{{ $value }}">
+                                                    <span class="reports-filter-check"><i class="fas fa-check" aria-hidden="true"></i></span>
+                                                    <span>{{ $label }}</span>
+                                                </button>
+                                            @endforeach
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                        <!-- Estado -->
-                        <div class="flex-1 min-w-0 w-full sm:w-auto sm:flex-1 sm:max-w-[160px]">
-                            <label class="block text-xs font-semibold text-[#404041] mb-1 font-lora">Estado</label>
-                            <select name="status" class="w-full border border-[#404041] rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-[#611132] focus:border-transparent">
-                                <option value="">Todos los estados</option>
-                                <option value="pendiente" {{ request('status') === 'pendiente' ? 'selected' : '' }}>Pendiente</option>
-                                <option value="aprobado" {{ request('status') === 'aprobado' ? 'selected' : '' }}>Aprobado</option>
-                                <option value="rechazado" {{ request('status') === 'rechazado' ? 'selected' : '' }}>Rechazado</option>
-                            </select>
-                        </div>
-
-                        <!-- Distrito -->
-                        <div class="district-filter-field flex-1 min-w-0 w-full sm:w-auto sm:flex-1 sm:max-w-[160px]">
-                            <label class="block text-xs font-semibold text-[#404041] mb-1 font-lora">Distrito</label>
-                            <select id="district_id" name="district_id" class="tomselect-select" data-placeholder="Todos los distritos" style="display: none;">
-                                <option value="">Todos los distritos</option>
-                                @foreach($districts as $district)
-                                    <option value="{{ $district->id }}" {{ request('district_id') == $district->id ? 'selected' : '' }}>{{ $district->name }}</option>
-                                @endforeach
-                            </select>
-                            <div class="district-select-skeleton" aria-hidden="true">
-                                <span>{{ optional($districts->firstWhere('id', request('district_id')))->name ?? 'Todos los distritos' }}</span>
+                            <div class="reports-filter-panel-footer">
+                                <button type="button" id="reports-filter-cancel" class="reports-button reports-button--secondary">Cancelar</button>
+                                <button type="submit" class="reports-button reports-button--primary">Aplicar filtros</button>
                             </div>
                         </div>
+                    </div>
 
-                        <!-- Periodo de fechas predefinido -->
-                        <div class="flex-1 min-w-0 w-full sm:w-auto sm:flex-1 sm:max-w-[160px]">
-                            <label class="block text-xs font-semibold text-[#404041] mb-1 font-lora">Periodo</label>
-                            <select name="date_filter" class="w-full border border-[#404041] rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-[#611132] focus:border-transparent">
-                                <option value="">Todas las fechas</option>
-                                <option value="hoy" {{ request('date_filter') === 'hoy' ? 'selected' : '' }}>Hoy</option>
-                                <option value="semana" {{ request('date_filter') === 'semana' ? 'selected' : '' }}>Esta semana</option>
-                                <option value="mes" {{ request('date_filter') === 'mes' ? 'selected' : '' }}>Este mes</option>
-                                <option value="3meses" {{ request('date_filter') === '3meses' ? 'selected' : '' }}>Últimos 3 meses</option>
-                                <option value="anio" {{ request('date_filter') === 'anio' ? 'selected' : '' }}>Este año</option>
-                            </select>
-                        </div>
+                    <div class="reports-search">
+                        <i class="fas fa-search" aria-hidden="true"></i>
+                        <input type="search" name="q" id="search" value="{{ request('q') }}" placeholder="Buscar por título o autor..." aria-label="Buscar reportes"
+                               autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false" enterkeyhint="search">
+                        <span class="reports-search-progress" aria-hidden="true"></span>
+                        <button type="button" class="reports-search-clear {{ request()->filled('q') ? '' : 'hidden' }}" aria-label="Limpiar búsqueda" title="Limpiar búsqueda">
+                            <i class="fas fa-times" aria-hidden="true"></i>
+                        </button>
+                    </div>
 
-                        <!-- Ordenar (incluye dirección) -->
-                        <div class="flex-1 min-w-0 w-full sm:w-auto sm:flex-1 sm:max-w-[280px]">
-                            <label class="block text-xs font-semibold text-[#404041] mb-1 font-lora">Ordenar</label>
-                            <select name="order_by" class="w-full border border-[#404041] rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-[#611132] focus:border-transparent">
-                                <option value="updated_at:desc" {{ request('order_by', 'updated_at:desc') === 'updated_at:desc' ? 'selected' : '' }}>Última actualización (recientes)</option>
-                                <option value="created_at:desc" {{ request('order_by') === 'created_at:desc' ? 'selected' : '' }}>Fecha creación (recientes)</option>
-                                <option value="created_at:asc" {{ request('order_by') === 'created_at:asc' ? 'selected' : '' }}>Fecha creación (antiguos)</option>
-                                <option value="titulo:asc" {{ request('order_by') === 'titulo:asc' ? 'selected' : '' }}>Título (A → Z)</option>
-                                <option value="titulo:desc" {{ request('order_by') === 'titulo:desc' ? 'selected' : '' }}>Título (Z → A)</option>
-                                <option value="usuario:asc" {{ request('order_by') === 'usuario:asc' ? 'selected' : '' }}>Usuario (A → Z)</option>
-                                <option value="usuario:desc" {{ request('order_by') === 'usuario:desc' ? 'selected' : '' }}>Usuario (Z → A)</option>
-                            </select>
-                        </div>
-
-                        <!-- Botones de acción -->
-                        <div class="flex gap-2 mt-2 sm:mt-0 sm:self-end flex-none">
-                            <button type="submit" class="bg-[#611132] text-white px-4 py-1.5 rounded-lg text-xs font-semibold hover:bg-[#4a0e26] transition-all duration-300 font-lora flex items-center gap-1 whitespace-nowrap">
-                                <i class="fas fa-filter text-xs"></i>
-                                Aplicar
+                    <div class="reports-page-size">
+                        <select name="per_page" class="reports-native-page-size" aria-hidden="true" tabindex="-1">
+                            @foreach([12, 24, 48] as $size)
+                                <option value="{{ $size }}" {{ (int) request('per_page', 12) === $size ? 'selected' : '' }}>{{ $size }}</option>
+                            @endforeach
+                        </select>
+                        <div class="reports-page-size-dropdown">
+                            <button type="button" class="reports-page-size-button" aria-haspopup="listbox" aria-expanded="false">
+                                <span>Mostrar</span>
+                                <strong>{{ (int) request('per_page', 12) }}</strong>
+                                <i class="fas fa-list-ul reports-page-size-icon" aria-hidden="true"></i>
                             </button>
-                            <a href="{{ route('reportes.index', ['tipo' => request('tipo', 'todos')]) }}" class="border border-[#404041] text-[#404041] px-3 py-1.5 rounded-lg text-xs font-semibold hover:bg-gray-50 transition-all duration-300 font-lora flex items-center gap-1 whitespace-nowrap">
-                                <i class="fas fa-redo text-xs"></i>
-                                Limpiar
-                            </a>
+                            <div class="reports-page-size-menu hidden" role="listbox" aria-label="Reportes por página">
+                                @foreach([12, 24, 48] as $size)
+                                    <button type="button" role="option" class="reports-page-size-option {{ (int) request('per_page', 12) === $size ? 'is-active' : '' }}"
+                                            data-value="{{ $size }}" aria-selected="{{ (int) request('per_page', 12) === $size ? 'true' : 'false' }}">
+                                        {{ $size }}
+                                    </button>
+                                @endforeach
+                            </div>
                         </div>
                     </div>
-
-                    <!-- Campo oculto para mantener el tipo seleccionado en pestañas -->
-                    <input type="hidden" name="tipo" id="filter-tipo-input" value="{{ request('tipo', 'todos') }}">
-                </form>
-
-                <!-- CONTADOR DE RESULTADOS Y BARRA DE HERRAMIENTAS -->
-                <div class="flex justify-between items-center mb-6 gap-4">
-                    <div class="text-sm text-gray-600 font-lora">
-                        <span class="font-semibold text-[#404041]">{{ $publications->total() }}</span> resultados encontrados
-                        <span class="text-gray-500">• Mostrando {{ $publications->currentPage() === 1 && !$publications->hasPages() ? 1 : $publications->firstItem() ?? 1 }}-{{ $publications->currentPage() === 1 && !$publications->hasPages() ? $publications->total() : $publications->lastItem() ?? $publications->total() }}</span>
-                    </div>
-                    <!-- Barra de herramientas de selección masiva -->
-                    <div id="bulk-toolbar" class="flex items-center gap-3 p-3 bg-gray-50 border border-gray-300 rounded-lg" style="display: none;">
-                        <span class="text-sm font-semibold text-[#404041] font-lora">
-                            <span id="selected-count">0</span> seleccionado(s)
-                        </span>
-                        <button id="bulk-download-files" type="button" class="bg-gray-600 text-white px-3 py-1.5 rounded-lg text-xs font-semibold hover:bg-gray-700 transition-all duration-300 font-lora flex items-center gap-2 whitespace-nowrap shadow-sm">
-                            <i class="fas fa-download text-xs"></i>
-                            <span>Descargar archivos</span>
-                        </button>
-                        <button id="bulk-delete-reports" type="button" class="bg-[#AB1A1A] text-white px-3 py-1.5 rounded-lg text-xs font-semibold hover:bg-[#8B1515] transition-all duration-300 font-lora flex items-center gap-2 whitespace-nowrap shadow-sm">
-                            <i class="fas fa-trash text-xs"></i>
-                            <span>Eliminar</span>
-                        </button>
-                        <button id="clear-selection" type="button" class="border border-[#404041] text-[#404041] px-3 py-1.5 rounded-lg text-xs font-semibold hover:bg-gray-50 transition-all duration-300 font-lora flex items-center gap-1 whitespace-nowrap">
-                            <i class="fas fa-times text-xs"></i>
-                            <span>Limpiar</span>
-                        </button>
-                    </div>
                 </div>
 
-                <!-- Paginación Superior -->
-                <div class="flex justify-center mb-6 mt-6 pt-6 border-t border-gray-300">
-                    {{ $publications->onEachSide(2)->links('vendor.pagination.custom') }}
-                </div>
+                @if($activeFilterCount > 0)
+                    <div class="reports-filter-chips" aria-label="Filtros activos">
+                        @if(request()->filled('status'))
+                            <a href="{{ route('reportes.index', request()->except(['status', 'page'])) }}" class="reports-filter-chip">Estado: {{ ucfirst(request('status')) }} <i class="fas fa-times" aria-hidden="true"></i></a>
+                        @endif
+                        @if(request()->filled('district_id'))
+                            <a href="{{ route('reportes.index', request()->except(['district_id', 'page'])) }}" class="reports-filter-chip">Distrito: {{ $districtLabel ?? 'Seleccionado' }} <i class="fas fa-times" aria-hidden="true"></i></a>
+                        @endif
+                        @if(request()->filled('date_filter'))
+                            <a href="{{ route('reportes.index', request()->except(['date_filter', 'page'])) }}" class="reports-filter-chip">Periodo: {{ ['hoy' => 'Hoy', 'semana' => 'Esta semana', 'mes' => 'Este mes', '3meses' => 'Últimos 3 meses', 'anio' => 'Este año'][request('date_filter')] ?? request('date_filter') }} <i class="fas fa-times" aria-hidden="true"></i></a>
+                        @endif
+                    </div>
+                @endif
+            </form>
 
-                <!-- Grid de reportes - 4 columnas -->
-                <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-5 items-stretch">
+            <div id="bulk-toolbar" class="reports-bulk-toolbar app-table-bulk-inline hidden items-center gap-3" role="status" aria-live="polite">
+                <div class="reports-bulk-summary">
+                    <span class="app-table-selection-marker" aria-hidden="true"></span>
+                    <span id="selected-count" class="app-table-selection-count whitespace-nowrap"></span>
+                </div>
+                <span class="reports-bulk-context">En esta página</span>
+                <button id="bulk-download-files" type="button" class="reports-bulk-action reports-bulk-action--download" title="Descargar archivos seleccionados">
+                    <i class="fas fa-download" aria-hidden="true"></i><span>Descargar archivos</span>
+                </button>
+                <button id="clear-selection" type="button" class="reports-bulk-action reports-bulk-action--clear" title="Quitar selección">Quitar selección</button>
+                <button id="bulk-delete-reports" type="button" class="app-table-bulk-danger reports-bulk-delete" title="Eliminar seleccionados">
+                    <i class="fas fa-trash" aria-hidden="true"></i><span>Eliminar</span>
+                </button>
+            </div>
+
+            <div id="reports-table-error" class="reports-inline-error hidden" role="alert">
+                <i class="fas fa-exclamation-triangle" aria-hidden="true"></i>
+                <span>No se pudieron actualizar los reportes. Los datos visibles pueden estar desactualizados.</span>
+                <button type="button" data-retry-reports>Reintentar</button>
+            </div>
+
+            <div class="reports-table-progress" aria-hidden="true"></div>
+            <span class="sr-only" role="status" aria-live="polite" aria-atomic="true" id="reports-table-status"></span>
+
+            <section class="reports-card-grid {{ $publications->isEmpty() ? 'is-empty' : '' }}" aria-label="Reportes">
                     @forelse($publications as $pub)
                         @php
                             // Determinar tipo de reporte y sus datos específicos
                             $tipoDisplay = '';
-                            $badgeClass = 'bg-[#4C8CC4] text-white';
-                            $badgeBorderClass = 'border-[#13264F]';
                             $claseModal = '';
                             $dataAttributes = [];
                             $activityInfo = ''; // Para mostrar debajo del título
@@ -167,8 +219,6 @@
                             
                             if ($pub->publication_type === 'seguridad_vial') {
                                 $tipoDisplay = 'Seguridad Vial';
-                                $badgeClass = 'bg-[#4C8CC4] text-white';
-                                $badgeBorderClass = 'border-[#13264F]';
                                 $claseModal = 'ver-detalle-seguridad';
                                 $editRoute = route('reportes.seguridad-vial.edit', $pub) . '?redirect_tipo=' . (request('tipo') ?? 'todos');
                                 $reporte = $pub->roadSafetyReports->first();
@@ -186,8 +236,6 @@
                                 }
                             } elseif ($pub->publication_type === 'observatorio') {
                                 $tipoDisplay = 'Observatorio de lesiones';
-                                $badgeClass = 'bg-[#75A84E] text-white';
-                                $badgeBorderClass = 'border-[#184823]';
                                 $claseModal = 'ver-detalle-observatorio';
                                 $editRoute = route('reportes.observatorio.edit', $pub) . '?redirect_tipo=' . (request('tipo') ?? 'todos');
                                 $reporte = $pub->injuryObservatoryReports->first();
@@ -201,8 +249,6 @@
                                 }
                             } elseif ($pub->publication_type === 'alcoholimetria') {
                                 $tipoDisplay = 'Alcoholimetría';
-                                $badgeClass = 'bg-[#9D2449] text-white';
-                                $badgeBorderClass = 'border-[#470202]';
                                 $claseModal = 'ver-detalle-alcohol';
                                 $editRoute = route('reportes.alcoholimetria.edit', $pub) . '?redirect_tipo=' . (request('tipo') ?? 'todos');
                                 $reporte = $pub->breathalyzerReports->first();
@@ -227,8 +273,6 @@
                                 }
                             } elseif ($pub->publication_type === 'grupos-vulnerables') {
                                 $tipoDisplay = 'Grupos Vulnerables';
-                                $badgeClass = 'bg-[#6B4C8A] text-white';
-                                $badgeBorderClass = 'border-[#2D1B47]';
                                 $claseModal = 'ver-detalle-grupos-vulnerables';
                                 $editRoute = route('reportes.grupos-vulnerables.edit', $pub) . '?redirect_tipo=' . (request('tipo') ?? 'todos');
                                 $reporte = $pub->gruposVulnerablesReport;
@@ -273,6 +317,7 @@
                             // Only count comments from OTHER users that current user hasn't read
                             $comentarios = $pub->comentarios_json ?? [];
                             $hasUnread = false;
+                            $unreadCommentsCount = 0;
                             $currentUserId = auth()->id();
                             
                             // Convert to array if it's a Collection
@@ -305,7 +350,7 @@
                                     // Check if this comment from another user is unread
                                     if (!($cc['seen_by_current_user'] ?? false)) {
                                         $hasUnread = true;
-                                        break;
+                                        $unreadCommentsCount++;
                                     }
                                 }
                             }
@@ -316,24 +361,29 @@
                             }
 
                             $wasUpdated = $pub->created_at && $pub->updated_at && $pub->updated_at->gt($pub->created_at->copy()->addMinute());
-                            $updatedDisplay = $wasUpdated ? $pub->updated_at->locale('es')->isoFormat('D MMM YYYY, HH:mm') : '';
+                            $updatedDisplay = $wasUpdated ? $pub->updated_at->locale('es')->isoFormat('D MMM, HH:mm') : '';
+                            $updatedFull = $wasUpdated ? $pub->updated_at->locale('es')->isoFormat('D [de] MMMM [de] YYYY, HH:mm') : '';
+                            $publicationDateDisplay = $pub->publication_date->locale('es')->isoFormat('D MMM YYYY');
+                            $publicationDateFull = $pub->publication_date->locale('es')->isoFormat('dddd, D [de] MMMM [de] YYYY');
                         @endphp
 
                         <x-publicacion-card
                             data-publication-id="{{ $pub->id }}"
                             :tipo="$tipoDisplay"
                             :titulo="$pub->topic"
-                            :fecha="$pub->publication_date->locale('es')->isoFormat('dddd, D [de] MMMM [de] YYYY')"
+                            :fecha="$publicationDateDisplay"
+                            :fecha_full="$publicationDateFull"
                             :actualizado="$updatedDisplay"
+                            :actualizado_full="$updatedFull"
                             :usuario="$uShort"
                             :usuario_full="$uFull"
                             :descripcion="$activityInfo"
+                            :archivos="$archivosArray"
                             :archivosCount="$pub->files->count()"
-                            :badgeClass="$badgeClass"
-                            :badgeBorderClass="$badgeBorderClass"
                             :has-comments="count($pub->comentarios_json ?? []) > 0"
                             :comments-count="count($pub->comentarios_json ?? [])"
                             :has-unread="$hasUnread"
+                            :unread-comments-count="$unreadCommentsCount"
                             :status="$pub->status"
                             :approvedBy="optional($pub->approver)->full_name"
                             :rejectedBy="optional($pub->rejector)->full_name"
@@ -341,7 +391,7 @@
                             data-publication-tipo="{{ $pub->publication_type }}"
                             class="publication-card-wrapper">
 
-                            <div class="flex justify-end gap-2">
+                            <div class="reports-row-actions">
                                 <button class="hidden {{ $claseModal }}" 
                                         title="Ver detalles"
                                         tabindex="-1"
@@ -375,91 +425,114 @@
                                                  ? auth()->user()->isAdmin()
                                                  : ((auth()->id() === $pub->user_id) || auth()->user()->isAdmin());
                                 @endphp
-                                @if($canEdit)
-                                    <a href="{{ $editRoute }}" class="w-8 h-8 flex items-center justify-center rounded-lg border border-[#C08400] text-[#C08400] transition-all duration-300 hover:bg-[#C08400] hover:text-white" title="Editar">
-                                        <i class="fas fa-edit text-sm"></i>
-                                    </a>
-                                @endif
-                                @if($canDelete)
-                                    <button type="button" 
-                                            class="eliminar-reporte w-8 h-8 flex items-center justify-center rounded-lg border border-[#AB1A1A] text-[#AB1A1A] transition-all duration-300 hover:bg-[#AB1A1A] hover:text-white" 
-                                            title="Eliminar"
-                                            data-publication-id="{{ $pub->id }}"
-                                            data-publication-title="{{ $pub->topic }}"
-                                            data-delete-url="{{ route('reportes.destroy', $pub) }}"
-                                            data-redirect-tipo="{{ request('tipo', 'todos') }}">
-                                        <i class="fas fa-trash text-sm"></i>
+                                <button type="button" class="reports-row-menu-button" aria-label="Acciones para {{ $pub->topic }}" aria-haspopup="menu" aria-expanded="false">
+                                    <i class="fas fa-ellipsis-v" aria-hidden="true"></i>
+                                </button>
+                                <div class="reports-row-menu hidden" role="menu">
+                                    <button type="button" class="reports-row-menu-item report-menu-detail" role="menuitem">
+                                        <i class="fas fa-eye" aria-hidden="true"></i><span>Ver detalles</span>
                                     </button>
-                                @endif
+                                    @if($canEdit)
+                                        <a href="{{ $editRoute }}" class="reports-row-menu-item" role="menuitem">
+                                            <i class="fas fa-edit" aria-hidden="true"></i><span>Editar</span>
+                                        </a>
+                                    @endif
+                                    @if($canDelete)
+                                        <button type="button"
+                                                class="reports-row-menu-item reports-row-menu-item--danger eliminar-reporte"
+                                                role="menuitem"
+                                                data-publication-id="{{ $pub->id }}"
+                                                data-publication-title="{{ $pub->topic }}"
+                                                data-delete-url="{{ route('reportes.destroy', $pub) }}"
+                                                data-redirect-tipo="{{ request('tipo', 'todos') }}">
+                                            <i class="fas fa-trash" aria-hidden="true"></i><span>Eliminar</span>
+                                        </button>
+                                    @endif
+                                </div>
                             </div>
 
                         </x-publicacion-card>
                     @empty
-                        <div class="col-span-full text-center py-12">
-                            <div class="flex flex-col items-center gap-3">
-                                <div class="flex h-16 w-16 items-center justify-center rounded-full bg-gray-100 text-gray-400">
-                                    <i class="fas fa-inbox text-3xl"></i>
-                                </div>
-                            @if(request()->filled('q') || request()->filled('status') || request()->filled('district_id') || request()->filled('date_filter') || request('tipo', 'todos') !== 'todos')
-                                <p class="text-lg font-lora text-gray-600">No se encontraron reportes</p>
-                                <p class="text-sm text-gray-500 font-lora">Intenta ajustar los criterios de búsqueda</p>
+                        <div class="reports-table-state {{ $hasActiveCriteria ? 'reports-table-state--no-results' : 'reports-table-state--empty' }}" role="status">
+                            <i class="fas {{ $hasActiveCriteria ? 'fa-search' : 'fa-file-alt' }}" aria-hidden="true"></i>
+                            @if($hasActiveCriteria)
+                                <strong>No encontramos resultados</strong>
+                                <span>Prueba con otra búsqueda o elimina los filtros aplicados.</span>
+                                <a class="reports-table-state-action" href="{{ route('reportes.index') }}">Limpiar búsqueda y filtros</a>
                             @else
-                                <p class="text-lg font-lora text-gray-600">No hay publicaciones registradas</p>
-                                <p class="text-sm text-gray-500 font-lora">Comienza creando un nuevo reporte</p>
+                                <strong>No hay reportes registrados</strong>
+                                <span>Los reportes aparecerán aquí cuando se registre el primero.</span>
                             @endif
-                            </div>
                         </div>
                     @endforelse
-                </div>
+            </section>
 
-                <!-- Paginación Inferior -->
-                <div class="flex justify-center mt-6 pt-6 border-t border-gray-300">
-                    {{ $publications->onEachSide(2)->links('vendor.pagination.custom') }}
+            <footer class="reports-table-footer">
+                <p>
+                    @if($publications->total() > 0)
+                        Mostrando <strong>{{ $publications->firstItem() }}-{{ $publications->lastItem() }}</strong> de <strong>{{ $publications->total() }}</strong>
+                        @if($publications->total() !== $totalPublications)
+                            <span class="reports-table-total">({{ $totalPublications }} totales)</span>
+                        @endif
+                    @else
+                        Mostrando <strong>0-0</strong> de <strong>0</strong>
+                        @if($totalPublications > 0)
+                            <span class="reports-table-total">({{ $totalPublications }} totales)</span>
+                        @endif
+                    @endif
+                </p>
+                <div>
+                    @if($publications->total() > 0)
+                        {{ $publications->onEachSide(2)->links('vendor.pagination.reports') }}
+                    @else
+                        <nav role="navigation" aria-label="Navegación de paginación" class="reports-pagination">
+                            <span class="reports-page-item reports-page-edge is-disabled" aria-disabled="true">Anterior</span>
+                            <span class="reports-page-item reports-page-edge is-disabled" aria-disabled="true">Siguiente</span>
+                        </nav>
+                    @endif
                 </div>
-            </div>
+            </footer>
         </div>
-    </div>
+    </main>
 
     <!-- INCLUIR EL COMPONENTE DEL MODAL DE ALCOHOLIMETRÍA -->
 <!-- AL FINAL DEL ARCHIVO hola.blade.php, DESPUÉS de incluir los modales -->
 
     <!-- INCLUIR TODOS LOS COMPONENTES DE MODALES -->
 <!-- Modal de rechazo -->
-<div id="reject-modal" class="government-confirm-modal hidden fixed inset-0 z-[999999] flex items-center justify-center p-4">
-    <div class="government-confirm-card bg-white max-w-2xl w-full p-6 border border-gray-200 border-t-4 border-t-[#611132] ring-1 ring-black/5">
-        <div class="flex items-center justify-between mb-4 pb-4 border-b border-gray-300">
+<div id="reject-modal" class="reports-reject-modal hidden" role="dialog" aria-modal="true" aria-labelledby="reject-modal-heading">
+    <div class="reports-reject-card">
+        <div class="reports-reject-heading">
             <div>
-                <p class="text-[11px] uppercase font-semibold text-[#611132] font-lora mb-1">Validacion del reporte</p>
-                <h3 class="text-xl font-bold text-[#303236] font-lora">Rechazar reporte</h3>
+                <i class="fas fa-exclamation-triangle" aria-hidden="true"></i>
+                <h3 id="reject-modal-heading">Rechazar reporte</h3>
             </div>
-            <button onclick="closeRejectModal()" class="modal-cerrar text-gray-500 hover:text-gray-700 transition-colors duration-200 w-9 h-9 flex items-center justify-center rounded-lg" aria-label="Cerrar modal">
-                <i class="fas fa-times text-base"></i>
+            <button type="button" onclick="closeRejectModal()" class="modal-cerrar" aria-label="Cerrar modal" title="Cerrar">
+                <i class="fas fa-times" aria-hidden="true"></i>
             </button>
         </div>
         
         <input type="hidden" id="reject-modal-publication-id">
         
-        <div class="mb-6">
-            <p class="text-sm text-gray-600 mb-4 font-lora">Reporte: <span id="reject-modal-title" class="font-semibold"></span></p>
-            <label class="block text-sm font-medium text-[#404041] mb-2 font-lora">Motivo del rechazo <span class="text-red-600">*</span></label>
+        <div class="reports-reject-body">
+            <p>¿Desea rechazar <strong id="reject-modal-title"></strong>?</p>
+            <label for="rejection-reason">Motivo del rechazo <span aria-hidden="true">*</span></label>
             <textarea 
                 id="rejection-reason"
-                rows="6"
-                class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-[#611132]/25 focus:border-[#611132] font-lora resize-none"
-                placeholder="Explique brevemente por qué se rechaza este reporte..."
+                rows="5"
+                aria-describedby="rejection-reason-help"
+                placeholder="Explique brevemente por qué se rechaza este reporte"
                 maxlength="500"
                 required></textarea>
-            <p class="text-xs text-gray-500 mt-1">Máximo 500 caracteres</p>
+            <p id="rejection-reason-help" class="reports-reject-help">Máximo 500 caracteres</p>
         </div>
         
-        <div class="flex gap-3 pt-4 border-t border-gray-300">
-            <button onclick="closeRejectModal()" 
-                    class="flex-1 px-4 py-2 border border-gray-300 text-[#404041] rounded-lg font-semibold hover:bg-gray-50 hover:border-[#611132]/40 transition-all duration-200 font-lora text-sm">
+        <div class="reports-reject-actions">
+            <button type="button" onclick="closeRejectModal()" class="reports-button reports-button--secondary">
                 Cancelar
             </button>
-            <button onclick="submitRejection()" 
-                    class="flex-1 px-4 py-2 bg-[#AB1A1A] text-white rounded-lg font-semibold hover:bg-[#8b1515] transition-all duration-200 font-lora text-sm flex items-center justify-center gap-2">
-                <i class="fas fa-times-circle"></i>Rechazar
+            <button type="button" onclick="submitRejection()" class="reports-button reports-button--danger">
+                Rechazar reporte
             </button>
         </div>
     </div>
@@ -472,7 +545,7 @@
 @include('components.modal-grupos-vulnerables')
 
 <!-- Previsualizacion de archivos -->
-<div id="archivo-preview-overlay" class="hidden fixed inset-0 bg-[#2f2f2f]/95 text-white" style="z-index: 10000000;">
+<div id="archivo-preview-overlay" class="hidden fixed inset-0 bg-[#2f2f2f]/95 text-white">
     <div id="archivo-preview-header" class="h-20 px-5 flex items-center justify-between gap-5 bg-[#2f2f2f] border-b border-white/10">
         <div class="flex items-center gap-4 min-w-0">
             <button type="button" id="archivo-preview-close" class="w-12 h-12 rounded-full flex items-center justify-center text-white/80 hover:text-white hover:bg-white/10 transition-colors" title="Cerrar">
@@ -527,76 +600,6 @@
     </button>
 </div>
 
-    <!-- ESTILOS PARA SELECCIÓN MASIVA DE REPORTES -->
-    <style>
-        .publication-card-wrapper {
-            transition: all 0.3s ease;
-        }
-
-        .publication-card-wrapper.selected-card {
-            border: 2px solid #4C8CC4 !important;
-            background-color: rgba(76, 140, 196, 0.05);
-        }
-
-        .publication-card-wrapper.selected-card .archivos-open {
-            background-color: rgba(76, 140, 196, 0.1);
-            border-color: #4C8CC4 !important;
-        }
-
-        #archivo-preview-overlay {
-            opacity: 1;
-            transition: opacity 260ms cubic-bezier(0.22, 1, 0.36, 1);
-        }
-
-        #archivo-preview-content {
-            transition: opacity 260ms cubic-bezier(0.22, 1, 0.36, 1), transform 260ms cubic-bezier(0.22, 1, 0.36, 1);
-            transform-origin: center center;
-        }
-
-        #archivo-preview-overlay.archivo-preview-closing {
-            opacity: 0;
-        }
-
-        #archivo-preview-overlay.archivo-preview-closing #archivo-preview-content {
-            opacity: 0;
-            transform: scale(0.975) translateY(6px);
-        }
-
-        #archivo-preview-content {
-            scrollbar-width: thin;
-            scrollbar-color: rgba(156, 163, 175, 0.65) transparent;
-        }
-
-        #archivo-preview-content::-webkit-scrollbar {
-            width: 10px;
-            height: 10px;
-        }
-
-        #archivo-preview-content::-webkit-scrollbar-track {
-            background: transparent;
-        }
-
-        #archivo-preview-content::-webkit-scrollbar-thumb {
-            background: rgba(156, 163, 175, 0.65);
-            border: 3px solid transparent;
-            border-radius: 999px;
-            background-clip: content-box;
-        }
-
-        #archivo-preview-content::-webkit-scrollbar-thumb:hover {
-            background: rgba(209, 213, 219, 0.85);
-            border: 2px solid transparent;
-            background-clip: content-box;
-        }
-
-        @media (prefers-reduced-motion: reduce) {
-            #archivo-preview-overlay,
-            #archivo-preview-content {
-                transition: none;
-            }
-        }
-    </style>
-
     <!-- JAVASCRIPT SIMPLIFICADO Y FUNCIONAL -->
     <script>
 document.addEventListener('DOMContentLoaded', function() {
@@ -612,6 +615,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const reportesIndexPath = new URL('{{ route("reportes.index") }}', window.location.origin).pathname;
     let reportesPanelAbortController = null;
     const reportesPanelCache = new Map();
+    let reportsMenuTrigger = null;
 
     function getReportesPanel() {
         return document.getElementById('reportes-publicaciones-panel');
@@ -640,10 +644,14 @@ document.addEventListener('DOMContentLoaded', function() {
         return url.toString();
     }
 
-    function setReportesPanelLoading(isLoading) {
+    function setReportesPanelLoading(isLoading, kind = 'refresh') {
         const panel = getReportesPanel();
         if (!panel) return;
         panel.setAttribute('aria-busy', isLoading ? 'true' : 'false');
+        panel.classList.toggle('is-searching', isLoading && kind === 'search');
+        const status = panel.querySelector('#reports-table-status');
+        if (status) status.textContent = isLoading ? (kind === 'search' ? 'Buscando reportes' : 'Actualizando reportes') : '';
+        if (isLoading) panel.querySelector('#reports-table-error')?.classList.add('hidden');
     }
 
     function replaceReportesPanelFromHtml(html, url, options = {}) {
@@ -680,7 +688,7 @@ document.addEventListener('DOMContentLoaded', function() {
             reportesPanelAbortController.abort();
         }
         reportesPanelAbortController = new AbortController();
-        setReportesPanelLoading(true);
+        setReportesPanelLoading(true, options.search ? 'search' : 'refresh');
 
         return fetch(targetUrl, {
             headers: {
@@ -701,7 +709,7 @@ document.addEventListener('DOMContentLoaded', function() {
         .catch(error => {
             if (error.name === 'AbortError') return false;
             console.error('Error cargando reportes sin recargar:', error);
-            window.location.href = targetUrl;
+            getReportesPanel()?.querySelector('#reports-table-error')?.classList.remove('hidden');
             return false;
         })
         .finally(() => {
@@ -821,10 +829,197 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!form || !getReportesPanel()?.contains(form)) return;
 
         e.preventDefault();
-        loadReportesPanel(buildReportesUrlFromForm(form), { push: true, scroll: false });
+        loadReportesPanel(buildReportesUrlFromForm(form), {
+            push: true,
+            scroll: false,
+            search: document.activeElement?.id === 'search'
+        });
+    });
+
+    function closeReportsFilter({ reset = false } = {}) {
+        const panel = document.getElementById('reports-filter-panel');
+        const toggle = document.getElementById('reports-filter-toggle');
+        const form = document.getElementById('reports-filter-form');
+        if (!panel || !toggle) return;
+        if (reset && form) {
+            form.reset();
+            const district = form.querySelector('#district_id');
+            if (district?.tomselect) district.tomselect.setValue(district.value, true);
+        }
+        panel.classList.add('hidden');
+        toggle.setAttribute('aria-expanded', 'false');
+    }
+
+    window.syncReportsFilterPanel = function() {
+        const form = document.getElementById('reports-filter-form');
+        if (!form) return;
+        form.querySelectorAll('.reports-filter-option[data-reports-filter-target]').forEach(option => {
+            const control = form.elements.namedItem(option.dataset.reportsFilterTarget);
+            const active = control && String(control.value) === String(option.dataset.reportsFilterValue || '');
+            option.classList.toggle('is-active', active);
+            option.setAttribute('aria-pressed', active ? 'true' : 'false');
+        });
+    };
+
+    function closeReportsRowMenus({ restoreFocus = false } = {}) {
+        document.querySelectorAll('.reports-row-menu:not(.hidden)').forEach(menu => menu.classList.add('hidden'));
+        document.querySelectorAll('.reports-row-menu-button[aria-expanded="true"]').forEach(button => button.setAttribute('aria-expanded', 'false'));
+        if (restoreFocus && reportsMenuTrigger) reportsMenuTrigger.focus();
+        reportsMenuTrigger = null;
+    }
+
+    function openReportsRowMenu(button) {
+        const menu = button.closest('.reports-row-actions')?.querySelector('.reports-row-menu');
+        if (!menu) return;
+        closeReportsRowMenus();
+        reportsMenuTrigger = button;
+        menu.classList.remove('hidden');
+        button.setAttribute('aria-expanded', 'true');
+        const buttonRect = button.getBoundingClientRect();
+        const menuRect = menu.getBoundingClientRect();
+        const openAbove = window.innerHeight - buttonRect.bottom < menuRect.height + 12 && buttonRect.top > menuRect.height + 12;
+        menu.style.top = `${openAbove ? buttonRect.top - menuRect.height - 6 : buttonRect.bottom + 6}px`;
+        menu.style.left = `${Math.max(8, Math.min(window.innerWidth - menuRect.width - 8, buttonRect.right - menuRect.width))}px`;
+        menu.querySelector('[role="menuitem"]')?.focus();
+    }
+
+    function closeReportsRowMenuOnViewportChange() {
+        if (document.querySelector('.reports-row-menu:not(.hidden)')) {
+            closeReportsRowMenus();
+        }
+    }
+
+    document.addEventListener('scroll', closeReportsRowMenuOnViewportChange, { capture: true, passive: true });
+    window.addEventListener('resize', closeReportsRowMenuOnViewportChange, { passive: true });
+    window.addEventListener('orientationchange', closeReportsRowMenuOnViewportChange, { passive: true });
+
+    document.addEventListener('change', function(e) {
+        const pageSize = e.target.closest('.reports-page-size select');
+        if (!pageSize || !getReportesPanel()?.contains(pageSize)) return;
+        const form = pageSize.closest('form');
+        if (form) loadReportesPanel(buildReportesUrlFromForm(form), { push: true, scroll: false, cache: false });
     });
 
     document.addEventListener('click', function(e) {
+        const searchClear = e.target.closest('.reports-search-clear');
+        if (searchClear && getReportesPanel()?.contains(searchClear)) {
+            e.preventDefault();
+            const search = searchClear.closest('.reports-search')?.querySelector('#search');
+            const form = search?.closest('form');
+            if (!search || !form) return;
+            search.value = '';
+            searchClear.classList.add('hidden');
+            loadReportesPanel(buildReportesUrlFromForm(form), {
+                push: true,
+                scroll: false,
+                search: true,
+                cache: false
+            }).then(() => document.getElementById('search')?.focus());
+            return;
+        }
+
+        const pageSizeButton = e.target.closest('.reports-page-size-button');
+        if (pageSizeButton && getReportesPanel()?.contains(pageSizeButton)) {
+            e.preventDefault();
+            e.stopPropagation();
+            const dropdown = pageSizeButton.closest('.reports-page-size-dropdown');
+            const menu = dropdown?.querySelector('.reports-page-size-menu');
+            const willOpen = menu?.classList.contains('hidden');
+            document.querySelectorAll('.reports-page-size-menu:not(.hidden)').forEach(openMenu => {
+                if (openMenu !== menu) {
+                    openMenu.classList.add('hidden');
+                    openMenu.closest('.reports-page-size-dropdown')?.querySelector('.reports-page-size-button')?.setAttribute('aria-expanded', 'false');
+                }
+            });
+            menu?.classList.toggle('hidden', !willOpen);
+            pageSizeButton.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
+            if (willOpen) window.requestAnimationFrame(() => menu?.querySelector('[aria-selected="true"]')?.focus());
+            return;
+        }
+
+        const pageSizeOption = e.target.closest('.reports-page-size-option');
+        if (pageSizeOption && getReportesPanel()?.contains(pageSizeOption)) {
+            e.preventDefault();
+            const dropdown = pageSizeOption.closest('.reports-page-size-dropdown');
+            const pageSize = dropdown?.closest('.reports-page-size')?.querySelector('select');
+            const button = dropdown?.querySelector('.reports-page-size-button');
+            if (!pageSize) return;
+            pageSize.value = pageSizeOption.dataset.value || '12';
+            button?.querySelector('strong')?.replaceChildren(document.createTextNode(pageSize.value));
+            dropdown.querySelectorAll('.reports-page-size-option').forEach(option => {
+                const active = option === pageSizeOption;
+                option.classList.toggle('is-active', active);
+                option.setAttribute('aria-selected', active ? 'true' : 'false');
+            });
+            dropdown.querySelector('.reports-page-size-menu')?.classList.add('hidden');
+            button?.setAttribute('aria-expanded', 'false');
+            pageSize.dispatchEvent(new Event('change', { bubbles: true }));
+            return;
+        }
+
+        const filterSectionToggle = e.target.closest('[data-reports-filter-section-toggle]');
+        if (filterSectionToggle && getReportesPanel()?.contains(filterSectionToggle)) {
+            const section = filterSectionToggle.closest('[data-reports-filter-section]');
+            const willOpen = !section?.classList.contains('is-open');
+            section?.classList.toggle('is-open', willOpen);
+            const icon = filterSectionToggle.querySelector('i');
+            icon?.classList.toggle('fa-chevron-down', willOpen);
+            icon?.classList.toggle('fa-chevron-right', !willOpen);
+            return;
+        }
+
+        const filterOption = e.target.closest('.reports-filter-option[data-reports-filter-target]');
+        if (filterOption && getReportesPanel()?.contains(filterOption)) {
+            const form = filterOption.closest('form');
+            const control = form?.elements.namedItem(filterOption.dataset.reportsFilterTarget);
+            if (control) control.value = filterOption.dataset.reportsFilterValue || '';
+            syncReportsFilterPanel();
+            return;
+        }
+
+        const filterToggle = e.target.closest('#reports-filter-toggle');
+        if (filterToggle && getReportesPanel()?.contains(filterToggle)) {
+            const filterPanel = document.getElementById('reports-filter-panel');
+            const willOpen = filterPanel?.classList.contains('hidden');
+            filterPanel?.classList.toggle('hidden', !willOpen);
+            filterToggle.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
+            if (willOpen) {
+                syncReportsFilterPanel();
+                filterPanel?.querySelector('button, select, input, a')?.focus();
+            }
+            return;
+        }
+
+        const filterCancel = e.target.closest('#reports-filter-cancel');
+        if (filterCancel && getReportesPanel()?.contains(filterCancel)) {
+            closeReportsFilter({ reset: true });
+            document.getElementById('reports-filter-toggle')?.focus();
+            return;
+        }
+
+        const rowMenuButton = e.target.closest('.reports-row-menu-button');
+        if (rowMenuButton && getReportesPanel()?.contains(rowMenuButton)) {
+            e.preventDefault();
+            if (rowMenuButton.getAttribute('aria-expanded') === 'true') closeReportsRowMenus({ restoreFocus: true });
+            else openReportsRowMenu(rowMenuButton);
+            return;
+        }
+
+        const reportDetail = e.target.closest('.report-menu-detail');
+        if (reportDetail && getReportesPanel()?.contains(reportDetail)) {
+            const row = reportDetail.closest('.publication-card');
+            closeReportsRowMenus();
+            row?.querySelector('button[title="Ver detalles"]')?.click();
+            return;
+        }
+
+        const retry = e.target.closest('[data-retry-reports]');
+        if (retry && getReportesPanel()?.contains(retry)) {
+            e.preventDefault();
+            loadReportesPanel(window.location.href, { push: false, scroll: false, cache: false });
+            return;
+        }
+
         const tabButton = e.target.closest('.tab-filter');
         if (tabButton && getReportesPanel()?.contains(tabButton)) {
             updateActiveTab(tabButton);
@@ -841,6 +1036,33 @@ document.addEventListener('DOMContentLoaded', function() {
 
         e.preventDefault();
         loadReportesPanel(link.href, { push: true, scroll: true });
+    });
+
+    document.addEventListener('click', function(e) {
+        if (!e.target.closest('.reports-filter-popover-wrap, .ts-dropdown')) closeReportsFilter();
+        if (!e.target.closest('.reports-page-size-dropdown')) {
+            document.querySelectorAll('.reports-page-size-menu:not(.hidden)').forEach(menu => {
+                menu.classList.add('hidden');
+                menu.closest('.reports-page-size-dropdown')?.querySelector('.reports-page-size-button')?.setAttribute('aria-expanded', 'false');
+            });
+        }
+        if (!e.target.closest('.reports-row-actions, .reports-row-menu')) closeReportsRowMenus();
+    });
+
+    document.addEventListener('keydown', function(e) {
+        if (e.key !== 'Escape') return;
+        if (document.querySelector('#reports-filter-panel:not(.hidden)')) {
+            closeReportsFilter({ reset: true });
+            document.getElementById('reports-filter-toggle')?.focus();
+        } else if (document.querySelector('.reports-row-menu:not(.hidden)')) {
+            closeReportsRowMenus({ restoreFocus: true });
+        } else if (document.querySelector('.reports-page-size-menu:not(.hidden)')) {
+            const menu = document.querySelector('.reports-page-size-menu:not(.hidden)');
+            const button = menu?.closest('.reports-page-size-dropdown')?.querySelector('.reports-page-size-button');
+            menu?.classList.add('hidden');
+            button?.setAttribute('aria-expanded', 'false');
+            button?.focus();
+        }
     });
 
     document.addEventListener('mouseover', function(e) {
@@ -1030,7 +1252,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // Solo hacer animación si no es navegación
         if (!skipAnimation) {
             setTimeout(() => {
-                const content = modal.querySelector('div > div');
+                const content = modal.querySelector('.publication-detail-modal');
                 if (content) {
                     content.style.transform = 'translateY(0) scale(1)';
                     content.style.opacity = '1';
@@ -1038,7 +1260,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }, 50);
         } else {
             // Si es navegación, mostrar sin animación
-            const content = modal.querySelector('div > div');
+            const content = modal.querySelector('.publication-detail-modal');
             if (content) {
                 content.style.transform = 'translateY(0) scale(1)';
                 content.style.opacity = '1';
@@ -1075,7 +1297,7 @@ document.addEventListener('DOMContentLoaded', function() {
     window.closeModal = function(modalId) {
         const modal = document.getElementById(modalId);
         if (modal) {
-            const content = modal.querySelector('div > div');
+            const content = modal.querySelector('.publication-detail-modal');
             if (content) {
                 content.style.transform = 'translateY(12px) scale(0.985)';
                 content.style.opacity = '0';
@@ -1135,12 +1357,30 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Cerrar modal de rechazo con ESC
     document.addEventListener('keydown', (e) => {
+        const rejectModal = document.getElementById('reject-modal');
+        if (!rejectModal || rejectModal.classList.contains('hidden')) return;
         if (e.key === 'Escape') {
-            const rejectModal = document.getElementById('reject-modal');
-            if (rejectModal && !rejectModal.classList.contains('hidden')) {
-                closeRejectModal();
+            e.preventDefault();
+            closeRejectModal();
+        } else if (e.key === 'Tab') {
+            const focusable = Array.from(rejectModal.querySelectorAll('button:not([disabled]), textarea:not([disabled])'));
+            if (focusable.length) {
+                const first = focusable[0];
+                const last = focusable[focusable.length - 1];
+                if (e.shiftKey && document.activeElement === first) {
+                    e.preventDefault();
+                    last.focus();
+                } else if (!e.shiftKey && document.activeElement === last) {
+                    e.preventDefault();
+                    first.focus();
+                }
             }
         }
+    });
+
+    document.addEventListener('click', (e) => {
+        const rejectModal = document.getElementById('reject-modal');
+        if (e.target === rejectModal && !rejectModal.classList.contains('hidden')) closeRejectModal();
     });
     
     // === CONFIGURAR BOTONES DE APERTURA ===
@@ -1753,7 +1993,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     const userDistrict = comentario.user?.district || 'Sin distrito';
                     const userMeta = userDistrict;
                     const userPhotoUrl = comentario.user?.profile_photo_url || '{{ asset('images/default_pfp.svg.png') }}';
-                    const avatarHtml = `<img src="${escapeHtml(userPhotoUrl)}" alt="Foto de ${escapeHtml(userName)}" class="w-8 h-8 rounded-full object-cover border border-[#611132]/20 shadow-sm flex-shrink-0">`;
+                    const avatarHtml = `<img src="${escapeHtml(userPhotoUrl)}" alt="Foto de ${escapeHtml(userName)}" class="w-8 h-8 rounded-full object-cover border border-slate-200 shadow-sm flex-shrink-0">`;
 
                     // Prefer an ISO timestamp from the server and format it in the user's local timezone in the browser.
                     let dateStr = comentario.date || '';
@@ -2071,7 +2311,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         const loadingHtml = `
             <div class="archivo-preview-loader hidden absolute inset-0 z-10 flex items-center justify-center bg-white">
-                <div class="animate-spin" style="width: 56px; height: 56px; border-radius: 9999px; border: 7px solid #e5e7eb; border-top-color: #611132; border-right-color: #d1d5db;"></div>
+                <div class="archivo-preview-spinner" aria-hidden="true"></div>
             </div>
         `;
 
@@ -2411,29 +2651,10 @@ document.addEventListener('DOMContentLoaded', function() {
     // Función para actualizar estilos de pestañas activas
     function updateActiveTab(activeButton) {
         const tabButtons = document.querySelectorAll('.tab-filter');
-        const colorMap = {
-            'todos': '#404041',
-            'seguridad_vial': '#4C8CC4',
-            'observatorio': '#75A84E',
-            'alcoholimetria': '#9D2449',
-            'grupos-vulnerables': '#6B4C8A'
-        };
-        
-        const baseClasses = 'tab-filter px-4 py-2 text-sm font-medium font-lora rounded-t-lg border border-b-0 border-gray-300 transition-all duration-200';
-
         tabButtons.forEach(btn => {
-            const tipoData = btn.getAttribute('data-tipo');
-            const color = colorMap[tipoData] || '#404041';
-            
-            if (btn === activeButton) {
-                btn.className = `${baseClasses} text-white`;
-                btn.style.backgroundColor = color;
-                btn.style.borderBottom = `4px solid ${color}`;
-            } else {
-                btn.className = `${baseClasses} bg-white text-[#404041] hover:bg-gray-100`;
-                btn.style.backgroundColor = 'white';
-                btn.style.borderBottom = `4px solid ${color}`;
-            }
+            const isActive = btn === activeButton;
+            btn.classList.toggle('is-active', isActive);
+            btn.setAttribute('aria-pressed', isActive ? 'true' : 'false');
         });
     }
     
@@ -2719,12 +2940,26 @@ document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('reject-modal').classList.remove('hidden');
             // Desactivar scroll de la página
             document.body.style.overflow = 'hidden';
+            document.getElementById('rejection-reason')?.focus();
         }, 350);
     };
 
-    window.closeRejectModal = function(returnToPrevious = true) {
+    window.closeRejectModal = async function(returnToPrevious = true) {
+        const reasonField = document.getElementById('rejection-reason');
+        if (returnToPrevious && reasonField?.value.trim()) {
+            const confirmed = await window.confirmDeleteDialog({
+                title: 'Descartar motivo',
+                subject: 'el motivo escrito',
+                description: 'El texto no se guardará y regresará al detalle del reporte.',
+                confirmLabel: 'Descartar'
+            });
+            if (!confirmed) {
+                reasonField.focus();
+                return;
+            }
+        }
         document.getElementById('reject-modal').classList.add('hidden');
-        document.getElementById('rejection-reason').value = '';
+        if (reasonField) reasonField.value = '';
         
         // Si se cancela, regresar al modal anterior
         if (returnToPrevious && previousModalId) {
@@ -2953,8 +3188,8 @@ document.addEventListener('DOMContentLoaded', function() {
         });
         
         if (checked.length > 0) {
-            toolbar.style.display = 'flex';
-            counter.textContent = checked.length;
+            toolbar.classList.remove('hidden');
+            counter.textContent = `${checked.length} seleccionado${checked.length === 1 ? '' : 's'}`;
             // Resaltar SOLO las tarjetas seleccionadas
             checked.forEach(checkbox => {
                 const card = checkbox.closest('.publication-card-wrapper');
@@ -2963,7 +3198,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             });
         } else {
-            toolbar.style.display = 'none';
+            toolbar.classList.add('hidden');
         }
     }
     document.addEventListener('change', function(e) {
@@ -3120,202 +3355,6 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 
-    <!-- Incluir Font Awesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-
-<style>
-    /* TomSelect Styles para publicaciones */
-    select.tomselect-select {
-        position: absolute !important;
-        left: -9999px !important;
-        width: 1px !important;
-        height: 1px !important;
-        overflow: hidden !important;
-        opacity: 0 !important;
-        pointer-events: none !important;
-        border: 0 !important;
-        margin: 0 !important;
-        padding: 0 !important;
-        background: transparent !important;
-        -webkit-appearance: none !important;
-        -moz-appearance: none !important;
-        appearance: none !important;
-        display: none !important;
-    }
-
-    select.tomselect-select::-ms-expand { display: none !important; }
-    select.tomselect-select { 
-        background-image: none !important;
-        visibility: hidden !important;
-    }
-
-    .district-filter-field {
-        position: relative;
-    }
-
-    .district-filter-field > label {
-        margin-bottom: 0.25rem !important;
-        transform: translateY(5px);
-    }
-
-    .district-filter-field .ts-wrapper {
-        display: block !important;
-        width: 100% !important;
-        flex: 0 0 auto;
-        transform: translateY(6px);
-    }
-
-    .district-filter-field .ts-control,
-    .district-select-skeleton {
-        height: 30px !important;
-        min-height: 30px !important;
-        max-height: 30px !important;
-    }
-
-    .district-select-skeleton {
-        width: 100%;
-        border: 1px solid #404041;
-        border-radius: 0.5rem;
-        padding: 0.375rem 28px 0.375rem 0.75rem;
-        background: #ffffff;
-        color: #1f2937;
-        font-size: 0.75rem;
-        line-height: 1rem;
-        font-family: inherit;
-        display: flex;
-        align-items: center;
-        box-sizing: border-box;
-        position: relative;
-        transform: translateY(6px);
-        overflow: hidden;
-        white-space: nowrap;
-    }
-
-    .district-select-skeleton span {
-        display: block;
-        min-width: 0;
-        overflow: hidden;
-        text-overflow: ellipsis;
-    }
-
-    .district-select-skeleton::after {
-        content: "▾";
-        position: absolute;
-        right: 12px;
-        top: 50%;
-        transform: translateY(-50%);
-        color: #404041;
-        font-size: 0.6rem;
-        pointer-events: none;
-    }
-
-    .district-filter-field:not(.tomselect-ready) .ts-wrapper {
-        display: none !important;
-    }
-
-    .district-filter-field.tomselect-ready .district-select-skeleton {
-        display: none !important;
-    }
-
-    .ts-wrapper { 
-        display: contents !important;
-        z-index: 9999 !important;
-    }
-
-    .ts-control {
-        z-index: 9999 !important;
-        position: relative;
-        border: 1px solid #404041 !important;
-        border-radius: 0.5rem !important;
-        padding: 5px 12px !important;
-        background: #ffffff !important;
-        font-family: inherit;
-        font-size: 0.75rem;
-        line-height: 1.25rem !important;
-        display: flex;
-        align-items: center;
-        justify-content: flex-start;
-        box-sizing: border-box;
-        margin: 0 !important;
-        box-shadow: none !important;
-        transition: all 0.2s ease;
-        width: 100%;
-        color: #1f2937 !important;
-    }
-
-    .ts-control .ts-control-input {
-        color: #1f2937 !important;
-    }
-
-    .ts-control input::placeholder {
-        color: #1f2937 !important;
-        opacity: 1 !important;
-    }
-
-    .ts-control .item {
-        color: #1f2937 !important;
-    }
-
-    .ts-control:focus-within {
-        border-color: #404041 !important;
-        outline: none !important;
-        box-shadow: 0 0 0 1px #611132 !important;
-    }
-
-    .ts-control .item, .ts-control input {
-        padding: 0 !important;
-        margin: 0 !important;
-        height: auto !important;
-        line-height: 1.25rem !important;
-        font-size: inherit;
-        font-family: inherit;
-    }
-
-    .ts-control .dropdown-toggle,
-    .ts-control .ts-dropdown-toggle,
-    .ts-control .dropdown_toggle,
-    .ts-control .ts-clear {
-        display: none !important;
-    }
-
-    .ts-dropdown {
-        border: 1px solid #404041;
-        border-radius: 0.5rem;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        max-height: 250px;
-        overflow-y: auto;
-        z-index: 999999 !important;
-        position: fixed !important;
-        background: white;
-        min-width: 200px;
-    }
-
-    .ts-dropdown .ts-option {
-        padding: 0.5rem 0.75rem;
-        cursor: pointer;
-        transition: background-color 0.15s ease;
-    }
-
-    .ts-dropdown .ts-option:hover {
-        background-color: #f3f4f6;
-    }
-
-    .ts-dropdown .ts-option.selected {
-        background-color: #e5e7eb;
-        color: #404041;
-    }
-
-    .ts-control::after {
-        content: "▾";
-        position: absolute;
-        right: 12px;
-        top: 50%;
-        transform: translateY(-50%);
-        color: #404041;
-        font-size: 0.6rem;
-        pointer-events: none;
-    }
-</style>
 
 <script>
     // Initialize TomSelect for district filter
@@ -3339,17 +3378,26 @@ document.addEventListener('DOMContentLoaded', function() {
 
             const instance = new TomSelect(select, {
                 create: false,
-                placeholder: select.dataset.placeholder || 'Selecciona una opción',
-                maxItems: select.hasAttribute('multiple') ? null : 1,
-                hidePlaceholder: true,
+                allowEmptyOption: false,
+                placeholder: select.dataset.placeholder || 'Todos',
+                maxItems: 1,
                 searchField: ['text', 'value'],
                 closeAfterSelect: true,
-                dropdownParent: 'body'
+                dropdownParent: 'body',
+                render: {
+                    no_results: function() {
+                        return '<div class="no-results">Sin resultados</div>';
+                    }
+                },
+                onChange: function() {
+                    if (typeof syncReportsFilterPanel === 'function') syncReportsFilterPanel();
+                }
             });
 
             // Posicionar el dropdown correctamente
             const control = instance.control;
             const dropdown = instance.dropdown;
+            dropdown.classList.add('reports-ts-dropdown');
 
             const positionDropdown = () => {
                 const rect = control.getBoundingClientRect();
@@ -3363,28 +3411,12 @@ document.addEventListener('DOMContentLoaded', function() {
             instance.on('type', positionDropdown);
             instance.on('load', positionDropdown);
             
-            // Re-posicionar al hacer scroll
-            window.addEventListener('scroll', () => {
-                if (dropdown.style.display !== 'none') {
-                    positionDropdown();
-                }
-            });
         });
-
-        // Match ts-control height exactly to the other native selects
-        const refSelect = document.querySelector('select[name="status"]');
-        if (refSelect) {
-            const refHeight = refSelect.offsetHeight;
-            document.querySelectorAll('.ts-control').forEach(ctrl => {
-                ctrl.style.height = refHeight + 'px';
-                ctrl.style.minHeight = refHeight + 'px';
-                ctrl.style.maxHeight = refHeight + 'px';
-            });
-        }
 
         document.querySelectorAll('.district-filter-field').forEach(field => {
             field.classList.add('tomselect-ready');
         });
+        if (typeof syncReportsFilterPanel === 'function') syncReportsFilterPanel();
     };
 
     document.addEventListener('DOMContentLoaded', window.initializeReportesTomSelect);

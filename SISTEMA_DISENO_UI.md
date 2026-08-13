@@ -147,7 +147,7 @@ El encabezado global forma parte del sistema de diseño y no se ajusta de manera
 - Logotipos y colores del gobierno viven únicamente en el shell y se sustituyen mediante recursos y variables de marca.
 - Navegación, perfil, notificaciones y menús usan Open Sans; Lora queda reservada al encabezado editorial de cada página.
 - Enlaces del shell: 12–13 px, peso 600, área interactiva mínima de 36 px.
-- El elemento activo se comunica con texto blanco, fondo blanco translúcido tenue y un indicador inferior de 2.5 px en `--brand-shell-accent`; no depende sólo del hover.
+- En el encabezado superior, el elemento activo conserva texto blanco y un subrayado blanco persistente de 1.5 px, sin fondo, píldora ni bloque; el mismo tratamiento aparece en hover y `aria-current` conserva la distinción semántica.
 - En el encabezado superior, el hover de los enlaces de texto —por ejemplo, Reportes y Estadísticas— usa texto blanco y un subrayado blanco de 1.5 px, sin crear bloques ni pestañas.
 - En la navegación secundaria, el hover no altera el fondo ni el texto: muestra únicamente el indicador inferior dorado de 2.5 px. La sección activa conserva el mismo indicador y además utiliza texto blanco para distinguirse de una opción sólo apuntada.
 - Los controles del encabezado que sólo contienen un icono se aclaran al pasar el cursor, sin círculos ni fondos decorativos; su foco de teclado permanece visible.

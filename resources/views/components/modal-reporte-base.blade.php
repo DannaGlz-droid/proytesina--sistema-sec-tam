@@ -1,5 +1,6 @@
 @props(['tipo', 'titulo', 'colorBadge', 'colorBorder', 'modalId'])
 
+@once
 <style>
     :root {
         --report-ink: #202428;
@@ -7,8 +8,9 @@
         --report-line: #d8dde3;
         --report-paper: #ffffff;
         --report-panel: #f4f6f8;
-        --report-wine: #611132;
-        --report-wine-dark: #4a0e26;
+        --report-focus: #475569;
+        --report-confirm: var(--brand-primary, #611132);
+        --report-confirm-hover: var(--brand-primary-hover, #4a0e26);
     }
 
     .modal-titulo {
@@ -57,16 +59,15 @@
 
     .report-modal-overlay,
     .government-confirm-modal {
-        background:
-            linear-gradient(rgba(21, 25, 30, 0.74), rgba(21, 25, 30, 0.74)),
-            repeating-linear-gradient(135deg, rgba(255,255,255,0.05) 0 1px, transparent 1px 8px);
-        backdrop-filter: blur(2px);
+        background: rgba(30, 41, 59, 0.34);
+        backdrop-filter: none;
     }
 
     .publication-detail-modal {
         color: var(--report-ink);
-        border-radius: 0.65rem !important;
-        box-shadow: 0 30px 80px rgba(9, 13, 18, 0.34), 0 0 0 1px rgba(255,255,255,0.22);
+        border-radius: 7px !important;
+        box-shadow: 0 18px 44px rgba(30, 50, 75, 0.20);
+        font-family: "Open Sans", system-ui, sans-serif;
         font-variant-numeric: tabular-nums;
     }
 
@@ -80,22 +81,20 @@
     }
 
     .publication-detail-modal .report-header {
-        background:
-            linear-gradient(90deg, rgba(97,17,50,0.07), transparent 44%),
-            var(--report-paper);
+        background: var(--report-paper);
         border-bottom: 1px solid var(--report-line);
     }
 
     .publication-detail-modal .report-kicker {
-        color: var(--report-wine);
+        color: var(--report-muted);
         font-size: 0.68rem;
         font-weight: 800;
-        letter-spacing: 0.06em;
-        text-transform: uppercase;
+        letter-spacing: 0;
+        text-transform: none;
     }
 
     .publication-detail-modal .report-type-strip {
-        height: 0.45rem;
+        height: 0.2rem;
         box-shadow: inset 0 -1px 0 rgba(0,0,0,0.08);
     }
 
@@ -128,9 +127,7 @@
     }
 
     .publication-detail-modal .report-body {
-        background:
-            linear-gradient(90deg, #f7f8fa 0, #f7f8fa 12px, transparent 12px),
-            var(--report-paper);
+        background: var(--report-paper);
     }
 
     .publication-detail-modal .h-px {
@@ -150,13 +147,7 @@
     }
 
     .publication-detail-modal h4::before {
-        content: "";
-        width: 0.42rem;
-        height: 0.42rem;
-        border-radius: 0.12rem;
-        background: var(--report-wine);
-        flex: 0 0 auto;
-        transform: rotate(45deg);
+        display: none;
     }
 
     .publication-detail-modal h5 {
@@ -168,19 +159,23 @@
     }
 
     .publication-detail-modal i.text-\[\#404041\] {
-        color: var(--report-wine) !important;
+        color: var(--report-muted) !important;
     }
 
     .publication-detail-modal div.border-\[\#404041\] {
         background: linear-gradient(180deg, #ffffff 0%, #fbfcfd 100%) !important;
         border-color: var(--report-line) !important;
         border-radius: 0.5rem !important;
-        box-shadow: inset 4px 0 0 rgba(97, 17, 50, 0.12) !important;
+        box-shadow: none !important;
     }
 
     .publication-detail-modal div.border-\[\#404041\]:hover {
         border-color: #bfc7d0 !important;
-        box-shadow: inset 4px 0 0 rgba(97, 17, 50, 0.22) !important;
+        box-shadow: none !important;
+    }
+
+    .publication-detail-modal .font-lora {
+        font-family: "Open Sans", system-ui, sans-serif !important;
     }
 
     .publication-detail-modal .datos-generales-grid {
@@ -471,19 +466,29 @@
         padding: 0.5rem 0.85rem;
         box-shadow: none;
         background: #ffffff;
-        color: var(--report-wine);
-        border: 1px solid var(--report-wine);
+        color: #334155;
+        border: 1px solid #cbd5e1;
     }
 
     .publication-detail-modal .descargar-todos-archivos:hover {
-        background: var(--report-wine);
-        color: #ffffff;
-        transform: translateY(-1px);
+        background: #f8fafc;
+        color: #10233f;
+        transform: translateY(1px);
     }
 
     .publication-detail-modal .enviar-comentario {
         width: 118px;
         padding: 0 0.9rem;
+        background: var(--report-confirm) !important;
+    }
+
+    .publication-detail-modal .enviar-comentario:hover {
+        background: var(--report-confirm-hover) !important;
+    }
+
+    .publication-detail-modal .nuevo-comentario:focus {
+        border-color: var(--report-focus) !important;
+        box-shadow: 0 0 0 2px rgba(71, 85, 105, 0.18) !important;
     }
 
     .publication-detail-modal .modal-cerrar,
@@ -521,8 +526,8 @@
     }
 
     .publication-detail-modal .reenviar-reporte {
-        border-color: var(--report-wine) !important;
-        color: var(--report-wine) !important;
+        border-color: var(--report-confirm) !important;
+        color: var(--report-confirm) !important;
         background: #ffffff !important;
     }
 
@@ -542,6 +547,7 @@
     }
 
 </style>
+@endonce
 
 <div id="{{ $modalId }}" class="report-modal-overlay fixed inset-0 flex items-center justify-center z-[999999] hidden transition-opacity duration-200 p-3 md:p-5">
     <div class="publication-detail-modal relative bg-white max-w-5xl w-full max-h-[94vh] overflow-hidden transform transition-all duration-300 translate-y-3 scale-[0.985] opacity-0 border border-gray-200 ring-1 ring-black/5 flex flex-col">

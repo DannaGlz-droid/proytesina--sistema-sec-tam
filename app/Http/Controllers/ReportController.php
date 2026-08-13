@@ -62,6 +62,10 @@ class ReportController extends Controller
         }
         // Admin, Coordinador e Invitado ven todas las publicaciones
 
+        // Conservar el total del conjunto visible antes de aplicar búsqueda y filtros,
+        // igual que en el pie del piloto de Gestión de usuarios.
+        $totalPublications = (clone $query)->count();
+
         // Filtro por estado (status)
         if ($request->filled('status')) {
             $status = $request->input('status');
@@ -178,7 +182,12 @@ class ReportController extends Controller
                   ->orderBy('publications.id', $orderDir);
         }
 
-        $publications = $query->paginate(12)->withQueryString();
+        $perPage = (int) $request->input('per_page', 12);
+        if (!in_array($perPage, [12, 24, 48], true)) {
+            $perPage = 12;
+        }
+
+        $publications = $query->paginate($perPage)->withQueryString();
 
         // Preparar comentarios en formato JSON para cada publicación
         $publications->each(function ($pub) use ($user) {
@@ -232,16 +241,10 @@ class ReportController extends Controller
             });
         });
         
-        // Obtener lista de distritos para el filtro
-        $districts = District::orderBy('name')->get();
-        
-        // Agregar opción "Oficina Central" solo para reportes (administradores y coordinadores)
-        $centralOffice = new District();
-        $centralOffice->id = 999;
-        $centralOffice->name = 'Oficina Central';
-        $districts->push($centralOffice);
-        
-        return view('reportes.publicaciones', compact('publications', 'districts'));
+        // Usar el catálogo depurado y ordenado del piloto de usuarios.
+        $districts = District::userAssignmentCatalog();
+
+        return view('reportes.publicaciones', compact('publications', 'districts', 'totalPublications'));
     }
 
     /**

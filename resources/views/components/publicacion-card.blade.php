@@ -2,145 +2,160 @@
     'tipo' => '',
     'titulo' => '',
     'fecha' => '',
+    'fecha_full' => '',
     'actualizado' => '',
+    'actualizado_full' => '',
     'usuario' => '',
     'usuario_full' => '',
     'descripcion' => '',
-    'status' => 'publicado',
+    'status' => 'pendiente',
     'approvedBy' => null,
     'rejectedBy' => null,
     'rejectionReason' => null,
-    // archivos: can be an array or JSON string; archivosCount is a simple count fallback
     'archivos' => null,
     'archivosCount' => 0,
-    // badge classes (bg and left border) to allow different colors per tipo
-    'badgeClass' => 'bg-[#4C8CC4] text-white',
-    'badgeBorderClass' => 'border-[#13264F]',
-    // show small red dot when the publication has comments (boolean)
     'hasComments' => false,
     'hasUnread' => false,
     'commentsCount' => 0,
+    'unreadCommentsCount' => 0,
 ])
 
 @php
     $commentsCount = (int) $commentsCount;
-    $commentsTooltip = $commentsCount === 1
-        ? '1 comentario'
-        : ($commentsCount > 1 ? "{$commentsCount} comentarios" : 'Sin comentarios');
+    $unreadCommentsCount = max(0, (int) $unreadCommentsCount);
+    $files = is_string($archivos) ? json_decode($archivos, true) : $archivos;
+    $filesCount = is_array($files) ? count($files) : (int) $archivosCount;
+    $fileTypeLabels = [
+        'pdf' => 'PDF',
+        'xls' => 'Excel', 'xlsx' => 'Excel', 'csv' => 'Excel',
+        'doc' => 'Word', 'docx' => 'Word',
+        'ppt' => 'PowerPoint', 'pptx' => 'PowerPoint',
+        'jpg' => 'imágenes', 'jpeg' => 'imágenes', 'png' => 'imágenes', 'gif' => 'imágenes', 'webp' => 'imágenes',
+        'zip' => 'comprimidos', 'rar' => 'comprimidos', '7z' => 'comprimidos',
+    ];
+    $fileTypeCounts = [];
+
+    foreach (is_array($files) ? $files : [] as $file) {
+        $fileName = is_array($file) ? ($file['name'] ?? '') : (string) $file;
+        $extension = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
+        $typeLabel = $fileTypeLabels[$extension] ?? 'otros';
+        $fileTypeCounts[$typeLabel] = ($fileTypeCounts[$typeLabel] ?? 0) + 1;
+    }
+
+    arsort($fileTypeCounts);
+    $fileTypeParts = [];
+    $remainingTypesCount = 0;
+
+    foreach ($fileTypeCounts as $typeLabel => $count) {
+        if (count($fileTypeParts) < 3) {
+            $fileTypeParts[] = "{$count} {$typeLabel}";
+        } else {
+            $remainingTypesCount += $count;
+        }
+    }
+
+    if ($remainingTypesCount > 0) {
+        $fileTypeParts[] = "{$remainingTypesCount} más";
+    }
+
+    $filesDetail = $filesCount === 0
+        ? 'Sin archivos'
+        : "{$filesCount} " . \Illuminate\Support\Str::plural('archivo', $filesCount)
+            . (!empty($fileTypeParts) ? ': ' . implode(' · ', $fileTypeParts) : '');
+    $statusLabel = match ($status) {
+        'aprobado' => 'Aprobado',
+        'rechazado' => 'Rechazado',
+        default => 'Pendiente',
+    };
+    $statusDetail = match ($status) {
+        'aprobado' => $approvedBy ? "Aprobado por {$approvedBy}" : 'Reporte aprobado',
+        'rechazado' => $rejectedBy ? "Rechazado por {$rejectedBy}" : 'Reporte rechazado',
+        default => 'Pendiente de aprobación',
+    };
+    $commentsLabel = $commentsCount === 1 ? '1 comentario' : "{$commentsCount} comentarios";
+    $commentsDetail = match (true) {
+        $commentsCount === 0 => 'Sin comentarios',
+        $unreadCommentsCount === 0 => "{$commentsLabel} · sin comentarios nuevos",
+        default => "{$commentsLabel} · {$unreadCommentsCount} "
+            . \Illuminate\Support\Str::plural('nuevo', $unreadCommentsCount),
+    };
 @endphp
 
-<div {{ $attributes->merge(['class' => 'border border-[#404041] rounded-lg p-5 bg-white transition-all duration-300 hover:-translate-y-1 hover:shadow-lg group flex flex-col h-full relative publication-card']) }}>
-    <div class="flex-grow min-w-0">
-        <div class="flex justify-between items-start mb-4">
-            <div class="flex items-center gap-2">
-                {{-- Checkbox para selección masiva --}}
-                <input type="checkbox" 
-                       class="publication-check-btn w-4 h-4 cursor-pointer border border-gray-300 rounded accent-[#611132] focus:ring-2 focus:ring-[#611132] focus:ring-offset-1" 
-                       data-publication-id="{{ $attributes['data-publication-id'] ?? '' }}" 
-                       title="Seleccionar para eliminación masiva">
-                <div class="text-gray-600 text-sm font-medium font-lora">{{ $fecha }}</div>
-            </div>
-            <div class="flex items-center gap-2">
-                {{-- Ícono de comentarios --}}
-                <div class="relative">
-                    <button type="button" class="open-comments relative w-5 h-5 flex items-center justify-center text-gray-500 cursor-help" title="{{ $commentsTooltip }}" aria-label="{{ $commentsTooltip }}">
-                        <i class="fas fa-comment-alt text-sm"></i>
-                        @if(($hasUnread ?? false) || ($hasComments && !isset($hasUnread)))
-                            <div class="absolute -top-0.5 -right-0.5 w-2 h-2 bg-red-500 rounded-full border border-white"></div>
-                        @endif
-                    </button>
-                </div>
+<article {{ $attributes->class(['publication-card-wrapper', 'publication-card']) }}>
+    <header class="reports-card-cover">
+        <div class="reports-card-cover-identity">
+            <span class="reports-type-badge">{{ $tipo }}</span>
+        </div>
 
-                {{-- Badge de estado - Solo icono con tooltip --}}
-                @if($status === 'aprobado')
-                    <div class="w-6 h-6 flex items-center justify-center rounded-full bg-green-100 text-green-700 cursor-help hover:bg-green-200 transition-colors duration-200" title="Aprobado por: {{ $approvedBy }}">
-                        <i class="fas fa-check-circle text-sm"></i>
-                    </div>
-                @elseif($status === 'rechazado')
-                    <div class="w-6 h-6 flex items-center justify-center rounded-full bg-red-100 text-red-700 cursor-help hover:bg-red-200 transition-colors duration-200" title="Rechazado por: {{ $rejectedBy }}">
-                        <i class="fas fa-times-circle text-sm"></i>
-                    </div>
-                @else
-                    <div class="w-6 h-6 flex items-center justify-center rounded-full bg-yellow-100 text-yellow-700 cursor-help hover:bg-yellow-200 transition-colors duration-200" title="Pendiente de aprobación">
-                        <i class="fas fa-clock text-sm"></i>
-                    </div>
+        <div class="reports-card-header-actions">
+            <label class="reports-checkbox-hitbox">
+                <input type="checkbox"
+                       class="publication-check-btn"
+                       data-publication-id="{{ $attributes['data-publication-id'] ?? '' }}"
+                       aria-label="Seleccionar el reporte {{ $titulo }}">
+            </label>
+            <div class="reports-actions-cell">
+                {{ $slot }}
+            </div>
+        </div>
+    </header>
+
+    <div class="reports-card-content">
+        <div class="reports-card-identity">
+            <button type="button" class="reports-card-main archivos-open" title="Ver detalles de {{ $titulo }}">
+                <span class="reports-topic-title">{{ $titulo }}</span>
+            </button>
+        </div>
+
+        <div class="reports-card-context">
+            <div class="reports-card-author-row">
+                <span class="reports-card-author"
+                      title="Autor: {{ $usuario_full ?: $usuario }}"
+                      aria-label="Autor: {{ $usuario_full ?: $usuario }}">
+                    <span class="reports-card-author-label">Autor:</span>
+                    <span class="reports-card-author-name">{{ $usuario }}</span>
+                </span>
+                @if($descripcion)
+                    <span class="reports-card-meta-separator" aria-hidden="true">&middot;</span>
+                    <span class="reports-card-location"
+                          title="Distrito: {{ preg_replace('/^Distrito:\s*/u', '', $descripcion) }}"
+                          aria-label="Distrito: {{ preg_replace('/^Distrito:\s*/u', '', $descripcion) }}">{{ preg_replace('/^Distrito:\s*/u', '', $descripcion) }}</span>
+                @endif
+            </div>
+
+            <div class="reports-card-date-row">
+                <span class="reports-card-date-label">Fecha:</span>
+                <span class="reports-card-date"
+                      title="Fecha del reporte: {{ $fecha_full ?: $fecha }}"
+                      aria-label="Fecha del reporte: {{ $fecha_full ?: $fecha }}">{{ $fecha }}</span>
+                @if($actualizado)
+                    <span class="reports-card-updated"
+                          title="Última actualización: {{ $actualizado_full ?: $actualizado }}"
+                          aria-label="Última actualización: {{ $actualizado_full ?: $actualizado }}">(mod. {{ $actualizado }})</span>
                 @endif
             </div>
         </div>
-
-        <div class="inline-block {{ $badgeClass }} px-3 py-1 rounded-lg text-xs font-semibold font-lora mb-3 border-l-4 {{ $badgeBorderClass }}">
-            {{ $tipo }}
-        </div>
-
-        <h3 class="text-lg font-semibold text-[#404041] mb-3 leading-tight font-lora truncate" title="{{ $titulo }}">{{ $titulo }}</h3>
-
-        <div class="min-h-[3rem]">
-            @if(!empty($descripcion))
-                <div class="flex items-center gap-2 text-gray-600 text-sm mb-2 font-lora">
-                    <i class="fas fa-tasks text-[#404041] w-4"></i>
-                    <span>{{ $descripcion }}</span>
-                </div>
-            @endif
-            <div class="flex items-center gap-2 text-gray-600 text-sm font-lora">
-                <i class="fas fa-user text-[#404041] w-4"></i>
-                <div class="min-w-0">
-                    <span class="block truncate" title="{{ $usuario_full ?: $usuario }}">Subido por: <span class="font-semibold">{{ $usuario }}</span></span>
-                    {{-- cargo removed from card; shown in modal only --}}
-                </div>
-            </div>
-        </div>
     </div>
 
-    <div class="h-[1px] bg-gray-300 my-3"></div>
+    <footer class="reports-card-footer">
+        <span class="reports-status reports-status--{{ $status }}" title="{{ $statusDetail }}">
+            <i class="fas {{ $status === 'aprobado' ? 'fa-check-circle' : ($status === 'rechazado' ? 'fa-times-circle' : 'fa-clock') }}" aria-hidden="true"></i>
+            <span>{{ $statusLabel }}</span>
+        </span>
 
-    {{-- Archivos adjuntos (opcional) --}}
-    @php
-        $files = null;
-        if ($archivos) {
-            if (is_string($archivos)) {
-                // try decode
-                $decoded = json_decode($archivos, true);
-                $files = is_array($decoded) ? $decoded : null;
-            } elseif (is_array($archivos)) {
-                $files = $archivos;
-            }
-        }
-        $count = $files ? count($files) : (int) $archivosCount;
-    @endphp
-
-    @if($count > 0)
-        <div class="flex-none">
-            @php
-                // Determinar icono según cantidad de archivos
-                $iconoClase = 'fa-file';
-                
-                if ($count >= 4) {
-                    $iconoClase = 'fa-folder';
-                } elseif ($count >= 2) {
-                    $iconoClase = 'fa-copy';
-                }
-            @endphp
-            <div class="bg-gray-50 p-4 rounded-lg border border-[#404041] cursor-pointer transition-all duration-300 hover:bg-gray-100 archivos-open">
-                <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 flex items-center justify-center rounded-lg bg-[#BC955C] text-white">
-                        <i class="fas {{ $iconoClase }} text-sm"></i>
-                    </div>
-                    <div class="flex-1 min-w-0">
-                        <div class="font-semibold text-[#404041] text-sm font-lora">Archivos adjuntos</div>
-                        <div class="text-gray-500 text-xs font-lora mt-1">{{ $count }} {{ \Illuminate\Support\Str::plural('archivo', $count) }} adjunto{{ $count>1 ? 's' : '' }}</div>
-                    </div>
-                    <div class="text-gray-500 transition-all duration-300 group-hover:text-[#404041]">
-                        <i class="fas fa-chevron-right text-sm"></i>
-                    </div>
-                </div>
-            </div>
+        <div class="reports-card-resources">
+            <button type="button" class="reports-resource-button reports-resource-button--files archivos-open" title="{{ $filesDetail }}" aria-label="Abrir {{ $filesDetail }} de {{ $titulo }}" @disabled($filesCount === 0)>
+                <i class="fas fa-paperclip" aria-hidden="true"></i>
+                <span>{{ $filesCount }} {{ \Illuminate\Support\Str::plural('archivo', $filesCount) }}</span>
+            </button>
+            <button type="button" class="reports-resource-button reports-resource-button--comments open-comments" title="{{ $commentsDetail }}" aria-label="{{ $commentsDetail }} en {{ $titulo }}">
+                <i class="far fa-comment-alt" aria-hidden="true"></i>
+                <span>{{ $commentsCount }}</span>
+                <span>{{ \Illuminate\Support\Str::plural('comentario', $commentsCount) }}</span>
+                @if($hasUnread)
+                    <span class="reports-resource-new">Nuevo</span>
+                @endif
+            </button>
         </div>
-
-        <div class="h-[1px] bg-gray-300 my-3"></div>
-    @endif
-
-    <div class="flex-none">
-        {{-- Slot para botones/acciones específicas (ver, editar, eliminar) --}}
-        {{ $slot }}
-    </div>
-</div>
+    </footer>
+</article>
