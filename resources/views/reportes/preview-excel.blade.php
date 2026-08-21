@@ -28,7 +28,7 @@
             background: #111827;
             color: var(--text);
             font-family: Arial, Helvetica, sans-serif;
-            font-size: 12px;
+            font-size: 11px;
             overflow: hidden;
         }
 
@@ -126,10 +126,10 @@
 
         th,
         td {
-            height: 26px;
+            height: 24px;
             border-right: 1px solid var(--grid);
             border-bottom: 1px solid var(--grid);
-            padding: 4px 7px;
+            padding: 3px 6px;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
@@ -223,11 +223,11 @@
 
         .tabs-bar {
             flex: 0 0 auto;
-            min-height: 46px;
+            min-height: 38px;
             display: flex;
             align-items: center;
-            gap: 8px;
-            padding: 7px 10px;
+            gap: 6px;
+            padding: 5px 8px;
             background: #111111;
             border-top: 1px solid #333;
             overflow-x: auto;
@@ -236,8 +236,8 @@
         .sheet-tab {
             display: inline-flex;
             align-items: center;
-            height: 30px;
-            padding: 0 13px;
+            height: 26px;
+            padding: 0 11px;
             border-radius: 999px;
             color: #e5e7eb;
             background: #2d2d2d;

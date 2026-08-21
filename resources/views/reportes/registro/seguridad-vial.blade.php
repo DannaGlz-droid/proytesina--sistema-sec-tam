@@ -25,11 +25,14 @@
     @include('components.header-admin')
     @include('components.nav-reportes')
 
-    <div class="px-4 lg:pl-10 pt-6 lg:pt-10 pb-8 lg:pb-12">
-        <h1 class="text-2xl lg:text-3xl font-lora font-bold text-[#404041] mb-3">
-            {{ isset($publication) ? 'Editar reporte de seguridad vial' : 'Registrar reporte de seguridad vial' }}
-        </h1>
-        <p class="text-sm lg:text-base text-[#404041] font-lora mb-6">{{ isset($publication) ? 'Actualiza la información y administra los archivos adjuntos de este reporte.' : 'Captura la información y adjunta los archivos requeridos para enviar este reporte.' }}</p>
+    <div class="report-road-form-page users-form-page px-4 sm:px-6 lg:px-10 pt-6 lg:pt-8 pb-8 lg:pb-10">
+        <x-ui.page-header
+            :title="isset($publication) ? 'Editar reporte de seguridad vial' : 'Registrar reporte de seguridad vial'"
+            :description="isset($publication) ? 'Actualiza la información del reporte y conserva la trazabilidad de sus archivos.' : 'Captura la información general, la actividad y los archivos de respaldo del reporte.'"
+            :back-href="route('reportes.index', ['tipo' => request('redirect_tipo', 'seguridad_vial')])"
+            back-label="Volver a publicaciones"
+            :prefer-history-back="true"
+        />
 
         <!-- Los mensajes transitorios de sesión se muestran desde el componente global de toast. -->
 
@@ -55,23 +58,23 @@
         @endif
 
         <!-- Cuadro del formulario responsive -->
-        <form id="seguridadVialForm" action="{{ isset($publication) ? route('reportes.seguridad-vial.update', $publication) : route('reportes.seguridad-vial.store') }}" method="POST" enctype="multipart/form-data">
+        <form id="seguridadVialForm" class="report-road-form" action="{{ isset($publication) ? route('reportes.seguridad-vial.update', $publication) : route('reportes.seguridad-vial.store') }}" method="POST" enctype="multipart/form-data">
             @csrf
             @if(isset($publication))
                 @method('PUT')
             @endif
             
-        <div class="border border-[#404041] rounded-lg lg:rounded-xl p-4 lg:p-6 bg-white bg-opacity-95 max-w-7xl shadow-md">
+        <div class="report-road-form-card users-form-card">
             
             <!-- Sección 1: Información general -->
-            <div class="mb-6 lg:mb-8">
-                <div class="flex items-center mb-4">
+            <div class="report-road-section report-road-general mb-6 lg:mb-8">
+                <div class="report-road-section-heading flex items-center mb-4">
                     <ion-icon name="document-text-outline" class="text-xl lg:text-xl text-[#404041] mr-2"></ion-icon>
                     <h2 class="text-lg lg:text-xl font-lora font-bold text-[#404041]">Información general</h2>
                     <div class="flex-1 h-[1px] bg-[#404041] ml-3"></div>
                 </div>
                 
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-3 lg:gap-4">
+                <div class="report-road-fields-grid grid grid-cols-1 lg:grid-cols-2 gap-3 lg:gap-4">
                     <div class="space-y-3">
                         <div>
                             <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Tema <span class="text-red-600">*</span></label>
@@ -178,11 +181,11 @@
             </div>
 
             <!-- Línea separadora -->
-            <div class="h-[1px] bg-gray-300 my-4 lg:my-6"></div>
+            <div class="report-road-legacy-divider h-[1px] bg-gray-300 my-4 lg:my-6"></div>
 
             <!-- Sección 2: Descripción -->
-            <div class="mb-6 lg:mb-8">
-                <div class="flex items-center mb-4">
+            <div class="report-road-section report-road-description mb-6 lg:mb-8">
+                <div class="report-road-section-heading flex items-center mb-4">
                     <ion-icon name="clipboard-outline" class="text-xl lg:text-xl text-[#404041] mr-2"></ion-icon>
                     <h2 class="text-lg lg:text-xl font-lora font-bold text-[#404041]">Descripción</h2>
                     <div class="flex-1 h-[1px] bg-[#404041] ml-3"></div>
@@ -204,11 +207,11 @@
             </div>
 
             <!-- Línea separadora -->
-            <div class="h-[1px] bg-gray-300 my-4 lg:my-6"></div>
+            <div class="report-road-legacy-divider h-[1px] bg-gray-300 my-4 lg:my-6"></div>
 
             <!-- Sección 3: Carga de archivos -->
-            <div class="mb-6 lg:mb-8">
-                <div class="flex items-center mb-4">
+            <div class="report-road-section report-road-files mb-6 lg:mb-8">
+                <div class="report-road-section-heading flex items-center mb-4">
                     <ion-icon name="cloud-upload-outline" class="text-xl lg:text-xl text-[#404041] mr-2"></ion-icon>
                     <h2 class="text-lg lg:text-xl font-lora font-bold text-[#404041]">Carga de archivos</h2>
                     <div class="flex-1 h-[1px] bg-[#404041] ml-3"></div>
@@ -379,28 +382,26 @@
             </div>
 
             <!-- Línea separadora para botones -->
-            <div class="h-[1px] bg-gray-300 my-4 lg:my-6"></div>
+            <div class="report-road-legacy-divider h-[1px] bg-gray-300 my-4 lg:my-6"></div>
 
             <!-- USAR COMPONENTE DE BOTONES -->
-            @if(isset($publication) || request()->is('reportes/*/*/edit'))
-                <x-form-buttons
-                    primaryText="Actualizar registro"
-                    secondaryText=""
-                    tertiaryText="Volver al listado"
-                    tertiaryHref="{{ route('reportes.index', ['tipo' => request('redirect_tipo', 'seguridad_vial')]) }}"
-                    primaryType="submit"
-                />
-            @else
-                <x-form-buttons 
-                    primaryText="Guardar registro"
-                    secondaryText="Limpiar formulario"
-                    primaryType="submit"
-                    secondaryType="button"
-                    secondaryOnclick="clearSeguridadVialForm()"
-                    tertiaryText="Volver al listado"
-                    tertiaryHref="{{ route('reportes.index', ['tipo' => request('redirect_tipo', 'seguridad_vial')]) }}"
-                />
-            @endif
+            <div class="report-road-form-actions">
+                @if(isset($publication) || request()->is('reportes/*/*/edit'))
+                    <x-form-buttons
+                        primaryText="Actualizar registro"
+                        secondaryText=""
+                        primaryType="submit"
+                    />
+                @else
+                    <x-form-buttons
+                        primaryText="Guardar registro"
+                        secondaryText="Limpiar formulario"
+                        primaryType="submit"
+                        secondaryType="button"
+                        secondaryOnclick="clearSeguridadVialForm()"
+                    />
+                @endif
+            </div>
         </div>
 
         <!-- Input oculto para archivos a eliminar -->
@@ -873,37 +874,6 @@
     <link href="https://cdn.jsdelivr.net/npm/tom-select/dist/css/tom-select.default.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/tom-select/dist/js/tom-select.complete.min.js"></script>
 
-    <style>
-        /* Tom Select styling to match form inputs */
-        .ts-wrapper { border: none !important; padding: 0 !important; background: transparent !important; }
-        select.tomselect-select {
-            position: absolute !important; left: -9999px !important; width: 1px !important;
-            height: 1px !important; overflow: hidden !important; opacity: 0 !important;
-            pointer-events: none !important; border: 0 !important; margin: 0 !important;
-            padding: 0 !important; background: transparent !important;
-        }
-        .ts-wrapper { display: block; width: 100%; }
-        .ts-control {
-            border: 1px solid #d1d5db !important; border-radius: 0.5rem !important;
-            padding: 8px 12px !important; background: #ffffff !important;
-            font-size: 0.875rem; line-height: 1.25rem !important;
-            box-shadow: none !important; height: auto !important; min-height: 36px !important;
-        }
-        .ts-control .item, .ts-control input { padding: 0 !important; margin: 0 !important; }
-        .ts-dropdown { border: 1px solid #d1d5db; border-radius: 0.5rem; max-height: 240px; }
-        .ts-dropdown .ts-option { padding: 0.5rem 0.75rem; }
-        .ts-control::after {
-            content: ""; position: absolute; right: 12px; top: 50%;
-            transform: translateY(-50%); width: 18px; height: 18px;
-            background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='1.6'><polyline points='6 9 12 15 18 9'/></svg>");
-            background-size: 12px 12px; pointer-events: none;
-        }
-        input[type="date"] {
-            padding: 8px 12px !important; border: 1px solid #d1d5db !important;
-            border-radius: 0.5rem !important; font-size: 0.875rem;
-            min-height: 36px !important;
-        }
-    </style>
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {

@@ -1,4 +1,5 @@
 @import './pages/report-publications.css';
+@import './pages/report-road-safety-form.css';
 @tailwind base;
 @tailwind components;
 @tailwind utilities;

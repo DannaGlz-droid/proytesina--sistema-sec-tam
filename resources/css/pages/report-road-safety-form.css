@@ -1,0 +1,300 @@
+.report-road-form-page {
+    color: #10213a;
+    --report-road-control-border: #cbd5e1;
+    --report-road-focus: #475569;
+    --report-road-focus-ring: rgba(71, 85, 105, 0.18);
+    --report-road-surface-soft: #f8fafc;
+    --report-road-option-active: #e9eef4;
+}
+
+.report-road-form,
+.report-road-form-card {
+    width: 100%;
+    max-width: none !important;
+    margin: 0;
+}
+
+.report-road-form-card {
+    padding: 0 !important;
+    overflow: visible;
+    border: 1px solid #d8e1ec !important;
+    border-radius: 0 !important;
+    background: #fff !important;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, .025) !important;
+}
+
+.report-road-section {
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+.report-road-section + .report-road-section {
+    border-top: 0;
+}
+
+.report-road-legacy-divider,
+.report-road-section-heading > div {
+    display: none !important;
+}
+
+.report-road-section-heading {
+    display: flex !important;
+    min-height: 38px;
+    margin: 0 !important;
+    padding: .58rem .82rem;
+    align-items: center;
+    gap: .48rem;
+    border-bottom: 1px solid #d8e1ec;
+    background: #f3f4f6;
+}
+
+.report-road-section-heading ion-icon {
+    display: block !important;
+    flex: 0 0 auto;
+    color: #31445d;
+    font-size: .92rem;
+}
+
+.report-road-section-heading h2 {
+    margin: 0;
+    color: #10213a;
+    font-family: "Open Sans", sans-serif;
+    font-size: .87rem;
+    font-weight: 700;
+    line-height: 1.25;
+}
+
+.report-road-fields-grid,
+.report-road-description > .space-y-3,
+.report-road-files > .space-y-4 {
+    padding: .82rem .9rem .95rem;
+}
+
+.report-road-form-card label {
+    color: #10213a;
+    font-family: "Open Sans", sans-serif;
+    font-size: .78rem;
+    font-weight: 600;
+}
+
+.report-road-form-card input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),
+.report-road-form-card select,
+.report-road-form-card textarea,
+.report-road-form-card .ts-control {
+    min-height: 34px;
+    border-color: var(--report-road-control-border);
+    border-radius: 7px;
+    background: #fff;
+    color: #10213a;
+    font-family: "Open Sans", sans-serif;
+    font-size: .82rem;
+}
+
+.report-road-form-card input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),
+.report-road-form-card select,
+.report-road-form-card textarea {
+    padding: .48rem .65rem;
+}
+
+.report-road-form-card textarea {
+    min-height: 72px;
+    resize: vertical;
+}
+
+/* Tom Select debe verse como un solo campo, igual que en el piloto de usuarios. */
+.report-road-form-card .ts-wrapper {
+    display: block !important;
+    width: 100% !important;
+    padding: 0 !important;
+    border: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+}
+
+.report-road-form-card select.tomselect-select {
+    position: absolute !important;
+    left: -9999px !important;
+    width: 1px !important;
+    height: 1px !important;
+    overflow: hidden !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+    border: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+.report-road-form-card .ts-wrapper .ts-control {
+    box-sizing: border-box !important;
+    width: 100% !important;
+    min-height: 34px !important;
+    height: 34px !important;
+    padding: 0 2rem 0 .72rem !important;
+    display: flex !important;
+    align-items: center !important;
+    flex-wrap: nowrap !important;
+    overflow: hidden !important;
+    border: 1px solid var(--report-road-control-border) !important;
+    border-radius: 7px !important;
+    background: #fff !important;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, .04) !important;
+}
+
+.report-road-form-page .report-road-form-card .ts-wrapper .ts-control .item {
+    max-width: 100% !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    overflow: hidden !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    color: inherit !important;
+    line-height: 1.15 !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+}
+
+.report-road-form-page .report-road-form-card .ts-wrapper .ts-control > input,
+.report-road-form-page .report-road-form-card .ts-wrapper .ts-control input,
+.report-road-form-page .report-road-form-card .ts-wrapper .ts-control input[type],
+.report-road-form-page .report-road-form-card .ts-wrapper .ts-control input:focus {
+    flex: 1 1 auto !important;
+    width: auto !important;
+    min-width: 2px !important;
+    min-height: 0 !important;
+    height: auto !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    outline: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    font: inherit !important;
+    line-height: 1.15 !important;
+}
+
+.report-road-form-page .report-road-form-card .ts-wrapper.single.has-items:not(.input-active) .ts-control > input {
+    width: 2px !important;
+    min-width: 2px !important;
+    flex: 0 0 2px !important;
+}
+
+.report-road-form-page .report-road-form-card .ts-wrapper.single.input-active .ts-control > input {
+    width: auto !important;
+    min-width: 3rem !important;
+    flex: 1 1 auto !important;
+}
+
+.report-road-form-card textarea#descripcion {
+    min-height: 88px !important;
+    height: auto;
+    padding: .65rem .75rem !important;
+    line-height: 1.45 !important;
+    resize: vertical !important;
+    overflow: auto !important;
+}
+
+.report-road-form-card textarea#descripcion::placeholder {
+    line-height: 1.45;
+}
+
+.report-road-form-card input:focus,
+.report-road-form-card select:focus,
+.report-road-form-card textarea:focus {
+    border-color: var(--report-road-focus);
+    box-shadow: 0 0 0 2px var(--report-road-focus-ring);
+    outline: none;
+}
+
+.report-road-form-card .ts-wrapper.focus .ts-control,
+.report-road-form-card .ts-wrapper.dropdown-active .ts-control {
+    border-color: var(--report-road-focus) !important;
+    background: #fff !important;
+    box-shadow: 0 0 0 2px var(--report-road-focus-ring) !important;
+    outline: none !important;
+}
+
+.report-road-form-card .ts-wrapper:not(.disabled) .ts-control:hover {
+    background: var(--report-road-surface-soft) !important;
+}
+
+.report-road-form-card .ts-dropdown {
+    border: 1px solid var(--report-road-control-border);
+    border-radius: 7px;
+    box-shadow: 0 12px 28px rgba(15, 23, 42, .14);
+    overflow: hidden;
+}
+
+.report-road-form-card .ts-dropdown .option {
+    padding: .62rem .75rem;
+}
+
+.report-road-form-card .ts-dropdown .option.selected {
+    background: var(--report-road-surface-soft);
+    color: #10213a;
+    font-weight: 600;
+}
+
+.report-road-form-card .ts-dropdown .option.active {
+    background: var(--report-road-option-active);
+    color: #10213a;
+}
+
+.report-road-files .space-y-4 > .bg-gray-50 {
+    padding: .75rem !important;
+    border-color: #d8e1ec !important;
+    border-radius: .45rem !important;
+    background: #f8fafc !important;
+}
+
+.report-road-files .lg\:flex-row {
+    gap: .65rem !important;
+    margin-bottom: .75rem !important;
+}
+
+.report-road-files .lg\:flex-row > .flex-1 {
+    padding: .75rem !important;
+    border-color: #d8e1ec !important;
+    border-radius: .45rem !important;
+    background: #fff !important;
+    box-shadow: none !important;
+}
+
+.report-road-files .border-dashed {
+    padding: 1rem !important;
+    border-color: #cbd5e1 !important;
+    border-radius: .45rem !important;
+    background: #f8fafc !important;
+}
+
+.report-road-form-actions {
+    display: flex;
+    justify-content: flex-end;
+    margin: 0;
+    padding: .7rem .9rem;
+    border-top: 1px solid #d8e1ec;
+    background: #fff;
+}
+
+.report-road-form-actions :is(button, a) {
+    min-height: 34px;
+    font-size: .78rem;
+}
+
+@media (max-width: 767px) {
+    .report-road-section-heading {
+        padding: .55rem .72rem;
+    }
+
+    .report-road-fields-grid,
+    .report-road-description > .space-y-3,
+    .report-road-files > .space-y-4 {
+        padding: .72rem;
+    }
+
+    .report-road-form-actions {
+        padding: .65rem .72rem;
+    }
+}

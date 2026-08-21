@@ -514,13 +514,7 @@ class ReportController extends Controller
         $user = Auth::user();
         $activityTypes = ActivityType::all();
         $municipalities = Municipality::all();
-        $districts = District::all();
-        
-        // Agregar opción "Oficina Central" para admins y coordinadores
-        $centralOffice = new District();
-        $centralOffice->id = 999;
-        $centralOffice->name = 'Oficina Central';
-        $districts->push($centralOffice);
+        $districts = District::userAssignmentCatalog();
         
         // Pasar información de si el usuario es admin o coordinador
         $isAdminOrCoordinator = $user->isAdmin()
@@ -639,7 +633,7 @@ class ReportController extends Controller
         $report = $publication->roadSafetyReports->first();
         $activityTypes = \App\Models\ActivityType::all();
         $municipalities = Municipality::all();
-        $districts = District::all();
+        $districts = District::userAssignmentCatalog();
         $isAdminOrCoordinator = $user->isAdmin()
             || $user->isCoordinator()
             || (int) $user->district_id === 999;

@@ -361,10 +361,10 @@
                             }
 
                             $wasUpdated = $pub->created_at && $pub->updated_at && $pub->updated_at->gt($pub->created_at->copy()->addMinute());
-                            $updatedDisplay = $wasUpdated ? $pub->updated_at->locale('es')->isoFormat('D MMM, HH:mm') : '';
-                            $updatedFull = $wasUpdated ? $pub->updated_at->locale('es')->isoFormat('D [de] MMMM [de] YYYY, HH:mm') : '';
-                            $publicationDateDisplay = $pub->publication_date->locale('es')->isoFormat('D MMM YYYY');
-                            $publicationDateFull = $pub->publication_date->locale('es')->isoFormat('dddd, D [de] MMMM [de] YYYY');
+                    $updatedDisplay = $wasUpdated ? $pub->updated_at->format('d/m/Y') . ' · ' . $pub->updated_at->format('H:i') : '';
+                    $updatedFull = $updatedDisplay;
+                    $publicationDateDisplay = $pub->publication_date->format('d/m/Y');
+                    $publicationDateFull = $publicationDateDisplay;
                         @endphp
 
                         <x-publicacion-card
@@ -545,38 +545,37 @@
 @include('components.modal-grupos-vulnerables')
 
 <!-- Previsualizacion de archivos -->
-<div id="archivo-preview-overlay" class="hidden fixed inset-0 bg-[#2f2f2f]/95 text-white">
-    <div id="archivo-preview-header" class="h-20 px-5 flex items-center justify-between gap-5 bg-[#2f2f2f] border-b border-white/10">
-        <div class="flex items-center gap-4 min-w-0">
-            <button type="button" id="archivo-preview-close" class="w-12 h-12 rounded-full flex items-center justify-center text-white/80 hover:text-white hover:bg-white/10 transition-colors" title="Cerrar">
-                <i class="fas fa-times text-[26px]"></i>
+<div id="archivo-preview-overlay" class="hidden fixed inset-0 bg-[#2f2f2f]/95 text-white" role="dialog" aria-modal="true" aria-hidden="true" aria-label="Vista previa de archivo">
+    <div id="archivo-preview-header" class="h-16 px-3 sm:px-4 flex items-center justify-between gap-3 bg-[#2f2f2f] border-b border-white/10">
+        <div class="flex items-center gap-3 min-w-0">
+            <button type="button" id="archivo-preview-close" class="w-10 h-10 rounded-lg flex items-center justify-center text-white/75 hover:text-white hover:bg-white/10 transition-colors" title="Cerrar">
+                <i class="fas fa-times text-xl"></i>
             </button>
-            <i id="archivo-preview-file-icon" class="fas fa-file text-[26px] text-white/80 flex-shrink-0"></i>
             <div class="min-w-0">
-                <p id="archivo-preview-file-name" class="truncate font-lora font-semibold text-base md:text-lg leading-tight">Archivo</p>
-                <p id="archivo-preview-file-type" class="text-sm text-white/55 font-lora leading-tight mt-1">Previsualizacion</p>
+                <p id="archivo-preview-file-name" class="truncate font-semibold text-sm sm:text-base leading-tight">Archivo</p>
+                <p id="archivo-preview-file-type" class="text-xs text-white/55 leading-tight mt-0.5">Previsualizacion</p>
             </div>
         </div>
         <div class="flex items-center gap-2 flex-shrink-0">
-            <a id="archivo-preview-open" class="w-12 h-12 rounded-full hidden md:flex items-center justify-center text-white/80 hover:text-white hover:bg-white/10 transition-colors" target="_blank" rel="noopener" title="Abrir en otra pestana">
-                <i class="fas fa-external-link-alt text-xl"></i>
+            <a id="archivo-preview-open" class="w-10 h-10 rounded-lg hidden md:flex items-center justify-center text-white/75 hover:text-white hover:bg-white/10 transition-colors" target="_blank" rel="noopener" title="Abrir en otra pestana">
+                <i class="fas fa-external-link-alt text-lg"></i>
             </a>
-            <a id="archivo-preview-download" class="w-12 h-12 rounded-full flex items-center justify-center text-white/80 hover:text-white hover:bg-white/10 transition-colors" title="Descargar">
-                <i class="fas fa-download text-xl"></i>
+            <a id="archivo-preview-download" class="w-10 h-10 rounded-lg flex items-center justify-center text-white/75 hover:text-white hover:bg-white/10 transition-colors" title="Descargar">
+                <i class="fas fa-download text-lg"></i>
             </a>
         </div>
     </div>
 
-    <button type="button" id="archivo-preview-prev" class="hidden absolute left-4 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-black/45 hover:bg-black/70 text-white transition-colors" title="Archivo anterior">
-        <i class="fas fa-chevron-left text-xl"></i>
+    <button type="button" id="archivo-preview-prev" class="hidden absolute left-2 sm:left-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-black/40 hover:bg-black/65 text-white transition-colors" title="Archivo anterior">
+        <i class="fas fa-chevron-left text-base"></i>
     </button>
 
-    <button type="button" id="archivo-preview-next" class="hidden absolute right-4 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-black/45 hover:bg-black/70 text-white transition-colors" title="Archivo siguiente">
-        <i class="fas fa-chevron-right text-xl"></i>
+    <button type="button" id="archivo-preview-next" class="hidden absolute right-2 sm:right-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-black/40 hover:bg-black/65 text-white transition-colors" title="Archivo siguiente">
+        <i class="fas fa-chevron-right text-base"></i>
     </button>
 
-    <div id="archivo-preview-content" class="h-[calc(100vh-5rem)] overflow-auto flex items-start justify-center p-4 md:p-8">
-        <div class="text-center text-white/70 font-lora mt-24">
+    <div id="archivo-preview-content" class="h-[calc(100dvh-4rem)] overflow-auto flex items-start justify-center p-3 md:p-5">
+        <div class="text-center text-white/70 mt-20">
             <i class="fas fa-file-alt text-4xl mb-3"></i>
             <p>Selecciona un archivo para previsualizar.</p>
         </div>
@@ -812,6 +811,8 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         updateActiveTabFromUrl();
         collectAllReportButtons();
+        bindReportModalOpeners();
+        bindArchivoPreviewControls();
         if (typeof window.initializeReportesTomSelect === 'function') {
             window.initializeReportesTomSelect();
         }
@@ -1384,9 +1385,11 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     
     // === CONFIGURAR BOTONES DE APERTURA ===
+    function bindReportModalOpeners() {
     
     // Alcoholimetría
-    document.querySelectorAll('.ver-detalle-alcohol').forEach(btn => {
+    document.querySelectorAll('.ver-detalle-alcohol:not([data-report-modal-bound])').forEach(btn => {
+        btn.dataset.reportModalBound = 'true';
         btn.addEventListener('click', function() {
             console.log('🎯 Click en botón Alcoholimetría');
             
@@ -1447,7 +1450,8 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     
     // Seguridad Vial
-    document.querySelectorAll('.ver-detalle-seguridad').forEach(btn => {
+    document.querySelectorAll('.ver-detalle-seguridad:not([data-report-modal-bound])').forEach(btn => {
+        btn.dataset.reportModalBound = 'true';
         btn.addEventListener('click', function() {
             console.log('🎯 Click en botón Seguridad Vial');
             
@@ -1487,7 +1491,8 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     
     // Observatorio
-    document.querySelectorAll('.ver-detalle-observatorio').forEach(btn => {
+    document.querySelectorAll('.ver-detalle-observatorio:not([data-report-modal-bound])').forEach(btn => {
+        btn.dataset.reportModalBound = 'true';
         btn.addEventListener('click', function() {
             console.log('🎯 Click en botón Observatorio');
             
@@ -1531,7 +1536,8 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     
     // Grupos Vulnerables
-    document.querySelectorAll('.ver-detalle-grupos-vulnerables').forEach(btn => {
+    document.querySelectorAll('.ver-detalle-grupos-vulnerables:not([data-report-modal-bound])').forEach(btn => {
+        btn.dataset.reportModalBound = 'true';
         btn.addEventListener('click', function() {
             console.log('🎯 Click en botón Grupos Vulnerables');
             
@@ -1570,6 +1576,10 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
     
+    }
+
+    bindReportModalOpeners();
+
     // Función para llenar datos básicos
     function fillBasicData(modal, dataset) {
         // Datos básicos comunes
@@ -1579,7 +1589,6 @@ document.addEventListener('DOMContentLoaded', function() {
             'modal-fecha-actividad': dataset.fechaActividad || dataset.fecha,
             // La fecha de publicación se muestra en la zona superior derecha (reemplaza 'Subido por')
             'modal-fecha-publicacion': dataset.fecha,
-            'modal-actualizado': dataset.actualizado,
             'modal-usuario': dataset.usuario
         };
         
@@ -1590,17 +1599,25 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         });
 
+        const rawUpdatedValue = String(dataset.actualizado ?? '').trim();
+        const hiddenUpdatedValues = new Set([
+            '', '-', '—', 'null', 'undefined',
+            'sin modificaciones', 'sin modificación', 'sin actualizaciones'
+        ]);
+        const hasUpdatedValue = !hiddenUpdatedValues.has(rawUpdatedValue.toLocaleLowerCase('es-MX'));
+
         modal.querySelectorAll('.modal-updated-meta').forEach((element) => {
-            const updatedValue = dataset.actualizado || '';
-            element.classList.toggle('hidden', !updatedValue);
+            element.classList.toggle('hidden', !hasUpdatedValue);
+            element.hidden = !hasUpdatedValue;
+            element.style.display = hasUpdatedValue ? '' : 'none';
             const valueElement = element.querySelector('.modal-actualizado');
             if (valueElement) {
-                valueElement.textContent = updatedValue;
+                valueElement.textContent = hasUpdatedValue ? rawUpdatedValue : '';
             }
         });
 
         modal.querySelectorAll('.report-meta-grid').forEach((element) => {
-            element.classList.toggle('has-update', !!dataset.actualizado);
+            element.classList.toggle('has-update', hasUpdatedValue);
         });
 
         const descripcion = (dataset.descripcion || '').trim();
@@ -1634,7 +1651,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 const approvedBy = dataset.approvedBy || 'Administrador';
                 statusHTML = `
                     <div class="status-card status-approved rounded-lg border border-[#404041] p-3 bg-white">
-                        <div class="contents">
+                        <div class="status-main">
                             <span class="status-icon bg-green-50 text-green-700">
                                 <i class="fas fa-check text-sm"></i>
                             </span>
@@ -1650,7 +1667,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 const rejectionReason = dataset.rejectionReason || 'No se proporciono motivo';
                 statusHTML = `
                     <div class="status-card status-rejected rounded-lg border border-[#404041] p-3 bg-white">
-                        <div class="contents">
+                        <div class="status-main">
                             <span class="status-icon bg-red-50 text-red-700">
                                 <i class="fas fa-times text-sm"></i>
                             </span>
@@ -1659,16 +1676,16 @@ document.addEventListener('DOMContentLoaded', function() {
                                 <p class="text-xs text-gray-500 font-lora leading-tight">Revisado por ${escapeHtml(rejectedBy)}</p>
                             </div>
                         </div>
-                        <div class="mt-3 pt-3 border-t border-gray-200">
-                            <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1 font-lora">Motivo</p>
-                            <p class="text-sm text-gray-700 font-lora leading-relaxed">${escapeHtml(rejectionReason)}</p>
+                        <div class="status-reason">
+                            <span class="status-reason-label font-lora">Motivo:</span>
+                            <p class="status-reason-text font-lora">${escapeHtml(rejectionReason)}</p>
                         </div>
                     </div>
                 `;
             } else {
                 statusHTML = `
                     <div class="status-card status-pending rounded-lg border border-[#404041] p-3 bg-white">
-                        <div class="contents">
+                        <div class="status-main">
                             <span class="status-icon bg-yellow-50 text-yellow-700">
                                 <i class="fas fa-clock text-sm"></i>
                             </span>
@@ -1687,10 +1704,13 @@ document.addEventListener('DOMContentLoaded', function() {
         // Configurar botones de aprobación/rechazo
         const approvalContainer = modal.querySelector('.approval-buttons-container');
         const actionsFooter = modal.querySelector('.modal-actions-footer');
-        const aprobarBtn = modal.querySelector('.aprobar-reporte');
-        const rechazarBtn = modal.querySelector('.rechazar-reporte');
-        
-        if (approvalContainer && aprobarBtn && rechazarBtn) {
+
+        modal.classList.remove('has-actions-footer');
+        if (actionsFooter) {
+            actionsFooter.style.display = 'none';
+        }
+
+        if (approvalContainer) {
             const userIsAdminOrCoord = {{ auth()->user()->isAdmin() || auth()->user()->isCoordinator() ? 'true' : 'false' }};
             const status = dataset.status || 'publicado';
             const publicationId = dataset.publicationId;
@@ -1698,19 +1718,18 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // Limpiar contenido previo del contenedor
             approvalContainer.innerHTML = '';
-            if (actionsFooter) {
-                actionsFooter.style.display = 'none';
-            }
+            approvalContainer.style.display = 'none';
             
             // Si es rechazado y el usuario es el autor, mostrar botón de reenvío
             if (status === 'rechazado' && isOwner) {
                 if (actionsFooter) {
                     actionsFooter.style.display = 'flex';
                 }
+                modal.classList.add('has-actions-footer');
                 approvalContainer.style.display = 'flex';
                 approvalContainer.innerHTML = `
-                    <button onclick="resubmitReport(${publicationId})" class="reenviar-reporte min-w-[190px] justify-center border border-[#404041] text-[#404041] px-4 py-2 rounded-lg text-xs lg:text-sm font-semibold hover:bg-gray-100 transition-all duration-300 font-lora whitespace-nowrap inline-flex items-center gap-2">
-                        <i class="fas fa-paper-plane"></i>Reenviar para revision
+                    <button onclick="resubmitReport(${publicationId})" class="reenviar-reporte min-w-[190px] justify-center border px-4 py-2 rounded-lg text-xs lg:text-sm font-semibold transition-all duration-200 font-lora whitespace-nowrap inline-flex items-center gap-2">
+                        Reenviar para revisión
                     </button>
                 `;
             }
@@ -1719,14 +1738,15 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (actionsFooter) {
                     actionsFooter.style.display = 'flex';
                 }
+                modal.classList.add('has-actions-footer');
                 approvalContainer.style.display = 'flex';
                 approvalContainer.innerHTML = `
-                    <div class="w-full flex items-center justify-between gap-3">
+                    <div class="w-full flex items-center justify-end gap-2">
                         <button class="rechazar-reporte min-w-[118px] justify-center border border-[#AB1A1A] text-[#AB1A1A] px-4 py-2 rounded-lg text-xs lg:text-sm font-semibold hover:bg-red-50 transition-all duration-300 font-lora whitespace-nowrap inline-flex items-center gap-2">
-                            <i class="fas fa-times-circle"></i>Rechazar
+                            Rechazar
                         </button>
-                        <button class="aprobar-reporte min-w-[118px] justify-center bg-[#399e3b] text-white px-4 py-2 rounded-lg text-xs lg:text-sm font-semibold hover:bg-[#2d7e2f] transition-all duration-300 font-lora whitespace-nowrap inline-flex items-center gap-2 shadow-sm">
-                            <i class="fas fa-check-circle"></i>Aprobar
+                        <button class="aprobar-reporte min-w-[118px] justify-center text-white px-4 py-2 rounded-lg text-xs lg:text-sm font-semibold transition-all duration-200 font-lora whitespace-nowrap inline-flex items-center gap-2">
+                            Aprobar
                         </button>
                     </div>
                 `;
@@ -1747,11 +1767,6 @@ document.addEventListener('DOMContentLoaded', function() {
                         showRejectModal(publicationId, titulo);
                     };
                 }
-                
-                // Ocultar botón de aprobar si ya está aprobado
-                aprobarBtn.style.display = status === 'aprobado' ? 'none' : 'inline-flex';
-                // Ocultar botón de rechazar si ya está rechazado
-                rechazarBtn.style.display = status === 'rechazado' ? 'none' : 'inline-flex';
             } else {
                 approvalContainer.style.display = 'none';
             }
@@ -2058,6 +2073,7 @@ document.addEventListener('DOMContentLoaded', function() {
         files: [],
         index: 0,
         renderToken: 0,
+        previousFocus: null,
     };
     let pdfJsLoadingPromise = null;
     let archivoPreviewCloseTimer = null;
@@ -2092,7 +2108,10 @@ document.addEventListener('DOMContentLoaded', function() {
             overlay.classList.remove('archivo-preview-closing');
             overlay.classList.remove('hidden');
             overlay.style.display = 'block';
+            overlay.setAttribute('aria-hidden', 'false');
+            archivoPreviewState.previousFocus = document.activeElement;
             document.body.style.overflow = 'hidden';
+            requestAnimationFrame(() => document.getElementById('archivo-preview-close')?.focus());
         }
 
         document.getElementById('report-nav-container')?.classList.add('hidden');
@@ -2136,6 +2155,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
             overlay.classList.add('hidden');
             overlay.style.display = 'none';
+            overlay.setAttribute('aria-hidden', 'true');
             overlay.classList.remove('archivo-preview-closing');
             archivoPreviewCloseTimer = null;
 
@@ -2145,6 +2165,11 @@ document.addEventListener('DOMContentLoaded', function() {
             } else {
                 updateNavigationArrows();
             }
+
+            if (archivoPreviewState.previousFocus instanceof HTMLElement && document.contains(archivoPreviewState.previousFocus)) {
+                archivoPreviewState.previousFocus.focus();
+            }
+            archivoPreviewState.previousFocus = null;
         }, window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 280);
     }
 
@@ -2284,7 +2309,6 @@ document.addEventListener('DOMContentLoaded', function() {
         const content = document.getElementById('archivo-preview-content');
         const fileNameEl = document.getElementById('archivo-preview-file-name');
         const fileTypeEl = document.getElementById('archivo-preview-file-type');
-        const fileIconEl = document.getElementById('archivo-preview-file-icon');
         const openLink = document.getElementById('archivo-preview-open');
         const downloadLink = document.getElementById('archivo-preview-download');
         const prevButton = document.getElementById('archivo-preview-prev');
@@ -2297,11 +2321,8 @@ document.addEventListener('DOMContentLoaded', function() {
         const previewUrl = getPreviewUrl(file);
         const displayUrl = extension === 'pdf' && file.publicUrl ? file.publicUrl : previewUrl;
         const downloadUrl = `/reportes/file/${file.id}/download`;
-        const { icono } = obtenerEstiloArchivo(extension);
-
         if (fileNameEl) fileNameEl.textContent = file.name;
         if (fileTypeEl) fileTypeEl.textContent = `${extension.toUpperCase()} · ${archivoPreviewState.index + 1} de ${archivoPreviewState.files.length}`;
-        if (fileIconEl) fileIconEl.className = `${icono} text-[26px] text-white/80 flex-shrink-0`;
         if (openLink) openLink.href = displayUrl;
         if (downloadLink) downloadLink.href = downloadUrl;
 
@@ -2316,7 +2337,7 @@ document.addEventListener('DOMContentLoaded', function() {
         `;
 
         if (['jpg', 'jpeg', 'png'].includes(extension)) {
-            content.className = 'h-[calc(100vh-5rem)] overflow-auto flex items-center justify-center py-4 px-16 sm:px-20 md:px-28 lg:px-32';
+            content.className = 'h-[calc(100dvh-4rem)] overflow-auto flex items-center justify-center py-3 px-14 sm:px-16 md:px-20 lg:px-24';
             content.innerHTML = `
                 <img src="${previewUrl}" alt="${escapeHtml(file.name)}" class="archivo-preview-surface max-w-full max-h-full object-contain shadow-2xl bg-white">
             `;
@@ -2330,9 +2351,9 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         if (['xlsx', 'xls'].includes(extension)) {
-            content.className = 'h-[calc(100vh-5rem)] overflow-auto flex items-start justify-center py-2 px-14 sm:px-16 md:px-20';
+            content.className = 'h-[calc(100dvh-4rem)] overflow-auto flex items-start justify-center py-2 px-12 sm:px-14 md:px-16';
             content.innerHTML = `
-                <div class="archivo-preview-surface relative w-full max-w-[88vw] h-[calc(100vh-7rem)] bg-white shadow-2xl">
+                <div class="archivo-preview-surface relative w-full max-w-[86vw] h-[calc(100dvh-6rem)] bg-white shadow-2xl">
                     ${loadingHtml}
                 </div>
             `;
@@ -2340,9 +2361,9 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
 
-        content.className = 'h-[calc(100vh-5rem)] overflow-auto flex items-center justify-center p-4 md:p-8';
+        content.className = 'h-[calc(100dvh-4rem)] overflow-auto flex items-center justify-center p-3 md:p-5';
             content.innerHTML = `
-                <div class="archivo-preview-surface text-center text-white/70 font-lora">
+                <div class="archivo-preview-surface text-center text-white/70">
                     <i class="fas fa-file-alt text-4xl mb-3"></i>
                     <p>Este tipo de archivo no tiene previsualizacion disponible.</p>
                 </div>
@@ -2533,21 +2554,29 @@ document.addEventListener('DOMContentLoaded', function() {
             .replace(/'/g, '&#039;');
     }
 
-    document.getElementById('archivo-preview-close')?.addEventListener('click', closeArchivoPreview);
-    document.getElementById('archivo-preview-prev')?.addEventListener('click', () => navigateArchivoPreview(-1));
-    document.getElementById('archivo-preview-next')?.addEventListener('click', () => navigateArchivoPreview(1));
+    function bindArchivoPreviewControls() {
+        const overlay = document.getElementById('archivo-preview-overlay');
+        if (!overlay || overlay.dataset.previewControlsBound === 'true') return;
 
-    document.getElementById('archivo-preview-overlay')?.addEventListener('click', function(e) {
-        const isControlClick = e.target.closest(
-            '#archivo-preview-header, #archivo-preview-prev, #archivo-preview-next, #archivo-preview-close, #archivo-preview-open, #archivo-preview-download'
-        );
-        const isFileSurfaceClick = e.target.closest('.archivo-preview-surface');
-        const isPreviewContentClick = e.target.closest('#archivo-preview-content');
+        overlay.dataset.previewControlsBound = 'true';
+        overlay.querySelector('#archivo-preview-close')?.addEventListener('click', closeArchivoPreview);
+        overlay.querySelector('#archivo-preview-prev')?.addEventListener('click', () => navigateArchivoPreview(-1));
+        overlay.querySelector('#archivo-preview-next')?.addEventListener('click', () => navigateArchivoPreview(1));
 
-        if (!isControlClick && !isFileSurfaceClick && (e.target === this || isPreviewContentClick)) {
-            closeArchivoPreview();
-        }
-    });
+        overlay.addEventListener('click', function(e) {
+            const isControlClick = e.target.closest(
+                '#archivo-preview-header, #archivo-preview-prev, #archivo-preview-next, #archivo-preview-close, #archivo-preview-open, #archivo-preview-download'
+            );
+            const isFileSurfaceClick = e.target.closest('.archivo-preview-surface');
+            const isPreviewContentClick = e.target.closest('#archivo-preview-content');
+
+            if (!isControlClick && !isFileSurfaceClick && (e.target === this || isPreviewContentClick)) {
+                closeArchivoPreview();
+            }
+        });
+    }
+
+    bindArchivoPreviewControls();
 
     document.addEventListener('keydown', function(e) {
         const overlay = document.getElementById('archivo-preview-overlay');
