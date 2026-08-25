@@ -490,20 +490,12 @@ class ReportController extends Controller
     {
         $user = Auth::user();
         $municipalities = Municipality::with('district')->orderBy('name')->get();
-        $districts = District::orderBy('name')->get();
-        
-        // Agregar opción "Oficina Central" para admins y coordinadores
-        $centralOffice = new District();
-        $centralOffice->id = 999;
-        $centralOffice->name = 'Oficina Central';
-        $districts->push($centralOffice);
-        
-        // Pasar información de si el usuario es admin o coordinador
-        $isAdminOrCoordinator = $user->isAdmin()
-            || $user->isCoordinator()
-            || (int) $user->district_id === 999;
-        
-        return view('reportes.registro.observatorio-de-lesiones', compact('municipalities', 'districts', 'isAdminOrCoordinator'));
+        $districts = District::numberedCatalog();
+
+        // Solo Oficina Central puede capturar para cualquier distrito territorial vigente.
+        $canSelectAnyDistrict = (int) $user->district_id === District::CENTRAL_OFFICE_ID;
+
+        return view('reportes.registro.observatorio-de-lesiones', compact('municipalities', 'districts', 'canSelectAnyDistrict'));
     }
 
     /**
@@ -514,14 +506,12 @@ class ReportController extends Controller
         $user = Auth::user();
         $activityTypes = ActivityType::all();
         $municipalities = Municipality::all();
-        $districts = District::userAssignmentCatalog();
+        $districts = District::numberedCatalog();
         
-        // Pasar información de si el usuario es admin o coordinador
-        $isAdminOrCoordinator = $user->isAdmin()
-            || $user->isCoordinator()
-            || (int) $user->district_id === 999;
+        // Oficina Central puede capturar para cualquier distrito territorial.
+        $canSelectAnyDistrict = (int) $user->district_id === District::CENTRAL_OFFICE_ID;
         
-        return view('reportes.registro.seguridad-vial', compact('activityTypes', 'municipalities', 'districts', 'isAdminOrCoordinator'));
+        return view('reportes.registro.seguridad-vial', compact('activityTypes', 'municipalities', 'districts', 'canSelectAnyDistrict'));
     }
 
     /**
@@ -633,12 +623,10 @@ class ReportController extends Controller
         $report = $publication->roadSafetyReports->first();
         $activityTypes = \App\Models\ActivityType::all();
         $municipalities = Municipality::all();
-        $districts = District::userAssignmentCatalog();
-        $isAdminOrCoordinator = $user->isAdmin()
-            || $user->isCoordinator()
-            || (int) $user->district_id === 999;
+        $districts = District::numberedCatalog();
+        $canSelectAnyDistrict = (int) $user->district_id === District::CENTRAL_OFFICE_ID;
         
-        return view('reportes.registro.seguridad-vial', compact('publication', 'report', 'activityTypes', 'municipalities', 'districts', 'isAdminOrCoordinator'));
+        return view('reportes.registro.seguridad-vial', compact('publication', 'report', 'activityTypes', 'municipalities', 'districts', 'canSelectAnyDistrict'));
     }
 
     /**
@@ -858,12 +846,10 @@ class ReportController extends Controller
 
         $report = $publication->injuryObservatoryReports->first();
         $municipalities = Municipality::with('district')->orderBy('name')->get();
-        $districts = District::orderBy('name')->get();
-        $isAdminOrCoordinator = $user->isAdmin()
-            || $user->isCoordinator()
-            || (int) $user->district_id === 999;
+        $districts = District::numberedCatalog();
+        $canSelectAnyDistrict = (int) $user->district_id === District::CENTRAL_OFFICE_ID;
         
-        return view('reportes.registro.observatorio-de-lesiones', compact('publication', 'report', 'municipalities', 'districts', 'isAdminOrCoordinator'));
+        return view('reportes.registro.observatorio-de-lesiones', compact('publication', 'report', 'municipalities', 'districts', 'canSelectAnyDistrict'));
     }
 
     /**
@@ -984,20 +970,10 @@ class ReportController extends Controller
     {
         $user = Auth::user();
         $municipalities = Municipality::all();
-        $districts = District::all();
-        
-        // Agregar opción "Oficina Central" para admins y coordinadores
-        $centralOffice = new District();
-        $centralOffice->id = 999;
-        $centralOffice->name = 'Oficina Central';
-        $districts->push($centralOffice);
-        
-        // Pasar información de si el usuario es admin o coordinador
-        $isAdminOrCoordinator = $user->isAdmin()
-            || $user->isCoordinator()
-            || (int) $user->district_id === 999;
+        $districts = District::numberedCatalog();
+        $canSelectAnyDistrict = (int) $user->district_id === District::CENTRAL_OFFICE_ID;
 
-        return view('reportes.registro.alcoholimetria', compact('municipalities', 'districts', 'isAdminOrCoordinator'));
+        return view('reportes.registro.alcoholimetria', compact('municipalities', 'districts', 'canSelectAnyDistrict'));
     }
 
     /**
@@ -1010,6 +986,26 @@ class ReportController extends Controller
         
         // Validated input from FormRequest
         $validated = $request->validated();
+
+        $user = Auth::user();
+        $userDistrictId = optional($user)->district_id;
+        $mustUseAssignedDistrict = $user->isOperator()
+            && $userDistrictId
+            && (int) $userDistrictId !== District::CENTRAL_OFFICE_ID;
+
+        if ($mustUseAssignedDistrict) {
+            $municipality = Municipality::find($validated['municipio']);
+
+            if (!$municipality || (int) $municipality->district_id !== (int) $userDistrictId) {
+                return redirect()->back()->withInput()->with('error', 'El municipio seleccionado no pertenece a su distrito.');
+            }
+
+            if ((int) $validated['jurisdiccion'] !== (int) $userDistrictId) {
+                return redirect()->back()->withInput()->with('error', 'El distrito seleccionado no coincide con su distrito asignado.');
+            }
+
+            $validated['jurisdiccion'] = $userDistrictId;
+        }
 
         try {
             DB::beginTransaction();
@@ -1095,20 +1091,10 @@ class ReportController extends Controller
 
         $report = $publication->breathalyzerReports->first();
         $municipalities = Municipality::all();
-        $districts = District::all();
-        
-        // Agregar opción "Oficina Central" para admins y coordinadores
-        $centralOffice = new District();
-        $centralOffice->id = 999;
-        $centralOffice->name = 'Oficina Central';
-        $districts->push($centralOffice);
-        
-        // Pasar información de si el usuario es admin o coordinador
-        $isAdminOrCoordinator = $user->isAdmin()
-            || $user->isCoordinator()
-            || (int) $user->district_id === 999;
+        $districts = District::numberedCatalog();
+        $canSelectAnyDistrict = (int) $user->district_id === District::CENTRAL_OFFICE_ID;
 
-        return view('reportes.registro.alcoholimetria', compact('publication', 'report', 'municipalities', 'districts', 'isAdminOrCoordinator'));
+        return view('reportes.registro.alcoholimetria', compact('publication', 'report', 'municipalities', 'districts', 'canSelectAnyDistrict'));
     }
 
     /**
@@ -1131,6 +1117,25 @@ class ReportController extends Controller
             return redirect()
                 ->route('reportes.index')
                 ->with('error', 'No puedes actualizar una publicación aprobada.');
+        }
+
+        $userDistrictId = optional($user)->district_id;
+        $mustUseAssignedDistrict = $user->isOperator()
+            && $userDistrictId
+            && (int) $userDistrictId !== District::CENTRAL_OFFICE_ID;
+
+        if ($mustUseAssignedDistrict) {
+            $municipality = Municipality::find($validated['municipio']);
+
+            if (!$municipality || (int) $municipality->district_id !== (int) $userDistrictId) {
+                return redirect()->back()->withInput()->with('error', 'El municipio seleccionado no pertenece a su distrito.');
+            }
+
+            if ((int) $validated['jurisdiccion'] !== (int) $userDistrictId) {
+                return redirect()->back()->withInput()->with('error', 'El distrito seleccionado no coincide con su distrito asignado.');
+            }
+
+            $validated['jurisdiccion'] = $userDistrictId;
         }
 
         try {
@@ -1214,22 +1219,12 @@ class ReportController extends Controller
         $user = Auth::user();
         $municipalities = Municipality::orderBy('name')->get();
         $activityTypes = ActivityType::orderBy('name')->get();
-        $districts = District::orderBy('name')->get();
+        $districts = District::numberedCatalog();
         $publication = null;
         $report = null;
-        
-        // Agregar opción "Oficina Central" para admins y coordinadores
-        $centralOffice = new District();
-        $centralOffice->id = 999;
-        $centralOffice->name = 'Oficina Central';
-        $districts->push($centralOffice);
-        
-        // Pasar información de si el usuario es admin o coordinador
-        $isAdminOrCoordinator = $user->isAdmin()
-            || $user->isCoordinator()
-            || (int) $user->district_id === 999;
+        $canSelectAnyDistrict = (int) $user->district_id === District::CENTRAL_OFFICE_ID;
 
-        return view('reportes.registro.grupos-vulnerables', compact('municipalities', 'activityTypes', 'districts', 'publication', 'report', 'isAdminOrCoordinator'));
+        return view('reportes.registro.grupos-vulnerables', compact('municipalities', 'activityTypes', 'districts', 'publication', 'report', 'canSelectAnyDistrict'));
     }
 
     public function storeGruposVulnerables(GruposVulnerablesReportRequest $request)
@@ -1237,6 +1232,23 @@ class ReportController extends Controller
         // FormRequest valida automáticamente
         $validated = $request->validated();
         $userId = Auth::id() ?? \App\Models\User::first()->id;
+
+        $user = Auth::user();
+        $userDistrictId = optional($user)->district_id;
+        $mustUseAssignedDistrict = $user->isOperator()
+            && $userDistrictId
+            && (int) $userDistrictId !== District::CENTRAL_OFFICE_ID;
+
+        if ($mustUseAssignedDistrict) {
+            $municipality = Municipality::find($validated['municipio']);
+            if (!$municipality || (int) $municipality->district_id !== (int) $userDistrictId) {
+                return redirect()->back()->withInput()->with('error', 'El municipio seleccionado no pertenece a su distrito.');
+            }
+            if ((int) $validated['jurisdiccion'] !== (int) $userDistrictId) {
+                return redirect()->back()->withInput()->with('error', 'El distrito seleccionado no coincide con su distrito asignado.');
+            }
+            $validated['jurisdiccion'] = $userDistrictId;
+        }
 
         try {
             DB::beginTransaction();
@@ -1297,20 +1309,12 @@ class ReportController extends Controller
         $report = $publication->gruposVulnerablesReport;
         $municipalities = Municipality::orderBy('name')->get();
         $activityTypes = ActivityType::orderBy('name')->get();
-        $districts = District::orderBy('name')->get();
-
-        // Agregar opción "Oficina Central" para admins y coordinadores
-        $centralOffice = new District();
-        $centralOffice->id = 999;
-        $centralOffice->name = 'Oficina Central';
-        $districts->push($centralOffice);
+        $districts = District::numberedCatalog();
 
         $user = Auth::user();
-        $isAdminOrCoordinator = $user->isAdmin()
-            || $user->isCoordinator()
-            || (int) $user->district_id === 999;
+        $canSelectAnyDistrict = (int) $user->district_id === District::CENTRAL_OFFICE_ID;
 
-        return view('reportes.registro.grupos-vulnerables', compact('publication', 'report', 'municipalities', 'activityTypes', 'districts', 'isAdminOrCoordinator'));
+        return view('reportes.registro.grupos-vulnerables', compact('publication', 'report', 'municipalities', 'activityTypes', 'districts', 'canSelectAnyDistrict'));
     }
 
     public function updateGruposVulnerables(GruposVulnerablesReportRequest $request, Publication $publication)
@@ -1335,6 +1339,22 @@ class ReportController extends Controller
         }
 
         $validated = $request->validated();
+
+        $userDistrictId = optional($user)->district_id;
+        $mustUseAssignedDistrict = $user->isOperator()
+            && $userDistrictId
+            && (int) $userDistrictId !== District::CENTRAL_OFFICE_ID;
+
+        if ($mustUseAssignedDistrict) {
+            $municipality = Municipality::find($validated['municipio']);
+            if (!$municipality || (int) $municipality->district_id !== (int) $userDistrictId) {
+                return redirect()->back()->withInput()->with('error', 'El municipio seleccionado no pertenece a su distrito.');
+            }
+            if ((int) $validated['jurisdiccion'] !== (int) $userDistrictId) {
+                return redirect()->back()->withInput()->with('error', 'El distrito seleccionado no coincide con su distrito asignado.');
+            }
+            $validated['jurisdiccion'] = $userDistrictId;
+        }
 
         try {
             DB::beginTransaction();

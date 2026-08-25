@@ -4,10 +4,22 @@ namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 use App\Config\ReportFileRequirements;
+use App\Models\District;
+use App\Models\Municipality;
 use Closure;
+use Illuminate\Validation\Rule;
 
 class RoadSafetyReportRequest extends FormRequest
 {
+    protected function prepareForValidation(): void
+    {
+        $userDistrictId = (int) $this->user()?->district_id;
+
+        if ($userDistrictId && $userDistrictId !== District::CENTRAL_OFFICE_ID) {
+            $this->merge(['jurisdiccion' => $userDistrictId]);
+        }
+    }
+
     /**
      * Determine if the user is authorized to make this request.
      */
@@ -25,6 +37,16 @@ class RoadSafetyReportRequest extends FormRequest
     {
         $publication = $this->route('publication');
         $isUpdate = $publication !== null;
+        $userDistrictId = (int) $this->user()?->district_id;
+        $canSelectAnyDistrict = $userDistrictId === District::CENTRAL_OFFICE_ID;
+        $allowedDistrictIds = $canSelectAnyDistrict
+            ? District::numberedCatalog()->pluck('id')->map(fn ($id) => (int) $id)->all()
+            : [$userDistrictId];
+        $municipalityRule = Rule::exists('municipalities', 'id');
+
+        if (! $canSelectAnyDistrict) {
+            $municipalityRule->where(fn ($query) => $query->where('district_id', $userDistrictId));
+        }
 
         return [
             'tema' => 'required|string|min:3|max:150',
@@ -33,8 +55,8 @@ class RoadSafetyReportRequest extends FormRequest
             'activity_type_id' => 'required|exists:activity_types,id',
             'participantes' => 'required|integer|min:1|max:9999',
             'promotor' => 'required|string|min:3|max:180',
-            'municipio' => 'required|exists:municipalities,id',
-            'jurisdiccion' => 'required|exists:districts,id',
+            'municipio' => ['required', 'integer', $municipalityRule],
+            'jurisdiccion' => ['required', 'integer', Rule::in($allowedDistrictIds)],
             'descripcion' => 'nullable|string|max:5000',
             // En modo edición, los archivos son opcionales
             'archivos' => $isUpdate ? 'nullable|array' : 'required|array|min:1',
@@ -53,6 +75,11 @@ class RoadSafetyReportRequest extends FormRequest
         return [
             function ($validator) {
                 $publication = $this->route('publication');
+
+                    $municipality = Municipality::find($this->input('municipio'));
+                    if ($municipality && (int) $municipality->district_id !== (int) $this->input('jurisdiccion')) {
+                        $validator->errors()->add('municipio', 'El municipio no pertenece al distrito seleccionado.');
+                    }
                     
                     // Obtener archivos a eliminar
                     $filesToDeleteIds = [];
@@ -138,7 +165,7 @@ class RoadSafetyReportRequest extends FormRequest
             'municipio.required' => 'El municipio es obligatorio.',
             'municipio.exists' => 'El municipio seleccionado no es válido.',
             'jurisdiccion.required' => 'La jurisdicción es obligatoria.',
-            'jurisdiccion.exists' => 'La jurisdicción seleccionada no es válida.',
+            'jurisdiccion.in' => 'El distrito seleccionado no está permitido para este usuario.',
             'descripcion.max' => 'La descripción no puede exceder 5000 caracteres.',
             'archivos.required' => 'Debe subir al menos un archivo.',
             'archivos.array' => 'Los archivos deben ser un conjunto válido.',

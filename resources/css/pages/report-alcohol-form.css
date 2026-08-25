@@ -1,0 +1,13 @@
+.report-alcohol-form-page .report-road-file-requirements {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.report-alcohol-form-page .report-alcohol-single-field {
+    grid-template-columns: minmax(0, 1fr);
+}
+
+@media (max-width: 767px) {
+    .report-alcohol-form-page .report-road-file-requirements {
+        grid-template-columns: minmax(0, 1fr);
+    }
+}

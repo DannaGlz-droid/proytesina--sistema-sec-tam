@@ -230,7 +230,7 @@
             <div class="users-filter-search">
                 <i class="fas fa-search" aria-hidden="true"></i>
                 <input type="search" id="dt-search-users" placeholder="Buscar usuarios..." aria-label="Buscar usuarios"
-                    autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false" enterkeyhint="search">
+                    autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false" enterkeyhint="search" aria-busy="false">
                 <span class="users-search-progress" aria-hidden="true"></span>
                 <button type="button" id="dt-clear-btn" class="hidden" title="Limpiar búsqueda" aria-label="Limpiar búsqueda">
                     <i class="fas fa-times" aria-hidden="true"></i>

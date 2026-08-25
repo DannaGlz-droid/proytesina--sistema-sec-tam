@@ -1,769 +1,374 @@
-@props([
-    'districts' => null,
-    'municipalities' => null,
-    'causes' => null,
-])
+@props(['districts' => null, 'municipalities' => null, 'causes' => null])
 
-<x-filtros.base titulo="Filtros">
-    <x-slot name="headerActions">
-        <button type="button" class="text-[#611132] text-xs font-semibold hover:text-[#4a0e26] transition-all duration-300 font-lora flex items-center gap-1" id="limpiarFiltros">
-            <i class="fas fa-redo text-xs"></i>
-            Limpiar
-        </button>
-    </x-slot>
+@php
+    $dateRangeValue = request('dateRange', 'all');
+    $sexValue = strtoupper((string) request('sexo', ''));
+    $selectedMonths = (array) request('selectedMonths', []);
+    $months = ['01'=>'Ene','02'=>'Feb','03'=>'Mar','04'=>'Abr','05'=>'May','06'=>'Jun','07'=>'Jul','08'=>'Ago','09'=>'Sep','10'=>'Oct','11'=>'Nov','12'=>'Dic'];
+@endphp
 
-    <!-- Fechas -->
-    <form id="filters-form" method="GET" action="{{ route('statistic.data') }}">
-    <x-filtros.seccion icono="calendar-alt" titulo="Fecha de defunción" abierto="true">
-        <div class="space-y-2">
-            <div class="filter-group">
-                <label class="block text-xs text-gray-600 font-lora mb-1">Rango:</label>
-                <select id="dateRange" name="dateRange" class="w-full border border-gray-300 bg-white rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-[#611132] focus:border-[#611132]">
-                    <option value="all" @selected(!request('dateRange') || request('dateRange') === 'all')>Todas las fechas</option>
-                    <option value="years" @selected(in_array(request('dateRange'), ['year', 'years'], true))>Año(s)</option>
-                    <option value="months" @selected(in_array(request('dateRange'), ['month', 'months', 'multiple-months'], true))>Mes(es)</option>
-                    <option value="quarter" @selected(request('dateRange') === 'quarter')>Trimestre</option>
-                    <option value="custom" @selected(request('dateRange') === 'custom')>Personalizado</option>
-                </select>
-            </div>
+<section class="users-filter-card statistics-filter-toolbar" aria-label="Controles de datos de defunciones">
+    <form id="filters-form" method="GET" action="{{ route('statistic.data') }}" class="users-filter-form">
+        <div class="users-filter-topbar">
+                <div class="users-filter-popover-wrap">
+                    <button type="button" id="deathsFilterToggle" class="users-filter-toggle" aria-expanded="false" aria-controls="deathsFilterPanel">
+                        <i class="fas fa-sliders-h" aria-hidden="true"></i>
+                        <span>Filtros</span>
+                        <span id="deathsFilterCount" class="users-filter-count hidden">0</span>
+                    </button>
 
-            <!-- Selectores condicionales: empezamos con display:none (como el demo que funciona) -->
-                <div class="filter-group" id="yearSelector" style="display: none;">
-                <label class="block text-xs text-gray-600 font-lora mb-1">Año(s) de defunción:</label>
-                @php $currentYear = now()->year; $minYear = 1950; @endphp
-                <input type="text" id="year" name="year" value="{{ request('year') }}" class="w-full border border-gray-300 bg-white rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-[#611132] focus:border-[#611132]" placeholder="Ej: {{ $currentYear }}, {{ $currentYear - 2 }}-{{ $currentYear }} o {{ $currentYear - 1 }}, {{ $currentYear }}">
-                <p class="mt-1 text-[11px] text-gray-500 font-lora">Puede ingresar un año, un rango o varios años separados por coma.</p>
-            </div>
-
-            <div class="filter-group" id="monthSelector" style="display: none;">
-                <label class="block text-xs text-gray-600 font-lora mb-1">Mes(es) de defunción:</label>
-                <input type="hidden" id="monthHidden" name="month" value="{{ request('month') }}">
-                <div class="grid grid-cols-3 gap-2 mt-2 months-container">
-                    @php
-                        $months = [
-                            '01' => 'Ene','02' => 'Feb','03' => 'Mar','04' => 'Abr','05' => 'May','06' => 'Jun',
-                            '07' => 'Jul','08' => 'Ago','09' => 'Sep','10' => 'Oct','11' => 'Nov','12' => 'Dic'
-                        ];
-                        $selectedMonths = (array) request('selectedMonths', []);
-                        $singleMonth = request('month');
-                    @endphp
-                    @foreach($months as $mval => $mlabel)
-                        <div>
-                            <input type="checkbox" id="month-{{ $mval }}" name="selectedMonths[]" class="month-checkbox" value="{{ $mval }}" {{ in_array($mval, $selectedMonths) || ((int) $singleMonth === (int) $mval) ? 'checked' : '' }}>
-                            <label for="month-{{ $mval }}" class="month-label block text-center text-xs py-1.5 bg-gray-100 border border-gray-300 rounded cursor-pointer hover:bg-gray-200">{{ $mlabel }}</label>
+                    <div id="deathsFilterPanel" class="users-filter-panel users-filter-menu is-collapsed">
+                        <div class="users-filter-panel-header">
+                            <h2>Filtros</h2>
+                            <button type="button" id="limpiarFiltros" class="users-filter-clear">Limpiar</button>
                         </div>
-                    @endforeach
+
+                        <div class="users-filter-native-controls" aria-hidden="true">
+                            <select name="sexo" id="sexo" tabindex="-1">
+                                <option value="" @selected($sexValue === '')>Todos</option>
+                                <option value="F" @selected($sexValue === 'F')>Femenino</option>
+                                <option value="M" @selected($sexValue === 'M')>Masculino</option>
+                            </select>
+                        </div>
+
+                        <p id="statistics-filter-error" class="statistics-inline-error hidden" role="alert"></p>
+                        <div class="users-filter-panel-body">
+                            <div class="users-filter-section is-open" data-filter-section>
+                                <button type="button" class="users-filter-section-toggle" data-filter-section-toggle>
+                                    <i class="fas fa-chevron-down" aria-hidden="true"></i><span>Fecha de defunción</span>
+                                </button>
+                                <div class="users-filter-section-content">
+                                    <div class="statistics-date-picker">
+                                        <div class="statistics-filter-field">
+                                            <label for="dateRange">Periodo</label>
+                                            <select name="dateRange" id="dateRange" class="users-district-tomselect" data-placeholder="Todas las fechas" aria-describedby="statisticsDateModeHelp">
+                                                <option value="all" @selected($dateRangeValue === 'all')>Todas las fechas</option>
+                                                <option value="years" @selected(in_array($dateRangeValue, ['year','years'], true))>Por año</option>
+                                                <option value="months" @selected(in_array($dateRangeValue, ['month','months','multiple-months'], true))>Por meses</option>
+                                                <option value="quarter" @selected($dateRangeValue === 'quarter')>Por trimestre</option>
+                                                <option value="custom" @selected($dateRangeValue === 'custom')>Rango personalizado</option>
+                                            </select>
+                                            <p id="statisticsDateModeHelp" class="statistics-date-mode-help">Muestra todos los registros disponibles.</p>
+                                        </div>
+                                    </div>
+                                    <div id="statisticsDateContext" class="statistics-date-context">
+                                        <div class="statistics-filter-detail" data-date-detail="year">
+                                            <label id="statisticsYearLabel" for="year">Año o periodo</label>
+                                            <input type="text" id="year" name="year" value="{{ request('year') }}" placeholder="Ej. {{ now()->year }} o 2024-2026" inputmode="numeric" aria-describedby="statisticsYearHelp">
+                                            <small id="statisticsYearHelp" class="statistics-filter-help">Sin año, este periodo no se aplicará.</small>
+                                        </div>
+                                        <div class="statistics-filter-detail" data-date-detail="months">
+                                            <input type="hidden" id="monthHidden" name="month" value="{{ request('month') }}">
+                                            <span class="statistics-filter-label">Meses</span>
+                                            <div class="statistics-month-options">
+                                                @foreach($months as $value => $label)
+                                                    <label><input type="checkbox" name="selectedMonths[]" value="{{ $value }}" @checked(in_array($value, $selectedMonths))><span>{{ $label }}</span></label>
+                                                @endforeach
+                                            </div>
+                                        </div>
+                                        <div class="statistics-filter-detail" data-date-detail="quarter">
+                                            <label for="quarter">Trimestre</label>
+                                            <select id="quarter" name="quarter" class="users-district-tomselect" data-placeholder="Seleccionar trimestre">
+                                                <option value="">Seleccionar trimestre</option>
+                                                <option value="1" @selected(request('quarter') === '1')>Q1 (Ene–Mar)</option>
+                                                <option value="2" @selected(request('quarter') === '2')>Q2 (Abr–Jun)</option>
+                                                <option value="3" @selected(request('quarter') === '3')>Q3 (Jul–Sep)</option>
+                                                <option value="4" @selected(request('quarter') === '4')>Q4 (Oct–Dic)</option>
+                                            </select>
+                                        </div>
+                                        <div class="statistics-filter-detail statistics-filter-date-grid" data-date-detail="custom">
+                                            <label>Desde<input type="date" id="startDate" name="startDate" value="{{ request('startDate') }}"></label>
+                                            <label>Hasta<input type="date" id="endDate" name="endDate" value="{{ request('endDate') }}"></label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="users-filter-section {{ request('distrito') || request('municipio') || request('municipioDefuncion') ? 'is-open' : '' }}" data-filter-section>
+                                <button type="button" class="users-filter-section-toggle" data-filter-section-toggle>
+                                    <i class="fas {{ request('distrito') || request('municipio') || request('municipioDefuncion') ? 'fa-chevron-down' : 'fa-chevron-right' }}" aria-hidden="true"></i><span>Ubicación</span>
+                                </button>
+                                <div class="users-filter-section-content">
+                                    <div class="statistics-filter-fields">
+                                        <div class="statistics-filter-field">
+                                            <label for="distrito">Distrito de residencia</label>
+                                            <select id="distrito" name="distrito" class="users-district-tomselect" data-placeholder="Todos"><option value="">Todos</option>@foreach($districts ?? [] as $district)<option value="{{ $district->name }}" @selected(request('distrito') === $district->name)>{{ $district->name }}</option>@endforeach</select>
+                                        </div>
+                                        <div class="statistics-filter-field">
+                                            <label for="municipio">Municipio de residencia</label>
+                                            <select id="municipio" name="municipio" class="users-district-tomselect" data-placeholder="Todos"><option value="">Todos</option>@foreach($municipalities ?? [] as $municipality)<option value="{{ $municipality->name }}" @selected(request('municipio') === $municipality->name)>{{ $municipality->name }}</option>@endforeach</select>
+                                        </div>
+                                        <div class="statistics-filter-field">
+                                            <label for="municipioDefuncion">Municipio de defunción</label>
+                                            <select id="municipioDefuncion" name="municipioDefuncion" class="users-district-tomselect" data-placeholder="Todos"><option value="">Todos</option>@foreach($municipalities ?? [] as $municipality)<option value="{{ $municipality->name }}" @selected(request('municipioDefuncion') === $municipality->name)>{{ $municipality->name }}</option>@endforeach</select>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="users-filter-section {{ request('sexo') || request('edad') ? 'is-open' : '' }}" data-filter-section>
+                                <button type="button" class="users-filter-section-toggle" data-filter-section-toggle>
+                                    <i class="fas {{ request('sexo') || request('edad') ? 'fa-chevron-down' : 'fa-chevron-right' }}" aria-hidden="true"></i><span>Datos demográficos</span>
+                                </button>
+                                <div class="users-filter-section-content">
+                                    <div class="users-filter-options">
+                                        @foreach([''=>'Todos','F'=>'Femenino','M'=>'Masculino'] as $value => $label)
+                                            <button type="button" class="users-filter-option" data-filter-target="sexo" data-filter-value="{{ $value }}"><span class="users-filter-check"><i class="fas fa-check" aria-hidden="true"></i></span><span>{{ $label }}</span></button>
+                                        @endforeach
+                                    </div>
+                                    <div class="statistics-filter-detail is-visible"><label for="edad">Edad</label><input type="text" id="edad" name="edad" value="{{ request('edad') }}" placeholder="Ej. 25, 20-30 o 5,10,15"></div>
+                                </div>
+                            </div>
+
+                            <div class="users-filter-section {{ request('causa') ? 'is-open' : '' }}" data-filter-section>
+                                <button type="button" class="users-filter-section-toggle" data-filter-section-toggle>
+                                    <i class="fas {{ request('causa') ? 'fa-chevron-down' : 'fa-chevron-right' }}" aria-hidden="true"></i><span>Causa de defunción</span>
+                                </button>
+                                <div class="users-filter-section-content">
+                                    <select id="causa" name="causa" class="users-district-tomselect" data-placeholder="Todas" aria-label="Causa de defunción"><option value="">Todas</option>@foreach($causes ?? [] as $cause)<option value="{{ $cause->id }}" @selected(request('causa') == $cause->id)>{{ $cause->name }}</option>@endforeach</select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="users-filter-panel-footer">
+                            <button type="button" id="closeDeathsFilters" class="users-filter-secondary">Cancelar</button>
+                            <button type="submit" class="users-filter-apply">Aplicar filtros</button>
+                        </div>
+                    </div>
                 </div>
+
+            <div class="users-filter-search">
+                <i class="fas fa-search" aria-hidden="true"></i>
+                <input type="search" id="dt-search-deaths" placeholder="Buscar defunciones..." aria-label="Buscar defunciones" autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false" enterkeyhint="search" aria-busy="false">
+                <span class="users-search-progress" aria-hidden="true"></span>
+                <button type="button" id="dt-clear-deaths-btn" class="hidden" title="Limpiar búsqueda" aria-label="Limpiar búsqueda"><i class="fas fa-times" aria-hidden="true"></i></button>
             </div>
 
-            <!-- multiple months selector removed: monthSelector grid is used for both single and multi modes -->
-
-            <div class="filter-group" id="quarterSelector" style="display: none;">
-                <label class="block text-xs text-gray-600 font-lora mb-1">Trimestre de defunción:</label>
-                <select id="quarter" name="quarter" class="w-full border border-gray-300 bg-white rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-[#611132] focus:border-[#611132]">
-                    <option value="">Seleccionar trimestre</option>
-                    <option value="1" @selected(request('quarter') === '1')>Q1 (Ene-Mar)</option>
-                    <option value="2" @selected(request('quarter') === '2')>Q2 (Abr-Jun)</option>
-                    <option value="3" @selected(request('quarter') === '3')>Q3 (Jul-Sep)</option>
-                    <option value="4" @selected(request('quarter') === '4')>Q4 (Oct-Dic)</option>
+            <div class="app-table-page-size users-filter-page-size">
+                <select id="dt-per-page-deaths" class="users-native-page-size" aria-hidden="true" tabindex="-1">
+                    <option value="10" selected>10</option><option value="25">25</option><option value="50">50</option><option value="100">100</option>
                 </select>
-            </div>
-
-            <div id="customRangeSelector" style="display: none;">
-                <div class="filter-group">
-                    <label class="block text-xs text-gray-600 font-lora mb-1">Desde (fecha de defunción):</label>
-                    <input type="date" id="startDate" name="startDate" value="{{ request('startDate') }}" class="w-full border border-gray-300 bg-white rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-[#611132] focus:border-[#611132]">
-                </div>
-                <div class="filter-group">
-                    <label class="block text-xs text-gray-600 font-lora mb-1">Hasta (fecha de defunción):</label>
-                    <input type="date" id="endDate" name="endDate" value="{{ request('endDate') }}" class="w-full border border-gray-300 bg-white rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-[#611132] focus:border-[#611132]">
+                <div class="users-page-size-dropdown">
+                    <button id="dt-per-page-deaths-button" type="button" class="users-page-size-button" aria-haspopup="listbox" aria-expanded="false"><span>Mostrar</span><strong id="dt-per-page-deaths-label">10</strong><i class="fas fa-list-ul users-page-size-icon" aria-hidden="true"></i></button>
+                    <div id="dt-per-page-deaths-menu" class="users-page-size-menu hidden" role="listbox" aria-labelledby="dt-per-page-deaths-button">
+                        @foreach([10,25,50,100] as $size)<button type="button" role="option" class="users-page-size-option {{ $size === 10 ? 'is-active' : '' }}" data-value="{{ $size }}">{{ $size }}</button>@endforeach
+                    </div>
                 </div>
             </div>
         </div>
-    </x-filtros.seccion>
 
-    <!-- Resto de secciones... (sin cambios funcionales, solo estilos y estructura) -->
-    <x-filtros.seccion icono="map-marker-alt" titulo="Ubicación">
-            <div class="filter-group">
-            <label class="block text-xs text-gray-600 font-lora mb-1">Distrito de residencia:</label>
-            <select id="distrito" name="distrito" class="tomselect-select">
-                <option value="">Todos</option>
-                @if($districts)
-                    @foreach($districts as $d)
-                        <option value="{{ $d->name }}" {{ request('distrito') === $d->name ? 'selected' : '' }}>{{ $d->name }}</option>
-                    @endforeach
-                @else
-                    <option value="norte">Distrito Norte</option>
-                    <option value="sur">Distrito Sur</option>
-                @endif
-            </select>
-        </div>
-
-            <div class="filter-group">
-            <label class="block text-xs text-gray-600 font-lora mb-1">Municipio de residencia:</label>
-            <select id="municipio" name="municipio" class="tomselect-select">
-                <option value="">Todos</option>
-                @if($municipalities)
-                    @foreach($municipalities as $m)
-                        <option value="{{ $m->name }}" {{ request('municipio') === $m->name ? 'selected' : '' }}>{{ $m->name }}</option>
-                    @endforeach
-                @else
-                    <option value="allende">Allende</option>
-                    <option value="monterrey">Monterrey</option>
-                @endif
-            </select>
-        </div>
-
-            <div class="filter-group">
-            <label class="block text-xs text-gray-600 font-lora mb-1">Municipio de defunción:</label>
-            <select id="municipioDefuncion" name="municipioDefuncion" class="tomselect-select">
-                <option value="">Todos</option>
-                @if($municipalities)
-                    @foreach($municipalities as $m)
-                        <option value="{{ $m->name }}" {{ request('municipioDefuncion') === $m->name ? 'selected' : '' }}>{{ $m->name }}</option>
-                    @endforeach
-                @else
-                    <option value="allende">Allende</option>
-                    <option value="monterrey">Monterrey</option>
-                @endif
-            </select>
-        </div>
-    </x-filtros.seccion>
-
-    <x-filtros.seccion icono="users" titulo="Demográficos">
-        <div class="filter-group">
-            <label class="block text-xs text-gray-600 font-lora mb-1">Sexo:</label>
-            <select id="sexo" name="sexo" class="w-full border border-gray-300 bg-white rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-[#611132] focus:border-[#611132]">
-                <option value="">Todos</option>
-                <option value="F" {{ request('sexo') === 'F' ? 'selected' : (request('sexo') === 'f' ? 'selected' : '') }}>Femenino</option>
-                <option value="M" {{ request('sexo') === 'M' ? 'selected' : (request('sexo') === 'm' ? 'selected' : '') }}>Masculino</option>
-            </select>
-        </div>
-
-        <div class="filter-group">
-            <label class="block text-xs text-gray-600 font-lora mb-1">Edad:</label>
-            <input type="text" id="edad" name="edad" class="w-full border border-gray-300 bg-white rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-[#611132] focus:border-[#611132]" 
-                   placeholder="Ej: 25 o 20-30 o 5,10,15">
-            <div class="text-xs text-gray-500 mt-1">Edad específica, rango o múltiples valores separados por coma</div>
-        </div>
-    </x-filtros.seccion>
-
-    <x-filtros.seccion icono="heartbeat" titulo="Causas">
-        <div class="filter-group">
-            <label class="block text-xs text-gray-600 font-lora mb-1">Causa de defunción:</label>
-            <select id="causa" name="causa" class="tomselect-select">
-                <option value="">Todas</option>
-                @if($causes)
-                    @foreach($causes as $c)
-                        <option value="{{ $c->id }}" {{ request('causa') == $c->id ? 'selected' : '' }}>{{ $c->name }}</option>
-                    @endforeach
-                @else
-                    <option value="cardiopatia">Enfermedades del corazón</option>
-                    <option value="cancer">Cáncer</option>
-                @endif
-            </select>
-        </div>
-    </x-filtros.seccion>
-
-    <!-- Botón Filtrar -->
-    <div class="mt-6 pt-4 border-t border-gray-200">
-        <button type="submit" form="filters-form" class="w-full bg-[#611132] text-white px-3 py-3 rounded-lg text-sm font-semibold hover:bg-[#4a0e26] transition-all duration-300 font-lora flex items-center justify-center gap-2">
-            <i class="fas fa-filter text-sm"></i>
-            Aplicar Filtros
-        </button>
-    </div>
+        <div id="deathsFilterChips" class="users-filter-chips" aria-live="polite"></div>
     </form>
-</x-filtros.base>
+</section>
 
+@once
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    // --- Inicializar colapsables (toggle de secciones con chevron y aria) ---
-    document.querySelectorAll('.filter-section').forEach(section => {
-        const header = section.querySelector('.filter-section-header');
-        const content = section.querySelector('.filter-section-content');
-        const chevron = header?.querySelector('.fa-chevron-down');
+document.addEventListener('DOMContentLoaded', function () {
+    const form = document.getElementById('filters-form');
+    const panel = document.getElementById('deathsFilterPanel');
+    const toggle = document.getElementById('deathsFilterToggle');
+    if (!form || !panel || !toggle) return;
 
-        if (!header || !content) return;
+    const getControl = (name) => form.querySelector(`[name="${name}"]`);
+    const selectedText = (control) => control?.options?.[control.selectedIndex]?.text?.trim() || '';
+    const escapeText = (value) => String(value ?? '').replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[char]));
+    const monthNames = { '01':'Ene', '02':'Feb', '03':'Mar', '04':'Abr', '05':'May', '06':'Jun', '07':'Jul', '08':'Ago', '09':'Sep', '10':'Oct', '11':'Nov', '12':'Dic' };
 
-        // Asegura que header pueda recibir focus/keyboard si no es button
-        if (header.getAttribute('role') === null && header.tagName.toLowerCase() !== 'button') {
-            header.setAttribute('role', 'button');
-            header.setAttribute('tabindex', '0');
-        }
+    function setPanel(open) {
+        panel.classList.toggle('is-collapsed', !open);
+        toggle.setAttribute('aria-expanded', String(open));
+    }
 
-        // Estado inicial (si el contenido tiene max-height inline o está abierto por defecto)
-        const isOpen = content.style.maxHeight && content.style.maxHeight !== '0px' && content.style.maxHeight !== '0';
-        if (isOpen) {
-            content.style.maxHeight = content.scrollHeight + 'px';
-            content.style.opacity = '1';
-            header.setAttribute('aria-expanded', 'true');
-            if (chevron) chevron.style.transform = 'rotate(0deg)';
-        } else {
-            // Si no está abierto explícitamente, colapsar
-            content.style.maxHeight = '0px';
-            content.style.opacity = '0';
-            header.setAttribute('aria-expanded', 'false');
-            if (chevron) chevron.style.transform = 'rotate(-90deg)';
-        }
+    toggle.addEventListener('click', () => setPanel(panel.classList.contains('is-collapsed')));
+    document.getElementById('closeDeathsFilters')?.addEventListener('click', () => setPanel(false));
+    document.addEventListener('click', event => {
+        if (!event.target.closest('.users-filter-popover-wrap')) setPanel(false);
+    });
+    document.addEventListener('keydown', event => { if (event.key === 'Escape') setPanel(false); });
 
-        function toggleSection() {
-            const opened = content.style.maxHeight && content.style.maxHeight !== '0px';
-            if (opened) {
-                // cerrar
-                content.style.maxHeight = '0px';
-                content.style.opacity = '0';
-                header.setAttribute('aria-expanded', 'false');
-                if (chevron) chevron.style.transform = 'rotate(-90deg)';
-            } else {
-                // abrir
-                content.style.maxHeight = content.scrollHeight + 'px';
-                content.style.opacity = '1';
-                header.setAttribute('aria-expanded', 'true');
-                if (chevron) chevron.style.transform = 'rotate(0deg)';
-            }
-
-            // Recalcula alturas de secciones abiertas al terminar la animación
-            setTimeout(() => {
-                document.querySelectorAll('.filter-section-content').forEach(c => {
-                    if (c.style.maxHeight && c.style.maxHeight !== '0px') {
-                        c.style.maxHeight = c.scrollHeight + 'px';
-                    }
-                });
-            }, 320);
-        }
-
-        header.addEventListener('click', toggleSection);
-        header.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter' || e.key === ' ') {
-                e.preventDefault();
-                toggleSection();
-            }
+    form.querySelectorAll('[data-filter-section]').forEach(section => {
+        section.querySelector('[data-filter-section-toggle]')?.addEventListener('click', function () {
+            section.classList.toggle('is-open');
+            const icon = this.querySelector('i');
+            icon?.classList.toggle('fa-chevron-down', section.classList.contains('is-open'));
+            icon?.classList.toggle('fa-chevron-right', !section.classList.contains('is-open'));
         });
     });
 
-    // Basado en el demo que funciona: toggling con display:block/none para los condicionales
-    const dateRange = document.getElementById('dateRange');
-    const yearSelector = document.getElementById('yearSelector');
-    const monthSelector = document.getElementById('monthSelector');
-    const quarterSelector = document.getElementById('quarterSelector');
-    const customRangeSelector = document.getElementById('customRangeSelector');
-
-    function hideAll() {
-        [yearSelector, monthSelector, quarterSelector, customRangeSelector].forEach(el => {
-            if (!el) return;
-            el.style.display = 'none';
-        });
+    function setFilterValue(name, value) {
+        const control = getControl(name);
+        if (!control) return;
+        if (control.tomselect) control.tomselect.setValue(value, true);
+        else control.value = value;
     }
 
-    function showFor(value) {
-        hideAll();
-        switch(value) {
-            case 'years':
-            case 'year':
-                if (yearSelector) yearSelector.style.display = 'block';
-                break;
-            case 'months':
-            case 'month':
-            case 'multiple-months':
-                if (yearSelector) yearSelector.style.display = 'block';
-                if (monthSelector) monthSelector.style.display = 'block';
-                break;
-            case 'quarter':
-                if (yearSelector) yearSelector.style.display = 'block';
-                if (quarterSelector) quarterSelector.style.display = 'block';
-                break;
-            case 'custom':
-                if (customRangeSelector) customRangeSelector.style.display = 'block';
-                break;
-            default:
-                // all
-                break;
-        }
-
-        // Si la sección padre es colapsable, forzamos recalcular su maxHeight (evita solapamientos)
-        const sectionContent = dateRange.closest('.filter-section')?.querySelector('.filter-section-content');
-        if (sectionContent && sectionContent.style.maxHeight && sectionContent.style.maxHeight !== '0px') {
-            // recalcula con pequeño delay para que paint aplique
-            setTimeout(() => {
-                sectionContent.style.maxHeight = sectionContent.scrollHeight + 'px';
-            }, 10);
-        }
-    }
-
-    if (dateRange) {
-        dateRange.addEventListener('change', function() {
-            showFor(this.value);
-        });
-        // init
-        showFor(dateRange.value);
-    }
-
-    // Mantener comportamiento del demo para labels de meses (input + label)
-    document.querySelectorAll('.month-checkbox').forEach(cb => {
-        const label = document.querySelector(`label[for="${cb.id}"]`);
-
-        // click handler: enforce single-select when dateRange === 'month'
-        cb.addEventListener('click', (e) => {
-            const mode = dateRange?.value;
-            if (mode === 'month') {
-                // uncheck all other checkboxes
-                document.querySelectorAll('.month-checkbox').forEach(other => {
-                    if (other === cb) return;
-                    other.checked = false;
-                    const otherLabel = document.querySelector(`label[for="${other.id}"]`);
-                    if (otherLabel) {
-                        otherLabel.classList.remove('bg-[#611132]','text-white','border-[#611132]');
-                        otherLabel.classList.add('bg-gray-100','border-gray-300');
-                    }
-                });
-
-                // set the hidden month field to this value
-                const monthHidden = document.getElementById('monthHidden');
-                if (monthHidden) monthHidden.value = cb.checked ? cb.value : '';
-            }
-
-            // El modo actual usa selectedMonths[]; el campo oculto queda sólo para URLs antiguas.
-            if (mode === 'months' || mode === 'multiple-months') {
-                const monthHidden = document.getElementById('monthHidden');
-                if (monthHidden) monthHidden.value = '';
-            }
-        });
-
-        cb.addEventListener('change', () => {
-            if (!label) return;
-            if (cb.checked) {
-                label.classList.add('bg-[#611132]','text-white','border-[#611132]');
-                label.classList.remove('bg-gray-100','border-gray-300');
-            } else {
-                label.classList.remove('bg-[#611132]','text-white','border-[#611132]');
-                label.classList.add('bg-gray-100','border-gray-300');
-            }
-
-            // recalcular sección abierta si corresponde
-            const secContent = cb.closest('.filter-section')?.querySelector('.filter-section-content');
-            if (secContent && secContent.style.maxHeight && secContent.style.maxHeight !== '0px') {
-                secContent.style.maxHeight = secContent.scrollHeight + 'px';
-            }
-        });
-    });
-
-    // Edad: legacy single input 'edad' is used; no operator UI
-
-        // Limpiar filtros: usa lógica simple (como en demo)
-    document.getElementById('limpiarFiltros')?.addEventListener('click', function() {
-        if (dateRange) dateRange.selectedIndex = 0;
-        hideAll();
-
-        // Reset other controls
-        document.querySelectorAll('select:not(#dateRange), input[type="text"], input[type="number"], input[type="date"]').forEach(el => {
-            if (el.tagName === 'SELECT') el.selectedIndex = 0;
-            else el.value = '';
-        });
-
-        document.querySelectorAll('.month-checkbox').forEach(cb => {
-            cb.checked = false;
-            const label = document.querySelector(`label[for="${cb.id}"]`);
-            if (label) {
-                label.classList.remove('bg-[#611132]','text-white','border-[#611132]');
-                label.classList.add('bg-gray-100','border-gray-300');
-            }
-        });
-
-        // Reajusta secciones abiertas
-        document.querySelectorAll('.filter-section-content').forEach(content => {
-            if (content.style.maxHeight && content.style.maxHeight !== '0px') {
-                content.style.maxHeight = content.scrollHeight + 'px';
-            }
-        });
-
-        console.log('Filtros limpiados');
-        // After cleaning, dispatch the form submit event so the listing updates via AJAX.
-        const filtersForm = document.getElementById('filters-form');
-        if (filtersForm) {
-            setTimeout(() => {
-                filtersForm.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
-            }, 50);
-        }
-    });
-
-    // Aplicar filtros (colección simple)
-    document.getElementById('aplicarFiltros')?.addEventListener('click', function() {
-        const filtros = {
-            dateRange: dateRange?.value,
-            year: document.getElementById('year')?.value,
-            month: document.getElementById('monthHidden')?.value,
-            selectedMonths: Array.from(document.querySelectorAll('.month-checkbox:checked')).map(i => i.value),
-            quarter: document.getElementById('quarter')?.value,
-            startDate: document.getElementById('startDate')?.value,
-            endDate: document.getElementById('endDate')?.value,
-            distrito: document.getElementById('distrito')?.value,
-            municipio: document.getElementById('municipio')?.value,
-            municipioDefuncion: document.getElementById('municipioDefuncion')?.value,
-            sexo: document.getElementById('sexo')?.value,
-            edad: document.getElementById('edad')?.value,
-            causa: document.getElementById('causa')?.value
+    function updateDateDetails() {
+        const value = getControl('dateRange')?.value || 'all';
+        const help = document.getElementById('statisticsDateModeHelp');
+        const context = document.getElementById('statisticsDateContext');
+        const descriptions = {
+            all: 'Muestra todos los registros disponibles.',
+            years: 'Puede consultar un año, varios años o un periodo continuo.',
+            months: 'Seleccione uno o varios meses dentro del año indicado.',
+            quarter: 'Seleccione el año y el trimestre que desea consultar.',
+            custom: 'Defina una fecha inicial, una fecha final o ambas.'
         };
-        console.log('Aplicando filtros:', filtros);
-        // aquí va la lógica real de filtrado / fetch
-    });
 
-    // Recalcula alturas de secciones abiertas al hacer resize (previene solapamiento)
-    window.addEventListener('resize', () => {
-        document.querySelectorAll('.filter-section-content').forEach(content => {
-            if (content.style.maxHeight && content.style.maxHeight !== '0px') {
-                content.style.maxHeight = content.scrollHeight + 'px';
-            }
+        if (help) help.textContent = descriptions[value] || descriptions.all;
+        if (context) {
+            context.classList.toggle('has-detail', value !== 'all');
+        }
+
+        form.querySelectorAll('[data-date-detail]').forEach(detail => {
+            const kind = detail.dataset.dateDetail;
+            const visible = kind === 'year'
+                ? ['years','months','quarter'].includes(value)
+                : kind === value;
+            detail.classList.toggle('is-visible', visible);
+            detail.querySelectorAll('input, select').forEach(control => {
+                control.disabled = !visible;
+                if (control.tomselect) {
+                    if (visible) control.tomselect.enable();
+                    else control.tomselect.disable();
+                }
+            });
+        });
+
+        const yearLabel = document.getElementById('statisticsYearLabel');
+        if (yearLabel) yearLabel.textContent = value === 'years' ? 'Año o periodo' : 'Año';
+    }
+
+    function syncOptions() {
+        form.querySelectorAll('.users-filter-option[data-filter-target]').forEach(option => {
+            const active = String(getControl(option.dataset.filterTarget)?.value ?? '') === String(option.dataset.filterValue ?? '');
+            option.classList.toggle('is-active', active);
+            option.setAttribute('aria-pressed', String(active));
+        });
+        updateDateDetails();
+    }
+
+    function updateChips() {
+        const chips = [];
+        const addSelect = (name, prefix, defaults = ['']) => {
+            const control = getControl(name);
+            if (control && !defaults.includes(String(control.value))) chips.push({ label: `${prefix}: ${selectedText(control)}`, fields: [name] });
+        };
+        const dateMode = getControl('dateRange')?.value || 'all';
+        const yearValue = getControl('year')?.value?.trim() || '';
+        let dateLabel = '';
+
+        if (dateMode === 'years' && yearValue) {
+            dateLabel = `Fecha: ${yearValue.replace(/-/g, '–')}`;
+        } else if (dateMode === 'months') {
+            const selected = Array.from(form.querySelectorAll('input[name="selectedMonths[]"]:checked'))
+                .map(input => monthNames[input.value] || input.value);
+            dateLabel = selected.length && yearValue
+                ? `Fecha: ${selected.join(', ')} de ${yearValue.replace(/-/g, '–')}`
+                : '';
+        } else if (dateMode === 'quarter') {
+            const quarterControl = getControl('quarter');
+            const quarter = quarterControl?.value ? selectedText(quarterControl) : '';
+            dateLabel = quarter && yearValue ? `Fecha: ${quarter} de ${yearValue.replace(/-/g, '–')}` : '';
+        } else if (dateMode === 'custom') {
+            const start = getControl('startDate')?.value || '';
+            const end = getControl('endDate')?.value || '';
+            const formatDate = value => value ? value.split('-').reverse().join('/') : '';
+            if (start && end) dateLabel = `Fecha: ${formatDate(start)}–${formatDate(end)}`;
+            else if (start) dateLabel = `Fecha: desde ${formatDate(start)}`;
+            else if (end) dateLabel = `Fecha: hasta ${formatDate(end)}`;
+            else dateLabel = 'Fecha: rango sin definir';
+        }
+
+        if (dateLabel) {
+            chips.push({
+                label: dateLabel,
+                fields: ['dateRange','year','month','selectedMonths[]','quarter','startDate','endDate']
+            });
+        }
+        addSelect('distrito', 'Distrito');
+        addSelect('municipio', 'Municipio res.');
+        addSelect('municipioDefuncion', 'Municipio def.');
+        addSelect('sexo', 'Sexo');
+        addSelect('causa', 'Causa');
+        if (getControl('edad')?.value) chips.push({ label: `Edad: ${getControl('edad').value}`, fields: ['edad'] });
+
+        const container = document.getElementById('deathsFilterChips');
+        const count = document.getElementById('deathsFilterCount');
+        container.innerHTML = chips.map(chip => `<span class="users-filter-chip">${escapeText(chip.label)}<button type="button" data-clear-filter="${chip.fields.join(',')}" aria-label="Quitar ${escapeText(chip.label)}"><i class="fas fa-times" aria-hidden="true"></i></button></span>`).join('');
+        count.textContent = chips.length;
+        count.classList.toggle('hidden', chips.length === 0);
+        syncOptions();
+    }
+
+    form.querySelectorAll('.users-filter-option[data-filter-target]').forEach(option => {
+        option.addEventListener('click', function () {
+            setFilterValue(this.dataset.filterTarget, this.dataset.filterValue || '');
+            updateChips();
         });
     });
 
-    // --- Inicializar TomSelect para los campos de filtros ---
-    function initTomSelectDefunciones() {
-        const selectores = [
-            { id: 'distrito', placeholder: 'Seleccione un distrito...' },
-            { id: 'municipio', placeholder: 'Seleccione un municipio...' },
-            { id: 'municipioDefuncion', placeholder: 'Seleccione un municipio...' },
-            { id: 'causa', placeholder: 'Seleccione una causa...' }
-        ];
-
-        selectores.forEach(sel => {
-            const selectEl = document.getElementById(sel.id);
-            if (selectEl && typeof TomSelect !== 'undefined') {
-                const tomSelectInstance = new TomSelect(selectEl, {
-                    valueField: 'value',
-                    labelField: 'text',
-                    searchField: 'text',
-                    maxOptions: 100,
-                    maxItems: 1,
-                    create: false,
-                    placeholder: sel.placeholder,
-                    onChange: () => {
-                        // Recalcular altura de la sección si está abierta
-                        const section = selectEl.closest('.filter-section');
-                        const content = section?.querySelector('.filter-section-content');
-                        if (content && content.style.maxHeight && content.style.maxHeight !== '0px') {
-                            setTimeout(() => {
-                                content.style.maxHeight = content.scrollHeight + 'px';
-                            }, 10);
-                        }
-                    }
-                });
-
-                // Guardar instancia globalmente para limpiar después
-                window[`tomSelect_${sel.id}`] = tomSelectInstance;
-                
-                // NUEVA SOLUCIÓN: Usar un ResizeObserver para monitorear cuando el wrapper cambia de tamaño (dropdown abierto/cerrado)
-                const wrapper = selectEl.nextElementSibling; // El ts-wrapper es el hermano siguiente
-                if (wrapper && typeof ResizeObserver !== 'undefined') {
-                    const section = selectEl.closest('.filter-section');
-                    const content = section?.querySelector('.filter-section-content');
-                    
-                    if (content) {
-                        const resizeObserver = new ResizeObserver(() => {
-                            // Cuando el wrapper cambia de tamaño (dropdown abierto), expandir la sección
-                            const wrapperHeight = wrapper.offsetHeight;
-                            const contentHeight = content.scrollHeight;
-                            
-                            if (wrapperHeight > 40) { // Si es más grande que un campo normal, el dropdown está abierto
-                                // Expandir para acomodar el dropdown
-                                content.style.maxHeight = (contentHeight + 350) + 'px';
-                            } else if (content.style.maxHeight !== '0px' && parseFloat(content.style.maxHeight) > 0) {
-                                // Si el dropdown se cerró, restaurar
-                                content.style.maxHeight = contentHeight + 'px';
-                            }
-                        });
-                        
-                        resizeObserver.observe(wrapper);
-                    }
-                }
-            }
+    form.querySelectorAll('.users-district-tomselect').forEach(select => {
+        if (typeof TomSelect === 'undefined' || select.tomselect) return;
+        new TomSelect(select, {
+            create: false, maxItems: 1, allowEmptyOption: false,
+            placeholder: select.dataset.placeholder || 'Todos',
+            searchField: select.options.length > 8 ? ['text'] : [],
+            render: { no_results: () => '<div class="no-results">Sin resultados</div>' },
+            onChange: updateChips
         });
-    }
+    });
 
-    // Try to initialize immediately
-    if (typeof TomSelect !== 'undefined') {
-        initTomSelectDefunciones();
-    } else {
-        // If TomSelect not available yet, wait for it
-        let attempts = 0;
-        const checkTomSelect = setInterval(() => {
-            if (typeof TomSelect !== 'undefined') {
-                clearInterval(checkTomSelect);
-                initTomSelectDefunciones();
-            }
-            attempts++;
-            if (attempts > 50) { // Stop after 5 seconds (50 * 100ms)
-                clearInterval(checkTomSelect);
-                console.warn('TomSelect did not load in time');
-            }
-        }, 100);
-    }
+    document.getElementById('limpiarFiltros')?.addEventListener('click', function () {
+        form.reset();
+        form.querySelectorAll('.users-district-tomselect').forEach(select => select.tomselect?.clear(true));
+        setFilterValue('dateRange', 'all');
+        updateChips();
+        form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+        setPanel(false);
+    });
 
-    // --- Recalcular altura cuando TomSelect renderiza para CADA sección ---
-    const tomSelectSelectors = ['distrito', 'municipio', 'municipioDefuncion', 'causa'];
-    tomSelectSelectors.forEach(id => {
-        const selectEl = document.getElementById(id);
-        if (!selectEl) return;
-        
-        const section = selectEl.closest('.filter-section');
-        const content = section?.querySelector('.filter-section-content');
-        
-        if (content) {
-            // Función para recalcular la altura
-            const recalculateHeight = () => {
-                const scrollHeight = content.scrollHeight;
-                const currentMaxHeight = content.style.maxHeight;
-                
-                // Si está abierto, actualizar la altura al scrollHeight actual
-                if (currentMaxHeight && currentMaxHeight !== '0px' && parseFloat(currentMaxHeight) > 0) {
-                    content.style.maxHeight = scrollHeight + 'px';
-                }
-            };
-            
-            // Recalcular cuando TomSelect esté listo
-            setTimeout(recalculateHeight, 50);
-            setTimeout(recalculateHeight, 150);
-            setTimeout(recalculateHeight, 300);
-            setTimeout(recalculateHeight, 500);
-            
-            // Usar MutationObserver para detectar cambios en el contenido (TomSelect renderizando)
-            const observer = new MutationObserver(() => {
-                recalculateHeight();
-            });
-            
-            observer.observe(content, {
-                childList: true,
-                subtree: true,
-                attributes: true,
-                attributeFilter: ['style']
-            });
-            
-            // Recalcular en caso de resize
-            window.addEventListener('resize', recalculateHeight);
+    document.getElementById('deathsFilterChips')?.addEventListener('click', function (event) {
+        const button = event.target.closest('[data-clear-filter]');
+        if (!button) return;
+        button.dataset.clearFilter.split(',').forEach(name => {
+            if (name === 'selectedMonths[]') {
+                form.querySelectorAll('input[name="selectedMonths[]"]').forEach(input => { input.checked = false; });
+                return;
+            }
+            setFilterValue(name, name === 'dateRange' ? 'all' : '');
+        });
+        updateChips();
+        form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+    });
+
+    const pageButton = document.getElementById('dt-per-page-deaths-button');
+    const pageMenu = document.getElementById('dt-per-page-deaths-menu');
+    pageButton?.addEventListener('click', event => {
+        event.stopPropagation();
+        const open = pageMenu.classList.toggle('hidden') === false;
+        pageButton.setAttribute('aria-expanded', String(open));
+    });
+    pageMenu?.addEventListener('click', event => {
+        const option = event.target.closest('[data-value]');
+        if (!option) return;
+        const value = option.dataset.value;
+        document.getElementById('dt-per-page-deaths').value = value;
+        document.getElementById('dt-per-page-deaths-label').textContent = value;
+        pageMenu.querySelectorAll('.users-page-size-option').forEach(item => item.classList.toggle('is-active', item === option));
+        document.getElementById('dt-per-page-deaths').dispatchEvent(new Event('change', { bubbles: true }));
+        pageMenu.classList.add('hidden');
+        pageButton.setAttribute('aria-expanded', 'false');
+    });
+    document.addEventListener('click', event => {
+        if (!event.target.closest('.users-page-size-dropdown')) {
+            pageMenu?.classList.add('hidden');
+            pageButton?.setAttribute('aria-expanded', 'false');
         }
     });
 
-    // --- Mejorar evento Limpiar filtros ---
-    const limpiarButton = document.getElementById('limpiarFiltros');
-    if (limpiarButton) {
-        // Guardar el listener original
-        const originalClickHandler = limpiarButton.onclick;
-        
-        // Reemplazar con un nuevo listener que agregue la limpieza de TomSelect
-        limpiarButton.onclick = null; // Remover listener anterior
-        limpiarButton.addEventListener('click', function(e) {
-            // Ejecutar el listener original si existía
-            if (originalClickHandler) {
-                originalClickHandler.call(this, e);
-            }
-            
-            // Limpiar TomSelect
-            ['distrito', 'municipio', 'municipioDefuncion', 'causa'].forEach(id => {
-                if (window[`tomSelect_${id}`]) {
-                    window[`tomSelect_${id}`].clear();
-                }
-            });
-        });
-    }
+    form.addEventListener('change', updateChips);
+    form.addEventListener('submit', () => setPanel(false));
+    updateChips();
 });
 </script>
-
-<style>
-/* Tomé la organización y estilos del demo que ya funciona y los adapté a tu componente */
-.filter-section { margin-bottom: 0.5rem; }
-.filter-group { margin-bottom: 0.75rem; }
-
-/* months visuals (igual que demo) */
-.month-checkbox { display: none; }
-.month-label {
-    display: block;
-    padding: 6px;
-    background: #f8f9fa;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    text-align: center;
-    cursor: pointer;
-    font-size: 12px;
-}
-.month-checkbox:checked + .month-label {
-    background: #611132;
-    color: white;
-    border-color: #611132;
-}
-
-/* evitar gaps excesivos cuando mostramos/ocultamos: content flow natural */
-.filter-section-content { position: relative; }
-
-/* reduce gaps entre secciones en el panel */
-.x-filtros-base-panel, .filters-panel { /* placeholder selectors if used */ }
-
-/* chevron in seccion component already handles rotation; esta règle asegura transición */
-.filter-section-header .fa-chevron-down { transition: transform 300ms ease; }
-
-/* TomSelect Styles */
-select.tomselect-select {
-    position: absolute !important;
-    left: -9999px !important;
-    width: 1px !important;
-    height: 1px !important;
-    overflow: hidden !important;
-    opacity: 0 !important;
-    pointer-events: none !important;
-    border: 0 !important;
-    margin: 0 !important;
-    padding: 0 !important;
-    background: transparent !important;
-    -webkit-appearance: none !important;
-    -moz-appearance: none !important;
-    appearance: none !important;
-    display: none !important;
-}
-
-select.tomselect-select::-ms-expand { display: none !important; }
-select.tomselect-select { 
-    background-image: none !important;
-    visibility: hidden !important;
-}
-
-.ts-wrapper { 
-    display: block; 
-    width: 100%;
-    position: relative;
-    z-index: 9999 !important;
-    margin: 0 !important;
-    padding: 0 !important;
-}
-
-.ts-control {
-    z-index: 9999 !important;
-    position: relative;
-    border: 1px solid #d1d5db !important;
-    border-radius: 0.5rem !important;
-    padding: 6px 12px !important;
-    background: #ffffff !important;
-    font-family: inherit;
-    font-size: 0.75rem;
-    line-height: 1.25rem !important;
-    display: flex;
-    align-items: center;
-    justify-content: flex-start;
-    box-sizing: border-box;
-    margin: 0 !important;
-    box-shadow: none !important;
-    height: auto !important;
-    min-height: 32px !important;
-    transition: all 0.2s ease;
-}
-
-.ts-control:focus-within {
-    border-color: #611132 !important;
-    outline: none !important;
-    box-shadow: 0 0 0 1px #611132 !important;
-}
-
-.ts-control .item, .ts-control input {
-    padding: 0 !important;
-    margin: 0 !important;
-    height: auto !important;
-    line-height: 1.25rem !important;
-    font-size: inherit;
-    font-family: inherit;
-}
-
-.ts-control .dropdown-toggle,
-.ts-control .ts-dropdown-toggle,
-.ts-control .dropdown_toggle,
-.ts-control .ts-clear {
-    display: none !important;
-}
-
-.ts-dropdown {
-    border: 1px solid #d1d5db;
-    border-radius: 0.5rem;
-    box-shadow: 0 8px 20px rgba(0,0,0,0.10);
-    max-height: 250px;
-    overflow-y: auto;
-    z-index: 999999 !important;
-    position: absolute !important;
-    top: 100% !important;
-    left: 0 !important;
-    right: 0 !important;
-    background: white;
-    margin-top: 2px;
-}
-
-.ts-dropdown .ts-option {
-    padding: 0.5rem 0.75rem;
-    cursor: pointer;
-    transition: background-color 0.15s ease;
-}
-
-.ts-dropdown .ts-option:hover {
-    background-color: #f3f4f6;
-}
-
-.ts-dropdown .ts-option.selected {
-    background-color: #e5e7eb;
-    color: #404041;
-}
-
-.ts-control::after {
-    content: "";
-    position: absolute;
-    right: 12px;
-    top: 50%;
-    transform: translateY(-50%);
-    width: 18px;
-    height: 18px;
-    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'/></svg>");
-    background-repeat: no-repeat;
-    background-position: center;
-    background-size: 12px 12px;
-    pointer-events: none;
-    opacity: 0.92;
-}
-
-.ts-wrapper, .ts-control { vertical-align: middle; }
-
-/* Asegurar que TomSelect dropdown tenga muy alto z-index */
-.filter-section-content {
-    position: relative;
-}
-
-.ts-wrapper.ts-dropdown-open {
-    z-index: 999999 !important;
-}
-
-.ts-wrapper:not(.ts-dropdown-open) {
-    z-index: 1 !important;
-}
-</style>
-
-<script>
-// Manager para z-index dinámico de TomSelect dropdowns
-document.addEventListener('DOMContentLoaded', function() {
-    const tomSelectElements = document.querySelectorAll('.tomselect-select');
-    
-    tomSelectElements.forEach(select => {
-        // Buscar la instancia de TomSelect asociada
-        if(select.tomselect) {
-            const tomSelectInstance = select.tomselect;
-            
-            // Cuando se abre el dropdown
-            tomSelectInstance.on('dropdown_open', function() {
-                const wrapper = tomSelectInstance.wrapper;
-                if(wrapper) {
-                    wrapper.classList.add('ts-dropdown-open');
-                }
-            });
-            
-            // Cuando se cierra el dropdown
-            tomSelectInstance.on('dropdown_close', function() {
-                const wrapper = tomSelectInstance.wrapper;
-                if(wrapper) {
-                    wrapper.classList.remove('ts-dropdown-open');
-                }
-            });
-        }
-    });
-});
-</script>
+@endonce

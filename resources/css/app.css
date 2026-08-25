@@ -1,5 +1,15 @@
 @import './pages/report-publications.css';
 @import './pages/report-road-safety-form.css';
+@import './pages/report-observatory-form.css';
+@import './pages/report-alcohol-form.css';
+@import './pages/statistics-data.css';
+@import './pages/statistics-imports.css';
+@import './pages/statistics-death-form.css';
+
+:root {
+  --ui-task-dialog-layer: 999990;
+}
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -3654,6 +3664,14 @@ html[data-ui-theme="tamaulipas-salud"] .app-document-surface {
 	font-size: 0.72rem;
 }
 
+.users-management-page .users-table-card .users-row-menu-button:hover,
+.users-management-page .users-table-card .users-row-menu-button[aria-expanded="true"] {
+	border-color: transparent !important;
+	background: transparent !important;
+	box-shadow: none !important;
+	color: #374151 !important;
+}
+
 .users-management-page .users-row-menu {
 	top: calc(100% + 0.25rem);
 	width: 10.8rem;
@@ -6154,8 +6172,8 @@ html[data-ui-theme="tamaulipas-salud"] .app-document-surface {
 	padding-right: 0 !important;
 }
 
-.users-management-page .users-table-card #users-table th.dt-checkbox-cell,
-.users-management-page .users-table-card #users-table td.dt-checkbox-cell {
+.users-management-page .users-table-card .app-data-table th.dt-checkbox-cell,
+.users-management-page .users-table-card .app-data-table td.dt-checkbox-cell {
 	width: 2.4rem !important;
 	min-width: 2.4rem !important;
 	max-width: 2.4rem !important;
@@ -6165,8 +6183,8 @@ html[data-ui-theme="tamaulipas-salud"] .app-document-surface {
 	vertical-align: middle !important;
 }
 
-.users-management-page .users-table-card #users-table th.dt-actions-cell,
-.users-management-page .users-table-card #users-table td.dt-actions-cell {
+.users-management-page .users-table-card .app-data-table th.dt-actions-cell,
+.users-management-page .users-table-card .app-data-table td.dt-actions-cell {
 	width: 2.75rem !important;
 	min-width: 2.75rem !important;
 	max-width: 2.75rem !important;
@@ -6176,8 +6194,8 @@ html[data-ui-theme="tamaulipas-salud"] .app-document-surface {
 	vertical-align: middle !important;
 }
 
-.users-management-page .users-table-card #users-table th.dt-checkbox-cell input[type="checkbox"],
-.users-management-page .users-table-card #users-table td.dt-checkbox-cell input[type="checkbox"] {
+.users-management-page .users-table-card .app-data-table th.dt-checkbox-cell input[type="checkbox"],
+.users-management-page .users-table-card .app-data-table td.dt-checkbox-cell input[type="checkbox"] {
 	display: block !important;
 	margin: 0 auto !important;
 	width: 0.9rem !important;
@@ -6283,19 +6301,19 @@ html[data-ui-theme="tamaulipas-salud"] .app-document-surface {
 }
 
 /* Quiet search feedback: keep the table stable and show progress inside the input. */
-.users-management-page .users-table-card > .app-table-toolbar .users-filter-search.is-searching input {
+.users-filter-search.is-searching input {
 	padding-right: 2.65rem !important;
 }
 
-.users-management-page .users-table-card > .app-table-toolbar .users-filter-search.is-searching #dt-clear-btn {
+.users-filter-search.is-searching > button {
 	display: none !important;
 }
 
-.users-management-page .users-table-card > .app-table-toolbar .users-filter-search.is-searching::after {
+.users-filter-search.is-searching::after {
 	content: none !important;
 }
 
-.users-management-page .users-table-card > .app-table-toolbar .users-filter-search .users-search-progress {
+.users-filter-search .users-search-progress {
 	display: none;
 	position: absolute;
 	right: 0.9rem;
@@ -6310,7 +6328,7 @@ html[data-ui-theme="tamaulipas-salud"] .app-document-surface {
 	pointer-events: none;
 }
 
-.users-management-page .users-table-card > .app-table-toolbar .users-filter-search.is-searching .users-search-progress {
+.users-filter-search.is-searching .users-search-progress {
 	display: block;
 	animation: usersSearchSpinner 0.7s linear infinite;
 }
@@ -6325,7 +6343,7 @@ html[data-ui-theme="tamaulipas-salud"] .app-document-surface {
 }
 
 @media (prefers-reduced-motion: reduce) {
-	.users-management-page .users-table-card > .app-table-toolbar .users-filter-search.is-searching .users-search-progress {
+	.users-filter-search.is-searching .users-search-progress {
 		animation: none;
 	}
 }
@@ -6562,8 +6580,6 @@ html[data-ui-theme="tamaulipas-salud"] .app-document-surface {
 	overflow-wrap: anywhere !important;
 }
 
-.users-management-page .users-table-card #users-table tbody td.dt-actions-cell,
-.users-management-page .users-table-card #users-table tbody td.dt-checkbox-cell,
 .users-management-page .users-table-card #users-table tbody td.dt-role-cell,
 .users-management-page .users-table-card #users-table tbody td.dt-status-cell,
 .users-management-page .users-table-card #users-table tbody td.dt-last-session-cell,
@@ -6572,8 +6588,12 @@ html[data-ui-theme="tamaulipas-salud"] .app-document-surface {
 	text-align: left !important;
 }
 
-.users-management-page .users-table-card #users-table thead th.dt-actions-cell,
-.users-management-page .users-table-card #users-table thead th.dt-checkbox-cell,
+.users-management-page .users-table-card #users-table .users-row-actions {
+	width: 100%;
+	align-items: center;
+	justify-content: center;
+}
+
 .users-management-page .users-table-card #users-table thead th.dt-role-cell,
 .users-management-page .users-table-card #users-table thead th.dt-status-cell,
 .users-management-page .users-table-card #users-table thead th.dt-last-session-cell,
@@ -7181,11 +7201,15 @@ html[data-ui-theme="tamaulipas-salud"] .app-document-surface {
 .users-form-page select,
 .users-form-page textarea {
 	min-height: 34px !important;
-	height: 34px !important;
 	padding: 0.38rem 0.58rem !important;
 	border-radius: 7px !important;
 	font-size: 0.79rem !important;
 	line-height: 1.05rem !important;
+}
+
+.users-form-page input:not([type="checkbox"]):not([type="radio"]),
+.users-form-page select {
+	height: 34px !important;
 }
 
 .users-form-page .relative input {
@@ -7495,7 +7519,6 @@ html[data-ui-theme="tamaulipas-salud"] .app-document-surface {
 .users-form-page textarea,
 .users-form-page .ts-control {
 	min-height: 34px !important;
-	height: 34px !important;
 	padding: 0 0.72rem !important;
 	border-color: var(--users-border-strong) !important;
 	border-radius: 7px !important;
@@ -7506,6 +7529,12 @@ html[data-ui-theme="tamaulipas-salud"] .app-document-surface {
 	color: var(--users-text) !important;
 	box-shadow: 0 1px 2px rgba(15, 23, 42, 0.025) !important;
 	transition: background-color 0.12s ease, border-color 0.12s ease, box-shadow 0.12s ease !important;
+}
+
+.users-form-page input,
+.users-form-page select,
+.users-form-page .ts-control {
+	height: 34px !important;
 }
 
 .users-form-page input::placeholder,
@@ -9087,25 +9116,29 @@ html[data-ui-theme="tamaulipas-salud"] .app-document-surface {
   line-height: 1.5;
 }
 
-.users-table-state-action {
+.users-table-state-action,
+.users-table-state-row > td:last-child .users-table-state-action {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   min-height: 2.15rem;
   margin-top: 1rem;
   padding: 0.42rem 0.85rem;
-  border: 1px solid var(--ui-border-strong);
+  border: 0 !important;
   border-radius: var(--ui-radius-control);
-  background: var(--ui-surface);
+  background: transparent !important;
+  box-shadow: none !important;
   color: var(--ui-text);
   font-size: 0.78rem;
   font-weight: 600;
   text-decoration: none;
 }
 
-.users-table-state-action:hover {
-  border-color: #94a3b8;
-  background: var(--ui-surface-soft);
+.users-table-state-action:hover,
+.users-table-state-row > td:last-child .users-table-state-action:hover {
+  border: 0 !important;
+  background: var(--ui-surface-section) !important;
+  box-shadow: none !important;
 }
 
 .users-table-state-action:focus-visible {
@@ -9868,9 +9901,9 @@ html[data-ui-theme="tamaulipas-salud"] .app-document-surface {
 
     .users-management-page .users-table-card #users-table th.dt-checkbox-cell,
     .users-management-page .users-table-card #users-table td.dt-checkbox-cell {
-        width: 2.75rem !important;
-        min-width: 2.75rem !important;
-        max-width: 2.75rem !important;
+        width: 2.4rem !important;
+        min-width: 2.4rem !important;
+        max-width: 2.4rem !important;
     }
 
     .users-management-page .users-checkbox-hitbox {
@@ -9931,4 +9964,557 @@ html[data-ui-theme="tamaulipas-salud"] .app-document-surface {
   padding: 0 0.65rem;
   border-radius: 0.4rem;
   font-size: 0.74rem;
+}
+
+/* Shared non-interactive field: its surface remains invariant in every pointer state. */
+.users-form-page input.ui-field--disabled:disabled,
+.users-form-page input.ui-field--disabled:disabled:is(:hover, :focus, :active) {
+  border-color: var(--ui-border-soft) !important;
+  background: var(--ui-surface-section) !important;
+  color: var(--ui-text-secondary) !important;
+  box-shadow: none !important;
+  outline: 0 !important;
+  cursor: not-allowed;
+  opacity: 1;
+  transition: none !important;
+}
+
+/* Profile page: same page rhythm and surfaces as the user form pilot. */
+.profile-page .app-page-header {
+  margin-bottom: 1.5rem;
+}
+
+.profile-layout {
+  display: grid;
+  grid-template-columns: minmax(15.5rem, 18rem) minmax(0, 1fr);
+  gap: 1rem;
+  align-items: start;
+}
+
+.profile-summary-card,
+.profile-details-card {
+  border-color: var(--ui-border-soft) !important;
+  border-radius: 0.5rem !important;
+  box-shadow: 0 1px 2px rgb(15 23 42 / 4%);
+}
+
+.profile-summary-card {
+  padding: 1.25rem !important;
+  overflow: visible !important;
+}
+
+.profile-avatar {
+  width: 5.5rem !important;
+  height: 5.5rem !important;
+  border: 3px solid #fff !important;
+  box-shadow: 0 0 0 1px var(--ui-border), 0 3px 10px rgb(15 23 42 / 12%);
+}
+
+.profile-photo-button {
+  background: #611132;
+}
+
+.profile-photo-menu,
+.profile-summary-name,
+.profile-summary-position,
+.profile-quick-list p,
+.profile-logout-button,
+.profile-details-header h3,
+.profile-details-header p,
+.profile-details-grid h4,
+.profile-details-grid label,
+.profile-details-grid p,
+.profile-details-body > .mt-6 p {
+  font-family: "Open Sans", sans-serif !important;
+}
+
+.profile-summary-name {
+  font-size: 0.95rem !important;
+}
+
+.profile-summary-position {
+  font-size: 0.76rem !important;
+}
+
+.profile-quick-list {
+  display: grid;
+  gap: 0.75rem !important;
+  padding-top: 1rem !important;
+  border-color: var(--ui-border-soft) !important;
+}
+
+.profile-quick-list > div {
+  gap: 0.65rem !important;
+}
+
+.profile-quick-list i {
+  width: 1rem;
+  color: var(--ui-text-muted) !important;
+  text-align: center;
+}
+
+.profile-quick-list p:first-child {
+  color: var(--ui-text-muted) !important;
+  font-size: 0.68rem !important;
+  font-weight: 600;
+}
+
+.profile-quick-list p:last-child {
+  color: var(--ui-text) !important;
+  font-size: 0.78rem !important;
+}
+
+.profile-logout-area {
+  border-color: var(--ui-border-soft) !important;
+}
+
+.profile-logout-button {
+  min-height: 2.5rem;
+  border-radius: 0.4rem !important;
+}
+
+.profile-details-card {
+  overflow: hidden !important;
+}
+
+.profile-details-header {
+  padding: 1rem 1.25rem !important;
+  border-color: var(--ui-border-soft) !important;
+  background: var(--ui-surface-soft);
+}
+
+.profile-details-header h3 {
+  font-size: 0.9rem !important;
+  font-weight: 700 !important;
+}
+
+.profile-details-header p {
+  margin-top: 0.2rem !important;
+  color: var(--ui-text-muted) !important;
+  font-size: 0.72rem !important;
+}
+
+.profile-details-body {
+  padding: 1.25rem !important;
+}
+
+.profile-details-grid {
+  gap: 1.25rem !important;
+}
+
+.profile-details-grid > .space-y-4 {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.profile-details-grid > .space-y-4 > h4 {
+  display: flex;
+  gap: 0.6rem;
+  align-items: center;
+  padding: 0 !important;
+  border: 0 !important;
+  font-size: 0.78rem !important;
+  font-weight: 700 !important;
+}
+
+.profile-details-grid > .space-y-4 > h4::after {
+  flex: 1;
+  height: 1px;
+  background: var(--ui-border-soft);
+  content: "";
+}
+
+.profile-details-grid label {
+  margin-bottom: 0.3rem !important;
+  color: var(--ui-text-muted) !important;
+  font-size: 0.68rem !important;
+  font-weight: 600 !important;
+}
+
+.profile-details-grid > .space-y-4 > div > p {
+  display: flex;
+  min-height: 2.65rem;
+  align-items: center;
+  padding: 0.65rem 0.75rem !important;
+  border: 1px solid var(--ui-border-soft) !important;
+  border-radius: 0.4rem !important;
+  background: var(--ui-surface-soft) !important;
+  color: var(--ui-text) !important;
+  font-size: 0.78rem !important;
+}
+
+.profile-details-grid > .space-y-4 > div.grid {
+  gap: 0.75rem !important;
+}
+
+.profile-details-body > .mt-6 {
+  margin-top: 1.25rem !important;
+  padding: 1rem !important;
+  border-color: var(--ui-border-soft) !important;
+  border-radius: 0.45rem !important;
+  background: var(--ui-surface-soft) !important;
+}
+
+@media (max-width: 1023px) {
+  .profile-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (min-width: 640px) and (max-width: 1023px) {
+  .profile-summary-card {
+    display: grid;
+    grid-template-columns: minmax(12rem, 0.75fr) 1.25fr;
+    gap: 1.25rem;
+    align-items: center;
+  }
+
+  .profile-summary-identity {
+    margin-bottom: 0 !important;
+  }
+
+  .profile-quick-list {
+    padding-top: 0 !important;
+    padding-left: 1.25rem !important;
+    border-top: 0 !important;
+    border-left: 1px solid var(--ui-border-soft);
+  }
+
+  .profile-logout-area {
+    grid-column: 1 / -1;
+    margin-top: 0 !important;
+  }
+}
+
+@media (max-width: 639px) {
+  .profile-page {
+    padding-top: 1.25rem !important;
+  }
+
+  .profile-summary-card,
+  .profile-details-body {
+    padding: 1rem !important;
+  }
+
+  .profile-details-header {
+    padding: 0.9rem 1rem !important;
+  }
+
+  .profile-details-grid {
+    gap: 1rem !important;
+  }
+}
+
+/* Mi perfil: reutiliza la tarjeta y el ritmo de campos de Crear/Editar usuario. */
+.profile-account-card {
+  overflow: visible;
+}
+
+.profile-account-identity {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid var(--ui-border-soft);
+  background: var(--ui-surface-soft);
+}
+
+.profile-avatar-control {
+  position: relative;
+  flex: 0 0 auto;
+}
+
+.profile-account-card .profile-avatar {
+  display: block;
+  width: 5.5rem;
+  height: 5.5rem;
+  object-fit: cover;
+  border: 3px solid #fff;
+  border-radius: 9999px;
+  box-shadow: 0 0 0 1px var(--ui-border-soft), 0 4px 12px rgb(15 23 42 / 8%);
+}
+
+.profile-account-card .profile-photo-button {
+  position: absolute;
+  right: -0.1rem;
+  bottom: -0.1rem;
+  display: inline-flex;
+  width: 2rem;
+  height: 2rem;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid #fff;
+  border-radius: 9999px;
+  background: #611132;
+  color: #fff;
+  font-size: 0.72rem;
+  box-shadow: 0 2px 6px rgb(15 23 42 / 16%);
+}
+
+.profile-account-card .profile-photo-button:hover {
+  background: #4a0e26;
+}
+
+.profile-account-card .profile-photo-menu {
+  position: absolute;
+  top: calc(100% + 0.65rem);
+  left: 0;
+  z-index: 30;
+  width: 11rem;
+  overflow: hidden;
+  border: 1px solid var(--ui-border-soft);
+  border-radius: 0.5rem;
+  background: #fff;
+  box-shadow: 0 12px 28px rgb(15 23 42 / 14%);
+}
+
+.profile-account-card .profile-photo-menu.hidden {
+  display: none;
+}
+
+.profile-account-card .profile-photo-menu-item {
+  display: flex;
+  width: 100%;
+  gap: 0.6rem;
+  align-items: center;
+  padding: 0.7rem 0.8rem;
+  background: #fff;
+  color: var(--ui-text);
+  font-size: 0.78rem;
+  text-align: left;
+}
+
+.profile-account-card .profile-photo-menu-item:hover {
+  background: #f1f1f1;
+}
+
+.profile-account-card .profile-photo-menu-item-danger {
+  color: #b91c1c;
+}
+
+.profile-identity-copy h2 {
+  margin: 0.15rem 0 0;
+  color: var(--ui-text);
+  font-size: 1.2rem;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.profile-identity-eyebrow {
+  color: var(--ui-text-muted);
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.profile-identity-copy > p {
+  margin-top: 0.18rem;
+  color: var(--ui-text-muted);
+  font-size: 0.78rem;
+}
+
+.profile-identity-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem 1rem;
+  margin-top: 0.65rem;
+  color: var(--ui-text-muted);
+  font-size: 0.76rem;
+}
+
+.profile-identity-meta span {
+  display: inline-flex;
+  gap: 0.45rem;
+  align-items: center;
+}
+
+.profile-identity-meta i {
+  width: 0.85rem;
+  text-align: center;
+}
+
+.profile-account-body {
+  padding: 1.25rem 1.5rem 0.25rem;
+}
+
+.profile-account-body .users-form-section {
+  margin-bottom: 1.5rem !important;
+}
+
+.profile-field {
+  min-width: 0;
+}
+
+.profile-field-label {
+  display: block;
+  margin-bottom: 0.35rem;
+  color: var(--ui-text);
+  font-size: 0.72rem;
+  font-weight: 600;
+}
+
+.profile-readonly-field {
+  display: flex;
+  min-height: 2.75rem;
+  align-items: center;
+  padding: 0.65rem 0.8rem;
+  overflow-wrap: anywhere;
+  border: 1px solid var(--ui-border-soft);
+  border-radius: 0.4rem;
+  background: var(--ui-surface-soft);
+  color: var(--ui-text);
+  font-size: 0.8rem;
+}
+
+.profile-account-statuses {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+  align-items: end;
+  padding: 0.15rem 0;
+}
+
+.profile-account-statuses > div {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.profile-status-text {
+  display: inline-flex;
+  min-height: 2rem;
+  gap: 0.45rem;
+  align-items: center;
+  color: var(--ui-text);
+  font-size: 0.8rem;
+}
+
+.profile-status-dot {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 9999px;
+  background: #94a3b8;
+}
+
+.profile-status-dot.is-active {
+  background: #10b981;
+}
+
+.profile-role-badge {
+  display: inline-flex;
+  min-height: 1.65rem;
+  align-items: center;
+  padding: 0.2rem 0.65rem;
+  border-radius: 9999px;
+  font-size: 0.72rem;
+  font-weight: 600;
+}
+
+.profile-help-note {
+  display: flex;
+  gap: 0.7rem;
+  margin-top: 0.15rem;
+  padding: 0.9rem 1rem;
+  border: 1px solid var(--ui-border-soft);
+  border-radius: 0.45rem;
+  background: var(--ui-surface-soft);
+  color: var(--ui-text);
+}
+
+.profile-help-note > i {
+  margin-top: 0.1rem;
+  color: var(--ui-text-muted);
+}
+
+.profile-help-note strong {
+  font-size: 0.8rem;
+}
+
+.profile-help-note p {
+  margin-top: 0.15rem;
+  color: var(--ui-text-muted);
+  font-size: 0.74rem;
+  line-height: 1.5;
+}
+
+.profile-help-note a {
+  color: var(--ui-text);
+  font-weight: 600;
+}
+
+.profile-account-footer {
+  display: flex;
+  justify-content: flex-end;
+  padding: 1rem 1.5rem;
+  border-top: 1px solid var(--ui-border-soft);
+  background: #fff;
+}
+
+.profile-account-footer form {
+  margin: 0;
+}
+
+.profile-account-card .profile-logout-button {
+  display: inline-flex;
+  min-height: 2.65rem;
+  gap: 0.5rem;
+  align-items: center;
+  justify-content: center;
+  padding: 0.65rem 1rem;
+  border: 1px solid var(--ui-border-soft);
+  border-radius: 0.4rem !important;
+  background: #fff;
+  color: var(--ui-text);
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.profile-account-card .profile-logout-button:hover {
+  border-color: #b8c2cc;
+  background: #f1f1f1;
+}
+
+@media (max-width: 639px) {
+  .profile-account-identity {
+    align-items: flex-start;
+    gap: 0.9rem;
+    padding: 1rem;
+  }
+
+  .profile-account-card .profile-avatar {
+    width: 4.5rem;
+    height: 4.5rem;
+  }
+
+  .profile-identity-copy h2 {
+    font-size: 1rem;
+  }
+
+  .profile-identity-meta {
+    flex-direction: column;
+    gap: 0.35rem;
+  }
+
+  .profile-account-body {
+    padding: 1rem 1rem 0.1rem;
+  }
+
+  .profile-account-statuses {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+
+  .profile-help-note {
+    padding: 0.8rem;
+  }
+
+  .profile-account-footer {
+    padding: 0.9rem 1rem;
+  }
+
+  .profile-account-card .profile-logout-button {
+    width: 100%;
+  }
 }

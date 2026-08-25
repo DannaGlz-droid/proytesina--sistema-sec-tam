@@ -27,18 +27,15 @@ class DeathController extends Controller
         
         // Order parameters
         $orderColumnIndex = $request->input('order.0.column', 0);
-        $orderDir = $request->input('order.0.dir', 'desc');
+        $orderDir = strtolower((string) $request->input('order.0.dir', 'desc')) === 'asc' ? 'asc' : 'desc';
         
-        // Column mapping (same order as table columns shown to server-side, NOT including the client-side checkbox column)
-        // Note: DataTables on the client will include a leading checkbox column (index 0). When DataTables sends an order column index,
-        // we need to map it to our $columns array. If the requested column is 0 (the checkbox), default to 'id'. Otherwise subtract 1.
-        $columns = ['gov_folio', 'name', 'first_last_name', 'second_last_name', 'age', 'sex', 'death_date', 'residence_municipality_id', 'death_municipality_id', 'district_id', 'death_location_id', 'death_cause_id'];
-        if ($orderColumnIndex == 0) {
-            $orderColumn = 'id';
-        } else {
-            $mappedIndex = $orderColumnIndex - 1;
-            $orderColumn = $columns[$mappedIndex] ?? 'id';
-        }
+        // Read the column name sent by DataTables so the server keeps matching the
+        // visible table even when related values are grouped into one cell.
+        $allowedOrderColumns = ['id', 'gov_folio', 'name', 'first_last_name', 'second_last_name', 'age', 'sex', 'death_date'];
+        $requestedOrderColumn = $request->input("columns.{$orderColumnIndex}.name", 'id');
+        $orderColumn = in_array($requestedOrderColumn, $allowedOrderColumns, true)
+            ? $requestedOrderColumn
+            : 'id';
         
         // Build query
         $query = Death::query();
@@ -59,8 +56,8 @@ class DeathController extends Controller
         // Apply existing filters from form (same as index method)
         $this->applyDateFilters($query, $request);
         
-        if ($request->filled('jurisdiccion')) {
-            $val = $request->input('jurisdiccion');
+        if ($request->filled('distrito') || $request->filled('jurisdiccion')) {
+            $val = $request->input('distrito', $request->input('jurisdiccion'));
             $query->whereHas('district', function ($qj) use ($val) {
                 $qj->whereRaw('LOWER(name) = ?', [strtolower($val)])
                    ->orWhere('name', 'like', "%{$val}%");
@@ -389,7 +386,7 @@ class DeathController extends Controller
         $ageDays = null;
         $ageForLegacy = $data['age'] ?? null;
 
-        if (!empty($data['edad_valor']) && !empty($data['edad_unidad'])) {
+        if (array_key_exists('edad_valor', $data) && $data['edad_valor'] !== null && $data['edad_valor'] !== '' && !empty($data['edad_unidad'])) {
             $valor = (int) $data['edad_valor'];
             $unidad = $data['edad_unidad'];
             if ($unidad === 'meses') {
@@ -670,7 +667,7 @@ class DeathController extends Controller
 
         $years = $this->parseYears($request->input('year'));
         if (empty($years)) {
-            $years = [now()->year];
+            return;
         }
 
         if (in_array($dateRange, ['year', 'years'], true)) {

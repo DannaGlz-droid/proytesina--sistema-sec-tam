@@ -5,29 +5,172 @@
     @include('components.header-admin')
     @include('components.nav-usuario')
 
-    <div class="px-4 lg:pl-10 pt-6 lg:pt-10 pb-8 lg:pb-12">
-        <h1 class="text-2xl lg:text-3xl font-lora font-bold text-[#404041] mb-3">Mi Perfil</h1>
-        <p class="text-sm lg:text-base text-[#404041] font-lora mb-6">Consulta tu información personal y datos de cuenta.</p>
+    @php
+        $profileUser = auth()->user();
+        $profileName = $fullName ?? $profileUser->name;
+        $profileUsername = $profileUser->username ?? explode('@', $profileUser->email)[0];
+        $profilePosition = $profileUser->position->name ?? 'Sin cargo';
+        $profileDistrict = $profileUser->district->name ?? 'Sin distrito';
+        $profilePhone = $profileUser->phone ?? 'Sin teléfono registrado';
+        $profileIsActive = (bool) ($profileUser->is_active ?? true);
+        $profileRole = strtolower($profileUser->role->name ?? 'Usuario');
+        $profileRoleLabel = match ($profileRole) {
+            'admin', 'administrador' => 'Administrador',
+            'coordinator', 'coordinador' => 'Coordinador',
+            'operator', 'operador' => 'Operador',
+            'invitado' => 'Invitado',
+            default => ucfirst($profileRole),
+        };
+        $profileRoleClass = match ($profileRole) {
+            'admin', 'administrador' => 'bg-[#e0e7ff] text-[#3730a3]',
+            'coordinator', 'coordinador' => 'bg-[#dcfce7] text-[#166534]',
+            'operator', 'operador' => 'bg-[#fef3c7] text-[#92400e]',
+            'invitado' => 'bg-[#fee2e2] text-[#991b1b]',
+            default => 'bg-[#f1f5f9] text-[#475569]',
+        };
+    @endphp
 
-        <div class="flex flex-col lg:flex-row gap-6">
+    <div class="users-form-page profile-page px-4 sm:px-6 lg:px-10 pt-6 lg:pt-8 pb-8 lg:pb-10">
+        <x-ui.page-header
+            title="Mi perfil"
+            description="Consulta tu información personal y los datos de tu cuenta."
+        />
+
+        <article class="users-form-card profile-account-card">
+            <header class="profile-account-identity">
+                <div class="profile-avatar-control">
+                    @if($profileUser->profile_photo_path)
+                        <img src="{{ asset('storage/' . $profileUser->profile_photo_path) }}" alt="Foto de perfil" class="profile-avatar" data-profile-avatar>
+                    @else
+                        <img src="{{ asset('images/default_pfp.svg.png') }}" alt="Avatar predeterminado" class="profile-avatar" data-profile-avatar>
+                    @endif
+
+                    <button type="button" id="photoMenuBtn" class="profile-photo-button" title="Opciones de foto" aria-label="Opciones de foto" aria-expanded="false" aria-controls="photoMenu">
+                        <i class="fas fa-camera" aria-hidden="true"></i>
+                    </button>
+
+                    <div id="photoMenu" class="profile-photo-menu hidden">
+                        <button type="button" id="uploadPhotoBtn" class="profile-photo-menu-item">
+                            <i class="fas fa-camera" aria-hidden="true"></i>
+                            Cambiar foto
+                        </button>
+                        <button type="button" id="deletePhotoBtn" class="profile-photo-menu-item profile-photo-menu-item-danger {{ $profileUser->profile_photo_path ? '' : 'hidden' }}">
+                            <i class="fas fa-trash" aria-hidden="true"></i>
+                            Eliminar foto
+                        </button>
+                    </div>
+                    <input type="file" id="photoInput" accept="image/jpeg,image/png,image/jpg" class="hidden">
+                </div>
+
+                <div class="profile-identity-copy min-w-0">
+                    <span class="profile-identity-eyebrow">Cuenta de usuario</span>
+                    <h2>{{ $profileName }}</h2>
+                    <p>{{ '@' . $profileUsername }}</p>
+                    <div class="profile-identity-meta">
+                        <span><i class="fas fa-briefcase" aria-hidden="true"></i>{{ $profilePosition }}</span>
+                        <span><i class="fas fa-map-marker-alt" aria-hidden="true"></i>{{ $profileDistrict }}</span>
+                    </div>
+                </div>
+            </header>
+
+            <div class="profile-account-body">
+                <x-ui.form.section title="Información personal" icon="user">
+                    <div class="profile-field">
+                        <span class="profile-field-label">Usuario</span>
+                        <div class="profile-readonly-field">{{ $profileUsername }}</div>
+                    </div>
+                    <div class="profile-field">
+                        <span class="profile-field-label">Nombre completo</span>
+                        <div class="profile-readonly-field">{{ $profileName }}</div>
+                    </div>
+                    <div class="profile-field">
+                        <span class="profile-field-label">Correo electrónico</span>
+                        <div class="profile-readonly-field">{{ $profileUser->email }}</div>
+                    </div>
+                    <div class="profile-field">
+                        <span class="profile-field-label">Teléfono</span>
+                        <div class="profile-readonly-field">{{ $profilePhone }}</div>
+                    </div>
+                </x-ui.form.section>
+
+                <x-ui.form.section title="Información laboral" icon="work">
+                    <div class="profile-field">
+                        <span class="profile-field-label">Cargo</span>
+                        <div class="profile-readonly-field">{{ $profilePosition }}</div>
+                    </div>
+                    <div class="profile-field">
+                        <span class="profile-field-label">Distrito</span>
+                        <div class="profile-readonly-field">{{ $profileDistrict }}</div>
+                    </div>
+                </x-ui.form.section>
+
+                <x-ui.form.section title="Información de la cuenta" icon="settings" class="profile-account-section">
+                    <div class="profile-field">
+                        <span class="profile-field-label">Fecha de alta</span>
+                        <div class="profile-readonly-field">{{ optional($profileUser->created_at)->format('d/m/Y') ?? 'Sin registro' }}</div>
+                    </div>
+                    <div class="profile-account-statuses" aria-label="Estado y rol de la cuenta">
+                        <div>
+                            <span class="profile-field-label">Estado de la cuenta</span>
+                            <span class="profile-status-text">
+                                <span class="profile-status-dot {{ $profileIsActive ? 'is-active' : 'is-inactive' }}" aria-hidden="true"></span>
+                                {{ $profileIsActive ? 'Activo' : 'Inactivo' }}
+                            </span>
+                        </div>
+                        <div>
+                            <span class="profile-field-label">Rol en el sistema</span>
+                            <span class="profile-role-badge {{ $profileRoleClass }}">{{ $profileRoleLabel }}</span>
+                        </div>
+                    </div>
+                </x-ui.form.section>
+
+                <div class="profile-help-note">
+                    <i class="fas fa-info-circle" aria-hidden="true"></i>
+                    <div>
+                        <strong>¿Necesitas actualizar tus datos?</strong>
+                        <p>Solicita la modificación al administrador del sistema: <a href="mailto:carlos.rodriguez@tamaulipas.gob.mx">carlos.rodriguez@tamaulipas.gob.mx</a> · <a href="tel:+528343186300">+52 834 318 6300</a></p>
+                    </div>
+                </div>
+            </div>
+
+            <footer class="profile-account-footer">
+                <form method="POST" action="{{ route('logout') }}">
+                    @csrf
+                    <button type="submit" class="profile-logout-button">
+                        <i class="fas fa-sign-out-alt" aria-hidden="true"></i>
+                        Cerrar sesión
+                    </button>
+                </form>
+            </footer>
+        </article>
+    </div>
+
+    @if(false)
+    <div class="users-form-page profile-page px-4 sm:px-6 lg:px-10 pt-6 lg:pt-8 pb-8 lg:pb-10">
+        <x-ui.page-header
+            title="Mi perfil"
+            description="Consulta tu información personal y los datos de tu cuenta."
+        />
+
+        <div class="profile-layout">
             
             <!-- COLUMNA IZQUIERDA - FICHA DE USUARIO -->
-            <div class="lg:w-80 lg:flex-none min-w-0">
-                <div class="border border-[#404041] rounded-lg p-6 bg-white overflow-hidden">
+            <div class="profile-summary-column min-w-0">
+                <div class="profile-summary-card border border-[#404041] rounded-lg p-6 bg-white overflow-hidden">
                     <!-- FOTO DE PERFIL -->
-                    <div class="flex flex-col items-center mb-6">
+                    <div class="profile-summary-identity flex flex-col items-center mb-6">
                         <div class="relative group">
                             @if(auth()->user()->profile_photo_path)
-                                <img src="{{ asset('storage/' . auth()->user()->profile_photo_path) }}" alt="Foto de perfil" class="w-24 h-24 rounded-full object-cover border-4 border-[#611132]" data-profile-avatar>
+                                <img src="{{ asset('storage/' . auth()->user()->profile_photo_path) }}" alt="Foto de perfil" class="profile-avatar w-24 h-24 rounded-full object-cover border-4 border-[#611132]" data-profile-avatar>
                             @else
-                                <img src="{{ asset('images/default_pfp.svg.png') }}" alt="Avatar predeterminado" class="w-24 h-24 rounded-full object-cover border-4 border-[#611132]" data-profile-avatar>
+                                <img src="{{ asset('images/default_pfp.svg.png') }}" alt="Avatar predeterminado" class="profile-avatar w-24 h-24 rounded-full object-cover border-4 border-[#611132]" data-profile-avatar>
                             @endif
                             
-                            <button type="button" id="photoMenuBtn" class="absolute -bottom-1 -right-1 flex h-8 w-8 items-center justify-center rounded-full border-2 border-white bg-[#611132] text-white shadow-sm transition-all duration-200 hover:bg-[#4a0e26] hover:shadow-md active:scale-95 focus:outline-none focus:ring-2 focus:ring-[#611132]/30" title="Opciones de foto" aria-label="Opciones de foto" aria-expanded="false" aria-controls="photoMenu">
+                            <button type="button" id="photoMenuBtn" class="profile-photo-button absolute -bottom-1 -right-1 flex h-8 w-8 items-center justify-center rounded-full border-2 border-white bg-[#611132] text-white shadow-sm transition-all duration-200 hover:bg-[#4a0e26] hover:shadow-md active:scale-95 focus:outline-none focus:ring-2 focus:ring-[#611132]/30" title="Opciones de foto" aria-label="Opciones de foto" aria-expanded="false" aria-controls="photoMenu">
                                 <i class="fas fa-camera text-xs"></i>
                             </button>
 
-                            <div id="photoMenu" class="hidden absolute left-1/2 top-full z-20 mt-3 w-44 -translate-x-1/2 overflow-hidden rounded-lg border border-gray-200 bg-white text-left shadow-xl ring-1 ring-black/5">
+                            <div id="photoMenu" class="profile-photo-menu hidden absolute left-1/2 top-full z-20 mt-3 w-44 -translate-x-1/2 overflow-hidden rounded-lg border border-gray-200 bg-white text-left shadow-xl ring-1 ring-black/5">
                                 <button type="button" id="uploadPhotoBtn" class="flex w-full items-center gap-2 px-3 py-2 text-xs font-lora font-semibold text-[#404041] transition-colors hover:bg-gray-50 focus:bg-gray-50 focus:outline-none">
                                     <i class="fas fa-camera w-4 text-[#611132]"></i>
                                     Cambiar foto
@@ -42,12 +185,12 @@
                         <!-- Input file hidden -->
                         <input type="file" id="photoInput" accept="image/*" style="display: none;">
                         
-                        <h2 class="text-lg font-lora font-bold text-[#404041] text-center mt-4 leading-snug max-w-full break-words [overflow-wrap:anywhere]">{{ $fullName ?? auth()->user()->name }}</h2>
-                        <p class="text-sm text-gray-600 font-lora text-center leading-snug max-w-full break-words [overflow-wrap:anywhere]">{{ auth()->user()->position->name ?? 'Sin cargo' }}</p>
+                        <h2 class="profile-summary-name text-lg font-lora font-bold text-[#404041] text-center mt-4 leading-snug max-w-full break-words [overflow-wrap:anywhere]">{{ $fullName ?? auth()->user()->name }}</h2>
+                        <p class="profile-summary-position text-sm text-gray-600 font-lora text-center leading-snug max-w-full break-words [overflow-wrap:anywhere]">{{ auth()->user()->position->name ?? 'Sin cargo' }}</p>
                     </div>
 
                     <!-- INFORMACIÓN RÁPIDA -->
-                    <div class="space-y-3 border-t border-gray-200 pt-4">
+                    <div class="profile-quick-list space-y-3 border-t border-gray-200 pt-4">
                         <div class="flex items-start gap-3 min-w-0">
                             <i class="fas fa-envelope text-[#611132] text-sm mt-1 flex-none"></i>
                             <div class="min-w-0">
@@ -74,10 +217,10 @@
                     </div>
 
                     <!-- BOTÓN CERRAR SESIÓN -->
-                    <div class="mt-6 pt-4 border-t border-gray-200">
+                    <div class="profile-logout-area mt-6 pt-4 border-t border-gray-200">
                         <form method="POST" action="{{ route('logout') }}">
                             @csrf
-                            <button type="submit" class="w-full bg-[#611132] text-white px-4 py-2.5 rounded-lg text-xs font-semibold hover:bg-[#4a0e26] transition-all duration-300 font-lora flex items-center justify-center gap-2">
+                            <button type="submit" class="profile-logout-button w-full bg-[#611132] text-white px-4 py-2.5 rounded-lg text-xs font-semibold hover:bg-[#4a0e26] transition-all duration-300 font-lora flex items-center justify-center gap-2">
                                 <i class="fas fa-sign-out-alt text-xs"></i>
                                 Cerrar Sesión
                             </button>
@@ -87,18 +230,18 @@
             </div>
 
             <!-- COLUMNA DERECHA - INFORMACIÓN DETALLADA -->
-            <div class="flex-1 min-w-0">
-                <div class="border border-[#404041] rounded-lg bg-white overflow-hidden">
+            <div class="profile-details-column min-w-0">
+                <div class="users-form-card profile-details-card border border-[#404041] rounded-lg bg-white overflow-hidden">
                     
                     <!-- ENCABEZADO -->
-                    <div class="border-b border-[#404041] p-4">
+                    <div class="profile-details-header border-b border-[#404041] p-4">
                         <h3 class="text-lg font-lora font-bold text-[#404041]">Información Personal</h3>
                         <p class="text-sm text-gray-600 font-lora mt-1">Datos personales y información de tu cuenta</p>
                     </div>
 
                     <!-- CONTENIDO -->
-                    <div class="p-6">
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="profile-details-body p-6">
+                        <div class="profile-details-grid grid grid-cols-1 md:grid-cols-2 gap-6">
                             <!-- Información Básica -->
                             <div class="space-y-4">
                                 <h4 class="font-lora font-semibold text-[#404041] text-sm border-b border-gray-200 pb-2">Información Básica</h4>
@@ -210,6 +353,8 @@
             </div>
         </div>
     </div>
+
+    @endif
 
     <!-- AGREGAR FONT AWESOME -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">

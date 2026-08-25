@@ -145,6 +145,12 @@
         margin-top: 2px;
       }
 
+      @media (min-width: 641px) {
+        .login-card {
+          zoom: 0.65;
+        }
+      }
+
       @media (max-width: 420px) {
         .login-card {
           padding: 30px 24px 28px;

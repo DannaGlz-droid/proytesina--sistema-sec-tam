@@ -1,0 +1,3 @@
+.report-observatory-form-page .report-road-file-requirements {
+    grid-template-columns: minmax(0, 1fr);
+}

@@ -1,17 +1,24 @@
-<div class="flex items-center justify-end space-x-1">
-    <a href="{{ route('statistic.edit', $death->id) }}" class="w-7 h-7 flex items-center justify-center rounded border border-[#404041] text-[#404041] hover:bg-[#404041] hover:text-white transition-all duration-200" title="Editar" aria-label="Editar defunción {{ $death->id }}">
-        <i class="fas fa-edit text-xs"></i>
-    </a>
-    <form method="POST"
-          action="{{ route('statistic.destroy', $death->id) }}"
-          data-confirm-delete-form
-          data-confirm-title="Eliminar registro"
-          data-confirm-subject="el registro {{ $death->id }}"
-          data-confirm-description="El registro dejará de estar disponible de forma permanente.">
-        @csrf
-        @method('DELETE')
-        <button type="submit" class="w-7 h-7 flex items-center justify-center rounded border border-[#AB1A1A] text-[#AB1A1A] hover:bg-[#AB1A1A] hover:text-white transition-all duration-200" title="Eliminar" aria-label="Eliminar registro {{ $death->id }}">
-            <i class="fas fa-trash text-xs"></i>
-        </button>
-    </form>
+<div class="users-row-actions">
+    <button type="button" class="users-row-menu-button" title="Acciones" aria-label="Abrir acciones de la defunción {{ $death->id }}" aria-expanded="false">
+        <i class="fas fa-ellipsis-v" aria-hidden="true"></i>
+    </button>
+    <div class="users-row-menu hidden" role="menu">
+        <a href="{{ route('statistic.edit', $death->id) }}" class="users-row-menu-item" role="menuitem">
+            <i class="fas fa-edit users-row-menu-icon" aria-hidden="true"></i>
+            <span>Editar</span>
+        </a>
+        <form method="POST"
+              action="{{ route('statistic.destroy', $death->id) }}"
+              data-confirm-delete-form
+              data-confirm-title="Eliminar registro"
+              data-confirm-subject="el registro {{ $death->id }}"
+              data-confirm-description="El registro dejará de estar disponible de forma permanente.">
+            @csrf
+            @method('DELETE')
+            <button type="submit" class="users-row-menu-item users-row-menu-item-danger" role="menuitem">
+                <i class="fas fa-trash users-row-menu-icon" aria-hidden="true"></i>
+                <span>Eliminar</span>
+            </button>
+        </form>
+    </div>
 </div>

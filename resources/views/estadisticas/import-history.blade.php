@@ -5,277 +5,36 @@
     @include('components.header-admin')
     @include('components.nav-estadisticas')
 
-    <div class="px-4 lg:pl-10 pt-6 lg:pt-10 pb-8 lg:pb-12">
-        <!-- HEADER CON TÍTULO -->
-        <div class="flex flex-col lg:flex-row lg:justify-between lg:items-center gap-4 mb-6">
-            <div>
-                <h1 class="app-page-title">Historial de Importaciones</h1>
-                <p class="app-page-subtitle">
-                    Visualiza todas las importaciones realizadas, filtra por fecha y estado, y revierte las que desees deshacer.
-                </p>
-            </div>
-            <a href="{{ route('statistic.data') }}" class="bg-[#611132] text-white px-4 py-2.5 rounded-lg text-xs font-semibold hover:bg-[#4a0e26] transition-all duration-300 font-lora flex items-center gap-2 whitespace-nowrap shadow-sm self-start lg:self-auto">
-                <i class="fas fa-arrow-left text-xs"></i>
-                Volver
-            </a>
-        </div>
-
-        <!-- Layout principal: Filtros + Tabla -->
-        <div class="flex flex-col lg:flex-row gap-6">
-            
-            <!-- Columna Izquierda - Filtros -->
-            <div class="lg:w-80 flex-shrink-0">
+    <main class="users-management-page statistics-import-history-page px-4 lg:pl-10 pt-5 lg:pt-7 pb-8 lg:pb-10">
+        <x-ui.page-header class="users-management-header" title="Historial de importaciones" description="Consulte las cargas realizadas, revise sus resultados y gestione las importaciones reversibles.">
+            <x-slot:actions><a href="{{ route('statistic.data') }}" class="users-page-create-btn"><i class="fas fa-arrow-left" aria-hidden="true"></i>Volver a datos</a></x-slot:actions>
+        </x-ui.page-header>
+        <div class="app-table-card users-table-card imports-table-card">
+            <div class="app-table-toolbar flex flex-row flex-wrap items-center justify-between gap-3 p-4">
                 <x-filtros.importaciones />
-            </div>
-
-            <!-- Columna Derecha - Tabla -->
-            <div class="flex-1 min-w-0">
-                <div class="app-table-card">
-                    <!-- Custom search, per-page controls -->
-                    <div class="app-table-toolbar flex flex-row flex-wrap items-center justify-between gap-3 p-4">
-                        <div class="flex-1 min-w-0 sm:w-1/3 lg:w-1/2">
-                            <div class="app-table-search">
-                                <div class="app-table-search-icon">
-                                    <i class="fas fa-search"></i>
-                                </div>
-                                <input type="text" id="search-imports" class="app-table-search-input" placeholder="Buscar en importaciones...">
-                                <div class="app-table-search-actions">
-                                    <button type="button" id="clear-imports-btn" class="app-table-clear-button hidden" title="Limpiar búsqueda">
-                                        <i class="fas fa-times text-xs"></i>
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="app-table-controls ml-0 sm:ml-auto flex flex-wrap items-center justify-end gap-3">
-                            <div class="app-table-page-size">
-                                <span>Mostrar</span>
-                                <select id="per-page-imports">
-                                    <option value="10" selected>10</option>
-                                    <option value="25">25</option>
-                                    <option value="50">50</option>
-                                    <option value="100">100</option>
-                                </select>
-                            </div>
-                            <div id="bulk-selection-bar-imports" class="app-table-bulk-inline hidden items-center gap-3">
-                                <div class="flex items-center gap-2">
-                                    <span class="app-table-selection-marker"></span>
-                                    <span id="bulk-selected-count-imports" class="app-table-selection-count text-xs font-lora whitespace-nowrap"></span>
-                                </div>
-                                <span class="hidden xl:inline text-xs font-lora text-gray-500">En esta página</span>
-                                <button id="clear-selected-imports" type="button" class="hidden text-xs font-semibold font-lora text-[#611132] hover:underline whitespace-nowrap" title="Quitar selección">
-                                    Quitar selección
-                                </button>
-                                <button id="bulk-delete-imports" type="button" class="app-table-bulk-danger items-center gap-2" title="Eliminar seleccionados" style="display: none;">
-                                    <i class="fas fa-trash text-xs"></i>
-                                    <span>Eliminar</span>
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Table wrapper -->
-                    <div class="app-table-shell overflow-x-auto min-w-0">
-                        <table id="imports-table" class="app-data-table min-w-full w-full text-sm text-left text-gray-500">
-                            <colgroup>
-                                <col style="width: 2.75rem;">
-                                <col style="width: 32%;">
-                                <col style="width: 15%;">
-                                <col style="width: 8%;">
-                                <col style="width: 5%;">
-                                <col style="width: 10%;">
-                                <col style="width: 6%;">
-                                <col style="width: 6%;">
-                                <col style="width: 8%;">
-                                <col style="width: 6.75rem;">
-                            </colgroup>
-                            <thead class="text-xs border-b border-[#404041]">
-                                <tr>
-                                    <th scope="col" class="px-2 py-2 font-lora whitespace-nowrap text-xs text-center"><input id="select-all-imports" type="checkbox" /></th>
-                                    <th scope="col" class="px-3 py-2 font-lora whitespace-nowrap text-xs sorting sortable" data-sort-key="original_name">Archivo</th>
-                                    <th scope="col" class="px-3 py-2 font-lora whitespace-nowrap text-xs sorting sortable" data-sort-key="created_by">Cargado por</th>
-                                    <th scope="col" class="px-3 py-2 font-lora whitespace-nowrap text-xs sorting_desc sortable" data-sort-key="created_at">Fecha</th>
-                                    <th scope="col" class="px-3 py-2 font-lora whitespace-nowrap text-xs">Total</th>
-                                    <th scope="col" class="px-3 py-2 font-lora whitespace-nowrap text-xs">Importados</th>
-                                    <th scope="col" class="px-3 py-2 font-lora whitespace-nowrap text-xs" title="Folios existentes omitidos o detectados con datos distintos">Observaciones</th>
-                                    <th scope="col" class="px-3 py-2 font-lora whitespace-nowrap text-xs">Fallidos</th>
-                                    <th scope="col" class="px-3 py-2 font-lora whitespace-nowrap text-xs">Estado</th>
-                                    <th scope="col" class="px-3 py-2 font-lora whitespace-nowrap text-xs text-right w-24" data-orderable="false">Acciones</th>
-                                </tr>
-                            </thead>
-                            <tbody id="imports-tbody">
-                                <!-- Se llena con JavaScript -->
-                            </tbody>
-                        </table>
-                    </div>
-
-                    <!-- Pagination -->
-                    <nav class="flex flex-row flex-wrap items-center justify-between gap-3 p-4 border-t border-[#404041]">
-                        <span class="text-sm font-normal text-gray-500 font-lora flex-1 min-w-0" id="info-imports">
-                            Mostrando <span class="font-semibold text-gray-900">0-0</span> de <span class="font-semibold text-gray-900">0</span> entradas
-                        </span>
-                        <div id="pagination-imports" class="flex-none"></div>
-                    </nav>
+                <div id="bulk-selection-bar-imports" class="app-table-bulk-inline hidden items-center gap-3">
+                    <div class="flex items-center gap-2"><span class="app-table-selection-marker"></span><span id="bulk-selected-count-imports" class="app-table-selection-count text-xs whitespace-nowrap"></span></div>
+                    <span class="hidden xl:inline text-xs text-gray-500">En esta página</span>
+                    <button id="clear-selected-imports" type="button" class="hidden text-xs font-semibold text-slate-600 hover:underline whitespace-nowrap">Quitar selección</button>
+                    <button id="bulk-delete-imports" type="button" class="app-table-bulk-danger items-center gap-2" style="display:none"><i class="fas fa-trash" aria-hidden="true"></i><span>Eliminar</span></button>
                 </div>
             </div>
+            <div class="app-table-shell imports-table-scroll min-w-0">
+                <div class="users-table-refresh-progress" aria-hidden="true"></div><span id="imports-table-status" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></span>
+                <table id="imports-table" class="app-data-table imports-table min-w-full w-full text-sm text-left text-gray-500">
+                    <thead class="text-xs"><tr>
+                        <th scope="col" class="dt-checkbox-cell"><label class="users-checkbox-hitbox" for="select-all-imports" title="Selecciona únicamente cargas que pueden eliminarse del historial"><input id="select-all-imports" type="checkbox" aria-label="Seleccionar cargas eliminables visibles"></label></th>
+                        <th scope="col" class="sorting sortable" data-sort-key="original_name">Archivo</th>
+                        <th scope="col" class="sorting sortable" data-sort-key="created_by">Cargado por</th>
+                        <th scope="col" class="sorting_desc sortable" data-sort-key="created_at">Fecha de carga</th>
+                        <th scope="col">Resultado</th><th scope="col">Estado</th><th scope="col" class="dt-actions-cell"><span class="sr-only">Acciones</span></th>
+                    </tr></thead>
+                    <tbody id="imports-tbody"></tbody>
+                </table>
+            </div>
+            <nav class="users-table-footer imports-table-footer flex flex-row flex-wrap items-center justify-between gap-3 p-4"><span id="dt-info" class="text-sm font-normal text-gray-500 flex-1 min-w-0 is-loading">Preparando tabla</span><div id="dt-pagination" class="flex-none"></div></nav>
         </div>
-    </div>
-
-    <!-- FONT AWESOME -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-
-    <style>
-        .status-badge {
-            display: inline-block;
-            padding: 0.25rem 0.75rem;
-            border-radius: 9999px;
-            font-size: 0.75rem;
-            font-weight: 700;
-        }
-
-        .status-completed {
-            background-color: #dcfce7;
-            color: #166534;
-        }
-
-        .status-processing {
-            background-color: #fef3c7;
-            color: #92400e;
-        }
-
-        .status-failed {
-            background-color: #fee2e2;
-            color: #991b1b;
-        }
-
-        .status-reversed {
-            background-color: #e0e7ff;
-            color: #3730a3;
-        }
-
-        .action-btn-disabled {
-            opacity: 0.5;
-            cursor: not-allowed !important;
-            pointer-events: none !important;
-        }
-
-        .action-btn-disabled:hover {
-            background-color: white !important;
-            color: inherit !important;
-        }
-
-        #imports-table thead th:nth-child(1),
-        #imports-table tbody td:nth-child(1) {
-            width: 2.75rem;
-            text-align: center;
-            padding-left: 0.75rem;
-        }
-
-        #imports-table thead th:nth-child(2),
-        #imports-table tbody td:nth-child(2) {
-            width: 32%;
-        }
-
-        #imports-table thead th:nth-child(3),
-        #imports-table tbody td:nth-child(3) {
-            width: 15%;
-        }
-
-        #imports-table thead th:nth-child(4),
-        #imports-table tbody td:nth-child(4) {
-            width: 8%;
-            white-space: nowrap;
-        }
-
-        #imports-table thead th:nth-child(5),
-        #imports-table tbody td:nth-child(5) {
-            width: 5%;
-            text-align: center;
-        }
-
-        #imports-table thead th:nth-child(6),
-        #imports-table tbody td:nth-child(6) {
-            width: 6%;
-            text-align: center;
-        }
-
-        #imports-table thead th:nth-child(7),
-        #imports-table tbody td:nth-child(7),
-        #imports-table thead th:nth-child(8),
-        #imports-table tbody td:nth-child(8),
-        #imports-table thead th:nth-child(9),
-        #imports-table tbody td:nth-child(9) {
-            width: 6%;
-            text-align: center;
-        }
-
-        #imports-table thead th:nth-child(10),
-        #imports-table tbody td:nth-child(10) {
-            width: 8%;
-            white-space: nowrap;
-        }
-
-        #imports-table thead th:nth-child(11),
-        #imports-table tbody td:nth-child(11) {
-            width: 6.75rem;
-            white-space: nowrap;
-        }
-
-        /* Sorting style aligned with existing DataTables tables */
-        #imports-table thead th.sortable {
-            cursor: pointer;
-            user-select: none;
-            position: relative;
-            padding-right: 1.5rem;
-        }
-
-        #imports-table thead th.sorting::before,
-        #imports-table thead th.sorting::after,
-        #imports-table thead th.sorting_asc::before,
-        #imports-table thead th.sorting_asc::after,
-        #imports-table thead th.sorting_desc::before,
-        #imports-table thead th.sorting_desc::after {
-            position: absolute;
-            right: 0.5rem;
-            line-height: 1;
-            font-size: 0.55rem;
-            color: #d1d5db;
-            opacity: 1;
-            pointer-events: none;
-        }
-
-        #imports-table thead th.sorting::before,
-        #imports-table thead th.sorting_asc::before,
-        #imports-table thead th.sorting_desc::before {
-            content: '▲';
-            top: 40%;
-            transform: translateY(-50%);
-        }
-
-        #imports-table thead th.sorting::after,
-        #imports-table thead th.sorting_asc::after,
-        #imports-table thead th.sorting_desc::after {
-            content: '▼';
-            top: 62%;
-            transform: translateY(-50%);
-        }
-
-        #imports-table thead th.sorting_asc::before {
-            color: #9ca3af;
-        }
-
-        #imports-table thead th.sorting_asc::after {
-            color: #e5e7eb;
-        }
-
-        #imports-table thead th.sorting_desc::before {
-            color: #e5e7eb;
-        }
-
-        #imports-table thead th.sorting_desc::after {
-            color: #9ca3af;
-        }
-    </style>
+    </main>
 
 @endsection
 
@@ -301,37 +60,26 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function importsLoadingRow() {
-        return `
-            <tr class="app-table-loading-row">
-                <td colspan="10">
-                    <span class="app-table-loading-inline">
-                        <span>Cargando datos</span>
-                        <span class="inline-flex items-center gap-1">
-                            <span class="app-table-loading-dot"></span>
-                            <span class="app-table-loading-dot"></span>
-                            <span class="app-table-loading-dot"></span>
-                        </span>
-                    </span>
-                </td>
-            </tr>
-        `;
+        return `<tr class="users-table-state-row"><td colspan="7"><div class="users-table-skeleton" role="status" aria-label="Cargando importaciones"><span class="sr-only">Cargando importaciones</span><div></div><div></div><div></div><div></div><div></div></div></td></tr>`;
     }
 
     function importsMessageRow(message, tone = 'muted') {
-        const toneClass = tone === 'error' ? 'text-red-700' : 'text-gray-500';
-
-        return `
-            <tr>
-                <td colspan="10" class="text-center py-4 ${toneClass}">
-                    ${escapeHtml(message)}
-                </td>
-            </tr>
-        `;
+        const error = tone === 'error';
+        const kind = error ? 'error' : 'no-results';
+        return `<tr class="users-table-state-row users-table-state-row--${kind}"><td colspan="7"><div class="users-table-state users-table-state--${kind}" role="${error ? 'alert' : 'status'}">
+            <i class="fas ${error ? 'fa-triangle-exclamation' : 'fa-magnifying-glass'}" aria-hidden="true"></i>
+            <strong>${error ? 'No pudimos cargar el historial' : 'No encontramos resultados'}</strong>
+            <span>${escapeHtml(message)}</span>
+            <button type="button" class="users-table-state-action" data-imports-${error ? 'retry' : 'reset'}>${error ? 'Reintentar' : 'Limpiar búsqueda y filtros'}</button>
+        </div></td></tr>`;
     }
 
     function setImportsTableLoading(isLoading) {
+        const card = document.querySelector('.imports-table-card');
+        card?.classList.toggle('is-refreshing', isLoading);
+        const status = document.getElementById('imports-table-status');
+        if (status) status.textContent = isLoading ? 'Actualizando historial de importaciones' : '';
         if (!isLoading) return;
-
         const tbody = document.getElementById('imports-tbody');
         if (!tbody) return;
 
@@ -344,9 +92,10 @@ document.addEventListener('DOMContentLoaded', function () {
         currentPage = 1;
 
         const tbody = document.getElementById('imports-tbody');
-        if (tbody) tbody.innerHTML = importsMessageRow('No se pudieron cargar las importaciones.', 'error');
+        if (tbody) tbody.innerHTML = importsMessageRow('Revise la conexión e intente nuevamente.', 'error');
 
         updatePaginationInfo();
+        renderPagination();
         clearVisibleImportSelection();
     }
 
@@ -368,6 +117,8 @@ document.addEventListener('DOMContentLoaded', function () {
     // Event listeners for filters
     const searchInput = document.getElementById('search-imports');
     const clearBtn = document.getElementById('clear-imports-btn');
+    const searchControl = searchInput?.closest('.users-filter-search');
+    let importSearchTimer = null;
     const dateRangeSelect = document.getElementById('dateRangeImports');
     const startDateInput = document.getElementById('startDateImports');
     const endDateInput = document.getElementById('endDateImports');
@@ -401,6 +152,7 @@ document.addEventListener('DOMContentLoaded', function () {
         sortImports();
         currentPage = 1;
         renderTable();
+        window.syncImportFilterUI?.();
     }
 
     function sortImports() {
@@ -441,13 +193,29 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    // Search input - applies only on Enter key
+    function runImportSearch() {
+        window.clearTimeout(importSearchTimer);
+        searchControl?.classList.add('is-searching');
+        searchInput?.setAttribute('aria-busy', 'true');
+
+        // The history is filtered locally. Keep the same visible feedback as
+        // server-side tables long enough for the browser to paint one frame.
+        importSearchTimer = window.setTimeout(() => {
+            applyFilters();
+            searchControl?.classList.remove('is-searching');
+            searchInput?.setAttribute('aria-busy', 'false');
+            updateSearchButton();
+        }, 180);
+    }
+
+    // Match the pilot: typing prepares the query; Enter executes it.
     if (searchInput) {
         searchInput.addEventListener('input', updateSearchButton);
 
-        searchInput.addEventListener('keypress', (e) => {
+        searchInput.addEventListener('keydown', (e) => {
             if (e.key === 'Enter') {
-                applyFilters();
+                e.preventDefault();
+                runImportSearch();
             }
         });
     }
@@ -457,7 +225,7 @@ document.addEventListener('DOMContentLoaded', function () {
         clearBtn.addEventListener('click', () => {
             if (searchInput) searchInput.value = '';
             updateSearchButton();
-            applyFilters();
+            runImportSearch();
         });
     }
 
@@ -506,6 +274,105 @@ document.addEventListener('DOMContentLoaded', function () {
 
     $('#imports-table tbody').on('click', 'input.row-check-import, button, a', function(e) {
         e.stopPropagation();
+    });
+
+    function restoreImportActionMenu(menu) {
+        if (!menu?._importsMenuHost) return;
+        menu._importsMenuHost.appendChild(menu);
+        menu.classList.remove('is-viewport-positioned');
+        menu.style.removeProperty('top');
+        menu.style.removeProperty('left');
+        menu.style.removeProperty('right');
+        menu.style.removeProperty('visibility');
+        menu._importsMenuHost = null;
+    }
+
+    function closeImportActionMenus(exceptMenu = null) {
+        document.querySelectorAll('.users-row-menu[data-import-action-menu]').forEach(menu => {
+            if (menu === exceptMenu) return;
+            menu.classList.add('hidden');
+            menu._importsMenuTrigger?.setAttribute('aria-expanded', 'false');
+            restoreImportActionMenu(menu);
+        });
+    }
+
+    function positionImportActionMenu(menu, trigger) {
+        menu._importsMenuHost = menu.parentElement;
+        menu._importsMenuTrigger = trigger;
+        const rect = trigger.getBoundingClientRect();
+        document.body.appendChild(menu);
+        menu.classList.add('is-viewport-positioned');
+        menu.classList.remove('hidden');
+        menu.style.visibility = 'hidden';
+
+        const width = menu.offsetWidth;
+        const height = menu.offsetHeight;
+        const margin = 8;
+        const left = Math.min(window.innerWidth - width - margin, Math.max(margin, rect.right - width));
+        const top = rect.bottom + height + margin <= window.innerHeight
+            ? rect.bottom + 5
+            : Math.max(margin, rect.top - height - 5);
+
+        menu.style.left = `${left}px`;
+        menu.style.top = `${top}px`;
+        menu.style.visibility = '';
+    }
+
+    document.getElementById('imports-tbody')?.addEventListener('click', function (event) {
+        const menuToggle = event.target.closest('[data-import-menu-toggle]');
+        if (menuToggle) {
+            const menu = menuToggle.nextElementSibling;
+            const willOpen = menu?.classList.contains('hidden');
+            closeImportActionMenus(willOpen ? menu : null);
+            if (willOpen && menu) {
+                positionImportActionMenu(menu, menuToggle);
+                menuToggle.setAttribute('aria-expanded', 'true');
+            } else if (menu) {
+                menu.classList.add('hidden');
+                menuToggle.setAttribute('aria-expanded', 'false');
+                restoreImportActionMenu(menu);
+            }
+            return;
+        }
+        const reverse = event.target.closest('[data-reverse-import]');
+        if (reverse && !reverse.disabled) {
+            closeImportActionMenus();
+            window.reverseImport(Number(reverse.dataset.reverseImport));
+        }
+        const remove = event.target.closest('[data-delete-import]');
+        if (remove && !remove.disabled) {
+            closeImportActionMenus();
+            window.deleteImport(Number(remove.dataset.deleteImport));
+        }
+    });
+
+    document.addEventListener('click', function (event) {
+        const reverse = event.target.closest('[data-reverse-import]');
+        const remove = event.target.closest('[data-delete-import]');
+        if (reverse && !reverse.disabled) {
+            closeImportActionMenus();
+            window.reverseImport(Number(reverse.dataset.reverseImport));
+            return;
+        }
+        if (remove && !remove.disabled) {
+            closeImportActionMenus();
+            window.deleteImport(Number(remove.dataset.deleteImport));
+            return;
+        }
+        if (!event.target.closest('[data-import-menu-toggle]') && !event.target.closest('[data-import-action-menu]')) closeImportActionMenus();
+    });
+    document.addEventListener('keydown', event => { if (event.key === 'Escape') closeImportActionMenus(); });
+    window.addEventListener('resize', () => closeImportActionMenus());
+    window.addEventListener('scroll', () => closeImportActionMenus(), true);
+
+    document.getElementById('imports-tbody')?.addEventListener('click', function (event) {
+        if (event.target.closest('[data-imports-retry]')) loadImports();
+        if (event.target.closest('[data-imports-reset]')) {
+            document.getElementById('limpiarFiltrosImportaciones')?.click();
+            if (searchInput) searchInput.value = '';
+            updateSearchButton();
+            applyFilters();
+        }
     });
 
     $('#clear-selected-imports').on('click', function() {
@@ -578,7 +445,8 @@ document.addEventListener('DOMContentLoaded', function () {
             if (searchInput) searchInput.value = '';
             
             // Reset date range
-            if (dateRangeSelect) dateRangeSelect.value = 'all';
+            if (dateRangeSelect?.tomselect) dateRangeSelect.tomselect.setValue('all', true);
+            else if (dateRangeSelect) dateRangeSelect.value = 'all';
             
             // Hide custom date range if visible
             const customRangeSelector = document.getElementById('customRangeSelectorImports');
@@ -605,6 +473,7 @@ document.addEventListener('DOMContentLoaded', function () {
             // Reset date inputs
             if (startDateInput) startDateInput.value = '';
             if (endDateInput) endDateInput.value = '';
+            window.syncImportFilterUI?.();
             
             // Apply filters (show all records)
             applyFilters();
@@ -667,7 +536,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function loadImports() {
         setImportsTableLoading(true);
-        const url = '{{ route("statistic.import-history") }}';
+        const url = '{{ route("statistic.import-history") }}?per_page=5000';
         fetch(url, {
             headers: {
                 'X-CSRF-TOKEN': '{{ csrf_token() }}'
@@ -691,7 +560,8 @@ document.addEventListener('DOMContentLoaded', function () {
             console.error(err);
             showError('No se pudieron cargar los datos.');
             showImportsLoadError();
-        });
+        })
+        .finally(() => setImportsTableLoading(false));
     }
 
     window.filterImports = function() {
@@ -766,13 +636,49 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     };
 
+    function renderImportResult(imp) {
+        const added = Number(imp.rows_imported || 0);
+        const unchanged = Number(imp.rows_skipped_duplicates || imp.skipped_duplicates || 0);
+        const different = Number(imp.rows_changed_existing || imp.changed_existing || 0);
+        const toCorrect = Number(imp.rows_failed || 0);
+
+        if (added + unchanged + different + toCorrect === 0) {
+            if (imp.status === 'processing') {
+                return '<div class="imports-result-empty"><strong>En proceso</strong><small>Calculando el resultado</small></div>';
+            }
+
+            if (imp.status === 'failed') {
+                return '<div class="imports-result-empty"><strong>Sin resultado</strong><small>El archivo no pudo procesarse</small></div>';
+            }
+        }
+
+        const metric = (value, label, title, modifier = '') => `
+            <span class="imports-result-metric ${value === 0 ? 'is-zero' : ''} ${modifier}" title="${title}">
+                <strong>${value}</strong>
+                <small>${label}</small>
+            </span>`;
+
+        const correction = toCorrect > 0
+            ? `<a class="imports-result-metric imports-result-correction" href="/estadisticas/importaciones/${imp.id}/registros-fallidos" title="Abrir los registros que requieren corrección"><strong>${toCorrect}</strong><small>Por corregir <i class="fas fa-arrow-right" aria-hidden="true"></i></small></a>`
+            : metric(0, 'Por corregir', 'Registros que requieren corrección', 'imports-result-correction');
+
+        return `
+            <div class="imports-result-grid">
+                ${metric(added, 'Agregados', 'Registros nuevos guardados', 'imports-result-added')}
+                ${metric(unchanged, 'Ya existentes', 'Folios que ya existían con la misma información', 'imports-result-unchanged')}
+                ${metric(different, 'Diferencias', 'Folios existentes con información distinta; no fueron sobrescritos', 'imports-result-different')}
+                ${correction}
+            </div>`;
+    }
+
     function renderTable() {
         const tbody = document.getElementById('imports-tbody');
         tbody.innerHTML = '';
 
         if (filteredImports.length === 0) {
-            tbody.innerHTML = importsMessageRow('No se encontraron registros coincidentes');
+            tbody.innerHTML = importsMessageRow('Pruebe con otra búsqueda o elimine los filtros aplicados.');
             updatePaginationInfo();
+            renderPagination();
             clearVisibleImportSelection();
             return;
         }
@@ -783,7 +689,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         pageImports.forEach(imp => {
             const row = document.createElement('tr');
-            row.className = 'border-b border-gray-200 hover:bg-gray-50 transition-colors';
+            row.className = 'imports-table-row';
 
                 const createdDate = new Date(imp.created_at);
                 const createdByName = [imp.created_by, imp.created_by_first_last_name, imp.created_by_second_last_name]
@@ -791,74 +697,42 @@ document.addEventListener('DOMContentLoaded', function () {
                     .join(' ') || 'Sistema';
                 const createdByUsername = imp.created_by_username ? `@${imp.created_by_username}` : '';
             
-            const skippedDuplicates = Number(imp.rows_skipped_duplicates || imp.skipped_duplicates || 0);
-            const changedExisting = Number(imp.rows_changed_existing || imp.changed_existing || 0);
-            const observationParts = [];
-            if (skippedDuplicates > 0) {
-                observationParts.push(`<span class="text-gray-700 font-semibold">${skippedDuplicates} omitidos</span>`);
-            }
-            if (changedExisting > 0) {
-                observationParts.push(`<span class="text-amber-700 font-semibold" title="Folios existentes con datos distintos. No se sobrescribieron automaticamente.">${changedExisting} cambios</span>`);
-            }
-            const observationsHtml = observationParts.length
-                ? observationParts.join('<span class="text-gray-300 px-1">/</span>')
-                : '<span class="text-gray-500">-</span>';
             const statusClass = imp.is_reversed ? 'status-reversed' : `status-${imp.status}`;
             const statusText = imp.is_reversed ? 'Revertido' : (imp.status === 'completed' ? 'Completado' : imp.status === 'processing' ? 'Procesando' : 'Fallido');
+            const statusHelp = imp.is_reversed
+                ? 'Los datos agregados fueron retirados. El resultado muestra lo ocurrido antes de revertir la carga.'
+                : (imp.status === 'completed'
+                    ? 'La carga terminó y sus datos continúan aplicados.'
+                    : (imp.status === 'processing'
+                        ? 'La carga todavía se está procesando.'
+                        : 'El archivo no pudo procesarse y no agregó datos.'));
             
             const canReverse = !imp.is_reversed && imp.status === 'completed';
             const canDeleteHistory = canDeleteImportHistory(imp);
             const deleteHistoryTitle = canDeleteHistory
                 ? 'Eliminar historial'
                 : 'Primero revierte esta importación para conservar la trazabilidad de los datos';
+            const selectionTitle = canDeleteHistory
+                ? 'Seleccionar para eliminar este registro del historial'
+                : 'No se puede eliminar del historial mientras sus datos continúen aplicados; primero use Revertir importación en Acciones';
+
+            const fileName = String(imp.original_name || 'Archivo sin nombre');
+            const extensionIndex = fileName.lastIndexOf('.');
+            const fileBaseName = extensionIndex > 0 ? fileName.slice(0, extensionIndex) : fileName;
+            const fileExtension = extensionIndex > 0 ? fileName.slice(extensionIndex) : '';
 
             row.innerHTML = `
-                <td class="text-center"><input class="row-check-import" data-id="${imp.id}" type="checkbox" ${canDeleteHistory ? '' : 'disabled'} title="${deleteHistoryTitle}" /></td>
-                <td class="app-cell-wrap app-cell-strong">${escapeHtml(imp.original_name)}</td>
-                <td class="app-cell-wrap">
-                    <div class="flex flex-col leading-tight">
-                        <span class="font-medium text-gray-900">${escapeHtml(createdByName)}</span>
-                        ${createdByUsername ? `<span class="text-[11px] text-gray-500">${escapeHtml(createdByUsername)}</span>` : ''}
-                    </div>
-                </td>
-                <td class="app-cell-nowrap text-xs">${createdDate.toLocaleDateString('es-ES')} ${createdDate.toLocaleTimeString('es-ES', {hour: '2-digit', minute: '2-digit'})}</td>
-                <td class="text-center font-semibold">${imp.rows_total}</td>
-                <td class="text-center"><span class="text-green-600 font-semibold">${imp.rows_imported}</span></td>
-                <td class="text-center" title="Folios que ya existían y se omitieron para evitar duplicados">
-                    ${observationsHtml}
-                </td>
-                <td class="text-center" style="display:none">
-                    ${changedExisting > 0 ? `<span class="text-amber-700 font-semibold" title="Folios existentes con datos distintos. No se sobrescribieron automáticamente.">${changedExisting}</span>` : '<span class="text-gray-500">0</span>'}
-                </td>
-                <td class="text-center">
-                    ${imp.rows_failed > 0 ? `
-                        <a href="/estadisticas/importaciones/${imp.id}/registros-fallidos"
-                           class="inline-flex items-center justify-center text-red-600 font-semibold underline-offset-4 hover:underline hover:text-red-700 transition"
-                           title="Ver registros fallidos" aria-label="Ver ${imp.rows_failed} registros fallidos de la importación ${imp.id}">
-                            ${imp.rows_failed}
-                        </a>
-                    ` : '<span class="text-gray-500">0</span>'}
-                </td>
-                <td class="app-cell-nowrap"><span class="status-badge ${statusClass}">${statusText}</span></td>
-                <td class="app-cell-nowrap text-right">
-                    <div class="flex gap-2 justify-end">
-                    ${false ? `
-                        <a href="/estadisticas/importaciones/${imp.id}/registros-fallidos" 
-                           class="w-7 h-7 flex items-center justify-center rounded border border-[#404041] text-[#404041] hover:bg-[#404041] hover:text-white transition-all duration-200 ${canReverse ? '' : 'action-btn-disabled'}" 
-                           ${canReverse ? '' : 'onclick="return false;" style="pointer-events: none; cursor: not-allowed;"'}
-                           title="${canReverse ? 'Ver registros fallidos' : 'No disponible (importación revertida)'}" aria-label="Registros fallidos ${imp.id}">
-                            <i class="fas fa-exclamation-circle text-xs"></i>
-                        </a>
-                    ` : ``}
-                    <button class="w-7 h-7 flex items-center justify-center rounded border border-[#D99A00] text-[#B7791F] hover:bg-[#D99A00] hover:text-white transition-all duration-200 ${canReverse ? '' : 'action-btn-disabled'}"
-                            onclick="reverseImport(${imp.id})" ${canReverse ? '' : 'disabled'} title="${canReverse ? 'Revertir esta importación' : 'No se puede revertir'}" aria-label="Revertir ${imp.id}">
-                        <i class="fas fa-undo text-xs"></i>
-                    </button>
-                    <button class="w-7 h-7 flex items-center justify-center rounded border border-[#AB1A1A] text-[#AB1A1A] hover:bg-[#AB1A1A] hover:text-white transition-all duration-200 ${canDeleteHistory ? '' : 'action-btn-disabled'}" onclick="deleteImport(${imp.id})" ${canDeleteHistory ? '' : 'disabled'} title="${deleteHistoryTitle}" aria-label="Eliminar historial ${imp.id}">
-                        <i class="fas fa-trash text-xs"></i>
-                    </button>
-                    </div>
-                </td>
+                <td class="dt-checkbox-cell"><label class="users-checkbox-hitbox${canDeleteHistory ? '' : ' is-disabled'}" title="${escapeHtml(selectionTitle)}"><input class="row-check-import" data-id="${imp.id}" type="checkbox" ${canDeleteHistory ? '' : 'disabled'} aria-label="${escapeHtml(selectionTitle)}: ${escapeHtml(imp.original_name)}"></label></td>
+                <td><div class="imports-file-cell"><div><strong class="imports-file-name" tabindex="0" title="${escapeHtml(fileName)}" aria-label="Nombre completo del archivo: ${escapeHtml(fileName)}"><span class="imports-file-name-base">${escapeHtml(fileBaseName)}</span><span class="imports-file-name-extension">${escapeHtml(fileExtension)}</span></strong><small>${Number(imp.rows_total || 0)} filas</small></div></div></td>
+                <td><div class="imports-person-cell"><strong>${escapeHtml(createdByName)}</strong>${createdByUsername ? `<small>${escapeHtml(createdByUsername)}</small>` : ''}</div></td>
+                <td class="imports-date-cell"><strong>${createdDate.toLocaleDateString('es-MX')}</strong><small>${createdDate.toLocaleTimeString('es-MX', {hour:'2-digit', minute:'2-digit'})}</small></td>
+                <td><div class="imports-result-cell">${renderImportResult(imp)}</div></td>
+                <td class="imports-status-cell"><div class="imports-status ${statusClass}" title="${escapeHtml(statusHelp)}" aria-label="${statusText}. ${escapeHtml(statusHelp)}"><span class="imports-status-dot" aria-hidden="true"></span><span>${statusText}</span></div></td>
+                <td class="dt-actions-cell imports-actions-cell"><div class="users-row-menu-wrap"><button type="button" class="users-row-menu-button" data-import-menu-toggle aria-haspopup="menu" aria-expanded="false" aria-label="Acciones de ${escapeHtml(imp.original_name)}"><i class="fas fa-ellipsis-v" aria-hidden="true"></i></button><div class="users-row-menu hidden" data-import-action-menu role="menu">
+                    ${Number(imp.rows_failed || 0) > 0 ? `<a role="menuitem" class="users-row-menu-item" href="/estadisticas/importaciones/${imp.id}/registros-fallidos"><i class="fas fa-exclamation-circle users-row-menu-icon" aria-hidden="true"></i><span>Revisar y corregir</span></a>` : ''}
+                    <button type="button" role="menuitem" class="users-row-menu-item" data-reverse-import="${imp.id}" ${canReverse ? '' : 'disabled'}><i class="fas fa-undo users-row-menu-icon" aria-hidden="true"></i><span>Revertir</span></button>
+                    <button type="button" role="menuitem" class="users-row-menu-item users-row-menu-item-danger" data-delete-import="${imp.id}" ${canDeleteHistory ? '' : 'disabled'} title="${escapeHtml(deleteHistoryTitle)}"><i class="fas fa-trash users-row-menu-icon" aria-hidden="true"></i><span>${canDeleteHistory ? 'Eliminar historial' : 'Revertir primero'}</span></button>
+                </div></div></td>
             `;
             tbody.appendChild(row);
         });
@@ -867,6 +741,7 @@ document.addEventListener('DOMContentLoaded', function () {
         renderPagination();
         updateSearchButton();
         clearVisibleImportSelection();
+        document.getElementById('imports-table-status').textContent = `${pageImports.length} importaciones mostradas`;
     }
 
     function updateSearchButton() {
@@ -883,7 +758,13 @@ document.addEventListener('DOMContentLoaded', function () {
         const start = total === 0 ? 0 : (currentPage - 1) * perPage + 1;
         const end = Math.min(currentPage * perPage, total);
         
-        document.getElementById('info-imports').innerHTML = `Mostrando <span class="font-semibold text-gray-900">${start}-${end}</span> de <span class="font-semibold text-gray-900">${total}</span> entradas`;
+        const totalAll = allImports.length;
+        let text = `<span class="users-table-info-main">Mostrando <span class="font-semibold text-gray-900">${start}-${end}</span> de <span class="font-semibold text-gray-900">${total}</span></span>`;
+        if (total !== totalAll) {
+            text += `<span class="users-table-info-context text-sm text-gray-400">(${totalAll} totales)</span>`;
+        }
+        document.getElementById('dt-info').classList.remove('is-loading');
+        document.getElementById('dt-info').innerHTML = text;
     }
 
     function updateImportSelectionState() {
@@ -926,76 +807,37 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function renderPagination() {
-        const paginationContainer = document.getElementById('pagination-imports');
+        const paginationContainer = document.getElementById('dt-pagination');
         paginationContainer.innerHTML = '';
-
         const totalPages = Math.ceil(filteredImports.length / perPage);
-        if (totalPages <= 1) return;
+        const pageButton = page => page === currentPage
+            ? `<span class="fb-page-btn fb-page-num fb-page-active" aria-current="page">${page}</span>`
+            : `<a href="#" data-page="${page}" class="pagination-link-imports fb-page-btn fb-page-num">${page}</a>`;
+        const ellipsis = () => '<span class="fb-page-btn fb-page-num fb-page-ellipsis">...</span>';
+        let html = '<div class="fb-pagination" role="navigation" aria-label="Paginación de importaciones">';
 
-        let html = '<ul class="inline-flex items-stretch -space-x-px">';
+        html += currentPage === 1 || totalPages === 0
+            ? '<span class="fb-page-btn fb-page-first fb-page-disabled">Anterior</span>'
+            : `<a href="#" data-page="${currentPage - 1}" class="pagination-link-imports fb-page-btn fb-page-first">Anterior</a>`;
 
-        // Previous button
-        if (currentPage === 1) {
-            html += '<li><span class="flex items-center justify-center h-full py-1.5 px-3 ml-0 text-gray-500 bg-white rounded-l-lg border border-gray-300 cursor-default"><i class="fas fa-chevron-left text-xs"></i></span></li>';
+        if (totalPages <= 5) {
+            for (let page = 1; page <= totalPages; page++) html += pageButton(page);
+        } else if (currentPage <= 3) {
+            for (let page = 1; page <= 5; page++) html += pageButton(page);
+            html += ellipsis() + pageButton(totalPages);
+        } else if (currentPage >= totalPages - 2) {
+            html += pageButton(1) + ellipsis();
+            for (let page = totalPages - 4; page <= totalPages; page++) html += pageButton(page);
         } else {
-            html += `<li><a href="#" data-page="${currentPage - 1}" class="pagination-link-imports flex items-center justify-center h-full py-1.5 px-3 ml-0 text-gray-500 bg-white rounded-l-lg border border-gray-300 hover:bg-gray-100 hover:text-gray-700"><i class="fas fa-chevron-left text-xs"></i></a></li>`;
+            html += pageButton(1) + ellipsis();
+            for (let page = currentPage - 1; page <= currentPage + 1; page++) html += pageButton(page);
+            html += ellipsis() + pageButton(totalPages);
         }
 
-        // Page numbers
-        const maxButtons = 5;
-        if (totalPages <= maxButtons) {
-            for (let i = 1; i <= totalPages; i++) {
-                if (i === currentPage) {
-                    html += `<li><span class="flex items-center justify-center text-sm py-2 px-3 leading-tight text-[#611132] bg-[#f8f1f4] border border-[#611132]">${i}</span></li>`;
-                } else {
-                    html += `<li><a href="#" data-page="${i}" class="pagination-link-imports flex items-center justify-center text-sm py-2 px-3 leading-tight text-gray-500 bg-white border border-gray-300 hover:bg-gray-100 hover:text-gray-700">${i}</a></li>`;
-                }
-            }
-        } else {
-            // Complex pagination with ellipsis
-            if (currentPage <= 3) {
-                for (let i = 1; i <= 5; i++) {
-                    if (i === currentPage) {
-                        html += `<li><span class="flex items-center justify-center text-sm py-2 px-3 leading-tight text-[#611132] bg-[#f8f1f4] border border-[#611132]">${i}</span></li>`;
-                    } else {
-                        html += `<li><a href="#" data-page="${i}" class="pagination-link-imports flex items-center justify-center text-sm py-2 px-3 leading-tight text-gray-500 bg-white border border-gray-300 hover:bg-gray-100 hover:text-gray-700">${i}</a></li>`;
-                    }
-                }
-                html += '<li><span class="flex items-center justify-center text-sm py-2 px-3 leading-tight text-gray-500 bg-white border border-gray-300">&hellip;</span></li>';
-                html += `<li><a href="#" data-page="${totalPages}" class="pagination-link-imports flex items-center justify-center text-sm py-2 px-3 leading-tight text-gray-500 bg-white border border-gray-300 hover:bg-gray-100 hover:text-gray-700">${totalPages}</a></li>`;
-            } else if (currentPage >= totalPages - 2) {
-                html += `<li><a href="#" data-page="1" class="pagination-link-imports flex items-center justify-center text-sm py-2 px-3 leading-tight text-gray-500 bg-white border border-gray-300 hover:bg-gray-100 hover:text-gray-700">1</a></li>`;
-                html += '<li><span class="flex items-center justify-center text-sm py-2 px-3 leading-tight text-gray-500 bg-white border border-gray-300">&hellip;</span></li>';
-                for (let i = totalPages - 4; i <= totalPages; i++) {
-                    if (i === currentPage) {
-                        html += `<li><span class="flex items-center justify-center text-sm py-2 px-3 leading-tight text-[#611132] bg-[#f8f1f4] border border-[#611132]">${i}</span></li>`;
-                    } else {
-                        html += `<li><a href="#" data-page="${i}" class="pagination-link-imports flex items-center justify-center text-sm py-2 px-3 leading-tight text-gray-500 bg-white border border-gray-300 hover:bg-gray-100 hover:text-gray-700">${i}</a></li>`;
-                    }
-                }
-            } else {
-                html += `<li><a href="#" data-page="1" class="pagination-link-imports flex items-center justify-center text-sm py-2 px-3 leading-tight text-gray-500 bg-white border border-gray-300 hover:bg-gray-100 hover:text-gray-700">1</a></li>`;
-                html += '<li><span class="flex items-center justify-center text-sm py-2 px-3 leading-tight text-gray-500 bg-white border border-gray-300">&hellip;</span></li>';
-                for (let i = currentPage - 2; i <= currentPage + 2; i++) {
-                    if (i === currentPage) {
-                        html += `<li><span class="flex items-center justify-center text-sm py-2 px-3 leading-tight text-[#611132] bg-[#f8f1f4] border border-[#611132]">${i}</span></li>`;
-                    } else {
-                        html += `<li><a href="#" data-page="${i}" class="pagination-link-imports flex items-center justify-center text-sm py-2 px-3 leading-tight text-gray-500 bg-white border border-gray-300 hover:bg-gray-100 hover:text-gray-700">${i}</a></li>`;
-                    }
-                }
-                html += '<li><span class="flex items-center justify-center text-sm py-2 px-3 leading-tight text-gray-500 bg-white border border-gray-300">&hellip;</span></li>';
-                html += `<li><a href="#" data-page="${totalPages}" class="pagination-link-imports flex items-center justify-center text-sm py-2 px-3 leading-tight text-gray-500 bg-white border border-gray-300 hover:bg-gray-100 hover:text-gray-700">${totalPages}</a></li>`;
-            }
-        }
-
-        // Next button
-        if (currentPage === totalPages || totalPages === 0) {
-            html += '<li><span class="flex items-center justify-center h-full py-1.5 px-3 leading-tight text-gray-500 bg-white rounded-r-lg border border-gray-300 cursor-default"><i class="fas fa-chevron-right text-xs"></i></span></li>';
-        } else {
-            html += `<li><a href="#" data-page="${currentPage + 1}" class="pagination-link-imports flex items-center justify-center h-full py-1.5 px-3 leading-tight text-gray-500 bg-white rounded-r-lg border border-gray-300 hover:bg-gray-100 hover:text-gray-700"><i class="fas fa-chevron-right text-xs"></i></a></li>`;
-        }
-
-        html += '</ul>';
+        html += currentPage === totalPages || totalPages === 0
+            ? '<span class="fb-page-btn fb-page-last fb-page-disabled">Siguiente</span>'
+            : `<a href="#" data-page="${currentPage + 1}" class="pagination-link-imports fb-page-btn fb-page-last">Siguiente</a>`;
+        html += '</div>';
         paginationContainer.innerHTML = html;
 
         // Attach click handlers to pagination links
@@ -1005,6 +847,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 const page = parseInt(link.dataset.page);
                 currentPage = page;
                 renderTable();
+                document.querySelector('.imports-table-card')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
             });
         });
     }

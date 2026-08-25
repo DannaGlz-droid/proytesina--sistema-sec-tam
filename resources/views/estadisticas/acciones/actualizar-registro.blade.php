@@ -1,502 +1,405 @@
 @extends('layouts.principal')
-@section('title', 'Actualizar Registro')
+@section('title', 'Editar defunción')
 @section('content')
 
     @include('components.header-admin')
     @include('components.nav-estadisticas')
 
-    <div class="px-4 lg:pl-10 pt-6 lg:pt-10 pb-8 lg:pb-12">
-        <h1 class="text-2xl lg:text-3xl font-lora font-bold text-[#404041] mb-3">Actualizar registro de defunción</h1>
-        <p class="text-sm lg:text-base text-[#404041] font-lora mb-6">Modifique los campos necesarios y guarde los cambios.</p>
+    @php
+        $selectedResidenceMunicipality = (string) old('residence_municipality_id', $defuncion->residence_municipality_id ?? '');
+        $selectedDeathMunicipality = (string) old('death_municipality_id', $defuncion->death_municipality_id ?? '');
+        $selectedDeathLocation = (string) old('death_location_id', $defuncion->death_location_id ?? '');
+        $selectedDeathCause = (string) old('death_cause_id', $defuncion->death_cause_id ?? '');
+        $selectedDistrict = (string) old('district_id', $defuncion->district_id ?? '');
+        if ($selectedDistrict === '' && $selectedResidenceMunicipality !== '') {
+            $selectedDistrict = (string) optional($municipalities->firstWhere('id', (int) $selectedResidenceMunicipality))->district_id;
+        }
+        $selectedDistrictName = $selectedDistrict !== ''
+            ? optional($districts->firstWhere('id', (int) $selectedDistrict))->name
+            : null;
 
-        <!-- Cuadro del formulario responsive -->
-        <div class="border border-[#404041] rounded-lg lg:rounded-xl p-4 lg:p-6 bg-white bg-opacity-95 max-w-7xl shadow-md">
-            <form id="death-update-form" method="POST" action="{{ route('statistic.update', $defuncion->id ?? 0) }}">
+        $selectedSex = strtolower((string) old('sex', $defuncion->sex ?? ''));
+        if (in_array($selectedSex, ['m', 'hombre'], true)) $selectedSex = 'masculino';
+        if (in_array($selectedSex, ['f', 'mujer'], true)) $selectedSex = 'femenino';
+
+        $selectedAgeValue = old('edad_valor');
+        $selectedAgeUnit = old('edad_unidad');
+        if ($selectedAgeValue === null) {
+            if ($defuncion->age_days !== null) {
+                $selectedAgeValue = $defuncion->age_days;
+                $selectedAgeUnit = 'dias';
+            } elseif ($defuncion->age_months !== null) {
+                $selectedAgeValue = $defuncion->age_months;
+                $selectedAgeUnit = 'meses';
+            } elseif ($defuncion->age_years !== null) {
+                $selectedAgeValue = $defuncion->age_years;
+                $selectedAgeUnit = 'anos';
+            } else {
+                $selectedAgeValue = $defuncion->age ?? '';
+                $selectedAgeUnit = 'anos';
+            }
+        }
+
+        $selectedDeathDate = old(
+            'death_date',
+            $defuncion->death_date ? \Carbon\Carbon::parse($defuncion->death_date)->format('Y-m-d') : ''
+        );
+    @endphp
+
+    <main class="users-form-page statistics-death-form-page px-4 sm:px-6 lg:px-10 pt-6 lg:pt-8 pb-8 lg:pb-10">
+        <x-ui.page-header
+            title="Editar defunción"
+            description="Modifique los campos necesarios y guarde los cambios."
+            :back-href="route('statistic.data')"
+            back-label="Volver a datos de defunciones"
+            :prefer-history-back="true"
+        />
+
+        <div class="users-form-card">
+            <form id="death-update-form" method="POST" action="{{ route('statistic.update', $defuncion) }}" novalidate>
                 @csrf
                 @method('PUT')
-            
-            <!-- Sección 1: Información del fallecido -->
-            <div class="mb-6 lg:mb-8">
-                <div class="flex items-center mb-4">
-                    <ion-icon name="person-outline" class="text-xl lg:text-xl text-[#404041] mr-2"></ion-icon>
-                    <h2 class="text-lg lg:text-xl font-lora font-bold text-[#404041]">Información del fallecido</h2>
-                    <div class="flex-1 h-px bg-[#404041] ml-3"></div>
-                </div>
-                
-                <div class="grid grid-cols-1 lg:grid-cols-3 gap-3 lg:gap-4 items-start">
-                    <!-- Row 1: Folio | Nombre | Ap. paterno -->
+
+                <x-ui.form.section title="Información de la persona" icon="far fa-user">
                     <div>
-                        <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Folio <span class="text-red-600">*</span></label>
-                           <input id="gov_folio" name="gov_folio" type="text" 
-                               class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora" 
-                               placeholder="Ej: 230787888"
-                               value="{{ old('gov_folio', $defuncion->gov_folio ?? '') }}" required minlength="9" maxlength="17" pattern="([0-9]{9}|[0-9]{2}[A-Za-z][0-9]{5}[A-Za-z][0-9]{8})" title="Ingrese 9 dígitos o el folio alfanumérico de defunción">
-                        @error('gov_folio') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
+                        <label for="gov_folio" class="block">Folio <span class="text-red-600">*</span></label>
+                        <input id="gov_folio" name="gov_folio" type="text" value="{{ old('gov_folio', $defuncion->gov_folio) }}" required minlength="9" maxlength="17"
+                            pattern="([0-9]{9}|[0-9]{2}[A-Za-z][0-9]{5}[A-Za-z][0-9]{8})"
+                            title="Capture 9 dígitos o el folio alfanumérico oficial"
+                            placeholder="Ej: 230787888 o 28M19673E00000007"
+                            aria-describedby="gov-folio-help @error('gov_folio') gov-folio-error @enderror"
+                            @error('gov_folio') aria-invalid="true" @enderror>
+                        <p id="gov-folio-help" class="statistics-field-help">Capture 9 dígitos o el folio alfanumérico oficial.</p>
+                        @error('gov_folio') <p id="gov-folio-error" class="statistics-field-error" data-server-error role="alert">{{ $message }}</p> @enderror
                     </div>
 
                     <div>
-                        <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Nombre(s) <span class="text-red-600">*</span></label>
-                        <input id="name" name="name" type="text" required minlength="2" maxlength="191"
-                               class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora" 
-                               placeholder="Ej: Juan Diego"
-                               value="{{ old('name', $defuncion->name ?? '') }}">
-                        @error('name') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
+                        <label for="name" class="block">Nombre(s) <span class="text-red-600">*</span></label>
+                        <input id="name" name="name" type="text" value="{{ old('name', $defuncion->name) }}" required minlength="2" maxlength="191"
+                            placeholder="Ej: Juan Diego" autocomplete="given-name"
+                            @error('name') aria-invalid="true" aria-describedby="name-error" @enderror>
+                        @error('name') <p id="name-error" class="statistics-field-error" data-server-error role="alert">{{ $message }}</p> @enderror
                     </div>
 
                     <div>
-                        <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Apellido paterno <span class="text-red-600">*</span></label>
-                        <input id="first_last_name" name="first_last_name" type="text" required minlength="2" maxlength="191"
-                               class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora" 
-                               placeholder="Ej: Nava"
-                               value="{{ old('first_last_name', $defuncion->first_last_name ?? '') }}">
-                        @error('first_last_name') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
-                    </div>
-
-                    <!-- Row 2: Apellido materno | Sexo | Edad (valor + unidad) -->
-                    <div>
-                        <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Apellido materno</label>
-                        <input id="second_last_name" name="second_last_name" type="text" minlength="2" maxlength="191"
-                               class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora" 
-                               placeholder="Ej: Reyes"
-                               value="{{ old('second_last_name', $defuncion->second_last_name ?? '') }}">
-                        @error('second_last_name') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
+                        <label for="first_last_name" class="block">Apellido paterno <span class="text-red-600">*</span></label>
+                        <input id="first_last_name" name="first_last_name" type="text" value="{{ old('first_last_name', $defuncion->first_last_name) }}" required minlength="2" maxlength="191"
+                            placeholder="Ej: García" autocomplete="family-name"
+                            @error('first_last_name') aria-invalid="true" aria-describedby="first-last-name-error" @enderror>
+                        @error('first_last_name') <p id="first-last-name-error" class="statistics-field-error" data-server-error role="alert">{{ $message }}</p> @enderror
                     </div>
 
                     <div>
-                        <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Sexo <span class="text-red-600">*</span></label>
-                        <select name="sex" class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora">
+                        <label for="second_last_name" class="block">Apellido materno</label>
+                        <input id="second_last_name" name="second_last_name" type="text" value="{{ old('second_last_name', $defuncion->second_last_name) }}" minlength="2" maxlength="191"
+                            placeholder="Ej: López"
+                            @error('second_last_name') aria-invalid="true" aria-describedby="second-last-name-error" @enderror>
+                        @error('second_last_name') <p id="second-last-name-error" class="statistics-field-error" data-server-error role="alert">{{ $message }}</p> @enderror
+                    </div>
+
+                    <div>
+                        <label for="sex" class="block">Sexo <span class="text-red-600">*</span></label>
+                        <select id="sex" name="sex" class="tomselect-select" required @error('sex') aria-invalid="true" aria-describedby="sex-error" @enderror>
                             <option value="">Seleccione una opción</option>
-                            <option value="M" {{ old('sex', $defuncion->sex ?? '') == 'M' ? 'selected' : '' }}>Masculino</option>
-                            <option value="F" {{ old('sex', $defuncion->sex ?? '') == 'F' ? 'selected' : '' }}>Femenino</option>
+                            <option value="masculino" @selected($selectedSex === 'masculino')>Masculino</option>
+                            <option value="femenino" @selected($selectedSex === 'femenino')>Femenino</option>
                         </select>
-                        @error('sex') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
+                        <p id="sex-client-error" class="statistics-field-error hidden" role="alert"></p>
+                        @error('sex') <p id="sex-error" class="statistics-field-error" data-server-error role="alert">{{ $message }}</p> @enderror
                     </div>
 
                     <div>
-                        <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Edad <span class="text-red-600">*</span></label>
-                        @php
-                            $defaultValor = old('edad_valor');
-                            $defaultUnidad = old('edad_unidad');
-                            if (is_null($defaultValor)) {
-                                // Prefer explicit day value if present
-                                if (isset($defuncion->age_days) && $defuncion->age_days !== null) {
-                                    $defaultValor = $defuncion->age_days;
-                                    $defaultUnidad = $defaultUnidad ?? 'dias';
-                                } elseif (isset($defuncion->age_months) && $defuncion->age_months !== null) {
-                                    $defaultValor = $defuncion->age_months;
-                                    $defaultUnidad = $defaultUnidad ?? 'meses';
-                                } elseif (isset($defuncion->age_years) && $defuncion->age_years !== null) {
-                                    $defaultValor = $defuncion->age_years;
-                                    $defaultUnidad = $defaultUnidad ?? 'anos';
-                                } else {
-                                    $defaultValor = $defuncion->age ?? '';
-                                    $defaultUnidad = $defaultUnidad ?? 'anos';
-                                }
-                            }
-                        @endphp
-                           <div class="flex gap-2">
-                            <input id="edad_valor" name="edad_valor" type="number" min="0" max="150" value="{{ $defaultValor }}" required
-                                class="w-1/2 px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora"
-                                placeholder="Ej: 34">
-                            <select id="edad_unidad" name="edad_unidad" required aria-required="true" class="w-1/2 px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora">
-                                <option value="">Unidad</option>
-                                <option value="anos" {{ $defaultUnidad === 'anos' ? 'selected' : '' }}>Años</option>
-                                <option value="meses" {{ $defaultUnidad === 'meses' ? 'selected' : '' }}>Meses</option>
-                                <option value="dias" {{ $defaultUnidad === 'dias' ? 'selected' : '' }}>Días</option>
+                        <label for="edad_valor" class="block">Edad <span class="text-red-600">*</span></label>
+                        <div class="statistics-age-fields">
+                            <input id="edad_valor" name="edad_valor" type="number" min="0" max="150" value="{{ $selectedAgeValue }}" required inputmode="numeric"
+                                placeholder="Ej: 34" aria-label="Valor de la edad"
+                                @error('edad_valor') aria-invalid="true" aria-describedby="age-value-error" @enderror>
+                            <select id="edad_unidad" name="edad_unidad" class="tomselect-select" required aria-label="Unidad de la edad"
+                                @error('edad_unidad') aria-invalid="true" aria-describedby="age-unit-error" @enderror>
+                                <option value="">Seleccione la unidad</option>
+                                <option value="anos" @selected($selectedAgeUnit === 'anos')>Años</option>
+                                <option value="meses" @selected($selectedAgeUnit === 'meses')>Meses</option>
+                                <option value="dias" @selected($selectedAgeUnit === 'dias')>Días</option>
                             </select>
                         </div>
-                        @error('edad_valor') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
-                        @error('edad_unidad') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
+                        <p id="age-client-error" class="statistics-field-error hidden" role="alert"></p>
+                        @error('edad_valor') <p id="age-value-error" class="statistics-field-error" data-server-error role="alert">{{ $message }}</p> @enderror
+                        @error('edad_unidad') <p id="age-unit-error" class="statistics-field-error" data-server-error role="alert">{{ $message }}</p> @enderror
                     </div>
-                </div>
-            </div>
+                </x-ui.form.section>
 
-            <!-- Línea separadora -->
-            <div class="h-px bg-gray-300 my-4 lg:my-6"></div>
-
-            <!-- Sección 2: Ubicación -->
-            <div class="mb-6 lg:mb-8">
-                <div class="flex items-center mb-4">
-                    <ion-icon name="location-outline" class="text-xl lg:text-xl text-[#404041] mr-2"></ion-icon>
-                    <h2 class="text-lg lg:text-xl font-lora font-bold text-[#404041]">Ubicación</h2>
-                    <div class="flex-1 h-px bg-[#404041] ml-3"></div>
-                </div>
-                
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-3 lg:gap-4">
-                    <div class="space-y-3">
-                        <div>
-                            <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Municipio de residencia <span class="text-red-600">*</span></label>
-                            <select id="residence_municipality_select" name="residence_municipality_id" required class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora tomselect-select">
-                                <option value="">Seleccione un municipio</option>
-                                @foreach($municipalities as $m)
-                                    <option value="{{ $m->id }}" {{ (int)old('residence_municipality_id', $defuncion->residence_municipality_id ?? 0) === $m->id ? 'selected' : '' }}>{{ $m->name }}</option>
-                                @endforeach
-                            </select>
-                            <p id="residence_municipality_error" class="text-xs text-red-600 mt-1 hidden">Este campo es requerido</p>
-                            @error('residence_municipality_id') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
-                        </div>
-                        <div>
-                            <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Municipio de defunción <span class="text-red-600">*</span></label>
-                            <select id="death_municipality_select" name="death_municipality_id" required class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora tomselect-select">
-                                <option value="">Seleccione un municipio</option>
-                                @foreach($municipalities as $m)
-                                    <option value="{{ $m->id }}" {{ (int)old('death_municipality_id', $defuncion->death_municipality_id ?? 0) === $m->id ? 'selected' : '' }}>{{ $m->name }}</option>
-                                @endforeach
-                            </select>
-                            <p id="death_municipality_error" class="text-xs text-red-600 mt-1 hidden">Este campo es requerido</p>
-                            @error('death_municipality_id') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
-                        </div>
+                <x-ui.form.section title="Ubicación" icon="fas fa-location-dot">
+                    <div>
+                        <label for="residence_municipality_select" class="block">Municipio de residencia <span class="text-red-600">*</span></label>
+                        <select id="residence_municipality_select" name="residence_municipality_id" class="tomselect-select" required
+                            @error('residence_municipality_id') aria-invalid="true" aria-describedby="residence-municipality-error" @enderror>
+                            <option value="">Seleccione un municipio</option>
+                            @foreach($municipalities as $municipality)
+                                <option value="{{ $municipality->id }}" @selected($selectedResidenceMunicipality === (string) $municipality->id)>{{ $municipality->name }}</option>
+                            @endforeach
+                        </select>
+                        <p id="residence-municipality-client-error" class="statistics-field-error hidden" role="alert"></p>
+                        @error('residence_municipality_id') <p id="residence-municipality-error" class="statistics-field-error" data-server-error role="alert">{{ $message }}</p> @enderror
                     </div>
-                    
-                    <div class="space-y-3">
-                        <div>
-                            <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Jurisdicción de residencia</label>
-                {{-- Hidden input to submit jurisdiction id; visible input is readonly/display only --}}
-                <input type="hidden" id="jurisdiction_input" name="district_id" value="{{ old('district_id', $defuncion->district_id ?? '') }}">
-                <input type="text" id="jurisdiction" 
-                    class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg bg-gray-50 focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora" 
-                    placeholder="Pendiente (seleccione municipio)"
-                    readonly
-                    value="{{ old('district_id') ? ($jurisdictions->firstWhere('id', old('district_id'))->name ?? '') : (optional($defuncion->jurisdiction)->name ?? '') }}">
-                        </div>
-                        <div>
-                            <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Lugar específico <span class="text-red-600">*</span></label>
-                            <select id="death_municipality_location" name="death_location_id" class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora">
-                                <option value="">Seleccione lugar</option>
-                                @foreach($locations as $loc)
-                                    <option value="{{ $loc->id }}" {{ (int)old('death_location_id', $defuncion->death_location_id ?? 0) === $loc->id ? 'selected' : '' }}>{{ $loc->name }}</option>
-                                @endforeach
-                            </select>
-                            @error('death_location_id') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
-                        </div>
+
+                    <div>
+                        <label for="jurisdiction_display" class="block">Distrito de residencia</label>
+                        <input id="jurisdiction_input" name="district_id" type="hidden" value="{{ $selectedDistrict }}">
+                        <input id="jurisdiction_display" type="text" class="ui-field--disabled" value="{{ $selectedDistrictName ?: 'Pendiente (seleccione municipio)' }}"
+                            disabled aria-disabled="true" aria-describedby="jurisdiction-help">
+                        <p id="jurisdiction-help" class="statistics-field-help">Se asigna automáticamente según el municipio de residencia.</p>
+                        @error('district_id') <p class="statistics-field-error" data-server-error role="alert">{{ $message }}</p> @enderror
                     </div>
-                </div>
-            </div>
 
-            <!-- Línea separadora -->
-            <div class="h-px bg-gray-300 my-4 lg:my-6"></div>
-
-            <!-- Sección 3: Información de la defunción -->
-            <div class="mb-6 lg:mb-8">
-                <div class="flex items-center mb-4">
-                    <ion-icon name="medical-outline" class="text-xl lg:text-xl text-[#404041] mr-2"></ion-icon>
-                    <h2 class="text-lg lg:text-xl font-lora font-bold text-[#404041]">Información de la defunción</h2>
-                    <div class="flex-1 h-px bg-[#404041] ml-3"></div>
-                    
-                </div>
-
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-3 lg:gap-4">
-                    <div class="space-y-3">
-                        <div>
-                            <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Causa de la defunción <span class="text-red-600">*</span></label>
-                            <select id="death_cause" name="death_cause_id" class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora">
-                                <option value="">Seleccione una causa</option>
-                                @foreach($causes as $c)
-                                    <option value="{{ $c->id }}" {{ (int)old('death_cause_id', $defuncion->death_cause_id ?? 0) === $c->id ? 'selected' : '' }}>{{ $c->name }}</option>
-                                @endforeach
-                            </select>
-                            @error('death_cause_id') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
-                        </div>
+                    <div>
+                        <label for="death_municipality_select" class="block">Municipio de defunción <span class="text-red-600">*</span></label>
+                        <select id="death_municipality_select" name="death_municipality_id" class="tomselect-select" required
+                            @error('death_municipality_id') aria-invalid="true" aria-describedby="death-municipality-error" @enderror>
+                            <option value="">Seleccione un municipio</option>
+                            @foreach($municipalities as $municipality)
+                                <option value="{{ $municipality->id }}" @selected($selectedDeathMunicipality === (string) $municipality->id)>{{ $municipality->name }}</option>
+                            @endforeach
+                        </select>
+                        <p id="death-municipality-client-error" class="statistics-field-error hidden" role="alert"></p>
+                        @error('death_municipality_id') <p id="death-municipality-error" class="statistics-field-error" data-server-error role="alert">{{ $message }}</p> @enderror
                     </div>
-                    
-                    <div class="space-y-3">
-                        <div>
-                            <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Fecha de defunción <span class="text-red-600">*</span></label>
-                            <input name="death_date" type="date" 
-                                   class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora"
-                                   value="{{ old('death_date', optional($defuncion)->death_date ? \Carbon\Carbon::parse(optional($defuncion)->death_date)->format('Y-m-d') : '') }}">
-                        </div>
+
+                    <div>
+                        <label for="death_municipality_location" class="block">Lugar específico <span class="text-red-600">*</span></label>
+                        <select id="death_municipality_location" name="death_location_id" class="tomselect-select" required
+                            @error('death_location_id') aria-invalid="true" aria-describedby="death-location-error" @enderror>
+                            <option value="">Seleccione un lugar</option>
+                            @foreach($locations as $location)
+                                <option value="{{ $location->id }}" @selected($selectedDeathLocation === (string) $location->id)>{{ $location->name }}</option>
+                            @endforeach
+                        </select>
+                        <p id="death-location-client-error" class="statistics-field-error hidden" role="alert"></p>
+                        @error('death_location_id') <p id="death-location-error" class="statistics-field-error" data-server-error role="alert">{{ $message }}</p> @enderror
                     </div>
-                </div>
-            </div>
+                </x-ui.form.section>
 
-            <!-- Línea separadora para botones -->
-            <div class="h-px bg-gray-300 my-4 lg:my-6"></div>
+                <x-ui.form.section title="Información de la defunción" icon="far fa-clipboard">
+                    <div>
+                        <label for="death_cause" class="block">Causa de la defunción <span class="text-red-600">*</span></label>
+                        <select id="death_cause" name="death_cause_id" class="tomselect-select" required
+                            @error('death_cause_id') aria-invalid="true" aria-describedby="death-cause-error" @enderror>
+                            <option value="">Seleccione una causa</option>
+                            @foreach($causes as $cause)
+                                <option value="{{ $cause->id }}" @selected($selectedDeathCause === (string) $cause->id)>{{ $cause->name }}</option>
+                            @endforeach
+                        </select>
+                        <p id="death-cause-client-error" class="statistics-field-error hidden" role="alert"></p>
+                        @error('death_cause_id') <p id="death-cause-error" class="statistics-field-error" data-server-error role="alert">{{ $message }}</p> @enderror
+                    </div>
 
-            <!-- USAR COMPONENTE DE BOTONES ESTANDARIZADO -->
-            <x-form-buttons 
-                primaryText="Actualizar registro"
-                secondaryText=""
-                tertiaryText="Volver al listado"
-                tertiaryHref="{{ route('statistic.data') }}"
-                primaryType="submit"
-            />
+                    <div>
+                        <label for="death_date" class="block">Fecha de defunción <span class="text-red-600">*</span></label>
+                        <input id="death_date" name="death_date" type="date" value="{{ $selectedDeathDate }}" required max="{{ now()->format('Y-m-d') }}"
+                            @error('death_date') aria-invalid="true" aria-describedby="death-date-error" @enderror>
+                        @error('death_date') <p id="death-date-error" class="statistics-field-error" data-server-error role="alert">{{ $message }}</p> @enderror
+                    </div>
+                </x-ui.form.section>
+
+                <x-form-buttons class="users-form-actions" primaryText="Guardar cambios" secondaryText="Restablecer cambios"
+                    primaryType="submit" secondaryType="button" secondaryOnclick="resetDeathEditForm(event)" />
             </form>
         </div>
-    </div>
+    </main>
 
-    <!-- Incluir Ionicons -->
-    <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
-    <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
-    <!-- Tom Select CDN (single-select, styled to match inputs) -->
-    <link href="https://cdn.jsdelivr.net/npm/tom-select/dist/css/tom-select.default.min.css" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/tom-select/dist/js/tom-select.complete.min.js"></script>
-    <style>
-        /* Tom Select visual parity with native inputs (copied from registro) */
-        .ts-wrapper { border: none !important; padding: 0 !important; background: transparent !important; }
-        select.tomselect-select { position: absolute !important; left: -9999px !important; width: 1px !important; height: 1px !important; overflow: hidden !important; opacity: 0 !important; pointer-events: none !important; border: 0 !important; margin: 0 !important; padding: 0 !important; background: transparent !important; -webkit-appearance: none !important; -moz-appearance: none !important; appearance: none !important; }
-        select.tomselect-select::-ms-expand { display: none !important; }
-        select.tomselect-select { background-image: none !important; }
-        .ts-wrapper { display: block; width: 100%; }
-        .ts-control { border: 1px solid #d1d5db !important; border-radius: 0.5rem !important; padding: 8px 12px !important; background: #ffffff !important; font-family: inherit; font-size: 0.875rem; line-height: 1.25rem !important; display: flex; align-items: center; justify-content: flex-start; position: relative; box-sizing: border-box; margin: 0 !important; box-shadow: none !important; height: auto !important; min-height: 36px !important; }
-        .ts-control .item, .ts-control input { padding: 0 !important; margin: 0 !important; height: auto !important; line-height: 1.25rem !important; font-size: inherit; font-family: inherit; }
-        .ts-control .dropdown-toggle, .ts-control .ts-dropdown-toggle, .ts-control .dropdown_toggle, .ts-control .ts-clear { display: none !important; }
-        .ts-dropdown { border: 1px solid #d1d5db; border-radius: 0.5rem; box-shadow: 0 2px 6px rgba(0,0,0,0.08); max-height: 240px; overflow: auto; }
-        .ts-dropdown .ts-option { padding: 0.5rem 0.75rem; }
-        .tomselect-caret { display: none !important; position: absolute; right: 12px; top: 50%; transform: translateY(-50%); color: #6b7280; pointer-events: none; font-size: 0.9rem; }
-        .ts-control::after { content: ""; position: absolute; right: 12px; top: 50%; transform: translateY(-50%); width: 18px; height: 18px; background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'/></svg>"); background-repeat: no-repeat; background-position: center; background-size: 12px 12px; pointer-events: none; opacity: 0.92; }
-        .ts-wrapper, .ts-control { vertical-align: middle; }
-        #residence_municipality_select + .ts-control, #death_municipality_select + .ts-control { padding: 8px 12px !important; height: auto !important; min-height: 36px !important; transform: none !important; }
-    </style>
-
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // Build municipality -> jurisdiction id map. Support keys by id and by lowercased name.
-            const muniToJur = @isset($municipalities) @json($municipalities->mapWithKeys(function($m){ return [$m->id => $m->district_id, mb_strtolower($m->name) => $m->district_id]; })) @else {} @endisset;
-            const jurIdToName = @isset($jurisdictions) @json($jurisdictions->mapWithKeys(function($j){ return [$j->id => $j->name]; })) @else {} @endisset;
-
-            const residenceMuni = document.getElementById('residence_municipality_select');
-            const deathMuni = document.getElementById('death_municipality_select');
-            const jurisdictionVisible = document.getElementById('jurisdiction');
-            const hiddenJur = document.getElementById('jurisdiction_input');
-
-            const placeholderClasses = ['text-gray-400','italic'];
-
-            function applyPlaceholderStyle() {
-                if (!jurisdictionVisible) return;
-                if (!hiddenJur || !hiddenJur.value) {
-                    jurisdictionVisible.classList.add(...placeholderClasses);
-                } else {
-                    jurisdictionVisible.classList.remove(...placeholderClasses);
-                }
-            }
-
-            // Initialize visible jurisdiction from hidden (old value) if present
-            if (hiddenJur && hiddenJur.value) {
-                // try to show friendly name if available
-                const name = jurIdToName[hiddenJur.value] ?? hiddenJur.value;
-                jurisdictionVisible.value = name;
-            } else {
-                jurisdictionVisible.value = '';
-            }
-            // keep readonly locked
-            if (jurisdictionVisible) jurisdictionVisible.readOnly = true;
-            applyPlaceholderStyle();
-
-            function setJurisdictionBasedOnMunicipality() {
-                // Prefer residence municipality to determine jurisdiction; fallback to death municipality
-                const mid = (residenceMuni?.value) ? residenceMuni.value : (deathMuni?.value || '');
-                let jid = null;
-                if (mid && muniToJur[mid]) jid = muniToJur[mid];
-                else if (mid && muniToJur[mid.toLowerCase?.()]) jid = muniToJur[mid.toLowerCase?.()];
-
-                if (jid) {
-                    if (hiddenJur) hiddenJur.value = jid;
-                    if (jurisdictionVisible) jurisdictionVisible.value = jurIdToName[jid] ?? jid;
-                } else {
-                    if (hiddenJur) hiddenJur.value = '';
-                    if (jurisdictionVisible) jurisdictionVisible.value = '';
-                }
-                applyPlaceholderStyle();
-            }
-
-            if (residenceMuni) {
-                residenceMuni.addEventListener('change', setJurisdictionBasedOnMunicipality);
-            }
-            // initialize on load
-            setJurisdictionBasedOnMunicipality();
-        });
-    </script>
-    <script>
-        // Initialize Tom Select for municipality selects and remote lookups for causes/locations
-        (function() {
-            // Set max date for death_date to today
-            document.addEventListener('DOMContentLoaded', function() {
-                const deathDateInput = document.querySelector('input[name="death_date"]');
-                if (deathDateInput) {
-                    const today = new Date();
-                    const year = today.getFullYear();
-                    const month = String(today.getMonth() + 1).padStart(2, '0');
-                    const day = String(today.getDate()).padStart(2, '0');
-                    deathDateInput.max = `${year}-${month}-${day}`;
-                }
-            });
-
-            function fetchMunicipalities(q) {
-                return fetch('/api/municipalities/search?q=' + encodeURIComponent(q)).then(r => r.json());
-            }
-
-            // Helper to add validation styling to a TomSelect instance
-            function addValidationStyles(selectElement, tomSelectInstance, errorElementId) {
-                const checkValidity = () => {
-                    const value = selectElement.value;
-                    const wrapper = selectElement.closest('.ts-wrapper') || selectElement.parentElement;
-                    const tsControl = wrapper?.querySelector('.ts-control');
-                    const errorElement = errorElementId ? document.getElementById(errorElementId) : null;
-
-                    if (!value || value === '') {
-                        if (tsControl) {
-                            tsControl.style.borderColor = '#dc2626';
-                            tsControl.style.borderWidth = '2px';
-                            tsControl.style.boxShadow = '0 0 0 3px rgba(220, 38, 38, 0.1)';
-                        }
-                        if (errorElement) errorElement.classList.remove('hidden');
-                        return false;
-                    } else {
-                        if (tsControl) {
-                            tsControl.style.borderColor = '';
-                            tsControl.style.borderWidth = '';
-                            tsControl.style.boxShadow = '';
-                        }
-                        if (errorElement) errorElement.classList.add('hidden');
-                        return true;
-                    }
-                };
-
-                if (tomSelectInstance) tomSelectInstance.on('change', checkValidity);
-                // also check on native select change (TomSelect may not fire in some edge-cases)
-                selectElement.addEventListener('change', checkValidity);
-                return checkValidity;
-            }
-
-            // Age validation (same logic as registro)
-            function validateAge() {
-                const edadValor = document.getElementById('edad_valor');
-                const edadUnidad = document.getElementById('edad_unidad');
-                if (!edadValor || !edadUnidad) return true;
-
-                const valor = String(edadValor.value || '').trim();
-                const unidad = edadUnidad.value;
-
-                if (valor !== '' && !unidad) {
-                    edadUnidad.setCustomValidity('Debe seleccionar la unidad (años, meses o días)');
-                    return false;
-                }
-
-                if (unidad === 'meses' && valor !== '') {
-                    const valorNum = parseInt(valor);
-                    if (isNaN(valorNum) || valorNum < 0 || valorNum >= 12) {
-                        edadValor.setCustomValidity('Si la unidad es "meses", el valor debe ser un número entre 0 y 11. Para 12 o más use años.');
-                        return false;
-                    }
-                }
-
-                if (unidad === 'dias' && valor !== '') {
-                    const valorNum = parseInt(valor);
-                    if (isNaN(valorNum) || valorNum < 0 || valorNum > 30) {
-                        edadValor.setCustomValidity('Si la unidad es "días", el valor debe ser un número entre 0 y 30.');
-                        return false;
-                    }
-                }
-
-                edadValor.setCustomValidity('');
-                edadUnidad.setCustomValidity('');
-                return true;
-            }
-
-            // Form submit validation
-            const form = document.getElementById('death-update-form');
-            if (form) {
-                form.addEventListener('submit', function(e) {
-                    if (!validateAge()) {
-                        e.preventDefault();
-                        const edadValor = document.getElementById('edad_valor');
-                        const edadUnidad = document.getElementById('edad_unidad');
-                        if (edadValor && !edadValor.checkValidity()) edadValor.reportValidity();
-                        else if (edadUnidad && !edadUnidad.checkValidity()) edadUnidad.reportValidity();
-                        return false;
-                    }
-
-                    const requiredSelects = [
-                        'residence_municipality_select',
-                        'death_municipality_select',
-                        'death_municipality_location',
-                        'death_cause'
-                    ];
-                    let hasErrors = false;
-                    for (const id of requiredSelects) {
-                        const sel = document.getElementById(id);
-                        if (sel && (!sel.value || sel.value === '')) {
-                            hasErrors = true;
-                            sel.dispatchEvent(new Event('change'));
-                        }
-                    }
-                    if (hasErrors) {
-                        e.preventDefault();
-                        return false;
-                    }
-                });
-            }
-
-            // Initialize TomSelect instances and attach validation styling
-            const residenceSelect = document.getElementById('residence_municipality_select');
-            let tsResidence = null;
-            if (residenceSelect) {
-                try {
-                    tsResidence = new TomSelect(residenceSelect, {
-                        valueField: 'id',
-                        labelField: 'name',
-                        searchField: 'name',
-                        maxOptions: 20,
-                        maxItems: 1,
-                        create: false,
-                        preload: true,
-                        load: function(query, callback) { fetchMunicipalities(query).then(items => callback(items)).catch(() => callback()); },
-                        onChange: function(value) { residenceSelect.dispatchEvent(new Event('change')); }
-                    });
-                    addValidationStyles(residenceSelect, tsResidence, 'residence_municipality_error');
-                    residenceSelect.style.display = 'none';
-                } catch (err) { console.warn('TomSelect init failed (residence)', err); }
-            }
-
-            const deathSelect = document.getElementById('death_municipality_select');
-            let tsDeath = null;
-            if (deathSelect) {
-                try {
-                    tsDeath = new TomSelect(deathSelect, {
-                        valueField: 'id',
-                        labelField: 'name',
-                        searchField: 'name',
-                        maxOptions: 20,
-                        maxItems: 1,
-                        create: false,
-                        preload: true,
-                        load: function(query, callback) { fetchMunicipalities(query).then(items => callback(items)).catch(() => callback()); },
-                        onChange: function(value) { deathSelect.dispatchEvent(new Event('change')); }
-                    });
-                    addValidationStyles(deathSelect, tsDeath, 'death_municipality_error');
-                    deathSelect.style.display = 'none';
-                } catch (err) { console.warn('TomSelect init failed (death)', err); }
-            }
-
-            // Causes remote
-            function fetchCauses(q) { return fetch('/api/causes/search?q=' + encodeURIComponent(q)).then(r => r.json()); }
-            const causeSelect = document.getElementById('death_cause');
-            let tsCause = null;
-            if (causeSelect) {
-                try {
-                    tsCause = new TomSelect(causeSelect, {
-                        valueField: 'id', labelField: 'name', searchField: 'name', maxOptions: 30, maxItems: 1, create: false,
-                        load: function(query, callback) { if (!query.length) return callback(); fetchCauses(query).then(items => callback(items)).catch(() => callback()); }
-                    });
-                    addValidationStyles(causeSelect, tsCause, null);
-                    causeSelect.style.display = 'none';
-                } catch (err) { console.warn('TomSelect init failed (cause)', err); }
-            }
-
-            // Locations remote
-            function fetchLocations(q) { return fetch('/api/locations/search?q=' + encodeURIComponent(q)).then(r => r.json()); }
-            const locationSelect = document.getElementById('death_municipality_location');
-            let tsLocation = null;
-            if (locationSelect) {
-                try {
-                    tsLocation = new TomSelect(locationSelect, { valueField: 'id', labelField: 'name', searchField: 'name', maxOptions: 40, maxItems: 1, create: false,
-                        load: function(query, callback) { fetchLocations(query).then(items => callback(items)).catch(() => callback()); }
-                    });
-                    addValidationStyles(locationSelect, tsLocation, null);
-                    locationSelect.style.display = 'none';
-                } catch (err) { console.warn('TomSelect init failed (location)', err); }
-            }
-        })();
-    </script>
 @endsection
+
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const form = document.getElementById('death-update-form');
+    if (!form || typeof TomSelect === 'undefined') return;
+
+    const municipalityToDistrict = @json($municipalities->mapWithKeys(fn ($municipality) => [(string) $municipality->id => (string) $municipality->district_id]));
+    const districtNames = @json($districts->mapWithKeys(fn ($district) => [(string) $district->id => $district->name]));
+    const residenceMunicipality = document.getElementById('residence_municipality_select');
+    const districtInput = document.getElementById('jurisdiction_input');
+    const districtDisplay = document.getElementById('jurisdiction_display');
+    const ageValue = document.getElementById('edad_valor');
+    const ageUnit = document.getElementById('edad_unidad');
+    const requiredSelects = [
+        [document.getElementById('sex'), 'Seleccione el sexo.', 'sex-client-error'],
+        [ageUnit, 'Seleccione la unidad de la edad.', 'age-client-error'],
+        [residenceMunicipality, 'Seleccione el municipio de residencia.', 'residence-municipality-client-error'],
+        [document.getElementById('death_municipality_select'), 'Seleccione el municipio de defunción.', 'death-municipality-client-error'],
+        [document.getElementById('death_municipality_location'), 'Seleccione el lugar específico.', 'death-location-client-error'],
+        [document.getElementById('death_cause'), 'Seleccione la causa de la defunción.', 'death-cause-client-error']
+    ];
+    const selects = requiredSelects.map(([select]) => select).filter(Boolean);
+
+    function selectErrorElement(select) {
+        return requiredSelects.find(([field]) => field === select)?.[2] || null;
+    }
+
+    function clearSelectError(select) {
+        if (!select) return;
+        select.removeAttribute('aria-invalid');
+        select.tomselect?.control_input?.setCustomValidity('');
+        const error = document.getElementById(selectErrorElement(select));
+        if (error) { error.textContent = ''; error.classList.add('hidden'); }
+    }
+
+    function validateRequiredSelect(select, message, errorId) {
+        if (select?.value) { clearSelectError(select); return true; }
+        if (!select) return false;
+        select.setAttribute('aria-invalid', 'true');
+        select.tomselect?.control_input?.setCustomValidity(message);
+        const error = document.getElementById(errorId);
+        if (error) { error.textContent = message; error.classList.remove('hidden'); }
+        return false;
+    }
+
+    function initializeSelect(select, searchable) {
+        if (!select || select.tomselect) return;
+        const initialValue = select.value;
+        new TomSelect(select, {
+            valueField: 'value', labelField: 'text', searchField: searchable ? ['text'] : [],
+            create: false, maxItems: 1, maxOptions: 100, allowEmptyOption: false
+        });
+        select.dataset.initialValue = initialValue;
+        select.tomselect.on('change', () => clearSelectError(select));
+        select.tomselect.on('blur', function () {
+            const definition = requiredSelects.find(([field]) => field === select);
+            if (definition) validateRequiredSelect(...definition);
+        });
+    }
+
+    initializeSelect(document.getElementById('sex'), false);
+    initializeSelect(ageUnit, false);
+    initializeSelect(residenceMunicipality, true);
+    initializeSelect(document.getElementById('death_municipality_select'), true);
+    initializeSelect(document.getElementById('death_municipality_location'), true);
+    initializeSelect(document.getElementById('death_cause'), true);
+
+    function updateDistrict() {
+        const districtId = municipalityToDistrict[String(residenceMunicipality?.value || '')] || '';
+        if (districtInput) districtInput.value = districtId;
+        if (districtDisplay) districtDisplay.value = districtNames[districtId] || 'Pendiente (seleccione municipio)';
+    }
+    residenceMunicipality?.tomselect?.on('change', updateDistrict);
+    updateDistrict();
+
+    function validateAge() {
+        if (!ageValue || !ageUnit) return true;
+        const error = document.getElementById('age-client-error');
+        const unit = ageUnit.value;
+        const value = ageValue.value === '' ? null : Number(ageValue.value);
+        let message = '';
+        if (value === null || !Number.isInteger(value) || value < 0) message = 'Capture una edad válida.';
+        else if (!unit) message = 'Seleccione la unidad de la edad.';
+        else if (unit === 'anos' && value > 150) message = 'La edad en años no puede ser mayor a 150.';
+        else if (unit === 'meses' && value > 11) message = 'Use años para edades de 12 meses o más.';
+        else if (unit === 'dias' && value > 30) message = 'La edad en días no puede ser mayor a 30.';
+        ageValue.setCustomValidity(message);
+        if (error) { error.textContent = message; error.classList.toggle('hidden', !message); }
+        ageValue.toggleAttribute('aria-invalid', Boolean(message));
+        return !message;
+    }
+
+    function updateAgeLimit(shouldValidate = true) {
+        const limits = { anos: 150, meses: 11, dias: 30 };
+        ageValue.max = String(limits[ageUnit.value] ?? 150);
+        if (shouldValidate) validateAge();
+    }
+    ageValue?.addEventListener('blur', validateAge);
+    ageValue?.addEventListener('input', function () { if (ageValue.hasAttribute('aria-invalid')) validateAge(); });
+    ageUnit?.tomselect?.on('change', updateAgeLimit);
+    updateAgeLimit(false);
+
+    const getFormSnapshot = () => JSON.stringify(
+        Array.from(new FormData(form).entries())
+            .filter(([name]) => !['_token', '_method'].includes(name))
+            .map(([name, value]) => [name, String(value)])
+    );
+    const initialSnapshot = getFormSnapshot();
+    const navigationState = { submitting: false, navigating: false, confirming: false };
+    const hasUnsavedChanges = () => getFormSnapshot() !== initialSnapshot;
+
+    async function confirmDiscardChanges(options) {
+        if (!hasUnsavedChanges()) return true;
+        if (navigationState.confirming) return false;
+        navigationState.confirming = true;
+        try {
+            if (typeof window.confirmDialog !== 'function') return window.confirm(`${options.question}\n\n${options.description}`);
+            return await window.confirmDialog({
+                title: 'Descartar cambios', question: options.question, description: options.description,
+                confirmText: options.confirmText, cancelText: 'Continuar editando', variant: 'warning'
+            });
+        } finally {
+            navigationState.confirming = false;
+        }
+    }
+
+    window.resetDeathEditForm = async function (event) {
+        event?.preventDefault();
+        const shouldReset = await confirmDiscardChanges({
+            question: '¿Deseas restablecer los cambios?',
+            description: 'Los campos volverán a los valores con los que abriste esta edición.',
+            confirmText: 'Restablecer'
+        });
+        if (!shouldReset) return;
+        form.reset();
+        selects.forEach(function (select) {
+            select.tomselect?.setValue(select.dataset.initialValue || '', true);
+            clearSelectError(select);
+        });
+        ageValue.setCustomValidity('');
+        ageValue.removeAttribute('aria-invalid');
+        document.getElementById('age-client-error')?.classList.add('hidden');
+        form.querySelectorAll('[data-server-error]').forEach((error) => error.remove());
+        updateDistrict();
+        updateAgeLimit(false);
+    };
+
+    form.addEventListener('submit', function (event) {
+        let firstInvalid = validateAge() ? null : ageValue;
+        requiredSelects.forEach(function (definition) {
+            if (!validateRequiredSelect(...definition) && !firstInvalid) firstInvalid = definition[0];
+        });
+        if (!form.checkValidity() || firstInvalid) {
+            event.preventDefault();
+            const target = firstInvalid || form.querySelector(':invalid');
+            if (target?.tomselect) {
+                target.tomselect.focus();
+                target.tomselect.control_input?.reportValidity();
+            } else {
+                target?.focus();
+                target?.reportValidity?.();
+            }
+            return;
+        }
+        navigationState.submitting = true;
+        const submitButton = form.querySelector('.ui-button--primary');
+        if (submitButton) { submitButton.disabled = true; submitButton.textContent = 'Guardando…'; }
+    });
+
+    document.addEventListener('click', async function (event) {
+        const link = event.target.closest('a[href]');
+        if (!link || event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey
+            || link.target === '_blank' || link.hasAttribute('download') || !hasUnsavedChanges()) return;
+        const href = link.getAttribute('href');
+        if (!href || href.startsWith('#') || href.startsWith('javascript:')) return;
+        const destination = new URL(link.href, window.location.href);
+        if (destination.origin !== window.location.origin) return;
+        event.preventDefault();
+        const shouldLeave = await confirmDiscardChanges({
+            question: '¿Deseas salir de la edición?', description: 'Los cambios realizados no se guardarán.', confirmText: 'Salir sin guardar'
+        });
+        if (!shouldLeave) return;
+        navigationState.navigating = true;
+        if (typeof window.navigateBackOrVisit === 'function') window.navigateBackOrVisit(destination.href);
+        else window.location.assign(destination.href);
+    }, true);
+
+    window.addEventListener('beforeunload', function (event) {
+        if (navigationState.submitting || navigationState.navigating || !hasUnsavedChanges()) return;
+        event.preventDefault();
+        event.returnValue = '';
+    });
+});
+</script>
+@endpush

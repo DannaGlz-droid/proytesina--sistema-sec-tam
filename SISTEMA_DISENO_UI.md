@@ -63,6 +63,7 @@ Los nombres expresan función, no un color específico.
   --ui-surface: #ffffff;
   --ui-surface-soft: #f8fafc;
   --ui-surface-section: #f3f4f6;
+  --ui-surface-row-alt: #fafafa;
   --ui-surface-hover: #f1f5f9;
 
   --ui-focus: #475569;
@@ -305,7 +306,10 @@ Estados:
 - Foco: borde `--ui-focus` y anillo de 2 px con `--ui-focus-ring`.
 - Error: borde rojo y mensaje inline debajo del campo.
 - Correcto: no pintar todo el campo de verde; mostrar confirmación discreta cuando aporte valor.
-- Deshabilitado: fondo gris, texto atenuado y cursor correspondiente.
+- Deshabilitado: fondo `--ui-surface-section`, borde `--ui-border-soft`, texto `--ui-text-secondary` y cursor `not-allowed`.
+- Un campo deshabilitado no cambia fondo, borde, texto ni sombra en hover, foco o estado activo; tampoco muestra anillo de foco ni transición, porque no debe sugerir interacción.
+- Para un valor derivado que solo se muestra y no debe recibir interacción, usar `disabled`, `aria-disabled="true"` y la clase compartida `ui-field--disabled`. Si el valor debe enviarse, conservarlo en un `input type="hidden"` y validarlo nuevamente en el servidor; el campo visible deshabilitado no lleva `name`.
+- Usar `readonly` en lugar de `disabled` solo cuando la persona necesite enfocar, seleccionar o copiar el contenido. Un campo `readonly` puede conservar respuesta de foco, pero nunca debe parecer editable.
 
 ### 6.3 Selects
 
@@ -320,6 +324,8 @@ Estados:
 - Diferenciar sin iconos el valor seleccionado y la opción activa: el seleccionado conserva un fondo neutral muy tenue y peso 600; la opción recorrida por cursor o teclado usa un gris ligeramente más marcado.
 - Si la opción seleccionada también está activa, prevalece el fondo del estado activo y se conserva el peso 600.
 - La opción activa usa azul grisáceo o neutral, no el color institucional.
+- En selects dependientes, elegir el campo padre filtra el catálogo hijo y limpia cualquier valor hijo incompatible; si el hijo permite inferir el padre, la asignación puede realizarse automáticamente sin interrumpir la selección actual.
+- Cuando el padre inferido o seleccionado limite un catálogo que inicialmente era completo, ofrecer una acción visible y específica para quitar ese filtro. La acción limpia solamente la pareja dependiente, restaura el catálogo completo y no reinicia los demás campos del formulario.
 
 ### 6.4 Validación
 
@@ -338,7 +344,18 @@ Estados:
 - Mostrar contraseña es una acción de solo icono con etiqueta accesible.
 - Los estados de seguridad usan colores semánticos, nunca color de marca.
 
-### 6.6 Cambios sin guardar
+### 6.6 Carga de archivos
+
+- Mostrar los requisitos como un resumen compacto y continuo, no como tarjetas decorativas independientes. Cada requisito incluye nombre, cantidad/formato esperado y estado textual.
+- La zona de carga usa borde discontinuo neutral, altura contenida, acción secundaria “Seleccionar archivos” y soporte equivalente para arrastrar y soltar. Formatos permitidos, selección múltiple y tamaño máximo permanecen visibles.
+- Los iconos de formato son neutrales. Reservar éxito, advertencia y error para el estado del requisito o la validación; no asignar colores intensos distintos a PDF, hoja de cálculo y fotografía.
+- Presentar archivos en filas compactas: icono, nombre como información principal, formato y tamaño como información secundaria, y una única acción accesible para retirar el archivo.
+- En edición, separar claramente archivos guardados de archivos por agregar. Marcar un archivo existente para reemplazo o eliminación debe ser reversible antes de guardar y no ejecuta una eliminación inmediata.
+- Los estados Pendiente, Incompleto y Completado se comunican mediante texto y color semántico suave; los contadores dinámicos usan `aria-live` cuando aporten contexto.
+- Validar formato, tamaño, duplicados y cantidades tanto en cliente como en servidor. Un error aparece inline junto a la zona de carga y lleva el foco a la acción de selección.
+- En móvil, el resumen de requisitos se apila y las filas conservan nombre, metadatos y acción sin introducir desplazamiento horizontal.
+
+### 6.7 Cambios sin guardar
 
 - Los formularios de edición comparan su estado actual con el estado inicial; abrir la vista sin modificarla nunca genera una advertencia.
 - Al intentar navegar mediante un enlace interno con cambios pendientes, usar el diálogo compartido “Descartar cambios”.
@@ -360,19 +377,23 @@ Estados:
 
 ### 7.2 Tabla
 
-- Encabezado en superficie gris clara, texto de 12 px y peso 700.
+- Encabezado en `--ui-surface-section`, texto de 12 px y peso 600. El color computado debe ser exactamente el del token (`#f3f4f6` en el tema base); no sustituirlo por `--ui-surface-soft`, `--table-head` ni otro gris azulado cercano.
+- Las filas alternan únicamente entre `--ui-surface` y `--ui-surface-row-alt`; el hover usa `--ui-surface-section`. No introducir grises locales aproximados por módulo.
+- La altura del encabezado se obtiene reutilizando el mismo DOM y padding del piloto. Las columnas de selección envuelven el checkbox en su etiqueta/área interactiva compartida tanto en `<th>` como en `<td>`; no compensar diferencias estructurales con `height`, `min-height` o padding exclusivo del módulo.
+- Al adaptar una tabla existente, revisar el CSS computado de encabezado y filas. Una regla genérica —en especial si usa `!important`— no debe sobrescribir los tokens del componente; resolver la cascada en el selector compartido y conservar la misma especificidad y orden del piloto, en lugar de añadir un parche visual aproximado.
 - Densidad única administrativa: filas de 56 px como base, permitiendo crecimiento natural cuando el contenido requiera una segunda línea.
 - Separadores horizontales suaves; evitar una cuadrícula completa.
 - Hover de fila neutral.
 - Selección de fila claramente distinguible sin saturar con marca.
 - Texto principal en azul oscuro; metadatos en gris.
 - En tablas de personas, usar avatares circulares de 40 px. Acompañarlos con nombre a 0.80 rem en peso 600 y metadato a 0.72 rem; esta escala conserva la fila base de 56 px y mejora el reconocimiento sin aumentar innecesariamente la densidad.
-- Jerarquía de ancho: `Usuario` tiene la mayor prioridad, seguida de `Cargo`; `Rol` y `Estado` usan anchos compactos. Selección y acciones son columnas utilitarias fijas de 44 px.
+- Jerarquía de ancho: `Usuario` tiene la mayor prioridad, seguida de `Cargo`; `Rol` y `Estado` usan anchos compactos. Las columnas utilitarias reutilizan exactamente la geometría del piloto: selección de `2.4rem`, acciones de `2.75rem`, sin padding lateral en la celda; el área táctil de 44 px la aporta la etiqueta o botón interno y no se obtiene ensanchando la columna.
 - En anchos estrechos, `Rol` y `Estado` conservan carriles independientes: la insignia de rol nunca debe tocar el indicador ni el texto del estado.
 - Mantener gutters horizontales uniformes y perceptibles entre columnas. La separación debe resolverse con padding de celda, nunca con márgenes negativos ni encogiendo insignias.
 - Las insignias de rol mantienen forma de píldora, altura mínima de 20 px y padding lateral suficiente incluso en anchos estrechos.
 - En ventanas estrechas, conservar una retícula mínima proporcional y permitir desplazamiento horizontal antes que solapar datos, truncar controles o comprimir columnas por debajo de su contenido útil.
 - Las columnas de datos con formato específico, como `Teléfono` y `Fecha alta`, deben mantenerse completas y sin cortes inarmónicos; preservar `white-space: nowrap` para esos campos e introducir scroll horizontal si hace falta.
+- Los encabezados usan su nombre completo cuando el ancho lo permite; por ejemplo, “Fecha de defunción” y “Municipio de defunción”. En anchos reducidos puede mostrarse una abreviatura visual, pero el nombre accesible permanece completo y no se altera el significado de la columna.
 - Este mismo patrón de tablas debe aplicarse a otros listados y módulos del sistema: controles comunes, espacio entre columnas y comportamiento responsive deben ser consistentes con el piloto de Gestión de usuarios.
 
 - En contenedores amplios, la columna `Usuario` presenta el nombre como información principal, el `@usuario` como una insignia discreta junto al nombre y el correo en una segunda línea de menor contraste.
@@ -380,8 +401,11 @@ Estados:
 - La visibilidad progresiva de columnas se decide con el ancho real del contenedor de la tabla, no con el ancho global de la ventana. Antes de comprometer las columnas principales, ocultar primero `Teléfono`, después `Últ. sesión` y finalmente `Fecha alta`; conservar siempre `Usuario`, `Cargo`, `Rol`, `Estado` y `Acciones`.
 - **Últ. sesión** usa texto temporal sin píldora: `En línea` en verde; después `Ahora mismo`, `Hace N min`, `Hace N h`, `Ayer` o `Hace N días`; a partir de siete días muestra la fecha `dd/mm/aaaa`. Cuando no existe actividad registrada usa `Sin registro` en color secundario. El detalle exacto de fecha y hora queda disponible al pasar el cursor.
 - Fechas y números con cifras tabulares.
+- Folios, claves e identificadores se tratan como texto y se alinean a la izquierda, aunque una página o resultado filtrado contenga únicamente valores numéricos. En tablas con inferencia automática se fija explícitamente el tipo para evitar cambios de alineación entre cargas.
 - Columnas de estado y acciones no deben reordenarse.
 - Acción por fila mediante menú de tres puntos con etiqueta accesible.
+- En tablas administrativas y operativas, el estado del registro o proceso y el resultado de sus elementos son conceptos distintos. El estado reutiliza el patrón del piloto: punto semántico de 8 px más texto normal, sin fondo, borde ni forma de píldora; las píldoras se reservan para categorías como rol. El resultado usa un resumen textual dentro de su propia columna.
+- Cuando un resultado compuesto usa un conjunto fijo de categorías y debe compararse entre filas, cada categoría conserva siempre la misma posición; los ceros se atenúan en lugar de alterar la estructura. Usar nombres que expliquen el efecto real (`agregados`, `sin cambios`, `diferencias`, `por corregir`). La categoría accionable enlaza al flujo correspondiente; nunca llamar `actualizados` a registros que el sistema no sobrescribió.
 
 ### 7.3 Filtros
 
@@ -390,18 +414,24 @@ Estados:
 - “Limpiar” es una acción textual; “Aplicar filtros” es la confirmación primaria.
 - Chips removibles deben mostrar el valor aplicado, no solo el nombre del campo.
 - Cerrar, cancelar o presionar Escape no aplica cambios parciales.
+- En un selector simple con estado global, “Todos” o “Todas” se muestra como estado vacío del control, pero no se repite como opción dentro del desplegable. En Tom Select se conserva la opción vacía para el envío del formulario y se inicializa con `allowEmptyOption: false`.
+- Cuando una sección agrupa varios selectores relacionados, cada etiqueta y su control forman un bloque y los bloques conservan una separación vertical uniforme. Si la sección contiene un solo selector, el título de la sección funciona como etiqueta visual y no se repite inmediatamente dentro del contenido.
+- Los filtros compuestos muestran únicamente los controles correspondientes al modo elegido. Su chip resume el criterio efectivo —valores, periodo o rango— y no solamente el nombre del modo seleccionado.
+- Un filtro compuesto no asigna valores implícitos a controles visibles que el usuario deja vacíos. Un modo abierto pero sin datos se considera borrador: no bloquea otros filtros, no se envía y no genera chip. Cuando el usuario empieza a capturar el criterio, se validan sus datos dependientes y el chip aparece únicamente al quedar completo.
 
 ### 7.4 Búsqueda y paginación
 
 - Buscar incluye icono, placeholder específico y botón para limpiar cuando exista texto.
 - Los buscadores de tablas usan `type="search"`, `autocomplete="off"`, no llevan `name` si no se envían con un formulario y desactivan corrección ortográfica y capitalización automática.
 - El foco del buscador usa el mismo borde `--ui-focus` y anillo `--ui-focus-ring` de campos, selects y controles de modal; no usar el azul predeterminado del navegador ni el color institucional.
-- Usar debounce y mostrar actividad sin bloquear la tabla.
+- Escribir no ejecuta la consulta automáticamente: la búsqueda se confirma con Enter. Mientras se escribe, únicamente se actualiza la disponibilidad de la acción para limpiar; al confirmar, mostrar actividad sin bloquear la tabla.
 - En actualizaciones posteriores a la carga inicial —ordenar, filtrar, buscar, paginar o cambiar la cantidad de filas— conservar los datos visibles, atenuarlos como máximo a 80 % y deshabilitar temporalmente las acciones de fila. Retrasar cualquier indicador unos 150 ms para evitar parpadeos en respuestas rápidas.
 - Para ordenar, filtrar, paginar o cambiar la cantidad de filas, mostrar una línea de progreso neutral en la parte superior de la tabla. Durante una búsqueda, sustituir esa línea por un único spinner neutral de 14–16 px dentro del campo; no mostrar ambos indicadores a la vez.
+- El estado de búsqueda es mutuamente excluyente: al comenzar se marca el campo con `aria-busy="true"`, se muestra `.users-search-progress` y se oculta el botón para limpiar; al terminar —también ante error— se retira la carga y la tacha reaparece solamente si queda texto. Esta alternancia pertenece al componente compartido y nunca se implementa con selectores ligados al `id` de una vista.
 - “Mostrar 10” conserva una sola altura y estilo con el resto de la toolbar. Usar un icono neutral de lista o filas para comunicar cantidad visible; no añadir otra flecha de despliegue ni animar el icono. En el menú, señalar la opción seleccionada solamente mediante fondo suave y peso de texto, sin palomita ni otro icono redundante; conservar `aria-selected`.
 - En móvil, el menú de “Mostrar” permanece anclado directamente debajo de su control y adopta su mismo ancho; nunca debe desplazarse debajo del buscador ni tomar como referencia toda la toolbar.
 - Los menús de acciones de fila se muestran en una capa vinculada al viewport, fuera del recorte de la tabla. Deben elegir automáticamente abrir arriba o abajo según el espacio disponible y nunca quedar ocultos detrás del pie, aunque una búsqueda deje una sola fila.
+- El control de tres puntos permanece transparente, sin borde, sombra ni superficie persistente. En hover y con `aria-expanded="true"` conserva el fondo transparente y únicamente oscurece el icono; no debe aparecer un recuadro gris, cuadrado o redondeado alrededor del control. Una regla genérica de botones de tabla no debe convertirlo en una tarjeta ni añadir una superficie local.
 - En móvil, la franja de filtros activos debe permanecer completamente dentro de los límites de la tarjeta y de su toolbar; no usar márgenes negativos que la hagan sobresalir.
 - Pie en escritorio: “Mostrando 1–10 de 40” a la izquierda y paginación a la derecha.
 - Anterior/Siguiente deshabilitados deben seguir siendo legibles.
@@ -410,7 +440,10 @@ Estados:
 ### 7.5 Estados obligatorios
 
 - Carga inicial: skeleton de filas que conserva encabezado, columnas y altura aproximada; no usar una tabla vacía ni un spinner aislado.
-- Sin resultados: estado neutral dentro de la tabla, icono de búsqueda, mensaje breve y acción “Limpiar búsqueda y filtros”.
+- Sin resultados: estado neutral dentro de la tabla, icono de búsqueda, mensaje breve y acción “Limpiar búsqueda y filtros”. Todos los listados reutilizan el mismo componente y DOM del piloto; no crear variantes locales para su altura, tipografía, espaciado o botón.
+- En escritorio, el estado compartido conserva `min-height: 13rem`, padding de `2rem 1rem`, icono de `1.15rem`, título de `0.94rem` en peso 600 y descripción de `0.8rem`. Su acción usa la variante neutral compartida `users-table-state-action`: transparente, sin borde ni sombra en reposo; únicamente muestra `--ui-surface-section` en hover o estado activo. El color computado de ese hover debe ser exactamente `#f3f4f6` en el tema base, nunca `--ui-surface-soft` (`#f8fafc`).
+- La acción de un estado ocupa una celda con `colspan` que también es `:last-child`; las reglas genéricas para botones de la última columna no deben convertirla en un botón secundario con borde. La variante del estado debe prevalecer explícitamente en la cascada.
+- Cuando la biblioteca de tabla genera automáticamente la fila vacía, asignarle la clase de fila de estado después de cada render. Su celda ocupa todas las columnas, usa padding cero y superficie blanca; debe prevalecer sobre las reglas normales y alternadas de las filas de datos.
 - Los estados vacíos o sin resultados no reaccionan al hover: el contenedor mantiene la superficie blanca de la tabla porque no es una fila interactiva.
 - Sin datos: estado neutral dentro del contenedor, icono relacionado con el módulo, título, una oración y la acción principal pertinente.
 - Error: franja inline rojo suave, icono de advertencia, explicación directa y botón secundario “Reintentar”; no usar modal para errores de carga.
@@ -456,6 +489,8 @@ Estados:
 - Tamaño normal de 440-480 px, campos en una columna y acciones separadas por un único divisor neutral.
 - Mostrar al inicio la entidad afectada para evitar que la persona modifique el registro equivocado.
 - Incluir estados de validación, envío, error y éxito dentro del flujo. No depender de alertas del navegador.
+- Para importar un archivo desde un listado, abrir un modal de tarea breve antes del explorador: mostrar formatos y tamaño máximo, permitir selección o arrastre, presentar el archivo elegido y habilitar la acción primaria únicamente después de validarlo.
+- La importación usa una sola confirmación explícita dentro del modal; no encadenar un segundo diálogo de confirmación después de seleccionar el archivo. Los errores de formato o procesamiento permanecen en el mismo flujo.
 - Si existen cambios escritos, cerrar, usar Escape o pulsar el overlay debe pedir confirmación antes de descartarlos.
 - La ruta de página debe conservarse como respaldo cuando JavaScript no esté disponible o se acceda mediante URL directa.
 

@@ -769,6 +769,7 @@ class DeathImportController extends Controller
      */
     public function getImportHistory()
     {
+        $perPage = min(max((int) request()->query('per_page', 25), 1), 5000);
         try {
             $imports = DB::table('imports')
                 ->leftJoin('users as creator', 'imports.user_id', '=', 'creator.id')
@@ -797,7 +798,7 @@ class DeathImportController extends Controller
                     'reverser.username as reversed_by_username',
                 ])
                 ->orderBy('imports.created_at', 'desc')
-                ->paginate(25);
+                ->paginate($perPage);
 
             return response()->json(['ok' => true, 'data' => $imports]);
         } catch (\Throwable $e) {
@@ -925,10 +926,21 @@ class DeathImportController extends Controller
     public function getFailedRecords($importId)
     {
         try {
+            $perPage = min(max((int) request()->query('per_page', 10), 1), 100);
+            $search = trim((string) request()->query('search', ''));
+
             $failedRecords = FailedImportRecord::where('import_id', $importId)
                 ->where('status', 'pending')
+                ->when($search !== '', function ($query) use ($search) {
+                    $term = '%' . $search . '%';
+                    $query->where(function ($nested) use ($term) {
+                        $nested->where('error_message', 'like', $term)
+                            ->orWhere('original_row_data', 'like', $term)
+                            ->orWhere('corrected_data', 'like', $term);
+                    });
+                })
                 ->orderBy('created_at', 'desc')
-                ->paginate(10);
+                ->paginate($perPage);
 
             return response()->json(['ok' => true, 'data' => $failedRecords]);
         } catch (\Throwable $e) {

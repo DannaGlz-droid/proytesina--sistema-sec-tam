@@ -5,9 +5,19 @@
     @include('components.header-admin')
     @include('components.nav-estadisticas')
 
-    <div class="px-4 lg:pl-10 pt-6 lg:pt-10 pb-8 lg:pb-12">
+    <main class="users-management-page statistics-failed-imports-page px-4 lg:pl-10 pt-5 lg:pt-7 pb-8 lg:pb-10">
+        <x-ui.page-header title="Importaciones fallidas" description="Revise, corrija o descarte los registros que no pudieron guardarse desde {{ $importFileName }}.">
+            <x-slot:actions><a href="{{ route('statistic.import-history-view') }}" class="users-page-create-btn"><i class="fas fa-arrow-left" aria-hidden="true"></i>Volver al historial</a></x-slot:actions>
+        </x-ui.page-header>
+
+        <section class="app-table-card users-table-card failed-imports-card" aria-label="Registros fallidos de la importaciÃ³n">
+            <div class="failed-imports-toolbar">
+                <div class="failed-imports-file-context"><span class="failed-imports-file-icon"><i class="far fa-file-excel" aria-hidden="true"></i></span><div><strong>{{ $importFileName }}</strong><small>Registros pendientes de revisiÃ³n</small></div></div>
+                <div class="users-filter-search failed-imports-search"><i class="fas fa-search" aria-hidden="true"></i><input id="search-failed-imports" type="search" placeholder="Buscar registros fallidos..." aria-label="Buscar registros fallidos" autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false" enterkeyhint="search"><span class="users-search-progress" aria-hidden="true"></span><button id="clear-failed-imports-search" type="button" class="hidden" aria-label="Limpiar bÃºsqueda"><i class="fas fa-times" aria-hidden="true"></i></button></div>
+                <div class="app-table-page-size users-filter-page-size"><select id="per-page-failed-imports" class="users-native-page-size" aria-hidden="true" tabindex="-1">@foreach([10,25,50] as $size)<option value="{{ $size }}">{{ $size }}</option>@endforeach</select><div class="users-page-size-dropdown"><button id="per-page-failed-imports-button" type="button" class="users-page-size-button" aria-haspopup="listbox" aria-expanded="false"><span>Mostrar</span><strong id="per-page-failed-imports-label">10</strong><i class="fas fa-list-ul users-page-size-icon" aria-hidden="true"></i></button><div id="per-page-failed-imports-menu" class="users-page-size-menu hidden" role="listbox">@foreach([10,25,50] as $size)<button type="button" role="option" class="users-page-size-option {{ $size === 10 ? 'is-active' : '' }}" data-value="{{ $size }}">{{ $size }}</button>@endforeach</div></div></div>
+            </div>
         <!-- HEADER CON TÍTULO Y BOTONES -->
-        <div class="flex flex-col lg:flex-row lg:justify-between lg:items-center gap-4 mb-6">
+        <div class="failed-imports-legacy-header flex flex-col lg:flex-row lg:justify-between lg:items-center gap-4 mb-6">
             <div>
                 <h1 class="text-2xl lg:text-3xl font-lora font-bold text-[#404041] mb-2">Registros Fallidos - "{{ $importFileName }}"</h1>
                 <p class="text-sm lg:text-base text-[#404041] font-lora">
@@ -22,7 +32,7 @@
         </div>
 
         <!-- Loading State -->
-        <div id="loading-state" class="space-y-6">
+        <div id="loading-state" class="failed-imports-state">
             <div class="flex flex-col items-center justify-center min-h-80">
                 <div class="relative mb-8">
                     <div class="w-16 h-16 border-4 border-gray-200 rounded-full"></div>
@@ -47,7 +57,7 @@
             </div>
 
             <!-- Records List (with empty state) -->
-            <div id="records-list" class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div id="records-list" class="failed-imports-list">
                 <!-- Empty State (shown when no records) -->
                 <div id="empty-state" class="col-span-full text-center py-12">
                     <div class="text-gray-400 mb-4">
@@ -59,9 +69,10 @@
             </div>
 
             <!-- Paginación Inferior -->
-            <div id="pagination-bottom" class="app-pagination mt-8"></div>
+            <nav class="users-table-footer failed-imports-footer"><span id="failed-imports-info">Mostrando 0-0 de 0</span><div id="pagination-bottom"></div></nav>
         </div>
-    </div>
+        </section>
+    </main>
 
 @endsection
 
@@ -426,15 +437,10 @@
 </template>
 
 <!-- Incluir Ionicons -->
-<script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
-<script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
 
 <!-- Font Awesome -->
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
 <!-- Tom Select CDN (single-select, styled to match inputs) -->
-<link href="https://cdn.jsdelivr.net/npm/tom-select/dist/css/tom-select.default.min.css" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/tom-select/dist/js/tom-select.complete.min.js"></script>
 
 @push('scripts')
 <style>
@@ -755,6 +761,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const importId = {{ $importId }};
     let currentPage = 1;
     let isInitialLoad = true;
+    let failedImportsPerPage = 10;
+    let failedImportsSearch = '';
 
     function notifyFailedImport(message, type = 'success', duration = 3000) {
         if (typeof window.showToast === 'function') {
@@ -765,6 +773,59 @@ document.addEventListener('DOMContentLoaded', function() {
         const logger = type === 'error' ? console.error : console.log;
         logger(message);
     }
+
+    const failedSearchInput = document.getElementById('search-failed-imports');
+    const failedSearchClear = document.getElementById('clear-failed-imports-search');
+    const failedSearchControl = failedSearchInput?.closest('.users-filter-search');
+    const failedPerPageSelect = document.getElementById('per-page-failed-imports');
+    const failedPerPageButton = document.getElementById('per-page-failed-imports-button');
+    const failedPerPageMenu = document.getElementById('per-page-failed-imports-menu');
+
+    failedSearchInput?.setAttribute('aria-busy', 'false');
+    const updateFailedSearchClear = () => failedSearchClear?.classList.toggle('hidden', !failedSearchInput?.value);
+    const applyFailedSearch = () => {
+        failedImportsSearch = failedSearchInput?.value.trim() || '';
+        failedSearchControl?.classList.add('is-searching');
+        failedSearchInput?.setAttribute('aria-busy', 'true');
+        isInitialLoad = false;
+        loadFailedRecords(1);
+    };
+
+    failedSearchInput?.addEventListener('input', updateFailedSearchClear);
+    failedSearchInput?.addEventListener('keydown', event => {
+        if (event.key === 'Enter') {
+            event.preventDefault();
+            applyFailedSearch();
+        }
+    });
+    failedSearchClear?.addEventListener('click', () => {
+        failedSearchInput.value = '';
+        updateFailedSearchClear();
+        applyFailedSearch();
+        failedSearchInput.focus();
+    });
+
+    failedPerPageButton?.addEventListener('click', () => {
+        const open = failedPerPageMenu?.classList.contains('hidden');
+        failedPerPageMenu?.classList.toggle('hidden', !open);
+        failedPerPageButton.setAttribute('aria-expanded', String(open));
+    });
+    failedPerPageMenu?.querySelectorAll('[data-value]').forEach(option => option.addEventListener('click', () => {
+        failedImportsPerPage = Number(option.dataset.value) || 10;
+        failedPerPageSelect.value = String(failedImportsPerPage);
+        document.getElementById('per-page-failed-imports-label').textContent = String(failedImportsPerPage);
+        failedPerPageMenu.querySelectorAll('[data-value]').forEach(item => item.classList.toggle('is-active', item === option));
+        failedPerPageMenu.classList.add('hidden');
+        failedPerPageButton.setAttribute('aria-expanded', 'false');
+        isInitialLoad = false;
+        loadFailedRecords(1);
+    }));
+    document.addEventListener('click', event => {
+        if (!event.target.closest('.users-page-size-dropdown')) {
+            failedPerPageMenu?.classList.add('hidden');
+            failedPerPageButton?.setAttribute('aria-expanded', 'false');
+        }
+    });
 
     function loadFailedRecords(page = 1) {
         const loadingState = document.getElementById('loading-state');
@@ -784,7 +845,9 @@ document.addEventListener('DOMContentLoaded', function() {
         // Get CSRF token from meta tag
         const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
 
-        fetch(`/api/estadisticas/importaciones/${importId}/registros-fallidos?page=${page}`, {
+        const query = new URLSearchParams({ page, per_page: failedImportsPerPage });
+        if (failedImportsSearch) query.set('search', failedImportsSearch);
+        fetch(`/api/estadisticas/importaciones/${importId}/registros-fallidos?${query.toString()}`, {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
@@ -842,11 +905,13 @@ document.addEventListener('DOMContentLoaded', function() {
                     // If it's a paginated response, use the pagination object; otherwise use the raw data
                     const paginationData = Array.isArray(data.data) ? null : data.data;
                     if (paginationData) {
-                        renderPagination(paginationData);
+                        renderFailedPaginationPilot(paginationData);
                     }
                     currentPage = page;
                 } else {
                     // Show only the empty state
+                    document.getElementById('failed-imports-info').innerHTML = 'Mostrando <strong>0-0</strong> de <strong>0</strong>';
+                    document.getElementById('pagination-bottom').replaceChildren();
                     recordsList.innerHTML = `
                         <div id="empty-state" class="col-span-full text-center py-12">
                             <div class="text-gray-400 mb-4">
@@ -865,6 +930,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 recordsContainer.classList.remove('hidden');
                 isInitialLoad = false;
                 recordsList.style.opacity = '1';
+                document.getElementById('failed-imports-info').innerHTML = 'Mostrando <strong>0-0</strong> de <strong>0</strong>';
+                document.getElementById('pagination-bottom').replaceChildren();
                 document.getElementById('records-list').innerHTML = `
                     <div class="col-span-full bg-red-50 border border-red-200 rounded-lg p-6 text-center">
                         <p class="text-red-700 font-semibold text-base mb-2">No se pudieron cargar los registros</p>
@@ -883,6 +950,11 @@ document.addEventListener('DOMContentLoaded', function() {
                         </details>
                     </div>
                 `;
+            })
+            .finally(() => {
+                failedSearchControl?.classList.remove('is-searching');
+                failedSearchInput?.setAttribute('aria-busy', 'false');
+                updateFailedSearchClear();
             });
     }
 
@@ -1277,6 +1349,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (btnToggleEdit) {
             btnToggleEdit.addEventListener('click', (e) => {
                 e.preventDefault();
+                card.classList.add('is-editing-fields');
                 form.querySelectorAll('[name]').forEach(field => {
                     field.disabled = false;
                 });
@@ -1330,6 +1403,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (btnCancelEdit) {
             btnCancelEdit.addEventListener('click', (e) => {
                 e.preventDefault();
+                card.classList.remove('is-editing-fields');
                 
                 // First, restore original form data
                 const originalData = JSON.parse(card.dataset.originalFormData || '{}');
@@ -1683,6 +1757,39 @@ document.addEventListener('DOMContentLoaded', function() {
         // Render in both top and bottom
         renderPaginationButtons(paginationTop);
         renderPaginationButtons(paginationBottom);
+    }
+
+    function renderFailedPaginationPilot(data) {
+        const container = document.getElementById('pagination-bottom');
+        const footerInfo = document.getElementById('failed-imports-info');
+        const from = data.from || 0;
+        const to = data.to || 0;
+        if (footerInfo) footerInfo.innerHTML = `Mostrando <strong>${from}-${to}</strong> de <strong>${data.total || 0}</strong>`;
+        if (!container) return;
+
+        const item = (label, page, disabled = false, active = false) => {
+            const tag = disabled || active ? 'span' : 'button';
+            const control = document.createElement(tag);
+            control.className = `fb-page-btn${disabled ? ' is-disabled' : ''}${active ? ' is-active' : ''}`;
+            control.textContent = label;
+            if (active) control.setAttribute('aria-current', 'page');
+            if (tag === 'button') {
+                control.type = 'button';
+                control.addEventListener('click', () => loadFailedRecords(page));
+            }
+            return control;
+        };
+
+        const list = document.createElement('div');
+        list.className = 'failed-imports-pagination';
+        list.appendChild(item('Anterior', data.current_page - 1, data.current_page <= 1));
+        getPaginationItems(data.current_page, data.last_page).forEach(page => {
+            list.appendChild(page === 'ellipsis'
+                ? item('...', 0, true)
+                : item(String(page), page, false, page === data.current_page));
+        });
+        list.appendChild(item('Siguiente', data.current_page + 1, data.current_page >= data.last_page));
+        container.replaceChildren(list);
     }
 
     function getPaginationItems(currentPage, lastPage) {

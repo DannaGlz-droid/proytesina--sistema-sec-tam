@@ -132,6 +132,12 @@
         text-decoration: underline;
       }
 
+      @media (min-width: 641px) {
+        .auth-card {
+          zoom: 0.65;
+        }
+      }
+
       @media (max-width: 420px) {
         .auth-card {
           padding: 30px 24px 28px;

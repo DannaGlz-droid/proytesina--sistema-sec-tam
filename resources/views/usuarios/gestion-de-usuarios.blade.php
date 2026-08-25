@@ -838,7 +838,7 @@
                 // Hide the ID column visually (we still include it in data for checkbox rendering)
                 columnDefs: [
                     { targets: 0, visible: false, searchable: false, orderable: false },
-                    { targets: 1, width: '2.75rem', className: 'dt-checkbox-cell text-center' },
+                    { targets: 1, width: '2.4rem', className: 'dt-checkbox-cell text-center' },
                     { targets: 2, visible: false, searchable: false },
                     { targets: 3, width: '30%', className: 'dt-username-cell app-cell-wrap app-cell-strong' },
                     { targets: [4, 5, 6, 7, 10], visible: false },
