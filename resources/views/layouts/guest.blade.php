@@ -45,7 +45,7 @@
 
                 @media (min-width: 641px) {
                     .guest-auth-scale-wrapper {
-                        zoom: 0.65;
+                        zoom: 0.78;
                     }
                 }
             </style>

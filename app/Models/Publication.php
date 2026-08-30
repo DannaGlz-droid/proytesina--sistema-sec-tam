@@ -9,7 +9,7 @@ class Publication extends Model
 {
     use SoftDeletes;
 
-     /**
+    /**
      * The table associated with the model.
      */
     protected $table = 'publications';
@@ -45,6 +45,34 @@ class Publication extends Model
         'approved_at' => 'datetime',
         'rejected_at' => 'datetime',
     ];
+
+    protected static function booted(): void
+    {
+        static::created(function (Publication $publication): void {
+            if ($publication->folio !== null) {
+                return;
+            }
+
+            $publication->forceFill([
+                'folio' => $publication->generateFolio(),
+            ])->saveQuietly();
+        });
+    }
+
+    public function generateFolio(): string
+    {
+        $typeCode = match ($this->publication_type) {
+            'seguridad_vial' => 'SV',
+            'observatorio' => 'OBS',
+            'alcoholimetria' => 'ALC',
+            'grupos-vulnerables', 'grupos_vulnerables' => 'GV',
+            default => 'GEN',
+        };
+
+        $year = $this->created_at?->format('Y') ?? now()->format('Y');
+
+        return sprintf('EXP-%s-%04d-%s', $year, $this->getKey(), $typeCode);
+    }
 
     /**
      * Relationship: Publication belongs to User
@@ -134,6 +162,7 @@ class Publication extends Model
         // El autor puede editar la publicación mientras NO esté aprobada.
         // Normalizar estado y usar comparación laxa para evitar fallos por tipo.
         $status = strtolower(trim((string) $this->status));
+
         return $this->user_id == $userId && $status !== 'aprobado';
     }
 

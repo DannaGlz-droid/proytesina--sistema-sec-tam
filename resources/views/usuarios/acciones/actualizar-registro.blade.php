@@ -9,8 +9,8 @@
         <x-ui.page-header
             title="Editar usuario"
             description="Actualice la información y los permisos de acceso de esta cuenta."
-            :back-href="route('user.user-gestion')"
-            back-label="Volver a gestión de usuarios"
+            :back-href="$returnToProfile ? route('usuario.miperfil') : route('user.user-gestion')"
+            :back-label="$returnToProfile ? 'Volver a Mi perfil' : 'Volver a gestión de usuarios'"
             :prefer-history-back="true"
         />
 
@@ -18,6 +18,9 @@
             <form action="{{ route('user.update', $user->id) }}" method="POST" id="userEditForm">
                 @csrf
                 @method('PUT')
+                @if($returnToProfile)
+                    <input type="hidden" name="return_to" value="profile">
+                @endif
 
                 <x-ui.form.section title="Información del usuario" icon="user">
                     <div>
@@ -107,7 +110,7 @@
                             <select id="role_id" class="tomselect-select" name="role_id" required @error('role_id') aria-invalid="true" aria-describedby="role-error" @enderror>
                                 <option value="">Seleccione un rol</option>
                                 @foreach($roles ?? [] as $role)
-                                    <option value="{{ $role->id }}" @selected((string) old('role_id', $user->role_id) === (string) $role->id)>
+                                    <option value="{{ $role->id }}" data-role-name="{{ mb_strtolower(trim($role->name), 'UTF-8') }}" @selected((string) old('role_id', $user->role_id) === (string) $role->id)>
                                         {{ $role->name }}
                                     </option>
                                 @endforeach
@@ -123,6 +126,32 @@
                             </select>
                             @error('is_active') <p id="status-error" class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
                         </div>
+                    </div>
+
+                    @php
+                        $selectedRoleName = mb_strtolower(trim((string) optional(($roles ?? collect())->firstWhere('id', (int) old('role_id', $user->role_id)))->name), 'UTF-8');
+                        $isSystemContactSelected = (bool) $user->is_system_contact;
+                    @endphp
+                    <div id="systemContactControl" class="user-system-contact {{ $selectedRoleName === 'administrador' ? '' : 'hidden' }}">
+                        <input type="hidden" name="is_system_contact" value="0">
+                        <label for="is_system_contact" class="user-system-contact-label">
+                            <input
+                                id="is_system_contact"
+                                name="is_system_contact"
+                                class="user-system-contact-input"
+                                type="checkbox"
+                                value="1"
+                                @checked($isSystemContactSelected)
+                            >
+                            <span class="user-system-contact-check" aria-hidden="true">
+                                <i class="fas fa-check"></i>
+                            </span>
+                            <span class="user-system-contact-copy">
+                                <strong id="systemContactTitle">{{ $isSystemContactSelected ? 'Responsable principal del sistema' : 'Designar como responsable principal' }}</strong>
+                                <small id="systemContactDescription">{{ $isSystemContactSelected ? 'Esta cuenta proporciona el contacto mostrado en Mi perfil.' : 'Usar los datos de esta cuenta en la ayuda de Mi perfil; reemplazará al responsable anterior.' }}</small>
+                            </span>
+                        </label>
+                        @error('is_system_contact') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
                     </div>
                 </x-ui.form.section>
 
@@ -146,6 +175,42 @@
             const selects = ['position_select', 'district_id', 'role_id', 'status_select']
                 .map((id) => document.getElementById(id))
                 .filter(Boolean);
+
+            const roleSelect = document.getElementById('role_id');
+            const systemContactControl = document.getElementById('systemContactControl');
+            const systemContactCheckbox = document.getElementById('is_system_contact');
+            const systemContactTitle = document.getElementById('systemContactTitle');
+            const systemContactDescription = document.getElementById('systemContactDescription');
+
+            const syncSystemContactCopy = () => {
+                if (!systemContactCheckbox || !systemContactTitle || !systemContactDescription) return;
+
+                if (systemContactCheckbox.checked) {
+                    systemContactTitle.textContent = 'Responsable principal del sistema';
+                    systemContactDescription.textContent = 'Esta cuenta proporciona el contacto mostrado en Mi perfil.';
+                } else {
+                    systemContactTitle.textContent = 'Designar como responsable principal';
+                    systemContactDescription.textContent = 'Usar los datos de esta cuenta en la ayuda de Mi perfil; reemplazará al responsable anterior.';
+                }
+            };
+
+            const syncSystemContactControl = () => {
+                if (!roleSelect || !systemContactControl) return;
+
+                const selectedOption = roleSelect.options[roleSelect.selectedIndex];
+                const isAdministrator = selectedOption?.dataset.roleName === 'administrador';
+                systemContactControl.classList.toggle('hidden', !isAdministrator);
+
+                if (!isAdministrator && systemContactCheckbox) {
+                    systemContactCheckbox.checked = false;
+                    syncSystemContactCopy();
+                }
+            };
+
+            roleSelect?.addEventListener('change', syncSystemContactControl);
+            systemContactCheckbox?.addEventListener('change', syncSystemContactCopy);
+            syncSystemContactControl();
+            syncSystemContactCopy();
 
             selects.forEach((select) => {
                 const initialValue = select.value;

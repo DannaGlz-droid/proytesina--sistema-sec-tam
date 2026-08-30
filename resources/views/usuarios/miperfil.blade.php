@@ -1,5 +1,5 @@
 @extends('layouts.principal')
-@section('title', 'Mi Perfil')
+@section('title', 'Mi perfil')
 @section('content')
 
     @include('components.header-admin')
@@ -10,8 +10,16 @@
         $profileName = $fullName ?? $profileUser->name;
         $profileUsername = $profileUser->username ?? explode('@', $profileUser->email)[0];
         $profilePosition = $profileUser->position->name ?? 'Sin cargo';
-        $profileDistrict = $profileUser->district->name ?? 'Sin distrito';
-        $profilePhone = $profileUser->phone ?? 'Sin teléfono registrado';
+        $profileDistrictRaw = $profileUser->district->name ?? 'Sin distrito';
+        $profileDistrictParts = preg_split('/\s*-\s*/u', $profileDistrictRaw, 2);
+        $profileDistrict = count($profileDistrictParts) === 2
+            ? mb_strtoupper(trim($profileDistrictParts[0]), 'UTF-8') . ' · ' . \Illuminate\Support\Str::title(\Illuminate\Support\Str::lower(trim($profileDistrictParts[1])))
+            : $profileDistrictRaw;
+        $profilePhone = $profileUser->formattedPhone() ?? 'Sin teléfono registrado';
+        $profilePhoneHref = $profileUser->phoneHref();
+        $profileRegistrationDate = $profileUser->formatted_registration_date
+            ?? optional($profileUser->created_at)->format('d/m/Y')
+            ?? 'Sin registro';
         $profileIsActive = (bool) ($profileUser->is_active ?? true);
         $profileRole = strtolower($profileUser->role->name ?? 'Usuario');
         $profileRoleLabel = match ($profileRole) {
@@ -22,12 +30,20 @@
             default => ucfirst($profileRole),
         };
         $profileRoleClass = match ($profileRole) {
-            'admin', 'administrador' => 'bg-[#e0e7ff] text-[#3730a3]',
-            'coordinator', 'coordinador' => 'bg-[#dcfce7] text-[#166534]',
-            'operator', 'operador' => 'bg-[#fef3c7] text-[#92400e]',
-            'invitado' => 'bg-[#fee2e2] text-[#991b1b]',
-            default => 'bg-[#f1f5f9] text-[#475569]',
+            'admin', 'administrador' => 'is-admin',
+            'coordinator', 'coordinador' => 'is-coordinator',
+            'operator', 'operador' => 'is-operator',
+            'invitado' => 'is-guest',
+            default => 'is-neutral',
         };
+        $showProfileContactHelp = in_array($profileRole, [
+            'coordinator',
+            'coordinador',
+            'operator',
+            'operador',
+            'guest',
+            'invitado',
+        ], true);
     @endphp
 
     <div class="users-form-page profile-page px-4 sm:px-6 lg:px-10 pt-6 lg:pt-8 pb-8 lg:pb-10">
@@ -37,103 +53,132 @@
         />
 
         <article class="users-form-card profile-account-card">
-            <header class="profile-account-identity">
-                <div class="profile-avatar-control">
-                    @if($profileUser->profile_photo_path)
-                        <img src="{{ asset('storage/' . $profileUser->profile_photo_path) }}" alt="Foto de perfil" class="profile-avatar" data-profile-avatar>
-                    @else
-                        <img src="{{ asset('images/default_pfp.svg.png') }}" alt="Avatar predeterminado" class="profile-avatar" data-profile-avatar>
-                    @endif
+            <header class="profile-overview">
+                <div class="profile-overview-identity">
+                    <div class="profile-avatar-control">
+                        <div class="profile-avatar-frame">
+                            @if($profileUser->profile_photo_path)
+                                <img src="{{ asset('storage/' . $profileUser->profile_photo_path) }}" alt="Foto de perfil de {{ $profileName }}" class="profile-avatar" data-profile-avatar>
+                            @else
+                                <img src="{{ asset('images/default_pfp.svg.png') }}" alt="Avatar predeterminado de {{ $profileName }}" class="profile-avatar profile-avatar-placeholder" data-profile-avatar>
+                            @endif
+                        </div>
 
-                    <button type="button" id="photoMenuBtn" class="profile-photo-button" title="Opciones de foto" aria-label="Opciones de foto" aria-expanded="false" aria-controls="photoMenu">
-                        <i class="fas fa-camera" aria-hidden="true"></i>
-                    </button>
-
-                    <div id="photoMenu" class="profile-photo-menu hidden">
-                        <button type="button" id="uploadPhotoBtn" class="profile-photo-menu-item">
+                        <button type="button" id="photoMenuBtn" class="profile-photo-button" title="Opciones de fotografía" aria-label="Opciones de fotografía" aria-haspopup="menu" aria-expanded="false" aria-controls="photoMenu">
                             <i class="fas fa-camera" aria-hidden="true"></i>
-                            Cambiar foto
                         </button>
-                        <button type="button" id="deletePhotoBtn" class="profile-photo-menu-item profile-photo-menu-item-danger {{ $profileUser->profile_photo_path ? '' : 'hidden' }}">
-                            <i class="fas fa-trash" aria-hidden="true"></i>
-                            Eliminar foto
-                        </button>
+
+                        <div id="photoMenu" class="profile-photo-menu hidden" role="menu" aria-label="Acciones de fotografía">
+                            <button type="button" id="uploadPhotoBtn" class="profile-photo-menu-item" role="menuitem">
+                                <i class="fas fa-camera" aria-hidden="true"></i>
+                                <span>Cambiar fotografía</span>
+                            </button>
+                            <button type="button" id="deletePhotoBtn" class="profile-photo-menu-item profile-photo-menu-item-danger {{ $profileUser->profile_photo_path ? '' : 'hidden' }}" role="menuitem">
+                                <i class="fas fa-trash" aria-hidden="true"></i>
+                                <span>Eliminar fotografía</span>
+                            </button>
+                        </div>
+
+                        <input type="file" id="photoInput" accept="image/jpeg,image/png,image/jpg" class="hidden" aria-label="Seleccionar fotografía de perfil">
                     </div>
-                    <input type="file" id="photoInput" accept="image/jpeg,image/png,image/jpg" class="hidden">
+
+                    <div class="profile-overview-copy">
+                        <span>Perfil de usuario</span>
+                        <h2>{{ $profileName }}</h2>
+                        <p class="profile-overview-username">{{ '@' . $profileUsername }}</p>
+                        <p class="profile-overview-date">Fecha de alta: <span class="profile-tabular">{{ $profileRegistrationDate }}</span></p>
+                    </div>
                 </div>
 
-                <div class="profile-identity-copy min-w-0">
-                    <span class="profile-identity-eyebrow">Cuenta de usuario</span>
-                    <h2>{{ $profileName }}</h2>
-                    <p>{{ '@' . $profileUsername }}</p>
-                    <div class="profile-identity-meta">
-                        <span><i class="fas fa-briefcase" aria-hidden="true"></i>{{ $profilePosition }}</span>
-                        <span><i class="fas fa-map-marker-alt" aria-hidden="true"></i>{{ $profileDistrict }}</span>
+                <div class="profile-overview-account" aria-label="Resumen de la cuenta">
+                    <div>
+                        <span class="profile-overview-label">Estado de la cuenta</span>
+                        <span class="profile-status-text">
+                            <span class="profile-status-dot {{ $profileIsActive ? 'is-active' : 'is-inactive' }}" aria-hidden="true"></span>
+                            {{ $profileIsActive ? 'Activo' : 'Inactivo' }}
+                        </span>
+                    </div>
+                    <div>
+                        <span class="profile-overview-label">Rol en el sistema</span>
+                        <span class="profile-role-badge {{ $profileRoleClass }}">{{ $profileRoleLabel }}</span>
                     </div>
                 </div>
             </header>
 
-            <div class="profile-account-body">
-                <x-ui.form.section title="Información personal" icon="user">
-                    <div class="profile-field">
-                        <span class="profile-field-label">Usuario</span>
-                        <div class="profile-readonly-field">{{ $profileUsername }}</div>
-                    </div>
-                    <div class="profile-field">
-                        <span class="profile-field-label">Nombre completo</span>
-                        <div class="profile-readonly-field">{{ $profileName }}</div>
-                    </div>
-                    <div class="profile-field">
-                        <span class="profile-field-label">Correo electrónico</span>
-                        <div class="profile-readonly-field">{{ $profileUser->email }}</div>
-                    </div>
-                    <div class="profile-field">
-                        <span class="profile-field-label">Teléfono</span>
-                        <div class="profile-readonly-field">{{ $profilePhone }}</div>
-                    </div>
-                </x-ui.form.section>
-
-                <x-ui.form.section title="Información laboral" icon="work">
-                    <div class="profile-field">
-                        <span class="profile-field-label">Cargo</span>
-                        <div class="profile-readonly-field">{{ $profilePosition }}</div>
-                    </div>
-                    <div class="profile-field">
-                        <span class="profile-field-label">Distrito</span>
-                        <div class="profile-readonly-field">{{ $profileDistrict }}</div>
-                    </div>
-                </x-ui.form.section>
-
-                <x-ui.form.section title="Información de la cuenta" icon="settings" class="profile-account-section">
-                    <div class="profile-field">
-                        <span class="profile-field-label">Fecha de alta</span>
-                        <div class="profile-readonly-field">{{ optional($profileUser->created_at)->format('d/m/Y') ?? 'Sin registro' }}</div>
-                    </div>
-                    <div class="profile-account-statuses" aria-label="Estado y rol de la cuenta">
-                        <div>
-                            <span class="profile-field-label">Estado de la cuenta</span>
-                            <span class="profile-status-text">
-                                <span class="profile-status-dot {{ $profileIsActive ? 'is-active' : 'is-inactive' }}" aria-hidden="true"></span>
-                                {{ $profileIsActive ? 'Activo' : 'Inactivo' }}
-                            </span>
+            <div class="profile-details-layout">
+                <section class="profile-detail-group" aria-labelledby="profile-personal-title">
+                    <h2 id="profile-personal-title" class="profile-detail-title">
+                        <i class="far fa-user" aria-hidden="true"></i>
+                        Información personal
+                    </h2>
+                    <dl class="profile-data-list">
+                        <div class="profile-data-item">
+                            <dt>Correo electrónico</dt>
+                            <dd><a href="mailto:{{ $profileUser->email }}">{{ $profileUser->email }}</a></dd>
                         </div>
-                        <div>
-                            <span class="profile-field-label">Rol en el sistema</span>
-                            <span class="profile-role-badge {{ $profileRoleClass }}">{{ $profileRoleLabel }}</span>
+                        <div class="profile-data-item">
+                            <dt>Teléfono</dt>
+                            <dd class="profile-tabular">
+                                @if($profilePhoneHref)
+                                    <a href="tel:{{ $profilePhoneHref }}">{{ $profilePhone }}</a>
+                                @else
+                                    {{ $profilePhone }}
+                                @endif
+                            </dd>
                         </div>
-                    </div>
-                </x-ui.form.section>
+                    </dl>
+                </section>
 
+                <section class="profile-detail-group" aria-labelledby="profile-work-title">
+                    <h2 id="profile-work-title" class="profile-detail-title">
+                        <i class="far fa-building" aria-hidden="true"></i>
+                        Información laboral
+                    </h2>
+                    <dl class="profile-data-list">
+                        <div class="profile-data-item">
+                            <dt>Cargo</dt>
+                            <dd>{{ $profilePosition }}</dd>
+                        </div>
+                        <div class="profile-data-item">
+                            <dt>Distrito</dt>
+                            <dd>{{ $profileDistrict }}</dd>
+                        </div>
+                    </dl>
+                </section>
+
+            </div>
+
+            @if($showProfileContactHelp)
                 <div class="profile-help-note">
                     <i class="fas fa-info-circle" aria-hidden="true"></i>
                     <div>
                         <strong>¿Necesitas actualizar tus datos?</strong>
-                        <p>Solicita la modificación al administrador del sistema: <a href="mailto:carlos.rodriguez@tamaulipas.gob.mx">carlos.rodriguez@tamaulipas.gob.mx</a> · <a href="tel:+528343186300">+52 834 318 6300</a></p>
+                        @if($systemContact)
+                            <p>
+                                Solicita la modificación al responsable del sistema:
+                                <span class="profile-help-contact-name">{{ $systemContact->contactDisplayName() }}</span>
+                                @if($systemContact->email)
+                                    <span aria-hidden="true"> · </span><a href="mailto:{{ $systemContact->email }}">{{ $systemContact->email }}</a>
+                                @endif
+                                @if($systemContact->phoneHref())
+                                    <span aria-hidden="true"> · </span><a class="profile-tabular" href="tel:{{ $systemContact->phoneHref() }}">{{ $systemContact->formattedPhone(true) }}</a>
+                                @endif
+                            </p>
+                        @else
+                            <p>Comunícate con el área responsable del sistema para solicitar la modificación.</p>
+                        @endif
                     </div>
                 </div>
-            </div>
+            @endif
 
             <footer class="profile-account-footer">
+                @if(in_array($profileRole, ['admin', 'administrador'], true))
+                    <a href="{{ route('user.edit', ['user' => $profileUser, 'from' => 'profile']) }}" class="profile-manage-account-button">
+                        <i class="fas fa-user-cog" aria-hidden="true"></i>
+                        Administrar esta cuenta
+                    </a>
+                @endif
+
                 <form method="POST" action="{{ route('logout') }}">
                     @csrf
                     <button type="submit" class="profile-logout-button">
@@ -145,220 +190,6 @@
         </article>
     </div>
 
-    @if(false)
-    <div class="users-form-page profile-page px-4 sm:px-6 lg:px-10 pt-6 lg:pt-8 pb-8 lg:pb-10">
-        <x-ui.page-header
-            title="Mi perfil"
-            description="Consulta tu información personal y los datos de tu cuenta."
-        />
-
-        <div class="profile-layout">
-            
-            <!-- COLUMNA IZQUIERDA - FICHA DE USUARIO -->
-            <div class="profile-summary-column min-w-0">
-                <div class="profile-summary-card border border-[#404041] rounded-lg p-6 bg-white overflow-hidden">
-                    <!-- FOTO DE PERFIL -->
-                    <div class="profile-summary-identity flex flex-col items-center mb-6">
-                        <div class="relative group">
-                            @if(auth()->user()->profile_photo_path)
-                                <img src="{{ asset('storage/' . auth()->user()->profile_photo_path) }}" alt="Foto de perfil" class="profile-avatar w-24 h-24 rounded-full object-cover border-4 border-[#611132]" data-profile-avatar>
-                            @else
-                                <img src="{{ asset('images/default_pfp.svg.png') }}" alt="Avatar predeterminado" class="profile-avatar w-24 h-24 rounded-full object-cover border-4 border-[#611132]" data-profile-avatar>
-                            @endif
-                            
-                            <button type="button" id="photoMenuBtn" class="profile-photo-button absolute -bottom-1 -right-1 flex h-8 w-8 items-center justify-center rounded-full border-2 border-white bg-[#611132] text-white shadow-sm transition-all duration-200 hover:bg-[#4a0e26] hover:shadow-md active:scale-95 focus:outline-none focus:ring-2 focus:ring-[#611132]/30" title="Opciones de foto" aria-label="Opciones de foto" aria-expanded="false" aria-controls="photoMenu">
-                                <i class="fas fa-camera text-xs"></i>
-                            </button>
-
-                            <div id="photoMenu" class="profile-photo-menu hidden absolute left-1/2 top-full z-20 mt-3 w-44 -translate-x-1/2 overflow-hidden rounded-lg border border-gray-200 bg-white text-left shadow-xl ring-1 ring-black/5">
-                                <button type="button" id="uploadPhotoBtn" class="flex w-full items-center gap-2 px-3 py-2 text-xs font-lora font-semibold text-[#404041] transition-colors hover:bg-gray-50 focus:bg-gray-50 focus:outline-none">
-                                    <i class="fas fa-camera w-4 text-[#611132]"></i>
-                                    Cambiar foto
-                                </button>
-                                <button type="button" id="deletePhotoBtn" class="{{ auth()->user()->profile_photo_path ? '' : 'hidden' }} flex w-full items-center gap-2 border-t border-gray-100 px-3 py-2 text-xs font-lora font-semibold text-red-700 transition-colors hover:bg-red-50 focus:bg-red-50 focus:outline-none">
-                                    <i class="fas fa-trash w-4"></i>
-                                    Eliminar foto
-                                </button>
-                            </div>
-                        </div>
-                        
-                        <!-- Input file hidden -->
-                        <input type="file" id="photoInput" accept="image/*" style="display: none;">
-                        
-                        <h2 class="profile-summary-name text-lg font-lora font-bold text-[#404041] text-center mt-4 leading-snug max-w-full break-words [overflow-wrap:anywhere]">{{ $fullName ?? auth()->user()->name }}</h2>
-                        <p class="profile-summary-position text-sm text-gray-600 font-lora text-center leading-snug max-w-full break-words [overflow-wrap:anywhere]">{{ auth()->user()->position->name ?? 'Sin cargo' }}</p>
-                    </div>
-
-                    <!-- INFORMACIÓN RÁPIDA -->
-                    <div class="profile-quick-list space-y-3 border-t border-gray-200 pt-4">
-                        <div class="flex items-start gap-3 min-w-0">
-                            <i class="fas fa-envelope text-[#611132] text-sm mt-1 flex-none"></i>
-                            <div class="min-w-0">
-                                <p class="text-xs text-gray-500 font-lora">Correo</p>
-                                <p class="text-sm text-[#404041] font-lora break-words [overflow-wrap:anywhere]">{{ auth()->user()->email }}</p>
-                            </div>
-                        </div>
-                        
-                        <div class="flex items-start gap-3 min-w-0">
-                            <i class="fas fa-briefcase text-[#611132] text-sm mt-1 flex-none"></i>
-                            <div class="min-w-0">
-                                <p class="text-xs text-gray-500 font-lora">Cargo</p>
-                                <p class="text-sm text-[#404041] font-lora break-words [overflow-wrap:anywhere]">{{ auth()->user()->position->name ?? 'Sin cargo' }}</p>
-                            </div>
-                        </div>
-                        
-                        <div class="flex items-start gap-3 min-w-0">
-                            <i class="fas fa-map-marker-alt text-[#611132] text-sm mt-1 flex-none"></i>
-                            <div class="min-w-0">
-                                <p class="text-xs text-gray-500 font-lora">Distrito</p>
-                                <p class="text-sm text-[#404041] font-lora break-words [overflow-wrap:anywhere]">{{ auth()->user()->district->name ?? 'Sin distrito' }}</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- BOTÓN CERRAR SESIÓN -->
-                    <div class="profile-logout-area mt-6 pt-4 border-t border-gray-200">
-                        <form method="POST" action="{{ route('logout') }}">
-                            @csrf
-                            <button type="submit" class="profile-logout-button w-full bg-[#611132] text-white px-4 py-2.5 rounded-lg text-xs font-semibold hover:bg-[#4a0e26] transition-all duration-300 font-lora flex items-center justify-center gap-2">
-                                <i class="fas fa-sign-out-alt text-xs"></i>
-                                Cerrar Sesión
-                            </button>
-                        </form>
-                    </div>
-                </div>
-            </div>
-
-            <!-- COLUMNA DERECHA - INFORMACIÓN DETALLADA -->
-            <div class="profile-details-column min-w-0">
-                <div class="users-form-card profile-details-card border border-[#404041] rounded-lg bg-white overflow-hidden">
-                    
-                    <!-- ENCABEZADO -->
-                    <div class="profile-details-header border-b border-[#404041] p-4">
-                        <h3 class="text-lg font-lora font-bold text-[#404041]">Información Personal</h3>
-                        <p class="text-sm text-gray-600 font-lora mt-1">Datos personales y información de tu cuenta</p>
-                    </div>
-
-                    <!-- CONTENIDO -->
-                    <div class="profile-details-body p-6">
-                        <div class="profile-details-grid grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <!-- Información Básica -->
-                            <div class="space-y-4">
-                                <h4 class="font-lora font-semibold text-[#404041] text-sm border-b border-gray-200 pb-2">Información Básica</h4>
-                                
-                                <div>
-                                    <label class="block text-xs text-gray-600 font-lora mb-1">Usuario</label>
-                                    <p class="text-sm text-[#404041] font-lora bg-gray-50 px-3 py-2 rounded border break-words [overflow-wrap:anywhere]">{{ auth()->user()->username ?? explode('@', auth()->user()->email)[0] }}</p>
-                                </div>
-                                
-                                <div>
-                                    <label class="block text-xs text-gray-600 font-lora mb-1">Nombre Completo</label>
-                                    <p class="text-sm text-[#404041] font-lora bg-gray-50 px-3 py-2 rounded border break-words [overflow-wrap:anywhere]">{{ $fullName ?? auth()->user()->name }}</p>
-                                </div>
-                            </div>
-
-                            <!-- Información de Contacto -->
-                            <div class="space-y-4">
-                                <h4 class="font-lora font-semibold text-[#404041] text-sm border-b border-gray-200 pb-2">Información de Contacto</h4>
-                                
-                                <div>
-                                    <label class="block text-xs text-gray-600 font-lora mb-1">Correo Electrónico</label>
-                                    <p class="text-sm text-[#404041] font-lora bg-gray-50 px-3 py-2 rounded border break-words [overflow-wrap:anywhere]">{{ auth()->user()->email }}</p>
-                                </div>
-                                
-                                <div>
-                                    <label class="block text-xs text-gray-600 font-lora mb-1">Teléfono</label>
-                                    <p class="text-sm text-[#404041] font-lora bg-gray-50 px-3 py-2 rounded border break-words [overflow-wrap:anywhere]">{{ auth()->user()->phone ?? 'No especificado' }}</p>
-                                </div>
-                            </div>
-
-                            <!-- Información Laboral -->
-                            <div class="space-y-4">
-                                <h4 class="font-lora font-semibold text-[#404041] text-sm border-b border-gray-200 pb-2">Información Laboral</h4>
-                                
-                                <div>
-                                    <label class="block text-xs text-gray-600 font-lora mb-1">Cargo</label>
-                                    <p class="text-sm text-[#404041] font-lora bg-gray-50 px-3 py-2 rounded border break-words [overflow-wrap:anywhere]">{{ auth()->user()->position->name ?? 'Sin cargo' }}</p>
-                                </div>
-                                
-                                <div>
-                                    <label class="block text-xs text-gray-600 font-lora mb-1">Distrito</label>
-                                    <p class="text-sm text-[#404041] font-lora bg-gray-50 px-3 py-2 rounded border break-words [overflow-wrap:anywhere]">{{ auth()->user()->district->name ?? 'Sin distrito' }}</p>
-                                </div>
-                            </div>
-
-                            <!-- Información de Cuenta -->
-                            <div class="space-y-4">
-                                <h4 class="font-lora font-semibold text-[#404041] text-sm border-b border-gray-200 pb-2">Información de Cuenta</h4>
-                                
-                                <div>
-                                    <label class="block text-xs text-gray-600 font-lora mb-1">Fecha de Alta</label>
-                                    <p class="text-sm text-[#404041] font-lora bg-gray-50 px-3 py-2 rounded border break-words [overflow-wrap:anywhere]">{{ auth()->user()->created_at->format('d/m/Y') }}</p>
-                                </div>
-                                
-                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                                    <div>
-                                        <label class="block text-xs text-gray-600 font-lora mb-1">Estado de la Cuenta</label>
-                                        <div class="flex items-center gap-2">
-                                            @if(auth()->user()->status ?? true)
-                                                <span class="w-2 h-2 rounded-full bg-green-500"></span>
-                                                <span class="text-sm text-green-600 font-lora">Activo</span>
-                                            @else
-                                                <span class="w-2 h-2 rounded-full bg-red-500"></span>
-                                                <span class="text-sm text-red-600 font-lora">Inactivo</span>
-                                            @endif
-                                        </div>
-                                    </div>
-                                    
-                                    <div>
-                                        <label class="block text-xs text-gray-600 font-lora mb-1">Rol en el Sistema</label>
-                                        @php
-                                            $roleName = auth()->user()->role->name ?? 'Usuario';
-                                            $roleLower = strtolower($roleName);
-                                            if (in_array($roleLower, ['administrador', 'admin'])) {
-                                                $roleClasses = 'bg-[#e0e7ff] text-[#3730a3]';
-                                            } elseif (in_array($roleLower, ['coordinador'])) {
-                                                $roleClasses = 'bg-[#dcfce7] text-[#166534]';
-                                            } elseif (in_array($roleLower, ['operador'])) {
-                                                $roleClasses = 'bg-[#fef3c7] text-[#92400e]';
-                                            } elseif ($roleLower === 'invitado') {
-                                                $roleClasses = 'bg-[#fee2e2] text-[#991b1b]';
-                                            } elseif (in_array($roleLower, ['usuario', 'user'])) {
-                                                $roleClasses = 'bg-[#f8f1f4] text-[#611132]';
-                                            } else {
-                                                $roleClasses = 'bg-slate-100 text-slate-700';
-                                            }
-                                        @endphp
-                                        <span class="inline-block max-w-full {{ $roleClasses }} text-xs font-semibold px-2.5 py-1 rounded-full whitespace-normal break-words [overflow-wrap:anywhere]">{{ $roleName }}</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- NOTA INFORMATIVA ACTUALIZADA -->
-                        <div class="mt-6 p-4 bg-gray-100 rounded-lg border border-gray-300">
-                            <div class="flex items-start gap-3">
-                                <i class="fas fa-info-circle text-gray-600 mt-0.5"></i>
-                                <div class="min-w-0">
-                                    <p class="text-sm text-[#404041] font-lora font-semibold">¿Necesitas ayuda?</p>
-                                    <p class="text-xs text-gray-600 font-lora mt-1 break-words [overflow-wrap:anywhere]">
-                                        Para cualquier modificación en tu información, contacta al administrador del sistema:<br>
-                                        <strong>carlos.rodriguez@tamaulipas.gob.mx</strong> | <strong>+52 834 318 6300</strong>
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    @endif
-
-    <!-- AGREGAR FONT AWESOME -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const photoMenuBtn = document.getElementById('photoMenuBtn');
@@ -368,19 +199,19 @@
             const photoInput = document.getElementById('photoInput');
             const defaultAvatarUrl = '{{ asset('images/default_pfp.svg.png') }}';
 
-            function closePhotoMenu() {
+            function closePhotoMenu(returnFocus = false) {
                 if (!photoMenu || !photoMenuBtn) return;
-
                 photoMenu.classList.add('hidden');
                 photoMenuBtn.setAttribute('aria-expanded', 'false');
+                if (returnFocus) photoMenuBtn.focus();
             }
 
             function togglePhotoMenu() {
                 if (!photoMenu || !photoMenuBtn) return;
-
                 const isOpen = !photoMenu.classList.contains('hidden');
                 photoMenu.classList.toggle('hidden', isOpen);
                 photoMenuBtn.setAttribute('aria-expanded', String(!isOpen));
+                if (!isOpen) uploadPhotoBtn?.focus();
             }
 
             function notify(message, type = 'success', duration = 3000) {
@@ -388,152 +219,151 @@
                     window.showToast(message, type, duration);
                     return;
                 }
-
                 console[type === 'error' ? 'error' : 'log'](message);
             }
 
-            function updateProfileAvatars(src, alt) {
+            function updateProfileAvatars(src, alt, isPlaceholder = false) {
                 document.querySelectorAll('[data-profile-avatar]').forEach((avatar) => {
                     avatar.src = src;
                     avatar.alt = alt;
+                    avatar.classList.toggle(
+                        'profile-avatar-placeholder',
+                        isPlaceholder && Boolean(avatar.closest('.profile-avatar-frame'))
+                    );
+                    avatar.classList.toggle(
+                        'app-header-avatar-placeholder',
+                        isPlaceholder && Boolean(avatar.closest('.app-header-profile-summary'))
+                    );
                 });
             }
 
             async function parseJsonResponse(response) {
                 const data = await response.json().catch(() => ({}));
-
                 if (!response.ok) {
                     const message = data.message || Object.values(data.errors || {})?.flat()?.[0] || 'No se pudo completar la acción.';
                     throw new Error(message);
                 }
-
                 return data;
             }
 
-            if (uploadPhotoBtn) {
-                uploadPhotoBtn.addEventListener('click', function() {
-                    closePhotoMenu();
-                    photoInput.click();
-                });
-            }
+            uploadPhotoBtn?.addEventListener('click', function() {
+                closePhotoMenu();
+                photoInput?.click();
+            });
 
-            if (photoMenuBtn) {
-                photoMenuBtn.addEventListener('click', function(event) {
-                    event.stopPropagation();
-                    togglePhotoMenu();
-                });
-            }
+            photoMenuBtn?.addEventListener('click', function(event) {
+                event.stopPropagation();
+                togglePhotoMenu();
+            });
 
             document.addEventListener('click', function(event) {
                 if (!photoMenu || photoMenu.classList.contains('hidden')) return;
                 if (event.target.closest('#photoMenu') || event.target.closest('#photoMenuBtn')) return;
-
                 closePhotoMenu();
             });
 
             document.addEventListener('keydown', function(event) {
-                if (event.key === 'Escape') {
-                    closePhotoMenu();
-                }
+                if (event.key === 'Escape' && !photoMenu?.classList.contains('hidden')) closePhotoMenu(true);
             });
 
-            if (photoInput) {
-                photoInput.addEventListener('change', function(e) {
-                    const file = e.target.files[0];
-                    if (!file) return;
+            photoMenu?.addEventListener('keydown', function(event) {
+                if (!['ArrowDown', 'ArrowUp', 'Home', 'End'].includes(event.key)) return;
 
-                    if (file.size > 5 * 1024 * 1024) {
-                        notify('El archivo es demasiado grande. Máximo 5 MB.', 'warning', 3200);
+                const items = [...photoMenu.querySelectorAll('[role="menuitem"]')]
+                    .filter((item) => !item.classList.contains('hidden') && !item.disabled);
+                if (!items.length) return;
+
+                event.preventDefault();
+                const currentIndex = items.indexOf(document.activeElement);
+                let nextIndex = currentIndex;
+
+                if (event.key === 'Home') nextIndex = 0;
+                if (event.key === 'End') nextIndex = items.length - 1;
+                if (event.key === 'ArrowDown') nextIndex = (currentIndex + 1 + items.length) % items.length;
+                if (event.key === 'ArrowUp') nextIndex = (currentIndex - 1 + items.length) % items.length;
+
+                items[nextIndex].focus();
+            });
+
+            photoInput?.addEventListener('change', function(event) {
+                const file = event.target.files[0];
+                if (!file) return;
+                if (file.size > 5 * 1024 * 1024) {
+                    notify('El archivo es demasiado grande. El tamaño máximo es 5 MB.', 'warning', 3200);
+                    photoInput.value = '';
+                    return;
+                }
+
+                const formData = new FormData();
+                formData.append('profile_photo', file);
+                formData.append('_token', '{{ csrf_token() }}');
+                const uploadBtnHtml = uploadPhotoBtn.innerHTML;
+                uploadPhotoBtn.disabled = true;
+                uploadPhotoBtn.setAttribute('aria-busy', 'true');
+                uploadPhotoBtn.innerHTML = '<i class="fas fa-spinner fa-spin" aria-hidden="true"></i><span>Subiendo...</span>';
+
+                fetch('{{ route("usuario.upload-photo") }}', {
+                    method: 'POST',
+                    headers: { 'Accept': 'application/json' },
+                    body: formData
+                })
+                    .then(parseJsonResponse)
+                    .then((data) => {
+                        if (!data.success) throw new Error(data.message || 'No se pudo subir la fotografía.');
+                        updateProfileAvatars(data.photo_url, 'Foto de perfil de {{ $profileName }}');
+                        deletePhotoBtn?.classList.remove('hidden');
+                        notify(data.message || 'La foto de perfil se actualizó correctamente.', 'success', 2800);
+                    })
+                    .catch((error) => {
+                        console.error('Error:', error);
+                        notify(error.message || 'No se pudo subir la fotografía. Inténtalo nuevamente.', 'error', 3200);
+                    })
+                    .finally(() => {
+                        uploadPhotoBtn.disabled = false;
+                        uploadPhotoBtn.removeAttribute('aria-busy');
+                        uploadPhotoBtn.innerHTML = uploadBtnHtml;
                         photoInput.value = '';
-                        return;
+                    });
+            });
+
+            deletePhotoBtn?.addEventListener('click', async function() {
+                closePhotoMenu();
+                const confirmed = typeof window.confirmDeleteDialog === 'function'
+                    ? await window.confirmDeleteDialog({
+                        title: 'Eliminar foto de perfil',
+                        subject: 'tu foto de perfil',
+                        description: 'Se mostrará el avatar predeterminado y la foto actual no podrá recuperarse.'
+                    })
+                    : false;
+                if (!confirmed) return;
+
+                deletePhotoBtn.disabled = true;
+                deletePhotoBtn.setAttribute('aria-busy', 'true');
+                fetch('{{ route("usuario.delete-photo") }}', {
+                    method: 'DELETE',
+                    headers: {
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
                     }
-
-                    const formData = new FormData();
-                    formData.append('profile_photo', file);
-                    formData.append('_token', '{{ csrf_token() }}');
-
-                    const uploadBtn = uploadPhotoBtn;
-                    const uploadBtnHtml = uploadBtn.innerHTML;
-                    uploadBtn.disabled = true;
-                    uploadBtn.innerHTML = '<i class="fas fa-spinner fa-spin w-4 text-[#611132]"></i> Subiendo...';
-
-                    fetch('{{ route("usuario.upload-photo") }}', {
-                        method: 'POST',
-                        headers: {
-                            'Accept': 'application/json'
-                        },
-                        body: formData
-                    })
+                })
                     .then(parseJsonResponse)
-                    .then(data => {
-                        if (data.success) {
-                            updateProfileAvatars(data.photo_url, 'Foto de perfil');
-                            if (deletePhotoBtn) {
-                                deletePhotoBtn.classList.remove('hidden');
-                            }
-                            notify(data.message || 'La foto de perfil se actualizó correctamente.', 'success', 2800);
-                        } else {
-                            notify(data.message || 'No se pudo subir la foto.', 'error', 3200);
-                        }
+                    .then((data) => {
+                        if (!data.success) throw new Error(data.message || 'No se pudo eliminar la fotografía.');
+                        updateProfileAvatars(defaultAvatarUrl, 'Avatar predeterminado de {{ $profileName }}', true);
+                        deletePhotoBtn.classList.add('hidden');
+                        notify(data.message || 'La foto de perfil se eliminó correctamente.', 'success', 2800);
                     })
-                    .catch(error => {
+                    .catch((error) => {
                         console.error('Error:', error);
-                        notify('No se pudo subir la foto. Inténtalo nuevamente.', 'error', 3200);
+                        notify(error.message || 'No se pudo eliminar la fotografía. Inténtalo nuevamente.', 'error', 3200);
                     })
                     .finally(() => {
-                        uploadBtn.disabled = false;
-                        uploadBtn.innerHTML = uploadBtnHtml;
-                        photoInput.value = '';
+                        if (!deletePhotoBtn.isConnected) return;
+                        deletePhotoBtn.disabled = false;
+                        deletePhotoBtn.removeAttribute('aria-busy');
                     });
-                });
-            }
-
-            if (deletePhotoBtn) {
-                deletePhotoBtn.addEventListener('click', async function() {
-                    closePhotoMenu();
-
-                    const confirmed = typeof window.confirmDeleteDialog === 'function'
-                        ? await window.confirmDeleteDialog({
-                            title: 'Eliminar foto de perfil',
-                            subject: 'tu foto de perfil',
-                            description: 'Se mostrará el avatar predeterminado y la foto actual no podrá recuperarse.'
-                        })
-                        : false;
-
-                    if (!confirmed) return;
-
-                    const deleteBtn = deletePhotoBtn;
-                    deleteBtn.disabled = true;
-
-                    fetch('{{ route("usuario.delete-photo") }}', {
-                        method: 'DELETE',
-                        headers: {
-                            'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                            'Content-Type': 'application/json',
-                            'Accept': 'application/json'
-                        }
-                    })
-                    .then(parseJsonResponse)
-                    .then(data => {
-                        if (data.success) {
-                            updateProfileAvatars(defaultAvatarUrl, 'Avatar predeterminado');
-                            deleteBtn.classList.add('hidden');
-                            notify(data.message || 'La foto de perfil se eliminó correctamente.', 'success', 2800);
-                        } else {
-                            notify(data.message || 'No se pudo eliminar la foto.', 'error', 3200);
-                        }
-                    })
-                    .catch(error => {
-                        console.error('Error:', error);
-                        notify('No se pudo eliminar la foto. Inténtalo nuevamente.', 'error', 3200);
-                    })
-                    .finally(() => {
-                        if (deleteBtn.isConnected) {
-                            deleteBtn.disabled = false;
-                        }
-                    });
-                });
-            }
+            });
         });
     </script>
 @endsection

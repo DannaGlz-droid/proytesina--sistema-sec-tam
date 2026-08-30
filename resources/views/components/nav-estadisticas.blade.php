@@ -28,7 +28,7 @@
         <a href="{{ route('statistic.create') }}"
            @class(['app-subnav-link', 'is-active' => $statisticsCreateActive])
            @if($statisticsCreateActive) aria-current="page" @endif>
-            <span>Nuevo registro</span>
+            <span>Registrar defunción</span>
             <span class="app-subnav-indicator" aria-hidden="true"></span>
         </a>
     </div>

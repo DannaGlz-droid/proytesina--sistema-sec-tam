@@ -94,7 +94,7 @@
                     @if(auth()->user()->profile_photo_path)
                         <img src="{{ asset('storage/' . auth()->user()->profile_photo_path) }}" alt="Foto de perfil" class="w-full h-full object-cover" data-profile-avatar>
                     @else
-                        <img src="{{ asset('images/default_pfp.svg.png') }}" alt="Avatar predeterminado" class="w-full h-full object-cover" data-profile-avatar>
+                        <img src="{{ asset('images/default_pfp.svg.png') }}" alt="Avatar predeterminado" class="app-header-avatar-placeholder w-full h-full object-cover" data-profile-avatar>
                     @endif
                 </div>
                 <!-- Nombre y cargo - se oculta en mobile -->

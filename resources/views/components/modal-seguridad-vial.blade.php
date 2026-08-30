@@ -1,100 +1,19 @@
-@php
-    $config = [
-        'tipo' => 'seguridad_vial',
-        'titulo' => 'Reporte de Seguridad Vial', 
-        'colorBadge' => 'bg-[#4C8CC4]',
-        'colorBorder' => 'border-[#13264F]',
-        'modalId' => 'modalSeguridadVial'
-    ];
-@endphp
-
-<x-modal-reporte-base 
-    :tipo="$config['tipo']" 
-    :titulo="$config['titulo']" 
-    :colorBadge="$config['colorBadge']" 
-    :colorBorder="$config['colorBorder']"
-    :modalId="$config['modalId']">
-    
-    <!-- SECCIÓN ESPECÍFICA DE SEGURIDAD VIAL -->
-    
-    <!-- INFORMACIÓN GEOGRÁFICA -->
-    <div class="mb-6">
-        <h4 class="font-semibold text-[#404041] mb-4 text-lg font-lora">Datos generales</h4>
-        
-        <div class="datos-generales-grid grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-            <div class="bg-white rounded-lg p-4 border border-[#404041]">
-                <div class="flex items-center gap-3 mb-3">
-                    <i class="fas fa-calendar-alt text-[#404041] text-xl"></i>
-                    <h5 class="font-semibold text-[#404041] font-lora">Fecha</h5>
-                </div>
-                <div class="dato-general-value text-base font-bold text-[#404041] font-lora modal-fecha-actividad">-</div>
-                <p class="text-xs text-gray-600 font-lora mt-1">Fecha de la actividad</p>
-            </div>
-
-            <div class="bg-white rounded-lg p-4 border border-[#404041]">
-                <div class="flex items-center gap-3 mb-3">
-                    <i class="fas fa-city text-[#404041] text-xl"></i>
-                    <h5 class="font-semibold text-[#404041] font-lora">Municipio</h5>
-                </div>
-                <div class="dato-general-value text-base font-bold text-[#404041] font-lora modal-municipio">-</div>
-                <p class="text-xs text-gray-600 font-lora mt-1">Área de cobertura del evento</p>
-            </div>
-            
-            <div class="bg-white rounded-lg p-4 border border-[#404041]">
-                <div class="flex items-center gap-3 mb-3">
-                    <i class="fas fa-map text-[#404041] text-xl"></i>
-                    <h5 class="font-semibold text-[#404041] font-lora">Jurisdicción</h5>
-                </div>
-                <div class="dato-general-value text-base font-bold text-[#404041] font-lora modal-distrito">-</div>
-                <p class="text-xs text-gray-600 font-lora mt-1">Zona administrativa</p>
-            </div>
-        </div>
-    </div>
-    
-    <!-- DETALLES DE LA ACTIVIDAD -->
-    <div class="mb-6">
-        <h4 class="font-semibold text-[#404041] mb-4 text-lg font-lora">Detalles de la Actividad</h4>
-        
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-            <div class="bg-white rounded-lg p-4 border border-[#404041]">
-                <div class="flex items-center gap-3 mb-3">
-                    <i class="fas fa-calendar-alt text-[#404041] text-xl"></i>
-                    <h5 class="font-semibold text-[#404041] font-lora">Actividad</h5>
-                </div>
-                <div class="text-lg font-bold text-[#404041] font-lora modal-actividad">-</div>
-                <p class="text-xs text-gray-600 font-lora mt-1">Tipo de actividad realizada</p>
-            </div>
-            
-            <div class="bg-white rounded-lg p-4 border border-[#404041]">
-                <div class="flex items-center gap-3 mb-3">
-                    <i class="fas fa-users text-[#404041] text-xl"></i>
-                    <h5 class="font-semibold text-[#404041] font-lora">Participantes</h5>
-                </div>
-                <div class="text-lg font-bold text-[#404041] font-lora modal-participantes">45</div>
-                <p class="text-xs text-gray-600 font-lora mt-1">Asistentes registrados</p>
-            </div>
-        </div>
-        
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-            <div class="bg-white rounded-lg p-4 border border-[#404041]">
-                <div class="flex items-center gap-3 mb-3">
-                    <i class="fas fa-map-marker-alt text-[#404041] text-xl"></i>
-                    <h5 class="font-semibold text-[#404041] font-lora">Lugar</h5>
-                </div>
-                <div class="text-lg font-bold text-[#404041] font-lora modal-lugar modal-content-scroll max-h-24 overflow-y-auto pr-2 break-words leading-tight">Centro Comunitario Norte</div>
-                <p class="text-xs text-gray-600 font-lora mt-1">Ubicación del evento</p>
-            </div>
-            
-            <div class="bg-white rounded-lg p-4 border border-[#404041]">
-                <div class="flex items-center gap-3 mb-3">
-                    <i class="fas fa-user-tie text-[#404041] text-xl"></i>
-                    <h5 class="font-semibold text-[#404041] font-lora">Promotor</h5>
-                </div>
-                <div class="text-lg font-bold text-[#404041] font-lora modal-promotor modal-content-scroll max-h-24 overflow-y-auto pr-2 break-words leading-tight">María González López</div>
-                <p class="text-xs text-gray-600 font-lora mt-1">Responsable de la actividad</p>
-            </div>
-        </div>
-    </div>
+<x-modal-reporte-base tipo="seguridad_vial" titulo="Reporte de Seguridad Vial" modal-id="modalSeguridadVial">
+    <section class="report-section">
+        <h3 class="report-section-title"><span>Datos generales</span></h3>
+        <dl class="report-field-grid report-field-grid--three">
+            <div class="report-field"><dt>Fecha</dt><dd class="modal-fecha-actividad">-</dd><small>Fecha de la actividad</small></div>
+            <div class="report-field"><dt>Municipio</dt><dd class="modal-municipio">-</dd><small>Área de cobertura</small></div>
+            <div class="report-field"><dt>Jurisdicción</dt><dd class="modal-distrito">-</dd><small>Zona administrativa</small></div>
+        </dl>
+    </section>
+    <section class="report-section">
+        <h3 class="report-section-title"><span>Detalles de la actividad</span></h3>
+        <dl class="report-field-grid">
+            <div class="report-field"><dt>Actividad</dt><dd class="modal-actividad">-</dd><small>Tipo de actividad</small></div>
+            <div class="report-field"><dt>Participantes</dt><dd class="modal-participantes">-</dd><small>Asistentes registrados</small></div>
+            <div class="report-field"><dt>Lugar</dt><dd class="modal-lugar">-</dd><small>Ubicación del evento</small></div>
+            <div class="report-field"><dt>Promotor</dt><dd class="modal-promotor">-</dd><small>Responsable</small></div>
+        </dl>
+    </section>
 </x-modal-reporte-base>
-
-

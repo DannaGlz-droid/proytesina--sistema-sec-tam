@@ -361,16 +361,19 @@
                             }
 
                             $wasUpdated = $pub->created_at && $pub->updated_at && $pub->updated_at->gt($pub->created_at->copy()->addMinute());
-                    $updatedDisplay = $wasUpdated ? $pub->updated_at->format('d/m/Y') . ' · ' . $pub->updated_at->format('H:i') : '';
-                    $updatedFull = $updatedDisplay;
-                    $publicationDateDisplay = $pub->publication_date->format('d/m/Y');
-                    $publicationDateFull = $publicationDateDisplay;
+                    $updatedDisplay = $wasUpdated
+                        ? str_replace('.', '', $pub->updated_at->locale('es')->translatedFormat('d M')) . ', ' . $pub->updated_at->format('H:i')
+                        : '';
+                    $updatedFull = $wasUpdated ? $pub->updated_at->format('d/m/Y H:i') : '';
+                    $publicationDateDisplay = str_replace('.', '', $pub->publication_date->locale('es')->translatedFormat('d M Y'));
+                    $publicationDateFull = $pub->publication_date->format('d/m/Y');
                         @endphp
 
                         <x-publicacion-card
                             data-publication-id="{{ $pub->id }}"
                             :tipo="$tipoDisplay"
                             :titulo="$pub->topic"
+                            :folio="$pub->folio"
                             :fecha="$publicationDateDisplay"
                             :fecha_full="$publicationDateFull"
                             :actualizado="$updatedDisplay"
@@ -398,7 +401,8 @@
                                         aria-hidden="true"
                                         data-tipo="{{ $pub->publication_type }}"
                                         data-titulo="{{ $pub->topic }}"
-                                        data-fecha="{{ $pub->publication_date->format('d/m/Y') }}"
+                                        data-folio="{{ $pub->folio }}"
+                                        data-fecha="{{ $publicationDateDisplay }}"
                                         data-fecha-actividad="{{ $pub->activity_date->locale('es')->isoFormat('dddd, D [de] MMMM [de] YYYY') }}"
                                         data-actualizado="{{ $updatedDisplay }}"
                                         data-usuario="{{ $uFull ?: ($pub->user->name ?? 'Usuario') }}"
@@ -1246,9 +1250,15 @@ document.addEventListener('DOMContentLoaded', function() {
         console.log('✅ Modal encontrado, mostrando...');
         
         // Desactivar scroll de la página principal
+        modal._previouslyFocusedElement = document.activeElement;
         document.body.style.overflow = 'hidden';
-        
+
         modal.classList.remove('hidden');
+        modal.setAttribute('aria-hidden', 'false');
+
+        requestAnimationFrame(() => {
+            modal.querySelector('.modal-cerrar')?.focus({ preventScroll: true });
+        });
         
         // Solo hacer animación si no es navegación
         if (!skipAnimation) {
@@ -1306,6 +1316,7 @@ document.addEventListener('DOMContentLoaded', function() {
             
             setTimeout(() => {
                 modal.classList.add('hidden');
+                modal.setAttribute('aria-hidden', 'true');
                 // Ocultar flechas cuando se cierra el modal
                 const navContainer = document.getElementById('report-nav-container');
                 if (navContainer) {
@@ -1317,6 +1328,10 @@ document.addEventListener('DOMContentLoaded', function() {
                                      document.getElementById('reject-modal')?.classList.contains('hidden') === false;
                 if (!anyModalOpen) {
                     document.body.style.overflow = 'auto';
+                }
+
+                if (modal._previouslyFocusedElement?.isConnected) {
+                    modal._previouslyFocusedElement.focus({ preventScroll: true });
                 }
             }, 300);
         }
@@ -1352,6 +1367,22 @@ document.addEventListener('DOMContentLoaded', function() {
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Escape' && !modal.classList.contains('hidden')) {
                 closeModal(modal.id);
+            } else if (e.key === 'Tab' && !modal.classList.contains('hidden')) {
+                const focusable = Array.from(modal.querySelectorAll(
+                    'button:not([disabled]):not([hidden]), a[href], textarea:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])'
+                )).filter((element) => element.offsetParent !== null);
+
+                if (!focusable.length) return;
+                const first = focusable[0];
+                const last = focusable[focusable.length - 1];
+
+                if (e.shiftKey && document.activeElement === first) {
+                    e.preventDefault();
+                    last.focus();
+                } else if (!e.shiftKey && document.activeElement === last) {
+                    e.preventDefault();
+                    first.focus();
+                }
             }
         });
     });
@@ -1585,6 +1616,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // Datos básicos comunes
         const basicFields = {
             'modal-titulo': dataset.titulo,
+            'modal-folio': dataset.folio,
             // Mostrar la fecha de la actividad directamente bajo el título (sin prefijo)
             'modal-fecha-actividad': dataset.fechaActividad || dataset.fecha,
             // La fecha de publicación se muestra en la zona superior derecha (reemplaza 'Subido por')
@@ -1596,8 +1628,19 @@ document.addEventListener('DOMContentLoaded', function() {
             modal.querySelectorAll(`.${className}`).forEach((element) => {
                 if (!value) return;
                 element.textContent = value;
+
+                if (className === 'modal-titulo') {
+                    element.setAttribute('title', value);
+                }
             });
         });
+
+        const folioMeta = modal.querySelector('.report-folio-meta');
+        if (folioMeta) {
+            const hasFolio = Boolean(String(dataset.folio || '').trim());
+            folioMeta.classList.toggle('hidden', !hasFolio);
+            folioMeta.hidden = !hasFolio;
+        }
 
         const rawUpdatedValue = String(dataset.actualizado ?? '').trim();
         const hiddenUpdatedValues = new Set([
@@ -1649,53 +1692,13 @@ document.addEventListener('DOMContentLoaded', function() {
             
             if (status === 'aprobado') {
                 const approvedBy = dataset.approvedBy || 'Administrador';
-                statusHTML = `
-                    <div class="status-card status-approved rounded-lg border border-[#404041] p-3 bg-white">
-                        <div class="status-main">
-                            <span class="status-icon bg-green-50 text-green-700">
-                                <i class="fas fa-check text-sm"></i>
-                            </span>
-                            <div>
-                                <p class="text-sm font-semibold text-[#404041] font-lora leading-tight">Aprobado</p>
-                                <p class="text-xs text-gray-500 font-lora leading-tight">Validado por ${escapeHtml(approvedBy)}</p>
-                            </div>
-                        </div>
-                    </div>
-                `;
+                statusHTML = `<div class="status-card status-approved"><span class="status-stamp">Aprobado</span><div><strong>Aprobado</strong><span>Validado por ${escapeHtml(approvedBy)}</span></div></div>`;
             } else if (status === 'rechazado') {
                 const rejectedBy = dataset.rejectedBy || 'Administrador';
                 const rejectionReason = dataset.rejectionReason || 'No se proporciono motivo';
-                statusHTML = `
-                    <div class="status-card status-rejected rounded-lg border border-[#404041] p-3 bg-white">
-                        <div class="status-main">
-                            <span class="status-icon bg-red-50 text-red-700">
-                                <i class="fas fa-times text-sm"></i>
-                            </span>
-                            <div>
-                                <p class="text-sm font-semibold text-[#404041] font-lora leading-tight">Rechazado</p>
-                                <p class="text-xs text-gray-500 font-lora leading-tight">Revisado por ${escapeHtml(rejectedBy)}</p>
-                            </div>
-                        </div>
-                        <div class="status-reason">
-                            <span class="status-reason-label font-lora">Motivo:</span>
-                            <p class="status-reason-text font-lora">${escapeHtml(rejectionReason)}</p>
-                        </div>
-                    </div>
-                `;
+                statusHTML = `<div class="status-card status-rejected"><span class="status-stamp">Rechazado</span><div><strong>Rechazado</strong><span>Revisado por ${escapeHtml(rejectedBy)}</span></div><div class="status-reason"><span class="status-reason-label">Motivo de rechazo</span><p class="status-reason-text">${escapeHtml(rejectionReason)}</p></div></div>`;
             } else {
-                statusHTML = `
-                    <div class="status-card status-pending rounded-lg border border-[#404041] p-3 bg-white">
-                        <div class="status-main">
-                            <span class="status-icon bg-yellow-50 text-yellow-700">
-                                <i class="fas fa-clock text-sm"></i>
-                            </span>
-                            <div>
-                                <p class="text-sm font-semibold text-[#404041] font-lora leading-tight">Pendiente de revision</p>
-                                <p class="text-xs text-gray-500 font-lora leading-tight">Esperando validacion</p>
-                            </div>
-                        </div>
-                    </div>
-                `;
+                statusHTML = `<div class="status-card status-pending"><span class="status-stamp">Pendiente</span><div><strong>Pendiente de revisión</strong><span>Esperando validación</span></div></div>`;
             }
             
             statusContainer.innerHTML = statusHTML;
@@ -1704,10 +1707,17 @@ document.addEventListener('DOMContentLoaded', function() {
         // Configurar botones de aprobación/rechazo
         const approvalContainer = modal.querySelector('.approval-buttons-container');
         const actionsFooter = modal.querySelector('.modal-actions-footer');
+        const footerNote = modal.querySelector('.modal-footer-note');
 
         modal.classList.remove('has-actions-footer');
-        if (actionsFooter) {
-            actionsFooter.style.display = 'none';
+        if (actionsFooter) actionsFooter.style.display = 'flex';
+        if (footerNote) {
+            const currentStatus = dataset.status || 'publicado';
+            footerNote.textContent = currentStatus === 'aprobado'
+                ? 'Reporte aprobado'
+                : currentStatus === 'rechazado'
+                    ? 'El autor puede corregir y reenviar el reporte'
+                    : 'Reporte pendiente de revisión';
         }
 
         if (approvalContainer) {
@@ -1728,7 +1738,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 modal.classList.add('has-actions-footer');
                 approvalContainer.style.display = 'flex';
                 approvalContainer.innerHTML = `
-                    <button onclick="resubmitReport(${publicationId})" class="reenviar-reporte min-w-[190px] justify-center border px-4 py-2 rounded-lg text-xs lg:text-sm font-semibold transition-all duration-200 font-lora whitespace-nowrap inline-flex items-center gap-2">
+                    <button onclick="resubmitReport(${publicationId})" class="reenviar-reporte">
                         Reenviar para revisión
                     </button>
                 `;
@@ -1741,11 +1751,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 modal.classList.add('has-actions-footer');
                 approvalContainer.style.display = 'flex';
                 approvalContainer.innerHTML = `
-                    <div class="w-full flex items-center justify-end gap-2">
-                        <button class="rechazar-reporte min-w-[118px] justify-center border border-[#AB1A1A] text-[#AB1A1A] px-4 py-2 rounded-lg text-xs lg:text-sm font-semibold hover:bg-red-50 transition-all duration-300 font-lora whitespace-nowrap inline-flex items-center gap-2">
+                    <div class="approval-button-row">
+                        <button class="rechazar-reporte">
                             Rechazar
                         </button>
-                        <button class="aprobar-reporte min-w-[118px] justify-center text-white px-4 py-2 rounded-lg text-xs lg:text-sm font-semibold transition-all duration-200 font-lora whitespace-nowrap inline-flex items-center gap-2">
+                        <button class="aprobar-reporte">
                             Aprobar
                         </button>
                     </div>
@@ -1774,6 +1784,12 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // Función para llenar archivos y comentarios
+    function getCommentsCounterLabel(modal, count) {
+        return modal?.dataset.reportType === 'alcoholimetria'
+            ? `Comentarios · ${count}`
+            : `Comentarios (${count})`;
+    }
+
     function fillFilesAndComments(modal, dataset) {
         // Archivos adjuntos
         const archivosContainer = modal.querySelector('.modal-archivos');
@@ -1781,6 +1797,14 @@ document.addEventListener('DOMContentLoaded', function() {
             try {
                 const archivos = JSON.parse(dataset.archivos);
                 archivosContainer.innerHTML = '';
+                const filesCount = modal.querySelector('.modal-archivos-count');
+                if (filesCount) filesCount.textContent = archivos.length;
+                const btnDescargarTodos = modal.querySelector('.descargar-todos-archivos');
+                if (btnDescargarTodos) btnDescargarTodos.hidden = archivos.length === 0;
+
+                if (archivos.length === 0) {
+                    archivosContainer.innerHTML = '<p class="report-empty-state">Sin archivos adjuntos</p>';
+                }
                 
                 // Guardar lista de archivos en el modal para el botón "Descargar Todos"
                 modal.dataset.archivosJson = dataset.archivos;
@@ -1811,7 +1835,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     const previewTitle = canPreview ? 'Previsualizar archivo' : 'Previsualizacion no disponible';
                     
                     archivosContainer.innerHTML += `
-                        <div class="archivo-preview-card bg-white rounded-lg border border-[#404041] overflow-hidden transition-all duration-200 group ${canPreview ? 'cursor-pointer' : ''}" data-file-id="${fileId}" data-file-name="${safeFileName}" data-extension="${extension}" data-file-index="${index}" title="${canPreview ? 'Abrir previsualizacion' : 'Previsualizacion no disponible'}" onclick="if (!event.target.closest('.archivo-action')) window.openArchivoPreviewFromCard(this, event)">
+                        <div class="archivo-preview-card ${canPreview ? 'cursor-pointer' : ''}" data-file-id="${fileId}" data-file-name="${safeFileName}" data-extension="${extension}" data-file-index="${index}" title="${canPreview ? 'Abrir previsualizacion' : 'Previsualizacion no disponible'}" onclick="if (!event.target.closest('.archivo-action')) window.openArchivoPreviewFromCard(this, event)">
                             <div class="archivo-thumb" data-thumbnail-index="${index}">
                                 ${thumbHtml}
                             </div>
@@ -1833,10 +1857,10 @@ document.addEventListener('DOMContentLoaded', function() {
                                 </div>
                             </div>
                             <div class="archivo-meta">
-                                <p class="text-sm font-semibold text-[#404041] font-lora truncate mb-1" title="${safeFileName}">
+                                <p class="archivo-nombre" title="${safeFileName}">
                                     ${safeFileName}
                                 </p>
-                                <p class="text-xs text-gray-500 font-lora">
+                                <p class="archivo-detalle">
                                     ${extension.toUpperCase()} - ${fileSize}
                                 </p>
                             </div>
@@ -1869,7 +1893,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
                 hydrateAttachmentThumbnails(archivosContainer, previewFiles);
 
-                const btnDescargarTodos = modal.querySelector('.descargar-todos-archivos');
                 if (btnDescargarTodos) {
                     btnDescargarTodos.replaceWith(btnDescargarTodos.cloneNode(true));
                     const newBtn = modal.querySelector('.descargar-todos-archivos');
@@ -1901,15 +1924,16 @@ document.addEventListener('DOMContentLoaded', function() {
                     comentariosToggle.style.display = 'flex';
                     const contadorSpan = comentariosToggle.querySelector('.contador-comentarios');
                     const icono = comentariosToggle.querySelector('.icono-chevron');
-                    const hasComments = comentarios.length > 0;
+                    const isAlcoholReport = modal.dataset.reportType === 'alcoholimetria';
+                    const shouldExpandComments = isAlcoholReport || comentarios.length > 0;
 
                     if (contadorSpan) {
-                        contadorSpan.textContent = `Comentarios (${comentarios.length})`;
+                        contadorSpan.textContent = getCommentsCounterLabel(modal, comentarios.length);
                     }
 
                     if (comentariosContainerDiv) {
                         comentariosContainerDiv.style.transition = 'none';
-                        comentariosContainerDiv.classList.toggle('expanded', hasComments);
+                        comentariosContainerDiv.classList.toggle('expanded', shouldExpandComments);
                         comentariosContainerDiv.offsetHeight;
                         requestAnimationFrame(() => {
                             comentariosContainerDiv.style.transition = '';
@@ -1917,8 +1941,9 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
 
                     if (icono) {
-                        icono.style.transform = hasComments ? 'rotate(180deg)' : 'rotate(0deg)';
+                        icono.style.transform = shouldExpandComments ? 'rotate(180deg)' : 'rotate(0deg)';
                     }
+                    comentariosToggle.setAttribute('aria-expanded', shouldExpandComments ? 'true' : 'false');
                     
                     // Agregar evento de click al toggle
                     comentariosToggle.onclick = function(e) {
@@ -1930,6 +1955,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         } else {
                             comentariosContainerDiv.classList.add('expanded');
                         }
+                        comentariosToggle.setAttribute('aria-expanded', isExpanded ? 'false' : 'true');
                         
                         // Rotar el icono
                         const icono = comentariosToggle.querySelector('.icono-chevron');
@@ -2060,12 +2086,15 @@ document.addEventListener('DOMContentLoaded', function() {
                     `;
             });
         } else {
-            container.innerHTML = `
-                <div class="text-center py-8 text-gray-500 font-lora">
-                    <i class="fas fa-comments text-3xl mb-3 text-gray-300"></i>
-                    <p class="text-sm">No hay comentarios aún</p>
-                </div>
-            `;
+            const isAlcoholReport = container.closest('.publication-detail-modal')?.dataset.reportType === 'alcoholimetria';
+            container.innerHTML = isAlcoholReport
+                ? '<p class="report-comments-empty">Aún no hay comentarios en este expediente.</p>'
+                : `
+                    <div class="text-center py-8 text-gray-500 font-lora">
+                        <i class="fas fa-comments text-3xl mb-3 text-gray-300"></i>
+                        <p class="text-sm">No hay comentarios aún</p>
+                    </div>
+                `;
         }
     }
 
@@ -2724,6 +2753,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
 
+            const idleButtonMarkup = button.innerHTML;
+
             // Deshabilitar botón mientras se envía
             button.disabled = true;
             button.innerHTML = '<i class="fas fa-spinner fa-spin text-sm"></i>';
@@ -2799,7 +2830,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     if (comentariosToggle) {
                         const contadorSpan = comentariosToggle.querySelector('.contador-comentarios');
                         if (contadorSpan) {
-                            contadorSpan.textContent = `Comentarios (${comentariosActuales.length})`;
+                            contadorSpan.textContent = getCommentsCounterLabel(modal, comentariosActuales.length);
                         }
                         
                         // Expandir la sección si estaba contraída
@@ -2835,8 +2866,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 showToast('No se pudo enviar el comentario. Intenta nuevamente.', 'error', 3600);
             })
             .finally(() => {
-                button.disabled = false;
-                button.innerHTML = '<i class="fas fa-paper-plane text-sm"></i>';
+                button.innerHTML = idleButtonMarkup;
+                button.disabled = !textarea.value.trim();
             });
         }
 
@@ -2846,11 +2877,13 @@ document.addEventListener('DOMContentLoaded', function() {
     // Auto-resize textarea y habilitar/deshabilitar botón
     document.querySelectorAll('.nuevo-comentario').forEach(textarea => {
         textarea.addEventListener('input', function() {
+            const modal = this.closest('.publication-detail-modal');
+            const maxHeight = modal?.dataset.reportType === 'alcoholimetria' ? 96 : 120;
             this.style.height = 'auto';
-            this.style.height = Math.min(this.scrollHeight, 120) + 'px';
+            this.style.height = Math.min(this.scrollHeight, maxHeight) + 'px';
             
-            const button = this.closest('.flex').querySelector('.enviar-comentario');
-            button.disabled = !this.value.trim();
+            const button = this.closest('.report-comment-form')?.querySelector('.enviar-comentario');
+            if (button) button.disabled = !this.value.trim();
         });
     });
 

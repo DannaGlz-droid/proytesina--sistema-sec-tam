@@ -147,7 +147,7 @@
 
       @media (min-width: 641px) {
         .login-card {
-          zoom: 0.65;
+          zoom: 0.78;
         }
       }
 

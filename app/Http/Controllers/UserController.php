@@ -15,6 +15,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use App\Http\Requests\UserRequest;
 use Illuminate\Validation\Rules\Password;
+use Illuminate\Validation\ValidationException;
 
 class UserController extends Controller
 {
@@ -467,7 +468,7 @@ class UserController extends Controller
                 'first_last_name' => $user->first_last_name,
                 'second_last_name' => $user->second_last_name ?: '—',
                 'email' => $user->email,
-                'phone' => $user->phone ?: '—',
+                'phone' => $user->formattedPhone() ?? '—',
                 'position' => optional($user->position)->name ?? '—',
                 'district' => optional($user->district)->name ?? '—',
                 'registration_date' => $user->formatted_registration_date ?? $user->registration_date,
@@ -545,11 +546,13 @@ class UserController extends Controller
     {
         $positions = $this->allowedPositions();
         $districts = District::userAssignmentCatalog();
+        $returnToProfile = request()->query('from') === 'profile'
+            && (int) auth()->id() === (int) $user->getKey();
         
         // Solo mostrar: Administrador, Operador, Coordinador (usar nombres canónicos en español)
         $roles = Role::whereIn('name', ['Administrador', 'Operador', 'Coordinador', 'administrador', 'operador', 'coordinador'])->get();
 
-        return view('usuarios.acciones.actualizar-registro', compact('user', 'positions', 'districts', 'roles'));
+        return view('usuarios.acciones.actualizar-registro', compact('user', 'positions', 'districts', 'roles', 'returnToProfile'));
       }
 
     public function update(UserRequest $request, User $user)
@@ -558,6 +561,19 @@ class UserController extends Controller
         $passwordChanged = ! empty($data['password']);
 
         $data['is_active'] = $request->has('is_active') ? (bool) $request->input('is_active') : false;
+        $data['is_system_contact'] = $request->boolean('is_system_contact');
+
+        if ($data['is_system_contact']) {
+            $selectedRole = Role::find($data['role_id']);
+            $isAdministrator = $selectedRole
+                && mb_strtolower(trim((string) $selectedRole->name), 'UTF-8') === 'administrador';
+
+            if (! $isAdministrator || ! $data['is_active']) {
+                throw ValidationException::withMessages([
+                    'is_system_contact' => 'El responsable principal debe ser un administrador activo.',
+                ]);
+            }
+        }
 
         if (!empty($data['password'])) {
             $data['password'] = Hash::make($data['password']);
@@ -565,14 +581,26 @@ class UserController extends Controller
             unset($data['password']);
         }
 
-        $user->update($data);
+        DB::transaction(function () use ($user, $data) {
+            if ($data['is_system_contact']) {
+                User::query()
+                    ->whereKeyNot($user->getKey())
+                    ->where('is_system_contact', true)
+                    ->update(['is_system_contact' => false]);
+            }
+
+            $user->update($data);
+        });
 
         if (! $user->is_active || $passwordChanged) {
             DB::table('sessions')->where('user_id', $user->id)->delete();
             $user->forceFill(['remember_token' => null])->save();
         }
 
-        return redirect()->route('user.user-gestion')
+        $returnToProfile = $request->input('return_to') === 'profile'
+            && (int) auth()->id() === (int) $user->getKey();
+
+        return redirect()->route($returnToProfile ? 'usuario.miperfil' : 'user.user-gestion')
             ->with('success', 'Los cambios del usuario se guardaron correctamente.')
             ->with('revalidate_users_table_cache', true);
 

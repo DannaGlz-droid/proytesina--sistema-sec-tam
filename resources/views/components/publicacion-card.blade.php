@@ -1,6 +1,7 @@
 @props([
     'tipo' => '',
     'titulo' => '',
+    'folio' => '',
     'fecha' => '',
     'fecha_full' => '',
     'actualizado' => '',
@@ -79,6 +80,11 @@
         default => "{$commentsLabel} · {$unreadCommentsCount} "
             . \Illuminate\Support\Str::plural('nuevo', $unreadCommentsCount),
     };
+    $location = preg_replace('/^Distrito:\s*/u', '', $descripcion);
+    $locationParts = preg_split('/\s+-\s+/u', $location, 2);
+    $locationDisplay = count($locationParts) === 2
+        ? $locationParts[0] . ' · ' . \Illuminate\Support\Str::title(\Illuminate\Support\Str::lower($locationParts[1]))
+        : $location;
 @endphp
 
 <article {{ $attributes->class(['publication-card-wrapper', 'publication-card']) }}>
@@ -112,46 +118,49 @@
                 <span class="reports-card-author"
                       title="Autor: {{ $usuario_full ?: $usuario }}"
                       aria-label="Autor: {{ $usuario_full ?: $usuario }}">
-                    <span class="reports-card-author-label">Autor:</span>
+                    <span class="reports-card-author-label">Autor</span>
                     <span class="reports-card-author-name">{{ $usuario }}</span>
                 </span>
                 @if($descripcion)
                     <span class="reports-card-meta-separator" aria-hidden="true">&middot;</span>
                     <span class="reports-card-location"
-                          title="Distrito: {{ preg_replace('/^Distrito:\s*/u', '', $descripcion) }}"
-                          aria-label="Distrito: {{ preg_replace('/^Distrito:\s*/u', '', $descripcion) }}">{{ preg_replace('/^Distrito:\s*/u', '', $descripcion) }}</span>
+                          title="Distrito: {{ $location }}"
+                          aria-label="Distrito: {{ $location }}">{{ $locationDisplay }}</span>
                 @endif
             </div>
 
             <div class="reports-card-date-row">
-                <span class="reports-card-date-label">Fecha:</span>
                 <span class="reports-card-date"
                       title="Fecha del reporte: {{ $fecha_full ?: $fecha }}"
                       aria-label="Fecha del reporte: {{ $fecha_full ?: $fecha }}">{{ $fecha }}</span>
                 @if($actualizado)
+                    <span class="reports-card-meta-separator" aria-hidden="true">&middot;</span>
                     <span class="reports-card-updated"
                           title="Última actualización: {{ $actualizado_full ?: $actualizado }}"
-                          aria-label="Última actualización: {{ $actualizado_full ?: $actualizado }}">(mod. {{ $actualizado }})</span>
+                          aria-label="Última actualización: {{ $actualizado_full ?: $actualizado }}">mod. {{ $actualizado }}</span>
                 @endif
             </div>
         </div>
+
+        @if($folio)
+            <p class="reports-card-folio" title="Folio del reporte: {{ $folio }}">{{ $folio }}</p>
+        @endif
     </div>
 
     <footer class="reports-card-footer">
         <span class="reports-status reports-status--{{ $status }}" title="{{ $statusDetail }}">
-            <i class="fas {{ $status === 'aprobado' ? 'fa-check-circle' : ($status === 'rechazado' ? 'fa-times-circle' : 'fa-clock') }}" aria-hidden="true"></i>
+            <span class="reports-status-dot" aria-hidden="true"></span>
             <span>{{ $statusLabel }}</span>
         </span>
 
         <div class="reports-card-resources">
             <button type="button" class="reports-resource-button reports-resource-button--files archivos-open" title="{{ $filesDetail }}" aria-label="Abrir {{ $filesDetail }} de {{ $titulo }}" @disabled($filesCount === 0)>
                 <i class="fas fa-paperclip" aria-hidden="true"></i>
-                <span>{{ $filesCount }} {{ \Illuminate\Support\Str::plural('archivo', $filesCount) }}</span>
+                <span aria-hidden="true">{{ $filesCount }}</span>
             </button>
             <button type="button" class="reports-resource-button reports-resource-button--comments open-comments" title="{{ $commentsDetail }}" aria-label="{{ $commentsDetail }} en {{ $titulo }}">
                 <i class="far fa-comment-alt" aria-hidden="true"></i>
-                <span>{{ $commentsCount }}</span>
-                <span>{{ \Illuminate\Support\Str::plural('comentario', $commentsCount) }}</span>
+                <span aria-hidden="true">{{ $commentsCount }}</span>
                 @if($hasUnread)
                     <span class="reports-resource-new">Nuevo</span>
                 @endif

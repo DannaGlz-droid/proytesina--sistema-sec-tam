@@ -70,6 +70,7 @@ class UserRequest extends FormRequest
             'username' => ['required', 'string', 'min:3', 'max:50', 'regex:/^[a-zA-Z0-9_.-]+$/', Rule::unique('users', 'username')->ignore($userId)],
             'password' => $passwordRule,
             'is_active' => $userId ? 'required|boolean' : 'nullable|boolean',
+            'is_system_contact' => $userId ? 'nullable|boolean' : 'prohibited',
             'position_id' => ['required', function ($attribute, $value, $fail) {
                 $position = Position::find($value);
                 $blocked = ['administrador', 'admin', 'no definido'];

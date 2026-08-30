@@ -32,6 +32,7 @@ class User extends Authenticatable
         'role_id',
         'password',
         'profile_photo_path',
+        'is_system_contact',
     ];
 
     /**
@@ -58,7 +59,55 @@ class User extends Authenticatable
         'is_active' => 'boolean',
         'registration_date' => 'datetime',
         'last_session' => 'datetime',
+        'is_system_contact' => 'boolean',
     ];
+
+    /**
+     * Nombre breve para contactos operativos: nombres registrados y primer apellido.
+     */
+    public function contactDisplayName(): string
+    {
+        return trim(implode(' ', array_filter([
+            trim((string) $this->name),
+            trim((string) $this->first_last_name),
+        ]))) ?: (string) $this->username;
+    }
+
+    /**
+     * Teléfono legible sin alterar el dato almacenado.
+     */
+    public function formattedPhone(bool $includeCountryCode = false): ?string
+    {
+        $digits = preg_replace('/\D+/u', '', (string) $this->phone);
+
+        if (strlen($digits) === 12 && str_starts_with($digits, '52')) {
+            $digits = substr($digits, 2);
+            $includeCountryCode = true;
+        }
+
+        if (strlen($digits) !== 10) {
+            return $this->phone ?: null;
+        }
+
+        $formatted = substr($digits, 0, 3).' '.substr($digits, 3, 3).' '.substr($digits, 6, 4);
+
+        return $includeCountryCode ? '+52 '.$formatted : $formatted;
+    }
+
+    public function phoneHref(): ?string
+    {
+        $digits = preg_replace('/\D+/u', '', (string) $this->phone);
+
+        if (strlen($digits) === 10) {
+            return '+52'.$digits;
+        }
+
+        if (strlen($digits) === 12 && str_starts_with($digits, '52')) {
+            return '+'.$digits;
+        }
+
+        return $digits !== '' ? $digits : null;
+    }
 
     /**
      * Relationship: User belongs to Role

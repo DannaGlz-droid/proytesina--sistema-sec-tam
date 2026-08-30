@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
@@ -19,9 +20,19 @@ class UserProfileController extends Controller
         $firstLast = trim($user->first_last_name ?? '');
         $secondLast = trim($user->second_last_name ?? '');
         $fullName = trim(implode(' ', array_filter([$givenName, $firstLast, $secondLast])));
+
+        $systemContact = User::query()
+            ->with('role')
+            ->where('is_system_contact', true)
+            ->where('is_active', true)
+            ->whereHas('role', function ($query) {
+                $query->whereRaw('LOWER(name) = ?', ['administrador']);
+            })
+            ->first();
         
         return view('usuarios.miperfil', [
-            'fullName' => $fullName
+            'fullName' => $fullName,
+            'systemContact' => $systemContact,
         ]);
     }
 

@@ -34,6 +34,7 @@ Las pantallas piloto son:
 |---|---|---:|---:|---:|
 | Título de página | Lora | 1.32rem (21 px) | 700 | 1.15 |
 | Descripción de página | Lora | 0.78rem (12.5 px) | 400 | 1.35 |
+| Título editorial de contenido | Lora | 0.96–1rem | 600–700 | 1.30–1.38 |
 | Título de sección | Open Sans | 0.82rem (13 px) | 700 | 1.20 |
 | Etiqueta de campo | Open Sans | 0.74rem (12 px) | 600 | 1.20 |
 | Controles y botones | Open Sans | 0.78–0.80rem | 500–600 | 1.15 |
@@ -42,11 +43,12 @@ Las pantallas piloto son:
 
 Reglas:
 
-- Usar Lora únicamente para el encabezado editorial de la página.
+- Usar Lora únicamente para el encabezado editorial de la página y para títulos editoriales de contenido, como el nombre de un reporte dentro de una tarjeta. No extenderla a metadatos, controles, tablas administrativas ni navegación.
 - Usar Open Sans en navegación, formularios, tablas, botones, filtros y mensajes.
 - Escribir títulos y secciones en estilo oración: “Gestión de usuarios”, no “Gestión De Usuarios”.
 - Las opciones de menús contextuales y de cuenta usan peso 500. Reservar 600–700 para títulos, identidades principales, estados seleccionados y acciones con mayor jerarquía.
 - Las descripciones deben explicar el propósito en una sola oración, con máximo aproximado de 65 caracteres por línea.
+- En tarjetas de contenido con autor, mostrar el nombre o nombres registrados y el primer apellido; conservar el nombre completo con ambos apellidos como texto accesible o ayuda, y usar el nombre de usuario únicamente como respaldo cuando falten los datos personales. Esta regla no sustituye la variante más breve definida para notificaciones.
 - No usar tamaños o familias distintas dentro de un mismo tipo de componente.
 
 ### 3.2 Paleta base permanente
@@ -175,6 +177,15 @@ El encabezado global forma parte del sistema de diseño y no se ajusta de manera
 - Toda animación dura 120–200 ms y se elimina con `prefers-reduced-motion`.
 - Sombra de controles: mínima, `0 1px 2px`.
 - Sombra de menús flotantes: visible pero fría, basada en azul grisáceo; no usar negro puro.
+
+### 3.7 Formato de datos visibles
+
+- Conservar los valores normalizados requeridos por validación y almacenamiento; aplicar espacios, abreviaturas y capitalización únicamente en la presentación.
+- Las fechas administrativas y de cuenta usan `dd/mm/aaaa`. Las fechas editoriales de contenido pueden usar `d mmm aaaa`, con el mes abreviado en español; cuando se abrevie una fecha u hora, el valor completo permanece disponible como texto accesible o ayuda.
+- Los teléfonos nacionales mexicanos de diez dígitos se muestran como `### ### ####`. Cuando se incluya el código de país se muestran como `+52 ### ### ####`. Los enlaces `tel:` conservan el número normalizado sin espacios.
+- Una vista de perfil o identidad individual muestra el nombre completo. Las tarjetas de contenido y las notificaciones conservan las variantes abreviadas definidas en sus reglas respectivas; no se obliga a usar una sola longitud de nombre en contextos con distinta función.
+- En datos territoriales de solo lectura, conservar en mayúsculas el número romano o clave oficial y presentar el nombre propio con capitalización normal, por ejemplo `IX · Miguel Alemán`. Los formularios pueden conservar el valor canónico de su catálogo.
+- Fechas, teléfonos y otros datos numéricos de lectura usan cifras tabulares cuando ayuden a comparar o reconocer grupos.
 
 ## 4. Estructura de página
 
@@ -682,3 +693,4 @@ Una pantalla se considera migrada cuando:
 - Tablas: densidad administrativa única, 56 px como altura base de fila.
 - Estados: skeleton para carga y mensajes inline para vacío, sin resultados y error.
 - Tema institucional: selector `data-ui-theme` y variables CSS centralizadas.
+- Los datos de contacto operativo no se escriben de forma fija en las vistas. Deben provenir de una cuenta activa designada explícitamente como responsable principal del sistema; el nombre visible usa nombres registrados y primer apellido, y correo y teléfono aparecen únicamente cuando estén disponibles. Si no existe una designación válida, se muestra una instrucción genérica sin datos personales. En Mi perfil, esta ayuda se muestra a Coordinadores, Operadores e Invitados; los Administradores gestionan los datos directamente y no necesitan verla.

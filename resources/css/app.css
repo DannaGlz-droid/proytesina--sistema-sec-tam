@@ -2903,14 +2903,19 @@ html[data-ui-theme="tamaulipas-salud"] .app-document-surface {
 }
 
 .app-header-profile-summary:hover > div:first-child {
-	border-color: rgba(255, 255, 255, 0.78);
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.58);
 }
 
 .app-header-profile-summary > div:first-child {
-	width: 2.1rem !important;
-	height: 2.1rem !important;
-	border: 1px solid rgba(255, 255, 255, 0.45);
-	background: rgba(255, 255, 255, 0.14) !important;
+  width: 2.1rem !important;
+  height: 2.1rem !important;
+  border: 0;
+  background: transparent !important;
+  transition: box-shadow 150ms ease;
+}
+
+.app-header-avatar-placeholder {
+  transform: scale(1.015);
 }
 
 .app-header-profile-summary .w-44 {
@@ -9979,9 +9984,13 @@ html[data-ui-theme="tamaulipas-salud"] .app-document-surface {
   transition: none !important;
 }
 
-/* Profile page: same page rhythm and surfaces as the user form pilot. */
+/* Profile page: align its editorial heading with the contained identity card. */
 .profile-page .app-page-header {
-  margin-bottom: 1.5rem;
+  width: min(100%, 76rem);
+  max-width: 76rem;
+  margin-right: auto;
+  margin-bottom: 1rem;
+  margin-left: auto;
 }
 
 .profile-layout {
@@ -10006,8 +10015,8 @@ html[data-ui-theme="tamaulipas-salud"] .app-document-surface {
 .profile-avatar {
   width: 5.5rem !important;
   height: 5.5rem !important;
-  border: 3px solid #fff !important;
-  box-shadow: 0 0 0 1px var(--ui-border), 0 3px 10px rgb(15 23 42 / 12%);
+  border: 1px solid var(--ui-border) !important;
+  box-shadow: 0 1px 2px rgb(15 23 42 / 8%);
 }
 
 .profile-photo-button {
@@ -10206,18 +10215,184 @@ html[data-ui-theme="tamaulipas-salud"] .app-document-surface {
   }
 }
 
-/* Mi perfil: reutiliza la tarjeta y el ritmo de campos de Crear/Editar usuario. */
-.profile-account-card {
-  overflow: visible;
+/* Mi perfil: ficha de identidad legible, separada del patrón visual de formularios. */
+.profile-page .profile-account-card {
+  width: min(100%, 76rem) !important;
+  max-width: 76rem !important;
+  margin: 1rem auto 0;
+  overflow: visible !important;
+  border-color: var(--ui-border-soft) !important;
+  border-radius: 10px !important;
+  box-shadow: 0 1px 2px rgb(15 23 42 / 3.5%) !important;
 }
 
-.profile-account-identity {
+.profile-overview {
   display: flex;
+  min-width: 0;
   align-items: center;
-  gap: 1.25rem;
-  padding: 1.25rem 1.5rem;
+  justify-content: space-between;
+  gap: 2rem;
+  padding: 1.75rem 2rem 1.6rem;
   border-bottom: 1px solid var(--ui-border-soft);
-  background: var(--ui-surface-soft);
+  background: var(--ui-surface-section);
+}
+
+.profile-overview-identity {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 1.35rem;
+}
+
+.profile-overview-copy {
+  min-width: 0;
+  font-family: "Open Sans", system-ui, sans-serif;
+}
+
+.profile-overview-copy > span,
+.profile-overview-label {
+  display: block;
+  color: var(--ui-text-muted);
+  font-size: 0.7rem;
+  font-weight: 600;
+  line-height: 1.25;
+}
+
+.profile-overview-copy h2 {
+  margin: 0.28rem 0 0;
+  overflow-wrap: anywhere;
+  color: var(--ui-text);
+  font-family: "Lora", serif;
+  font-size: 1.32rem;
+  font-weight: 700;
+  line-height: 1.22;
+  text-wrap: balance;
+}
+
+.profile-overview-username {
+  margin: 0.22rem 0 0;
+  overflow-wrap: anywhere;
+  color: var(--ui-text-secondary);
+  font-size: 0.78rem;
+  line-height: 1.35;
+}
+
+.profile-overview-date {
+  margin: 0.3rem 0 0;
+  color: var(--ui-text-muted);
+  font-size: 0.68rem;
+  line-height: 1.35;
+}
+
+.profile-overview-date span {
+  color: var(--ui-text-secondary);
+  font-weight: 500;
+}
+
+.profile-overview-account {
+  display: grid;
+  min-width: 19rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1.75rem;
+  padding: 0.2rem 0 0.2rem 1.75rem;
+  border-left: 1px solid var(--ui-border-soft);
+}
+
+.profile-overview-account > div {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-start;
+}
+
+.profile-overview-account .profile-status-text,
+.profile-overview-account .profile-role-badge {
+  margin-top: 0.42rem;
+}
+
+.profile-details-layout {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1.75rem 2.5rem;
+  padding: 1.55rem 2rem 1.25rem;
+}
+
+.profile-detail-group {
+  min-width: 0;
+}
+
+.profile-detail-title {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 0.48rem;
+  margin: 0;
+  color: var(--ui-text-secondary);
+  font-family: "Open Sans", system-ui, sans-serif;
+  font-size: 0.8rem;
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+.profile-detail-title {
+  padding-bottom: 0.62rem;
+  border-bottom: 1px solid var(--ui-border-soft);
+}
+
+.profile-detail-title i {
+  width: 0.9rem;
+  color: var(--ui-text-muted);
+  font-size: 0.76rem;
+  text-align: center;
+}
+
+.profile-data-list {
+  display: grid;
+  gap: 1rem;
+  margin: 1rem 0 0;
+}
+
+.profile-data-item {
+  min-width: 0;
+  font-family: "Open Sans", system-ui, sans-serif;
+}
+
+.profile-data-item dt {
+  color: var(--ui-text-muted);
+  font-size: 0.7rem;
+  font-weight: 400;
+  line-height: 1.3;
+}
+
+.profile-data-item dd {
+  min-width: 0;
+  margin: 0.18rem 0 0;
+  overflow-wrap: anywhere;
+  color: var(--ui-text);
+  font-size: 0.86rem;
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+.profile-data-item dd a {
+  color: inherit;
+  text-decoration: none;
+  text-underline-offset: 0.2em;
+}
+
+.profile-data-item dd a:hover {
+  text-decoration: underline;
+}
+
+.profile-data-item dd a:focus-visible {
+  border-radius: 3px;
+  outline: 2px solid var(--ui-focus);
+  outline-offset: 2px;
+}
+
+.profile-tabular {
+  font-variant-numeric: tabular-nums;
 }
 
 .profile-avatar-control {
@@ -10225,48 +10400,76 @@ html[data-ui-theme="tamaulipas-salud"] .app-document-surface {
   flex: 0 0 auto;
 }
 
+.profile-account-card .profile-avatar-frame {
+  width: 5.5rem !important;
+  height: 5.5rem !important;
+  border: 1px solid var(--ui-border) !important;
+  border-radius: 9999px;
+  overflow: hidden;
+  box-shadow: 0 1px 2px rgb(15 23 42 / 8%);
+}
+
 .profile-account-card .profile-avatar {
   display: block;
-  width: 5.5rem;
-  height: 5.5rem;
+  width: 100% !important;
+  height: 100% !important;
+  border: 0 !important;
   object-fit: cover;
-  border: 3px solid #fff;
-  border-radius: 9999px;
-  box-shadow: 0 0 0 1px var(--ui-border-soft), 0 4px 12px rgb(15 23 42 / 8%);
+  box-shadow: none;
+}
+
+.profile-account-card .profile-avatar-placeholder {
+  transform: scale(1.015);
 }
 
 .profile-account-card .profile-photo-button {
   position: absolute;
-  right: -0.1rem;
-  bottom: -0.1rem;
+  right: -0.2rem;
+  bottom: -0.2rem;
   display: inline-flex;
   width: 2rem;
   height: 2rem;
   align-items: center;
   justify-content: center;
-  border: 2px solid #fff;
+  border: 1px solid var(--ui-border);
   border-radius: 9999px;
-  background: #611132;
-  color: #fff;
+  background: var(--ui-surface);
+  color: var(--ui-text-secondary);
   font-size: 0.72rem;
-  box-shadow: 0 2px 6px rgb(15 23 42 / 16%);
+  box-shadow: 0 1px 2px rgb(15 23 42 / 8%);
+  transition: border-color 160ms ease, background-color 160ms ease, color 160ms ease, transform 120ms ease;
 }
 
-.profile-account-card .profile-photo-button:hover {
-  background: #4a0e26;
+.profile-account-card .profile-photo-button:hover,
+.profile-account-card .profile-photo-button[aria-expanded="true"] {
+  border-color: var(--ui-border);
+  background: var(--ui-surface-section);
+  color: var(--ui-text);
+}
+
+.profile-account-card .profile-photo-button:focus-visible,
+.profile-account-card .profile-photo-menu-item:focus-visible,
+.profile-account-card .profile-logout-button:focus-visible {
+  outline: 2px solid var(--ui-focus);
+  outline-offset: 2px;
+}
+
+.profile-account-card .profile-photo-button:active,
+.profile-account-card .profile-logout-button:active {
+  transform: translateY(1px);
 }
 
 .profile-account-card .profile-photo-menu {
   position: absolute;
-  top: calc(100% + 0.65rem);
+  top: calc(100% + 0.5rem);
   left: 0;
   z-index: 30;
-  width: 11rem;
-  overflow: hidden;
+  width: 12rem;
+  padding: 0.35rem;
   border: 1px solid var(--ui-border-soft);
-  border-radius: 0.5rem;
-  background: #fff;
-  box-shadow: 0 12px 28px rgb(15 23 42 / 14%);
+  border-radius: var(--ui-radius-panel);
+  background: var(--ui-surface);
+  box-shadow: 0 10px 24px rgb(30 41 59 / 14%);
 }
 
 .profile-account-card .profile-photo-menu.hidden {
@@ -10276,115 +10479,53 @@ html[data-ui-theme="tamaulipas-salud"] .app-document-surface {
 .profile-account-card .profile-photo-menu-item {
   display: flex;
   width: 100%;
-  gap: 0.6rem;
+  min-height: 2rem;
+  gap: 0.5rem;
   align-items: center;
-  padding: 0.7rem 0.8rem;
-  background: #fff;
+  padding: 0 0.65rem;
+  border-radius: 0.4rem;
+  background: var(--ui-surface);
   color: var(--ui-text);
-  font-size: 0.78rem;
+  font-family: "Open Sans", system-ui, sans-serif;
+  font-size: 0.74rem;
+  font-weight: 500;
   text-align: left;
+  transition: background-color 160ms ease, color 160ms ease;
 }
 
-.profile-account-card .profile-photo-menu-item:hover {
-  background: #f1f1f1;
-}
-
-.profile-account-card .profile-photo-menu-item-danger {
-  color: #b91c1c;
-}
-
-.profile-identity-copy h2 {
-  margin: 0.15rem 0 0;
-  color: var(--ui-text);
-  font-size: 1.2rem;
-  font-weight: 700;
-  line-height: 1.3;
-}
-
-.profile-identity-eyebrow {
+.profile-account-card .profile-photo-menu-item i {
+  width: 1rem;
   color: var(--ui-text-muted);
-  font-size: 0.66rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
-.profile-identity-copy > p {
-  margin-top: 0.18rem;
-  color: var(--ui-text-muted);
-  font-size: 0.78rem;
-}
-
-.profile-identity-meta {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.45rem 1rem;
-  margin-top: 0.65rem;
-  color: var(--ui-text-muted);
-  font-size: 0.76rem;
-}
-
-.profile-identity-meta span {
-  display: inline-flex;
-  gap: 0.45rem;
-  align-items: center;
-}
-
-.profile-identity-meta i {
-  width: 0.85rem;
   text-align: center;
 }
 
-.profile-account-body {
-  padding: 1.25rem 1.5rem 0.25rem;
+.profile-account-card .profile-photo-menu-item:hover,
+.profile-account-card .profile-photo-menu-item:focus-visible {
+  background: var(--ui-surface-hover);
 }
 
-.profile-account-body .users-form-section {
-  margin-bottom: 1.5rem !important;
+.profile-account-card .profile-photo-menu-item-danger {
+  color: var(--ui-danger-text);
 }
 
-.profile-field {
-  min-width: 0;
+.profile-account-card .profile-photo-menu-item-danger i {
+  color: var(--ui-danger-text);
 }
 
-.profile-field-label {
-  display: block;
-  margin-bottom: 0.35rem;
-  color: var(--ui-text);
-  font-size: 0.72rem;
-  font-weight: 600;
+.profile-account-card .profile-photo-menu-item-danger:hover,
+.profile-account-card .profile-photo-menu-item-danger:focus-visible {
+  background: var(--ui-danger-soft);
+  color: var(--ui-danger-text);
 }
 
-.profile-readonly-field {
-  display: flex;
-  min-height: 2.75rem;
-  align-items: center;
-  padding: 0.65rem 0.8rem;
-  overflow-wrap: anywhere;
-  border: 1px solid var(--ui-border-soft);
-  border-radius: 0.4rem;
-  background: var(--ui-surface-soft);
-  color: var(--ui-text);
-  font-size: 0.8rem;
-}
-
-.profile-account-statuses {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 1rem;
-  align-items: end;
-  padding: 0.15rem 0;
-}
-
-.profile-account-statuses > div {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
+.profile-account-card .profile-photo-menu-item:disabled {
+  cursor: wait;
+  opacity: 0.62;
 }
 
 .profile-status-text {
   display: inline-flex;
-  min-height: 2rem;
+  min-height: 2.125rem;
   gap: 0.45rem;
   align-items: center;
   color: var(--ui-text);
@@ -10395,126 +10536,310 @@ html[data-ui-theme="tamaulipas-salud"] .app-document-surface {
   width: 0.5rem;
   height: 0.5rem;
   border-radius: 9999px;
-  background: #94a3b8;
+  background: var(--ui-text-muted);
 }
 
 .profile-status-dot.is-active {
-  background: #10b981;
+  background: var(--ui-success);
 }
 
 .profile-role-badge {
   display: inline-flex;
-  min-height: 1.65rem;
+  min-height: 1.5rem;
   align-items: center;
-  padding: 0.2rem 0.65rem;
+  padding: 0.25rem 0.65rem;
   border-radius: 9999px;
   font-size: 0.72rem;
   font-weight: 600;
+  line-height: 1;
+}
+
+.profile-role-badge.is-admin {
+  background: #e0e7ff;
+  color: #3730a3;
+}
+
+.profile-role-badge.is-coordinator {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.profile-role-badge.is-operator {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.profile-role-badge.is-guest {
+  background: var(--ui-danger-soft);
+  color: var(--ui-danger-text);
+}
+
+.profile-role-badge.is-neutral {
+  background: var(--ui-surface-section);
+  color: var(--ui-text-secondary);
 }
 
 .profile-help-note {
   display: flex;
+  align-items: flex-start;
+  min-width: 0;
   gap: 0.7rem;
-  margin-top: 0.15rem;
-  padding: 0.9rem 1rem;
+  margin: 0 2rem 1.55rem;
+  padding: 0.85rem 1rem;
   border: 1px solid var(--ui-border-soft);
-  border-radius: 0.45rem;
+  border-radius: var(--ui-radius-control);
   background: var(--ui-surface-soft);
   color: var(--ui-text);
 }
 
+.profile-help-note > div {
+  min-width: 0;
+}
+
 .profile-help-note > i {
-  margin-top: 0.1rem;
+  display: inline-flex;
+  flex: 0 0 1.25rem;
+  align-items: center;
+  justify-content: center;
+  width: 1.25rem;
+  height: 1.25rem;
+  margin-top: 0;
+  line-height: 1;
   color: var(--ui-text-muted);
 }
 
 .profile-help-note strong {
-  font-size: 0.8rem;
+  display: block;
+  font-family: "Open Sans", system-ui, sans-serif;
+  font-size: 0.78rem;
+  font-weight: 700;
+  line-height: 1.25rem;
 }
 
 .profile-help-note p {
   margin-top: 0.15rem;
   color: var(--ui-text-muted);
-  font-size: 0.74rem;
-  line-height: 1.5;
+  font-family: "Open Sans", system-ui, sans-serif;
+  font-size: 0.72rem;
+  line-height: 1.45;
 }
 
 .profile-help-note a {
   color: var(--ui-text);
   font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.profile-help-contact-name {
+  color: var(--ui-text);
+  font-weight: 600;
+}
+
+.user-system-contact {
+  grid-column: 1 / -1;
+  padding: 0.75rem 0 0;
+  border-top: 1px solid var(--ui-border-soft);
+}
+
+.user-system-contact-label {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.625rem;
+  color: var(--ui-text);
+  cursor: pointer;
+}
+
+.user-system-contact-input {
+  position: absolute;
+  width: 1rem;
+  height: 1rem;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.user-system-contact-check {
+  display: inline-flex;
+  width: 1.125rem;
+  height: 1.125rem;
+  flex: 0 0 1.125rem;
+  align-items: center;
+  justify-content: center;
+  margin-top: 0.0625rem;
+  border: 1px solid var(--ui-border);
+  border-radius: 4px;
+  background: var(--ui-surface);
+  color: var(--brand-on-primary);
+  font-size: 0.62rem;
+  transition: border-color 0.16s ease, background-color 0.16s ease, box-shadow 0.16s ease;
+}
+
+.user-system-contact-check i {
+  opacity: 0;
+}
+
+.user-system-contact-input:checked + .user-system-contact-check {
+  border-color: var(--ui-focus);
+  background: var(--ui-focus);
+}
+
+.user-system-contact-input:checked + .user-system-contact-check i {
+  opacity: 1;
+}
+
+.user-system-contact-input:focus-visible + .user-system-contact-check {
+  outline: 2px solid var(--ui-focus);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 3px var(--ui-focus-ring);
+}
+
+.user-system-contact-label:hover .user-system-contact-check {
+  border-color: var(--ui-focus);
+}
+
+.user-system-contact-copy {
+  display: grid;
+  gap: 0.2rem;
+  max-width: 65ch;
+}
+
+.user-system-contact-label strong {
+  font-size: 0.75rem;
+  line-height: 1.25;
+}
+
+.user-system-contact-label small {
+  color: var(--ui-text-secondary);
+  font-size: 0.7rem;
+  font-weight: 400;
+  line-height: 1.35;
 }
 
 .profile-account-footer {
   display: flex;
   justify-content: flex-end;
-  padding: 1rem 1.5rem;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.9rem 2rem 1rem;
   border-top: 1px solid var(--ui-border-soft);
-  background: #fff;
+  background: var(--ui-surface);
 }
 
 .profile-account-footer form {
   margin: 0;
 }
 
+.profile-account-card .profile-manage-account-button,
 .profile-account-card .profile-logout-button {
   display: inline-flex;
-  min-height: 2.65rem;
+  min-height: 2.125rem;
   gap: 0.5rem;
   align-items: center;
   justify-content: center;
-  padding: 0.65rem 1rem;
-  border: 1px solid var(--ui-border-soft);
-  border-radius: 0.4rem !important;
-  background: #fff;
+  padding: 0 0.85rem;
+  border: 1px solid var(--ui-border);
+  border-radius: var(--ui-radius-control) !important;
+  background: var(--ui-surface);
   color: var(--ui-text);
   font-size: 0.78rem;
   font-weight: 600;
+  line-height: 1.15;
+  transition: border-color 160ms ease, background-color 160ms ease, color 160ms ease, transform 120ms ease;
 }
 
+.profile-account-card .profile-manage-account-button:hover,
 .profile-account-card .profile-logout-button:hover {
-  border-color: #b8c2cc;
-  background: #f1f1f1;
+  border-color: var(--ui-border);
+  background: var(--ui-surface-soft);
+  color: var(--ui-text);
+}
+
+.profile-account-card .profile-manage-account-button:focus-visible,
+.profile-account-card .profile-logout-button:focus-visible {
+  outline: 2px solid var(--ui-focus);
+  outline-offset: 2px;
+}
+
+.profile-account-card .profile-manage-account-button:active,
+.profile-account-card .profile-logout-button:active {
+  transform: translateY(1px);
+}
+
+@media (max-width: 759px) {
+  .profile-overview {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 1.25rem;
+    padding: 1.35rem 1.25rem 1.2rem;
+  }
+
+  .profile-overview-account {
+    min-width: 0;
+    gap: 1.25rem;
+    padding: 1rem 0 0;
+    border-top: 1px solid var(--ui-border-soft);
+    border-left: 0;
+  }
+
+  .profile-details-layout {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 1.5rem;
+    padding: 1.3rem 1.25rem 1rem;
+  }
+
 }
 
 @media (max-width: 639px) {
-  .profile-account-identity {
-    align-items: flex-start;
-    gap: 0.9rem;
-    padding: 1rem;
+  .profile-page .profile-account-card {
+    margin-top: 0.75rem;
+    border-radius: 8px !important;
   }
 
-  .profile-account-card .profile-avatar {
-    width: 4.5rem;
-    height: 4.5rem;
+  .profile-overview-identity {
+    align-items: center;
+    gap: 1rem;
   }
 
-  .profile-identity-copy h2 {
-    font-size: 1rem;
+  .profile-account-card .profile-avatar-frame {
+    width: 4.5rem !important;
+    height: 4.5rem !important;
   }
 
-  .profile-identity-meta {
-    flex-direction: column;
-    gap: 0.35rem;
+  .profile-overview-copy h2 {
+    font-size: 1.08rem;
   }
 
-  .profile-account-body {
-    padding: 1rem 1rem 0.1rem;
-  }
-
-  .profile-account-statuses {
-    grid-template-columns: 1fr;
-    gap: 0.75rem;
+  .profile-overview-account {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .profile-help-note {
+    margin: 0 1.25rem 1.25rem;
     padding: 0.8rem;
   }
 
   .profile-account-footer {
-    padding: 0.9rem 1rem;
+    flex-direction: column;
+    align-items: stretch;
+    padding: 0.85rem 1.25rem 1.1rem;
   }
 
+  .profile-account-card .profile-manage-account-button,
   .profile-account-card .profile-logout-button {
     width: 100%;
+    min-height: 2.5rem;
+  }
+
+  .profile-account-card .profile-photo-button {
+    width: 2.5rem;
+    height: 2.5rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .profile-account-card .profile-photo-button,
+  .profile-account-card .profile-photo-menu-item,
+  .profile-account-card .profile-manage-account-button,
+  .profile-account-card .profile-logout-button {
+    transition-duration: 0.01ms;
   }
 }
