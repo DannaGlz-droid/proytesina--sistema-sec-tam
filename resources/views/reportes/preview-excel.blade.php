@@ -274,6 +274,104 @@
             color: #991b1b;
         }
 
+        body.is-thumbnail {
+            background: #ffffff;
+            font-size: 10px;
+        }
+
+        body.is-thumbnail .grid-wrap {
+            overflow: hidden;
+            scrollbar-width: none;
+        }
+
+        body.is-thumbnail .grid-wrap::-webkit-scrollbar,
+        body.is-thumbnail .tabs-bar {
+            display: none;
+        }
+
+        body.is-thumbnail th,
+        body.is-thumbnail td {
+            height: 22px;
+            padding: 2px 5px;
+        }
+
+        body.is-thumbnail .corner,
+        body.is-thumbnail .column-header,
+        body.is-thumbnail .row-header {
+            border-color: #d8dfda;
+            background: #eef1ef;
+            color: #526158;
+        }
+
+        body.is-thumbnail-sparse {
+            font-size: 16px;
+        }
+
+        body.is-thumbnail-sparse .grid-wrap {
+            padding: 16px;
+            background: #f1f3f2;
+        }
+
+        body.is-thumbnail-sparse table {
+            min-width: calc(100% - 32px);
+            border-top: 1px solid #d8dfda;
+            border-left: 1px solid #d8dfda;
+            box-shadow: 0 2px 8px rgba(31, 41, 55, .08);
+        }
+
+        body.is-thumbnail-sparse th,
+        body.is-thumbnail-sparse td {
+            height: 34px;
+            padding: 4px 8px;
+        }
+
+        body.is-thumbnail-wide-short {
+            font-size: 52px;
+        }
+
+        body.is-thumbnail-wide-short .grid-wrap {
+            display: flex;
+            align-items: center;
+            padding: 0;
+            background: #f1f3f2;
+        }
+
+        body.is-thumbnail-wide-short table {
+            min-width: 100%;
+            border-top: 1px solid #d8dfda;
+            border-left: 1px solid #d8dfda;
+            box-shadow: 0 8px 24px rgba(31, 41, 55, .08);
+        }
+
+        body.is-thumbnail-wide-short th,
+        body.is-thumbnail-wide-short td {
+            padding: 12px 20px;
+        }
+
+        body.is-thumbnail-wide-short thead th {
+            height: 120px;
+        }
+
+        body.is-thumbnail-wide-short.is-thumbnail-rows-1 tbody th,
+        body.is-thumbnail-wide-short.is-thumbnail-rows-1 tbody td {
+            height: 500px;
+        }
+
+        body.is-thumbnail-wide-short.is-thumbnail-rows-2 tbody th,
+        body.is-thumbnail-wide-short.is-thumbnail-rows-2 tbody td {
+            height: 400px;
+        }
+
+        body.is-thumbnail-wide-short.is-thumbnail-rows-3 tbody th,
+        body.is-thumbnail-wide-short.is-thumbnail-rows-3 tbody td {
+            height: 270px;
+        }
+
+        body.is-thumbnail-wide-short.is-thumbnail-rows-4 tbody th,
+        body.is-thumbnail-wide-short.is-thumbnail-rows-4 tbody td {
+            height: 200px;
+        }
+
         .state-card {
             max-width: 520px;
             border: 1px solid #fecaca;
@@ -317,10 +415,28 @@
         }
     </style>
 </head>
-<body>
     @php
         $embedded = request()->boolean('embed');
+        $isThumbnail = request()->boolean('thumbnail');
+        $thumbnailCells = (int) ($thumbnailCellCount ?? 0);
+        $thumbnailRows = min(4, max(1, (int) ($thumbnailRowCount ?? 0)));
+        $isWideShortThumbnail = $isThumbnail && !empty($thumbnailWideShort);
+        $bodyClasses = [];
+
+        if ($isThumbnail) {
+            $bodyClasses[] = 'is-thumbnail';
+
+            if ($thumbnailCells === 0) {
+                $bodyClasses[] = 'is-thumbnail-empty';
+            } elseif ($isWideShortThumbnail) {
+                $bodyClasses[] = 'is-thumbnail-wide-short';
+                $bodyClasses[] = 'is-thumbnail-rows-' . $thumbnailRows;
+            } elseif ($thumbnailCells <= 8) {
+                $bodyClasses[] = 'is-thumbnail-sparse';
+            }
+        }
     @endphp
+<body class="{{ implode(' ', $bodyClasses) }}">
 
     <div class="excel-shell">
         @unless($embedded)

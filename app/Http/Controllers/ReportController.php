@@ -46,6 +46,7 @@ class ReportController extends Controller
             'files',
             'comments.user.position',
             'comments.user.district',
+            'comments.user.role',
             'roadSafetyReports.activityType',
             'roadSafetyReports.municipality',
             'roadSafetyReports.district',
@@ -198,7 +199,7 @@ class ReportController extends Controller
             // This will show all comment dates/times in the same timezone.
             $viewerTz = 'America/Mexico_City';
 
-            $pub->comentarios_json = $orderedComments->map(function ($c) use ($user, $viewerTz) {
+            $pub->comentarios_json = $orderedComments->map(function ($c) use ($user, $viewerTz, $pub) {
                 $commentUserName = trim(implode(' ', array_filter([
                     $c->user->name,
                     $c->user->first_last_name,
@@ -214,6 +215,7 @@ class ReportController extends Controller
                     'created_at' => $c->created_at->locale('es')->isoFormat('D [de] MMMM [de] YYYY, h:mm A'),
                     // ISO timestamp (includes timezone) so the frontend can format to the user's/local timezone
                     'created_at_iso' => $c->created_at->toIso8601String(),
+                    'participant' => $this->commentParticipantContext($c, $pub),
                     'user' => [
                         'id' => $c->user->id,
                         'name' => $commentUserName,
@@ -1513,7 +1515,7 @@ class ReportController extends Controller
         ]);
 
         // Cargar relaciones para devolver al frontend
-        $comment->load('user.position', 'user.district');
+        $comment->load('user.position', 'user.district', 'user.role');
 
         // Crear notificaciones para todos los usuarios involucrados en la publicación
         // (dueño de la publicación + otros comentaristas), excepto quien comenta.
@@ -1589,6 +1591,7 @@ class ReportController extends Controller
                 'created_at' => $comment->created_at->locale('es')->isoFormat('D [de] MMMM [de] YYYY, h:mm A'),
                 // Provide ISO timestamp for client-side timezone-correct formatting
                 'created_at_iso' => $comment->created_at->toIso8601String(),
+                'participant' => $this->commentParticipantContext($comment, $publication),
                 'user' => [
                     'id' => $comment->user->id,
                     'name' => $commentUserName,
@@ -1603,6 +1606,21 @@ class ReportController extends Controller
                 'can_delete' => Auth::id() === $comment->user_id || Auth::user()->isAdmin(),
             ],
         ]);
+    }
+
+    /**
+     * Describe the commenter's relationship with the report without inferring it in the UI.
+     */
+    private function commentParticipantContext(PublicationComment $comment, Publication $publication): array
+    {
+        $roleName = optional($comment->user->role)->name;
+        $isReportAuthor = (int) $comment->user_id === (int) $publication->user_id;
+
+        return [
+            'type' => $isReportAuthor ? 'author' : 'reviewer',
+            'label' => $isReportAuthor ? 'Autor' : 'Revisor',
+            'role' => $roleName,
+        ];
     }
 
     /**
@@ -1844,15 +1862,18 @@ class ReportController extends Controller
         if (in_array($extension, ['xlsx', 'xls'])) {
             try {
                 $requestedSheetIndex = (int) $request->query('sheet', 0);
+                $isThumbnail = $request->boolean('thumbnail');
                 $cacheKey = implode(':', [
                     'report-file-preview',
                     $file->id,
                     filemtime($fullPath),
                     filesize($fullPath),
                     $requestedSheetIndex,
+                    $isThumbnail ? 'thumbnail' : 'full',
+                    'v3',
                 ]);
 
-                $previewData = Cache::remember($cacheKey, now()->addMinutes(30), function () use ($fullPath, $file, $requestedSheetIndex) {
+                $previewData = Cache::remember($cacheKey, now()->addMinutes(30), function () use ($fullPath, $file, $requestedSheetIndex, $isThumbnail) {
                     $reader = IOFactory::createReaderForFile($fullPath);
                     $reader->setReadDataOnly(true);
                     $sheetNames = $reader->listWorksheetNames($fullPath);
@@ -1864,10 +1885,13 @@ class ReportController extends Controller
                     $sheetName = $sheet->getTitle();
                     $totalRows = (int) $sheet->getHighestRow();
                     $totalColumns = Coordinate::columnIndexFromString($sheet->getHighestColumn());
-                    $highestRow = min($totalRows, 120);
-                    $highestColumnIndex = min($totalColumns, 40);
+                    $highestRow = min($totalRows, $isThumbnail ? 30 : 120);
+                    $highestColumnIndex = min($totalColumns, $isThumbnail ? 20 : 40);
                     $rows = [];
                     $columnLabels = [];
+                    $nonEmptyCellCount = 0;
+                    $nonEmptyRows = [];
+                    $nonEmptyColumns = [];
 
                     for ($column = 1; $column <= $highestColumnIndex; $column++) {
                         $columnLabels[] = Coordinate::stringFromColumnIndex($column);
@@ -1877,13 +1901,23 @@ class ReportController extends Controller
                         $cells = [];
 
                         for ($column = 1; $column <= $highestColumnIndex; $column++) {
-                            $cells[] = $sheet->getCellByColumnAndRow($column, $row)->getFormattedValue();
+                            $cellValue = $sheet->getCellByColumnAndRow($column, $row)->getFormattedValue();
+                            $cells[] = $cellValue;
+
+                            if (trim((string) $cellValue) !== '') {
+                                $nonEmptyCellCount++;
+                                $nonEmptyRows[$row] = true;
+                                $nonEmptyColumns[$column] = true;
+                            }
                         }
 
                         $rows[] = $cells;
                     }
 
                     $spreadsheet->disconnectWorksheets();
+
+                    $thumbnailRowCount = $isThumbnail ? count($nonEmptyRows) : null;
+                    $thumbnailColumnCount = $isThumbnail ? count($nonEmptyColumns) : null;
 
                     return [
                         'fileName' => $file->original_name,
@@ -1892,6 +1926,13 @@ class ReportController extends Controller
                         'activeSheetIndex' => $sheetIndex,
                         'columnLabels' => $columnLabels,
                         'rows' => $rows,
+                        'thumbnailCellCount' => $isThumbnail ? $nonEmptyCellCount : null,
+                        'thumbnailRowCount' => $thumbnailRowCount,
+                        'thumbnailColumnCount' => $thumbnailColumnCount,
+                        'thumbnailWideShort' => $isThumbnail
+                            && $thumbnailRowCount >= 1
+                            && $thumbnailRowCount <= 4
+                            && $thumbnailColumnCount >= 8,
                         'rowLimitReached' => $totalRows > $highestRow,
                         'columnLimitReached' => $totalColumns > $highestColumnIndex,
                     ];
@@ -1911,6 +1952,10 @@ class ReportController extends Controller
                     'activeSheetIndex' => 0,
                     'columnLabels' => [],
                     'rows' => [],
+                    'thumbnailCellCount' => 0,
+                    'thumbnailRowCount' => 0,
+                    'thumbnailColumnCount' => 0,
+                    'thumbnailWideShort' => false,
                     'rowLimitReached' => false,
                     'columnLimitReached' => false,
                     'error' => 'No se pudo generar la previsualizacion del archivo.',

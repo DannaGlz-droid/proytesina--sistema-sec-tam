@@ -1114,7 +1114,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!prevBtn || !nextBtn || !navContainer) return;
         
         // Mostrar/ocultar el contenedor solo si hay un modal abierto
-        const openModal = document.querySelector('[id^="modal"]:not(.hidden)');
+        const openModal = document.querySelector('.report-modal-overlay:not(.hidden)');
         
         if (!openModal || allReportButtons.length <= 1) {
             navContainer.classList.add('hidden');
@@ -1160,12 +1160,13 @@ document.addEventListener('DOMContentLoaded', function() {
             console.log(`👆 Simulando click en reporte #${index + 1}`);
             
             // Determinar cuál modal es actualmente visible
-            const openModal = document.querySelector('[id^="modal"]:not(.hidden)');
+            const openModal = document.querySelector('.report-modal-overlay:not(.hidden)');
             
             if (openModal) {
                 // Ocultar el modal anterior SIN animación
                 console.log('🔐 Cerrando modal anterior');
                 openModal.classList.add('hidden');
+                openModal.setAttribute('aria-hidden', 'true');
                 
                 // Hacer click INMEDIATAMENTE al botón del nuevo reporte
                 console.log('✅ Abriendo nuevo modal sin transición');
@@ -1222,7 +1223,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const filePreviewOpen = document.getElementById('archivo-preview-overlay') && !document.getElementById('archivo-preview-overlay').classList.contains('hidden');
         if (filePreviewOpen) return;
 
-        const openModal = document.querySelector('[id^="modal"]:not(.hidden)');
+        const openModal = document.querySelector('.report-modal-overlay:not(.hidden)');
         if (!openModal) return;
         
         if (e.key === 'ArrowLeft') {
@@ -1784,8 +1785,16 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // Función para llenar archivos y comentarios
+    function isAlcoholReportContext(element) {
+        const reportModal = element?.matches?.('.publication-detail-modal')
+            ? element
+            : element?.closest?.('.publication-detail-modal') || element?.querySelector?.('.publication-detail-modal');
+
+        return reportModal?.dataset.reportType === 'alcoholimetria';
+    }
+
     function getCommentsCounterLabel(modal, count) {
-        return modal?.dataset.reportType === 'alcoholimetria'
+        return isAlcoholReportContext(modal)
             ? `Comentarios · ${count}`
             : `Comentarios (${count})`;
     }
@@ -1793,6 +1802,7 @@ document.addEventListener('DOMContentLoaded', function() {
     function fillFilesAndComments(modal, dataset) {
         // Archivos adjuntos
         const archivosContainer = modal.querySelector('.modal-archivos');
+        const useSpreadsheetThumbnails = isAlcoholReportContext(modal);
         if (archivosContainer && dataset.archivos) {
             try {
                 const archivos = JSON.parse(dataset.archivos);
@@ -1831,7 +1841,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     const canPreview = archivo.canPreview;
                     const safeFileName = escapeHtml(fileName);
                     const fileSize = obtenerTamañoAleatorio();
-                    const thumbHtml = getAttachmentThumbHtml(archivo, icono, color, safeFileName);
+                    const thumbHtml = getAttachmentThumbHtml(archivo, icono, color, safeFileName, useSpreadsheetThumbnails);
                     const previewTitle = canPreview ? 'Previsualizar archivo' : 'Previsualizacion no disponible';
                     
                     archivosContainer.innerHTML += `
@@ -1846,15 +1856,6 @@ document.addEventListener('DOMContentLoaded', function() {
                                 <button type="button" class="archivo-action descargar-archivo" title="Descargar" aria-label="Descargar" data-file-id="${fileId}">
                                     <i class="fas fa-download text-xs"></i>
                                 </button>
-                                <button type="button" class="archivo-action archivo-info" title="Datos del archivo" aria-label="Datos del archivo">
-                                    <i class="fas fa-info text-xs"></i>
-                                </button>
-                                <div class="archivo-info-popover font-lora">
-                                    <div><strong>Nombre:</strong> ${safeFileName}</div>
-                                    <div><strong>Tipo:</strong> ${extension.toUpperCase()}</div>
-                                    <div><strong>Tamano:</strong> ${fileSize}</div>
-                                    <div><strong>Vista previa:</strong> ${canPreview ? 'Disponible' : 'No disponible'}</div>
-                                </div>
                             </div>
                             <div class="archivo-meta">
                                 <p class="archivo-nombre" title="${safeFileName}">
@@ -1924,7 +1925,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     comentariosToggle.style.display = 'flex';
                     const contadorSpan = comentariosToggle.querySelector('.contador-comentarios');
                     const icono = comentariosToggle.querySelector('.icono-chevron');
-                    const isAlcoholReport = modal.dataset.reportType === 'alcoholimetria';
+                    const isAlcoholReport = isAlcoholReportContext(modal);
                     const shouldExpandComments = isAlcoholReport || comentarios.length > 0;
 
                     if (contadorSpan) {
@@ -2034,6 +2035,13 @@ document.addEventListener('DOMContentLoaded', function() {
                     const userDistrict = comentario.user?.district || 'Sin distrito';
                     const userMeta = userDistrict;
                     const userPhotoUrl = comentario.user?.profile_photo_url || '{{ asset('images/default_pfp.svg.png') }}';
+                    const isAlcoholReport = container.closest('.publication-detail-modal')?.dataset.reportType === 'alcoholimetria';
+                    const participantType = comentario.participant?.type === 'author' ? 'author' : 'reviewer';
+                    const participantLabel = comentario.participant?.label || (participantType === 'author' ? 'Autor' : 'Revisor');
+                    const participantRole = comentario.participant?.role || '';
+                    const participantAccessibleLabel = participantRole && participantType === 'reviewer'
+                        ? `${participantLabel}, ${participantRole}`
+                        : participantLabel;
                     const avatarHtml = `<img src="${escapeHtml(userPhotoUrl)}" alt="Foto de ${escapeHtml(userName)}" class="w-8 h-8 rounded-full object-cover border border-slate-200 shadow-sm flex-shrink-0">`;
 
                     // Prefer an ISO timestamp from the server and format it in the user's local timezone in the browser.
@@ -2059,6 +2067,35 @@ document.addEventListener('DOMContentLoaded', function() {
                     const tickHtml = (comentario.user && comentario.user.id == CURRENT_USER_ID)
                         ? (comentario.seen_by_current_user ? '<i class="fas fa-check-double text-blue-500" title="Visto"></i>' : '<i class="fas fa-check text-gray-400" title="Enviado"></i>')
                         : '';
+
+                    const alcoholReadStateHtml = (comentario.user && comentario.user.id == CURRENT_USER_ID)
+                        ? (comentario.seen_by_current_user
+                            ? '<span class="comment-read-state" aria-label="Visto"><i class="fas fa-check-double" aria-hidden="true"></i></span>'
+                            : '<span class="comment-read-state" aria-label="Enviado"><i class="fas fa-check" aria-hidden="true"></i></span>')
+                        : '';
+
+                    if (isAlcoholReport) {
+                        container.insertAdjacentHTML('beforeend', `
+                            <article class="comentario-item alcohol-comment-item" data-comment-id="${comentario.id}" data-user-id="${comentario.user?.id}">
+                                <img src="${escapeHtml(userPhotoUrl)}" alt="Foto de ${escapeHtml(userName)}" class="comment-avatar">
+                                <div class="comment-body">
+                                    <p class="comment-meta">
+                                        <span class="comment-name">${escapeHtml(userName)}</span>
+                                        <span class="comment-meta-separator" aria-hidden="true">·</span>
+                                        <span class="comment-role comment-role--${participantType}" aria-label="${escapeHtml(participantAccessibleLabel)}" title="${escapeHtml(participantAccessibleLabel)}">${escapeHtml(participantLabel)}</span>
+                                        <span class="comment-meta-separator" aria-hidden="true">·</span>
+                                        <span class="comment-context">${escapeHtml(userMeta)}</span>
+                                    </p>
+                                    <p class="comment-text">${escapeHtml(comentario.comment || '')}</p>
+                                    <p class="comment-time">
+                                        <time>${escapeHtml(dateStr)}, ${escapeHtml(timeStr)}</time>
+                                        ${alcoholReadStateHtml}
+                                    </p>
+                                </div>
+                            </article>
+                        `);
+                        return;
+                    }
 
                     container.innerHTML += `
                         <div class="comentario-item relative border rounded-xl px-3 py-2 transition-all duration-200" data-comment-id="${comentario.id}" data-user-id="${comentario.user?.id}">
@@ -2088,7 +2125,7 @@ document.addEventListener('DOMContentLoaded', function() {
         } else {
             const isAlcoholReport = container.closest('.publication-detail-modal')?.dataset.reportType === 'alcoholimetria';
             container.innerHTML = isAlcoholReport
-                ? '<p class="report-comments-empty">Aún no hay comentarios en este expediente.</p>'
+                ? '<p class="report-comments-empty"><i class="far fa-comment" aria-hidden="true"></i><span>Aún no hay comentarios en este expediente.</span></p>'
                 : `
                     <div class="text-center py-8 text-gray-500 font-lora">
                         <i class="fas fa-comments text-3xl mb-3 text-gray-300"></i>
@@ -2221,7 +2258,7 @@ document.addEventListener('DOMContentLoaded', function() {
         return `${file.extension}:${file.id}:${file.name}`;
     }
 
-    function getAttachmentThumbHtml(file, icono, color, safeFileName) {
+    function getAttachmentThumbHtml(file, icono, color, safeFileName, useSpreadsheetThumbnail = false) {
         if (file.canPreview && ['jpg', 'jpeg', 'png'].includes(file.extension)) {
             return `<img src="${getPreviewUrl(file)}" alt="Vista previa de ${safeFileName}" loading="lazy">`;
         }
@@ -2235,6 +2272,24 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         if (['xlsx', 'xls'].includes(file.extension)) {
+            if (useSpreadsheetThumbnail && file.canPreview) {
+                return `
+                    <div class="archivo-sheet-thumb" aria-hidden="true">
+                        <div class="archivo-sheet-placeholder">
+                            <i class="fas fa-file-excel"></i>
+                            <span>${escapeHtml(file.extension.toUpperCase())}</span>
+                        </div>
+                        <iframe
+                            class="archivo-sheet-thumb-frame"
+                            src="${getPreviewUrl(file)}?embed=1&thumbnail=1"
+                            title="Miniatura de ${safeFileName}"
+                            loading="lazy"
+                            tabindex="-1"
+                        ></iframe>
+                    </div>
+                `;
+            }
+
             const cells = Array.from({ length: 25 }, () => '<span></span>').join('');
             return `
                 <div class="archivo-sheet-thumb" aria-hidden="true">
@@ -2258,8 +2313,35 @@ document.addEventListener('DOMContentLoaded', function() {
             const index = Number(thumb.dataset.thumbnailIndex || 0);
             const file = files[index];
 
-            if (!file || file.extension !== 'pdf' || !file.canPreview) return;
-            renderPdfAttachmentThumbnail(file, thumb);
+            if (!file || !file.canPreview) return;
+
+            if (file.extension === 'pdf') {
+                renderPdfAttachmentThumbnail(file, thumb);
+                return;
+            }
+
+            if (['xlsx', 'xls'].includes(file.extension)) {
+                const sheetThumb = thumb.querySelector('.archivo-sheet-thumb');
+                const frame = sheetThumb?.querySelector('.archivo-sheet-thumb-frame');
+                if (!sheetThumb || !frame) return;
+
+                const revealThumbnail = () => {
+                    try {
+                        const previewBody = frame.contentDocument?.body;
+                        const hasTable = frame.contentDocument?.querySelector('.grid-wrap table');
+                        if (!previewBody || !hasTable || previewBody.classList.contains('is-thumbnail-empty')) return;
+
+                        sheetThumb.classList.toggle('is-sparse', previewBody.classList.contains('is-thumbnail-sparse'));
+                        sheetThumb.classList.toggle('is-wide-short', previewBody.classList.contains('is-thumbnail-wide-short'));
+                        sheetThumb.classList.add('is-loaded');
+                    } catch (error) {
+                        // Keep the file-type fallback if the preview cannot be inspected.
+                    }
+                };
+                frame.addEventListener('load', revealThumbnail, { once: true });
+
+                if (frame.contentDocument?.readyState === 'complete') revealThumbnail();
+            }
         });
     }
 
@@ -2799,6 +2881,9 @@ document.addEventListener('DOMContentLoaded', function() {
                     // Limpiar textarea
                     textarea.value = '';
                     textarea.style.height = 'auto';
+                    if (modal.dataset.reportType === 'alcoholimetria') {
+                        textarea.style.overflowY = 'hidden';
+                    }
                     // Obtener el contenedor de comentarios
                     const comentariosContainer = modal.querySelector('.modal-comentarios');
                     const comentariosToggle = modal.querySelector('.comentarios-toggle');
@@ -2881,6 +2966,9 @@ document.addEventListener('DOMContentLoaded', function() {
             const maxHeight = modal?.dataset.reportType === 'alcoholimetria' ? 96 : 120;
             this.style.height = 'auto';
             this.style.height = Math.min(this.scrollHeight, maxHeight) + 'px';
+            if (modal?.dataset.reportType === 'alcoholimetria') {
+                this.style.overflowY = this.scrollHeight > maxHeight ? 'auto' : 'hidden';
+            }
             
             const button = this.closest('.report-comment-form')?.querySelector('.enviar-comentario');
             if (button) button.disabled = !this.value.trim();
