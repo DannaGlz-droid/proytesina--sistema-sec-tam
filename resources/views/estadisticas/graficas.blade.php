@@ -504,7 +504,7 @@
             tipoMunicipio: 'defuncion'
         };
 
-        // Full municipalities list with jurisdiction info (used to filter municipios when jurisdicción is selected)
+        // Lista de municipios con su distrito (se usa para filtrar por distrito).
         const municipalitiesFull = @json($municipalities->map(function($m) { return ['id' => $m->id, 'name' => $m->name, 'district_id' => $m->district_id ?? null]; })->values());
 
         const colorPalettes = {
@@ -811,7 +811,7 @@
                             // Actualizar los filtros mostrados en "Filtros aplicados:"
                             collectFilters();
                             updateActiveFiltersDisplay();
-                            // Si cambió la jurisdicción mientras se ve 'municipios', actualizar la lista de municipios disponibles
+                            // Si cambió el distrito mientras se ve 'municipios', actualizar la lista disponible.
                             if (element.id === 'distritoesFilter' && currentChartType === 'municipios') {
                                 const selected = Array.isArray(value) ? value.map(String) : (value ? [String(value)] : []);
                                 updateMunicipiosOptions(selected);
@@ -891,7 +891,7 @@
             // Filtrar la lista completa de municipios
             const allowed = municipalitiesFull.filter(m => {
                 if (!m.district_id) return selStr.length === 0; // si no hay info, mostrar sólo cuando no hay filtro
-                if (selStr.length === 0) return true; // sin jurisdicción seleccionada -> todos
+                if (selStr.length === 0) return true; // Sin distrito seleccionado: mostrar todos.
                 return selStr.includes(String(m.district_id));
             });
 

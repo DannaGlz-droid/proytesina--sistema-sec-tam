@@ -135,19 +135,19 @@
     <!-- Ubicación -->
     <x-filtros.seccion icono="map-marker-alt" titulo="Ubicación">
         <div class="filter-group">
-            <label class="block text-xs text-gray-600 font-lora mb-1">Jurisdicción de residencia:</label>
+            <label class="block text-xs text-gray-600 font-lora mb-1">Distrito de residencia:</label>
             <select id="distrito" class="w-full border border-[#404041] rounded-lg px-3 py-1.5 text-xs">
                 <option value="">Todas</option>
                 @isset($jurisdictions)
                     @foreach($jurisdictions as $j)
-                        <option value="{{ $j->id }}">{{ $j->name }}</option>
+                        <option value="{{ $j->id }}">{{ \App\Models\District::formatName($j->name) }}</option>
                     @endforeach
                 @else
-                    <option value="norte">Jurisdicción Norte</option>
-                    <option value="sur">Jurisdicción Sur</option>
-                    <option value="centro">Jurisdicción Centro</option>
-                    <option value="este">Jurisdicción Este</option>
-                    <option value="oeste">Jurisdicción Oeste</option>
+                    <option value="norte">Distrito Norte</option>
+                    <option value="sur">Distrito Sur</option>
+                    <option value="centro">Distrito Centro</option>
+                    <option value="este">Distrito Este</option>
+                    <option value="oeste">Distrito Oeste</option>
                 @endisset
             </select>
         </div>

@@ -8,7 +8,7 @@
     @php
         $activeFilterCount = collect(['status', 'district_id', 'date_filter'])->filter(fn ($key) => request()->filled($key))->count();
         $hasActiveCriteria = request()->filled('q') || $activeFilterCount > 0 || request('tipo', 'todos') !== 'todos';
-        $districtLabel = optional($districts->firstWhere('id', request('district_id')))->name;
+        $districtLabel = optional($districts->firstWhere('id', request('district_id')))->display_name;
     @endphp
 
     <main class="reports-publications-page px-4 lg:pl-10 pt-5 lg:pt-7 pb-8 lg:pb-10">
@@ -104,7 +104,7 @@
                                         <select id="district_id" name="district_id" class="reports-district-tomselect tomselect-select" data-placeholder="Todos">
                                             <option value="">Todos</option>
                                             @foreach($districts as $district)
-                                                <option value="{{ $district->id }}" {{ (string) request('district_id') === (string) $district->id ? 'selected' : '' }}>{{ $district->name }}</option>
+                                                <option value="{{ $district->id }}" {{ (string) request('district_id') === (string) $district->id ? 'selected' : '' }}>{{ $district->display_name }}</option>
                                             @endforeach
                                         </select>
                                     </div>
@@ -224,14 +224,14 @@
                                 $reporte = $pub->roadSafetyReports->first();
                                 if ($reporte) {
                                     // Mostrar el Distrito en lugar de Actividad
-                                    $activityInfo = 'Distrito: ' . ($reporte->district->name ?? 'No especificado');
+                                    $activityInfo = 'Distrito: ' . ($reporte->district?->display_name ?? 'No especificado');
                                     $dataAttributes = [
                                         'data-lugar' => $reporte->location ?? '',
                                         'data-promotor' => $reporte->promoter ?? '',
                                         'data-participantes' => $reporte->participants ?? '',
                                         'data-actividad' => $reporte->activityType->name ?? '',
                                         'data-municipio' => $reporte->municipality->name ?? '',
-                                        'data-distrito' => $reporte->district->name ?? '',
+                                        'data-distrito' => $reporte->district?->display_name ?? '',
                                     ];
                                 }
                             } elseif ($pub->publication_type === 'observatorio') {
@@ -241,10 +241,10 @@
                                 $reporte = $pub->injuryObservatoryReports->first();
                                 if ($reporte) {
                                     // Mostrar el Distrito para Observatorio
-                                    $activityInfo = 'Distrito: ' . ($reporte->district->name ?? 'No especificado');
+                                    $activityInfo = 'Distrito: ' . ($reporte->district?->display_name ?? 'No especificado');
                                     $dataAttributes = [
                                         'data-municipio' => $reporte->municipality->name ?? '',
-                                        'data-distrito' => $reporte->district->name ?? '',
+                                        'data-distrito' => $reporte->district?->display_name ?? '',
                                     ];
                                 }
                             } elseif ($pub->publication_type === 'alcoholimetria') {
@@ -254,7 +254,7 @@
                                 $reporte = $pub->breathalyzerReports->first();
                                 if ($reporte) {
                                     // Mostrar el Distrito para Alcoholimetría
-                                    $activityInfo = 'Distrito: ' . ($reporte->district->name ?? 'No especificado');
+                                    $activityInfo = 'Distrito: ' . ($reporte->district?->display_name ?? 'No especificado');
                                     $dataAttributes = [
                                         'data-puntos-revision' => $reporte->checkpoints ?? '',
                                         'data-conductores-no-aptos' => $reporte->drivers_not_fit ?? '',
@@ -268,7 +268,7 @@
                                         'data-transporte-carga-no-apto' => $reporte->cargo_transport ?? '',
                                         'data-emergencia-no-apto' => $reporte->emergency_vehicles ?? '',
                                         'data-municipio' => $reporte->municipality->name ?? '',
-                                        'data-distrito' => $reporte->district->name ?? '',
+                                        'data-distrito' => $reporte->district?->display_name ?? '',
                                     ];
                                 }
                             } elseif ($pub->publication_type === 'grupos-vulnerables') {
@@ -277,14 +277,14 @@
                                 $editRoute = route('reportes.grupos-vulnerables.edit', $pub) . '?redirect_tipo=' . (request('tipo') ?? 'todos');
                                 $reporte = $pub->gruposVulnerablesReport;
                                 if ($reporte) {
-                                    $activityInfo = 'Distrito: ' . ($reporte->district->name ?? 'No especificado');
+                                    $activityInfo = 'Distrito: ' . ($reporte->district?->display_name ?? 'No especificado');
                                     $dataAttributes = [
                                         'data-lugar' => $reporte->location ?? '',
                                         'data-promotor' => $reporte->promoter ?? '',
                                         'data-participantes' => $reporte->participants ?? '',
                                         'data-actividad' => $reporte->activityType->name ?? '',
                                         'data-municipio' => $reporte->municipality->name ?? '',
-                                        'data-distrito' => $reporte->district->name ?? '',
+                                        'data-distrito' => $reporte->district?->display_name ?? '',
                                     ];
                                 } else {
                                     $activityInfo = '';
@@ -507,11 +507,17 @@
 <div id="reject-modal" class="reports-reject-modal hidden" role="dialog" aria-modal="true" aria-labelledby="reject-modal-heading">
     <div class="reports-reject-card">
         <div class="reports-reject-heading">
-            <div>
-                <i class="fas fa-exclamation-triangle" aria-hidden="true"></i>
-                <h3 id="reject-modal-heading">Rechazar reporte</h3>
+            <div class="reports-reject-heading-copy">
+                <div class="reports-reject-title-row">
+                    <i class="fas fa-exclamation-triangle" aria-hidden="true"></i>
+                    <h3 id="reject-modal-heading">Rechazar reporte</h3>
+                </div>
+                <div class="reports-reject-heading-context">
+                    <p id="reject-modal-title" class="reports-reject-report-title"></p>
+                    <p class="reports-reject-heading-consequence">El reporte volverá al autor para que pueda corregirlo y reenviarlo.</p>
+                </div>
             </div>
-            <button type="button" onclick="closeRejectModal()" class="modal-cerrar" aria-label="Cerrar modal" title="Cerrar">
+            <button type="button" id="reject-modal-close" onclick="closeRejectModal()" class="modal-cerrar" aria-label="Cerrar rechazo" title="Cerrar">
                 <i class="fas fa-times" aria-hidden="true"></i>
             </button>
         </div>
@@ -519,24 +525,34 @@
         <input type="hidden" id="reject-modal-publication-id">
         
         <div class="reports-reject-body">
-            <p>¿Desea rechazar <strong id="reject-modal-title"></strong>?</p>
+            <div class="reports-reject-context">
+                <p class="reports-reject-question reports-reject-question-default">¿Desea rechazar <strong id="reject-modal-title-default"></strong>?</p>
+            </div>
             <label for="rejection-reason">Motivo del rechazo <span aria-hidden="true">*</span></label>
             <textarea 
                 id="rejection-reason"
-                rows="5"
-                aria-describedby="rejection-reason-help"
+                rows="4"
+                aria-describedby="rejection-reason-help rejection-reason-error"
+                aria-invalid="false"
                 placeholder="Explique brevemente por qué se rechaza este reporte"
                 maxlength="500"
                 required></textarea>
-            <p id="rejection-reason-help" class="reports-reject-help">Máximo 500 caracteres</p>
+            <div class="reports-reject-field-meta">
+                <p id="rejection-reason-help" class="reports-reject-help">
+                    <span class="reports-reject-help-default">Máximo 500 caracteres</span>
+                    <span class="reports-reject-help-alcohol">Describa claramente qué necesita corregirse.</span>
+                </p>
+                <output id="rejection-reason-count" for="rejection-reason">0/500</output>
+            </div>
+            <p id="rejection-reason-error" class="reports-reject-error hidden" role="alert">Escriba el motivo del rechazo.</p>
         </div>
         
         <div class="reports-reject-actions">
-            <button type="button" onclick="closeRejectModal()" class="reports-button reports-button--secondary">
+            <button type="button" id="reject-modal-cancel" onclick="closeRejectModal()" class="reports-button reports-button--secondary">
                 Cancelar
             </button>
-            <button type="button" onclick="submitRejection()" class="reports-button reports-button--danger">
-                Rechazar reporte
+            <button type="button" id="reject-modal-submit" onclick="submitRejection()" class="reports-button reports-button--danger">
+                Rechazar
             </button>
         </div>
     </div>
@@ -549,38 +565,38 @@
 @include('components.modal-grupos-vulnerables')
 
 <!-- Previsualizacion de archivos -->
-<div id="archivo-preview-overlay" class="hidden fixed inset-0 bg-[#2f2f2f]/95 text-white" role="dialog" aria-modal="true" aria-hidden="true" aria-label="Vista previa de archivo">
-    <div id="archivo-preview-header" class="h-16 px-3 sm:px-4 flex items-center justify-between gap-3 bg-[#2f2f2f] border-b border-white/10">
-        <div class="flex items-center gap-3 min-w-0">
-            <button type="button" id="archivo-preview-close" class="w-10 h-10 rounded-lg flex items-center justify-center text-white/75 hover:text-white hover:bg-white/10 transition-colors" title="Cerrar">
-                <i class="fas fa-times text-xl"></i>
+<div id="archivo-preview-overlay" class="hidden" role="dialog" aria-modal="true" aria-hidden="true" aria-label="Vista previa de archivo">
+    <header id="archivo-preview-header">
+        <div class="archivo-preview-identity">
+            <button type="button" id="archivo-preview-close" class="archivo-preview-tool" aria-label="Cerrar vista previa" title="Cerrar vista previa">
+                <i class="fas fa-times" aria-hidden="true"></i>
             </button>
-            <div class="min-w-0">
-                <p id="archivo-preview-file-name" class="truncate font-semibold text-sm sm:text-base leading-tight">Archivo</p>
-                <p id="archivo-preview-file-type" class="text-xs text-white/55 leading-tight mt-0.5">Previsualizacion</p>
+            <div class="archivo-preview-copy">
+                <p id="archivo-preview-file-name">Archivo</p>
+                <p id="archivo-preview-file-type">Previsualización</p>
             </div>
         </div>
-        <div class="flex items-center gap-2 flex-shrink-0">
-            <a id="archivo-preview-open" class="w-10 h-10 rounded-lg hidden md:flex items-center justify-center text-white/75 hover:text-white hover:bg-white/10 transition-colors" target="_blank" rel="noopener" title="Abrir en otra pestana">
-                <i class="fas fa-external-link-alt text-lg"></i>
+        <div class="archivo-preview-actions">
+            <a id="archivo-preview-open" class="archivo-preview-tool" target="_blank" rel="noopener" aria-label="Abrir archivo en otra pestaña" title="Abrir en otra pestaña">
+                <i class="fas fa-external-link-alt" aria-hidden="true"></i>
             </a>
-            <a id="archivo-preview-download" class="w-10 h-10 rounded-lg flex items-center justify-center text-white/75 hover:text-white hover:bg-white/10 transition-colors" title="Descargar">
-                <i class="fas fa-download text-lg"></i>
+            <a id="archivo-preview-download" class="archivo-preview-tool" aria-label="Descargar archivo" title="Descargar archivo">
+                <i class="fas fa-download" aria-hidden="true"></i>
             </a>
         </div>
-    </div>
+    </header>
 
-    <button type="button" id="archivo-preview-prev" class="hidden absolute left-2 sm:left-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-black/40 hover:bg-black/65 text-white transition-colors" title="Archivo anterior">
-        <i class="fas fa-chevron-left text-base"></i>
+    <button type="button" id="archivo-preview-prev" class="hidden" aria-label="Ver archivo anterior" title="Archivo anterior">
+        <i class="fas fa-chevron-left" aria-hidden="true"></i>
     </button>
 
-    <button type="button" id="archivo-preview-next" class="hidden absolute right-2 sm:right-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-black/40 hover:bg-black/65 text-white transition-colors" title="Archivo siguiente">
-        <i class="fas fa-chevron-right text-base"></i>
+    <button type="button" id="archivo-preview-next" class="hidden" aria-label="Ver archivo siguiente" title="Archivo siguiente">
+        <i class="fas fa-chevron-right" aria-hidden="true"></i>
     </button>
 
-    <div id="archivo-preview-content" class="h-[calc(100dvh-4rem)] overflow-auto flex items-start justify-center p-3 md:p-5">
-        <div class="text-center text-white/70 mt-20">
-            <i class="fas fa-file-alt text-4xl mb-3"></i>
+    <div id="archivo-preview-content">
+        <div class="archivo-preview-empty">
+            <i class="fas fa-file-alt" aria-hidden="true"></i>
             <p>Selecciona un archivo para previsualizar.</p>
         </div>
     </div>
@@ -589,14 +605,18 @@
 <!-- Navegación de Reportes (Flechas) -->
 <div id="report-nav-container" class="hidden fixed inset-0 z-[9999999] pointer-events-none">
     <!-- Flecha izquierda (posicionada a la izquierda) -->
-    <button id="report-nav-prev" 
+    <button id="report-nav-prev"
+            type="button"
+            aria-label="Reporte anterior"
             class="pointer-events-auto absolute left-4 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-[#404041] text-white hover:bg-[#2a2a2a] transition-all duration-200 flex items-center justify-center shadow-lg hidden hover:shadow-xl cursor-pointer"
             title="Reporte anterior (Flecha izquierda)">
         <i class="fas fa-chevron-left text-xl pointer-events-none"></i>
     </button>
     
     <!-- Flecha derecha (posicionada a la derecha) -->
-    <button id="report-nav-next" 
+    <button id="report-nav-next"
+            type="button"
+            aria-label="Siguiente reporte"
             class="pointer-events-auto absolute right-4 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-[#404041] text-white hover:bg-[#2a2a2a] transition-all duration-200 flex items-center justify-center shadow-lg hidden hover:shadow-xl cursor-pointer"
             title="Siguiente reporte (Flecha derecha)">
         <i class="fas fa-chevron-right text-xl pointer-events-none"></i>
@@ -619,6 +639,82 @@ document.addEventListener('DOMContentLoaded', function() {
     let reportesPanelAbortController = null;
     const reportesPanelCache = new Map();
     let reportsMenuTrigger = null;
+    let reportPageOverflowBeforeLock = null;
+
+    function hasOpenReportLayer() {
+        const reportDetailOpen = document.querySelector('.report-modal-overlay:not(.hidden)');
+        const rejectModal = document.getElementById('reject-modal');
+        const filePreview = document.getElementById('archivo-preview-overlay');
+
+        return Boolean(
+            reportDetailOpen
+            || (rejectModal && !rejectModal.classList.contains('hidden'))
+            || (filePreview && !filePreview.classList.contains('hidden'))
+        );
+    }
+
+    function syncReportPageScroll() {
+        const body = document.body;
+        if (!body) return;
+
+        if (hasOpenReportLayer()) {
+            if (body.dataset.reportScrollLocked !== 'true') {
+                reportPageOverflowBeforeLock = body.style.overflow;
+                body.dataset.reportScrollLocked = 'true';
+            }
+            body.style.overflow = 'hidden';
+            return;
+        }
+
+        if (body.dataset.reportScrollLocked === 'true') {
+            if (reportPageOverflowBeforeLock) {
+                body.style.overflow = reportPageOverflowBeforeLock;
+            } else {
+                body.style.removeProperty('overflow');
+            }
+            delete body.dataset.reportScrollLocked;
+            reportPageOverflowBeforeLock = null;
+        }
+    }
+
+    function formatTerritorialLabel(value) {
+        const rawValue = String(value ?? '').replace(/^Distrito:\s*/iu, '').trim();
+        if (!rawValue) return '';
+
+        const titleCase = (text) => text
+            .toLocaleLowerCase('es-MX')
+            .replace(/(^|[\s'’-])(\p{L})/gu, (_, separator, letter) => (
+                separator + letter.toLocaleUpperCase('es-MX')
+            ));
+        const parts = rawValue.split(/\s*(?:-|·)\s*/u);
+
+        if (parts.length > 1) {
+            const districtKey = parts.shift().trim().toLocaleUpperCase('es-MX');
+            const districtName = titleCase(parts.join(' - ').trim());
+            return districtName ? `${districtKey} · ${districtName}` : districtKey;
+        }
+
+        return titleCase(rawValue);
+    }
+
+    function formatPersonName(value) {
+        const rawValue = String(value ?? '').trim();
+        if (!rawValue) return '';
+
+        const lowercaseConnectors = new Set(['de', 'del', 'la', 'las', 'los', 'y']);
+
+        return rawValue
+            .toLocaleLowerCase('es-MX')
+            .split(/\s+/u)
+            .map((word, index) => {
+                if (index > 0 && lowercaseConnectors.has(word)) return word;
+
+                return word.replace(/(^|[-'’])(\p{L})/gu, (_, separator, letter) => (
+                    separator + letter.toLocaleUpperCase('es-MX')
+                ));
+            })
+            .join(' ');
+    }
 
     function getReportesPanel() {
         return document.getElementById('reportes-publicaciones-panel');
@@ -1240,45 +1336,46 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Función simple para mostrar modal - GLOBAL (original)
     window.showModalBase = function(modalId, skipAnimation = false) {
-        console.log('Intentando mostrar modal:', modalId);
         const modal = document.getElementById(modalId);
-        
-        if (!modal) {
-            console.error('❌ Modal no encontrado:', modalId);
-            return false;
-        }
-        
-        console.log('✅ Modal encontrado, mostrando...');
-        
-        // Desactivar scroll de la página principal
-        modal._previouslyFocusedElement = document.activeElement;
-        document.body.style.overflow = 'hidden';
+        if (!modal?.classList.contains('report-modal-overlay')) return false;
 
+        if (modal._closeTimer) {
+            clearTimeout(modal._closeTimer);
+            modal._closeTimer = null;
+        }
+
+        // A report detail is a single-layer flow: never leave another detail underneath.
+        document.querySelectorAll('.report-modal-overlay:not(.hidden)').forEach((openModal) => {
+            if (openModal === modal) return;
+
+            if (openModal._closeTimer) {
+                clearTimeout(openModal._closeTimer);
+                openModal._closeTimer = null;
+            }
+
+            openModal.classList.add('hidden');
+            openModal.setAttribute('aria-hidden', 'true');
+        });
+
+        modal._previouslyFocusedElement = document.activeElement;
         modal.classList.remove('hidden');
         modal.setAttribute('aria-hidden', 'false');
+        syncReportPageScroll();
+
+        const content = modal.querySelector('.publication-detail-modal');
+        const revealContent = () => {
+            if (!content || modal.classList.contains('hidden')) return;
+            content.style.transform = 'translateY(0) scale(1)';
+            content.style.opacity = '1';
+        };
+
+        if (skipAnimation) revealContent();
+        else window.setTimeout(revealContent, 50);
 
         requestAnimationFrame(() => {
             modal.querySelector('.modal-cerrar')?.focus({ preventScroll: true });
         });
-        
-        // Solo hacer animación si no es navegación
-        if (!skipAnimation) {
-            setTimeout(() => {
-                const content = modal.querySelector('.publication-detail-modal');
-                if (content) {
-                    content.style.transform = 'translateY(0) scale(1)';
-                    content.style.opacity = '1';
-                }
-            }, 50);
-        } else {
-            // Si es navegación, mostrar sin animación
-            const content = modal.querySelector('.publication-detail-modal');
-            if (content) {
-                content.style.transform = 'translateY(0) scale(1)';
-                content.style.opacity = '1';
-            }
-        }
-        
+
         return true;
     }
     
@@ -1308,38 +1405,32 @@ document.addEventListener('DOMContentLoaded', function() {
     // Función para cerrar modal - GLOBAL
     window.closeModal = function(modalId) {
         const modal = document.getElementById(modalId);
-        if (modal) {
-            const content = modal.querySelector('.publication-detail-modal');
-            if (content) {
-                content.style.transform = 'translateY(12px) scale(0.985)';
-                content.style.opacity = '0';
-            }
-            
-            setTimeout(() => {
-                modal.classList.add('hidden');
-                modal.setAttribute('aria-hidden', 'true');
-                // Ocultar flechas cuando se cierra el modal
-                const navContainer = document.getElementById('report-nav-container');
-                if (navContainer) {
-                    navContainer.classList.add('hidden');
-                }
-                
-                // Restaurar scroll de la página si no hay más modales abiertos
-                const anyModalOpen = document.querySelector('[id^="modal"]:not(.hidden)') || 
-                                     document.getElementById('reject-modal')?.classList.contains('hidden') === false;
-                if (!anyModalOpen) {
-                    document.body.style.overflow = 'auto';
-                }
+        if (!modal?.classList.contains('report-modal-overlay') || modal.classList.contains('hidden')) return;
+        if (modal._closeTimer) return;
 
-                if (modal._previouslyFocusedElement?.isConnected) {
-                    modal._previouslyFocusedElement.focus({ preventScroll: true });
-                }
-            }, 300);
+        const content = modal.querySelector('.publication-detail-modal');
+        if (content) {
+            content.style.transform = 'translateY(12px) scale(0.985)';
+            content.style.opacity = '0';
         }
+
+        modal._closeTimer = window.setTimeout(() => {
+            modal.classList.add('hidden');
+            modal.setAttribute('aria-hidden', 'true');
+            modal._closeTimer = null;
+
+            document.getElementById('report-nav-container')?.classList.add('hidden');
+
+            syncReportPageScroll();
+
+            if (modal._previouslyFocusedElement?.isConnected) {
+                modal._previouslyFocusedElement.focus({ preventScroll: true });
+            }
+        }, 300);
     }
     
     // Configurar eventos de cierre para todos los modales
-    document.querySelectorAll('[id^="modal"]').forEach(modal => {
+    document.querySelectorAll('.report-modal-overlay').forEach(modal => {
         const closeBtn = modal.querySelector('.modal-cerrar');
         if (closeBtn) {
             closeBtn.addEventListener('click', () => {
@@ -1469,7 +1560,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 geoFields.forEach(field => {
                     const element = modal.querySelector(`.modal-${field}`);
                     if (element && this.dataset[field]) {
-                        element.textContent = this.dataset[field];
+                        element.textContent = field === 'distrito'
+                            ? formatTerritorialLabel(this.dataset[field])
+                            : this.dataset[field];
                     }
                 });
                 
@@ -1510,7 +1603,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 specificFields.forEach(field => {
                     const element = modal.querySelector(`.modal-${field}`);
                     if (element && this.dataset[field]) {
-                        element.textContent = this.dataset[field];
+                        element.textContent = field === 'promotor'
+                            ? formatPersonName(this.dataset[field])
+                            : this.dataset[field];
                     }
                 });
                 
@@ -1596,7 +1691,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 specificFields.forEach(field => {
                     const element = modal.querySelector(`.modal-${field}`);
                     if (element && this.dataset[field]) {
-                        element.textContent = this.dataset[field];
+                        element.textContent = field === 'promotor'
+                            ? formatPersonName(this.dataset[field])
+                            : this.dataset[field];
                     }
                 });
                 
@@ -1689,15 +1786,18 @@ document.addEventListener('DOMContentLoaded', function() {
         const statusContainer = modal.querySelector('.modal-status-container');
         if (statusContainer) {
             const status = dataset.status || 'publicado';
+            const usesEditorialDesign = usesEditorialReportDesign(modal);
+            const approvedActorLabel = usesEditorialDesign ? 'Aprobado por' : 'Validado por';
+            const rejectedActorLabel = usesEditorialDesign ? 'Rechazado por' : 'Revisado por';
             let statusHTML = '';
             
             if (status === 'aprobado') {
                 const approvedBy = dataset.approvedBy || 'Administrador';
-                statusHTML = `<div class="status-card status-approved"><span class="status-stamp">Aprobado</span><div><strong>Aprobado</strong><span>Validado por ${escapeHtml(approvedBy)}</span></div></div>`;
+                statusHTML = `<div class="status-card status-approved"><span class="status-stamp">Aprobado</span><div><strong>Aprobado</strong><span>${approvedActorLabel} ${escapeHtml(approvedBy)}</span></div></div>`;
             } else if (status === 'rechazado') {
                 const rejectedBy = dataset.rejectedBy || 'Administrador';
                 const rejectionReason = dataset.rejectionReason || 'No se proporciono motivo';
-                statusHTML = `<div class="status-card status-rejected"><span class="status-stamp">Rechazado</span><div><strong>Rechazado</strong><span>Revisado por ${escapeHtml(rejectedBy)}</span></div><div class="status-reason"><span class="status-reason-label">Motivo de rechazo</span><p class="status-reason-text">${escapeHtml(rejectionReason)}</p></div></div>`;
+                statusHTML = `<div class="status-card status-rejected"><span class="status-stamp">Rechazado</span><div><strong>Rechazado</strong><span>${rejectedActorLabel} ${escapeHtml(rejectedBy)}</span></div><div class="status-reason"><span class="status-reason-label">Motivo de rechazo</span><p class="status-reason-text">${escapeHtml(rejectionReason)}</p></div></div>`;
             } else {
                 statusHTML = `<div class="status-card status-pending"><span class="status-stamp">Pendiente</span><div><strong>Pendiente de revisión</strong><span>Esperando validación</span></div></div>`;
             }
@@ -1739,7 +1839,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 modal.classList.add('has-actions-footer');
                 approvalContainer.style.display = 'flex';
                 approvalContainer.innerHTML = `
-                    <button onclick="resubmitReport(${publicationId})" class="reenviar-reporte">
+                    <button type="button" onclick="resubmitReport(${publicationId})" class="reenviar-reporte">
                         Reenviar para revisión
                     </button>
                 `;
@@ -1753,10 +1853,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 approvalContainer.style.display = 'flex';
                 approvalContainer.innerHTML = `
                     <div class="approval-button-row">
-                        <button class="rechazar-reporte">
+                        <button type="button" class="rechazar-reporte">
                             Rechazar
                         </button>
-                        <button class="aprobar-reporte">
+                        <button type="button" class="aprobar-reporte">
                             Aprobar
                         </button>
                     </div>
@@ -1775,7 +1875,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (newRechazarBtn) {
                     newRechazarBtn.onclick = function() {
                         const titulo = dataset.titulo || 'este reporte';
-                        showRejectModal(publicationId, titulo);
+                        showRejectModal(publicationId, titulo, getReportTypeFromContext(modal));
                     };
                 }
             } else {
@@ -1785,16 +1885,32 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // Función para llenar archivos y comentarios
-    function isAlcoholReportContext(element) {
+    function getReportModalFromContext(element) {
         const reportModal = element?.matches?.('.publication-detail-modal')
             ? element
             : element?.closest?.('.publication-detail-modal') || element?.querySelector?.('.publication-detail-modal');
 
-        return reportModal?.dataset.reportType === 'alcoholimetria';
+        return reportModal || null;
+    }
+
+    function getReportTypeFromContext(element) {
+        return getReportModalFromContext(element)?.dataset.reportType || '';
+    }
+
+    function usesEditorialReportDesign(element) {
+        const reportModal = getReportModalFromContext(element);
+
+        return reportModal?.dataset.reportLayout === 'editorial'
+            || [
+                'alcoholimetria',
+                'observatorio de lesiones',
+                'seguridad_vial',
+                'grupos_vulnerables',
+            ].includes(reportModal?.dataset.reportType);
     }
 
     function getCommentsCounterLabel(modal, count) {
-        return isAlcoholReportContext(modal)
+        return usesEditorialReportDesign(modal)
             ? `Comentarios · ${count}`
             : `Comentarios (${count})`;
     }
@@ -1802,7 +1918,7 @@ document.addEventListener('DOMContentLoaded', function() {
     function fillFilesAndComments(modal, dataset) {
         // Archivos adjuntos
         const archivosContainer = modal.querySelector('.modal-archivos');
-        const useSpreadsheetThumbnails = isAlcoholReportContext(modal);
+        const useSpreadsheetThumbnails = usesEditorialReportDesign(modal);
         if (archivosContainer && dataset.archivos) {
             try {
                 const archivos = JSON.parse(dataset.archivos);
@@ -1851,10 +1967,10 @@ document.addEventListener('DOMContentLoaded', function() {
                             </div>
                             <div class="archivo-actions" aria-label="Acciones del archivo">
                                 <button type="button" class="archivo-action archivo-view" title="${previewTitle}" aria-label="${previewTitle}" ${canPreview ? '' : 'disabled'}>
-                                    <i class="fas fa-eye text-xs"></i>
+                                    <i class="fas fa-eye text-xs" aria-hidden="true"></i>
                                 </button>
                                 <button type="button" class="archivo-action descargar-archivo" title="Descargar" aria-label="Descargar" data-file-id="${fileId}">
-                                    <i class="fas fa-download text-xs"></i>
+                                    <i class="fas fa-download text-xs" aria-hidden="true"></i>
                                 </button>
                             </div>
                             <div class="archivo-meta">
@@ -1925,8 +2041,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     comentariosToggle.style.display = 'flex';
                     const contadorSpan = comentariosToggle.querySelector('.contador-comentarios');
                     const icono = comentariosToggle.querySelector('.icono-chevron');
-                    const isAlcoholReport = isAlcoholReportContext(modal);
-                    const shouldExpandComments = isAlcoholReport || comentarios.length > 0;
+                    const usesEditorialDesign = usesEditorialReportDesign(modal);
+                    const shouldExpandComments = usesEditorialDesign || comentarios.length > 0;
 
                     if (contadorSpan) {
                         contadorSpan.textContent = getCommentsCounterLabel(modal, comentarios.length);
@@ -2033,9 +2149,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 comentarios.forEach(comentario => {
                     const userName = comentario.user?.name || 'Usuario';
                     const userDistrict = comentario.user?.district || 'Sin distrito';
-                    const userMeta = userDistrict;
                     const userPhotoUrl = comentario.user?.profile_photo_url || '{{ asset('images/default_pfp.svg.png') }}';
-                    const isAlcoholReport = container.closest('.publication-detail-modal')?.dataset.reportType === 'alcoholimetria';
+                    const usesEditorialDesign = usesEditorialReportDesign(container);
+                    const userMeta = usesEditorialDesign ? formatTerritorialLabel(userDistrict) : userDistrict;
                     const participantType = comentario.participant?.type === 'author' ? 'author' : 'reviewer';
                     const participantLabel = comentario.participant?.label || (participantType === 'author' ? 'Autor' : 'Revisor');
                     const participantRole = comentario.participant?.role || '';
@@ -2068,15 +2184,15 @@ document.addEventListener('DOMContentLoaded', function() {
                         ? (comentario.seen_by_current_user ? '<i class="fas fa-check-double text-blue-500" title="Visto"></i>' : '<i class="fas fa-check text-gray-400" title="Enviado"></i>')
                         : '';
 
-                    const alcoholReadStateHtml = (comentario.user && comentario.user.id == CURRENT_USER_ID)
+                    const editorialReadStateHtml = (comentario.user && comentario.user.id == CURRENT_USER_ID)
                         ? (comentario.seen_by_current_user
                             ? '<span class="comment-read-state" aria-label="Visto"><i class="fas fa-check-double" aria-hidden="true"></i></span>'
                             : '<span class="comment-read-state" aria-label="Enviado"><i class="fas fa-check" aria-hidden="true"></i></span>')
                         : '';
 
-                    if (isAlcoholReport) {
+                    if (usesEditorialDesign) {
                         container.insertAdjacentHTML('beforeend', `
-                            <article class="comentario-item alcohol-comment-item" data-comment-id="${comentario.id}" data-user-id="${comentario.user?.id}">
+                            <article class="comentario-item editorial-comment-item" data-comment-id="${comentario.id}" data-user-id="${comentario.user?.id}">
                                 <img src="${escapeHtml(userPhotoUrl)}" alt="Foto de ${escapeHtml(userName)}" class="comment-avatar">
                                 <div class="comment-body">
                                     <p class="comment-meta">
@@ -2089,7 +2205,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                     <p class="comment-text">${escapeHtml(comentario.comment || '')}</p>
                                     <p class="comment-time">
                                         <time>${escapeHtml(dateStr)}, ${escapeHtml(timeStr)}</time>
-                                        ${alcoholReadStateHtml}
+                                        ${editorialReadStateHtml}
                                     </p>
                                 </div>
                             </article>
@@ -2123,9 +2239,9 @@ document.addEventListener('DOMContentLoaded', function() {
                     `;
             });
         } else {
-            const isAlcoholReport = container.closest('.publication-detail-modal')?.dataset.reportType === 'alcoholimetria';
-            container.innerHTML = isAlcoholReport
-                ? '<p class="report-comments-empty"><i class="far fa-comment" aria-hidden="true"></i><span>Aún no hay comentarios en este expediente.</span></p>'
+            const usesEditorialDesign = usesEditorialReportDesign(container);
+            container.innerHTML = usesEditorialDesign
+                ? '<p class="report-comments-empty"><i class="far fa-comment-alt" aria-hidden="true"></i><span>Aún no hay comentarios en este expediente.</span></p>'
                 : `
                     <div class="text-center py-8 text-gray-500 font-lora">
                         <i class="fas fa-comments text-3xl mb-3 text-gray-300"></i>
@@ -2176,7 +2292,7 @@ document.addEventListener('DOMContentLoaded', function() {
             overlay.style.display = 'block';
             overlay.setAttribute('aria-hidden', 'false');
             archivoPreviewState.previousFocus = document.activeElement;
-            document.body.style.overflow = 'hidden';
+            syncReportPageScroll();
             requestAnimationFrame(() => document.getElementById('archivo-preview-close')?.focus());
         }
 
@@ -2225,10 +2341,8 @@ document.addEventListener('DOMContentLoaded', function() {
             overlay.classList.remove('archivo-preview-closing');
             archivoPreviewCloseTimer = null;
 
-            const anyModalOpen = document.querySelector('[id^="modal"]:not(.hidden)');
-            if (!anyModalOpen) {
-                document.body.style.overflow = 'auto';
-            } else {
+            syncReportPageScroll();
+            if (document.querySelector('.report-modal-overlay:not(.hidden)')) {
                 updateNavigationArrows();
             }
 
@@ -2448,7 +2562,7 @@ document.addEventListener('DOMContentLoaded', function() {
         `;
 
         if (['jpg', 'jpeg', 'png'].includes(extension)) {
-            content.className = 'h-[calc(100dvh-4rem)] overflow-auto flex items-center justify-center py-3 px-14 sm:px-16 md:px-20 lg:px-24';
+            content.className = 'archivo-preview-content--image';
             content.innerHTML = `
                 <img src="${previewUrl}" alt="${escapeHtml(file.name)}" class="archivo-preview-surface max-w-full max-h-full object-contain shadow-2xl bg-white">
             `;
@@ -2462,7 +2576,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         if (['xlsx', 'xls'].includes(extension)) {
-            content.className = 'h-[calc(100dvh-4rem)] overflow-auto flex items-start justify-center py-2 px-12 sm:px-14 md:px-16';
+            content.className = 'archivo-preview-content--spreadsheet';
             content.innerHTML = `
                 <div class="archivo-preview-surface relative w-full max-w-[86vw] h-[calc(100dvh-6rem)] bg-white shadow-2xl">
                     ${loadingHtml}
@@ -2472,7 +2586,7 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
 
-        content.className = 'h-[calc(100dvh-4rem)] overflow-auto flex items-center justify-center p-3 md:p-5';
+        content.className = 'archivo-preview-content--unsupported';
             content.innerHTML = `
                 <div class="archivo-preview-surface text-center text-white/70">
                     <i class="fas fa-file-alt text-4xl mb-3"></i>
@@ -2580,7 +2694,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const safeName = escapeHtml(file.name);
         const sourceUrl = encodeURI(pdfUrl);
 
-        content.className = 'h-[calc(100vh-5rem)] overflow-auto flex items-start justify-center p-4 md:p-8';
+        content.className = 'archivo-preview-content--pdf';
         content.innerHTML = `
             <div id="pdf-preview-frame" class="relative w-full max-w-5xl min-h-[calc(100vh-9rem)]">
                 ${loadingHtml}
@@ -2754,7 +2868,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 const iv = setInterval(() => {
                     tries += 1;
                     // Find currently visible modal (not hidden)
-                    const modal = Array.from(document.querySelectorAll('[id^="modal"]')).find(m => !m.classList.contains('hidden'));
+                    const modal = document.querySelector('.report-modal-overlay:not(.hidden)');
                     if (modal) {
                         const commentEl = modal.querySelector(`[data-comment-id="${commentId}"]`);
                         if (commentEl) {
@@ -2810,7 +2924,7 @@ document.addEventListener('DOMContentLoaded', function() {
             console.log('🔔 Click en enviar comentario');
             
             const button = e.target.closest('.enviar-comentario');
-            const modal = button.closest('[id^="modal"]');
+            const modal = button.closest('.report-modal-overlay');
             
             if (!modal) {
                 console.error('❌ No se encontró el modal');
@@ -2881,7 +2995,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     // Limpiar textarea
                     textarea.value = '';
                     textarea.style.height = 'auto';
-                    if (modal.dataset.reportType === 'alcoholimetria') {
+                    if (usesEditorialReportDesign(modal)) {
                         textarea.style.overflowY = 'hidden';
                     }
                     // Obtener el contenedor de comentarios
@@ -2963,10 +3077,10 @@ document.addEventListener('DOMContentLoaded', function() {
     document.querySelectorAll('.nuevo-comentario').forEach(textarea => {
         textarea.addEventListener('input', function() {
             const modal = this.closest('.publication-detail-modal');
-            const maxHeight = modal?.dataset.reportType === 'alcoholimetria' ? 96 : 120;
+            const maxHeight = usesEditorialReportDesign(modal) ? 96 : 120;
             this.style.height = 'auto';
             this.style.height = Math.min(this.scrollHeight, maxHeight) + 'px';
-            if (modal?.dataset.reportType === 'alcoholimetria') {
+            if (usesEditorialReportDesign(modal)) {
                 this.style.overflowY = this.scrollHeight > maxHeight ? 'auto' : 'hidden';
             }
             
@@ -3027,7 +3141,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!confirmed) return;
         
         // Buscar el modal abierto para extraer datos del reporte
-        const modal = Array.from(document.querySelectorAll('[id^="modal"]')).find(m => !m.classList.contains('hidden') && m.id !== 'reject-modal');
+        const modal = document.querySelector('.report-modal-overlay:not(.hidden)');
         if (!modal) return;
 
         // Obtener elemento del dataset
@@ -3074,27 +3188,75 @@ document.addEventListener('DOMContentLoaded', function() {
     // Variable para guardar el modal anterior
     let previousModalId = null;
 
-    window.showRejectModal = function(publicationId, publicationTitle) {
+    function updateRejectReasonState() {
+        const reasonField = document.getElementById('rejection-reason');
+        const count = document.getElementById('rejection-reason-count');
+        const error = document.getElementById('rejection-reason-error');
+        if (!reasonField) return;
+
+        const length = reasonField.value.length;
+        if (count) count.textContent = `${length}/500`;
+        if (length > 0) {
+            reasonField.setAttribute('aria-invalid', 'false');
+            error?.classList.add('hidden');
+        }
+    }
+
+    function setRejectSubmitting(isSubmitting) {
+        const rejectModal = document.getElementById('reject-modal');
+        const submitButton = document.getElementById('reject-modal-submit');
+        const cancelButton = document.getElementById('reject-modal-cancel');
+        const closeButton = document.getElementById('reject-modal-close');
+
+        rejectModal?.querySelector('.reports-reject-card')?.setAttribute('aria-busy', String(isSubmitting));
+        [submitButton, cancelButton, closeButton].forEach((button) => {
+            if (button) button.disabled = isSubmitting;
+        });
+        if (submitButton) submitButton.textContent = isSubmitting ? 'Rechazando…' : 'Rechazar';
+    }
+
+    document.getElementById('rejection-reason')?.addEventListener('input', updateRejectReasonState);
+
+    window.showRejectModal = function(publicationId, publicationTitle, reportType = '') {
         // Guardar cuál modal de detalles estaba abierto
-        document.querySelectorAll('[id^="modal"]').forEach(modal => {
-            if (modal.id !== 'reject-modal' && !modal.classList.contains('hidden')) {
+        let sourceReportType = reportType;
+        document.querySelectorAll('.report-modal-overlay').forEach(modal => {
+            if (!modal.classList.contains('hidden')) {
                 previousModalId = modal.id;
+                sourceReportType ||= modal.dataset.reportType || '';
                 closeModal(modal.id);
             }
         });
+
+        if (!sourceReportType) {
+            const sourceCard = Array.from(document.querySelectorAll('.publication-card[data-publication-id]'))
+                .find(card => String(card.dataset.publicationId) === String(publicationId));
+            sourceReportType = sourceCard?.dataset.publicationTipo || '';
+        }
         
         // Pequeño delay para que se cierre el modal anterior antes de abrir el de rechazo
         setTimeout(() => {
             document.getElementById('reject-modal-publication-id').value = publicationId;
             document.getElementById('reject-modal-title').textContent = publicationTitle;
-            document.getElementById('reject-modal').classList.remove('hidden');
+            const defaultTitle = document.getElementById('reject-modal-title-default');
+            if (defaultTitle) defaultTitle.textContent = publicationTitle;
+            const rejectModal = document.getElementById('reject-modal');
+            const reasonField = document.getElementById('rejection-reason');
+            rejectModal.dataset.reportType = sourceReportType;
+            rejectModal.classList.remove('hidden');
+            if (reasonField) reasonField.value = '';
+            setRejectSubmitting(false);
+            updateRejectReasonState();
             // Desactivar scroll de la página
-            document.body.style.overflow = 'hidden';
-            document.getElementById('rejection-reason')?.focus();
+            syncReportPageScroll();
+            reasonField?.focus();
         }, 350);
     };
 
     window.closeRejectModal = async function(returnToPrevious = true) {
+        const rejectCard = document.querySelector('#reject-modal .reports-reject-card');
+        if (returnToPrevious && rejectCard?.getAttribute('aria-busy') === 'true') return;
+
         const reasonField = document.getElementById('rejection-reason');
         if (returnToPrevious && reasonField?.value.trim()) {
             const confirmed = await window.confirmDeleteDialog({
@@ -3110,6 +3272,8 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         document.getElementById('reject-modal').classList.add('hidden');
         if (reasonField) reasonField.value = '';
+        setRejectSubmitting(false);
+        updateRejectReasonState();
         
         // Si se cancela, regresar al modal anterior
         if (returnToPrevious && previousModalId) {
@@ -3117,20 +3281,24 @@ document.addEventListener('DOMContentLoaded', function() {
             showModal(previousModalId);
             previousModalId = null;
         } else {
-            // Si no regresamos a un modal anterior, restaurar el scroll
-            document.body.style.overflow = 'auto';
             previousModalId = null;
+            syncReportPageScroll();
         }
     };
 
     window.submitRejection = function() {
         const publicationId = document.getElementById('reject-modal-publication-id').value;
-        const reason = document.getElementById('rejection-reason').value.trim();
+        const reasonField = document.getElementById('rejection-reason');
+        const reason = reasonField.value.trim();
         
         if (!reason) {
-            showToast('Escribe la razón de rechazo.', 'warning', 3000);
+            reasonField.setAttribute('aria-invalid', 'true');
+            document.getElementById('rejection-reason-error')?.classList.remove('hidden');
+            reasonField.focus();
             return;
         }
+
+        setRejectSubmitting(true);
         
         fetch(`/reportes/${publicationId}/rechazar`, {
             method: 'POST',
@@ -3148,7 +3316,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 refreshReportesPanel();
                 
                 // Actualizar estado en el modal sin recargar
-                const modal = Array.from(document.querySelectorAll('[id^="modal"]')).find(m => !m.classList.contains('hidden') && m.id !== 'reject-modal');
+                const modal = document.querySelector('.report-modal-overlay:not(.hidden)');
                 if (modal) {
                     const dataElement = modal.querySelector('[data-status]');
                     if (dataElement) {
@@ -3163,17 +3331,19 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 // Cerrar modal anterior después de 1s
                 setTimeout(() => {
-                    const mainModal = Array.from(document.querySelectorAll('[id^="modal"]')).find(m => !m.classList.contains('hidden') && m.id !== 'reject-modal');
+                    const mainModal = document.querySelector('.report-modal-overlay:not(.hidden)');
                     if (mainModal) {
                         closeModal(mainModal.id);
                     }
                 }, 1000);
             } else {
+                setRejectSubmitting(false);
                 showToast(data.message || 'No se pudo rechazar el reporte.', 'error', 3000);
             }
         })
         .catch(error => {
             console.error('Error:', error);
+            setRejectSubmitting(false);
             showToast('No se pudo rechazar el reporte.', 'error', 3000);
         });
     };
@@ -3190,7 +3360,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!confirmed) return;
         
         // Buscar el modal abierto
-        const modal = Array.from(document.querySelectorAll('[id^="modal"]')).find(m => !m.classList.contains('hidden') && m.id !== 'reject-modal');
+        const modal = document.querySelector('.report-modal-overlay:not(.hidden)');
         if (!modal) return;
 
         const dataElement = modal.querySelector('[data-status]');
@@ -3306,7 +3476,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     eyeBtn.click();
                     // Después de abrir el modal, desplazar/focar la sección de comentarios
                     setTimeout(() => {
-                        const visibleModal = document.querySelector('[id^="modal"]:not(.hidden)');
+                        const visibleModal = document.querySelector('.report-modal-overlay:not(.hidden)');
                         if (visibleModal) {
                             const comentariosContainer = visibleModal.querySelector('.modal-comentarios');
                             const textarea = visibleModal.querySelector('.nuevo-comentario');
@@ -3479,7 +3649,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     let tries = 0;
                     const iv = setInterval(() => {
                         tries += 1;
-                        const modal = Array.from(document.querySelectorAll('[id^="modal"]')).find(m => !m.classList.contains('hidden'));
+                        const modal = document.querySelector('.report-modal-overlay:not(.hidden)');
                         if (modal) {
                             const commentEl = modal.querySelector(`[data-comment-id="${commentIdFromUrl}"]`);
                             if (commentEl) {

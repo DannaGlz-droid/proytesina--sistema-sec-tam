@@ -104,12 +104,12 @@
                                 <select id="jurisdiction_select_alcohol" name="jurisdiccion" class="tomselect-select" required
                                         aria-invalid="{{ $errors->has('jurisdiccion') ? 'true' : 'false' }}" @error('jurisdiccion') aria-describedby="jurisdiccion-error" @enderror>
                                     <option value="">Seleccione un distrito</option>
-                                    @foreach($districts as $district)<option value="{{ $district->id }}" {{ (string) $selectedDistrito === (string) $district->id ? 'selected' : '' }}>{{ $district->name }}</option>@endforeach
+                                    @foreach($districts as $district)<option value="{{ $district->id }}" {{ (string) $selectedDistrito === (string) $district->id ? 'selected' : '' }}>{{ $district->display_name }}</option>@endforeach
                                 </select>
                             @else
                                 <label for="jurisdiction_display_alcohol">Distrito asignado</label>
                                 <input type="hidden" id="jurisdiction_input_alcohol" name="jurisdiccion" value="{{ auth()->user()->district_id }}" required>
-                                <input id="jurisdiction_display_alcohol" type="text" class="ui-field--disabled" value="{{ optional(auth()->user()->district)->name }}" disabled aria-disabled="true">
+                                <input id="jurisdiction_display_alcohol" type="text" class="ui-field--disabled" value="{{ optional(auth()->user()->district)->display_name }}" disabled aria-disabled="true">
                             @endif
                             @error('jurisdiccion') <p id="jurisdiccion-error" class="report-road-field-error" role="alert">{{ $message }}</p> @enderror
                         </div>
@@ -326,7 +326,7 @@
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const municipalityToDistrict = @json($municipalities->mapWithKeys(fn($item) => [$item->id => $item->district_id]));
-            const districtNames = @json($districts->mapWithKeys(fn($item) => [$item->id => $item->name]));
+            const districtNames = @json($districts->mapWithKeys(fn($item) => [$item->id => $item->display_name]));
             const currentDistrict = @json(optional(auth()->user())->district_id); const canSelectAnyDistrict = @json($canSelectAnyDistrict ?? false);
             const oldDistrict = @json(old('jurisdiccion', '')); const oldMunicipality = @json(old('municipio', isset($report) ? $report->municipality_id : ''));
             const municipality = document.getElementById('alcohol_municipality_select'); const district = document.getElementById('jurisdiction_select_alcohol');

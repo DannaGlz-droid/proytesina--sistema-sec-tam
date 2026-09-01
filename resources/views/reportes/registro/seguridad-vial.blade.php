@@ -158,14 +158,14 @@
                             <select id="jurisdiction_select_vial" name="jurisdiccion" class="tomselect-select" required aria-invalid="{{ $errors->has('jurisdiccion') ? 'true' : 'false' }}" @error('jurisdiccion') aria-describedby="jurisdiccion-error" @enderror>
                                 <option value="">Seleccione un distrito</option>
                                 @foreach($districts as $district)
-                                    <option value="{{ $district->id }}" {{ (string) $selectedDistritoVial === (string) $district->id ? 'selected' : '' }}>{{ $district->name }}</option>
+                                    <option value="{{ $district->id }}" {{ (string) $selectedDistritoVial === (string) $district->id ? 'selected' : '' }}>{{ $district->display_name }}</option>
                                 @endforeach
                             </select>
                         @else
                             <label class="block text-xs lg:text-sm font-medium text-gray-500 mb-1 font-lora">Distrito asignado</label>
                             <!-- Adscripción territorial: valor fijo, visible y no editable. -->
                             <input type="hidden" id="jurisdiction_input_vial" name="jurisdiccion" value="{{ auth()->user()->district_id }}" required>
-                            <input id="jurisdiction_display_vial" type="text" class="ui-field--disabled" value="{{ optional(auth()->user()->district)->name }}" disabled aria-disabled="true">
+                            <input id="jurisdiction_display_vial" type="text" class="ui-field--disabled" value="{{ optional(auth()->user()->district)->display_name }}" disabled aria-disabled="true">
                         @endif
                         @error('jurisdiccion') <p id="jurisdiccion-error" class="report-road-field-error" role="alert">{{ $message }}</p> @enderror
                     </div>
@@ -806,8 +806,8 @@
         document.addEventListener('DOMContentLoaded', function() {
             // Map municipality_id -> district_id
             const muniToJur = @json($municipalities->mapWithKeys(function($m){ return [$m->id => $m->district_id]; }));
-            const jurisNames = @json($districts->mapWithKeys(function($j){ return [$j->id => $j->name]; }));
-            // Jurisdicción del usuario (puede ser null)
+            const jurisNames = @json($districts->mapWithKeys(function($j){ return [$j->id => $j->display_name]; }));
+            // Distrito del usuario (puede ser null)
             const currentJurisdiction = @json(optional(auth()->user())->district_id);
             const canSelectAnyDistrict = @json($canSelectAnyDistrict ?? false);
 

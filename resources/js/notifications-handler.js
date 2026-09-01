@@ -21,7 +21,7 @@ window.openPublicationFromNotification = function(publicationId, commentId) {
                 const iv = setInterval(() => {
                     tries += 1;
                     // Find currently visible modal (not hidden)
-                    const modal = Array.from(document.querySelectorAll('[id^="modal"]')).find(m => !m.classList.contains('hidden'));
+                    const modal = document.querySelector('.report-modal-overlay:not(.hidden)');
                     if (modal) {
                         const commentEl = modal.querySelector(`[data-comment-id="${commentId}"]`);
                         if (commentEl) {

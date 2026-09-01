@@ -17,15 +17,15 @@
 }
 
 /* Alcoholimetría: cierre y acciones con el mismo eje y densidad del sistema. */
-.publication-detail-modal[data-report-type="alcoholimetria"] .report-header {
+.publication-detail-modal[data-report-layout="editorial"] .report-header {
   position: relative;
 }
 
-.publication-detail-modal[data-report-type="alcoholimetria"] .report-heading-copy {
+.publication-detail-modal[data-report-layout="editorial"] .report-heading-copy {
   padding-right: 44px;
 }
 
-.publication-detail-modal[data-report-type="alcoholimetria"] .modal-cerrar {
+.publication-detail-modal[data-report-layout="editorial"] .modal-cerrar {
   position: absolute;
   top: 16px;
   right: 32px;
@@ -38,29 +38,29 @@
   font-size: 14px;
   line-height: 1;
   cursor: pointer;
-  transition: background-color 150ms ease, color 150ms ease, transform 120ms ease;
+  transition: color 150ms ease, transform 120ms ease;
 }
 
-.publication-detail-modal[data-report-type="alcoholimetria"] .modal-cerrar:hover {
-  background: var(--reports-surface-section, #f3f4f6);
+.publication-detail-modal[data-report-layout="editorial"] .modal-cerrar:hover {
+  background: transparent;
   color: #374151;
 }
 
-.publication-detail-modal[data-report-type="alcoholimetria"] .modal-cerrar:active {
+.publication-detail-modal[data-report-layout="editorial"] .modal-cerrar:active {
   transform: translateY(1px);
 }
 
-.publication-detail-modal[data-report-type="alcoholimetria"] .modal-cerrar:focus-visible {
+.publication-detail-modal[data-report-layout="editorial"] .modal-cerrar:focus-visible {
   outline: 2px solid var(--ui-focus, #475569);
   outline-offset: 2px;
 }
 
-.publication-detail-modal[data-report-type="alcoholimetria"] .modal-actions-footer {
+.publication-detail-modal[data-report-layout="editorial"] .modal-actions-footer {
   min-height: 62px;
   padding-block: 10px;
 }
 
-.publication-detail-modal[data-report-type="alcoholimetria"] .approval-buttons-container :is(.rechazar-reporte, .aprobar-reporte) {
+.publication-detail-modal[data-report-layout="editorial"] .approval-buttons-container :is(.rechazar-reporte, .aprobar-reporte) {
   width: 112px;
   min-width: 112px;
   height: 34px;
@@ -71,7 +71,7 @@
   transition: background-color 150ms ease, border-color 150ms ease, color 150ms ease, transform 120ms ease;
 }
 
-.publication-detail-modal[data-report-type="alcoholimetria"] .approval-buttons-container .reenviar-reporte {
+.publication-detail-modal[data-report-layout="editorial"] .approval-buttons-container .reenviar-reporte {
   width: auto;
   max-width: 100%;
   min-width: max-content;
@@ -79,18 +79,20 @@
   min-height: 34px;
   padding: 0 14px;
   white-space: nowrap;
+  cursor: pointer;
+  transition: background-color 150ms ease, border-color 150ms ease, color 150ms ease, transform 120ms ease;
 }
 
-.publication-detail-modal[data-report-type="alcoholimetria"] .approval-buttons-container button:active:not(:disabled) {
+.publication-detail-modal[data-report-layout="editorial"] .approval-buttons-container button:active:not(:disabled) {
   transform: translateY(1px);
 }
 
-.publication-detail-modal[data-report-type="alcoholimetria"] .approval-buttons-container button:focus-visible {
+.publication-detail-modal[data-report-layout="editorial"] .approval-buttons-container button:focus-visible {
   outline: 2px solid var(--ui-focus, #475569);
   outline-offset: 2px;
 }
 
-.publication-detail-modal[data-report-type="alcoholimetria"] .approval-buttons-container button:disabled {
+.publication-detail-modal[data-report-layout="editorial"] .approval-buttons-container button:disabled {
   border-color: var(--reports-border-soft, #e5e7eb);
   background: var(--reports-surface-section, #f3f4f6);
   color: #6b7280;
@@ -99,33 +101,39 @@
   transform: none;
 }
 
-.publication-detail-modal[data-report-type="alcoholimetria"] .rechazar-reporte:hover:not(:disabled) {
+.publication-detail-modal[data-report-layout="editorial"] .rechazar-reporte:hover:not(:disabled) {
   background: var(--ui-danger-soft, #fef2f2);
 }
 
-.publication-detail-modal[data-report-type="alcoholimetria"] .aprobar-reporte:hover:not(:disabled) {
+.publication-detail-modal[data-report-layout="editorial"] .aprobar-reporte:hover:not(:disabled) {
+  border-color: #14532d;
   background: #14532d;
 }
 
+.publication-detail-modal[data-report-layout="editorial"] .reenviar-reporte:hover:not(:disabled) {
+  border-color: var(--brand-primary-hover, #4a0e26);
+  background: var(--brand-primary-hover, #4a0e26);
+}
+
 @media (max-width: 1023px) {
-  .publication-detail-modal[data-report-type="alcoholimetria"] .modal-cerrar {
+  .publication-detail-modal[data-report-layout="editorial"] .modal-cerrar {
     right: 14px;
   }
 }
 
 @media (max-width: 639px) {
-  .publication-detail-modal[data-report-type="alcoholimetria"] .report-heading-copy {
+  .publication-detail-modal[data-report-layout="editorial"] .report-heading-copy {
     padding-right: 40px;
   }
 
-  .publication-detail-modal[data-report-type="alcoholimetria"] .modal-cerrar {
+  .publication-detail-modal[data-report-layout="editorial"] .modal-cerrar {
     top: 10px;
     right: 0;
     width: 40px;
     height: 40px;
   }
 
-  .publication-detail-modal[data-report-type="alcoholimetria"] .approval-buttons-container button {
+  .publication-detail-modal[data-report-layout="editorial"] .approval-buttons-container button {
     width: auto;
     height: 40px;
     min-height: 40px;
@@ -223,6 +231,7 @@
   letter-spacing: -.012em;
   text-align: left;
   text-wrap: pretty;
+  overflow-wrap: anywhere;
   word-spacing: normal;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
@@ -322,40 +331,123 @@
 .publication-detail-modal .report-compact-grid dd { margin: 0; font-weight: 700; }
 
 /* Alcoholimetría: lectura de expediente operativo, sin afectar los otros tipos. */
-.publication-detail-modal[data-report-type="alcoholimetria"] .report-workspace {
+.publication-detail-modal[data-report-layout="editorial"] .report-workspace {
   grid-template-columns: minmax(0, 1fr);
 }
 
-.publication-detail-modal[data-report-type="alcoholimetria"] .report-primary-pane {
+.publication-detail-modal[data-report-layout="editorial"] .report-type-label {
+  border-color: color-mix(in srgb, var(--report-category) 42%, transparent);
+  border-radius: 4px;
+  background: #faeef3;
+  letter-spacing: normal;
+  text-transform: none;
+}
+
+.publication-detail-modal[data-report-type="observatorio de lesiones"] .report-type-label {
+  background: #f1f6ee;
+}
+
+.publication-detail-modal[data-report-type="seguridad_vial"] .report-type-label {
+  background: #eef5fb;
+}
+
+.publication-detail-modal[data-report-type="grupos_vulnerables"] .report-type-label {
+  background: #f3eff7;
+}
+
+.publication-detail-modal[data-report-layout="editorial"] .status-pending {
+  color: var(--ui-text-muted, #64748b);
+  background: var(--ui-surface-soft, #f8fafc);
+}
+
+.publication-detail-modal[data-report-layout="editorial"] .report-status-section {
+  padding: 14px 48px;
+}
+
+.publication-detail-modal[data-report-layout="editorial"] .status-card {
+  display: grid;
+  grid-template-columns: 70px minmax(0, 1fr);
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  border-color: color-mix(in srgb, currentColor 48%, transparent);
+}
+
+.publication-detail-modal[data-report-layout="editorial"] .status-stamp {
+  width: 70px;
+  min-width: 70px;
+  min-height: 28px;
+  padding: 4px 6px;
+  font-size: 9.5px;
+}
+
+.publication-detail-modal[data-report-layout="editorial"] .status-card strong {
+  font-size: 13px;
+}
+
+.publication-detail-modal[data-report-layout="editorial"] .status-card > div:not(.status-reason) > span {
+  font-size: 11.5px;
+}
+
+.publication-detail-modal[data-report-layout="editorial"] .status-rejected {
+  grid-template-columns: 70px minmax(190px, .75fr) minmax(0, 1.25fr);
+  column-gap: 14px;
+}
+
+.publication-detail-modal[data-report-layout="editorial"] .status-rejected .status-reason {
+  display: block !important;
+  grid-row: 1;
+  grid-column: 3;
+  min-width: 0;
+  margin: 0;
+  padding: 0 0 0 14px;
+  border-top: 0;
+  border-left: 1px solid rgb(185 28 28 / 28%);
+}
+
+.publication-detail-modal[data-report-layout="editorial"] .status-reason-label {
+  margin-bottom: 2px;
+  font-size: 9.5px;
+}
+
+.publication-detail-modal[data-report-layout="editorial"] .status-reason-text {
+  font-size: 12.5px;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+.publication-detail-modal[data-report-layout="editorial"] .report-primary-pane {
   padding: 24px 48px 30px;
 }
 
-.publication-detail-modal[data-report-type="alcoholimetria"] .report-secondary-pane {
+.publication-detail-modal[data-report-layout="editorial"] .report-secondary-pane {
   padding: 24px 48px 28px;
   border-top: 1px solid var(--ui-border-soft, #dbe3ec);
   border-left: 0;
   background: var(--ui-surface, #ffffff);
 }
 
-.publication-detail-modal[data-report-type="alcoholimetria"] .report-comments-pane {
+.publication-detail-modal[data-report-layout="editorial"] .report-comments-pane {
   grid-column: auto;
   padding: 22px 48px 28px;
   background: var(--ui-surface-row-alt, #fafafa);
 }
 
-.publication-detail-modal[data-report-type="alcoholimetria"] .report-secondary-pane {
+.publication-detail-modal[data-report-layout="editorial"] .report-secondary-pane {
   align-self: start;
 }
 
-.publication-detail-modal[data-report-type="alcoholimetria"] .comentarios-toggle {
-  min-height: 24px;
+.publication-detail-modal[data-report-layout="editorial"] .comentarios-toggle {
+  min-height: 30px;
   gap: 10px;
   padding: 0;
   border-bottom: 0;
   color: #6b7280;
+  cursor: pointer;
+  transition: color 150ms ease;
 }
 
-.publication-detail-modal[data-report-type="alcoholimetria"] .comentarios-toggle::after {
+.publication-detail-modal[data-report-layout="editorial"] .comentarios-toggle::after {
   content: "";
   order: 1;
   height: 1px;
@@ -363,11 +455,11 @@
   background: var(--reports-border-soft, #e5e7eb);
 }
 
-.publication-detail-modal[data-report-type="alcoholimetria"] .comentarios-toggle .contador-comentarios {
+.publication-detail-modal[data-report-layout="editorial"] .comentarios-toggle .contador-comentarios {
   order: 0;
 }
 
-.publication-detail-modal[data-report-type="alcoholimetria"] .comentarios-toggle .icono-chevron {
+.publication-detail-modal[data-report-layout="editorial"] .comentarios-toggle .icono-chevron {
   order: 2;
   width: 24px;
   height: 24px;
@@ -378,27 +470,33 @@
   transition: color 150ms ease, transform 150ms ease;
 }
 
-.publication-detail-modal[data-report-type="alcoholimetria"] .comentarios-toggle:hover .icono-chevron {
+.publication-detail-modal[data-report-layout="editorial"] .comentarios-toggle:hover,
+.publication-detail-modal[data-report-layout="editorial"] .comentarios-toggle:hover .icono-chevron {
   color: #374151;
 }
 
-.publication-detail-modal[data-report-type="alcoholimetria"] .comentario-item {
+.publication-detail-modal[data-report-layout="editorial"] .comentarios-toggle:active,
+.publication-detail-modal[data-report-layout="editorial"] .comentarios-toggle:active .icono-chevron {
+  color: #111827;
+}
+
+.publication-detail-modal[data-report-layout="editorial"] .comentario-item {
   padding: 14px 0 !important;
   border-top: 1px solid var(--reports-border-soft, #e5e7eb) !important;
   border-bottom: 0 !important;
 }
 
-.publication-detail-modal[data-report-type="alcoholimetria"] .modal-comentarios {
+.publication-detail-modal[data-report-layout="editorial"] .modal-comentarios {
   margin-top: 14px;
 }
 
-.publication-detail-modal[data-report-type="alcoholimetria"] .alcohol-comment-item {
+.publication-detail-modal[data-report-layout="editorial"] .editorial-comment-item {
   display: flex;
   align-items: flex-start;
   gap: 11px;
 }
 
-.publication-detail-modal[data-report-type="alcoholimetria"] .comment-avatar {
+.publication-detail-modal[data-report-layout="editorial"] .comment-avatar {
   width: 30px;
   height: 30px;
   flex: 0 0 30px;
@@ -408,12 +506,12 @@
   box-shadow: none;
 }
 
-.publication-detail-modal[data-report-type="alcoholimetria"] .comment-body {
+.publication-detail-modal[data-report-layout="editorial"] .comment-body {
   min-width: 0;
   flex: 1;
 }
 
-.publication-detail-modal[data-report-type="alcoholimetria"] .comment-meta {
+.publication-detail-modal[data-report-layout="editorial"] .comment-meta {
   display: flex;
   align-items: baseline;
   flex-wrap: wrap;
@@ -421,42 +519,78 @@
   margin: 0 0 4px;
 }
 
-.publication-detail-modal[data-report-type="alcoholimetria"] .comment-name {
+.publication-detail-modal[data-report-layout="editorial"] .comment-name {
   color: var(--ui-text, #10233f);
   font-size: 13px;
   font-weight: 600;
   line-height: 1.35;
 }
 
-.publication-detail-modal[data-report-type="alcoholimetria"] .comment-meta-separator {
+.publication-detail-modal[data-report-layout="editorial"] .comment-meta-separator {
   color: #9ca3af;
   font-size: 10.5px;
   line-height: 1.35;
 }
 
-.publication-detail-modal[data-report-type="alcoholimetria"] .comment-role {
+.publication-detail-modal[data-report-layout="editorial"] .comment-role {
   color: #4b5563;
-  font-size: 10.5px;
+  font-size: 11px;
   font-weight: 600;
-  letter-spacing: .05em;
+  letter-spacing: .01em;
   line-height: 1.35;
-  text-transform: uppercase;
+  text-transform: none;
 }
 
-.publication-detail-modal[data-report-type="alcoholimetria"] .comment-role--author {
+.publication-detail-modal[data-report-layout="editorial"] .comment-role--author {
   color: var(--reports-accent, #9f1239);
 }
 
-.publication-detail-modal[data-report-type="alcoholimetria"] .comment-context {
-  color: #6b7280;
-  font-size: 10.5px;
-  font-weight: 500;
-  letter-spacing: .05em;
-  line-height: 1.35;
-  text-transform: uppercase;
+.publication-detail-modal[data-report-type="observatorio de lesiones"] .comment-role--author {
+  color: var(--report-category);
 }
 
-.publication-detail-modal[data-report-type="alcoholimetria"] .comment-text {
+.publication-detail-modal:is(
+  [data-report-type="seguridad_vial"],
+  [data-report-type="grupos_vulnerables"]
+) .comment-role--author {
+  color: var(--report-category);
+}
+
+.publication-detail-modal[data-report-layout="editorial"] .activity-details-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0 28px;
+}
+
+.publication-detail-modal[data-report-layout="editorial"] .activity-details-strip {
+  grid-template-columns: 22fr 18fr 32fr 28fr;
+  gap: 0;
+  border: 1px solid var(--ui-border, #cbd5e1);
+}
+
+.publication-detail-modal[data-report-layout="editorial"] .activity-details-strip .report-field {
+  padding: 14px 18px 15px;
+  border-top: 0;
+  border-left: 1px solid var(--ui-border-soft, #dbe3ec);
+}
+
+.publication-detail-modal[data-report-layout="editorial"] .activity-details-strip .report-field:first-child {
+  border-left: 0;
+}
+
+.publication-detail-modal[data-report-layout="editorial"] .activity-details-strip .modal-participantes {
+  font-variant-numeric: tabular-nums;
+}
+
+.publication-detail-modal[data-report-layout="editorial"] .comment-context {
+  color: #6b7280;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: normal;
+  line-height: 1.35;
+  text-transform: none;
+}
+
+.publication-detail-modal[data-report-layout="editorial"] .comment-text {
   margin: 0;
   color: #374151;
   font-size: 13px;
@@ -465,7 +599,7 @@
   white-space: pre-line;
 }
 
-.publication-detail-modal[data-report-type="alcoholimetria"] .comment-time {
+.publication-detail-modal[data-report-layout="editorial"] .comment-time {
   display: flex;
   align-items: center;
   gap: 6px;
@@ -475,12 +609,12 @@
   line-height: 1.3;
 }
 
-.publication-detail-modal[data-report-type="alcoholimetria"] .comment-read-state {
+.publication-detail-modal[data-report-layout="editorial"] .comment-read-state {
   color: #6b7280;
   font-size: 10px;
 }
 
-.publication-detail-modal[data-report-type="alcoholimetria"] .report-comments-empty {
+.publication-detail-modal[data-report-layout="editorial"] .report-comments-empty {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -492,19 +626,19 @@
   font-style: normal;
 }
 
-.publication-detail-modal[data-report-type="alcoholimetria"] .report-comments-empty i {
+.publication-detail-modal[data-report-layout="editorial"] .report-comments-empty i {
   color: #9ca3af;
   font-size: 13px;
 }
 
-.publication-detail-modal[data-report-type="alcoholimetria"] .report-comment-form {
+.publication-detail-modal[data-report-layout="editorial"] .report-comment-form {
   align-items: flex-end;
   margin-top: 2px;
   padding-top: 16px;
   border-top: 1px solid var(--reports-border-soft, #e5e7eb);
 }
 
-.publication-detail-modal[data-report-type="alcoholimetria"] .nuevo-comentario {
+.publication-detail-modal[data-report-layout="editorial"] .nuevo-comentario {
   min-height: 40px;
   max-height: 96px;
   resize: none;
@@ -517,40 +651,40 @@
   transition: border-color 150ms ease, box-shadow 150ms ease, background-color 150ms ease;
 }
 
-.publication-detail-modal[data-report-type="alcoholimetria"] .nuevo-comentario::-webkit-scrollbar {
+.publication-detail-modal[data-report-layout="editorial"] .nuevo-comentario::-webkit-scrollbar {
   width: 6px;
 }
 
-.publication-detail-modal[data-report-type="alcoholimetria"] .nuevo-comentario::-webkit-scrollbar-track {
+.publication-detail-modal[data-report-layout="editorial"] .nuevo-comentario::-webkit-scrollbar-track {
   background: transparent;
 }
 
-.publication-detail-modal[data-report-type="alcoholimetria"] .nuevo-comentario::-webkit-scrollbar-thumb {
+.publication-detail-modal[data-report-layout="editorial"] .nuevo-comentario::-webkit-scrollbar-thumb {
   border-radius: 999px;
   background: #d1d5db;
 }
 
-.publication-detail-modal[data-report-type="alcoholimetria"] .nuevo-comentario::-webkit-scrollbar-button {
+.publication-detail-modal[data-report-layout="editorial"] .nuevo-comentario::-webkit-scrollbar-button {
   display: none;
 }
 
-.publication-detail-modal[data-report-type="alcoholimetria"] .nuevo-comentario::placeholder {
+.publication-detail-modal[data-report-layout="editorial"] .nuevo-comentario::placeholder {
   color: #9ca3af;
 }
 
-.publication-detail-modal[data-report-type="alcoholimetria"] .nuevo-comentario:hover {
+.publication-detail-modal[data-report-layout="editorial"] .nuevo-comentario:hover {
   border-color: #9ca3af;
   background: #fff;
 }
 
-.publication-detail-modal[data-report-type="alcoholimetria"] .nuevo-comentario:focus,
-.publication-detail-modal[data-report-type="alcoholimetria"] .nuevo-comentario:focus-visible {
+.publication-detail-modal[data-report-layout="editorial"] .nuevo-comentario:focus,
+.publication-detail-modal[data-report-layout="editorial"] .nuevo-comentario:focus-visible {
   border-color: var(--ui-focus, #475569);
   outline: 0;
   box-shadow: 0 0 0 2px var(--ui-focus-ring, rgba(71, 85, 105, .18));
 }
 
-.publication-detail-modal[data-report-type="alcoholimetria"] .enviar-comentario {
+.publication-detail-modal[data-report-layout="editorial"] .enviar-comentario {
   width: 40px;
   min-width: 40px;
   height: 40px;
@@ -564,21 +698,21 @@
   transition: background-color 150ms ease, border-color 150ms ease, color 150ms ease, transform 120ms ease;
 }
 
-.publication-detail-modal[data-report-type="alcoholimetria"] .enviar-comentario:hover:not(:disabled) {
+.publication-detail-modal[data-report-layout="editorial"] .enviar-comentario:hover:not(:disabled) {
   border-color: var(--brand-primary-hover, #4a0e26);
   background: var(--brand-primary-hover, #4a0e26);
 }
 
-.publication-detail-modal[data-report-type="alcoholimetria"] .enviar-comentario:active:not(:disabled) {
+.publication-detail-modal[data-report-layout="editorial"] .enviar-comentario:active:not(:disabled) {
   transform: translateY(1px);
 }
 
-.publication-detail-modal[data-report-type="alcoholimetria"] .enviar-comentario:focus-visible {
+.publication-detail-modal[data-report-layout="editorial"] .enviar-comentario:focus-visible {
   outline: 2px solid var(--ui-focus, #475569);
   outline-offset: 2px;
 }
 
-.publication-detail-modal[data-report-type="alcoholimetria"] .enviar-comentario:disabled {
+.publication-detail-modal[data-report-layout="editorial"] .enviar-comentario:disabled {
   border-color: var(--reports-border, #d1d5db);
   background: var(--reports-surface-section, #f3f4f6);
   color: #9ca3af;
@@ -586,38 +720,38 @@
   opacity: 1;
 }
 
-.publication-detail-modal[data-report-type="alcoholimetria"] .enviar-comentario span {
+.publication-detail-modal[data-report-layout="editorial"] .enviar-comentario span {
   display: none;
 }
 
-.publication-detail-modal[data-report-type="alcoholimetria"] .comentario-no-permisos {
+.publication-detail-modal[data-report-layout="editorial"] .comentario-no-permisos {
   margin-top: 14px;
   padding-top: 14px;
   border-top: 1px solid var(--reports-border-soft, #e5e7eb);
   color: #6b7280;
 }
 
-.publication-detail-modal[data-report-type="alcoholimetria"] .comentario-no-permisos p {
+.publication-detail-modal[data-report-layout="editorial"] .comentario-no-permisos p {
   margin: 0;
 }
 
-.publication-detail-modal[data-report-type="alcoholimetria"] .alcohol-report-section + .alcohol-report-section {
+.publication-detail-modal[data-report-layout="editorial"] .alcohol-report-section + .alcohol-report-section {
   margin-top: 24px;
 }
 
-.publication-detail-modal[data-report-type="alcoholimetria"] .alcohol-general-grid {
+.publication-detail-modal[data-report-layout="editorial"] .report-general-grid {
   grid-template-columns: repeat(3, minmax(0, 220px));
   column-gap: 32px;
   justify-content: start;
 }
 
-.publication-detail-modal[data-report-type="alcoholimetria"] .alcohol-results-grid {
+.publication-detail-modal[data-report-layout="editorial"] .alcohol-results-grid {
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 0;
   border: 1px solid var(--ui-border, #cbd5e1);
 }
 
-.publication-detail-modal[data-report-type="alcoholimetria"] .alcohol-results-grid .report-metric {
+.publication-detail-modal[data-report-layout="editorial"] .alcohol-results-grid .report-metric {
     min-height: 84px;
     justify-content: flex-start;
     gap: 10px;
@@ -626,41 +760,41 @@
     border-left: 1px solid var(--ui-border, #cbd5e1);
 }
 
-.publication-detail-modal[data-report-type="alcoholimetria"] .alcohol-results-grid .report-metric:first-child {
+.publication-detail-modal[data-report-layout="editorial"] .alcohol-results-grid .report-metric:first-child {
   border-left: 0;
 }
 
-.publication-detail-modal[data-report-type="alcoholimetria"] .alcohol-results-grid .report-metric dd {
+.publication-detail-modal[data-report-layout="editorial"] .alcohol-results-grid .report-metric dd {
   font-size: 27px;
   line-height: 1;
 }
 
-.publication-detail-modal[data-report-type="alcoholimetria"] .alcohol-breakdown-groups {
+.publication-detail-modal[data-report-layout="editorial"] .alcohol-breakdown-groups {
   display: grid;
   grid-template-columns: minmax(200px, 1fr) minmax(0, 2fr);
   gap: 40px;
 }
 
-.publication-detail-modal[data-report-type="alcoholimetria"] .alcohol-breakdown-group {
+.publication-detail-modal[data-report-layout="editorial"] .alcohol-breakdown-group {
   display: flex;
   min-width: 0;
   flex-direction: column;
 }
 
-.publication-detail-modal[data-report-type="alcoholimetria"] .alcohol-breakdown-group .report-subsection-title {
+.publication-detail-modal[data-report-layout="editorial"] .alcohol-breakdown-group .report-subsection-title {
   margin: 0;
   padding-bottom: 9px;
   border-bottom: 1px solid var(--ui-border-soft, #dbe3ec);
 }
 
-.publication-detail-modal[data-report-type="alcoholimetria"] .alcohol-breakdown-list {
+.publication-detail-modal[data-report-layout="editorial"] .alcohol-breakdown-list {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 0 28px;
   margin: 0;
 }
 
-.publication-detail-modal[data-report-type="alcoholimetria"] .alcohol-breakdown-list > div {
+.publication-detail-modal[data-report-layout="editorial"] .alcohol-breakdown-list > div {
   display: flex;
   min-width: 0;
   align-items: baseline;
@@ -670,31 +804,31 @@
   border-top: 1px solid var(--ui-border-soft, #dbe3ec);
 }
 
-.publication-detail-modal[data-report-type="alcoholimetria"] .alcohol-breakdown-list > div:nth-child(-n + 2) {
+.publication-detail-modal[data-report-layout="editorial"] .alcohol-breakdown-list > div:nth-child(-n + 2) {
   border-top: 0;
 }
 
-.publication-detail-modal[data-report-type="alcoholimetria"] .alcohol-breakdown-list--gender {
+.publication-detail-modal[data-report-layout="editorial"] .alcohol-breakdown-list--gender {
   flex: 1;
   grid-template-columns: minmax(0, 1fr);
   grid-template-rows: repeat(2, minmax(0, 1fr));
 }
 
-.publication-detail-modal[data-report-type="alcoholimetria"] .alcohol-breakdown-list--gender > div {
+.publication-detail-modal[data-report-layout="editorial"] .alcohol-breakdown-list--gender > div {
   align-items: center;
 }
 
-.publication-detail-modal[data-report-type="alcoholimetria"] .alcohol-breakdown-list--gender > div:nth-child(2) {
+.publication-detail-modal[data-report-layout="editorial"] .alcohol-breakdown-list--gender > div:nth-child(2) {
   border-top: 1px solid var(--ui-border-soft, #dbe3ec);
 }
 
-.publication-detail-modal[data-report-type="alcoholimetria"] .alcohol-breakdown-list dt {
+.publication-detail-modal[data-report-layout="editorial"] .alcohol-breakdown-list dt {
   color: var(--ui-text-secondary, #526278);
   font-size: 12px;
   line-height: 1.4;
 }
 
-.publication-detail-modal[data-report-type="alcoholimetria"] .alcohol-breakdown-list dd {
+.publication-detail-modal[data-report-layout="editorial"] .alcohol-breakdown-list dd {
   flex: 0 0 auto;
   margin: 0;
   color: var(--ui-text, #10233f);
@@ -702,18 +836,63 @@
   font-weight: 700;
 }
 
-.publication-detail-modal[data-report-type="alcoholimetria"] .modal-archivos {
+.publication-detail-modal[data-report-layout="editorial"] .modal-archivos {
   grid-template-columns: repeat(4, minmax(0, 180px));
   justify-content: start;
 }
 
-.publication-detail-modal[data-report-type="alcoholimetria"]
+@media (min-width: 1024px) {
+  .publication-detail-modal[data-report-layout="editorial"] .modal-archivos:has(> .archivo-preview-card) {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+  }
+
+  .publication-detail-modal[data-report-layout="editorial"] .modal-archivos > .archivo-preview-card {
+    min-width: 0;
+    flex: 0 0 calc((100% - 36px) / 4);
+  }
+}
+
+.publication-detail-modal[data-report-layout="editorial"] .descargar-todos-archivos {
+  min-height: 30px;
+  padding: 0 8px;
+  border-radius: 7px;
+  color: var(--ui-text-secondary, #526278);
+  font-size: 12px;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background-color 150ms ease, color 150ms ease, transform 120ms ease;
+}
+
+.publication-detail-modal[data-report-layout="editorial"] .descargar-todos-archivos i {
+  width: 12px;
+  font-size: 12px;
+  text-align: center;
+}
+
+.publication-detail-modal[data-report-layout="editorial"] .descargar-todos-archivos:hover {
+  background: transparent;
+  color: var(--ui-text, #10233f);
+  text-decoration: none;
+}
+
+.publication-detail-modal[data-report-layout="editorial"] .descargar-todos-archivos:active {
+  transform: translateY(1px);
+}
+
+.publication-detail-modal[data-report-layout="editorial"] .descargar-todos-archivos:focus-visible {
+  outline: 2px solid var(--ui-focus, #475569);
+  outline-offset: 2px;
+}
+
+.publication-detail-modal[data-report-layout="editorial"]
   .archivo-preview-card:is([data-extension="xlsx"], [data-extension="xls"])
   .archivo-thumb {
   background: #f1f6f2;
 }
 
-.publication-detail-modal[data-report-type="alcoholimetria"] .archivo-sheet-thumb {
+.publication-detail-modal[data-report-layout="editorial"] .archivo-sheet-thumb {
   position: relative;
   display: block;
   width: 100%;
@@ -722,7 +901,7 @@
   background: #fff;
 }
 
-.publication-detail-modal[data-report-type="alcoholimetria"] .archivo-sheet-placeholder {
+.publication-detail-modal[data-report-layout="editorial"] .archivo-sheet-placeholder {
   position: absolute;
   inset: 0;
   display: flex;
@@ -735,12 +914,12 @@
   transition: opacity 160ms ease;
 }
 
-.publication-detail-modal[data-report-type="alcoholimetria"] .archivo-sheet-placeholder i {
+.publication-detail-modal[data-report-layout="editorial"] .archivo-sheet-placeholder i {
   font-size: 34px;
   line-height: 1;
 }
 
-.publication-detail-modal[data-report-type="alcoholimetria"] .archivo-sheet-placeholder span {
+.publication-detail-modal[data-report-layout="editorial"] .archivo-sheet-placeholder span {
   color: #3f5f49;
   font-size: 10px;
   font-weight: 700;
@@ -748,7 +927,7 @@
   line-height: 1;
 }
 
-.publication-detail-modal[data-report-type="alcoholimetria"] .archivo-sheet-thumb-frame {
+.publication-detail-modal[data-report-layout="editorial"] .archivo-sheet-thumb-frame {
   position: absolute;
   top: 0;
   left: 0;
@@ -763,28 +942,28 @@
   transition: opacity 180ms ease;
 }
 
-.publication-detail-modal[data-report-type="alcoholimetria"] .archivo-sheet-thumb.is-sparse .archivo-sheet-thumb-frame {
+.publication-detail-modal[data-report-layout="editorial"] .archivo-sheet-thumb.is-sparse .archivo-sheet-thumb-frame {
   width: 200%;
   height: 200%;
   transform: scale(.5);
 }
 
-.publication-detail-modal[data-report-type="alcoholimetria"] .archivo-sheet-thumb.is-wide-short .archivo-sheet-thumb-frame {
+.publication-detail-modal[data-report-layout="editorial"] .archivo-sheet-thumb.is-wide-short .archivo-sheet-thumb-frame {
   width: 1100%;
   height: 1100%;
   transform: scale(.0909);
 }
 
-.publication-detail-modal[data-report-type="alcoholimetria"] .archivo-sheet-thumb.is-loaded .archivo-sheet-thumb-frame {
+.publication-detail-modal[data-report-layout="editorial"] .archivo-sheet-thumb.is-loaded .archivo-sheet-thumb-frame {
   opacity: 1;
 }
 
-.publication-detail-modal[data-report-type="alcoholimetria"] .archivo-sheet-thumb.is-loaded .archivo-sheet-placeholder {
+.publication-detail-modal[data-report-layout="editorial"] .archivo-sheet-thumb.is-loaded .archivo-sheet-placeholder {
   opacity: 0;
 }
 
-.publication-detail-modal[data-report-type="alcoholimetria"] .archivo-sheet-bar,
-.publication-detail-modal[data-report-type="alcoholimetria"] .archivo-sheet-grid {
+.publication-detail-modal[data-report-layout="editorial"] .archivo-sheet-bar,
+.publication-detail-modal[data-report-layout="editorial"] .archivo-sheet-grid {
   display: none;
 }
 
@@ -805,17 +984,17 @@
 .publication-detail-modal .archivo-action:hover:not(:disabled) { background: var(--ui-hover, #f1f5f9); color: var(--ui-text, #10233f); }
 
 /* Alcoholimetría: acciones de archivo compactas y alineadas con el sistema. */
-.publication-detail-modal[data-report-type="alcoholimetria"] .archivo-actions {
+.publication-detail-modal[data-report-layout="editorial"] .archivo-actions {
     top: 10px;
     right: 10px;
     gap: 6px;
 }
 
-.publication-detail-modal[data-report-type="alcoholimetria"] .archivo-action {
+.publication-detail-modal[data-report-layout="editorial"] .archivo-action {
     width: 32px;
     height: 32px;
     border-color: var(--ui-border, #d1d5db);
-    border-radius: 6px;
+    border-radius: 7px;
     background: var(--ui-surface, #fff);
     color: var(--ui-text-secondary, #526278);
     font-size: 13px;
@@ -825,23 +1004,23 @@
     transition: background-color 140ms ease, border-color 140ms ease, color 140ms ease, transform 80ms ease;
 }
 
-.publication-detail-modal[data-report-type="alcoholimetria"] .archivo-action:hover:not(:disabled) {
-    border-color: var(--ui-border-strong, #d1d5db);
+.publication-detail-modal[data-report-layout="editorial"] .archivo-action:hover:not(:disabled) {
+    border-color: var(--ui-border-strong, #9ca3af);
     background: var(--ui-surface-section, #f3f4f6);
     color: var(--ui-text, #10233f);
 }
 
-.publication-detail-modal[data-report-type="alcoholimetria"] .archivo-action:focus-visible {
-    outline: 2px solid var(--ui-focus-ring, rgba(97, 17, 50, .24));
+.publication-detail-modal[data-report-layout="editorial"] .archivo-action:focus-visible {
+    outline: 2px solid var(--ui-focus, #475569);
     outline-offset: 2px;
 }
 
-.publication-detail-modal[data-report-type="alcoholimetria"] .archivo-action:active:not(:disabled) {
-    background: var(--ui-surface-row-alt, #fafafa);
+.publication-detail-modal[data-report-layout="editorial"] .archivo-action:active:not(:disabled) {
+    background: var(--reports-border-soft, #e5e7eb);
     transform: translateY(1px);
 }
 
-.publication-detail-modal[data-report-type="alcoholimetria"] .archivo-action:disabled {
+.publication-detail-modal[data-report-layout="editorial"] .archivo-action:disabled {
     background: var(--ui-surface-row-alt, #fafafa);
     color: var(--ui-text-muted, #8a96a8);
     cursor: not-allowed;
@@ -875,6 +1054,8 @@
 
 #report-nav-container :is(#report-nav-prev, #report-nav-next) { width: 44px; height: 44px; border-radius: 50%; background: rgb(15 23 42 / 55%); box-shadow: none; }
 #report-nav-container :is(#report-nav-prev, #report-nav-next):hover { background: rgb(15 23 42 / 78%); }
+#report-nav-container :is(#report-nav-prev, #report-nav-next):active { background: rgb(15 23 42 / 90%); }
+#report-nav-container :is(#report-nav-prev, #report-nav-next):focus-visible { outline: 2px solid #fff; outline-offset: 3px; }
 
 @media (max-width: 1023px) {
   .report-modal-overlay { padding: 16px 58px; }
@@ -887,12 +1068,26 @@
   .publication-detail-modal .report-secondary-pane { padding: 26px 30px; border-top: 1px solid var(--ui-border-soft, #dbe3ec); border-left: 0; }
   .publication-detail-modal .report-comments-pane { grid-column: auto; padding: 24px 30px; }
   .publication-detail-modal .modal-actions-footer { padding-inline: 30px; }
-  .publication-detail-modal[data-report-type="alcoholimetria"] .report-primary-pane,
-  .publication-detail-modal[data-report-type="alcoholimetria"] .report-secondary-pane,
-  .publication-detail-modal[data-report-type="alcoholimetria"] .report-comments-pane { padding-inline: 30px; }
-  .publication-detail-modal[data-report-type="alcoholimetria"] .alcohol-general-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-  .publication-detail-modal[data-report-type="alcoholimetria"] .alcohol-breakdown-groups { grid-template-columns: minmax(180px, 1fr) minmax(0, 2fr); gap: 28px; }
-  .publication-detail-modal[data-report-type="alcoholimetria"] .modal-archivos { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .publication-detail-modal[data-report-layout="editorial"] .report-primary-pane,
+  .publication-detail-modal[data-report-layout="editorial"] .report-secondary-pane,
+  .publication-detail-modal[data-report-layout="editorial"] .report-comments-pane { padding-inline: 30px; }
+  .publication-detail-modal[data-report-layout="editorial"] .report-status-section { padding: 14px 30px; }
+  .publication-detail-modal[data-report-layout="editorial"] .status-rejected { grid-template-columns: 70px minmax(0, 1fr); }
+  .publication-detail-modal[data-report-layout="editorial"] .status-rejected .status-stamp { grid-row: 1 / span 2; align-self: center; }
+  .publication-detail-modal[data-report-layout="editorial"] .status-rejected .status-reason {
+    grid-row: 2;
+    grid-column: 2;
+    margin-top: 6px;
+    padding: 7px 0 0;
+    border-top: 1px solid rgb(185 28 28 / 28%);
+    border-left: 0;
+  }
+  .publication-detail-modal[data-report-layout="editorial"] .report-general-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .publication-detail-modal[data-report-layout="editorial"] .alcohol-breakdown-groups { grid-template-columns: minmax(180px, 1fr) minmax(0, 2fr); gap: 28px; }
+  .publication-detail-modal[data-report-layout="editorial"] .modal-archivos { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .publication-detail-modal[data-report-layout="editorial"] .activity-details-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .publication-detail-modal[data-report-layout="editorial"] .activity-details-strip .report-field:nth-child(odd) { border-left: 0; }
+  .publication-detail-modal[data-report-layout="editorial"] .activity-details-strip .report-field:nth-child(n + 3) { border-top: 1px solid var(--ui-border-soft, #dbe3ec); }
 }
 
 @media (max-width: 639px) {
@@ -910,47 +1105,57 @@
   .publication-detail-modal .report-primary-pane,
   .publication-detail-modal .report-secondary-pane,
   .publication-detail-modal .report-comments-pane { padding: 22px 20px; }
-  .publication-detail-modal[data-report-type="alcoholimetria"] .report-primary-pane,
-  .publication-detail-modal[data-report-type="alcoholimetria"] .report-secondary-pane,
-  .publication-detail-modal[data-report-type="alcoholimetria"] .report-comments-pane { padding-inline: 20px; }
+  .publication-detail-modal[data-report-layout="editorial"] .report-primary-pane,
+  .publication-detail-modal[data-report-layout="editorial"] .report-secondary-pane,
+  .publication-detail-modal[data-report-layout="editorial"] .report-comments-pane { padding-inline: 20px; }
+  .publication-detail-modal[data-report-layout="editorial"] .report-status-section { padding: 12px 20px; }
+  .publication-detail-modal[data-report-layout="editorial"] .status-card { grid-template-columns: 64px minmax(0, 1fr); gap: 10px; padding: 10px 12px; }
+  .publication-detail-modal[data-report-layout="editorial"] .status-stamp { width: 64px; min-width: 64px; }
+  .publication-detail-modal[data-report-layout="editorial"] .status-rejected { grid-template-columns: 64px minmax(0, 1fr); }
   .publication-detail-modal .report-field-grid,
   .publication-detail-modal .report-field-grid--three,
   .publication-detail-modal .report-metrics-grid,
   .publication-detail-modal .report-compact-grid--three { grid-template-columns: 1fr; }
   .publication-detail-modal .report-compact-grid--two { grid-template-columns: 1fr 1fr; }
   .publication-detail-modal .modal-archivos { grid-template-columns: 1fr 1fr; }
-  .publication-detail-modal[data-report-type="alcoholimetria"] .archivo-action {
-    width: 36px;
-    height: 36px;
+  .publication-detail-modal[data-report-layout="editorial"] .archivo-action {
+    width: 40px;
+    height: 40px;
   }
   .publication-detail-modal .report-comment-form { align-items: stretch; flex-direction: column; }
   .publication-detail-modal .enviar-comentario { width: 100%; justify-content: center; }
-  .publication-detail-modal[data-report-type="alcoholimetria"] .report-comment-form { align-items: flex-end; flex-direction: row; }
-  .publication-detail-modal[data-report-type="alcoholimetria"] .enviar-comentario { width: 40px; min-width: 40px; }
+  .publication-detail-modal[data-report-layout="editorial"] .report-comment-form { align-items: flex-end; flex-direction: row; }
+  .publication-detail-modal[data-report-layout="editorial"] .enviar-comentario { width: 40px; min-width: 40px; }
   .publication-detail-modal .modal-actions-footer { align-items: stretch; flex-direction: column; padding: 12px 20px max(12px, env(safe-area-inset-bottom)); }
   .publication-detail-modal .approval-buttons-container { width: 100%; }
   .publication-detail-modal .approval-button-row { width: 100%; }
   .publication-detail-modal .approval-buttons-container button { flex: 1; }
-  .publication-detail-modal[data-report-type="alcoholimetria"] .alcohol-general-grid,
-  .publication-detail-modal[data-report-type="alcoholimetria"] .alcohol-results-grid,
-  .publication-detail-modal[data-report-type="alcoholimetria"] .alcohol-breakdown-list { grid-template-columns: 1fr; }
-  .publication-detail-modal[data-report-type="alcoholimetria"] .alcohol-breakdown-groups { grid-template-columns: 1fr; gap: 22px; }
-  .publication-detail-modal[data-report-type="alcoholimetria"] .alcohol-breakdown-list > div:nth-child(2) { border-top: 1px solid var(--ui-border-soft, #dbe3ec); }
-  .publication-detail-modal[data-report-type="alcoholimetria"] .alcohol-results-grid .report-metric {
+  .publication-detail-modal[data-report-layout="editorial"] .report-general-grid,
+  .publication-detail-modal[data-report-layout="editorial"] .alcohol-results-grid,
+  .publication-detail-modal[data-report-layout="editorial"] .alcohol-breakdown-list { grid-template-columns: 1fr; }
+  .publication-detail-modal[data-report-layout="editorial"] .alcohol-breakdown-groups { grid-template-columns: 1fr; gap: 22px; }
+  .publication-detail-modal[data-report-layout="editorial"] .alcohol-breakdown-list > div:nth-child(2) { border-top: 1px solid var(--ui-border-soft, #dbe3ec); }
+  .publication-detail-modal[data-report-layout="editorial"] .alcohol-results-grid .report-metric {
     min-height: auto;
     gap: 8px;
     border-top: 1px solid var(--ui-border, #cbd5e1);
     border-left: 0;
   }
-  .publication-detail-modal[data-report-type="alcoholimetria"] .alcohol-results-grid .report-metric:first-child { border-top: 0; }
-  .publication-detail-modal[data-report-type="alcoholimetria"] .modal-archivos { grid-template-columns: 1fr 1fr; }
+  .publication-detail-modal[data-report-layout="editorial"] .alcohol-results-grid .report-metric:first-child { border-top: 0; }
+  .publication-detail-modal[data-report-layout="editorial"] .modal-archivos { grid-template-columns: 1fr 1fr; }
+  .publication-detail-modal[data-report-layout="editorial"] .activity-details-grid { grid-template-columns: 1fr; }
+  .publication-detail-modal[data-report-layout="editorial"] .activity-details-strip .report-field {
+    border-top: 1px solid var(--ui-border-soft, #dbe3ec);
+    border-left: 0;
+  }
+  .publication-detail-modal[data-report-layout="editorial"] .activity-details-strip .report-field:first-child { border-top: 0; }
   #report-nav-container { display: none !important; }
 }
 
 @media (max-width: 390px) {
   .publication-detail-modal .modal-archivos,
   .publication-detail-modal .report-compact-grid--two { grid-template-columns: 1fr; }
-  .publication-detail-modal[data-report-type="alcoholimetria"] .modal-archivos { grid-template-columns: 1fr; }
+  .publication-detail-modal[data-report-layout="editorial"] .modal-archivos { grid-template-columns: 1fr; }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -2459,15 +2664,20 @@
   padding: 1rem 1.25rem .65rem;
 }
 
-.reports-reject-heading > div {
+.reports-reject-heading-copy,
+.reports-reject-title-row {
   display: flex;
   align-items: center;
   gap: .55rem;
 }
 
-.reports-reject-heading > div > i {
+.reports-reject-title-row > i {
   color: var(--ui-danger-text, #b91c1c);
   font-size: .9rem;
+}
+
+.reports-reject-heading-context {
+  display: none;
 }
 
 .reports-reject-heading h3 {
@@ -2511,15 +2721,24 @@
   margin: 0;
 }
 
-.reports-reject-body > p:first-child {
+.reports-reject-question {
+  margin: 0;
   color: #526278;
   font-size: .8rem;
   line-height: 1.45;
 }
 
-.reports-reject-body > p:first-child strong {
+.reports-reject-question strong {
   color: var(--ui-text, #10233f);
   font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.reports-reject-heading-consequence,
+#rejection-reason-count,
+.reports-reject-help-alcohol,
+.reports-reject-report-title {
+  display: none;
 }
 
 .reports-reject-body label {
@@ -2556,12 +2775,269 @@
   font-size: .68rem;
 }
 
+.reports-reject-field-meta {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: .75rem;
+}
+
+.reports-reject-error {
+  color: var(--ui-danger-text, #b91c1c);
+  font-size: .68rem;
+  font-weight: 600;
+}
+
 .reports-reject-actions {
   display: flex;
   justify-content: flex-end;
   gap: .55rem;
   padding: .8rem 1.25rem 1rem;
   border-top: 1px solid #e5e7eb;
+}
+
+/* Rejection task opened from the redesigned Alcoholimetry report detail. */
+.reports-reject-modal:is([data-report-type="alcoholimetria"], [data-report-type="observatorio de lesiones"], [data-report-type="seguridad_vial"], [data-report-type="grupos_vulnerables"]) .reports-reject-card {
+  width: min(28.75rem, 100%);
+  border-color: #d8dee8;
+  border-radius: 7px;
+  box-shadow: 0 18px 46px rgb(15 23 42 / 18%), 0 2px 6px rgb(15 23 42 / 8%);
+}
+
+.reports-reject-modal:is([data-report-type="alcoholimetria"], [data-report-type="observatorio de lesiones"], [data-report-type="seguridad_vial"], [data-report-type="grupos_vulnerables"]) .reports-reject-heading {
+  align-items: flex-start;
+  padding: 20px 24px 18px;
+}
+
+.reports-reject-modal:is([data-report-type="alcoholimetria"], [data-report-type="observatorio de lesiones"], [data-report-type="seguridad_vial"], [data-report-type="grupos_vulnerables"]) .reports-reject-heading-copy {
+  display: grid;
+  min-width: 0;
+  flex: 1 1 auto;
+  gap: 0;
+}
+
+.reports-reject-modal:is([data-report-type="alcoholimetria"], [data-report-type="observatorio de lesiones"], [data-report-type="seguridad_vial"], [data-report-type="grupos_vulnerables"]) .reports-reject-title-row {
+  gap: 7px;
+}
+
+.reports-reject-modal:is([data-report-type="alcoholimetria"], [data-report-type="observatorio de lesiones"], [data-report-type="seguridad_vial"], [data-report-type="grupos_vulnerables"]) .reports-reject-title-row::after {
+  height: 1px;
+  min-width: 24px;
+  flex: 1 1 auto;
+  margin-left: 5px;
+  background: var(--ui-border-soft, #dbe3ec);
+  content: "";
+}
+
+.reports-reject-modal:is([data-report-type="alcoholimetria"], [data-report-type="observatorio de lesiones"], [data-report-type="seguridad_vial"], [data-report-type="grupos_vulnerables"]) .reports-reject-title-row > i {
+  width: 14px;
+  flex: 0 0 14px;
+  color: var(--ui-danger-text, #b91c1c);
+  font-size: 13px;
+  text-align: center;
+  transform: translateY(1px);
+}
+
+.reports-reject-modal:is([data-report-type="alcoholimetria"], [data-report-type="observatorio de lesiones"], [data-report-type="seguridad_vial"], [data-report-type="grupos_vulnerables"]) .reports-reject-heading h3 {
+  font-family: "Lora", Georgia, serif;
+  font-size: 17px;
+  font-weight: 600;
+  letter-spacing: -.01em;
+  line-height: 1.25;
+}
+
+.reports-reject-modal:is([data-report-type="alcoholimetria"], [data-report-type="observatorio de lesiones"], [data-report-type="seguridad_vial"], [data-report-type="grupos_vulnerables"]) .reports-reject-heading .modal-cerrar {
+  width: 32px;
+  height: 32px;
+  flex: 0 0 32px;
+  color: #6b7280;
+  font-size: 14px;
+  margin-top: -4px;
+  transition: color 160ms ease, transform 160ms ease;
+}
+
+.reports-reject-modal:is([data-report-type="alcoholimetria"], [data-report-type="observatorio de lesiones"], [data-report-type="seguridad_vial"], [data-report-type="grupos_vulnerables"]) .reports-reject-heading .modal-cerrar:hover:not(:disabled) {
+  background: transparent;
+  color: #374151;
+}
+
+.reports-reject-modal:is([data-report-type="alcoholimetria"], [data-report-type="observatorio de lesiones"], [data-report-type="seguridad_vial"], [data-report-type="grupos_vulnerables"]) .reports-reject-heading .modal-cerrar:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+.reports-reject-modal:is([data-report-type="alcoholimetria"], [data-report-type="observatorio de lesiones"], [data-report-type="seguridad_vial"], [data-report-type="grupos_vulnerables"]) .reports-reject-body {
+  gap: 8px;
+  padding: 0 24px 22px;
+}
+
+.reports-reject-modal:is([data-report-type="alcoholimetria"], [data-report-type="observatorio de lesiones"], [data-report-type="seguridad_vial"], [data-report-type="grupos_vulnerables"]) .reports-reject-context {
+  display: none;
+}
+
+.reports-reject-modal:is([data-report-type="alcoholimetria"], [data-report-type="observatorio de lesiones"], [data-report-type="seguridad_vial"], [data-report-type="grupos_vulnerables"]) .reports-reject-heading-context {
+  display: grid;
+  gap: 5px;
+  margin-top: 14px;
+}
+
+.reports-reject-modal:is([data-report-type="alcoholimetria"], [data-report-type="observatorio de lesiones"], [data-report-type="seguridad_vial"], [data-report-type="grupos_vulnerables"]) .reports-reject-heading-consequence {
+  display: block;
+  margin: 0;
+  color: var(--ui-text-muted, #64748b);
+  font-size: 12.5px;
+  font-weight: 400;
+  line-height: 1.45;
+}
+
+.reports-reject-modal:is([data-report-type="alcoholimetria"], [data-report-type="observatorio de lesiones"], [data-report-type="seguridad_vial"], [data-report-type="grupos_vulnerables"]) .reports-reject-report-title {
+  display: -webkit-box;
+  overflow: hidden;
+  margin: 0;
+  color: var(--ui-text, #10233f);
+  font-family: "Open Sans", system-ui, sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0;
+  line-height: 1.4;
+  text-wrap: pretty;
+  overflow-wrap: anywhere;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.reports-reject-modal:is([data-report-type="alcoholimetria"], [data-report-type="observatorio de lesiones"], [data-report-type="seguridad_vial"], [data-report-type="grupos_vulnerables"]) .reports-reject-body label {
+  margin-top: 0;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.reports-reject-modal:is([data-report-type="alcoholimetria"], [data-report-type="observatorio de lesiones"], [data-report-type="seguridad_vial"], [data-report-type="grupos_vulnerables"]) .reports-reject-body textarea {
+  min-height: 104px;
+  max-height: 220px;
+  padding: 10px 12px;
+  border-color: var(--ui-border, #cbd5e1);
+  border-radius: 7px;
+  color: var(--ui-text, #10233f);
+  font-size: 13px;
+  line-height: 1.45;
+  transition: border-color 160ms ease, box-shadow 160ms ease;
+}
+
+.reports-reject-modal:is([data-report-type="alcoholimetria"], [data-report-type="observatorio de lesiones"], [data-report-type="seguridad_vial"], [data-report-type="grupos_vulnerables"]) .reports-reject-body textarea::placeholder {
+  color: #9ca3af;
+}
+
+.reports-reject-modal:is([data-report-type="alcoholimetria"], [data-report-type="observatorio de lesiones"], [data-report-type="seguridad_vial"], [data-report-type="grupos_vulnerables"]) .reports-reject-body textarea:hover:not(:disabled) {
+  border-color: #9ca3af;
+  background: var(--ui-surface, #fff);
+}
+
+.reports-reject-modal:is([data-report-type="alcoholimetria"], [data-report-type="observatorio de lesiones"], [data-report-type="seguridad_vial"], [data-report-type="grupos_vulnerables"]) .reports-reject-body textarea[aria-invalid="true"] {
+  border-color: var(--ui-danger, #dc2626);
+}
+
+.reports-reject-modal:is([data-report-type="alcoholimetria"], [data-report-type="observatorio de lesiones"], [data-report-type="seguridad_vial"], [data-report-type="grupos_vulnerables"]) .reports-reject-body textarea[aria-invalid="true"]:focus {
+  box-shadow: 0 0 0 2px rgb(220 38 38 / 14%);
+}
+
+.reports-reject-modal:is([data-report-type="alcoholimetria"], [data-report-type="observatorio de lesiones"], [data-report-type="seguridad_vial"], [data-report-type="grupos_vulnerables"]) .reports-reject-help,
+.reports-reject-modal:is([data-report-type="alcoholimetria"], [data-report-type="observatorio de lesiones"], [data-report-type="seguridad_vial"], [data-report-type="grupos_vulnerables"]) #rejection-reason-count,
+.reports-reject-modal:is([data-report-type="alcoholimetria"], [data-report-type="observatorio de lesiones"], [data-report-type="seguridad_vial"], [data-report-type="grupos_vulnerables"]) .reports-reject-error {
+  color: var(--ui-text-muted, #64748b);
+  font-size: 11px;
+  line-height: 1.3;
+}
+
+.reports-reject-modal:is([data-report-type="alcoholimetria"], [data-report-type="observatorio de lesiones"], [data-report-type="seguridad_vial"], [data-report-type="grupos_vulnerables"]) #rejection-reason-count {
+  display: block;
+  flex: 0 0 auto;
+  font-variant-numeric: tabular-nums;
+}
+
+.reports-reject-modal:is([data-report-type="alcoholimetria"], [data-report-type="observatorio de lesiones"], [data-report-type="seguridad_vial"], [data-report-type="grupos_vulnerables"]) .reports-reject-help-default {
+  display: none;
+}
+
+.reports-reject-modal:is([data-report-type="alcoholimetria"], [data-report-type="observatorio de lesiones"], [data-report-type="seguridad_vial"], [data-report-type="grupos_vulnerables"]) .reports-reject-help-alcohol {
+  display: inline;
+}
+
+.reports-reject-modal:is([data-report-type="alcoholimetria"], [data-report-type="observatorio de lesiones"], [data-report-type="seguridad_vial"], [data-report-type="grupos_vulnerables"]) .reports-reject-error {
+  color: var(--ui-danger-text, #b91c1c);
+  font-weight: 600;
+}
+
+.reports-reject-modal:is([data-report-type="alcoholimetria"], [data-report-type="observatorio de lesiones"], [data-report-type="seguridad_vial"], [data-report-type="grupos_vulnerables"]) .reports-reject-actions {
+  min-height: 62px;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 24px;
+  border-top-color: #e5e7eb;
+}
+
+.reports-reject-modal:is([data-report-type="alcoholimetria"], [data-report-type="observatorio de lesiones"], [data-report-type="seguridad_vial"], [data-report-type="grupos_vulnerables"]) .reports-reject-actions .reports-button {
+  width: 112px;
+  min-width: 112px;
+  height: 34px;
+  min-height: 34px;
+  padding: 0 14px;
+  border-radius: 7px;
+  font-family: "Open Sans", system-ui, sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  transition: background-color 150ms ease, border-color 150ms ease, color 150ms ease, transform 120ms ease;
+}
+
+.reports-reject-modal:is([data-report-type="alcoholimetria"], [data-report-type="observatorio de lesiones"], [data-report-type="seguridad_vial"], [data-report-type="grupos_vulnerables"]) #reject-modal-cancel {
+  border: 1px solid var(--ui-border, #cbd5e1);
+  background: var(--ui-surface, #fff);
+  color: var(--ui-text, #10233f);
+}
+
+.reports-reject-modal:is([data-report-type="alcoholimetria"], [data-report-type="observatorio de lesiones"], [data-report-type="seguridad_vial"], [data-report-type="grupos_vulnerables"]) #reject-modal-submit {
+  border: 1px solid var(--ui-danger-text, #b91c1c);
+  background: var(--ui-danger-text, #b91c1c);
+  color: #fff;
+}
+
+.reports-reject-modal:is([data-report-type="alcoholimetria"], [data-report-type="observatorio de lesiones"], [data-report-type="seguridad_vial"], [data-report-type="grupos_vulnerables"]) #reject-modal-cancel:hover:not(:disabled) {
+  border-color: #94a3b8;
+  background: var(--ui-surface-soft, #f8fafc);
+}
+
+.reports-reject-modal:is([data-report-type="alcoholimetria"], [data-report-type="observatorio de lesiones"], [data-report-type="seguridad_vial"], [data-report-type="grupos_vulnerables"]) #reject-modal-submit:hover:not(:disabled) {
+  border-color: #991b1b;
+  background: #991b1b;
+}
+
+.reports-reject-modal:is([data-report-type="alcoholimetria"], [data-report-type="observatorio de lesiones"], [data-report-type="seguridad_vial"], [data-report-type="grupos_vulnerables"]) .reports-reject-actions .reports-button:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+.reports-reject-modal:is([data-report-type="alcoholimetria"], [data-report-type="observatorio de lesiones"], [data-report-type="seguridad_vial"], [data-report-type="grupos_vulnerables"]) .reports-reject-actions .reports-button:focus-visible {
+  outline: 2px solid var(--ui-focus, #475569);
+  outline-offset: 2px;
+}
+
+.reports-reject-modal:is([data-report-type="alcoholimetria"], [data-report-type="observatorio de lesiones"], [data-report-type="seguridad_vial"], [data-report-type="grupos_vulnerables"]) .modal-cerrar:disabled {
+  cursor: not-allowed;
+  opacity: .58;
+}
+
+.reports-reject-modal:is([data-report-type="alcoholimetria"], [data-report-type="observatorio de lesiones"], [data-report-type="seguridad_vial"], [data-report-type="grupos_vulnerables"]) .reports-button:disabled {
+  border-color: var(--ui-border-soft, #e5e7eb);
+  background: var(--ui-surface-section, #f3f4f6);
+  color: #6b7280;
+  cursor: not-allowed;
+  opacity: 1;
+  transform: none;
+}
+
+.reports-reject-modal:is([data-report-type="alcoholimetria"], [data-report-type="observatorio de lesiones"], [data-report-type="seguridad_vial"], [data-report-type="grupos_vulnerables"]) #reject-modal-submit:disabled {
+  border-color: var(--ui-border-soft, #e5e7eb);
+  background: var(--ui-surface-section, #f3f4f6);
+  color: #6b7280;
 }
 
 .reports-filter-field .ts-wrapper {
@@ -2630,21 +3106,142 @@
 
 #archivo-preview-overlay {
   /* Debe quedar sobre el expediente abierto y devolver al usuario al mismo modal al cerrar. */
+  --archivo-preview-header-height: 56px;
+  position: fixed;
+  inset: 0;
   z-index: 1000010 !important;
+  overflow: hidden;
+  background: rgb(29 29 29 / 96%);
+  color: #f5f5f5;
+  font-family: "Open Sans", system-ui, sans-serif;
   opacity: 1;
   transition: opacity .18s ease;
 }
 
 #archivo-preview-header {
   position: relative;
+  display: flex;
+  height: var(--archivo-preview-header-height);
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 0 16px;
+  border-bottom: 1px solid rgb(255 255 255 / 12%);
+  background: #292929;
+  box-shadow: 0 1px 2px rgb(0 0 0 / 18%);
   z-index: 3;
+}
+
+.archivo-preview-identity,
+.archivo-preview-actions {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+}
+
+.archivo-preview-identity {
+  flex: 1 1 auto;
+  gap: 12px;
+}
+
+.archivo-preview-actions {
+  flex: 0 0 auto;
+  gap: 8px;
+}
+
+.archivo-preview-copy {
+  min-width: 0;
+}
+
+#archivo-preview-file-name,
+#archivo-preview-file-type {
+  overflow: hidden;
+  margin: 0;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+#archivo-preview-file-name {
+  color: #f5f5f5;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.25;
+}
+
+#archivo-preview-file-type {
+  margin-top: 2px;
+  color: #b8b8b8;
+  font-size: 11px;
+  font-weight: 400;
+  line-height: 1.25;
+  font-variant-numeric: tabular-nums;
+}
+
+.archivo-preview-tool {
+  display: inline-grid;
+  width: 32px;
+  height: 32px;
+  flex: 0 0 32px;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: #c5c5c5;
+  font-size: 15px;
+  line-height: 1;
+  text-decoration: none;
+  cursor: pointer;
+  transition: color .16s ease, transform .16s ease;
+}
+
+.archivo-preview-tool:hover {
+  background: transparent;
+  color: #fff;
+}
+
+.archivo-preview-tool:active {
+  transform: translateY(1px);
+}
+
+.archivo-preview-tool:focus-visible,
+#archivo-preview-prev:focus-visible,
+#archivo-preview-next:focus-visible {
+  outline: 2px solid #f5f5f5;
+  outline-offset: 2px;
 }
 
 #archivo-preview-prev,
 #archivo-preview-next {
+  position: absolute;
+  top: calc(50% + (var(--archivo-preview-header-height) / 2));
+  display: inline-grid;
+  width: 40px;
+  height: 40px;
+  place-items: center;
+  padding: 0;
+  border: 1px solid rgb(255 255 255 / 13%);
+  border-radius: 50%;
+  background: rgb(20 20 20 / 58%);
+  color: #f5f5f5;
+  font-size: 14px;
+  cursor: pointer;
   z-index: 4;
   opacity: .68;
   transition: opacity .18s ease, background-color .18s ease, transform .18s ease;
+}
+
+#archivo-preview-prev.hidden,
+#archivo-preview-next.hidden {
+  display: none;
+}
+
+#archivo-preview-prev { left: 12px; transform: translateY(-50%); }
+#archivo-preview-next { right: 12px; transform: translateY(-50%); }
+
+#archivo-preview-prev:hover,
+#archivo-preview-next:hover {
+  background: rgb(20 20 20 / 82%);
 }
 
 #archivo-preview-overlay:hover #archivo-preview-prev,
@@ -2670,10 +3267,85 @@
 }
 
 #archivo-preview-content {
+  display: flex;
+  height: calc(100dvh - var(--archivo-preview-header-height));
+  justify-content: center;
+  overflow: auto;
   transform-origin: center;
   scrollbar-width: thin;
   scrollbar-color: rgba(156, 163, 175, .65) transparent;
   transition: opacity .18s ease, transform .18s ease;
+}
+
+#archivo-preview-content.archivo-preview-content--image {
+  align-items: center;
+  padding: 12px 56px;
+}
+
+#archivo-preview-content.archivo-preview-content--spreadsheet {
+  align-items: flex-start;
+  padding: 8px 48px;
+}
+
+#archivo-preview-content.archivo-preview-content--pdf {
+  align-items: flex-start;
+  padding: 32px;
+}
+
+#archivo-preview-content.archivo-preview-content--unsupported {
+  align-items: center;
+  padding: 20px;
+}
+
+.archivo-preview-empty {
+  margin-top: 80px;
+  color: #b8b8b8;
+  font-size: 13px;
+  text-align: center;
+}
+
+.archivo-preview-empty i {
+  margin-bottom: 12px;
+  font-size: 32px;
+}
+
+.archivo-preview-empty p { margin: 0; }
+
+@media (max-width: 767px) {
+  #archivo-preview-overlay { --archivo-preview-header-height: 60px; }
+
+  #archivo-preview-header {
+    gap: 8px;
+    padding-inline: 10px;
+  }
+
+  .archivo-preview-identity { gap: 8px; }
+
+  .archivo-preview-tool {
+    width: 40px;
+    height: 40px;
+    flex-basis: 40px;
+  }
+
+  #archivo-preview-open { display: none; }
+
+  #archivo-preview-file-name { font-size: 13px; }
+
+  #archivo-preview-content.archivo-preview-content--image {
+    padding: 12px 48px;
+  }
+
+  #archivo-preview-content.archivo-preview-content--spreadsheet {
+    padding: 8px 44px;
+  }
+
+  #archivo-preview-content.archivo-preview-content--pdf,
+  #archivo-preview-content.archivo-preview-content--unsupported {
+    padding: 12px;
+  }
+
+  #archivo-preview-prev { left: 8px; }
+  #archivo-preview-next { right: 8px; }
 }
 
 .archivo-preview-spinner {
@@ -2812,6 +3484,49 @@
     min-height: 40px;
   }
 
+  .reports-reject-modal:is([data-report-type="alcoholimetria"], [data-report-type="observatorio de lesiones"], [data-report-type="seguridad_vial"], [data-report-type="grupos_vulnerables"]) {
+    padding: 12px;
+  }
+
+  .reports-reject-modal:is([data-report-type="alcoholimetria"], [data-report-type="observatorio de lesiones"], [data-report-type="seguridad_vial"], [data-report-type="grupos_vulnerables"]) .reports-reject-heading {
+    padding: 16px 16px 14px;
+  }
+
+  .reports-reject-modal:is([data-report-type="alcoholimetria"], [data-report-type="observatorio de lesiones"], [data-report-type="seguridad_vial"], [data-report-type="grupos_vulnerables"]) .reports-reject-heading .modal-cerrar {
+    width: 40px;
+    height: 40px;
+    flex-basis: 40px;
+  }
+
+  .reports-reject-modal:is([data-report-type="alcoholimetria"], [data-report-type="observatorio de lesiones"], [data-report-type="seguridad_vial"], [data-report-type="grupos_vulnerables"]) .reports-reject-body {
+    padding: 0 16px 18px;
+  }
+
+  .reports-reject-modal:is([data-report-type="alcoholimetria"], [data-report-type="observatorio de lesiones"], [data-report-type="seguridad_vial"], [data-report-type="grupos_vulnerables"]) .reports-reject-heading-context {
+    gap: 5px;
+    margin-top: 12px;
+  }
+
+  .reports-reject-modal:is([data-report-type="alcoholimetria"], [data-report-type="observatorio de lesiones"], [data-report-type="seguridad_vial"], [data-report-type="grupos_vulnerables"]) .reports-reject-report-title {
+    font-size: 12.5px;
+  }
+
+  .reports-reject-modal:is([data-report-type="alcoholimetria"], [data-report-type="observatorio de lesiones"], [data-report-type="seguridad_vial"], [data-report-type="grupos_vulnerables"]) .reports-reject-body textarea {
+    min-height: 96px;
+  }
+
+  .reports-reject-modal:is([data-report-type="alcoholimetria"], [data-report-type="observatorio de lesiones"], [data-report-type="seguridad_vial"], [data-report-type="grupos_vulnerables"]) .reports-reject-actions {
+    gap: 8px;
+    padding: 12px 16px 16px;
+  }
+
+  .reports-reject-modal:is([data-report-type="alcoholimetria"], [data-report-type="observatorio de lesiones"], [data-report-type="seguridad_vial"], [data-report-type="grupos_vulnerables"]) .reports-reject-actions .reports-button {
+    width: 100%;
+    min-width: 0;
+    height: 40px;
+    min-height: 40px;
+  }
+
   .reports-row-menu-button,
   .reports-files-button,
   .reports-comments-button {
@@ -2822,6 +3537,8 @@
 
 @media (prefers-reduced-motion: reduce) {
   .reports-publications-page *,
+  #reject-modal,
+  #reject-modal .reports-reject-card,
   #archivo-preview-overlay,
   #archivo-preview-content {
     scroll-behavior: auto !important;

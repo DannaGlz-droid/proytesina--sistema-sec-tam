@@ -20,7 +20,7 @@
     <p>Fecha de Registro: {{ $user->registration_date }}</p>
     <p>Última Sesión: {{ $user->last_session }}</p>
     <p>Posición: {{ $user->position->name ?? 'N/A' }}</p>
-    <p>Jurisdicción: {{ $user->jurisdiction->name ?? 'N/A' }}</p>
+    <p>Distrito: {{ \App\Models\District::formatName($user->jurisdiction->name ?? null) ?: 'N/A' }}</p>
     <p>Rol: {{ $user->role->name ?? 'N/A' }}</p>
 </body>
 </html>

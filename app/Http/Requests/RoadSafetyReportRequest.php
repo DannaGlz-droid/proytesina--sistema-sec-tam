@@ -164,7 +164,7 @@ class RoadSafetyReportRequest extends FormRequest
             'promotor.max' => 'El promotor no puede exceder 180 caracteres.',
             'municipio.required' => 'El municipio es obligatorio.',
             'municipio.exists' => 'El municipio seleccionado no es válido.',
-            'jurisdiccion.required' => 'La jurisdicción es obligatoria.',
+            'jurisdiccion.required' => 'El distrito es obligatorio.',
             'jurisdiccion.in' => 'El distrito seleccionado no está permitido para este usuario.',
             'descripcion.max' => 'La descripción no puede exceder 5000 caracteres.',
             'archivos.required' => 'Debe subir al menos un archivo.',

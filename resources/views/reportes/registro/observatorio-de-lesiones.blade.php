@@ -80,14 +80,14 @@
                                         @error('jurisdiccion') aria-describedby="jurisdiccion-error" @enderror>
                                     <option value="">Seleccione un distrito</option>
                                     @foreach($districts as $district)
-                                        <option value="{{ $district->id }}" {{ (string) $selectedDistrito === (string) $district->id ? 'selected' : '' }}>{{ $district->name }}</option>
+                                        <option value="{{ $district->id }}" {{ (string) $selectedDistrito === (string) $district->id ? 'selected' : '' }}>{{ $district->display_name }}</option>
                                     @endforeach
                                 </select>
                             @else
                                 <label for="jurisdiction_display_observatorio">Distrito asignado</label>
                                 <input type="hidden" id="jurisdiction_input_observatorio" name="jurisdiccion" value="{{ auth()->user()->district_id }}" required>
                                 <input id="jurisdiction_display_observatorio" type="text" class="ui-field--disabled"
-                                       value="{{ optional(auth()->user()->district)->name }}" disabled aria-disabled="true">
+                                       value="{{ optional(auth()->user()->district)->display_name }}" disabled aria-disabled="true">
                             @endif
                             @error('jurisdiccion') <p id="jurisdiccion-error" class="report-road-field-error" role="alert">{{ $message }}</p> @enderror
                         </div>
@@ -349,7 +349,7 @@
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const municipalityToDistrict = @json($municipalities->mapWithKeys(fn($municipality) => [$municipality->id => $municipality->district_id]));
-            const districtNames = @json($districts->mapWithKeys(fn($district) => [$district->id => $district->name]));
+            const districtNames = @json($districts->mapWithKeys(fn($district) => [$district->id => $district->display_name]));
             const currentDistrict = @json(optional(auth()->user())->district_id);
             const canSelectAnyDistrict = @json($canSelectAnyDistrict ?? false);
             const oldDistrict = @json(old('jurisdiccion', ''));

@@ -8,10 +8,19 @@
         'grupos_vulnerables' => 'Grupos Vulnerables',
         default => ucwords(str_replace('_', ' ', $tipo)),
     };
+
+    $reportLayout = in_array($tipo, [
+        'alcoholimetria',
+        'observatorio de lesiones',
+        'seguridad_vial',
+        'grupos_vulnerables',
+    ], true)
+        ? 'editorial'
+        : 'standard';
 @endphp
 
 <div id="{{ $modalId }}" class="report-modal-overlay fixed inset-0 z-[999999] hidden" aria-hidden="true">
-    <article class="publication-detail-modal" role="dialog" aria-modal="true" aria-labelledby="{{ $modalId }}-title" data-report-type="{{ $tipo }}">
+    <article class="publication-detail-modal" role="dialog" aria-modal="true" aria-labelledby="{{ $modalId }}-title" data-report-type="{{ $tipo }}" data-report-layout="{{ $reportLayout }}">
         <header class="report-header">
             <div class="report-category-line" aria-hidden="true"></div>
             <div class="report-heading-copy">
@@ -28,7 +37,7 @@
                     <span class="report-meta-item modal-updated-meta hidden">Editado <strong class="modal-actualizado"></strong></span>
                 </div>
             </div>
-            <button type="button" class="modal-cerrar" aria-label="Cerrar expediente"><i class="fas fa-times" aria-hidden="true"></i></button>
+            <button type="button" class="modal-cerrar" aria-label="Cerrar expediente" title="Cerrar expediente"><i class="fas fa-times" aria-hidden="true"></i></button>
         </header>
 
         <div class="report-modal-main">

@@ -1,10 +1,10 @@
 <x-modal-reporte-base tipo="alcoholimetria" titulo="Reporte de Alcoholimetría" modal-id="modalAlcoholimetria">
     <section class="report-section alcohol-report-section">
         <h3 class="report-section-title"><span>Datos generales</span></h3>
-        <dl class="report-field-grid report-field-grid--three alcohol-general-grid">
+        <dl class="report-field-grid report-field-grid--three report-general-grid alcohol-general-grid">
             <div class="report-field"><dt>Fecha</dt><dd class="modal-fecha-actividad">-</dd><small>Fecha de la actividad</small></div>
             <div class="report-field"><dt>Municipio</dt><dd class="modal-municipio">-</dd><small>Área de cobertura</small></div>
-            <div class="report-field"><dt>Jurisdicción</dt><dd class="modal-distrito">-</dd><small>Zona administrativa</small></div>
+            <div class="report-field"><dt>Distrito</dt><dd class="modal-distrito">-</dd><small>Zona administrativa</small></div>
         </dl>
     </section>
     <section class="report-section alcohol-report-section">

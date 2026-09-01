@@ -71,7 +71,7 @@
     $statusDetail = match ($status) {
         'aprobado' => $approvedBy ? "Aprobado por {$approvedBy}" : 'Reporte aprobado',
         'rechazado' => $rejectedBy ? "Rechazado por {$rejectedBy}" : 'Reporte rechazado',
-        default => 'Pendiente de aprobación',
+        default => $tipo === 'Alcoholimetría' ? 'Pendiente de revisión' : 'Pendiente de aprobación',
     };
     $commentsLabel = $commentsCount === 1 ? '1 comentario' : "{$commentsCount} comentarios";
     $commentsDetail = match (true) {

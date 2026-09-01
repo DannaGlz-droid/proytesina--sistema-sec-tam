@@ -29,7 +29,7 @@
                             <th class="px-4 py-2 text-left text-xs font-medium text-gray-500">Teléfono</th>
                             <th class="px-4 py-2 text-left text-xs font-medium text-gray-500">Rol</th>
                             <th class="px-4 py-2 text-left text-xs font-medium text-gray-500">Cargo</th>
-                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500">Jurisdicción</th>
+                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500">Distrito</th>
                             <th class="px-4 py-2 text-left text-xs font-medium text-gray-500">Activo</th>
                             <th class="px-4 py-2 text-left text-xs font-medium text-gray-500">Alta</th>
                             <th class="px-4 py-2 text-left text-xs font-medium text-gray-500">Última sesión</th>
@@ -46,7 +46,7 @@
                                 <td class="px-4 py-2 text-sm text-gray-700">{{ $user->phone ?? '—' }}</td>
                                 <td class="px-4 py-2 text-sm text-gray-700">{{ optional($user->role)->name ?? '—' }}</td>
                                 <td class="px-4 py-2 text-sm text-gray-700">{{ optional($user->position)->name ?? '—' }}</td>
-                                <td class="px-4 py-2 text-sm text-gray-700">{{ optional($user->jurisdiction)->name ?? '—' }}</td>
+                                <td class="px-4 py-2 text-sm text-gray-700">{{ \App\Models\District::formatName(optional($user->jurisdiction)->name) ?: '—' }}</td>
                                 <td class="px-4 py-2 text-sm">@if($user->is_active) <span class="text-green-600 font-semibold">Sí</span> @else <span class="text-red-600">No</span> @endif</td>
                                 <td class="px-4 py-2 text-sm text-gray-700">
                                     @php
