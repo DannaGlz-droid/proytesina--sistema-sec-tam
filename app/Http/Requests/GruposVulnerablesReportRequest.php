@@ -8,6 +8,25 @@ use Closure;
 
 class GruposVulnerablesReportRequest extends FormRequest
 {
+    protected function prepareForValidation(): void
+    {
+        $this->merge([
+            'lugar' => $this->normalizeFreeText($this->input('lugar')),
+            'promotor' => $this->normalizeFreeText($this->input('promotor')),
+        ]);
+    }
+
+    private function normalizeFreeText($value): ?string
+    {
+        if ($value === null) {
+            return null;
+        }
+
+        $normalized = preg_replace('/\s+/u', ' ', trim((string) $value));
+
+        return $normalized === '' ? null : $normalized;
+    }
+
     /**
      * Determine if the user is authorized to make this request.
      */

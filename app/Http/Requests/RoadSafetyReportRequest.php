@@ -14,10 +14,27 @@ class RoadSafetyReportRequest extends FormRequest
     protected function prepareForValidation(): void
     {
         $userDistrictId = (int) $this->user()?->district_id;
+        $normalized = [
+            'lugar' => $this->normalizeFreeText($this->input('lugar')),
+            'promotor' => $this->normalizeFreeText($this->input('promotor')),
+        ];
 
         if ($userDistrictId && $userDistrictId !== District::CENTRAL_OFFICE_ID) {
-            $this->merge(['jurisdiccion' => $userDistrictId]);
+            $normalized['jurisdiccion'] = $userDistrictId;
         }
+
+        $this->merge($normalized);
+    }
+
+    private function normalizeFreeText($value): ?string
+    {
+        if ($value === null) {
+            return null;
+        }
+
+        $normalized = preg_replace('/\s+/u', ' ', trim((string) $value));
+
+        return $normalized === '' ? null : $normalized;
     }
 
     /**

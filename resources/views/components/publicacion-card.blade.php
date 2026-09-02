@@ -159,7 +159,7 @@
                 <span aria-hidden="true">{{ $filesCount }}</span>
             </button>
             <button type="button" class="reports-resource-button reports-resource-button--comments open-comments" title="{{ $commentsDetail }}" aria-label="{{ $commentsDetail }} en {{ $titulo }}">
-                <i class="far fa-comment-alt" aria-hidden="true"></i>
+                <i class="fas fa-comment-alt" aria-hidden="true"></i>
                 <span aria-hidden="true">{{ $commentsCount }}</span>
                 @if($hasUnread)
                     <span class="reports-resource-new">Nuevo</span>

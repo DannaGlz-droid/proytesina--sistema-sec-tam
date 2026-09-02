@@ -147,6 +147,18 @@ class ReportController extends Controller
             }
         }
 
+        // Cuando se llega desde una notificación, garantizar que la publicación
+        // solicitada aparezca en la primera página sin ocultar el resto del listado.
+        // Así el frontend siempre tendrá disponible el disparador de su modal,
+        // aunque originalmente estuviera en otra página de la paginación.
+        $requestedPublicationId = $request->integer('publication');
+        if ($requestedPublicationId > 0) {
+            $query->orderByRaw(
+                'CASE WHEN publications.id = ? THEN 0 ELSE 1 END',
+                [$requestedPublicationId]
+            );
+        }
+
         // Ordenar
         // Ahora el parámetro `order_by` puede venir en formato `campo:dir` (ej. updated_at:desc)
         // Por defecto ordenamos por `updated_at` para que las publicaciones editadas suban al inicio.
@@ -1701,9 +1713,9 @@ class ReportController extends Controller
                     'id' => $n->id,
                     'type' => $n->type,
                     'read' => $n->read,
-                    'time_ago' => $n->created_at->diffForHumans(),
+                    'time_ago' => $this->notificationRelativeTime($n->created_at),
                     'created_at' => $n->created_at->toIso8601String(),
-                    'created_at_label' => $n->created_at->translatedFormat('d M Y, H:i'),
+                    'created_at_label' => 'Fecha y hora: '.$n->created_at->format('d/m/Y H:i'),
                     'publication_id' => $n->publication_id,
                     'comment_id' => $n->publication_comment_id,
                     'publication_title' => $n->publication ? ($n->publication->topic ?? null) : null,
@@ -1711,6 +1723,46 @@ class ReportController extends Controller
             }),
             'unread_count' => $unreadCount,
         ]);
+    }
+
+    /**
+     * Keep relative notification times compact while preserving the exact value
+     * in created_at_label for the accessible tooltip.
+     */
+    private function notificationRelativeTime(\Carbon\CarbonInterface $date): string
+    {
+        $elapsedSeconds = max(0, now()->timestamp - $date->timestamp);
+        $elapsedMinutes = intdiv($elapsedSeconds, 60);
+
+        if ($elapsedMinutes < 1) {
+            return 'Ahora';
+        }
+
+        if ($elapsedMinutes < 60) {
+            return 'hace '.$elapsedMinutes.' min';
+        }
+
+        if ($elapsedMinutes < 1440) {
+            return 'hace '.intdiv($elapsedMinutes, 60).' h';
+        }
+
+        if ($date->isYesterday()) {
+            return 'Ayer';
+        }
+
+        $elapsedDays = intdiv($elapsedMinutes, 1440);
+
+        if ($elapsedDays < 7) {
+            return 'hace '.$elapsedDays.' '.($elapsedDays === 1 ? 'día' : 'días');
+        }
+
+        $label = str_replace('.', '', $date->locale('es')->translatedFormat('j M'));
+
+        if ($date->format('Y') !== now()->format('Y')) {
+            $label .= ' '.$date->format('Y');
+        }
+
+        return $label;
     }
 
     /**
@@ -1737,15 +1789,15 @@ class ReportController extends Controller
                 'event_label' => 'Reporte aprobado',
                 'action_text' => 'aprobó tu reporte.',
                 'tone' => 'success',
-                'icon' => 'fa-solid fa-circle-check',
+                'icon' => 'fa-solid fa-check',
             ]),
             'rejection' => array_merge($base, [
                 'event_label' => 'Reporte rechazado',
                 'action_text' => 'rechazó tu reporte.',
-                'detail_label' => 'Motivo',
+                'detail_label' => 'Motivo del rechazo',
                 'detail' => $this->notificationRejectionReason($notification),
                 'tone' => 'danger',
-                'icon' => 'fa-solid fa-circle-xmark',
+                'icon' => 'fa-solid fa-xmark',
             ]),
             'resubmission' => array_merge($base, [
                 'event_label' => 'Reporte reenviado',
@@ -1760,15 +1812,15 @@ class ReportController extends Controller
                     : 'respondió en un reporte que sigues.',
                 'detail_label' => 'Comentario',
                 'detail' => $notification->comment?->comment,
-                'tone' => 'info',
-                'icon' => 'fa-solid fa-comment',
+                'tone' => 'neutral',
+                'icon' => 'fa-solid fa-comment-alt',
             ]),
             'system' => array_merge($base, [
                 'event_label' => $notification->title ?: 'Aviso del sistema',
                 'actor' => null,
                 'action_text' => $notification->message ?: 'Hay una actualización del sistema.',
                 'tone' => 'neutral',
-                'icon' => 'fa-solid fa-circle-info',
+                'icon' => 'fa-solid fa-info',
             ]),
             default => $base,
         };

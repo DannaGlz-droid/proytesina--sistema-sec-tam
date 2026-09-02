@@ -697,25 +697,6 @@ document.addEventListener('DOMContentLoaded', function() {
         return titleCase(rawValue);
     }
 
-    function formatPersonName(value) {
-        const rawValue = String(value ?? '').trim();
-        if (!rawValue) return '';
-
-        const lowercaseConnectors = new Set(['de', 'del', 'la', 'las', 'los', 'y']);
-
-        return rawValue
-            .toLocaleLowerCase('es-MX')
-            .split(/\s+/u)
-            .map((word, index) => {
-                if (index > 0 && lowercaseConnectors.has(word)) return word;
-
-                return word.replace(/(^|[-'’])(\p{L})/gu, (_, separator, letter) => (
-                    separator + letter.toLocaleUpperCase('es-MX')
-                ));
-            })
-            .join(' ');
-    }
-
     function getReportesPanel() {
         return document.getElementById('reportes-publicaciones-panel');
     }
@@ -1335,6 +1316,18 @@ document.addEventListener('DOMContentLoaded', function() {
     collectAllReportButtons();
     
     // Función simple para mostrar modal - GLOBAL (original)
+    function updateReportHeaderTitleSpacing(modal) {
+        const header = modal?.querySelector('.report-header');
+        const title = header?.querySelector('.modal-titulo');
+        if (!header || !title) return;
+
+        const lineHeight = Number.parseFloat(window.getComputedStyle(title).lineHeight);
+        const titleHeight = title.getBoundingClientRect().height;
+        const isMultiline = Number.isFinite(lineHeight) && titleHeight > lineHeight * 1.5;
+
+        header.classList.toggle('has-multiline-title', isMultiline);
+    }
+
     window.showModalBase = function(modalId, skipAnimation = false) {
         const modal = document.getElementById(modalId);
         if (!modal?.classList.contains('report-modal-overlay')) return false;
@@ -1373,11 +1366,24 @@ document.addEventListener('DOMContentLoaded', function() {
         else window.setTimeout(revealContent, 50);
 
         requestAnimationFrame(() => {
+            updateReportHeaderTitleSpacing(modal);
             modal.querySelector('.modal-cerrar')?.focus({ preventScroll: true });
         });
 
         return true;
     }
+
+    let reportHeaderResizeFrame = null;
+    window.addEventListener('resize', () => {
+        if (reportHeaderResizeFrame) cancelAnimationFrame(reportHeaderResizeFrame);
+
+        reportHeaderResizeFrame = requestAnimationFrame(() => {
+            document.querySelectorAll('.report-modal-overlay:not(.hidden)').forEach((modal) => {
+                updateReportHeaderTitleSpacing(modal);
+            });
+            reportHeaderResizeFrame = null;
+        });
+    });
     
     // Envoltura de showModal que incluye actualización de navegación
     window.showModal = function(modalId) {
@@ -1603,9 +1609,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 specificFields.forEach(field => {
                     const element = modal.querySelector(`.modal-${field}`);
                     if (element && this.dataset[field]) {
-                        element.textContent = field === 'promotor'
-                            ? formatPersonName(this.dataset[field])
-                            : this.dataset[field];
+                        element.textContent = this.dataset[field];
                     }
                 });
                 
@@ -1691,9 +1695,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 specificFields.forEach(field => {
                     const element = modal.querySelector(`.modal-${field}`);
                     if (element && this.dataset[field]) {
-                        element.textContent = field === 'promotor'
-                            ? formatPersonName(this.dataset[field])
-                            : this.dataset[field];
+                        element.textContent = this.dataset[field];
                     }
                 });
                 
@@ -1809,24 +1811,28 @@ document.addEventListener('DOMContentLoaded', function() {
         const approvalContainer = modal.querySelector('.approval-buttons-container');
         const actionsFooter = modal.querySelector('.modal-actions-footer');
         const footerNote = modal.querySelector('.modal-footer-note');
+        const userIsAdminOrCoord = {{ auth()->user()->isAdmin() || auth()->user()->isCoordinator() ? 'true' : 'false' }};
+        const status = dataset.status || 'publicado';
+        const publicationId = dataset.publicationId;
+        const isOwner = dataset.isOwner === 'true';
 
         modal.classList.remove('has-actions-footer');
-        if (actionsFooter) actionsFooter.style.display = 'flex';
+        if (actionsFooter) actionsFooter.style.display = 'none';
         if (footerNote) {
-            const currentStatus = dataset.status || 'publicado';
-            footerNote.textContent = currentStatus === 'aprobado'
-                ? 'Reporte aprobado'
-                : currentStatus === 'rechazado'
-                    ? 'El autor puede corregir y reenviar el reporte'
-                    : 'Reporte pendiente de revisión';
+            if (status === 'aprobado') {
+                footerNote.textContent = 'Aprobado';
+            } else if (status === 'rechazado' && isOwner) {
+                footerNote.textContent = 'Corrige los datos señalados antes de reenviar';
+            } else if (status === 'rechazado') {
+                footerNote.textContent = 'Rechazado';
+            } else if (isOwner && !userIsAdminOrCoord) {
+                footerNote.textContent = 'Enviado para revisión';
+            } else {
+                footerNote.textContent = 'Pendiente de revisión';
+            }
         }
 
         if (approvalContainer) {
-            const userIsAdminOrCoord = {{ auth()->user()->isAdmin() || auth()->user()->isCoordinator() ? 'true' : 'false' }};
-            const status = dataset.status || 'publicado';
-            const publicationId = dataset.publicationId;
-            const isOwner = dataset.isOwner === 'true';
-            
             // Limpiar contenido previo del contenedor
             approvalContainer.innerHTML = '';
             approvalContainer.style.display = 'none';
@@ -2857,30 +2863,34 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Función utilitaria para abrir un modal de publicación y navegar al comentario
     window.openPublicationFromNotification = function(publicationId, commentId) {
+        const focusComment = () => {
+            if (!commentId) return;
+
+            let tries = 0;
+            const iv = setInterval(() => {
+                tries += 1;
+                const modal = document.querySelector('.report-modal-overlay:not(.hidden)');
+                const commentEl = modal?.querySelector(`[data-comment-id="${commentId}"]`);
+
+                if (commentEl) {
+                    commentEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    commentEl.style.transition = 'box-shadow 0.3s ease';
+                    commentEl.style.boxShadow = '0 0 0 3px rgba(75, 85, 99, 0.22)';
+                    setTimeout(() => { commentEl.style.boxShadow = 'none'; }, 3500);
+                    clearInterval(iv);
+                    return;
+                }
+
+                if (tries > 30) clearInterval(iv);
+            }, 200);
+        };
+
         try {
             const btn = document.querySelector(`button[data-publication-id="${publicationId}"]`);
             if (btn) {
                 // Click the existing button to fill and show the modal
                 btn.click();
-
-                // Wait for modal to render comments and then scroll to the comment
-                let tries = 0;
-                const iv = setInterval(() => {
-                    tries += 1;
-                    // Find currently visible modal (not hidden)
-                    const modal = document.querySelector('.report-modal-overlay:not(.hidden)');
-                    if (modal) {
-                        const commentEl = modal.querySelector(`[data-comment-id="${commentId}"]`);
-                        if (commentEl) {
-                            commentEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                            commentEl.style.transition = 'box-shadow 0.3s ease';
-                            commentEl.style.boxShadow = '0 0 0 3px rgba(59,130,246,0.25)';
-                            setTimeout(() => { commentEl.style.boxShadow = 'none'; }, 3500);
-                            clearInterval(iv);
-                        }
-                    }
-                    if (tries > 30) clearInterval(iv);
-                }, 200);
+                focusComment();
                 return;
             }
         } catch (e) {
@@ -2890,9 +2900,14 @@ document.addEventListener('DOMContentLoaded', function() {
         // Fallback: cargar la pagina de publicaciones sin refrescar todo el layout.
         const fallbackUrl = '/reportes/publicaciones?publication=' + publicationId + (commentId ? ('&comment=' + commentId) : '');
         if (isReportesIndexUrl(fallbackUrl)) {
-            loadReportesPanel(fallbackUrl, { push: true, scroll: false }).then(() => {
+            loadReportesPanel(fallbackUrl, { push: true, scroll: false }).then((loaded) => {
+                if (!loaded) return;
+
                 const refreshedBtn = document.querySelector(`button[data-publication-id="${publicationId}"]`);
-                if (refreshedBtn) refreshedBtn.click();
+                if (refreshedBtn) {
+                    refreshedBtn.click();
+                    focusComment();
+                }
             });
             return;
         }

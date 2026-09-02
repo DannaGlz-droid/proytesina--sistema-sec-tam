@@ -9,7 +9,7 @@
     </section>
     <section class="report-section">
         <h3 class="report-section-title"><span>Detalles de la actividad</span></h3>
-        <dl class="report-field-grid activity-details-grid activity-details-strip">
+        <dl class="report-field-grid activity-details-grid">
             <div class="report-field"><dt>Actividad</dt><dd class="modal-actividad">-</dd><small>Tipo de actividad</small></div>
             <div class="report-field"><dt>Participantes</dt><dd class="modal-participantes">-</dd><small>Asistentes registrados</small></div>
             <div class="report-field"><dt>Lugar</dt><dd class="modal-lugar">-</dd><small>Ubicación del evento</small></div>
