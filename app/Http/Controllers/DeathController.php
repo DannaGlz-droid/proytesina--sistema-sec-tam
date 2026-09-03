@@ -115,7 +115,7 @@ class DeathController extends Controller
         $recordsFiltered = $query->count();
         
         // Apply ordering and pagination
-        $deaths = $query->with(['deathCause', 'deathMunicipality', 'residenceMunicipality', 'district', 'deathLocation']);
+        $deaths = $query->with(['deathCause', 'deathMunicipality', 'residenceMunicipality', 'district', 'deathDistrict', 'deathLocation']);
         
         // Special handling for age ordering: calculate total days
         if ($orderColumn === 'age') {
@@ -156,6 +156,7 @@ class DeathController extends Controller
                 'residence_municipality' => $this->displayTitleText(optional($death->residenceMunicipality)->name),
                 'death_municipality' => $this->displayTitleText(optional($death->deathMunicipality)->name),
                 'district' => $this->displayDistrict(optional($death->district)->name),
+                'death_district' => $this->displayDistrict(optional($death->deathDistrict)->name),
                 'death_location' => $this->displayTitleText(optional($death->deathLocation)->name),
                 'death_cause' => $this->displayCause(optional($death->deathCause)->name),
                 'actions' => view('estadisticas.partials.table-actions', compact('death'))->render(),
@@ -290,7 +291,13 @@ class DeathController extends Controller
 
         $orderBy = $allowedSorts[$sort] ?? $allowedSorts['death_date_desc'];
 
-        $deaths = $query->with(['deathCause', 'deathMunicipality', 'district', 'deathLocation']);
+        $deaths = $query->with([
+            'deathCause',
+            'deathMunicipality',
+            'district',
+            'deathDistrict',
+            'deathLocation',
+        ]);
 
         // Apply primary order
         $deaths = $deaths->orderBy($orderBy[0], $orderBy[1]);
@@ -441,6 +448,15 @@ class DeathController extends Controller
             $districtId = $defaultJur->id;
         }
 
+        $deathDistrictId = null;
+        if (!empty($data['death_municipality_id'])) {
+            $deathMunicipality = Municipality::find($data['death_municipality_id']);
+            $deathDistrictId = $deathMunicipality?->district_id;
+        }
+        if (is_null($deathDistrictId)) {
+            $deathDistrictId = District::firstOrCreate(['name' => District::OTHER_NAME])->id;
+        }
+
         // Create record
         $death = Death::create([
             'gov_folio' => $data['gov_folio'],
@@ -456,6 +472,7 @@ class DeathController extends Controller
             'residence_municipality_id' => $data['residence_municipality_id'] ?? null,
             'death_municipality_id' => $data['death_municipality_id'] ?? null,
             'district_id' => $districtId,
+            'death_district_id' => $deathDistrictId,
             'death_location_id' => $data['death_location_id'] ?? null,
             'death_cause_id' => $data['death_cause_id'],
         ]);
@@ -568,6 +585,15 @@ class DeathController extends Controller
             $districtId = $defaultJur->id;
         }
 
+        $deathDistrictId = null;
+        if (!empty($data['death_municipality_id'])) {
+            $deathMunicipality = Municipality::find($data['death_municipality_id']);
+            $deathDistrictId = $deathMunicipality?->district_id;
+        }
+        if (is_null($deathDistrictId)) {
+            $deathDistrictId = District::firstOrCreate(['name' => District::OTHER_NAME])->id;
+        }
+
         // Update record
         $death->update([
             'gov_folio' => $data['gov_folio'],
@@ -583,6 +609,7 @@ class DeathController extends Controller
             'residence_municipality_id' => $data['residence_municipality_id'] ?? null,
             'death_municipality_id' => $data['death_municipality_id'] ?? null,
             'district_id' => $districtId,
+            'death_district_id' => $deathDistrictId,
             'death_location_id' => $data['death_location_id'] ?? null,
             'death_cause_id' => $data['death_cause_id'],
         ]);

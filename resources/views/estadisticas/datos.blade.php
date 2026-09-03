@@ -835,7 +835,9 @@ document.addEventListener('DOMContentLoaded', function () {
             { data: null, name: 'residence_municipality_id', orderable: false, render: function(data, type, row) {
                 return `<div class="statistics-location"><strong>${escapeDeathCell(row.residence_municipality || '—')}</strong><span>${escapeDeathCell(row.district || 'Sin distrito')}</span></div>`;
             } },
-            { data: 'death_municipality', name: 'death_municipality_id', orderable: false },
+            { data: null, name: 'death_municipality_id', orderable: false, render: function(data, type, row) {
+                return `<div class="statistics-location"><strong>${escapeDeathCell(row.death_municipality || '—')}</strong><span>${escapeDeathCell(row.death_district || 'Sin distrito')}</span></div>`;
+            } },
             { data: 'death_location', name: 'death_location_id', orderable: false },
             { data: 'death_cause', name: 'death_cause_id', orderable: false },
             { data: 'actions', name: 'actions', orderable: false, searchable: false, width: '2.75rem', className: 'dt-actions-cell' }

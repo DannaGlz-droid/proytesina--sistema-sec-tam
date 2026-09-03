@@ -7,12 +7,20 @@
 
     @php
         $selectedResidenceMunicipality = (string) old('residence_municipality_id', '');
+        $selectedDeathMunicipality = (string) old('death_municipality_id', '');
         $selectedDistrict = (string) old('district_id', '');
         if ($selectedDistrict === '' && $selectedResidenceMunicipality !== '') {
             $selectedDistrict = (string) optional($municipalities->firstWhere('id', (int) $selectedResidenceMunicipality))->district_id;
         }
         $selectedDistrictName = $selectedDistrict !== ''
             ? optional($districts->firstWhere('id', (int) $selectedDistrict))->name
+            : null;
+        $selectedDeathDistrict = (string) old('death_district_id', '');
+        if ($selectedDeathDistrict === '' && $selectedDeathMunicipality !== '') {
+            $selectedDeathDistrict = (string) optional($municipalities->firstWhere('id', (int) $selectedDeathMunicipality))->district_id;
+        }
+        $selectedDeathDistrictName = $selectedDeathDistrict !== ''
+            ? optional($districts->firstWhere('id', (int) $selectedDeathDistrict))->name
             : null;
     @endphp
 
@@ -126,11 +134,20 @@
                             @error('death_municipality_id') aria-invalid="true" aria-describedby="death-municipality-error" @enderror>
                             <option value="">Seleccione un municipio</option>
                             @foreach($municipalities as $municipality)
-                                <option value="{{ $municipality->id }}" @selected((string) old('death_municipality_id') === (string) $municipality->id)>{{ $municipality->name }}</option>
+                                <option value="{{ $municipality->id }}" @selected($selectedDeathMunicipality === (string) $municipality->id)>{{ $municipality->name }}</option>
                             @endforeach
                         </select>
                         <p id="death-municipality-client-error" class="statistics-field-error hidden" role="alert"></p>
                         @error('death_municipality_id') <p id="death-municipality-error" class="statistics-field-error" role="alert">{{ $message }}</p> @enderror
+                    </div>
+
+                    <div>
+                        <label for="death_district_display" class="block">Distrito de defunción</label>
+                        <input id="death_district_input" name="death_district_id" type="hidden" value="{{ $selectedDeathDistrict }}">
+                        <input id="death_district_display" type="text" class="ui-field--disabled" value="{{ $selectedDeathDistrictName ?: 'Pendiente (seleccione municipio)' }}"
+                            disabled aria-disabled="true" aria-describedby="death-district-help">
+                        <p id="death-district-help" class="statistics-field-help">Se asigna automáticamente según el municipio de defunción.</p>
+                        @error('death_district_id') <p class="statistics-field-error" role="alert">{{ $message }}</p> @enderror
                     </div>
 
                     <div>
@@ -186,8 +203,11 @@ document.addEventListener('DOMContentLoaded', function () {
     const municipalityToDistrict = @json($municipalities->mapWithKeys(fn ($municipality) => [(string) $municipality->id => (string) $municipality->district_id]));
     const districtNames = @json($districts->mapWithKeys(fn ($district) => [(string) $district->id => $district->name]));
     const residenceMunicipality = document.getElementById('residence_municipality_select');
+    const deathMunicipality = document.getElementById('death_municipality_select');
     const districtInput = document.getElementById('jurisdiction_input');
     const districtDisplay = document.getElementById('jurisdiction_display');
+    const deathDistrictInput = document.getElementById('death_district_input');
+    const deathDistrictDisplay = document.getElementById('death_district_display');
     const ageValue = document.getElementById('edad_valor');
     const ageUnit = document.getElementById('edad_unidad');
     const requiredSelects = [
@@ -241,13 +261,18 @@ document.addEventListener('DOMContentLoaded', function () {
     initializeSelect(document.getElementById('death_municipality_location'), true);
     initializeSelect(document.getElementById('death_cause'), true);
 
-    function updateDistrict() {
+    function updateDistricts() {
         const districtId = municipalityToDistrict[String(residenceMunicipality?.value || '')] || '';
         if (districtInput) districtInput.value = districtId;
         if (districtDisplay) districtDisplay.value = districtNames[districtId] || 'Pendiente (seleccione municipio)';
+
+        const deathDistrictId = municipalityToDistrict[String(deathMunicipality?.value || '')] || '';
+        if (deathDistrictInput) deathDistrictInput.value = deathDistrictId;
+        if (deathDistrictDisplay) deathDistrictDisplay.value = districtNames[deathDistrictId] || 'Pendiente (seleccione municipio)';
     }
-    residenceMunicipality?.tomselect?.on('change', updateDistrict);
-    updateDistrict();
+    residenceMunicipality?.tomselect?.on('change', updateDistricts);
+    deathMunicipality?.tomselect?.on('change', updateDistricts);
+    updateDistricts();
 
     function validateAge() {
         if (!ageValue || !ageUnit) return true;
@@ -306,7 +331,7 @@ document.addEventListener('DOMContentLoaded', function () {
         ageValue.setCustomValidity('');
         ageValue.removeAttribute('aria-invalid');
         document.getElementById('age-client-error')?.classList.add('hidden');
-        updateDistrict();
+        updateDistricts();
         updateAgeLimit(false);
         window.showToast?.('Formulario limpiado.', 'info', 2400);
     };

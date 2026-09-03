@@ -455,9 +455,7 @@
     }
 }
 
-.statistics-failed-imports-page .failed-imports-legacy-header,
-.statistics-failed-imports-page #top-section,
-.statistics-failed-imports-page #pagination-top {
+.statistics-failed-imports-page .failed-imports-legacy-header {
     display: none !important;
 }
 
@@ -467,15 +465,6 @@
 
 .statistics-failed-imports-page #records-container > * {
     margin-top: 0 !important;
-}
-
-.statistics-failed-imports-page .failed-imports-toolbar {
-    display: grid;
-    grid-template-columns: minmax(14rem, 1fr) minmax(16rem, 22rem) auto;
-    align-items: center;
-    gap: .8rem;
-    padding: .78rem 1rem;
-    border-bottom: 1px solid #dde3ea;
 }
 
 .statistics-failed-imports-page .failed-imports-file-context {
@@ -516,35 +505,6 @@
     border-radius: .5rem;
     background: #f8fafc;
     color: #63748d;
-}
-
-.statistics-failed-imports-page .failed-imports-state {
-    display: flex;
-    min-height: 15rem;
-    align-items: center;
-    justify-content: center;
-}
-
-.statistics-failed-imports-page .failed-imports-state > div {
-    min-height: 15rem !important;
-}
-
-.statistics-failed-imports-page .failed-imports-state .relative {
-    display: none !important;
-}
-
-.statistics-failed-imports-page .failed-imports-state p:first-of-type {
-    margin: 0 !important;
-    color: #101828 !important;
-    font-family: inherit !important;
-    font-size: .875rem !important;
-    font-weight: 600 !important;
-}
-
-.statistics-failed-imports-page .failed-imports-state p:last-of-type {
-    color: #66758d !important;
-    font-family: inherit !important;
-    font-size: .75rem !important;
 }
 
 .statistics-failed-imports-page .failed-imports-list {
@@ -706,22 +666,6 @@
     background: #600929 !important;
 }
 
-.statistics-failed-imports-page .failed-imports-footer {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: .75rem;
-    padding: .55rem .8rem;
-    border-top: 1px solid #d9e0e8;
-    color: #25324a;
-    font-size: .8125rem;
-}
-
-.statistics-failed-imports-page .failed-imports-pagination {
-    display: flex;
-    align-items: center;
-}
-
 .statistics-failed-imports-page .app-table-empty-state {
     display: flex;
     min-height: 15rem;
@@ -772,14 +716,6 @@
 }
 
 @media (max-width: 767px) {
-    .statistics-failed-imports-page .failed-imports-toolbar {
-        grid-template-columns: 1fr;
-    }
-
-    .statistics-failed-imports-page .failed-imports-search {
-        width: 100%;
-    }
-
     .statistics-failed-imports-page .users-filter-page-size,
     .statistics-failed-imports-page .users-page-size-dropdown,
     .statistics-failed-imports-page .users-page-size-button {
@@ -791,14 +727,622 @@
     }
 
     .statistics-failed-imports-page .action-buttons-view,
-    .statistics-failed-imports-page .action-buttons-edit,
-    .statistics-failed-imports-page .failed-imports-footer {
+    .statistics-failed-imports-page .action-buttons-edit {
         align-items: stretch;
         flex-direction: column;
     }
+}
 
-    .statistics-failed-imports-page .failed-imports-pagination {
-        max-width: 100%;
-        overflow-x: auto;
+/* Failed imports: compact review surface aligned with the report redesign. */
+.statistics-failed-imports-page {
+    --failed-ink: var(--ui-text, #10233f);
+    --failed-muted: var(--ui-text-muted, #64748b);
+    --failed-line: var(--ui-border-soft, #dbe3ec);
+    --failed-section: var(--ui-surface-section, #f3f4f6);
+    --failed-danger: var(--ui-danger, #dc2626);
+    --failed-danger-text: var(--ui-danger-text, #b91c1c);
+    --failed-danger-soft: var(--ui-danger-soft, #fef2f2);
+}
+
+.statistics-failed-imports-page .failed-imports-card {
+    border-color: var(--failed-line) !important;
+    border-radius: var(--ui-radius-panel, 10px) !important;
+    background: var(--ui-surface, #fff);
+    box-shadow: 0 12px 28px rgba(49, 46, 42, .06) !important;
+}
+
+.statistics-failed-imports-page .failed-imports-file-context {
+    gap: .75rem;
+}
+
+.statistics-failed-imports-page .failed-imports-file-icon {
+    width: 2.25rem;
+    height: 2.25rem;
+    flex-basis: 2.25rem;
+    border-color: var(--ui-border, #cbd5e1);
+    border-radius: var(--ui-radius-control, 7px);
+    background: var(--failed-section);
+    color: #4b5563;
+}
+
+.statistics-failed-imports-page .failed-imports-file-context strong {
+    color: var(--failed-ink);
+    font-size: .875rem;
+    font-weight: 600;
+}
+
+.statistics-failed-imports-page .failed-imports-file-context small {
+    margin-top: .08rem;
+    color: var(--failed-muted);
+    font-size: .75rem;
+}
+
+.statistics-failed-imports-page .failed-imports-state.hidden,
+.statistics-failed-imports-page #records-container.hidden,
+.statistics-failed-imports-page .validation-errors.hidden,
+.statistics-failed-imports-page .action-buttons-edit.hidden {
+    display: none !important;
+}
+
+.statistics-failed-imports-page .failed-imports-state {
+    display: block;
+    width: 100%;
+    padding: 1rem;
+    background: #fafafa;
+}
+
+.statistics-failed-imports-page .failed-imports-loading-grid {
+    display: grid;
+    width: 100%;
+    grid-template-columns: minmax(0, 1fr);
+    gap: .9rem;
+}
+
+.statistics-failed-imports-page .failed-imports-loading-card {
+    overflow: hidden;
+    min-width: 0;
+    border: 1px solid var(--failed-line);
+    border-radius: var(--ui-radius-panel, 10px);
+    background: #fff;
+}
+
+.statistics-failed-imports-page .failed-imports-skeleton-alert {
+    display: grid;
+    grid-template-columns: 1.75rem minmax(0, 1fr);
+    gap: .7rem;
+    padding: .72rem 1rem;
+    border-bottom: 1px solid var(--failed-line);
+    background: #f8fafc;
+}
+
+.statistics-failed-imports-page .failed-imports-skeleton-alert > div {
+    display: grid;
+    align-content: center;
+    gap: .38rem;
+}
+
+.statistics-failed-imports-page .failed-imports-skeleton-circle,
+.statistics-failed-imports-page .failed-imports-skeleton-bar,
+.statistics-failed-imports-page .failed-imports-skeleton-label,
+.statistics-failed-imports-page .failed-imports-skeleton-heading,
+.statistics-failed-imports-page .failed-imports-skeleton-actions > span {
+    display: block;
+    border-radius: 6px;
+    background: linear-gradient(90deg, #eef2f6 25%, #f8fafc 45%, #eef2f6 65%);
+    background-size: 240% 100%;
+    animation: usersSkeletonPulse 1.15s ease-in-out infinite;
+}
+
+.statistics-failed-imports-page .failed-imports-skeleton-circle {
+    width: 1.75rem;
+    height: 1.75rem;
+    border-radius: 50%;
+}
+
+.statistics-failed-imports-page .failed-imports-skeleton-bar {
+    width: 72%;
+    height: .72rem;
+}
+
+.statistics-failed-imports-page .failed-imports-skeleton-bar.is-short {
+    width: 28%;
+}
+
+.statistics-failed-imports-page .failed-imports-skeleton-bar.is-message {
+    width: 64%;
+    height: .58rem;
+}
+
+.statistics-failed-imports-page .failed-imports-skeleton-section {
+    padding: .85rem 1rem .95rem;
+    border-bottom: 1px solid var(--failed-line);
+}
+
+.statistics-failed-imports-page .failed-imports-skeleton-heading {
+    width: 32%;
+    height: .58rem;
+    margin-bottom: .85rem;
+}
+
+.statistics-failed-imports-page .failed-imports-skeleton-fields {
+    display: grid;
+    gap: .8rem 1rem;
+}
+
+.statistics-failed-imports-page .failed-imports-skeleton-fields.is-three-columns {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.statistics-failed-imports-page .failed-imports-skeleton-fields.is-two-columns {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.statistics-failed-imports-page .failed-imports-skeleton-fields > div {
+    display: grid;
+    gap: .42rem;
+}
+
+.statistics-failed-imports-page .failed-imports-skeleton-label {
+    width: 44%;
+    height: .42rem;
+}
+
+.statistics-failed-imports-page .failed-imports-skeleton-fields > div:nth-child(2n) .failed-imports-skeleton-bar {
+    width: 58%;
+}
+
+.statistics-failed-imports-page .failed-imports-skeleton-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: .55rem;
+    padding: .72rem 1rem;
+}
+
+.statistics-failed-imports-page .failed-imports-skeleton-actions > span {
+    width: 5.2rem;
+    height: 2rem;
+}
+
+.statistics-failed-imports-page .failed-imports-skeleton-actions > span:last-child {
+    width: 4.6rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .statistics-failed-imports-page .failed-imports-skeleton-circle,
+    .statistics-failed-imports-page .failed-imports-skeleton-bar,
+    .statistics-failed-imports-page .failed-imports-skeleton-label,
+    .statistics-failed-imports-page .failed-imports-skeleton-heading,
+    .statistics-failed-imports-page .failed-imports-skeleton-actions > span {
+        animation: none;
     }
+}
+
+@media (min-width: 1280px) {
+    .statistics-failed-imports-page .failed-imports-loading-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 639px) {
+    .statistics-failed-imports-page .failed-imports-skeleton-fields.is-three-columns,
+    .statistics-failed-imports-page .failed-imports-skeleton-fields.is-two-columns {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+.statistics-failed-imports-page .failed-imports-list {
+    grid-template-columns: minmax(0, 1fr);
+    align-items: start;
+    gap: .9rem;
+    padding: 1rem;
+    background: #fafafa;
+}
+
+@media (min-width: 1280px) {
+    .statistics-failed-imports-page .failed-imports-list {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .statistics-failed-imports-page .failed-imports-list > .col-span-full,
+    .statistics-failed-imports-page .failed-imports-list > .failed-imports-load-error {
+        grid-column: 1 / -1;
+    }
+
+    .statistics-failed-imports-page .failed-imports-list > .record-card:only-child {
+        grid-column: 1 / -1;
+    }
+}
+
+.statistics-failed-imports-page .record-card {
+    border: 1px solid var(--failed-line) !important;
+    border-top: 1px solid var(--failed-line) !important;
+    border-radius: var(--ui-radius-panel, 10px) !important;
+    background: #fff !important;
+    box-shadow: 0 4px 14px rgba(49, 46, 42, .04) !important;
+}
+
+.statistics-failed-imports-page .record-card:hover {
+    border-color: var(--ui-border, #cbd5e1) !important;
+    border-top-color: var(--ui-border, #cbd5e1) !important;
+    box-shadow: 0 7px 18px rgba(49, 46, 42, .065) !important;
+}
+
+.statistics-failed-imports-page .record-card.is-editing-fields {
+    border-color: var(--ui-border, #cbd5e1) !important;
+    border-top-color: #760b35 !important;
+    box-shadow: 0 0 0 2px rgba(118, 11, 53, .08) !important;
+}
+
+.statistics-failed-imports-page .record-card > .failed-record-error {
+    display: grid;
+    grid-template-columns: 1.85rem minmax(0, 1fr);
+    align-items: start;
+    gap: .7rem;
+    margin: 0 !important;
+    padding: .72rem 1rem !important;
+    border: 0 !important;
+    border-bottom: 1px solid var(--ui-danger-border, #fecaca) !important;
+    border-radius: 0 !important;
+    background: var(--failed-danger-soft) !important;
+}
+
+.statistics-failed-imports-page .failed-record-error-icon {
+    display: inline-flex;
+    width: 1.75rem;
+    height: 1.75rem;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: #fff;
+    color: var(--failed-danger);
+    font-size: .7rem;
+}
+
+.statistics-failed-imports-page .record-card > .failed-record-error p:first-child {
+    margin: 0 !important;
+    color: var(--failed-danger-text) !important;
+    font-size: .72rem !important;
+    font-weight: 600 !important;
+    letter-spacing: .02em;
+}
+
+.statistics-failed-imports-page .record-card > .failed-record-error .error-message {
+    margin: .12rem 0 0 !important;
+    color: #7f1d1d !important;
+    font-size: .78rem !important;
+    line-height: 1.42;
+}
+
+.statistics-failed-imports-page .record-card > .validation-errors:not(.hidden) {
+    display: grid;
+    gap: .3rem;
+    margin: 0 !important;
+    padding: .7rem 1rem !important;
+    border: 0 !important;
+    border-bottom: 1px solid var(--ui-danger-border, #fecaca) !important;
+    border-radius: 0 !important;
+    background: var(--failed-danger-soft) !important;
+}
+
+.statistics-failed-imports-page .correction-form > .mb-6,
+.statistics-failed-imports-page .correction-form > .lg\:mb-8 {
+    margin: 0 !important;
+    padding: .9rem 1rem 1rem !important;
+    border-bottom: 1px solid var(--failed-line);
+}
+
+.statistics-failed-imports-page .correction-form > .mb-6 > .flex.items-center,
+.statistics-failed-imports-page .correction-form > .lg\:mb-8 > .flex.items-center {
+    min-height: auto;
+    margin: 0 0 .8rem !important;
+    padding: 0;
+    border: 0;
+    background: transparent;
+}
+
+.statistics-failed-imports-page .correction-form > .mb-6 > .flex.items-center h2,
+.statistics-failed-imports-page .correction-form > .lg\:mb-8 > .flex.items-center h2 {
+    flex: 0 0 auto;
+    color: #5b6472 !important;
+    font-family: inherit !important;
+    font-size: .68rem !important;
+    font-weight: 700 !important;
+    letter-spacing: .105em;
+    line-height: 1.3;
+    text-transform: uppercase;
+}
+
+.statistics-failed-imports-page .correction-form > .mb-6 > .flex.items-center ion-icon,
+.statistics-failed-imports-page .correction-form > .lg\:mb-8 > .flex.items-center ion-icon {
+    display: none;
+}
+
+.statistics-failed-imports-page .correction-form > .mb-6 > .flex.items-center .h-px,
+.statistics-failed-imports-page .correction-form > .lg\:mb-8 > .flex.items-center .h-px {
+    display: block !important;
+    height: 1px;
+    margin-left: .7rem !important;
+    background: var(--failed-line) !important;
+}
+
+.statistics-failed-imports-page .correction-form > .h-px {
+    display: none !important;
+}
+
+.statistics-failed-imports-page .correction-form .grid {
+    gap: .75rem 1rem !important;
+}
+
+.statistics-failed-imports-page .correction-form .space-y-3 > :not([hidden]) ~ :not([hidden]) {
+    margin-top: .75rem !important;
+}
+
+/* Keep both location columns compact; the specific place closes the group below them. */
+.statistics-failed-imports-page .failed-location-grid {
+    align-items: start;
+    align-content: start;
+    grid-auto-rows: max-content;
+    gap: .6rem 1rem !important;
+}
+
+.statistics-failed-imports-page .failed-location-grid > .space-y-3 {
+    display: grid;
+    align-content: start;
+    gap: .6rem;
+}
+
+.statistics-failed-imports-page .failed-location-grid > .space-y-3 > :not([hidden]) {
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
+}
+
+.statistics-failed-imports-page .failed-location-place {
+    grid-column: 1 / -1;
+    margin-top: 0 !important;
+}
+
+.statistics-failed-imports-page .correction-form label {
+    margin-bottom: .28rem !important;
+    color: #4b5563 !important;
+    font-family: inherit !important;
+    font-size: .7rem !important;
+    font-weight: 600 !important;
+    line-height: 1.35;
+}
+
+.statistics-failed-imports-page .correction-form input,
+.statistics-failed-imports-page .correction-form select,
+.statistics-failed-imports-page .correction-form .ts-control,
+.statistics-failed-imports-page .correction-form input[type="date"] {
+    box-sizing: border-box;
+    min-height: 2.35rem !important;
+    padding: .46rem .65rem !important;
+    border: 1px solid var(--ui-border, #cbd5e1) !important;
+    border-radius: var(--ui-radius-control, 7px) !important;
+    background: #fff !important;
+    color: var(--failed-ink) !important;
+    font-family: inherit !important;
+    font-size: .78rem !important;
+    line-height: 1.35 !important;
+    box-shadow: none !important;
+}
+
+.statistics-failed-imports-page .correction-form input:focus,
+.statistics-failed-imports-page .correction-form select:focus,
+.statistics-failed-imports-page .correction-form .ts-wrapper.focus .ts-control {
+    border-color: var(--ui-focus, #475569) !important;
+    outline: none !important;
+    box-shadow: 0 0 0 2px var(--ui-focus-ring, rgba(71, 85, 105, .18)) !important;
+}
+
+.statistics-failed-imports-page .correction-form input:disabled,
+.statistics-failed-imports-page .correction-form input[readonly],
+.statistics-failed-imports-page .correction-form select:disabled,
+.statistics-failed-imports-page .view-mode .ts-wrapper .ts-control,
+.statistics-failed-imports-page .view-mode input[type="date"]:disabled {
+    border-color: #e1e4e8 !important;
+    background: var(--failed-section) !important;
+    color: #4b5563 !important;
+    cursor: default !important;
+    opacity: 1 !important;
+}
+
+/* Tom Select injects an input inside its control; it must never look like a second field. */
+.statistics-failed-imports-page .correction-form .ts-control > input {
+    width: auto !important;
+    min-height: 0 !important;
+    padding: 0 !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+}
+
+/* Generated select controls must use the same interface typeface as every other value. */
+.statistics-failed-imports-page .correction-form .ts-wrapper,
+.statistics-failed-imports-page .correction-form .ts-control,
+.statistics-failed-imports-page .correction-form .ts-control .item,
+.statistics-failed-imports-page .correction-form .ts-control > input,
+.statistics-failed-imports-page .correction-form .ts-dropdown,
+.statistics-failed-imports-page .correction-form .ts-dropdown .option {
+    font-family: "Open Sans", system-ui, sans-serif !important;
+}
+
+/* Review mode is a data summary. Form affordances return only after pressing Editar. */
+.statistics-failed-imports-page .record-card:not(.is-editing-fields) .view-mode .correction-form input:disabled,
+.statistics-failed-imports-page .record-card:not(.is-editing-fields) .view-mode .correction-form input[readonly],
+.statistics-failed-imports-page .record-card:not(.is-editing-fields) .view-mode .correction-form select:disabled,
+.statistics-failed-imports-page .record-card:not(.is-editing-fields) .view-mode .ts-wrapper .ts-control {
+    min-height: 1.55rem !important;
+    padding: 0 !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    color: var(--failed-ink) !important;
+    font-family: inherit !important;
+    font-size: .82rem !important;
+    font-weight: 500 !important;
+    cursor: default !important;
+    appearance: none !important;
+}
+
+.statistics-failed-imports-page .record-card:not(.is-editing-fields) .view-mode label .text-red-600,
+.statistics-failed-imports-page .record-card:not(.is-editing-fields) .view-mode .ts-control::after,
+.statistics-failed-imports-page .record-card:not(.is-editing-fields) .view-mode input[type="date"]::-webkit-calendar-picker-indicator {
+    display: none !important;
+}
+
+.statistics-failed-imports-page .record-card:not(.is-editing-fields) .view-mode .ts-wrapper.disabled,
+.statistics-failed-imports-page .record-card:not(.is-editing-fields) .view-mode .ts-wrapper.disabled .ts-control {
+    background: transparent !important;
+    color: var(--failed-ink) !important;
+    cursor: default !important;
+}
+
+.statistics-failed-imports-page .record-card:not(.is-editing-fields) .view-mode label + .flex {
+    justify-content: flex-start;
+    gap: .3rem !important;
+}
+
+.statistics-failed-imports-page .record-card:not(.is-editing-fields) .view-mode label + .flex > input:disabled {
+    width: 3rem !important;
+    flex: 0 0 3rem;
+}
+
+.statistics-failed-imports-page .record-card:not(.is-editing-fields) .view-mode label + .flex > select:disabled {
+    width: auto !important;
+    flex: 0 0 auto;
+}
+
+.statistics-failed-imports-page .is-editing-fields .correction-form input:not([readonly]),
+.statistics-failed-imports-page .is-editing-fields .correction-form select,
+.statistics-failed-imports-page .is-editing-fields .correction-form .ts-control {
+    background: #fff !important;
+    color: var(--failed-ink) !important;
+}
+
+.statistics-failed-imports-page .action-buttons-view,
+.statistics-failed-imports-page .action-buttons-edit {
+    margin: 0 !important;
+    padding: .8rem 1rem !important;
+    border-top: 0;
+    background: #fff;
+    gap: .55rem !important;
+}
+
+.statistics-failed-imports-page .action-buttons-view button,
+.statistics-failed-imports-page .action-buttons-edit button {
+    min-height: 2.35rem;
+    padding: .48rem .85rem !important;
+    border: 1px solid var(--ui-border, #cbd5e1) !important;
+    border-radius: var(--ui-radius-control, 7px) !important;
+    background: #fff !important;
+    color: #374151 !important;
+    font-family: inherit !important;
+    font-size: .72rem !important;
+    font-weight: 600 !important;
+    box-shadow: none !important;
+    transition: background-color .18s ease, border-color .18s ease, color .18s ease, transform .18s ease !important;
+}
+
+.statistics-failed-imports-page .action-buttons-view button:active,
+.statistics-failed-imports-page .action-buttons-edit button:active {
+    transform: translateY(1px);
+}
+
+.statistics-failed-imports-page .action-buttons-view button:focus-visible,
+.statistics-failed-imports-page .action-buttons-edit button:focus-visible {
+    outline: 2px solid var(--ui-focus, #475569);
+    outline-offset: 2px;
+}
+
+.statistics-failed-imports-page .action-buttons-view .btn-discard {
+    color: var(--failed-danger-text) !important;
+}
+
+.statistics-failed-imports-page .action-buttons-view .btn-toggle-edit,
+.statistics-failed-imports-page .action-buttons-edit .btn-retry {
+    border-color: #760b35 !important;
+    background: #760b35 !important;
+    color: #fff !important;
+}
+
+.statistics-failed-imports-page .action-buttons-view .btn-toggle-edit:hover,
+.statistics-failed-imports-page .action-buttons-edit .btn-retry:hover {
+    border-color: #600929 !important;
+    background: #600929 !important;
+}
+
+.statistics-failed-imports-page #empty-state,
+.statistics-failed-imports-page .failed-imports-list > .col-span-full {
+    min-height: 12rem;
+    border: 1px dashed var(--ui-border, #cbd5e1) !important;
+    border-radius: var(--ui-radius-panel, 10px);
+    background: #fff !important;
+}
+
+.statistics-failed-imports-page #empty-state > div,
+.statistics-failed-imports-page .failed-imports-list > .col-span-full > div {
+    display: inline-flex;
+    width: 2.2rem;
+    height: 2.2rem;
+    margin: 0 !important;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: var(--ui-success-soft, #f0fdf4);
+}
+
+.statistics-failed-imports-page #empty-state i {
+    color: var(--ui-success, #16a34a) !important;
+    font-size: .8rem !important;
+}
+
+.statistics-failed-imports-page .failed-imports-list > .failed-imports-load-error {
+    display: flex;
+    min-height: 8rem;
+    align-items: center;
+    justify-content: center;
+    gap: .7rem;
+    padding: 1rem;
+    border: 1px solid var(--ui-danger-border, #fecaca) !important;
+    border-radius: var(--ui-radius-panel, 10px);
+    background: var(--failed-danger-soft) !important;
+    color: var(--failed-danger-text) !important;
+    text-align: left;
+}
+
+.statistics-failed-imports-page .failed-imports-load-error > span {
+    display: inline-flex;
+    width: 2rem;
+    height: 2rem;
+    flex: 0 0 2rem;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: #fff;
+    font-size: .72rem;
+}
+
+.statistics-failed-imports-page .failed-imports-load-error p {
+    margin: 0;
+}
+
+.statistics-failed-imports-page .failed-imports-load-error p:first-child {
+    font-size: .8125rem;
+    font-weight: 600;
+}
+
+.statistics-failed-imports-page .failed-imports-load-error p:last-child {
+    margin-top: .12rem;
+    font-size: .75rem;
+}
+
+@media (max-width: 767px) {
+    .statistics-failed-imports-page .users-filter-page-size,
+    .statistics-failed-imports-page .users-page-size-dropdown,
+    .statistics-failed-imports-page .users-page-size-button {
+        width: auto;
+    }
+
 }

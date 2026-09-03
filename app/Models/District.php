@@ -144,6 +144,14 @@ class District extends Model
     }
 
     /**
+     * Deaths that occurred within this district.
+     */
+    public function deathDistrictDeaths()
+    {
+        return $this->hasMany(Death::class, 'death_district_id');
+    }
+
+    /**
      * Relationship: District has many RoadSafetyReports
      */
     public function roadSafetyReports()

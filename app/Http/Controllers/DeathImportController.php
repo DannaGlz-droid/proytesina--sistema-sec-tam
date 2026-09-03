@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 use App\Models\Death;
 use App\Models\DeathCause;
 use App\Models\DeathLocation;
@@ -159,6 +160,7 @@ class DeathImportController extends Controller
                     'residence_municipality_id',
                     'death_municipality_id',
                     'district_id',
+                    'death_district_id',
                     'death_location_id',
                     'death_cause_id',
                 ])
@@ -172,6 +174,8 @@ class DeathImportController extends Controller
             $key = $this->normalizeMunicipalityName($m->name);
             if (!isset($municipalityLookup[$key])) $municipalityLookup[$key] = $m;
         }
+
+        $districtLookup = $this->buildImportDistrictLookup();
 
         // Prepare death locations and causes lookup (require existing entries for strict import)
         $deathLocationLookup = [];
@@ -255,6 +259,7 @@ class DeathImportController extends Controller
                 $dateRaw = $rowAssoc['fechadefuncion'] ?? ($rowAssoc['fechadefuncion'] ?? null);
                 $residenceMunicipalityName = trim((string)($rowAssoc['municipioresidenciad'] ?? '')) ?: null;
                 $deathMunicipalityName = trim((string)($rowAssoc['municipiodefunciond'] ?? '')) ?: null;
+                $deathDistrictName = trim((string)($rowAssoc['jurisdicciondefunciond'] ?? $rowAssoc['distritodefunciond'] ?? '')) ?: null;
                 $siteName = trim((string)($rowAssoc['sitiodefunciond'] ?? '')) ?: null;
 
                 // basic validations (STRICT: require gov_folio; municipalities outside Tamaulipas map to 'OTRO')
@@ -557,6 +562,11 @@ class DeathImportController extends Controller
                     $incomingDistrictId = District::firstOrCreate(['name' => District::OTHER_NAME])->id;
                 }
 
+                $incomingDeathDistrict = $this->resolveImportDistrict($deathDistrictName, $districtLookup);
+                $incomingDeathDistrictId = $incomingDeathDistrict?->id
+                    ?? $deathMunicipality?->district_id
+                    ?? $otherJur->id;
+
                 // Accumulated files can contain previous folios. Identical records are omitted;
                 // changed records are reported for review, but never overwritten automatically.
                 $existingDeath = $existingDeathsByFolio->get(strtoupper((string) $folio));
@@ -574,6 +584,7 @@ class DeathImportController extends Controller
                         'residence_municipality_id' => $residenceMunicipality ? $residenceMunicipality->id : null,
                         'death_municipality_id' => $deathMunicipality ? $deathMunicipality->id : null,
                         'district_id' => $incomingDistrictId,
+                        'death_district_id' => $incomingDeathDistrictId,
                         'death_location_id' => $deathLocation ? $deathLocation->id : null,
                         'death_cause_id' => $deathCause ? $deathCause->id : null,
                     ];
@@ -608,6 +619,7 @@ class DeathImportController extends Controller
                 $d->residence_municipality_id = $residenceMunicipality ? $residenceMunicipality->id : null;
                 $d->death_municipality_id = $deathMunicipality->id;
                 $d->district_id = $incomingDistrictId;
+                $d->death_district_id = $incomingDeathDistrictId;
                 $d->death_location_id = $deathLocation ? $deathLocation->id : null;
                 $d->death_cause_id = $deathCause->id;
                 // Track which import batch this record came from
@@ -1156,6 +1168,7 @@ class DeathImportController extends Controller
                 // Set municipalities (try to find them, use OTRO as default)
                 $residenceMunicipalityName = trim((string)($rowData['municipioresidenciad'] ?? '')) ?: null;
                 $deathMunicipalityName = trim((string)($rowData['municipiodefunciond'] ?? '')) ?: null;
+                $deathDistrictName = trim((string)($rowData['jurisdicciondefunciond'] ?? $rowData['distritodefunciond'] ?? '')) ?: null;
                 $otherJur = District::firstOrCreate(['name' => District::OTHER_NAME]);
                 $otherMuni = Municipality::firstOrCreate(['name' => 'OTRO'], ['district_id' => $otherJur->id]);
                 
@@ -1166,6 +1179,7 @@ class DeathImportController extends Controller
                     $death->residence_municipality_id = $otherMuni->id;
                 }
                 
+                $deathMuni = null;
                 if ($deathMunicipalityName) {
                     $deathMuni = Municipality::where('name', 'like', '%' . $deathMunicipalityName . '%')->first();
                     $death->death_municipality_id = $deathMuni ? $deathMuni->id : $otherMuni->id;
@@ -1181,6 +1195,12 @@ class DeathImportController extends Controller
                     // Fallback to OTRO jurisdiction if municipality not found
                     $death->district_id = $otherJur->id;
                 }
+
+                $deathDistrict = $this->resolveImportDistrict($deathDistrictName, $this->buildImportDistrictLookup());
+                $death->death_district_id = $deathDistrict?->id
+                    ?? $deathMuni?->district_id
+                    ?? $otherMuni->district_id
+                    ?? $otherJur->id;
                 
                 $death->import_id = $failedRecord->import_id;
                 $death->save();
@@ -1267,6 +1287,7 @@ class DeathImportController extends Controller
             'CLAVEEDADD' => ['claveedadd', 'claveedad'],
             'MUNICIPIORESIDENCIAD' => ['municipioresidenciad', 'municipioresidencia'],
             'MUNICIPIODEFUNCIOND' => ['municipiodefunciond', 'municipiodefuncion'],
+            'JURISDICCIONDEFUNCIOND' => ['jurisdicciondefunciond', 'jurisdicciondefuncion', 'distritodefunciond', 'distritodefuncion'],
             'FECHADEFUNCION' => ['fechadefuncion'],
             'CIECAUSABASICA' => ['ciecausabasica'],
             'CIECAUSABASICAD' => ['ciecausabasicad'],
@@ -1459,6 +1480,7 @@ class DeathImportController extends Controller
             'residence_municipality_id',
             'death_municipality_id',
             'district_id',
+            'death_district_id',
             'death_location_id',
             'death_cause_id',
         ] as $field) {
@@ -1499,6 +1521,62 @@ class DeathImportController extends Controller
         } catch (\Throwable $e) {
             return trim((string) $value);
         }
+    }
+
+    /**
+     * Build aliases for the official district catalog so spreadsheet labels such
+     * as "Jurisdicción sanitaria VI Mante", "VI - Mante" or "6 Mante" resolve
+     * to the same record.
+     *
+     * @return array<string, District>
+     */
+    private function buildImportDistrictLookup(): array
+    {
+        $lookup = [];
+
+        foreach (District::statisticsCatalog() as $district) {
+            $normalized = $this->normalizeImportDistrictName($district->name);
+            $aliases = [$normalized];
+
+            if (preg_match('/^([IVX]+)\s+(.+)$/', $normalized, $matches)) {
+                $number = District::sortOrder($district->name);
+                $place = trim($matches[2]);
+                $aliases[] = $matches[1];
+                $aliases[] = $place;
+
+                if ($number >= 1 && $number <= 12) {
+                    $aliases[] = (string) $number;
+                    $aliases[] = $number.' '.$place;
+                }
+            }
+
+            foreach (array_unique(array_filter($aliases)) as $alias) {
+                $lookup[$alias] ??= $district;
+            }
+        }
+
+        return $lookup;
+    }
+
+    private function resolveImportDistrict(?string $value, array $lookup): ?District
+    {
+        $normalized = $this->normalizeImportDistrictName($value);
+
+        return $normalized === '' ? null : ($lookup[$normalized] ?? null);
+    }
+
+    private function normalizeImportDistrictName(?string $value): string
+    {
+        $normalized = mb_strtoupper(Str::ascii(trim((string) $value)));
+        $normalized = preg_replace('/\b(?:JURISDICCION|DISTRITO|SANITARIA|NUMERO|NO)\b/u', ' ', $normalized) ?? $normalized;
+        $normalized = preg_replace('/[^A-Z0-9]+/u', ' ', $normalized) ?? $normalized;
+        $normalized = preg_replace_callback(
+            '/\b0+(1[0-2]|[1-9])\b/',
+            static fn (array $matches): string => (string) ((int) $matches[1]),
+            $normalized
+        ) ?? $normalized;
+
+        return trim(preg_replace('/\s+/u', ' ', $normalized) ?? $normalized);
     }
 
     /**

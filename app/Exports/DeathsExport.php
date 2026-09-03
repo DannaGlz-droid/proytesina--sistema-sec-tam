@@ -3,75 +3,111 @@
 namespace App\Exports;
 
 use App\Models\Death;
+use Illuminate\Database\Eloquent\Builder;
 use Maatwebsite\Excel\Concerns\FromQuery;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
 
 class DeathsExport implements FromQuery, WithHeadings, WithMapping
 {
-    protected $filters;
-
-    public function __construct(array $filters = [])
+    public function __construct(private readonly array $filters = [])
     {
-        $this->filters = $filters;
     }
 
-    public function query()
+    public function query(): Builder
     {
-        $q = Death::query()->select([
-            'id', 'nombre', 'apellido', 'edad', 'sexo', 'fecha_defuncion', 'municipio_id', 'causa_id', 'observaciones'
+        $query = Death::query()->with([
+            'residenceMunicipality',
+            'district',
+            'deathMunicipality',
+            'deathDistrict',
+            'deathLocation',
+            'deathCause',
         ]);
 
-        if (!empty($this->filters['jurisdiccion'])) {
-            $q->where('jurisdiccion_id', $this->filters['jurisdiccion']);
-        }
-        if (!empty($this->filters['municipio'])) {
-            $q->where('municipio_id', $this->filters['municipio']);
-        }
+        $this->applyRelatedFilter($query, 'district', 'district_id', $this->filters['distrito'] ?? $this->filters['jurisdiccion'] ?? null);
+        $this->applyRelatedFilter($query, 'residenceMunicipality', 'residence_municipality_id', $this->filters['municipio'] ?? null);
+        $this->applyRelatedFilter($query, 'deathMunicipality', 'death_municipality_id', $this->filters['municipioDefuncion'] ?? null);
+
         if (!empty($this->filters['sexo'])) {
-            $q->where('sexo', $this->filters['sexo']);
-        }
-        if (!empty($this->filters['causa'])) {
-            $q->where('causa_id', $this->filters['causa']);
-        }
-        if (!empty($this->filters['year'])) {
-            $year = (int) $this->filters['year'];
-            $q->whereYear('fecha_defuncion', $year);
-        }
-        if (!empty($this->filters['month'])) {
-            $month = (int) $this->filters['month'];
-            $q->whereMonth('fecha_defuncion', $month);
-        }
-        if (!empty($this->filters['q'])) {
-            $term = $this->filters['q'];
-            $q->where(function ($s) use ($term) {
-                $s->where('nombre', 'like', "%{$term}%")
-                    ->orWhere('apellido', 'like', "%{$term}%");
-            });
+            $query->whereRaw('LOWER(sex) = ?', [mb_strtolower((string) $this->filters['sexo'])]);
         }
 
-        return $q;
+        if (!empty($this->filters['causa'])) {
+            $cause = $this->filters['causa'];
+            is_numeric($cause)
+                ? $query->where('death_cause_id', (int) $cause)
+                : $query->whereHas('deathCause', fn (Builder $relation) => $relation->where('name', 'like', '%'.$cause.'%'));
+        }
+
+        if (!empty($this->filters['year'])) {
+            $query->whereYear('death_date', (int) $this->filters['year']);
+        }
+
+        if (!empty($this->filters['month'])) {
+            $query->whereMonth('death_date', (int) $this->filters['month']);
+        }
+
+        if (!empty($this->filters['startDate'])) {
+            $query->whereDate('death_date', '>=', $this->filters['startDate']);
+        }
+
+        if (!empty($this->filters['endDate'])) {
+            $query->whereDate('death_date', '<=', $this->filters['endDate']);
+        }
+
+        return $query->orderByDesc('death_date')->orderByDesc('id');
     }
 
     public function headings(): array
     {
         return [
-            'ID', 'Nombre', 'Apellido', 'Edad', 'Sexo', 'Fecha de defunción', 'Municipio ID', 'Causa ID', 'Observaciones'
+            'Folio',
+            'Nombre(s)',
+            'Apellido paterno',
+            'Apellido materno',
+            'Sexo',
+            'Edad',
+            'Municipio de residencia',
+            'Distrito de residencia',
+            'Municipio de defunción',
+            'Distrito de defunción',
+            'Fecha de defunción',
+            'Lugar de defunción',
+            'Causa de defunción',
         ];
     }
 
     public function map($death): array
     {
         return [
-            $death->id,
-            $death->nombre,
-            $death->apellido,
-            $death->edad,
-            $death->sexo,
-            $death->fecha_defuncion ? $death->fecha_defuncion->format('Y-m-d') : null,
-            $death->municipio_id,
-            $death->causa_id,
-            $death->observaciones,
+            $death->gov_folio,
+            $death->name_formatted,
+            $death->first_last_name_formatted,
+            $death->second_last_name_formatted,
+            $death->sex,
+            $death->pretty_age,
+            $death->residenceMunicipality?->name,
+            $death->district?->display_name,
+            $death->deathMunicipality?->name,
+            $death->deathDistrict?->display_name,
+            $death->death_date?->format('d/m/Y'),
+            $death->deathLocation?->name,
+            $death->deathCause?->name,
         ];
+    }
+
+    private function applyRelatedFilter(Builder $query, string $relation, string $foreignKey, $value): void
+    {
+        if ($value === null || $value === '') {
+            return;
+        }
+
+        if (is_numeric($value)) {
+            $query->where($foreignKey, (int) $value);
+            return;
+        }
+
+        $query->whereHas($relation, fn (Builder $related) => $related->where('name', 'like', '%'.$value.'%'));
     }
 }

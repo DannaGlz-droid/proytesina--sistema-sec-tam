@@ -5,16 +5,22 @@
     @include('components.header-admin')
     @include('components.nav-estadisticas')
 
-    <main class="users-management-page statistics-failed-imports-page px-4 lg:pl-10 pt-5 lg:pt-7 pb-8 lg:pb-10">
-        <x-ui.page-header title="Importaciones fallidas" description="Revise, corrija o descarte los registros que no pudieron guardarse desde {{ $importFileName }}.">
+    <main class="users-management-page statistics-failed-imports-page px-4 sm:px-6 lg:px-10 pt-5 lg:pt-7 pb-8 lg:pb-10">
+        <x-ui.page-header class="users-management-header statistics-failed-imports-header" title="Importaciones fallidas" description="Revise, corrija o descarte los registros que no pudieron guardarse desde {{ $importFileName }}.">
             <x-slot:actions><a href="{{ route('statistic.import-history-view') }}" class="users-page-create-btn"><i class="fas fa-arrow-left" aria-hidden="true"></i>Volver al historial</a></x-slot:actions>
         </x-ui.page-header>
 
-        <section class="app-table-card users-table-card failed-imports-card" aria-label="Registros fallidos de la importaciÃ³n">
-            <div class="failed-imports-toolbar">
-                <div class="failed-imports-file-context"><span class="failed-imports-file-icon"><i class="far fa-file-excel" aria-hidden="true"></i></span><div><strong>{{ $importFileName }}</strong><small>Registros pendientes de revisiÃ³n</small></div></div>
-                <div class="users-filter-search failed-imports-search"><i class="fas fa-search" aria-hidden="true"></i><input id="search-failed-imports" type="search" placeholder="Buscar registros fallidos..." aria-label="Buscar registros fallidos" autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false" enterkeyhint="search"><span class="users-search-progress" aria-hidden="true"></span><button id="clear-failed-imports-search" type="button" class="hidden" aria-label="Limpiar bÃºsqueda"><i class="fas fa-times" aria-hidden="true"></i></button></div>
-                <div class="app-table-page-size users-filter-page-size"><select id="per-page-failed-imports" class="users-native-page-size" aria-hidden="true" tabindex="-1">@foreach([10,25,50] as $size)<option value="{{ $size }}">{{ $size }}</option>@endforeach</select><div class="users-page-size-dropdown"><button id="per-page-failed-imports-button" type="button" class="users-page-size-button" aria-haspopup="listbox" aria-expanded="false"><span>Mostrar</span><strong id="per-page-failed-imports-label">10</strong><i class="fas fa-list-ul users-page-size-icon" aria-hidden="true"></i></button><div id="per-page-failed-imports-menu" class="users-page-size-menu hidden" role="listbox">@foreach([10,25,50] as $size)<button type="button" role="option" class="users-page-size-option {{ $size === 10 ? 'is-active' : '' }}" data-value="{{ $size }}">{{ $size }}</button>@endforeach</div></div></div>
+        <section class="app-table-card users-table-card failed-imports-card" aria-label="Registros fallidos de la importación">
+            <div class="app-table-toolbar flex flex-row flex-wrap items-center justify-between gap-3 p-4">
+                <section class="users-filter-card failed-imports-controls" aria-label="Controles de registros fallidos">
+                    <div class="users-filter-form">
+                        <div class="users-filter-topbar">
+                            <div class="failed-imports-file-context"><span class="failed-imports-file-icon"><i class="far fa-file-excel" aria-hidden="true"></i></span><div><strong>{{ $importFileName }}</strong><small>Registros pendientes de revisión</small></div></div>
+                            <div class="users-filter-search"><i class="fas fa-search" aria-hidden="true"></i><input id="search-failed-imports" type="search" placeholder="Buscar registros fallidos..." aria-label="Buscar registros fallidos" autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false" enterkeyhint="search" aria-busy="false"><span class="users-search-progress" aria-hidden="true"></span><button id="clear-failed-imports-search" type="button" class="hidden" title="Limpiar búsqueda" aria-label="Limpiar búsqueda"><i class="fas fa-times" aria-hidden="true"></i></button></div>
+                            <div class="app-table-page-size users-filter-page-size"><select id="per-page-failed-imports" class="users-native-page-size" aria-hidden="true" tabindex="-1">@foreach([10,25,50,100] as $size)<option value="{{ $size }}" @selected($size === 10)>{{ $size }}</option>@endforeach</select><div class="users-page-size-dropdown"><button id="per-page-failed-imports-button" type="button" class="users-page-size-button" aria-haspopup="listbox" aria-expanded="false"><span>Mostrar</span><strong id="per-page-failed-imports-label">10</strong><i class="fas fa-list-ul users-page-size-icon" aria-hidden="true"></i></button><div id="per-page-failed-imports-menu" class="users-page-size-menu hidden" role="listbox" aria-labelledby="per-page-failed-imports-button">@foreach([10,25,50,100] as $size)<button type="button" role="option" class="users-page-size-option {{ $size === 10 ? 'is-active' : '' }}" data-value="{{ $size }}">{{ $size }}</button>@endforeach</div></div></div>
+                        </div>
+                    </div>
+                </section>
             </div>
         <!-- HEADER CON TÍTULO Y BOTONES -->
         <div class="failed-imports-legacy-header flex flex-col lg:flex-row lg:justify-between lg:items-center gap-4 mb-6">
@@ -32,45 +38,59 @@
         </div>
 
         <!-- Loading State -->
-        <div id="loading-state" class="failed-imports-state">
-            <div class="flex flex-col items-center justify-center min-h-80">
-                <div class="relative mb-8">
-                    <div class="w-16 h-16 border-4 border-gray-200 rounded-full"></div>
-                    <div class="absolute top-0 left-0 w-16 h-16 border-4 border-transparent border-t-[#611132] rounded-full animate-spin"></div>
-                </div>
-                <p class="text-lg text-gray-700 font-lora font-semibold mb-2">Cargando registros fallidos...</p>
-                <p class="text-sm text-gray-500 font-lora">Por favor espere mientras se cargan los datos</p>
+        <div id="loading-state" class="failed-imports-state" role="status" aria-label="Cargando registros fallidos">
+            <span class="sr-only">Cargando registros fallidos</span>
+            <div class="failed-imports-loading-grid" aria-hidden="true">
+                @for ($card = 0; $card < 2; $card++)
+                    <article class="failed-imports-loading-card">
+                        <div class="failed-imports-skeleton-alert">
+                            <span class="failed-imports-skeleton-circle"></span>
+                            <div><span class="failed-imports-skeleton-bar is-short"></span><span class="failed-imports-skeleton-bar is-message"></span></div>
+                        </div>
+                        <section class="failed-imports-skeleton-section">
+                            <span class="failed-imports-skeleton-heading"></span>
+                            <div class="failed-imports-skeleton-fields is-three-columns">
+                                @for ($field = 0; $field < 6; $field++)
+                                    <div><span class="failed-imports-skeleton-label"></span><span class="failed-imports-skeleton-bar"></span></div>
+                                @endfor
+                            </div>
+                        </section>
+                        <section class="failed-imports-skeleton-section">
+                            <span class="failed-imports-skeleton-heading"></span>
+                            <div class="failed-imports-skeleton-fields is-two-columns">
+                                @for ($field = 0; $field < 4; $field++)
+                                    <div><span class="failed-imports-skeleton-label"></span><span class="failed-imports-skeleton-bar"></span></div>
+                                @endfor
+                            </div>
+                        </section>
+                        <section class="failed-imports-skeleton-section">
+                            <span class="failed-imports-skeleton-heading"></span>
+                            <div class="failed-imports-skeleton-fields is-two-columns">
+                                @for ($field = 0; $field < 2; $field++)
+                                    <div><span class="failed-imports-skeleton-label"></span><span class="failed-imports-skeleton-bar"></span></div>
+                                @endfor
+                            </div>
+                        </section>
+                        <div class="failed-imports-skeleton-actions"><span></span><span></span></div>
+                    </article>
+                @endfor
             </div>
         </div>
 
         <!-- Records Container -->
         <div id="records-container" class="hidden space-y-6">
-            <!-- Contador de resultados y Paginación Superior -->
-            <div id="top-section" class="hidden space-y-4">
-                <div class="flex justify-between items-center">
-                    <div id="results-counter" class="text-sm text-gray-600 font-lora">
-                        <span id="total-count" class="font-semibold text-[#404041]">0</span> resultados encontrados
-                        <span id="showing-count" class="text-gray-500">• Mostrando 0-0</span>
-                    </div>
-                </div>
-                <div id="pagination-top" class="app-pagination"></div>
-            </div>
-
             <!-- Records List (with empty state) -->
             <div id="records-list" class="failed-imports-list">
                 <!-- Empty State (shown when no records) -->
                 <div id="empty-state" class="col-span-full text-center py-12">
-                    <div class="text-gray-400 mb-4">
-                        <i class="fas fa-check-circle text-6xl"></i>
-                    </div>
-                    <p class="text-lg font-lora text-gray-600">No hay registros fallidos para esta importación</p>
-                    <p class="text-sm text-gray-500 font-lora mt-2">No hay registros fallidos por revisar</p>
+                    <div class="text-gray-400 mb-4"><i class="fas fa-check" aria-hidden="true"></i></div>
+                    <p class="text-lg font-lora text-gray-600">No quedan registros por revisar</p>
+                    <p class="text-sm text-gray-500 font-lora mt-2">Todos los registros fallidos de esta importación ya fueron atendidos.</p>
                 </div>
             </div>
 
-            <!-- Paginación Inferior -->
-            <nav class="users-table-footer failed-imports-footer"><span id="failed-imports-info">Mostrando 0-0 de 0</span><div id="pagination-bottom"></div></nav>
         </div>
+        <nav class="users-table-footer failed-imports-footer flex flex-row flex-wrap items-center justify-between gap-3 p-4" aria-label="Paginación de registros fallidos"><span id="dt-info" class="text-sm font-normal text-gray-500 flex-1 min-w-0 is-loading">Preparando tabla</span><div id="dt-pagination" class="flex-none"></div></nav>
         </section>
     </main>
 
@@ -78,12 +98,12 @@
 
 <!-- Template for failed record card -->
 <template id="record-template">
-    <div class="border border-[#404041] rounded-lg lg:rounded-xl p-4 lg:p-6 bg-white bg-opacity-95 shadow-md record-card" data-record-id="">
+    <article class="border border-[#404041] rounded-lg lg:rounded-xl p-4 lg:p-6 bg-white bg-opacity-95 shadow-md record-card" data-record-id="">
         
         <!-- Error Alert -->
-        <div class="bg-red-50 border-l-4 border-red-600 p-4 mb-6 rounded-r-lg">
-            <p class="text-red-700 font-semibold text-sm">Error en el registro:</p>
-            <p class="text-red-600 text-sm mt-1 error-message"></p>
+        <div class="failed-record-error bg-red-50 border-l-4 border-red-600 p-4 mb-6 rounded-r-lg" role="alert">
+            <span class="failed-record-error-icon"><i class="fas fa-exclamation" aria-hidden="true"></i></span>
+            <div><p class="text-red-700 font-semibold text-sm">Requiere corrección</p><p class="text-red-600 text-sm mt-1 error-message"></p></div>
         </div>
 
         <!-- Validation Errors (hidden by default) -->
@@ -171,7 +191,7 @@
                         <div class="flex-1 h-px bg-[#404041] ml-3"></div>
                     </div>
                     
-                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-3 lg:gap-4">
+                    <div class="failed-location-grid grid grid-cols-1 lg:grid-cols-2 gap-3 lg:gap-4">
                         <!-- Left column -->
                         <div class="space-y-3">
                             <div>
@@ -201,12 +221,20 @@
                             </div>
 
                             <div>
-                                <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Lugar específico <span class="text-red-600">*</span></label>
-                                <select name="sitiodefunciond" required disabled
+                                <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Distrito de defunción</label>
+                                <select name="jurisdicciondefunciond" disabled
                                        class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg bg-gray-100 text-gray-700 font-lora tomselect-select">
-                                    <option value="">Seleccione lugar</option>
+                                    <option value="">Seleccione un distrito</option>
                                 </select>
                             </div>
+                        </div>
+
+                        <div class="failed-location-place">
+                            <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Lugar específico <span class="text-red-600">*</span></label>
+                            <select name="sitiodefunciond" required disabled
+                                   class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg bg-gray-100 text-gray-700 font-lora tomselect-select">
+                                <option value="">Seleccione lugar</option>
+                            </select>
                         </div>
                     </div>
                 </div>
@@ -353,7 +381,7 @@
                         <div class="flex-1 h-px bg-[#404041] ml-3"></div>
                     </div>
                     
-                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-3 lg:gap-4">
+                    <div class="failed-location-grid grid grid-cols-1 lg:grid-cols-2 gap-3 lg:gap-4">
                         <!-- Left column -->
                         <div class="space-y-3">
                             <div>
@@ -383,12 +411,20 @@
                             </div>
 
                             <div>
-                                <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Lugar específico <span class="text-red-600">*</span></label>
-                                <select name="sitiodefunciond" required
+                                <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Distrito de defunción <span class="text-red-600">*</span></label>
+                                <select name="jurisdicciondefunciond" required
                                        class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora tomselect-select">
-                                    <option value="">Seleccione lugar</option>
+                                    <option value="">Seleccione un distrito</option>
                                 </select>
                             </div>
+                        </div>
+
+                        <div class="failed-location-place">
+                            <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Lugar específico <span class="text-red-600">*</span></label>
+                            <select name="sitiodefunciond" required
+                                   class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora tomselect-select">
+                                <option value="">Seleccione lugar</option>
+                            </select>
                         </div>
                     </div>
                 </div>
@@ -433,7 +469,7 @@
 
             </form>
         </div>
-    </div>
+    </article>
 </template>
 
 <!-- Incluir Ionicons -->
@@ -728,8 +764,23 @@ const muniToJurName = @json(
     })
 );
 
+function districtNameForMunicipality(municipalityName) {
+    const target = String(municipalityName || '').trim().toUpperCase();
+    if (!target) return '';
+
+    for (const [municipality, district] of Object.entries(muniToJurName)) {
+        const candidate = municipality.trim().toUpperCase();
+        if (candidate === target || candidate.includes(target) || target.includes(candidate)) {
+            return district;
+        }
+    }
+
+    return '';
+}
+
 // Build data for Tom Select
 const municipalitiesData = @json($municipalities);
+const districtsData = @json($districts);
 const locationsData = @json($locations);
 const causesData = @json($causes);
 
@@ -802,7 +853,6 @@ document.addEventListener('DOMContentLoaded', function() {
         failedSearchInput.value = '';
         updateFailedSearchClear();
         applyFailedSearch();
-        failedSearchInput.focus();
     });
 
     failedPerPageButton?.addEventListener('click', () => {
@@ -811,15 +861,18 @@ document.addEventListener('DOMContentLoaded', function() {
         failedPerPageButton.setAttribute('aria-expanded', String(open));
     });
     failedPerPageMenu?.querySelectorAll('[data-value]').forEach(option => option.addEventListener('click', () => {
-        failedImportsPerPage = Number(option.dataset.value) || 10;
-        failedPerPageSelect.value = String(failedImportsPerPage);
-        document.getElementById('per-page-failed-imports-label').textContent = String(failedImportsPerPage);
+        failedPerPageSelect.value = option.dataset.value;
+        document.getElementById('per-page-failed-imports-label').textContent = option.dataset.value;
         failedPerPageMenu.querySelectorAll('[data-value]').forEach(item => item.classList.toggle('is-active', item === option));
         failedPerPageMenu.classList.add('hidden');
         failedPerPageButton.setAttribute('aria-expanded', 'false');
+        failedPerPageSelect.dispatchEvent(new Event('change', { bubbles: true }));
+    }));
+    failedPerPageSelect?.addEventListener('change', event => {
+        failedImportsPerPage = Number(event.target.value) || 10;
         isInitialLoad = false;
         loadFailedRecords(1);
-    }));
+    });
     document.addEventListener('click', event => {
         if (!event.target.closest('.users-page-size-dropdown')) {
             failedPerPageMenu?.classList.add('hidden');
@@ -910,15 +963,13 @@ document.addEventListener('DOMContentLoaded', function() {
                     currentPage = page;
                 } else {
                     // Show only the empty state
-                    document.getElementById('failed-imports-info').innerHTML = 'Mostrando <strong>0-0</strong> de <strong>0</strong>';
-                    document.getElementById('pagination-bottom').replaceChildren();
+                    updateFailedPaginationInfo({ from: 0, to: 0, total: 0 });
+                    document.getElementById('dt-pagination').replaceChildren();
                     recordsList.innerHTML = `
                         <div id="empty-state" class="col-span-full text-center py-12">
-                            <div class="text-gray-400 mb-4">
-                                <i class="fas fa-check-circle text-6xl"></i>
-                            </div>
-                            <p class="text-lg font-lora text-gray-600">No hay registros fallidos para esta importación</p>
-                            <p class="text-sm text-gray-500 font-lora mt-2">No hay registros fallidos por revisar</p>
+                            <div class="text-gray-400 mb-4"><i class="fas fa-check" aria-hidden="true"></i></div>
+                            <p class="text-lg font-lora text-gray-600">No quedan registros por revisar</p>
+                            <p class="text-sm text-gray-500 font-lora mt-2">Todos los registros fallidos de esta importación ya fueron atendidos.</p>
                         </div>
                     `;
                 }
@@ -930,24 +981,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 recordsContainer.classList.remove('hidden');
                 isInitialLoad = false;
                 recordsList.style.opacity = '1';
-                document.getElementById('failed-imports-info').innerHTML = 'Mostrando <strong>0-0</strong> de <strong>0</strong>';
-                document.getElementById('pagination-bottom').replaceChildren();
-                document.getElementById('records-list').innerHTML = `
-                    <div class="col-span-full bg-red-50 border border-red-200 rounded-lg p-6 text-center">
-                        <p class="text-red-700 font-semibold text-base mb-2">No se pudieron cargar los registros</p>
-                        <p class="text-red-600 text-sm">Intente nuevamente en unos momentos.</p>
-                    </div>
-                `;
-                return;
-                document.getElementById('records-list').innerHTML = `
-                    <div class="bg-red-50 border border-red-300 rounded-lg p-6 text-center">
-                        <p class="text-red-700 font-semibold text-base mb-2">❌ Error cargando registros</p>
-                        <p class="text-red-600 text-sm mb-3">${error.message}</p>
-                        <p class="text-red-600 text-xs">Revise la consola del navegador (F12) para más detalles</p>
-                        <details class="mt-4 text-left">
-                            <summary class="cursor-pointer text-red-600 text-xs">Ver detalles</summary>
-                            <pre class="bg-red-100 p-2 rounded text-xs mt-2 overflow-auto">${error.stack}</pre>
-                        </details>
+                updateFailedPaginationInfo({ from: 0, to: 0, total: 0 });
+                document.getElementById('dt-pagination').replaceChildren();
+                recordsList.innerHTML = `
+                    <div class="failed-imports-load-error" role="alert">
+                        <span><i class="fas fa-exclamation" aria-hidden="true"></i></span>
+                        <div><p>No se pudieron cargar los registros</p><p>Intente nuevamente en unos momentos.</p></div>
                     </div>
                 `;
             })
@@ -1006,7 +1045,7 @@ document.addEventListener('DOMContentLoaded', function() {
         console.log('Initializing Tom Select:', name, '- text value:', textValue);
         
         // Find matching ID
-        const selectedId = findMatchingItemId(textValue, data);
+        let selectedId = findMatchingItemId(textValue, data);
         
         // Create Tom Select options
         const options = data.map(item => ({
@@ -1014,6 +1053,17 @@ document.addEventListener('DOMContentLoaded', function() {
             name: item.name,
             text: item.name
         }));
+
+        // In review mode, preserve the source value even when it is precisely
+        // the invalid option that caused the import to fail.
+        if (!selectedId && el.disabled && textValue) {
+            selectedId = '__source_value__';
+            options.unshift({
+                id: selectedId,
+                name: textValue,
+                text: textValue
+            });
+        }
         
         const config = {
             options: options,
@@ -1050,16 +1100,16 @@ document.addEventListener('DOMContentLoaded', function() {
                     if (el.disabled) {
                         wrapper.classList.add('disabled');
                         control.classList.add('disabled');
-                        control.style.setProperty('background-color', '#f3f4f6', 'important');
-                        control.style.setProperty('color', '#6b7280', 'important');
-                        control.style.setProperty('cursor', 'not-allowed', 'important');
+                        control.style.setProperty('background-color', 'transparent', 'important');
+                        control.style.setProperty('color', '#10233f', 'important');
+                        control.style.setProperty('cursor', 'default', 'important');
                         control.style.setProperty('opacity', '1', 'important');
                         
                         // Also style the input inside
                         const input = control.querySelector('input');
                         if (input) {
                             input.style.setProperty('background-color', 'transparent', 'important');
-                            input.style.setProperty('cursor', 'not-allowed', 'important');
+                            input.style.setProperty('cursor', 'default', 'important');
                         }
                     } else {
                         wrapper.classList.remove('disabled');
@@ -1218,6 +1268,16 @@ document.addEventListener('DOMContentLoaded', function() {
                         }
                     }
                 }
+
+                if (fieldName === 'jurisdicciondefunciond') {
+                    const deathMunicipality = (formData.municipiodefunciond || originalData.municipiodefunciond || '').trim();
+                    value = districtNameForMunicipality(deathMunicipality)
+                        || formData.jurisdicciondefunciond
+                        || originalData.jurisdicciondefunciond
+                        || formData.distritodefunciond
+                        || originalData.distritodefunciond
+                        || '';
+                }
                 
                 if (value !== undefined && value !== null && value !== '') {
                     field.value = value;
@@ -1230,6 +1290,8 @@ document.addEventListener('DOMContentLoaded', function() {
                         // Determine which data to use based on field name
                         if (fieldName === 'municipioresidenciad' || fieldName === 'municipiodefunciond') {
                             assignedData = municipalitiesData;
+                        } else if (fieldName === 'jurisdicciondefunciond') {
+                            assignedData = districtsData;
                         } else if (fieldName === 'sitiodefunciond') {
                             assignedData = locationsData;
                         } else if (fieldName === 'sheet') {
@@ -1289,6 +1351,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     // Determine which data to use based on the field name
                     if (name === 'municipioresidenciad' || name === 'municipiodefunciond') {
                         data = municipalitiesData;
+                    } else if (name === 'jurisdicciondefunciond') {
+                        data = districtsData;
                     } else if (name === 'sitiodefunciond') {
                         data = locationsData;
                     } else if (name === 'sheet') {
@@ -1349,6 +1413,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (btnToggleEdit) {
             btnToggleEdit.addEventListener('click', (e) => {
                 e.preventDefault();
+
                 card.classList.add('is-editing-fields');
                 form.querySelectorAll('[name]').forEach(field => {
                     field.disabled = false;
@@ -1368,6 +1433,8 @@ document.addEventListener('DOMContentLoaded', function() {
                         
                         if (name === 'municipioresidenciad' || name === 'municipiodefunciond') {
                             data = municipalitiesData;
+                        } else if (name === 'jurisdicciondefunciond') {
+                            data = districtsData;
                         } else if (name === 'sitiodefunciond') {
                             data = locationsData;
                         } else if (name === 'sheet') {
@@ -1392,6 +1459,21 @@ document.addEventListener('DOMContentLoaded', function() {
                             });
                         }
                     });
+
+                    const deathMunicipalitySelect = form.querySelector('[name="municipiodefunciond"]');
+                    const deathDistrictSelect = form.querySelector('[name="jurisdicciondefunciond"]');
+                    const syncDeathDistrict = () => {
+                        const municipality = municipalitiesData.find(item => String(item.id) === String(deathMunicipalitySelect?.value));
+                        const districtName = districtNameForMunicipality(municipality?.name || deathMunicipalitySelect?.dataset.originalText);
+                        const district = districtsData.find(item => String(item.name).trim().toUpperCase() === String(districtName).trim().toUpperCase());
+
+                        if (district && deathDistrictSelect?.tomselect) {
+                            deathDistrictSelect.tomselect.setValue(String(district.id), true);
+                            deathDistrictSelect.dataset.originalText = district.name;
+                        }
+                    };
+                    deathMunicipalitySelect?.tomselect?.on('change', syncDeathDistrict);
+                    syncDeathDistrict();
                 }, 50);
                 
                 actionButtonsView.classList.add('hidden');
@@ -1437,6 +1519,8 @@ document.addEventListener('DOMContentLoaded', function() {
                         
                         if (name === 'municipioresidenciad' || name === 'municipiodefunciond') {
                             data = municipalitiesData;
+                        } else if (name === 'jurisdicciondefunciond') {
+                            data = districtsData;
                         } else if (name === 'sitiodefunciond') {
                             data = locationsData;
                         } else if (name === 'sheet') {
@@ -1609,6 +1693,8 @@ document.addEventListener('DOMContentLoaded', function() {
                                 let data = [];
                                 if (fieldName === 'municipioresidenciad' || fieldName === 'municipiodefunciond') {
                                     data = municipalitiesData;
+                                } else if (fieldName === 'jurisdicciondefunciond') {
+                                    data = districtsData;
                                 } else if (fieldName === 'sitiodefunciond') {
                                     data = locationsData;
                                 } else if (fieldName === 'sheet') {
@@ -1687,145 +1773,59 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    function renderPagination(data) {
-        const paginationTop = document.getElementById('pagination-top');
-        const paginationBottom = document.getElementById('pagination-bottom');
-        const topSection = document.getElementById('top-section');
-        const totalCount = document.getElementById('total-count');
-        const showingCount = document.getElementById('showing-count');
-        
-        paginationTop.innerHTML = '';
-        paginationBottom.innerHTML = '';
-
-        // Update results counter
-        if (data.total > 0) {
-            totalCount.textContent = data.total;
-            const from = data.from || 1;
-            const to = data.to || data.total;
-            showingCount.textContent = `• Mostrando ${from}-${to}`;
-            topSection.classList.remove('hidden');
-        } else {
-            topSection.classList.add('hidden');
-            return;
-        }
-
-        const paginationItems = getPaginationItems(data.current_page, data.last_page);
-        const createButton = (label, page, options = {}) => {
-            const btn = document.createElement('button');
-            btn.type = 'button';
-            btn.className = options.active ? 'app-page-item is-active' : options.disabled ? 'app-page-item is-disabled' : 'app-page-item';
-            btn.innerHTML = label;
-            btn.disabled = !!options.disabled;
-            if (options.ariaLabel) btn.setAttribute('aria-label', options.ariaLabel);
-            if (!options.disabled && !options.active) {
-                btn.addEventListener('click', () => loadFailedRecords(page));
-            }
-            return btn;
-        };
-
-        const createEllipsis = () => {
-            const span = document.createElement('span');
-            span.className = 'app-page-ellipsis';
-            span.textContent = '...';
-            return span;
-        };
-
-        const renderPaginationButtons = (container) => {
-            container.innerHTML = '';
-            container.appendChild(createButton(
-                '<svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>',
-                data.current_page - 1,
-                { disabled: data.current_page <= 1, ariaLabel: 'Pagina anterior' }
-            ));
-
-            paginationItems.forEach(item => {
-                if (item === 'ellipsis') {
-                    container.appendChild(createEllipsis());
-                    return;
-                }
-
-                container.appendChild(createButton(String(item), item, { active: item === data.current_page }));
-            });
-
-            container.appendChild(createButton(
-                '<svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>',
-                data.current_page + 1,
-                { disabled: data.current_page >= data.last_page, ariaLabel: 'Pagina siguiente' }
-            ));
-        };
-
-        // Render in both top and bottom
-        renderPaginationButtons(paginationTop);
-        renderPaginationButtons(paginationBottom);
-    }
-
     function renderFailedPaginationPilot(data) {
-        const container = document.getElementById('pagination-bottom');
-        const footerInfo = document.getElementById('failed-imports-info');
-        const from = data.from || 0;
-        const to = data.to || 0;
-        if (footerInfo) footerInfo.innerHTML = `Mostrando <strong>${from}-${to}</strong> de <strong>${data.total || 0}</strong>`;
+        const container = document.getElementById('dt-pagination');
+        updateFailedPaginationInfo(data);
         if (!container) return;
+        const activePage = Number(data.current_page) || 1;
+        const totalPages = Number(data.last_page) || 0;
+        const pageButton = page => page === activePage
+            ? `<span class="fb-page-btn fb-page-num fb-page-active" aria-current="page">${page}</span>`
+            : `<a href="#" data-page="${page}" class="pagination-link-failed-imports fb-page-btn fb-page-num">${page}</a>`;
+        const ellipsis = () => '<span class="fb-page-btn fb-page-num fb-page-ellipsis">...</span>';
+        let html = '<div class="fb-pagination" role="navigation" aria-label="Paginación de registros fallidos">';
 
-        const item = (label, page, disabled = false, active = false) => {
-            const tag = disabled || active ? 'span' : 'button';
-            const control = document.createElement(tag);
-            control.className = `fb-page-btn${disabled ? ' is-disabled' : ''}${active ? ' is-active' : ''}`;
-            control.textContent = label;
-            if (active) control.setAttribute('aria-current', 'page');
-            if (tag === 'button') {
-                control.type = 'button';
-                control.addEventListener('click', () => loadFailedRecords(page));
-            }
-            return control;
-        };
+        html += activePage === 1 || totalPages === 0
+            ? '<span class="fb-page-btn fb-page-first fb-page-disabled">Anterior</span>'
+            : `<a href="#" data-page="${activePage - 1}" class="pagination-link-failed-imports fb-page-btn fb-page-first">Anterior</a>`;
 
-        const list = document.createElement('div');
-        list.className = 'failed-imports-pagination';
-        list.appendChild(item('Anterior', data.current_page - 1, data.current_page <= 1));
-        getPaginationItems(data.current_page, data.last_page).forEach(page => {
-            list.appendChild(page === 'ellipsis'
-                ? item('...', 0, true)
-                : item(String(page), page, false, page === data.current_page));
+        if (totalPages <= 5) {
+            for (let page = 1; page <= totalPages; page++) html += pageButton(page);
+        } else if (activePage <= 3) {
+            for (let page = 1; page <= 5; page++) html += pageButton(page);
+            html += ellipsis() + pageButton(totalPages);
+        } else if (activePage >= totalPages - 2) {
+            html += pageButton(1) + ellipsis();
+            for (let page = totalPages - 4; page <= totalPages; page++) html += pageButton(page);
+        } else {
+            html += pageButton(1) + ellipsis();
+            for (let page = activePage - 1; page <= activePage + 1; page++) html += pageButton(page);
+            html += ellipsis() + pageButton(totalPages);
+        }
+
+        html += activePage === totalPages || totalPages === 0
+            ? '<span class="fb-page-btn fb-page-last fb-page-disabled">Siguiente</span>'
+            : `<a href="#" data-page="${activePage + 1}" class="pagination-link-failed-imports fb-page-btn fb-page-last">Siguiente</a>`;
+        html += '</div>';
+        container.innerHTML = html;
+
+        container.querySelectorAll('.pagination-link-failed-imports').forEach(link => {
+            link.addEventListener('click', event => {
+                event.preventDefault();
+                loadFailedRecords(Number(link.dataset.page));
+                document.querySelector('.failed-imports-card')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            });
         });
-        list.appendChild(item('Siguiente', data.current_page + 1, data.current_page >= data.last_page));
-        container.replaceChildren(list);
     }
 
-    function getPaginationItems(currentPage, lastPage) {
-        if (lastPage <= 7) {
-            return Array.from({ length: lastPage }, (_, index) => index + 1);
-        }
-
-        const pages = new Set([1, lastPage]);
-        const start = Math.max(2, currentPage - 1);
-        const end = Math.min(lastPage - 1, currentPage + 1);
-
-        for (let page = start; page <= end; page++) {
-            pages.add(page);
-        }
-
-        if (currentPage <= 4) {
-            [2, 3, 4, 5].forEach(page => pages.add(page));
-        }
-
-        if (currentPage >= lastPage - 3) {
-            [lastPage - 4, lastPage - 3, lastPage - 2, lastPage - 1].forEach(page => {
-                if (page > 1) pages.add(page);
-            });
-        }
-
-        const sortedPages = Array.from(pages)
-            .filter(page => page >= 1 && page <= lastPage)
-            .sort((a, b) => a - b);
-
-        return sortedPages.reduce((items, page, index) => {
-            if (index > 0 && page - sortedPages[index - 1] > 1) {
-                items.push('ellipsis');
-            }
-            items.push(page);
-            return items;
-        }, []);
+    function updateFailedPaginationInfo(data) {
+        const footerInfo = document.getElementById('dt-info');
+        if (!footerInfo) return;
+        const from = Number(data.from) || 0;
+        const to = Number(data.to) || 0;
+        const total = Number(data.total) || 0;
+        footerInfo.classList.remove('is-loading');
+        footerInfo.innerHTML = `<span class="users-table-info-main">Mostrando <span class="font-semibold text-gray-900">${from}-${to}</span> de <span class="font-semibold text-gray-900">${total}</span></span>`;
     }
 
     loadFailedRecords(1);

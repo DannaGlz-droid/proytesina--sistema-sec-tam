@@ -29,6 +29,7 @@ class Death extends Model
         'residence_municipality_id',
         'district_id',
         'death_municipality_id',
+        'death_district_id',
         'death_location_id',
         'death_cause_id',
     ];
@@ -37,6 +38,7 @@ class Death extends Model
         'residence_municipality_id',  // FK sensible
         'district_id',            // FK sensible
         'death_municipality_id',      // FK sensible (te faltó este)
+        'death_district_id',          // FK sensible
         'death_location_id',          // FK sensible
         'death_cause_id',             // FK sensible
         'name',                       // Información personal sensible
@@ -143,6 +145,14 @@ class Death extends Model
     public function deathMunicipality()
     {
         return $this->belongsTo(Municipality::class, 'death_municipality_id');
+    }
+
+    /**
+     * Relationship: Death belongs to the district where the death occurred.
+     */
+    public function deathDistrict()
+    {
+        return $this->belongsTo(District::class, 'death_district_id');
     }
 
     /**
