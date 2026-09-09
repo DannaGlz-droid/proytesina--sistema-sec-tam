@@ -23,7 +23,7 @@
 
         <!-- Cuadro del formulario responsive -->
         <div class="report-road-form-card users-form-card">
-        <form id="seguridadVialForm" class="report-road-form" action="{{ isset($publication) ? route('reportes.seguridad-vial.update', $publication) : route('reportes.seguridad-vial.store') }}" method="POST" enctype="multipart/form-data">
+        <form id="seguridadVialForm" class="report-road-form ui-form-fields" action="{{ isset($publication) ? route('reportes.seguridad-vial.update', $publication) : route('reportes.seguridad-vial.store') }}" method="POST" enctype="multipart/form-data">
             @csrf
             @if(isset($publication))
                 @method('PUT')

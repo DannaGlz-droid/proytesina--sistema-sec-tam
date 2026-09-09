@@ -17,7 +17,7 @@
                         <div class="users-filter-topbar">
                             <div class="failed-imports-file-context"><span class="failed-imports-file-icon"><i class="far fa-file-excel" aria-hidden="true"></i></span><div><strong>{{ $importFileName }}</strong><small>Registros pendientes de revisión</small></div></div>
                             <div class="users-filter-search"><i class="fas fa-search" aria-hidden="true"></i><input id="search-failed-imports" type="search" placeholder="Buscar registros fallidos..." aria-label="Buscar registros fallidos" autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false" enterkeyhint="search" aria-busy="false"><span class="users-search-progress" aria-hidden="true"></span><button id="clear-failed-imports-search" type="button" class="hidden" title="Limpiar búsqueda" aria-label="Limpiar búsqueda"><i class="fas fa-times" aria-hidden="true"></i></button></div>
-                            <div class="app-table-page-size users-filter-page-size"><select id="per-page-failed-imports" class="users-native-page-size" aria-hidden="true" tabindex="-1">@foreach([10,25,50,100] as $size)<option value="{{ $size }}" @selected($size === 10)>{{ $size }}</option>@endforeach</select><div class="users-page-size-dropdown"><button id="per-page-failed-imports-button" type="button" class="users-page-size-button" aria-haspopup="listbox" aria-expanded="false"><span>Mostrar</span><strong id="per-page-failed-imports-label">10</strong><i class="fas fa-list-ul users-page-size-icon" aria-hidden="true"></i></button><div id="per-page-failed-imports-menu" class="users-page-size-menu hidden" role="listbox" aria-labelledby="per-page-failed-imports-button">@foreach([10,25,50,100] as $size)<button type="button" role="option" class="users-page-size-option {{ $size === 10 ? 'is-active' : '' }}" data-value="{{ $size }}">{{ $size }}</button>@endforeach</div></div></div>
+                            <div class="app-table-page-size users-filter-page-size"><select id="per-page-failed-imports" class="users-native-page-size" aria-hidden="true" tabindex="-1">@foreach([4,6,10] as $size)<option value="{{ $size }}" @selected($size === 4)>{{ $size }}</option>@endforeach</select><div class="users-page-size-dropdown"><button id="per-page-failed-imports-button" type="button" class="users-page-size-button" aria-haspopup="listbox" aria-expanded="false"><span>Mostrar</span><strong id="per-page-failed-imports-label">4</strong><i class="fas fa-list-ul users-page-size-icon" aria-hidden="true"></i></button><div id="per-page-failed-imports-menu" class="users-page-size-menu hidden" role="listbox" aria-labelledby="per-page-failed-imports-button">@foreach([4,6,10] as $size)<button type="button" role="option" class="users-page-size-option {{ $size === 4 ? 'is-active' : '' }}" data-value="{{ $size }}">{{ $size }}</button>@endforeach</div></div></div>
                         </div>
                     </div>
                 </section>
@@ -43,35 +43,24 @@
             <div class="failed-imports-loading-grid" aria-hidden="true">
                 @for ($card = 0; $card < 2; $card++)
                     <article class="failed-imports-loading-card">
-                        <div class="failed-imports-skeleton-alert">
-                            <span class="failed-imports-skeleton-circle"></span>
-                            <div><span class="failed-imports-skeleton-bar is-short"></span><span class="failed-imports-skeleton-bar is-message"></span></div>
+                        <div class="users-table-skeleton failed-imports-skeleton-alert">
+                            <div></div>
                         </div>
-                        <section class="failed-imports-skeleton-section">
-                            <span class="failed-imports-skeleton-heading"></span>
-                            <div class="failed-imports-skeleton-fields is-three-columns">
-                                @for ($field = 0; $field < 6; $field++)
-                                    <div><span class="failed-imports-skeleton-label"></span><span class="failed-imports-skeleton-bar"></span></div>
-                                @endfor
-                            </div>
-                        </section>
-                        <section class="failed-imports-skeleton-section">
-                            <span class="failed-imports-skeleton-heading"></span>
-                            <div class="failed-imports-skeleton-fields is-two-columns">
-                                @for ($field = 0; $field < 4; $field++)
-                                    <div><span class="failed-imports-skeleton-label"></span><span class="failed-imports-skeleton-bar"></span></div>
-                                @endfor
-                            </div>
-                        </section>
-                        <section class="failed-imports-skeleton-section">
-                            <span class="failed-imports-skeleton-heading"></span>
-                            <div class="failed-imports-skeleton-fields is-two-columns">
-                                @for ($field = 0; $field < 2; $field++)
-                                    <div><span class="failed-imports-skeleton-label"></span><span class="failed-imports-skeleton-bar"></span></div>
-                                @endfor
-                            </div>
-                        </section>
-                        <div class="failed-imports-skeleton-actions"><span></span><span></span></div>
+                        <div class="users-table-skeleton failed-imports-skeleton-fields failed-imports-skeleton-fields--three">
+                            <div></div><div></div><div></div>
+                            <div></div><div></div><div></div>
+                        </div>
+                        <div class="users-table-skeleton failed-imports-skeleton-fields failed-imports-skeleton-fields--two failed-imports-skeleton-location">
+                            <div></div><div></div>
+                            <div></div><div></div>
+                            <div></div>
+                        </div>
+                        <div class="users-table-skeleton failed-imports-skeleton-fields failed-imports-skeleton-fields--two failed-imports-skeleton-summary">
+                            <div></div><div></div>
+                        </div>
+                        <div class="users-table-skeleton failed-imports-skeleton-actions">
+                            <div></div><div></div>
+                        </div>
                     </article>
                 @endfor
             </div>
@@ -101,20 +90,17 @@
     <article class="border border-[#404041] rounded-lg lg:rounded-xl p-4 lg:p-6 bg-white bg-opacity-95 shadow-md record-card" data-record-id="">
         
         <!-- Error Alert -->
-        <div class="failed-record-error bg-red-50 border-l-4 border-red-600 p-4 mb-6 rounded-r-lg" role="alert">
-            <span class="failed-record-error-icon"><i class="fas fa-exclamation" aria-hidden="true"></i></span>
-            <div><p class="text-red-700 font-semibold text-sm">Requiere corrección</p><p class="text-red-600 text-sm mt-1 error-message"></p></div>
-        </div>
-
-        <!-- Validation Errors (hidden by default) -->
-        <div class="validation-errors hidden bg-red-50 border border-red-300 rounded-lg p-4 mb-6">
-            <p class="text-red-700 font-semibold text-sm mb-2">Errores de validación:</p>
-            <ul class="list-disc list-inside text-red-600 text-sm space-y-1"></ul>
+        <div class="failed-record-error" data-record-status>
+            <span class="failed-record-error-icon"><i class="fas fa-circle-exclamation" aria-hidden="true"></i></span>
+            <div>
+                <p class="failed-record-error-title">Requiere corrección</p>
+                <ul class="error-messages"></ul>
+            </div>
         </div>
 
         <!-- VIEW MODE -->
         <div class="view-mode">
-            <form class="correction-form">
+            <form class="correction-form ui-form-fields">
                 <!-- Sección 1: Información del fallecido -->
                 <div class="mb-6 lg:mb-8">
                     <div class="flex items-center mb-4">
@@ -127,21 +113,23 @@
                         <!-- Row 1: Folio | Nombre | Ap. paterno -->
                         <div>
                             <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Folio <span class="text-red-600">*</span></label>
-                            <input name="folio" type="text" value="" disabled
+                            <input name="folio" type="text" value="" disabled required minlength="9" maxlength="17"
+                                pattern="([0-9]{9}|[0-9]{2}[A-Za-z][0-9]{5}[A-Za-z][0-9]{8})"
+                                title="Capture 9 dígitos o el folio alfanumérico oficial" inputmode="text"
                                 class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg bg-gray-100 text-gray-700 font-lora" 
                                 placeholder="Ej: 230787888">
                         </div>
 
                         <div>
                             <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Nombre(s) <span class="text-red-600">*</span></label>
-                            <input name="nombre" type="text" value="" disabled
+                            <input name="nombre" type="text" value="" disabled required maxlength="191"
                                    class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg bg-gray-100 text-gray-700 font-lora" 
                                    placeholder="Ej: Juan Diego">
                         </div>
 
                         <div>
                             <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Apellido paterno <span class="text-red-600">*</span></label>
-                            <input name="primerapellido" type="text" value="" disabled
+                            <input name="primerapellido" type="text" value="" disabled required maxlength="191"
                                    class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg bg-gray-100 text-gray-700 font-lora" 
                                    placeholder="Ej: Nava">
                         </div>
@@ -149,14 +137,14 @@
                         <!-- Row 2: Apellido materno | Sexo | Edad -->
                         <div>
                             <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Apellido materno</label>
-                            <input name="segundoapellido" type="text" value="" disabled
+                            <input name="segundoapellido" type="text" value="" disabled maxlength="191"
                                    class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg bg-gray-100 text-gray-700 font-lora" 
                                    placeholder="Ej: Reyes">
                         </div>
 
                         <div>
                             <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Sexo <span class="text-red-600">*</span></label>
-                            <select name="sexod" disabled class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg bg-gray-100 text-gray-700 font-lora">
+                            <select name="sexod" required disabled class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg bg-gray-100 text-gray-700 font-lora tomselect-select">
                                 <option value="">Seleccione una opción</option>
                                 <option value="M">Masculino</option>
                                 <option value="F">Femenino</option>
@@ -165,11 +153,11 @@
 
                         <div>
                             <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Edad <span class="text-red-600">*</span></label>
-                            <div class="flex gap-2">
-                                <input name="edad_valor" type="number" min="0" max="150" value="" disabled
+                            <div class="failed-age-fields flex gap-2">
+                                <input name="edad_valor" type="number" min="0" max="150" value="" required disabled inputmode="numeric"
                                        class="w-1/2 px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg bg-gray-100 text-gray-700 font-lora"
                                        placeholder="Ej: 34">
-                                <select name="edad_unidad" disabled class="w-1/2 px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg bg-gray-100 text-gray-700 font-lora">
+                                <select name="edad_unidad" required disabled class="w-1/2 px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg bg-gray-100 text-gray-700 font-lora tomselect-select">
                                     <option value="">Unidad</option>
                                     <option value="anos">Años</option>
                                     <option value="meses">Meses</option>
@@ -196,7 +184,7 @@
                         <div class="space-y-3">
                             <div>
                                 <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Municipio de residencia <span class="text-red-600">*</span></label>
-                                <select name="municipioresidenciad" disabled
+                                <select name="municipioresidenciad" required disabled
                                        class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg bg-gray-100 text-gray-700 font-lora tomselect-select">
                                     <option value="">Seleccione un municipio</option>
                                 </select>
@@ -204,7 +192,7 @@
 
                             <div>
                                 <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Municipio de defunción <span class="text-red-600">*</span></label>
-                                <select name="municipiodefunciond" disabled
+                                <select name="municipiodefunciond" required disabled
                                        class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg bg-gray-100 text-gray-700 font-lora tomselect-select">
                                     <option value="">Seleccione un municipio</option>
                                 </select>
@@ -215,17 +203,16 @@
                         <div class="space-y-3">
                             <div>
                                 <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Distrito de residencia</label>
-                                <input name="distrito" type="text" value="" readonly
+                                <input name="distrito" type="text" value="" readonly data-derived-field aria-disabled="true"
                                        class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg bg-gray-50 text-gray-700 font-lora" 
                                        placeholder="Distrito">
                             </div>
 
                             <div>
                                 <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Distrito de defunción</label>
-                                <select name="jurisdicciondefunciond" disabled
-                                       class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg bg-gray-100 text-gray-700 font-lora tomselect-select">
-                                    <option value="">Seleccione un distrito</option>
-                                </select>
+                                <input name="jurisdicciondefunciond" type="text" value="" readonly data-derived-field aria-disabled="true"
+                                       class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg bg-gray-50 text-gray-700 font-lora"
+                                       placeholder="Distrito">
                             </div>
                         </div>
 
@@ -255,7 +242,7 @@
                         <div class="space-y-3">
                             <div>
                                 <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Causa de la defunción <span class="text-red-600">*</span></label>
-                                <select name="sheet" disabled
+                                <select name="sheet" required disabled
                                        class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg bg-gray-100 text-gray-700 font-lora tomselect-select">
                                     <option value="">Seleccione una causa</option>
                                 </select>
@@ -266,7 +253,7 @@
                         <div class="space-y-3">
                             <div>
                                 <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Fecha de defunción <span class="text-red-600">*</span></label>
-                                <input name="fechadefuncion" type="date" value="" disabled
+                                <input name="fechadefuncion" type="date" value="" required disabled
                                        class="fecha-input w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg text-gray-700 font-lora" 
                                        placeholder="dd/mm/yyyy">
                             </div>
@@ -279,196 +266,38 @@
 
                 <!-- Action Buttons - View Mode -->
                 <div class="action-buttons-view flex flex-col sm:flex-row justify-end gap-3 lg:gap-4">
-                    <button type="button" class="btn-discard border border-[#404041] text-[#404041] px-4 lg:px-6 py-2 rounded-lg text-xs lg:text-sm font-semibold hover:bg-gray-50 transition-all duration-300 font-lora flex items-center justify-center gap-2 whitespace-nowrap">
-                        <i class="fas fa-trash text-xs"></i> Descartar
+                    <button type="button" class="ui-button ui-button--secondary btn-discard">
+                        <i class="fas fa-trash" aria-hidden="true"></i>
+                        <span data-button-label>Descartar</span>
                     </button>
-                    <button type="button" class="btn-toggle-edit bg-[#611132] text-white px-4 lg:px-6 py-2 rounded-lg text-xs lg:text-sm font-semibold hover:bg-[#4a0e26] transition-all duration-300 font-lora flex items-center justify-center gap-2 whitespace-nowrap">
-                        <i class="fas fa-edit text-xs"></i> Editar
+                    <button type="button" class="ui-button ui-button--primary btn-toggle-edit">
+                        <i class="fas fa-edit" aria-hidden="true"></i>
+                        <span data-button-label>Editar</span>
+                    </button>
+                    <button type="button" class="ui-button ui-button--primary btn-import-corrected" hidden>
+                        <i class="fas fa-check" aria-hidden="true"></i>
+                        <span data-button-label>Importar</span>
                     </button>
                 </div>
 
                 <!-- Action Buttons - Edit Mode -->
                 <div class="action-buttons-edit hidden flex flex-col sm:flex-row justify-end gap-3 lg:gap-4">
-                    <button type="button" class="btn-cancel-edit border border-[#404041] text-[#404041] px-4 lg:px-6 py-2 rounded-lg text-xs lg:text-sm font-semibold hover:bg-gray-50 transition-all duration-300 font-lora flex items-center justify-center gap-2 whitespace-nowrap">
-                        <i class="fas fa-times text-xs"></i> Cancelar
+                    <button type="button" class="ui-button ui-button--secondary btn-cancel-edit">
+                        <i class="fas fa-times" aria-hidden="true"></i>
+                        <span data-button-label>Cancelar</span>
                     </button>
-                    <button type="button" class="btn-save-correction border border-[#404041] text-[#404041] px-4 lg:px-6 py-2 rounded-lg text-xs lg:text-sm font-semibold hover:bg-gray-50 transition-all duration-300 font-lora flex items-center justify-center gap-2 whitespace-nowrap">
-                        <i class="fas fa-save text-xs"></i> Guardar
+                    <button type="button" class="ui-button ui-button--secondary btn-save-correction">
+                        <i class="fas fa-save" aria-hidden="true"></i>
+                        <span data-button-label>Guardar corrección</span>
                     </button>
-                    <button type="button" class="btn-retry bg-[#611132] text-white px-4 lg:px-6 py-2 rounded-lg text-xs lg:text-sm font-semibold hover:bg-[#4a0e26] transition-all duration-300 font-lora flex items-center justify-center gap-2 whitespace-nowrap">
-                        <i class="fas fa-check text-xs"></i> Importar
+                    <button type="button" class="ui-button ui-button--primary btn-retry">
+                        <i class="fas fa-check" aria-hidden="true"></i>
+                        <span data-button-label>Guardar e importar</span>
                     </button>
                 </div>
             </form>
         </div>
 
-        <!-- EDIT MODE -->
-        <div class="edit-mode hidden">
-            <form class="correction-form">
-                <!-- Sección 1: Información del fallecido -->
-                <div class="mb-6 lg:mb-8">
-                    <div class="flex items-center mb-4">
-                        <ion-icon name="person-outline" class="text-xl lg:text-xl text-[#404041] mr-2"></ion-icon>
-                        <h2 class="text-lg lg:text-xl font-lora font-bold text-[#404041]">Información del fallecido</h2>
-                        <div class="flex-1 h-px bg-[#404041] ml-3"></div>
-                    </div>
-                    
-                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-3 lg:gap-4 items-start">
-                        <!-- Row 1: Folio | Nombre | Ap. paterno -->
-                        <div>
-                            <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Folio <span class="text-red-600">*</span></label>
-                            <input name="folio" type="text" value="" required
-                                class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora" 
-                                placeholder="Ej: 230787888">
-                        </div>
-
-                        <div>
-                            <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Nombre(s) <span class="text-red-600">*</span></label>
-                            <input name="nombre" type="text" value="" required minlength="2" maxlength="191"
-                                   class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora" 
-                                   placeholder="Ej: Juan Diego">
-                        </div>
-
-                        <div>
-                            <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Apellido paterno <span class="text-red-600">*</span></label>
-                            <input name="primerapellido" type="text" value="" required minlength="2" maxlength="191"
-                                   class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora" 
-                                   placeholder="Ej: Nava">
-                        </div>
-
-                        <!-- Row 2: Apellido materno | Sexo | Edad (valor + unidad) -->
-                        <div>
-                            <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Apellido materno</label>
-                            <input name="segundoapellido" type="text" value="" minlength="2" maxlength="191"
-                                   class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora" 
-                                   placeholder="Ej: Reyes">
-                        </div>
-
-                        <div>
-                            <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Sexo <span class="text-red-600">*</span></label>
-                            <select name="sexod" required class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora">
-                                <option value="">Seleccione una opción</option>
-                                <option value="M">Masculino</option>
-                                <option value="F">Femenino</option>
-                            </select>
-                        </div>
-
-                        <div>
-                            <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Edad <span class="text-red-600">*</span></label>
-                            <div class="flex gap-2">
-                                <input name="edad_valor" type="number" min="0" max="150" value="" required
-                                       class="w-1/2 px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora"
-                                       placeholder="Ej: 34">
-                                <select name="edad_unidad" required class="w-1/2 px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora">
-                                    <option value="">Unidad</option>
-                                    <option value="anos">Años</option>
-                                    <option value="meses">Meses</option>
-                                    <option value="dias">Días</option>
-                                </select>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Línea separadora -->
-                <div class="h-px bg-gray-300 my-4 lg:my-6"></div>
-
-                <!-- Sección 2: Ubicación -->
-                <div class="mb-6 lg:mb-8">
-                    <div class="flex items-center mb-4">
-                        <ion-icon name="location-outline" class="text-xl lg:text-xl text-[#404041] mr-2"></ion-icon>
-                        <h2 class="text-lg lg:text-xl font-lora font-bold text-[#404041]">Ubicación</h2>
-                        <div class="flex-1 h-px bg-[#404041] ml-3"></div>
-                    </div>
-                    
-                    <div class="failed-location-grid grid grid-cols-1 lg:grid-cols-2 gap-3 lg:gap-4">
-                        <!-- Left column -->
-                        <div class="space-y-3">
-                            <div>
-                                <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Municipio de residencia <span class="text-red-600">*</span></label>
-                                <select name="municipioresidenciad" required
-                                       class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora tomselect-select">
-                                    <option value="">Seleccione un municipio</option>
-                                </select>
-                            </div>
-
-                            <div>
-                                <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Municipio de defunción <span class="text-red-600">*</span></label>
-                                <select name="municipiodefunciond" required
-                                       class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora tomselect-select">
-                                    <option value="">Seleccione un municipio</option>
-                                </select>
-                            </div>
-                        </div>
-
-                        <!-- Right column -->
-                        <div class="space-y-3">
-                            <div>
-                                <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Distrito de residencia</label>
-                                <input name="distrito" type="text" value=""
-                                       class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora" 
-                                       placeholder="Distrito">
-                            </div>
-
-                            <div>
-                                <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Distrito de defunción <span class="text-red-600">*</span></label>
-                                <select name="jurisdicciondefunciond" required
-                                       class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora tomselect-select">
-                                    <option value="">Seleccione un distrito</option>
-                                </select>
-                            </div>
-                        </div>
-
-                        <div class="failed-location-place">
-                            <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Lugar específico <span class="text-red-600">*</span></label>
-                            <select name="sitiodefunciond" required
-                                   class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora tomselect-select">
-                                <option value="">Seleccione lugar</option>
-                            </select>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Línea separadora -->
-                <div class="h-px bg-gray-300 my-4 lg:my-6"></div>
-
-                <!-- Sección 3: Información de la defunción -->
-                <div class="mb-6 lg:mb-8">
-                    <div class="flex items-center mb-4">
-                        <ion-icon name="medical-outline" class="text-xl lg:text-xl text-[#404041] mr-2"></ion-icon>
-                        <h2 class="text-lg lg:text-xl font-lora font-bold text-[#404041]">Información de la defunción</h2>
-                        <div class="flex-1 h-px bg-[#404041] ml-3"></div>
-                    </div>
-                    
-                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-3 lg:gap-4">
-                        <!-- Left column -->
-                        <div class="space-y-3">
-                            <div>
-                                <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Causa de la defunción <span class="text-red-600">*</span></label>
-                                <select name="sheet" required
-                                       class="w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora tomselect-select">
-                                    <option value="">Seleccione una causa</option>
-                                </select>
-                            </div>
-                        </div>
-
-                        <!-- Right column -->
-                        <div class="space-y-3">
-                            <div>
-                                <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Fecha de defunción <span class="text-red-600">*</span></label>
-                                <input name="fechadefuncion" type="date" value="" required
-                                       class="fecha-input w-full px-3 py-2 text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#404041] focus:border-transparent transition-all duration-200 font-lora">
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Línea separadora para botones -->
-                <div class="h-px bg-gray-300 my-4 lg:my-6"></div>
-
-
-            </form>
-        </div>
     </article>
 </template>
 
@@ -479,233 +308,6 @@
 <!-- Tom Select CDN (single-select, styled to match inputs) -->
 
 @push('scripts')
-<style>
-    /* Tom Select styling - match input styles */
-    .ts-wrapper {
-        border: none !important;
-        padding: 0 !important;
-        background: transparent !important;
-    }
-
-    select.tomselect-select {
-        position: absolute !important;
-        left: -9999px !important;
-        width: 1px !important;
-        height: 1px !important;
-        overflow: hidden !important;
-        opacity: 0 !important;
-        pointer-events: none !important;
-        border: 0 !important;
-        margin: 0 !important;
-        padding: 0 !important;
-        background: transparent !important;
-        -webkit-appearance: none !important;
-        -moz-appearance: none !important;
-        appearance: none !important;
-    }
-
-    select.tomselect-select::-ms-expand { display: none !important; }
-    select.tomselect-select { background-image: none !important; }
-
-    .ts-wrapper { display: block; width: 100%; }
-
-    .ts-control {
-        border: 1px solid #d1d5db !important;
-        border-radius: 0.5rem !important;
-        padding: 8px 12px !important;
-        background: #ffffff !important;
-        font-family: inherit;
-        font-size: 0.875rem;
-        line-height: 1.25rem !important;
-        display: flex;
-        align-items: center;
-        justify-content: flex-start;
-        position: relative;
-        box-sizing: border-box;
-        margin: 0 !important;
-        box-shadow: none !important;
-        height: auto !important;
-        min-height: 36px !important;
-        transition: all 0.2s ease;
-    }
-
-    .ts-control:focus-within {
-        border-color: #404041 !important;
-        box-shadow: 0 0 0 2px rgba(64, 64, 65, 0.1) !important;
-        outline: 2px solid transparent !important;
-        outline-offset: 2px !important;
-    }
-
-    .ts-control .item, .ts-control input {
-        padding: 0 !important;
-        margin: 0 !important;
-        height: auto !important;
-        line-height: 1.25rem !important;
-        font-size: inherit;
-        font-family: inherit;
-    }
-
-    .ts-control .dropdown-toggle,
-    .ts-control .ts-dropdown-toggle,
-    .ts-control .dropdown_toggle,
-    .ts-control .ts-clear {
-        display: none !important;
-    }
-
-    .ts-dropdown {
-        border: 1px solid #d1d5db;
-        border-radius: 0.5rem;
-        box-shadow: 0 2px 6px rgba(0,0,0,0.08);
-        max-height: 240px;
-        overflow: auto;
-    }
-
-    .ts-dropdown .ts-option {
-        padding: 0.5rem 0.75rem;
-    }
-
-    .tomselect-caret {
-        display: none !important;
-        position: absolute;
-        right: 12px;
-        top: 50%;
-        transform: translateY(-50%);
-        color: #6b7280;
-        pointer-events: none;
-        font-size: 0.9rem;
-    }
-
-    .ts-control::after {
-        content: "";
-        position: absolute;
-        right: 12px;
-        top: 50%;
-        transform: translateY(-50%);
-        width: 18px;
-        height: 18px;
-        background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'/></svg>");
-        background-repeat: no-repeat;
-        background-position: center;
-        background-size: 12px 12px;
-        pointer-events: none;
-        opacity: 0.92;
-    }
-
-    .ts-wrapper, .ts-control { vertical-align: middle; }
-
-    /* Disabled Tom Select styling - VERY STRONG */
-    select.tomselect-select:disabled ~ .ts-wrapper,
-    select.tomselect-select:disabled ~ .ts-wrapper .ts-control,
-    .ts-wrapper.disabled,
-    .ts-wrapper.disabled .ts-control {
-        background-color: #f3f4f6 !important;
-        color: #6b7280 !important;
-        opacity: 1 !important;
-        cursor: not-allowed !important;
-    }
-
-    .view-mode select.tomselect-select:disabled {
-        background-color: #f3f4f6 !important;
-    }
-
-    .view-mode .ts-wrapper .ts-control {
-        background-color: #f3f4f6 !important;
-        color: #6b7280 !important;
-    }
-
-    .view-mode { display: block; }
-    .edit-mode { display: none; }
-    
-    .record-card.in-edit .view-mode { display: none; }
-    .record-card.in-edit .edit-mode { display: block; }
-    
-    .record-card {
-        transition: all 0.3s ease;
-    }
-    
-    .record-card.in-edit {
-        border-color: #611132 !important;
-        background-color: #fef2f6 !important;
-    }
-
-    /* Make native date input visually match other inputs/selects in the form */
-    input[type="date"] {
-        padding: 8px 12px !important; /* match px-3 py-2 */
-        border: 1px solid #d1d5db !important;
-        border-radius: 0.5rem !important;
-        background: #ffffff !important;
-        font-family: inherit;
-        font-size: 0.875rem;
-        line-height: 1.25rem;
-        box-shadow: none !important;
-        height: auto !important;
-        min-height: 36px !important;
-    }
-    /* Disabled date input - show gray background */
-    input[type="date"]:disabled,
-    input.fecha-input:disabled {
-        background: #f3f4f6 !important; /* gray-100 */
-        color: #6b7280 !important; /* gray-500 - match other disabled inputs */
-        border-color: #d1d5db !important; /* Keep gray border */
-        cursor: not-allowed !important;
-        opacity: 1 !important;
-    }
-    /* Enabled date input - white background */
-    input[type="date"]:not(:disabled),
-    input.fecha-input:not(:disabled) {
-        background: #ffffff !important;
-        color: #000000 !important;
-    }
-    /* Make the calendar icon gray when disabled */
-    input.fecha-input:disabled::-webkit-calendar-picker-indicator {
-        filter: opacity(0.5) grayscale(100%);
-    }
-    /* Slightly tone down the calendar icon so it blends with your selects */
-    input[type="date"]::-webkit-calendar-picker-indicator {
-        opacity: 0.7;
-        transform: scale(0.95);
-    }
-    input[type="date"]::-webkit-inner-spin-button,
-    input[type="date"]::-webkit-clear-button {
-        display: none;
-    }
-
-    /* Super aggressive date input styling for view mode */
-    .view-mode input[type="date"],
-    .view-mode input[type="date"]:disabled {
-        background-color: #f3f4f6 !important;
-        color: #6b7280 !important;
-        border: 1px solid #d1d5db !important;
-        cursor: not-allowed !important;
-    }
-
-    /* Readonly input styling (e.g., jurisdiction field) */
-    input[readonly] {
-        background: #f3f4f6 !important; /* gray-100 */
-        color: #6b7280 !important; /* gray-500 */
-        border: 1px solid #d1d5db !important;
-        cursor: not-allowed !important;
-        opacity: 1 !important;
-    }
-
-    input:disabled,
-    select:disabled {
-        background: #f3f4f6 !important;
-        color: #6b7280 !important;
-        border: 1px solid #d1d5db !important;
-        cursor: not-allowed !important;
-        opacity: 1 !important;
-    }
-
-    /* Override to ensure readonly/disabled fields are always gray */
-    .correction-form input:disabled,
-    .correction-form input[readonly],
-    .correction-form select:disabled {
-        background-color: #f3f4f6 !important;
-        color: #6b7280 !important;
-    }
-</style>
-
 <script>
 // Helper function to parse dates in various formats and convert to YYYY-MM-DD for HTML date input
 function parseDateForInput(dateStr) {
@@ -713,17 +315,11 @@ function parseDateForInput(dateStr) {
     
     let date = null;
     
-    // Try DD/MM/YYYY format (common in imports)
+    // Excel imports use the official DD/MM/YYYY format.
     if (dateStr.includes('/')) {
         const parts = dateStr.split('/');
         if (parts.length === 3) {
-            // Try MM/DD/YYYY first
-            if (parseInt(parts[0]) <= 12) {
-                date = new Date(parseInt(parts[2]), parseInt(parts[0]) - 1, parseInt(parts[1]));
-            } else {
-                // Must be DD/MM/YYYY
-                date = new Date(parseInt(parts[2]), parseInt(parts[1]) - 1, parseInt(parts[0]));
-            }
+            date = new Date(parseInt(parts[2]), parseInt(parts[1]) - 1, parseInt(parts[0]));
         }
     } else if (dateStr.includes('-')) {
         // Try YYYY-MM-DD or DD-MM-YYYY
@@ -765,12 +361,17 @@ const muniToJurName = @json(
 );
 
 function districtNameForMunicipality(municipalityName) {
-    const target = String(municipalityName || '').trim().toUpperCase();
+    const normalize = value => String(value || '')
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/\s+/g, ' ')
+        .trim()
+        .toUpperCase();
+    const target = normalize(municipalityName);
     if (!target) return '';
 
     for (const [municipality, district] of Object.entries(muniToJurName)) {
-        const candidate = municipality.trim().toUpperCase();
-        if (candidate === target || candidate.includes(target) || target.includes(candidate)) {
+        if (normalize(municipality) === target) {
             return district;
         }
     }
@@ -780,9 +381,30 @@ function districtNameForMunicipality(municipalityName) {
 
 // Build data for Tom Select
 const municipalitiesData = @json($municipalities);
-const districtsData = @json($districts);
 const locationsData = @json($locations);
 const causesData = @json($causes);
+const sexData = [
+    { id: 'M', name: 'Masculino' },
+    { id: 'F', name: 'Femenino' },
+];
+const ageUnitData = [
+    { id: 'anos', name: 'Años' },
+    { id: 'meses', name: 'Meses' },
+    { id: 'dias', name: 'Días' },
+];
+
+function selectCatalog(name) {
+    if (name === 'sexod') return sexData;
+    if (name === 'edad_unidad') return ageUnitData;
+    if (name === 'municipioresidenciad' || name === 'municipiodefunciond') return municipalitiesData;
+    if (name === 'sitiodefunciond') return locationsData;
+    if (name === 'sheet') return causesData;
+    return [];
+}
+
+function selectIsSearchable(name) {
+    return !['sexod', 'edad_unidad'].includes(name);
+}
 
 // Function to initialize Tom Select for a specific select element
 function initializeTomSelect(selector, data, labelField = 'name', valueField = 'id') {
@@ -812,8 +434,66 @@ document.addEventListener('DOMContentLoaded', function() {
     const importId = {{ $importId }};
     let currentPage = 1;
     let isInitialLoad = true;
-    let failedImportsPerPage = 10;
+    let failedImportsPerPage = 4;
     let failedImportsSearch = '';
+    let activeAdaptiveTomSelect = null;
+    let adaptiveDropdownFrame = null;
+
+    function positionAdaptiveTomSelect(ts) {
+        if (!ts?.isOpen || !ts.wrapper || !ts.control || !ts.dropdown) return;
+
+        if (!document.documentElement.contains(ts.wrapper)) {
+            activeAdaptiveTomSelect = null;
+            return;
+        }
+
+        const viewportGap = 12;
+        const maximumHeight = 240;
+        const minimumUsefulHeight = 96;
+        const controlRect = ts.control.getBoundingClientRect();
+        const spaceBelow = Math.max(0, window.innerHeight - controlRect.bottom - viewportGap);
+        const spaceAbove = Math.max(0, controlRect.top - viewportGap);
+        const dropdownContent = ts.dropdown_content
+            || ts.dropdown.querySelector('.ts-dropdown-content')
+            || ts.dropdown;
+        const desiredHeight = Math.min(
+            maximumHeight,
+            Math.max(minimumUsefulHeight, dropdownContent.scrollHeight || maximumHeight)
+        );
+        const openUpward = spaceBelow < desiredHeight && spaceAbove > spaceBelow;
+        const availableHeight = openUpward ? spaceAbove : spaceBelow;
+        const dropdownHeight = Math.min(maximumHeight, availableHeight);
+
+        ts.wrapper.classList.toggle('dropdown-up', openUpward);
+        ts.dropdown.style.setProperty('--failed-ts-available-height', `${Math.floor(dropdownHeight)}px`);
+    }
+
+    function scheduleAdaptiveTomSelectPosition() {
+        if (!activeAdaptiveTomSelect || adaptiveDropdownFrame !== null) return;
+
+        adaptiveDropdownFrame = window.requestAnimationFrame(() => {
+            adaptiveDropdownFrame = null;
+            positionAdaptiveTomSelect(activeAdaptiveTomSelect);
+        });
+    }
+
+    function enableAdaptiveTomSelectDropdown(ts) {
+        ts.on('dropdown_open', () => {
+            activeAdaptiveTomSelect = ts;
+            positionAdaptiveTomSelect(ts);
+            window.requestAnimationFrame(() => positionAdaptiveTomSelect(ts));
+        });
+        ts.on('type', scheduleAdaptiveTomSelectPosition);
+        ts.on('load', scheduleAdaptiveTomSelectPosition);
+        ts.on('dropdown_close', () => {
+            ts.wrapper?.classList.remove('dropdown-up');
+            ts.dropdown?.style.removeProperty('--failed-ts-available-height');
+            if (activeAdaptiveTomSelect === ts) activeAdaptiveTomSelect = null;
+        });
+    }
+
+    window.addEventListener('resize', scheduleAdaptiveTomSelectPosition, { passive: true });
+    document.addEventListener('scroll', scheduleAdaptiveTomSelectPosition, { passive: true, capture: true });
 
     function notifyFailedImport(message, type = 'success', duration = 3000) {
         if (typeof window.showToast === 'function') {
@@ -842,6 +522,27 @@ document.addEventListener('DOMContentLoaded', function() {
         loadFailedRecords(1);
     };
 
+    const failedImportsEmptyStateMarkup = () => {
+        if (failedImportsSearch) {
+            return `
+                <div class="users-table-state users-table-state--no-results failed-imports-search-empty" role="status">
+                    <i class="fas fa-search" aria-hidden="true"></i>
+                    <strong>No encontramos resultados</strong>
+                    <span>Prueba con otra búsqueda.</span>
+                    <button class="users-table-state-action" type="button" data-failed-state-action="search">Limpiar búsqueda</button>
+                </div>
+            `;
+        }
+
+        return `
+            <div id="empty-state" class="col-span-full text-center py-12">
+                <div class="text-gray-400 mb-4"><i class="fas fa-check" aria-hidden="true"></i></div>
+                <p class="text-lg font-lora text-gray-600">No quedan registros por revisar</p>
+                <p class="text-sm text-gray-500 font-lora mt-2">Todos los registros fallidos de esta importación ya fueron atendidos.</p>
+            </div>
+        `;
+    };
+
     failedSearchInput?.addEventListener('input', updateFailedSearchClear);
     failedSearchInput?.addEventListener('keydown', event => {
         if (event.key === 'Enter') {
@@ -853,6 +554,15 @@ document.addEventListener('DOMContentLoaded', function() {
         failedSearchInput.value = '';
         updateFailedSearchClear();
         applyFailedSearch();
+    });
+    document.getElementById('records-list')?.addEventListener('click', event => {
+        const action = event.target.closest('[data-failed-state-action="search"]');
+        if (!action) return;
+
+        failedSearchInput.value = '';
+        updateFailedSearchClear();
+        applyFailedSearch();
+        failedSearchInput.focus();
     });
 
     failedPerPageButton?.addEventListener('click', () => {
@@ -869,7 +579,7 @@ document.addEventListener('DOMContentLoaded', function() {
         failedPerPageSelect.dispatchEvent(new Event('change', { bubbles: true }));
     }));
     failedPerPageSelect?.addEventListener('change', event => {
-        failedImportsPerPage = Number(event.target.value) || 10;
+        failedImportsPerPage = Number(event.target.value) || 4;
         isInitialLoad = false;
         loadFailedRecords(1);
     });
@@ -937,13 +647,26 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 // Safely access nested data
                 if (!data.data) {
-                    document.getElementById('empty-state').classList.remove('hidden');
+                    recordsList.classList.toggle('is-search-empty', Boolean(failedImportsSearch));
+                    recordsList.innerHTML = failedImportsEmptyStateMarkup();
+                    renderFailedPaginationPilot({
+                        current_page: 1,
+                        last_page: 0,
+                        from: 0,
+                        to: 0,
+                        total: 0,
+                        total_pending: Number(data.total_pending) || 0,
+                    });
+                    window.requestAnimationFrame(() => {
+                        recordsList.style.opacity = '1';
+                    });
                     return;
                 }
                 // Check if this is a paginated response (Laravel pagination object)
                 const records = Array.isArray(data.data) ? data.data : (data.data.data || []);
                 
                 if (records.length > 0) {
+                    recordsList.classList.remove('is-search-empty');
                     recordsList.innerHTML = '';
                     
                     renderRecords(records);
@@ -958,20 +681,26 @@ document.addEventListener('DOMContentLoaded', function() {
                     // If it's a paginated response, use the pagination object; otherwise use the raw data
                     const paginationData = Array.isArray(data.data) ? null : data.data;
                     if (paginationData) {
-                        renderFailedPaginationPilot(paginationData);
+                        renderFailedPaginationPilot({
+                            ...paginationData,
+                            total_pending: Number(data.total_pending) || Number(paginationData.total) || 0,
+                        });
                     }
                     currentPage = page;
                 } else {
-                    // Show only the empty state
-                    updateFailedPaginationInfo({ from: 0, to: 0, total: 0 });
-                    document.getElementById('dt-pagination').replaceChildren();
-                    recordsList.innerHTML = `
-                        <div id="empty-state" class="col-span-full text-center py-12">
-                            <div class="text-gray-400 mb-4"><i class="fas fa-check" aria-hidden="true"></i></div>
-                            <p class="text-lg font-lora text-gray-600">No quedan registros por revisar</p>
-                            <p class="text-sm text-gray-500 font-lora mt-2">Todos los registros fallidos de esta importación ya fueron atendidos.</p>
-                        </div>
-                    `;
+                    recordsList.classList.toggle('is-search-empty', Boolean(failedImportsSearch));
+                    recordsList.innerHTML = failedImportsEmptyStateMarkup();
+                    renderFailedPaginationPilot({
+                        current_page: 1,
+                        last_page: 0,
+                        from: 0,
+                        to: 0,
+                        total: 0,
+                        total_pending: Number(data.total_pending) || 0,
+                    });
+                    window.requestAnimationFrame(() => {
+                        recordsList.style.opacity = '1';
+                    });
                 }
             })
             .catch(error => {
@@ -981,11 +710,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 recordsContainer.classList.remove('hidden');
                 isInitialLoad = false;
                 recordsList.style.opacity = '1';
+                recordsList.classList.remove('is-search-empty');
                 updateFailedPaginationInfo({ from: 0, to: 0, total: 0 });
                 document.getElementById('dt-pagination').replaceChildren();
                 recordsList.innerHTML = `
                     <div class="failed-imports-load-error" role="alert">
-                        <span><i class="fas fa-exclamation" aria-hidden="true"></i></span>
+                        <span><i class="fas fa-triangle-exclamation" aria-hidden="true"></i></span>
                         <div><p>No se pudieron cargar los registros</p><p>Intente nuevamente en unos momentos.</p></div>
                     </div>
                 `;
@@ -999,37 +729,20 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function findMatchingItemId(textValue, data) {
         if (!textValue || !data || data.length === 0) return '';
-        
-        const trimmed = String(textValue).trim();
-        
-        // Exact match first
-        let item = data.find(d => String(d.name).trim() === trimmed);
-        if (item) {
-            console.log('✓ Exact match: "' + textValue + '" -> ID:', item.id);
-            return String(item.id);
-        }
-        
-        // Case-insensitive match
-        const upper = trimmed.toUpperCase();
-        item = data.find(d => String(d.name).trim().toUpperCase() === upper);
-        if (item) {
-            console.log('✓ Case-insensitive match: "' + textValue + '" -> ID:', item.id);
-            return String(item.id);
-        }
-        
-        // Partial match (for longer names with potential variations)
-        item = data.find(d => {
-            const dName = String(d.name).trim().toUpperCase();
-            return dName.includes(upper) || upper.includes(dName);
-        });
-        if (item) {
-            console.log('✓ Partial match: "' + textValue + '" -> ID:', item.id);
-            return String(item.id);
-        }
-        
-        // Debug: show what we have
-        console.warn('✗ NO MATCH for "' + textValue + '". Available:', data.slice(0, 3).map(d => d.name).join(' | ') + '...');
-        return '';
+
+        const normalize = value => String(value)
+            .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '')
+            .replace(/\s+/g, ' ')
+            .trim()
+            .toUpperCase();
+        const normalizedValue = normalize(textValue);
+        const item = data.find(option =>
+            String(option.id) === String(textValue)
+            || normalize(option.name) === normalizedValue
+        );
+
+        return item ? String(item.id) : '';
     }
 
     function initializeTomSelectField(el, data) {
@@ -1038,11 +751,8 @@ document.addEventListener('DOMContentLoaded', function() {
         const textValue = el.dataset.originalValue || el.dataset.originalText || el.value || '';
         
         if (!data || data.length === 0) {
-            console.log('No data available for', name);
             return;
         }
-        
-        console.log('Initializing Tom Select:', name, '- text value:', textValue);
         
         // Find matching ID
         let selectedId = findMatchingItemId(textValue, data);
@@ -1070,27 +780,43 @@ document.addEventListener('DOMContentLoaded', function() {
             items: selectedId ? [selectedId] : [],
             valueField: 'id',
             labelField: 'name',
-            searchField: 'name',
+            searchField: selectIsSearchable(name) ? ['name'] : [],
             create: false,
             placeholder: 'Seleccione una opción',
             maxItems: 1,
+            maxOptions: 100,
+            allowEmptyOption: false,
+            hideSelected: false,
             closeAfterSelect: true,
             disable: el.disabled
         };
         
         const ts = new TomSelect(el, config);
+        enableAdaptiveTomSelectDropdown(ts);
+        const describedBy = el.getAttribute('aria-describedby');
+        if (describedBy) ts.control_input?.setAttribute('aria-describedby', describedBy);
+        if (el.disabled) ts.control_input?.setAttribute('aria-disabled', 'true');
         
         // Ensure value is set after initialization
         if (selectedId) {
-            ts.setValue(selectedId);
+            ts.setValue(selectedId, true);
             // Update the data attribute with the mapped name for consistency
             const item = data.find(d => String(d.id) === selectedId);
             if (item) {
                 el.dataset.originalText = item.name;
-                console.log('Set originalText to:', item.name);
             }
         }
         
+        ts.on('change', value => {
+            const selected = data.find(item => String(item.id) === String(value));
+            el.dataset.originalText = selected?.name || '';
+            clearFieldError(el);
+        });
+
+        ts.on('blur', () => {
+            if (!el.disabled && el.required) validateCorrectionField(el);
+        });
+
         // Function to apply/reapply styling
         const applyDisabledStyle = () => {
             const wrapper = el.closest('.ts-wrapper');
@@ -1098,11 +824,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 const control = wrapper.querySelector('.ts-control');
                 if (control) {
                     if (el.disabled) {
+                        const isDerivedInEdit = el.hasAttribute('data-derived-field')
+                            && el.closest('.record-card')?.classList.contains('is-editing-fields');
                         wrapper.classList.add('disabled');
                         control.classList.add('disabled');
-                        control.style.setProperty('background-color', 'transparent', 'important');
+                        control.style.setProperty('background-color', isDerivedInEdit ? '#f3f4f6' : 'transparent', 'important');
                         control.style.setProperty('color', '#10233f', 'important');
-                        control.style.setProperty('cursor', 'default', 'important');
+                        control.style.setProperty('cursor', isDerivedInEdit ? 'not-allowed' : 'default', 'important');
                         control.style.setProperty('opacity', '1', 'important');
                         
                         // Also style the input inside
@@ -1148,6 +876,145 @@ document.addEventListener('DOMContentLoaded', function() {
         return ts;
     }
 
+    function friendlyRecordError(error) {
+        const message = String(error || '').trim();
+        const causeMatch = message.match(/^Causa no reconocida:\s*"([\s\S]+?)"\.\s*Use una de las causas permitidas\.?$/i);
+        if (causeMatch) return `Causa de defunción: "${causeMatch[1]}" no es una opción válida. Seleccione una causa permitida.`;
+
+        const legacyMessages = {
+            'Nombre vacío': 'Nombre: este campo es obligatorio.',
+            'Primer apellido vacío': 'Primer apellido: este campo es obligatorio.',
+            'Edad vacía o inválida': 'Edad: ingrese un número entero.',
+            'Lugar de defunción vacío': 'Lugar de defunción: este campo es obligatorio.',
+            'Causa no indicada en la hoja ni en la fila.': 'Causa de defunción: no está indicada. Seleccione una causa permitida.',
+            'Folio duplicado en el archivo (todas las ocurrencias rechazadas)': 'Folio: está repetido dentro del archivo. Corrija o elimine las filas duplicadas.',
+            'Folio duplicado detectado en la base de datos': 'Folio: ya existe en el sistema. Ingrese uno diferente.',
+            'El folio ya existe en la base de datos': 'Folio: ya existe en el sistema. Ingrese uno diferente.',
+            'Edad inválida: meses debe ser mayor o igual a 0': 'Edad: para meses, ingrese un valor entre 0 y 11.',
+            'Edad inválida: meses debe ser menor a 12': 'Edad: para meses, ingrese un valor entre 0 y 11.',
+            'Edad inválida: días debe ser mayor o igual a 0': 'Edad: para días, ingrese un valor entre 0 y 30.',
+            'Edad inválida: días debe ser menor o igual a 30': 'Edad: para días, ingrese un valor entre 0 y 30.',
+            'Edad inválida: años debe ser mayor o igual a 0': 'Edad: para años, ingrese un valor entre 0 y 150.',
+            'Edad inválida: años debe ser menor o igual a 150': 'Edad: para años, ingrese un valor entre 0 y 150.',
+            'Fecha futura: la fecha de defunción no puede ser mayor a hoy': 'Fecha de defunción: no puede ser posterior a hoy.',
+        };
+
+        if (legacyMessages[message]) return legacyMessages[message];
+        if (/^Folio gubernamental inválido o ausente/i.test(message)) {
+            return 'Folio: ingrese 9 dígitos o un folio alfanumérico de defunción válido.';
+        }
+        if (/^Sexo inválido o ausente/i.test(message)) return 'Sexo: seleccione Masculino o Femenino.';
+        if (/^Fecha (?:de defunción )?inválida/i.test(message)) return 'Fecha de defunción: ingrese una fecha válida.';
+
+        return message;
+    }
+
+    function recordErrorDetails(record) {
+        if (Array.isArray(record?.error_details) && record.error_details.length > 0) {
+            return record.error_details
+                .filter(error => typeof error === 'string' && error.trim() !== '')
+                .map(friendlyRecordError);
+        }
+
+        return String(record?.error_message || '')
+            .split(/;\s*/)
+            .map(error => error.trim())
+            .filter(Boolean)
+            .map(friendlyRecordError);
+    }
+
+    function renderRecordErrors(card, errors) {
+        const list = card.querySelector('.error-messages');
+        if (!list) return;
+
+        list.innerHTML = '';
+        errors.forEach(error => {
+            const item = document.createElement('li');
+            const isStructuredError = error && typeof error === 'object';
+            item.textContent = isStructuredError ? error.message : error;
+            if (isStructuredError && error.kind) item.classList.add(`is-${error.kind}`);
+            list.appendChild(item);
+        });
+    }
+
+    function renderRecordStatus(card, record) {
+        const status = record?.status === 'corrected' ? 'corrected' : 'pending';
+        const statusPanel = card.querySelector('[data-record-status]');
+        const statusIcon = statusPanel?.querySelector('.failed-record-error-icon i');
+        const statusTitle = statusPanel?.querySelector('.failed-record-error-title');
+        const editButton = card.querySelector('.btn-toggle-edit');
+        const importButton = card.querySelector('.btn-import-corrected');
+        const isCorrected = status === 'corrected';
+        const statusMessages = isCorrected
+            ? ['El registro está listo para importarse.']
+            : recordErrorDetails(record);
+
+        card.dataset.status = status;
+        card.dataset.statusMessages = JSON.stringify(statusMessages);
+        card.classList.remove('is-editing-status');
+        statusPanel?.classList.remove('is-editing');
+        statusPanel?.classList.toggle('is-corrected', isCorrected);
+
+        if (statusIcon) {
+            statusIcon.className = isCorrected ? 'fas fa-circle-check' : 'fas fa-circle-exclamation';
+        }
+        if (statusTitle) {
+            statusTitle.textContent = isCorrected ? 'Corrección guardada' : 'Requiere corrección';
+        }
+
+        renderRecordErrors(card, statusMessages);
+
+        if (importButton) importButton.hidden = !isCorrected;
+        editButton?.classList.toggle('ui-button--primary', !isCorrected);
+        editButton?.classList.toggle('ui-button--secondary', isCorrected);
+    }
+
+    function renderRecordEditingStatus(card) {
+        const statusPanel = card.querySelector('[data-record-status]');
+        const statusIcon = statusPanel?.querySelector('.failed-record-error-icon i');
+        const statusTitle = statusPanel?.querySelector('.failed-record-error-title');
+        const isPending = card.dataset.status !== 'corrected';
+        let savedStatusMessages = [];
+
+        try {
+            savedStatusMessages = JSON.parse(card.dataset.statusMessages || '[]');
+        } catch (error) {
+            savedStatusMessages = [];
+        }
+
+        card.classList.add('is-editing-status');
+        statusPanel?.classList.remove('is-corrected');
+        statusPanel?.classList.add('is-editing');
+
+        if (statusIcon) statusIcon.className = 'fas fa-edit';
+        if (statusTitle) statusTitle.textContent = 'Editando corrección';
+        renderRecordErrors(card, [
+            ...(isPending
+                ? savedStatusMessages.map(message => ({ message, kind: 'error' }))
+                : []),
+            { message: 'Los cambios aún no se han guardado.', kind: 'note' },
+        ]);
+    }
+
+    function restoreRecordStatus(card) {
+        let statusMessages = [];
+
+        try {
+            statusMessages = JSON.parse(card.dataset.statusMessages || '[]');
+        } catch (error) {
+            statusMessages = [];
+        }
+
+        renderRecordStatus(card, {
+            status: card.dataset.status,
+            error_details: statusMessages,
+        });
+    }
+
+    function correctionFields(form) {
+        return form.querySelectorAll('input[name], select[name], textarea[name]');
+    }
+
     function renderRecords(records) {
         const container = document.getElementById('records-list');
         container.innerHTML = '';
@@ -1159,17 +1026,14 @@ document.addEventListener('DOMContentLoaded', function() {
             const card = clone.querySelector('.record-card');
             card.dataset.recordId = record.id;
 
-            clone.querySelector('.error-message').textContent = record.error_message;
+            renderRecordStatus(card, record);
 
             const originalData = record.original_row_data || {};
             const formData = record.corrected_data || originalData;
             
-            // Debug: log what fields we have
-            console.log('Record #' + record.id + ' fields:', Object.keys(originalData));
-            
             // Populate all form fields
             const form = clone.querySelector('.correction-form');
-            form.querySelectorAll('[name]').forEach(field => {
+            correctionFields(form).forEach(field => {
                 const fieldName = field.getAttribute('name');
                 let value = formData[fieldName];
                 
@@ -1197,76 +1061,29 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 // Special handling for edad - split valor and unidad
                 if (fieldName === 'edad_valor' || fieldName === 'edad_unidad') {
-                    const edadStr = originalData.edad || formData.edad || '';
+                    const edadStr = formData.edad_valor || originalData.edad_valor || formData.edad || originalData.edad || '';
                     if (edadStr) {
                         // Try to extract number and unit
                         const match = edadStr.match(/^(\d+)\s*(?:años|anos|years|a)?$/i);
                         if (match && fieldName === 'edad_valor') {
                             value = match[1];
                         } else if (fieldName === 'edad_unidad' && !value) {
-                            value = 'anos'; // default to years
+                            const sourceUnit = String(
+                                formData.claveedadd || originalData.claveedadd || formData.claveedad || originalData.claveedad || ''
+                            ).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+                            value = sourceUnit.includes('mes')
+                                ? 'meses'
+                                : (sourceUnit.includes('dia')
+                                    ? 'dias'
+                                    : (sourceUnit.includes('ano') || sourceUnit === 'a' ? 'anos' : ''));
                         }
                     }
                 }
                 
-                // Distrito: CALCULAR con base en el municipio de residencia
                 if (fieldName === 'distrito') {
-                    // Primero buscar si existe en los datos
-                    value = formData.distrito || 
-                            originalData.distrito ||
-                            formData.jurisdiction ||
-                            originalData.jurisdiction ||
-                            formData.distrito_id ||
-                            originalData.distrito_id ||
-                            originalData.jurisdicccion ||
-                            '';
-                    
-                    // Si no existe, calcularla basada en el municipio de residencia
-                    if (!value) {
-                        const muniResidencia = (formData.municipioresidenciad || originalData.municipioresidenciad || '').trim();
-                        console.log('DEBUG: Buscando distrito para municipio:', JSON.stringify(muniResidencia));
-                        
-                        if (muniResidencia) {
-                            // Helper para buscar el distrito
-                            const findJurisdiction = (muni) => {
-                                const muniUpper = muni.toUpperCase().trim();
-                                
-                                // 1. Búsqueda exacta
-                                for (const [key, jur] of Object.entries(muniToJurName)) {
-                                    if (key.trim() === muni) {
-                                        console.log('✓ EXACT MATCH: "' + muni + '" -> "' + jur + '"');
-                                        return jur;
-                                    }
-                                }
-                                
-                                // 2. Búsqueda case-insensitive
-                                for (const [key, jur] of Object.entries(muniToJurName)) {
-                                    if (key.toUpperCase().trim() === muniUpper) {
-                                        console.log('✓ CASE-INSENSITIVE: "' + muni + '" -> "' + jur + '"');
-                                        return jur;
-                                    }
-                                }
-                                
-                                // 3. Búsqueda parcial (si muni contiene key o key contiene muni)
-                                for (const [key, jur] of Object.entries(muniToJurName)) {
-                                    const keyUpper = key.toUpperCase().trim();
-                                    if (muniUpper.includes(keyUpper) || keyUpper.includes(muniUpper)) {
-                                        console.log('✓ PARTIAL MATCH: "' + muni + '" vs "' + key + '" -> "' + jur + '"');
-                                        return jur;
-                                    }
-                                }
-                                
-                                console.warn('✗ NO MATCH for "' + muni + '". Need to search all ' + Object.keys(muniToJurName).length + ' municipalities');
-                                console.warn('   Sample municipalities:', Object.keys(muniToJurName).slice(0, 10).join(', '));
-                                return '';
-                            };
-                            
-                            value = findJurisdiction(muniResidencia);
-                            console.log('DEBUG: Resultado distrito:', JSON.stringify(value));
-                        } else {
-                            console.log('DEBUG: Municipio residencia vacío');
-                        }
-                    }
+                    const residenceMunicipality =
+                        formData.municipioresidenciad || originalData.municipioresidenciad || '';
+                    value = districtNameForMunicipality(residenceMunicipality);
                 }
 
                 if (fieldName === 'jurisdicciondefunciond') {
@@ -1285,18 +1102,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     // Para Tom Select fields, guardar el valor original ANTES de que Tom Select lo modifique
                     if (field.classList.contains('tomselect-select')) {
                         const fieldName = field.getAttribute('name');
-                        let assignedData = [];
-                        
-                        // Determine which data to use based on field name
-                        if (fieldName === 'municipioresidenciad' || fieldName === 'municipiodefunciond') {
-                            assignedData = municipalitiesData;
-                        } else if (fieldName === 'jurisdicciondefunciond') {
-                            assignedData = districtsData;
-                        } else if (fieldName === 'sitiodefunciond') {
-                            assignedData = locationsData;
-                        } else if (fieldName === 'sheet') {
-                            assignedData = causesData;
-                        }
+                        const assignedData = selectCatalog(fieldName);
                         
                         // Check if this value exists in the available data
                         let valueExists = false;
@@ -1311,7 +1117,6 @@ document.addEventListener('DOMContentLoaded', function() {
                         if (!valueExists && (fieldName === 'municipioresidenciad' || fieldName === 'municipiodefunciond')) {
                             value = 'OTRO';
                             field.value = value;
-                            console.log('Value "' + field.dataset.originalValue + '" not found in data, setting to OTRO');
                         }
                         
                         // Guardar en dataset para recuperar más tarde
@@ -1342,22 +1147,10 @@ document.addEventListener('DOMContentLoaded', function() {
         // Initialize Tom Select for all select elements in the new records
         setTimeout(() => {
             const allSelects = container.querySelectorAll('select.tomselect-select');
-            console.log('Tom Select: Found', allSelects.length, 'selects to initialize');
             allSelects.forEach((el) => {
                 if (!el.tomselect) {
                     const name = el.getAttribute('name');
-                    let data = [];
-                    
-                    // Determine which data to use based on the field name
-                    if (name === 'municipioresidenciad' || name === 'municipiodefunciond') {
-                        data = municipalitiesData;
-                    } else if (name === 'jurisdicciondefunciond') {
-                        data = districtsData;
-                    } else if (name === 'sitiodefunciond') {
-                        data = locationsData;
-                    } else if (name === 'sheet') {
-                        data = causesData;
-                    }
+                    const data = selectCatalog(name);
                     
                     initializeTomSelectField(el, data);
                 }
@@ -1368,7 +1161,7 @@ document.addEventListener('DOMContentLoaded', function() {
             container.querySelectorAll('.record-card').forEach(card => {
                 const form = card.querySelector('.correction-form');
                 const originalFormData = {};
-                form.querySelectorAll('[name]').forEach(field => {
+                correctionFields(form).forEach(field => {
                     if (field.classList.contains('tomselect-select')) {
                         // For Tom Select fields, use the ORIGINAL value from server (before any mapping)
                         originalFormData[field.getAttribute('name')] = field.dataset.originalValue || '';
@@ -1378,16 +1171,198 @@ document.addEventListener('DOMContentLoaded', function() {
                 });
                 card.dataset.originalFormData = JSON.stringify(originalFormData);
                 
-                // Debug log important fields
-                console.group('Record #' + card.dataset.recordId + ' - Saved Data');
-                console.log('Municipio Residencia:', originalFormData.municipioresidenciad);
-                console.log('Distrito:', originalFormData.distrito);
-                console.log('Municipio Defunción:', originalFormData.municipiodefunciond);
-                console.log('Lugar Específico:', originalFormData.sitiodefunciond);
-                console.log('Causa Defunción:', originalFormData.sheet);
-                console.groupEnd();
             });
         }, 50);
+    }
+
+    function setRecordActionBusy(card, activeButton, isBusy, busyLabel = '') {
+        card.setAttribute('aria-busy', isBusy ? 'true' : 'false');
+        card.querySelectorAll('.action-buttons-view button, .action-buttons-edit button').forEach(button => {
+            button.disabled = isBusy;
+        });
+
+        if (!activeButton) return;
+
+        const label = activeButton.querySelector('[data-button-label]');
+        const icon = activeButton.querySelector('i');
+
+        if (isBusy) {
+            if (label) {
+                label.dataset.defaultLabel = label.textContent.trim();
+                label.textContent = busyLabel;
+            }
+            if (icon) {
+                icon.dataset.defaultClass = icon.className;
+                icon.className = 'fas fa-spinner fa-spin';
+            }
+        } else {
+            if (label?.dataset.defaultLabel) {
+                label.textContent = label.dataset.defaultLabel;
+            }
+            if (icon?.dataset.defaultClass) {
+                icon.className = icon.dataset.defaultClass;
+            }
+        }
+    }
+
+    function finishRecordEditing(card, form) {
+        const savedFormData = {};
+
+        correctionFields(form).forEach(field => {
+            const fieldName = field.getAttribute('name');
+            const savedValue = field.classList.contains('tomselect-select')
+                ? (field.dataset.originalText || '').trim()
+                : (field.value || '').trim();
+
+            savedFormData[fieldName] = savedValue;
+
+            if (field.classList.contains('tomselect-select')) {
+                field.dataset.originalValue = savedValue;
+                field.dataset.originalText = savedValue;
+                field.tomselect?.disable();
+            }
+
+            field.disabled = true;
+        });
+
+        card.dataset.originalFormData = JSON.stringify(savedFormData);
+        card.classList.remove('is-editing-fields');
+        card.querySelector('.action-buttons-edit')?.classList.add('hidden');
+        card.querySelector('.action-buttons-view')?.classList.remove('hidden');
+    }
+
+    function correctionErrorElement(field) {
+        const errorId = field?.getAttribute('aria-describedby');
+        return errorId ? document.getElementById(errorId.split(/\s+/)[0]) : null;
+    }
+
+    function clearFieldError(field) {
+        if (!field) return;
+        field.removeAttribute('aria-invalid');
+        field.tomselect?.control_input?.removeAttribute('aria-invalid');
+        field.setCustomValidity?.('');
+        field.tomselect?.control_input?.setCustomValidity('');
+        const error = correctionErrorElement(field);
+        if (error) {
+            error.textContent = '';
+            error.classList.add('hidden');
+        }
+    }
+
+    function showFieldError(field, message) {
+        if (!field) return false;
+        field.setAttribute('aria-invalid', 'true');
+        field.tomselect?.control_input?.setAttribute('aria-invalid', 'true');
+        field.setCustomValidity?.(message);
+        field.tomselect?.control_input?.setCustomValidity(message);
+        const error = correctionErrorElement(field);
+        if (error) {
+            error.textContent = message;
+            error.classList.remove('hidden');
+        }
+        return false;
+    }
+
+    function fieldRequiredMessage(field) {
+        const messages = {
+            folio: 'Ingrese el folio.',
+            nombre: 'Ingrese el nombre.',
+            primerapellido: 'Ingrese el apellido paterno.',
+            sexod: 'Seleccione el sexo.',
+            edad_valor: 'Ingrese la edad.',
+            edad_unidad: 'Seleccione la unidad de la edad.',
+            municipioresidenciad: 'Seleccione el municipio de residencia.',
+            municipiodefunciond: 'Seleccione el municipio de defunción.',
+            sitiodefunciond: 'Seleccione el lugar específico.',
+            sheet: 'Seleccione la causa de la defunción.',
+            fechadefuncion: 'Ingrese la fecha de defunción.',
+        };
+        return messages[field.name] || 'Complete este campo.';
+    }
+
+    function validateCorrectionField(field) {
+        if (!field || field.disabled || field.hasAttribute('data-derived-field')) return true;
+        const value = String(field.value || '').trim();
+
+        if (field.required && value === '') return showFieldError(field, fieldRequiredMessage(field));
+        if (value === '') {
+            clearFieldError(field);
+            return true;
+        }
+
+        if (field.name === 'folio' && !/^(?:[0-9]{9}|[0-9]{2}[A-Za-z][0-9]{5}[A-Za-z][0-9]{8})$/.test(value)) {
+            return showFieldError(field, 'Ingrese 9 dígitos o el folio alfanumérico oficial.');
+        }
+        if (field.minLength > 0 && value.length < field.minLength) {
+            return showFieldError(field, `Ingrese al menos ${field.minLength} caracteres.`);
+        }
+        if (field.maxLength > 0 && value.length > field.maxLength) {
+            return showFieldError(field, `Ingrese como máximo ${field.maxLength} caracteres.`);
+        }
+        if (field.name === 'fechadefuncion' && field.max && value > field.max) {
+            return showFieldError(field, 'La fecha de defunción no puede ser posterior a hoy.');
+        }
+
+        clearFieldError(field);
+        return true;
+    }
+
+    function prepareCorrectionForm(form, recordId) {
+        const ageErrorId = `failed-${recordId}-age-error`;
+
+        correctionFields(form).forEach(field => {
+            const safeName = field.name.replace(/[^a-z0-9_-]/gi, '-');
+            field.id = `failed-${recordId}-${safeName}`;
+
+            const fieldGroup = field.name === 'edad_valor' || field.name === 'edad_unidad'
+                ? field.closest('.flex')?.parentElement
+                : field.parentElement;
+            const firstNamedField = fieldGroup?.querySelector('[name]');
+            const label = fieldGroup?.querySelector('label');
+            if (label && firstNamedField === field) label.htmlFor = field.id;
+            if (field.name === 'edad_unidad') field.setAttribute('aria-label', 'Unidad de la edad');
+
+            const errorId = field.name === 'edad_valor' || field.name === 'edad_unidad'
+                ? ageErrorId
+                : `${field.id}-error`;
+            field.setAttribute('aria-describedby', errorId);
+
+            if (fieldGroup && !form.querySelector(`[id="${errorId}"]`)) {
+                const error = document.createElement('p');
+                error.id = errorId;
+                error.className = 'failed-field-error hidden';
+                error.setAttribute('role', 'alert');
+                fieldGroup.appendChild(error);
+            }
+
+            field.addEventListener('blur', () => {
+                if (field.name === 'edad_valor' || field.name === 'edad_unidad') validateAgeFields(form);
+                else validateCorrectionField(field);
+            });
+            field.addEventListener('input', () => {
+                if (!field.hasAttribute('aria-invalid')) return;
+                if (field.name === 'edad_valor' || field.name === 'edad_unidad') validateAgeFields(form);
+                else validateCorrectionField(field);
+            });
+        });
+    }
+
+    function focusCorrectionField(field) {
+        field?.scrollIntoView?.({ behavior: 'smooth', block: 'center' });
+        if (field?.tomselect) field.tomselect.focus();
+        else field?.focus?.();
+    }
+
+    function validateCorrectionForm(form) {
+        let firstInvalid = null;
+        correctionFields(form).forEach(field => {
+            const valid = field.name === 'edad_valor' || field.name === 'edad_unidad'
+                ? validateAgeFields(form)
+                : validateCorrectionField(field);
+            if (!valid && !firstInvalid) firstInvalid = field;
+        });
+        if (firstInvalid) focusCorrectionField(firstInvalid);
+        return !firstInvalid;
     }
 
     function attachRecordListeners(cardElement, recordId) {
@@ -1400,11 +1375,14 @@ document.addEventListener('DOMContentLoaded', function() {
         const btnCancelEdit = cardElement.querySelector('.btn-cancel-edit');
         const btnSaveCorrection = cardElement.querySelector('.btn-save-correction');
         const btnRetry = cardElement.querySelector('.btn-retry');
+        const btnImportCorrected = cardElement.querySelector('.btn-import-corrected');
         const btnDiscard = cardElement.querySelector('.btn-discard');
+
+        prepareCorrectionForm(form, recordId);
 
         // Store original form state for cancel
         const originalFormData = {};
-        form.querySelectorAll('[name]').forEach(field => {
+        correctionFields(form).forEach(field => {
             originalFormData[field.getAttribute('name')] = field.value;
         });
         card.dataset.originalFormData = JSON.stringify(originalFormData);
@@ -1415,8 +1393,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 e.preventDefault();
 
                 card.classList.add('is-editing-fields');
-                form.querySelectorAll('[name]').forEach(field => {
-                    field.disabled = false;
+                renderRecordEditingStatus(card);
+                correctionFields(form).forEach(field => {
+                    field.disabled = field.hasAttribute('data-derived-field');
                 });
                 
                 // Destroy existing Tom Select instances and recreate with edit mode
@@ -1428,51 +1407,38 @@ document.addEventListener('DOMContentLoaded', function() {
                             el.tomselect.destroy();
                         }
                         
-                        let data = [];
                         const name = el.getAttribute('name');
-                        
-                        if (name === 'municipioresidenciad' || name === 'municipiodefunciond') {
-                            data = municipalitiesData;
-                        } else if (name === 'jurisdicciondefunciond') {
-                            data = districtsData;
-                        } else if (name === 'sitiodefunciond') {
-                            data = locationsData;
-                        } else if (name === 'sheet') {
-                            data = causesData;
-                        }
+                        const data = selectCatalog(name);
                         
                         if (data.length > 0) {
-                            el.disabled = false;
+                            el.disabled = el.hasAttribute('data-derived-field');
                             initializeTomSelectField(el, data);
-                            
-                            // Add change listener to update originalText when user changes the value
-                            el.addEventListener('change', function() {
-                                // Get the selected item's name from the data array
-                                const selectedId = this.value;
-                                if (selectedId && data.length > 0) {
-                                    const item = data.find(d => String(d.id) === String(selectedId));
-                                    if (item) {
-                                        this.dataset.originalText = item.name;
-                                        console.log('Updated originalText to:', item.name);
-                                    }
-                                }
-                            });
                         }
                     });
 
+                    const residenceMunicipalitySelect = form.querySelector('[name="municipioresidenciad"]');
+                    const residenceDistrictInput = form.querySelector('[name="distrito"]');
                     const deathMunicipalitySelect = form.querySelector('[name="municipiodefunciond"]');
-                    const deathDistrictSelect = form.querySelector('[name="jurisdicciondefunciond"]');
-                    const syncDeathDistrict = () => {
-                        const municipality = municipalitiesData.find(item => String(item.id) === String(deathMunicipalitySelect?.value));
-                        const districtName = districtNameForMunicipality(municipality?.name || deathMunicipalitySelect?.dataset.originalText);
-                        const district = districtsData.find(item => String(item.name).trim().toUpperCase() === String(districtName).trim().toUpperCase());
+                    const deathDistrictInput = form.querySelector('[name="jurisdicciondefunciond"]');
 
-                        if (district && deathDistrictSelect?.tomselect) {
-                            deathDistrictSelect.tomselect.setValue(String(district.id), true);
-                            deathDistrictSelect.dataset.originalText = district.name;
-                        }
+                    const selectedMunicipalityName = select => {
+                        const municipality = municipalitiesData.find(item => String(item.id) === String(select?.value));
+                        return municipality?.name || select?.dataset.originalText || '';
                     };
+
+                    const syncResidenceDistrict = () => {
+                        const districtName = districtNameForMunicipality(selectedMunicipalityName(residenceMunicipalitySelect));
+                        if (residenceDistrictInput) residenceDistrictInput.value = districtName;
+                    };
+
+                    const syncDeathDistrict = () => {
+                        const districtName = districtNameForMunicipality(selectedMunicipalityName(deathMunicipalitySelect));
+                        if (deathDistrictInput) deathDistrictInput.value = districtName;
+                    };
+
+                    residenceMunicipalitySelect?.tomselect?.on('change', syncResidenceDistrict);
                     deathMunicipalitySelect?.tomselect?.on('change', syncDeathDistrict);
+                    syncResidenceDistrict();
                     syncDeathDistrict();
                 }, 50);
                 
@@ -1489,7 +1455,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 // First, restore original form data
                 const originalData = JSON.parse(card.dataset.originalFormData || '{}');
-                form.querySelectorAll('[name]').forEach(field => {
+                correctionFields(form).forEach(field => {
+                    clearFieldError(field);
                     const fieldName = field.getAttribute('name');
                     const originalValue = originalData[fieldName] || '';
                     
@@ -1514,18 +1481,8 @@ document.addEventListener('DOMContentLoaded', function() {
                             el.tomselect.destroy();
                         }
                         
-                        let data = [];
                         const name = el.getAttribute('name');
-                        
-                        if (name === 'municipioresidenciad' || name === 'municipiodefunciond') {
-                            data = municipalitiesData;
-                        } else if (name === 'jurisdicciondefunciond') {
-                            data = districtsData;
-                        } else if (name === 'sitiodefunciond') {
-                            data = locationsData;
-                        } else if (name === 'sheet') {
-                            data = causesData;
-                        }
+                        const data = selectCatalog(name);
                         
                         if (data.length > 0) {
                             el.disabled = true;
@@ -1536,6 +1493,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 actionButtonsEdit.classList.add('hidden');
                 actionButtonsView.classList.remove('hidden');
+                restoreRecordStatus(card);
             });
         }
 
@@ -1543,8 +1501,8 @@ document.addEventListener('DOMContentLoaded', function() {
         if (btnSaveCorrection) {
             btnSaveCorrection.addEventListener('click', (e) => {
                 e.preventDefault();
-                if (validateAgeFields(form)) {
-                    saveCorrection(recordId, form, card, false);
+                if (validateCorrectionForm(form)) {
+                    saveCorrection(recordId, form, card, false, btnSaveCorrection);
                 }
             });
         }
@@ -1553,9 +1511,17 @@ document.addEventListener('DOMContentLoaded', function() {
         if (btnRetry) {
             btnRetry.addEventListener('click', (e) => {
                 e.preventDefault();
-                if (validateAgeFields(form)) {
-                    saveCorrection(recordId, form, card, true);
+                if (validateCorrectionForm(form)) {
+                    saveCorrection(recordId, form, card, true, btnRetry);
                 }
+            });
+        }
+
+        // Import a correction that was already validated and saved.
+        if (btnImportCorrected) {
+            btnImportCorrected.addEventListener('click', (e) => {
+                e.preventDefault();
+                saveCorrection(recordId, form, card, true, btnImportCorrected);
             });
         }
 
@@ -1574,7 +1540,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     return;
                 }
 
-                discardRecord(recordId, card);
+                discardRecord(recordId, card, btnDiscard);
             });
         }
     }
@@ -1582,54 +1548,67 @@ document.addEventListener('DOMContentLoaded', function() {
     function validateAgeFields(form) {
         const edadValor = form.querySelector('[name="edad_valor"]');
         const edadUnidad = form.querySelector('[name="edad_unidad"]');
-        
-        // If no age fields, validation passes
         if (!edadValor || !edadUnidad) return true;
-        
+
         const valor = edadValor.value.trim();
         const unidad = edadUnidad.value;
-        
-        // If valor is provided, unidad is required
-        if (valor !== '' && !unidad) {
-            edadUnidad.setCustomValidity('Debe seleccionar la unidad (años, meses o días)');
-            edadUnidad.reportValidity();
-            return false;
+
+        clearFieldError(edadValor);
+        clearFieldError(edadUnidad);
+
+        if (valor === '') return showFieldError(edadValor, 'Ingrese la edad.');
+        if (!unidad) return showFieldError(edadUnidad, 'Seleccione la unidad de la edad.');
+
+        const valorNum = Number(valor);
+        if (!Number.isInteger(valorNum) || valorNum < 0) {
+            return showFieldError(edadValor, 'Ingrese una edad con un número entero mayor o igual a 0.');
         }
-        
-        // If unidad is 'meses', valor must be < 12
-        if (unidad === 'meses' && valor !== '') {
-            const valorNum = parseInt(valor);
-            if (valorNum >= 12) {
-                edadValor.setCustomValidity('Si la unidad es "meses", el valor debe ser menor a 12. Para 12 o más use años.');
-                edadValor.reportValidity();
-                return false;
-            }
+        if (unidad === 'anos' && valorNum > 150) {
+            return showFieldError(edadValor, 'Para años, ingrese un valor entre 0 y 150.');
+        }
+        if (unidad === 'meses' && valorNum > 11) {
+            return showFieldError(edadValor, 'Para meses, ingrese un valor entre 0 y 11.');
+        }
+        if (unidad === 'dias' && valorNum > 30) {
+            return showFieldError(edadValor, 'Para días, ingrese un valor entre 0 y 30.');
         }
 
-        // If unidad is 'dias', valor must be between 0 and 30 (inclusive)
-        if (unidad === 'dias' && valor !== '') {
-            const valorNum = parseInt(valor);
-            if (valorNum < 0) {
-                edadValor.setCustomValidity('Si la unidad es "días", el valor debe ser mayor o igual a 0.');
-                edadValor.reportValidity();
-                return false;
-            }
-            if (valorNum > 30) {
-                edadValor.setCustomValidity('Si la unidad es "días", el valor debe ser menor o igual a 30.');
-                edadValor.reportValidity();
-                return false;
-            }
-        }
-        
-        // Clear custom validity if all checks pass
-        edadValor.setCustomValidity('');
-        edadUnidad.setCustomValidity('');
+        clearFieldError(edadValor);
+        clearFieldError(edadUnidad);
+        edadValor.max = String({ anos: 150, meses: 11, dias: 30 }[unidad] ?? 150);
         return true;
     }
 
-    function saveCorrection(recordId, form, card, shouldRetry = false) {
+    function showServerFieldErrors(form, errors) {
+        const fieldByPrefix = [
+            [/^Folio:/i, 'folio'],
+            [/^Nombre:/i, 'nombre'],
+            [/^Primer apellido:/i, 'primerapellido'],
+            [/^Segundo apellido:/i, 'segundoapellido'],
+            [/^Sexo:/i, 'sexod'],
+            [/^(Edad|Unidad de edad):/i, 'edad_valor'],
+            [/^Municipio de residencia:/i, 'municipioresidenciad'],
+            [/^Municipio de defunción:/i, 'municipiodefunciond'],
+            [/^Lugar de defunción:/i, 'sitiodefunciond'],
+            [/^Causa de defunción:/i, 'sheet'],
+            [/^Fecha de defunción:/i, 'fechadefuncion'],
+        ];
+
+        let firstInvalid = null;
+        errors.forEach(message => {
+            const match = fieldByPrefix.find(([pattern]) => pattern.test(message));
+            if (!match) return;
+            const field = form.querySelector(`[name="${match[1]}"]`);
+            if (!field) return;
+            showFieldError(field, String(message).replace(/^[^:]+:\s*/, ''));
+            firstInvalid ||= field;
+        });
+        if (firstInvalid) focusCorrectionField(firstInvalid);
+    }
+
+    function saveCorrection(recordId, form, card, shouldRetry = false, activeButton = null) {
         const correctedData = {};
-        form.querySelectorAll('[name]').forEach(field => {
+        correctionFields(form).forEach(field => {
             const fieldName = field.getAttribute('name');
             let value = '';
             
@@ -1640,9 +1619,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 value = field.value ? field.value.trim() : '';
             }
             
-            if (value !== '') {
-                correctedData[fieldName] = value;
-            }
+            correctedData[fieldName] = value;
         });
 
         const endpoint = shouldRetry 
@@ -1650,6 +1627,14 @@ document.addEventListener('DOMContentLoaded', function() {
             : `/api/estadisticas/registros-fallidos/${recordId}/corregir`;
 
         const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '{{ csrf_token() }}';
+        let cardWillBeRemoved = false;
+
+        setRecordActionBusy(
+            card,
+            activeButton,
+            true,
+            shouldRetry ? 'Importando...' : 'Guardando...'
+        );
 
         fetch(endpoint, {
             method: 'POST',
@@ -1661,10 +1646,9 @@ document.addEventListener('DOMContentLoaded', function() {
         })
         .then(response => response.json())
         .then(data => {
-            const validationErrors = card.querySelector('.validation-errors');
-            
             if (data.ok) {
                 if (shouldRetry) {
+                    cardWillBeRemoved = true;
                     // Animate removal without reloading page
                     card.style.transition = 'opacity 0.3s ease-out';
                     card.style.opacity = '0';
@@ -1680,51 +1664,18 @@ document.addEventListener('DOMContentLoaded', function() {
                     }, 300);
                     notifyFailedImport('Registro importado.', 'success');
                 } else {
-                    card.classList.remove('in-edit');
-                    validationErrors.classList.add('hidden');
-                    form.querySelectorAll('[name]').forEach(field => {
-                        const fieldName = field.getAttribute('name');
-                        const displayElement = card.querySelector(`.original-${fieldName}`);
-                        if (displayElement) {
-                            let displayValue = field.value || '-';
-                            
-                            // For Tom Select fields, convert ID back to name for display
-                            if (field.classList.contains('tomselect-select')) {
-                                let data = [];
-                                if (fieldName === 'municipioresidenciad' || fieldName === 'municipiodefunciond') {
-                                    data = municipalitiesData;
-                                } else if (fieldName === 'jurisdicciondefunciond') {
-                                    data = districtsData;
-                                } else if (fieldName === 'sitiodefunciond') {
-                                    data = locationsData;
-                                } else if (fieldName === 'sheet') {
-                                    data = causesData;
-                                }
-                                
-                                if (data && data.length > 0 && field.value) {
-                                    const item = data.find(i => String(i.id) === String(field.value));
-                                    if (item) {
-                                        displayValue = item.name;
-                                        field.dataset.originalText = item.name;
-                                    }
-                                }
-                            }
-                            
-                            displayElement.textContent = displayValue;
-                        }
-                    });
+                    finishRecordEditing(card, form);
+                    renderRecordStatus(card, data.data || { status: 'corrected' });
                     notifyFailedImport('Cambios guardados.', 'success');
                 }
             } else {
                 if (data.errors && Array.isArray(data.errors)) {
-                    const errorsList = validationErrors.querySelector('ul');
-                    errorsList.innerHTML = '';
-                    data.errors.forEach(error => {
-                        const li = document.createElement('li');
-                        li.textContent = error;
-                        errorsList.appendChild(li);
+                    renderRecordStatus(card, {
+                        status: 'pending',
+                        error_details: data.errors,
                     });
-                    validationErrors.classList.remove('hidden');
+                    card.querySelector('.failed-record-error')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                    showServerFieldErrors(form, data.errors);
                 } else {
                     notifyFailedImport(data.message || 'No se pudieron guardar los cambios. Intenta nuevamente.', 'error');
                 }
@@ -1733,11 +1684,19 @@ document.addEventListener('DOMContentLoaded', function() {
         .catch(error => {
             console.error('Error:', error);
             notifyFailedImport('No se pudieron guardar los cambios. Inténtalo nuevamente.', 'error');
+        })
+        .finally(() => {
+            if (!cardWillBeRemoved && card.isConnected) {
+                setRecordActionBusy(card, activeButton, false);
+            }
         });
     }
 
-    function discardRecord(recordId, card) {
+    function discardRecord(recordId, card, activeButton = null) {
         const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '{{ csrf_token() }}';
+        let cardWillBeRemoved = false;
+
+        setRecordActionBusy(card, activeButton, true, 'Descartando...');
 
         fetch(`/api/estadisticas/registros-fallidos/${recordId}/descartar`, {
             method: 'POST',
@@ -1749,6 +1708,7 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(response => response.json())
         .then(data => {
             if (data.ok) {
+                cardWillBeRemoved = true;
                 notifyFailedImport('Registro descartado.', 'success');
                 // Animate removal
                 card.style.transition = 'opacity 0.3s ease-out';
@@ -1770,6 +1730,11 @@ document.addEventListener('DOMContentLoaded', function() {
         .catch(error => {
             console.error('Error:', error);
             notifyFailedImport('No se pudo descartar el registro. Inténtalo nuevamente.', 'error');
+        })
+        .finally(() => {
+            if (!cardWillBeRemoved && card.isConnected) {
+                setRecordActionBusy(card, activeButton, false);
+            }
         });
     }
 
@@ -1824,8 +1789,12 @@ document.addEventListener('DOMContentLoaded', function() {
         const from = Number(data.from) || 0;
         const to = Number(data.to) || 0;
         const total = Number(data.total) || 0;
+        const totalPending = Number(data.total_pending ?? data.total) || 0;
+        const unfilteredTotal = total !== totalPending
+            ? ` <span class="text-sm text-gray-500">(de ${totalPending} totales)</span>`
+            : '';
         footerInfo.classList.remove('is-loading');
-        footerInfo.innerHTML = `<span class="users-table-info-main">Mostrando <span class="font-semibold text-gray-900">${from}-${to}</span> de <span class="font-semibold text-gray-900">${total}</span></span>`;
+        footerInfo.innerHTML = `<span class="users-table-info-main">Mostrando <span class="font-semibold text-gray-900">${from}-${to}</span> de <span class="font-semibold text-gray-900">${total}</span>${unfilteredTotal}</span>`;
     }
 
     loadFailedRecords(1);

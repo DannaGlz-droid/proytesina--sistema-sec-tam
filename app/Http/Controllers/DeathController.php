@@ -532,7 +532,7 @@ class DeathController extends Controller
         $ageDays = null;
         $ageForLegacy = $data['age'] ?? null;
 
-        if (!empty($data['edad_valor']) && !empty($data['edad_unidad'])) {
+        if (array_key_exists('edad_valor', $data) && $data['edad_valor'] !== null && $data['edad_valor'] !== '' && !empty($data['edad_unidad'])) {
             $valor = (int) $data['edad_valor'];
             $unidad = $data['edad_unidad'];
             if ($unidad === 'meses') {

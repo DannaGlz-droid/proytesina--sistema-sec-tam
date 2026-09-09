@@ -1245,7 +1245,7 @@
                         action: '<button class="users-table-state-action" type="button" data-clear-users-state>Limpiar búsqueda y filtros</button>'
                     },
                     error: {
-                        icon: 'fas fa-exclamation-circle',
+                        icon: 'fas fa-triangle-exclamation',
                         title: 'No pudimos cargar los usuarios',
                         message: 'Revisa tu conexión e inténtalo nuevamente.',
                         action: '<button class="users-table-state-action" type="button" data-retry-users-table>Reintentar</button>'

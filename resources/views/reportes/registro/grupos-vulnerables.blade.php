@@ -19,7 +19,7 @@
         @endphp
 
         <div class="report-road-form-card users-form-card">
-            <form id="gruposVulnerablesForm" class="report-road-form" action="{{ isset($publication) ? route('reportes.grupos-vulnerables.update', $publication) : route('reportes.grupos-vulnerables.store') }}" method="POST" enctype="multipart/form-data">
+            <form id="gruposVulnerablesForm" class="report-road-form ui-form-fields" action="{{ isset($publication) ? route('reportes.grupos-vulnerables.update', $publication) : route('reportes.grupos-vulnerables.store') }}" method="POST" enctype="multipart/form-data">
                 @csrf
                 @if(isset($publication)) @method('PUT') @endif
 

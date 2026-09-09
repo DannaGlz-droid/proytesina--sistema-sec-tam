@@ -1,21 +1,30 @@
-<div id="user-password-dialog" class="user-password-dialog hidden fixed inset-0 items-center justify-center p-4" aria-hidden="true">
-    <div class="user-password-dialog-overlay absolute inset-0" data-password-dialog-close></div>
-    <section class="user-password-dialog-card relative w-full" role="dialog" aria-modal="true" aria-labelledby="user-password-dialog-title" aria-describedby="user-password-dialog-description">
+<x-ui.dialog
+    id="user-password-dialog"
+    size="task"
+    labelledby="user-password-dialog-title"
+    describedby="user-password-dialog-description"
+    class="user-password-dialog"
+    panel-class="user-password-dialog-card"
+    :overlay-attributes="['class' => 'user-password-dialog-overlay', 'data-password-dialog-close' => '']"
+>
         <form id="user-password-dialog-form" method="POST" novalidate>
             @csrf
             @method('PUT')
 
-            <header class="user-password-dialog-header">
-                <div class="min-w-0">
-                    <h2 id="user-password-dialog-title">Cambiar contraseña</h2>
-                    <p id="user-password-dialog-description">Actualice las credenciales de acceso de esta cuenta.</p>
+            <header class="ui-dialog__header user-password-dialog-header">
+                <div class="ui-dialog__heading min-w-0">
+                    <div class="ui-dialog__title-row">
+                        <i class="fas fa-key" aria-hidden="true"></i>
+                        <h2 id="user-password-dialog-title" class="ui-dialog__title">Cambiar contraseña</h2>
+                    </div>
+                    <p id="user-password-dialog-description" class="ui-dialog__description">Actualice las credenciales de acceso de esta cuenta.</p>
                 </div>
-                <button type="button" class="user-password-dialog-close" data-password-dialog-close aria-label="Cerrar">
+                <button type="button" class="ui-dialog__close user-password-dialog-close" data-password-dialog-close aria-label="Cerrar">
                     <i class="fas fa-times" aria-hidden="true"></i>
                 </button>
             </header>
 
-            <div class="user-password-dialog-body">
+            <div class="ui-dialog__body user-password-dialog-body">
                 <div class="user-password-dialog-account">
                     <img id="user-password-dialog-photo" src="{{ asset('images/default_pfp.svg.png') }}" alt="">
                     <div class="min-w-0">
@@ -65,13 +74,12 @@
                 </div>
             </div>
 
-            <footer class="user-password-dialog-actions">
+            <footer class="ui-dialog__actions user-password-dialog-actions">
                 <button type="button" class="user-password-dialog-button user-password-dialog-cancel" data-password-dialog-close>Cancelar</button>
                 <button type="submit" class="user-password-dialog-button user-password-dialog-save">Guardar contraseña</button>
             </footer>
         </form>
-    </section>
-</div>
+</x-ui.dialog>
 
 <script>
     (function() {

@@ -534,22 +534,6 @@
     box-shadow: 0 0 0 2px rgba(118, 11, 53, .08) !important;
 }
 
-.statistics-failed-imports-page .record-card > .bg-red-50,
-.statistics-failed-imports-page .record-card > .validation-errors {
-    margin: 0 !important;
-    padding: .7rem 1rem !important;
-    border: 0 !important;
-    border-bottom: 1px solid #fecaca !important;
-    border-radius: 0 !important;
-    background: #fff7f7 !important;
-}
-
-.statistics-failed-imports-page .record-card > .bg-red-50 p,
-.statistics-failed-imports-page .record-card > .validation-errors p,
-.statistics-failed-imports-page .record-card > .validation-errors li {
-    font-size: .75rem !important;
-}
-
 .statistics-failed-imports-page .correction-form > .mb-6,
 .statistics-failed-imports-page .correction-form > .lg\:mb-8 {
     margin: 0 !important;
@@ -634,36 +618,14 @@
     gap: .65rem !important;
 }
 
-.statistics-failed-imports-page .action-buttons-view button,
-.statistics-failed-imports-page .action-buttons-edit button {
-    min-height: 2.55rem;
-    padding: .55rem .9rem !important;
-    border: 1px solid #d3dce7 !important;
-    border-radius: .5rem !important;
-    background: #fff !important;
-    color: #172033 !important;
-    font-family: inherit !important;
-    font-size: .75rem !important;
-    font-weight: 600 !important;
-    box-shadow: none !important;
-}
-
-.statistics-failed-imports-page .action-buttons-view .btn-toggle-edit,
-.statistics-failed-imports-page .action-buttons-edit .btn-retry {
-    border-color: #760b35 !important;
-    background: #760b35 !important;
-    color: #fff !important;
+.statistics-failed-imports-page .action-buttons-view .btn-import-corrected[hidden] {
+    display: none !important;
 }
 
 .statistics-failed-imports-page .action-buttons-view .btn-discard:hover {
     border-color: #fecaca !important;
     background: #fff5f5 !important;
     color: #b42318 !important;
-}
-
-.statistics-failed-imports-page .action-buttons-view .btn-toggle-edit:hover,
-.statistics-failed-imports-page .action-buttons-edit .btn-retry:hover {
-    background: #600929 !important;
 }
 
 .statistics-failed-imports-page .app-table-empty-state {
@@ -742,6 +704,9 @@
     --failed-danger: var(--ui-danger, #dc2626);
     --failed-danger-text: var(--ui-danger-text, #b91c1c);
     --failed-danger-soft: var(--ui-danger-soft, #fef2f2);
+    --failed-success: var(--ui-success, #16a34a);
+    --failed-success-text: var(--ui-success-text, #166534);
+    --failed-success-soft: var(--ui-success-soft, #f0fdf4);
 }
 
 .statistics-failed-imports-page .failed-imports-card {
@@ -779,7 +744,6 @@
 
 .statistics-failed-imports-page .failed-imports-state.hidden,
 .statistics-failed-imports-page #records-container.hidden,
-.statistics-failed-imports-page .validation-errors.hidden,
 .statistics-failed-imports-page .action-buttons-edit.hidden {
     display: none !important;
 }
@@ -799,6 +763,9 @@
 }
 
 .statistics-failed-imports-page .failed-imports-loading-card {
+    display: flex;
+    min-height: 30rem;
+    flex-direction: column;
     overflow: hidden;
     min-width: 0;
     border: 1px solid var(--failed-line);
@@ -806,126 +773,70 @@
     background: #fff;
 }
 
-.statistics-failed-imports-page .failed-imports-skeleton-alert {
-    display: grid;
-    grid-template-columns: 1.75rem minmax(0, 1fr);
-    gap: .7rem;
-    padding: .72rem 1rem;
+.statistics-failed-imports-page .failed-imports-skeleton-alert,
+.statistics-failed-imports-page .failed-imports-skeleton-fields {
     border-bottom: 1px solid var(--failed-line);
-    background: #f8fafc;
+}
+
+.statistics-failed-imports-page .failed-imports-skeleton-alert {
+    padding-block: 1rem;
 }
 
 .statistics-failed-imports-page .failed-imports-skeleton-alert > div {
-    display: grid;
-    align-content: center;
-    gap: .38rem;
-}
-
-.statistics-failed-imports-page .failed-imports-skeleton-circle,
-.statistics-failed-imports-page .failed-imports-skeleton-bar,
-.statistics-failed-imports-page .failed-imports-skeleton-label,
-.statistics-failed-imports-page .failed-imports-skeleton-heading,
-.statistics-failed-imports-page .failed-imports-skeleton-actions > span {
-    display: block;
-    border-radius: 6px;
-    background: linear-gradient(90deg, #eef2f6 25%, #f8fafc 45%, #eef2f6 65%);
-    background-size: 240% 100%;
-    animation: usersSkeletonPulse 1.15s ease-in-out infinite;
-}
-
-.statistics-failed-imports-page .failed-imports-skeleton-circle {
-    width: 1.75rem;
-    height: 1.75rem;
-    border-radius: 50%;
-}
-
-.statistics-failed-imports-page .failed-imports-skeleton-bar {
     width: 72%;
-    height: .72rem;
-}
-
-.statistics-failed-imports-page .failed-imports-skeleton-bar.is-short {
-    width: 28%;
-}
-
-.statistics-failed-imports-page .failed-imports-skeleton-bar.is-message {
-    width: 64%;
-    height: .58rem;
-}
-
-.statistics-failed-imports-page .failed-imports-skeleton-section {
-    padding: .85rem 1rem .95rem;
-    border-bottom: 1px solid var(--failed-line);
-}
-
-.statistics-failed-imports-page .failed-imports-skeleton-heading {
-    width: 32%;
-    height: .58rem;
-    margin-bottom: .85rem;
 }
 
 .statistics-failed-imports-page .failed-imports-skeleton-fields {
-    display: grid;
     gap: .8rem 1rem;
+    padding-block: 1.15rem;
 }
 
-.statistics-failed-imports-page .failed-imports-skeleton-fields.is-three-columns {
+.statistics-failed-imports-page .failed-imports-skeleton-fields--three {
     grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
-.statistics-failed-imports-page .failed-imports-skeleton-fields.is-two-columns {
+.statistics-failed-imports-page .failed-imports-skeleton-fields--two {
     grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
-.statistics-failed-imports-page .failed-imports-skeleton-fields > div {
-    display: grid;
-    gap: .42rem;
+.statistics-failed-imports-page .failed-imports-skeleton-location {
+    flex: 1;
+    align-content: center;
 }
 
-.statistics-failed-imports-page .failed-imports-skeleton-label {
-    width: 44%;
-    height: .42rem;
+.statistics-failed-imports-page .failed-imports-skeleton-location > div:last-child {
+    grid-column: 1 / -1;
 }
 
-.statistics-failed-imports-page .failed-imports-skeleton-fields > div:nth-child(2n) .failed-imports-skeleton-bar {
-    width: 58%;
+.statistics-failed-imports-page .failed-imports-skeleton-summary {
+    align-content: center;
 }
 
 .statistics-failed-imports-page .failed-imports-skeleton-actions {
     display: flex;
+    width: 100%;
     justify-content: flex-end;
     gap: .55rem;
-    padding: .72rem 1rem;
+    padding-block: .85rem;
 }
 
-.statistics-failed-imports-page .failed-imports-skeleton-actions > span {
-    width: 5.2rem;
-    height: 2rem;
+.statistics-failed-imports-page .failed-imports-skeleton-actions > div {
+    width: 5.5rem;
 }
 
-.statistics-failed-imports-page .failed-imports-skeleton-actions > span:last-child {
-    width: 4.6rem;
-}
+@media (max-width: 760px) {
+    .statistics-failed-imports-page .failed-imports-skeleton-fields--three,
+    .statistics-failed-imports-page .failed-imports-skeleton-fields--two {
+        grid-template-columns: minmax(0, 1fr);
+    }
 
-@media (prefers-reduced-motion: reduce) {
-    .statistics-failed-imports-page .failed-imports-skeleton-circle,
-    .statistics-failed-imports-page .failed-imports-skeleton-bar,
-    .statistics-failed-imports-page .failed-imports-skeleton-label,
-    .statistics-failed-imports-page .failed-imports-skeleton-heading,
-    .statistics-failed-imports-page .failed-imports-skeleton-actions > span {
-        animation: none;
+    .statistics-failed-imports-page .failed-imports-skeleton-location > div:last-child {
+        grid-column: auto;
     }
 }
 
 @media (min-width: 1280px) {
     .statistics-failed-imports-page .failed-imports-loading-grid {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-}
-
-@media (max-width: 639px) {
-    .statistics-failed-imports-page .failed-imports-skeleton-fields.is-three-columns,
-    .statistics-failed-imports-page .failed-imports-skeleton-fields.is-two-columns {
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 }
@@ -973,6 +884,16 @@
     box-shadow: 0 0 0 2px rgba(118, 11, 53, .08) !important;
 }
 
+.statistics-failed-imports-page .record-card[data-status="corrected"].is-editing-fields {
+    border-top-color: var(--failed-success) !important;
+    box-shadow: 0 0 0 2px rgba(22, 163, 74, .08) !important;
+}
+
+.statistics-failed-imports-page .record-card.is-editing-fields.is-editing-status {
+    border-top-color: var(--ui-border, #cbd5e1) !important;
+    box-shadow: 0 0 0 2px rgba(71, 85, 105, .06) !important;
+}
+
 .statistics-failed-imports-page .record-card > .failed-record-error {
     display: grid;
     grid-template-columns: 1.85rem minmax(0, 1fr);
@@ -992,13 +913,11 @@
     height: 1.75rem;
     align-items: center;
     justify-content: center;
-    border-radius: 50%;
-    background: #fff;
     color: var(--failed-danger);
-    font-size: .7rem;
+    font-size: 1rem;
 }
 
-.statistics-failed-imports-page .record-card > .failed-record-error p:first-child {
+.statistics-failed-imports-page .failed-record-error-title {
     margin: 0 !important;
     color: var(--failed-danger-text) !important;
     font-size: .72rem !important;
@@ -1006,22 +925,53 @@
     letter-spacing: .02em;
 }
 
-.statistics-failed-imports-page .record-card > .failed-record-error .error-message {
+.statistics-failed-imports-page .record-card > .failed-record-error .error-messages {
     margin: .12rem 0 0 !important;
-    color: #7f1d1d !important;
+    padding: 0;
+    color: var(--failed-danger-text) !important;
     font-size: .78rem !important;
     line-height: 1.42;
+    list-style: none;
 }
 
-.statistics-failed-imports-page .record-card > .validation-errors:not(.hidden) {
-    display: grid;
-    gap: .3rem;
-    margin: 0 !important;
-    padding: .7rem 1rem !important;
-    border: 0 !important;
-    border-bottom: 1px solid var(--ui-danger-border, #fecaca) !important;
-    border-radius: 0 !important;
-    background: var(--failed-danger-soft) !important;
+.statistics-failed-imports-page .record-card > .failed-record-error .error-messages li + li {
+    margin-top: .18rem;
+}
+
+.statistics-failed-imports-page .record-card > .failed-record-error.is-corrected {
+    border-bottom-color: var(--ui-success-border, #bbf7d0) !important;
+    background: var(--failed-success-soft) !important;
+}
+
+.statistics-failed-imports-page .failed-record-error.is-corrected .failed-record-error-icon {
+    color: var(--failed-success) !important;
+}
+
+.statistics-failed-imports-page .failed-record-error.is-corrected .failed-record-error-title,
+.statistics-failed-imports-page .record-card > .failed-record-error.is-corrected .error-messages {
+    color: var(--failed-success-text) !important;
+}
+
+.statistics-failed-imports-page .record-card > .failed-record-error.is-editing {
+    border-bottom-color: var(--failed-line) !important;
+    background: var(--failed-section) !important;
+}
+
+.statistics-failed-imports-page .failed-record-error.is-editing .failed-record-error-icon {
+    color: var(--ui-text-secondary, #475569) !important;
+}
+
+.statistics-failed-imports-page .failed-record-error.is-editing .failed-record-error-title,
+.statistics-failed-imports-page .record-card > .failed-record-error.is-editing .error-messages {
+    color: var(--failed-ink) !important;
+}
+
+.statistics-failed-imports-page .record-card > .failed-record-error.is-editing .error-messages .is-error {
+    color: var(--failed-danger-text) !important;
+}
+
+.statistics-failed-imports-page .record-card > .failed-record-error.is-editing .error-messages .is-note {
+    color: var(--failed-muted) !important;
 }
 
 .statistics-failed-imports-page .correction-form > .mb-6,
@@ -1169,19 +1119,27 @@
 }
 
 /* Review mode is a data summary. Form affordances return only after pressing Editar. */
+.statistics-failed-imports-page .record-card:not(.is-editing-fields) .view-mode .correction-form label {
+    color: var(--failed-muted) !important;
+    font-weight: 500 !important;
+}
+
 .statistics-failed-imports-page .record-card:not(.is-editing-fields) .view-mode .correction-form input:disabled,
 .statistics-failed-imports-page .record-card:not(.is-editing-fields) .view-mode .correction-form input[readonly],
 .statistics-failed-imports-page .record-card:not(.is-editing-fields) .view-mode .correction-form select:disabled,
 .statistics-failed-imports-page .record-card:not(.is-editing-fields) .view-mode .ts-wrapper .ts-control {
-    min-height: 1.55rem !important;
-    padding: 0 !important;
-    border: 0 !important;
-    border-radius: 0 !important;
-    background: transparent !important;
+    min-height: 34px !important;
+    height: 34px !important;
+    padding: 0 .65rem !important;
+    border: 1px solid transparent !important;
+    border-radius: var(--ui-radius-control, 7px) !important;
+    background: var(--ui-surface-soft, #f8fafc) !important;
     color: var(--failed-ink) !important;
     font-family: inherit !important;
-    font-size: .82rem !important;
+    font-size: .8rem !important;
     font-weight: 500 !important;
+    line-height: 1.35 !important;
+    box-shadow: none !important;
     cursor: default !important;
     appearance: none !important;
 }
@@ -1194,24 +1152,48 @@
 
 .statistics-failed-imports-page .record-card:not(.is-editing-fields) .view-mode .ts-wrapper.disabled,
 .statistics-failed-imports-page .record-card:not(.is-editing-fields) .view-mode .ts-wrapper.disabled .ts-control {
-    background: transparent !important;
+    background: var(--ui-surface-soft, #f8fafc) !important;
     color: var(--failed-ink) !important;
     cursor: default !important;
 }
 
-.statistics-failed-imports-page .record-card:not(.is-editing-fields) .view-mode label + .flex {
-    justify-content: flex-start;
-    gap: .3rem !important;
+.statistics-failed-imports-page .record-card:not(.is-editing-fields) .view-mode .ts-control {
+    display: flex !important;
+    align-items: center;
 }
 
-.statistics-failed-imports-page .record-card:not(.is-editing-fields) .view-mode label + .flex > input:disabled {
-    width: 3rem !important;
-    flex: 0 0 3rem;
+.statistics-failed-imports-page .record-card:not(.is-editing-fields) .view-mode .ts-control > input {
+    display: none !important;
 }
 
-.statistics-failed-imports-page .record-card:not(.is-editing-fields) .view-mode label + .flex > select:disabled {
-    width: auto !important;
-    flex: 0 0 auto;
+.statistics-failed-imports-page .record-card:not(.is-editing-fields) .view-mode .ts-control .item {
+    margin: 0 !important;
+    padding: 0 !important;
+    border: 0 !important;
+    background: transparent !important;
+    color: var(--failed-ink) !important;
+    box-shadow: none !important;
+}
+
+.statistics-failed-imports-page .record-card:not(.is-editing-fields) .view-mode .failed-age-fields {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: .55rem !important;
+}
+
+.statistics-failed-imports-page .record-card:not(.is-editing-fields) .view-mode .failed-age-fields > input:disabled,
+.statistics-failed-imports-page .record-card:not(.is-editing-fields) .view-mode .failed-age-fields > .ts-wrapper {
+    width: 100% !important;
+    min-width: 0;
+}
+
+.statistics-failed-imports-page .record-card:not(.is-editing-fields) .view-mode input[type="number"] {
+    -moz-appearance: textfield;
+}
+
+.statistics-failed-imports-page .record-card:not(.is-editing-fields) .view-mode input[type="number"]::-webkit-inner-spin-button,
+.statistics-failed-imports-page .record-card:not(.is-editing-fields) .view-mode input[type="number"]::-webkit-outer-spin-button {
+    margin: 0;
+    appearance: none;
 }
 
 .statistics-failed-imports-page .is-editing-fields .correction-form input:not([readonly]),
@@ -1230,47 +1212,32 @@
     gap: .55rem !important;
 }
 
-.statistics-failed-imports-page .action-buttons-view button,
-.statistics-failed-imports-page .action-buttons-edit button {
-    min-height: 2.35rem;
-    padding: .48rem .85rem !important;
-    border: 1px solid var(--ui-border, #cbd5e1) !important;
-    border-radius: var(--ui-radius-control, 7px) !important;
-    background: #fff !important;
-    color: #374151 !important;
-    font-family: inherit !important;
-    font-size: .72rem !important;
-    font-weight: 600 !important;
-    box-shadow: none !important;
-    transition: background-color .18s ease, border-color .18s ease, color .18s ease, transform .18s ease !important;
-}
-
-.statistics-failed-imports-page .action-buttons-view button:active,
-.statistics-failed-imports-page .action-buttons-edit button:active {
+.statistics-failed-imports-page .action-buttons-view .ui-button:active:not(:disabled),
+.statistics-failed-imports-page .action-buttons-edit .ui-button:active:not(:disabled) {
     transform: translateY(1px);
-}
-
-.statistics-failed-imports-page .action-buttons-view button:focus-visible,
-.statistics-failed-imports-page .action-buttons-edit button:focus-visible {
-    outline: 2px solid var(--ui-focus, #475569);
-    outline-offset: 2px;
 }
 
 .statistics-failed-imports-page .action-buttons-view .btn-discard {
     color: var(--failed-danger-text) !important;
 }
 
-.statistics-failed-imports-page .action-buttons-view .btn-toggle-edit,
-.statistics-failed-imports-page .action-buttons-edit .btn-retry {
-    border-color: #760b35 !important;
-    background: #760b35 !important;
-    color: #fff !important;
+.statistics-failed-imports-page .action-buttons-view .btn-discard:disabled:hover {
+    border-color: var(--ui-border, #cbd5e1) !important;
+    background: var(--ui-surface, #fff) !important;
+    color: var(--failed-danger-text) !important;
 }
 
-.statistics-failed-imports-page .action-buttons-view .btn-toggle-edit:hover,
-.statistics-failed-imports-page .action-buttons-edit .btn-retry:hover {
-    border-color: #600929 !important;
-    background: #600929 !important;
+.statistics-failed-imports-page .failed-imports-list > .failed-imports-search-empty {
+    grid-column: 1 / -1;
+    width: 100%;
+    min-height: 13rem;
+    background: var(--ui-surface, #fff);
+}
+
+.statistics-failed-imports-page .failed-imports-list.is-search-empty {
+    gap: 0;
+    padding: 0;
+    background: var(--ui-surface, #fff);
 }
 
 .statistics-failed-imports-page #empty-state,
@@ -1319,9 +1286,7 @@
     flex: 0 0 2rem;
     align-items: center;
     justify-content: center;
-    border-radius: 50%;
-    background: #fff;
-    font-size: .72rem;
+    font-size: 1rem;
 }
 
 .statistics-failed-imports-page .failed-imports-load-error p {
@@ -1345,4 +1310,142 @@
         width: auto;
     }
 
+}
+
+/* Failed-record editor: shared control geometry, inline validation and open menus. */
+.statistics-failed-imports-page .failed-imports-list,
+.statistics-failed-imports-page .record-card,
+.statistics-failed-imports-page .correction-form,
+.statistics-failed-imports-page .correction-form > div {
+    overflow: visible !important;
+}
+
+.statistics-failed-imports-page .record-card {
+    position: relative;
+}
+
+.statistics-failed-imports-page .record-card:has(.ts-wrapper.dropdown-active) {
+    z-index: 60;
+}
+
+.statistics-failed-imports-page .correction-form > div:has(.ts-wrapper.dropdown-active),
+.statistics-failed-imports-page .correction-form .ts-wrapper.dropdown-active {
+    position: relative;
+    z-index: 70;
+}
+
+.statistics-failed-imports-page .correction-form .ts-dropdown {
+    z-index: 80 !important;
+    max-height: var(--failed-ts-available-height, 15rem);
+    overflow: hidden;
+    border-color: var(--ui-border, #cbd5e1) !important;
+    border-radius: var(--ui-radius-control, 7px) !important;
+    box-shadow: 0 16px 32px rgba(15, 23, 42, .12) !important;
+}
+
+.statistics-failed-imports-page .correction-form .ts-dropdown .ts-dropdown-content {
+    max-height: var(--failed-ts-available-height, 15rem);
+    overflow-y: auto;
+}
+
+.statistics-failed-imports-page .correction-form .ts-wrapper.dropdown-up .ts-dropdown {
+    top: auto !important;
+    bottom: calc(100% + .25rem) !important;
+    margin: 0 !important;
+}
+
+.statistics-failed-imports-page .correction-form .ts-wrapper.single.dropdown-active:not(.dropdown-up) .ts-control::after {
+    transform: translateY(-50%) rotate(0deg) !important;
+}
+
+.statistics-failed-imports-page .correction-form .ts-wrapper.single.dropdown-active.dropdown-up .ts-control::after {
+    transform: translateY(-50%) rotate(180deg) !important;
+}
+
+.statistics-failed-imports-page .record-card > .failed-record-error {
+    border-radius: var(--ui-radius-panel, 10px) var(--ui-radius-panel, 10px) 0 0 !important;
+}
+
+.statistics-failed-imports-page .is-editing-fields .correction-form label {
+    margin-bottom: .32rem !important;
+    color: var(--ui-text, #10233f) !important;
+    font-size: .72rem !important;
+    font-weight: 600 !important;
+    line-height: 1.25 !important;
+}
+
+.statistics-failed-imports-page .is-editing-fields .correction-form input:not([type="hidden"]),
+.statistics-failed-imports-page .is-editing-fields .correction-form select {
+    min-height: 34px !important;
+    height: 34px !important;
+    padding: 0 .58rem !important;
+    font-size: .8rem !important;
+}
+
+.statistics-failed-imports-page .is-editing-fields .correction-form .ts-control {
+    min-height: 34px !important;
+    height: 34px !important;
+    padding: 0 2rem 0 .72rem !important;
+    font-size: .8rem !important;
+}
+
+.statistics-failed-imports-page .is-editing-fields .correction-form [data-derived-field]:disabled,
+.statistics-failed-imports-page .is-editing-fields .correction-form .ts-wrapper.disabled .ts-control {
+    border-color: var(--ui-border-soft, #dbe3ec) !important;
+    background: var(--ui-surface-section, #f3f4f6) !important;
+    color: var(--ui-text-secondary, #475569) !important;
+    cursor: not-allowed !important;
+    box-shadow: none !important;
+}
+
+.statistics-failed-imports-page .correction-form [aria-invalid="true"]:not([type="hidden"]),
+.statistics-failed-imports-page .correction-form .ts-wrapper:has(select[aria-invalid="true"]) .ts-control {
+    border-color: var(--ui-danger, #dc2626) !important;
+}
+
+.statistics-failed-imports-page .correction-form [aria-invalid="true"]:focus,
+.statistics-failed-imports-page .correction-form .ts-wrapper:has(select[aria-invalid="true"]).focus .ts-control {
+    box-shadow: 0 0 0 2px rgba(185, 28, 28, .14) !important;
+}
+
+.statistics-failed-imports-page .failed-field-error {
+    margin: .28rem 0 0;
+    color: var(--ui-danger-text, #b91c1c);
+    font-family: "Open Sans", system-ui, sans-serif;
+    font-size: .7rem;
+    font-weight: 400;
+    line-height: 1.35;
+}
+
+.statistics-failed-imports-page .failed-field-error.hidden {
+    display: none;
+}
+
+.statistics-failed-imports-page .failed-age-fields {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: .55rem !important;
+}
+
+.statistics-failed-imports-page .failed-age-fields > input,
+.statistics-failed-imports-page .failed-age-fields > .ts-wrapper {
+    width: 100% !important;
+    min-width: 0;
+}
+
+@media (max-width: 639px) {
+    .statistics-failed-imports-page .is-editing-fields .correction-form input:not([type="hidden"]),
+    .statistics-failed-imports-page .is-editing-fields .correction-form select {
+        min-height: 40px !important;
+        height: 40px !important;
+    }
+
+    .statistics-failed-imports-page .is-editing-fields .correction-form .ts-control {
+        min-height: 40px !important;
+        height: 40px !important;
+    }
+
+    .statistics-failed-imports-page .failed-age-fields {
+        grid-template-columns: minmax(0, 1fr);
+    }
 }

@@ -503,60 +503,7 @@
 <!-- AL FINAL DEL ARCHIVO hola.blade.php, DESPUÉS de incluir los modales -->
 
     <!-- INCLUIR TODOS LOS COMPONENTES DE MODALES -->
-<!-- Modal de rechazo -->
-<div id="reject-modal" class="reports-reject-modal hidden" role="dialog" aria-modal="true" aria-labelledby="reject-modal-heading">
-    <div class="reports-reject-card">
-        <div class="reports-reject-heading">
-            <div class="reports-reject-heading-copy">
-                <div class="reports-reject-title-row">
-                    <i class="fas fa-exclamation-triangle" aria-hidden="true"></i>
-                    <h3 id="reject-modal-heading">Rechazar reporte</h3>
-                </div>
-                <div class="reports-reject-heading-context">
-                    <p id="reject-modal-title" class="reports-reject-report-title"></p>
-                    <p class="reports-reject-heading-consequence">El reporte volverá al autor para que pueda corregirlo y reenviarlo.</p>
-                </div>
-            </div>
-            <button type="button" id="reject-modal-close" onclick="closeRejectModal()" class="modal-cerrar" aria-label="Cerrar rechazo" title="Cerrar">
-                <i class="fas fa-times" aria-hidden="true"></i>
-            </button>
-        </div>
-        
-        <input type="hidden" id="reject-modal-publication-id">
-        
-        <div class="reports-reject-body">
-            <div class="reports-reject-context">
-                <p class="reports-reject-question reports-reject-question-default">¿Desea rechazar <strong id="reject-modal-title-default"></strong>?</p>
-            </div>
-            <label for="rejection-reason">Motivo del rechazo <span aria-hidden="true">*</span></label>
-            <textarea 
-                id="rejection-reason"
-                rows="4"
-                aria-describedby="rejection-reason-help rejection-reason-error"
-                aria-invalid="false"
-                placeholder="Explique brevemente por qué se rechaza este reporte"
-                maxlength="500"
-                required></textarea>
-            <div class="reports-reject-field-meta">
-                <p id="rejection-reason-help" class="reports-reject-help">
-                    <span class="reports-reject-help-default">Máximo 500 caracteres</span>
-                    <span class="reports-reject-help-alcohol">Describa claramente qué necesita corregirse.</span>
-                </p>
-                <output id="rejection-reason-count" for="rejection-reason">0/500</output>
-            </div>
-            <p id="rejection-reason-error" class="reports-reject-error hidden" role="alert">Escriba el motivo del rechazo.</p>
-        </div>
-        
-        <div class="reports-reject-actions">
-            <button type="button" id="reject-modal-cancel" onclick="closeRejectModal()" class="reports-button reports-button--secondary">
-                Cancelar
-            </button>
-            <button type="button" id="reject-modal-submit" onclick="submitRejection()" class="reports-button reports-button--danger">
-                Rechazar
-            </button>
-        </div>
-    </div>
-</div>
+@include('components.report-reject-dialog')
 
   <!-- INCLUIR TODOS LOS COMPONENTES DE MODALES -->
 @include('components.modal-alcoholimetria')
@@ -1510,7 +1457,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     document.addEventListener('click', (e) => {
         const rejectModal = document.getElementById('reject-modal');
-        if (e.target === rejectModal && !rejectModal.classList.contains('hidden')) closeRejectModal();
+        if (e.target.closest('[data-reject-dialog-overlay]') && !rejectModal.classList.contains('hidden')) closeRejectModal();
     });
     
     // === CONFIGURAR BOTONES DE APERTURA ===

@@ -264,3 +264,63 @@ document.addEventListener('click', (event) => {
     markUsersTableHistoryReturn(link.href);
     window.history.back();
 });
+
+function uiTomSelectSearchInput(target) {
+    if (!(target instanceof HTMLInputElement)) return null;
+    return target.matches('.ui-form-fields .ts-control > input') ? target : null;
+}
+
+function localizeUiTomSelectEmptyState(wrapper) {
+    window.requestAnimationFrame(() => {
+        wrapper.querySelectorAll('.ts-dropdown .no-results').forEach((emptyState) => {
+            emptyState.lang = 'es';
+            emptyState.textContent = 'No se encontraron resultados';
+        });
+    });
+}
+
+function syncUiTomSelectSearchState(input) {
+    const wrapper = input.closest('.ts-wrapper');
+    if (!wrapper) return;
+
+    wrapper.classList.toggle('ui-has-search-query', input.value.trim().length > 0);
+    localizeUiTomSelectEmptyState(wrapper);
+}
+
+/*
+ * Single-select searches keep their committed value, but only show the query
+ * while the user is typing. This avoids presenting the value and query as if
+ * they were two selected items. Event delegation also covers dynamic cards.
+ */
+document.addEventListener('input', (event) => {
+    const input = uiTomSelectSearchInput(event.target);
+    if (input) syncUiTomSelectSearchState(input);
+});
+
+document.addEventListener('change', (event) => {
+    const select = event.target;
+    if (!(select instanceof HTMLSelectElement)
+        || !select.matches('.ui-form-fields select.tomselect-select')) return;
+
+    select.nextElementSibling?.classList.remove('ui-has-search-query');
+});
+
+document.addEventListener('focusout', (event) => {
+    const input = uiTomSelectSearchInput(event.target);
+    if (!input) return;
+
+    const wrapper = input.closest('.ts-wrapper');
+    window.setTimeout(() => {
+        if (!wrapper || wrapper.contains(document.activeElement)) return;
+
+        const select = wrapper.previousElementSibling;
+        if (select instanceof HTMLSelectElement && select.tomselect?.control_input === input) {
+            select.tomselect.setTextboxValue('');
+            select.tomselect.refreshOptions(false);
+        } else {
+            input.value = '';
+        }
+
+        wrapper.classList.remove('ui-has-search-query');
+    }, 0);
+});

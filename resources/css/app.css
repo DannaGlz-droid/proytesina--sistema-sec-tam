@@ -1,3 +1,4 @@
+@import './design-system/dialog.css';
 @import './pages/report-publications.css';
 @import './pages/report-road-safety-form.css';
 @import './pages/report-observatory-form.css';
@@ -9085,6 +9086,161 @@ html[data-ui-theme="tamaulipas-salud"] .app-document-surface {
   box-shadow: 0 0 0 2px rgba(185, 28, 28, 0.14) !important;
 }
 
+/* Shared field contract used by report registration and inline correction forms. */
+.ui-form-fields label:not(.inline-flex) {
+  margin-bottom: 0.32rem !important;
+  color: var(--ui-text) !important;
+  font-family: "Open Sans", system-ui, sans-serif !important;
+  font-size: 0.72rem !important;
+  font-weight: 600 !important;
+  line-height: 1.25 !important;
+  letter-spacing: 0 !important;
+}
+
+.ui-form-fields label:not(.inline-flex) span.text-red-600 {
+  color: var(--ui-required) !important;
+}
+
+.ui-form-fields input:not([type="checkbox"]):not([type="radio"]),
+.ui-form-fields select,
+.ui-form-fields textarea,
+.ui-form-fields .ts-control,
+.ui-form-fields .ts-control .item,
+.ui-form-fields .ts-control > input {
+  font-family: "Open Sans", system-ui, sans-serif !important;
+  font-size: 0.8rem !important;
+  font-weight: 500 !important;
+  letter-spacing: 0 !important;
+}
+
+.ui-form-fields .ts-wrapper {
+  display: block !important;
+  width: 100% !important;
+  padding: 0 !important;
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.ui-form-fields .ts-wrapper .ts-control {
+  box-sizing: border-box !important;
+  width: 100% !important;
+  min-height: 34px !important;
+  height: 34px !important;
+  padding: 0 2rem 0 0.72rem !important;
+  align-items: center !important;
+  flex-wrap: nowrap !important;
+  gap: 0.28rem !important;
+  overflow: hidden !important;
+  border: 1px solid var(--ui-border) !important;
+  border-radius: var(--ui-radius-control) !important;
+  background: var(--ui-surface) !important;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04) !important;
+}
+
+.ui-form-fields .ts-wrapper:not(.disabled) .ts-control:hover {
+  border-color: var(--ui-border) !important;
+  background: var(--ui-surface-soft) !important;
+}
+
+.ui-form-fields .ts-wrapper.focus .ts-control,
+.ui-form-fields .ts-wrapper.dropdown-active .ts-control {
+  border-color: var(--ui-focus) !important;
+  background: var(--ui-surface) !important;
+  box-shadow: 0 0 0 2px var(--ui-focus-ring) !important;
+}
+
+.ui-form-fields .ts-control .item {
+  max-width: 100% !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+  border: 0 !important;
+  background: transparent !important;
+  color: var(--ui-text) !important;
+  line-height: 1.15 !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+.ui-form-fields .ts-control > input,
+.ui-form-fields .ts-control > input:focus {
+  width: auto !important;
+  min-width: 2px !important;
+  min-height: 0 !important;
+  height: auto !important;
+  flex: 1 1 auto !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  outline: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  font: inherit !important;
+  line-height: 1.15 !important;
+}
+
+.ui-form-fields .ts-wrapper.single.has-items:not(.input-active) .ts-control > input {
+  width: 2px !important;
+  min-width: 2px !important;
+  flex: 0 0 2px !important;
+}
+
+.ui-form-fields .ts-wrapper.single.ui-has-search-query .ts-control > .item {
+  display: none !important;
+}
+
+.ui-form-fields .ts-wrapper.single.ui-has-search-query .ts-control > input {
+  min-width: 0 !important;
+  flex: 1 1 100% !important;
+}
+
+.ui-form-fields .ts-wrapper.single .ts-control::after {
+  top: 50% !important;
+  right: 0.72rem !important;
+  width: 0 !important;
+  height: 0 !important;
+  margin-top: 0 !important;
+  transform: translateY(-50%) !important;
+  border-width: 5px 5px 0 !important;
+  border-color: var(--ui-text-muted) transparent transparent !important;
+  background: none !important;
+}
+
+.ui-form-fields .ts-wrapper.single.dropdown-active .ts-control::after {
+  transform: translateY(-50%) rotate(180deg) !important;
+}
+
+.ui-form-fields .ts-dropdown {
+  z-index: 80 !important;
+  overflow: auto;
+  border-color: var(--ui-border) !important;
+  border-radius: var(--ui-radius-control) !important;
+  box-shadow: 0 16px 32px rgba(15, 23, 42, 0.12) !important;
+}
+
+.ui-form-fields .ts-dropdown .option,
+.ui-form-fields .ts-dropdown .no-results {
+  padding: 0.42rem 0.58rem !important;
+  color: var(--ui-text-secondary) !important;
+  font-family: "Open Sans", system-ui, sans-serif !important;
+  font-size: 0.79rem !important;
+  font-weight: 400 !important;
+  line-height: 1.15rem !important;
+}
+
+.ui-form-fields .ts-dropdown .option.selected {
+  background: var(--ui-surface-soft) !important;
+  color: var(--ui-text) !important;
+  font-weight: 600 !important;
+}
+
+.ui-form-fields .ts-dropdown .option.active {
+  background: #e9eef4 !important;
+  color: var(--ui-text) !important;
+}
+
 .app-toast-container {
   position: fixed;
   z-index: 90;
@@ -9670,6 +9826,26 @@ html[data-ui-theme="tamaulipas-salud"] .app-document-surface {
   min-width: 5.75rem;
   color: #ffffff;
 }
+
+.confirm-dialog[data-variant="neutral"] .confirm-dialog-icon { color: var(--brand-primary); }
+.confirm-dialog[data-variant="neutral"] .confirm-dialog-button-primary { border-color: var(--brand-primary); background: var(--brand-primary); }
+.confirm-dialog[data-variant="neutral"] .confirm-dialog-button-primary:hover { border-color: var(--brand-primary-hover); background: var(--brand-primary-hover); }
+.confirm-dialog[data-variant="neutral"] .confirm-dialog-button-primary:focus-visible { outline: 3px solid rgb(97 17 50 / 30%); outline-offset: 2px; }
+
+.confirm-dialog[data-variant="danger"] .confirm-dialog-icon { color: var(--ui-danger-text); }
+.confirm-dialog[data-variant="danger"] .confirm-dialog-button-primary { border-color: var(--ui-danger-text); background: var(--ui-danger-text); }
+.confirm-dialog[data-variant="danger"] .confirm-dialog-button-primary:hover { border-color: #991b1b; background: #991b1b; }
+.confirm-dialog[data-variant="danger"] .confirm-dialog-button-primary:focus-visible { outline: 3px solid rgb(185 28 28 / 25%); outline-offset: 2px; }
+
+.confirm-dialog[data-variant="warning"] .confirm-dialog-icon { color: var(--ui-warning-text); }
+.confirm-dialog[data-variant="warning"] .confirm-dialog-button-primary { border-color: var(--ui-warning-text); background: var(--ui-warning-text); }
+.confirm-dialog[data-variant="warning"] .confirm-dialog-button-primary:hover { border-color: #78350f; background: #78350f; }
+.confirm-dialog[data-variant="warning"] .confirm-dialog-button-primary:focus-visible { outline: 3px solid rgb(146 64 14 / 25%); outline-offset: 2px; }
+
+.confirm-dialog[data-variant="success"] .confirm-dialog-icon { color: var(--ui-success-text); }
+.confirm-dialog[data-variant="success"] .confirm-dialog-button-primary { border-color: var(--ui-success-text); background: var(--ui-success-text); }
+.confirm-dialog[data-variant="success"] .confirm-dialog-button-primary:hover { border-color: #14532d; background: #14532d; }
+.confirm-dialog[data-variant="success"] .confirm-dialog-button-primary:focus-visible { outline: 3px solid rgb(22 101 52 / 25%); outline-offset: 2px; }
 
 @media (max-width: 639px) {
   .confirm-dialog-content {

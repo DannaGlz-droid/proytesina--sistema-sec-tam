@@ -12,12 +12,14 @@ class FailedImportRecord extends Model
         'import_id',
         'original_row_data',
         'error_message',
+        'error_details',
         'corrected_data',
         'status',
     ];
 
     protected $casts = [
         'original_row_data' => 'array',
+        'error_details' => 'array',
         'corrected_data' => 'array',
     ];
 

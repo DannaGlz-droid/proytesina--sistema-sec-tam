@@ -133,7 +133,7 @@ class DeathImportController extends Controller
                         $folio = trim((string)$row[0]);
                     }
                     if ($folio !== null && $folio !== '') {
-                        $folio = strtoupper($folio);
+                        $folio = strtoupper(preg_replace('/[^A-Z0-9]/i', '', $folio));
                         $folioCounts[$folio] = ($folioCounts[$folio] ?? 0) + 1;
                     }
                 }
@@ -262,43 +262,22 @@ class DeathImportController extends Controller
                 $deathDistrictName = trim((string)($rowAssoc['jurisdicciondefunciond'] ?? $rowAssoc['distritodefunciond'] ?? '')) ?: null;
                 $siteName = trim((string)($rowAssoc['sitiodefunciond'] ?? '')) ?: null;
 
-                // basic validations (STRICT: require gov_folio; municipalities outside Tamaulipas map to 'OTRO')
-                $errors = [];
-                if (!$name) $errors[] = 'Nombre vacío';
-                if (!$first) $errors[] = 'Primer apellido vacío';
-                if (!$dateRaw) $errors[] = 'Fecha de defunción vacía';
-
-                // parse date
-                $deathDate = null;
-                if ($dateRaw) {
-                    try {
-                        if (is_numeric($dateRaw)) {
-                            $deathDate = ExcelDate::excelToDateTimeObject($dateRaw);
-                        } else {
-                            $deathDate = Carbon::parse($dateRaw);
-                        }
-                    } catch (\Throwable $e) {
-                        $errors[] = 'Fecha inválida: ' . $dateRaw;
-                    }
+                $validationRow = $rowAssoc;
+                if ($folio !== null) {
+                    $validationRow['folio'] = $folio;
                 }
-
-                // Validate that death date is not in the future
-                if ($deathDate) {
-                    try {
-                        // Ensure we have a Carbon instance for comparison
-                        if (!($deathDate instanceof \Carbon\Carbon)) {
-                            $deathDate = Carbon::instance($deathDate);
-                        }
-                        $today = Carbon::today();
-                        // compare date portion only
-                        if ($deathDate->startOfDay()->gt($today->startOfDay())) {
-                            $errors[] = 'Fecha futura: la fecha de defunción no puede ser mayor a hoy';
-                        }
-                    } catch (\Throwable $__e) {
-                        // If anything goes wrong comparing dates, treat as invalid date
-                        $errors[] = 'Fecha inválida: error al validar fecha';
-                    }
-                }
+                $validated = $this->validateAndNormalizeImportRow($validationRow);
+                $errors = $validated['errors'];
+                $name = $validated['name'];
+                $first = $validated['first'];
+                $second = $validated['second'];
+                $folio = $validated['folio'];
+                $sex = $validated['sex'];
+                $age = $validated['age'];
+                $ageYears = $validated['age_years'];
+                $ageMonths = $validated['age_months'];
+                $ageDays = $validated['age_days'];
+                $deathDate = $validated['death_date'];
 
                 // lookup municipalities using normalized exact match first.
                 // If not found (likely outside Tamaulipas), use/create a generic 'OTRO' municipality and jurisdiction.
@@ -353,23 +332,22 @@ class DeathImportController extends Controller
                     $municipalityLookup[$this->normalizeMunicipalityName($deathMunicipality->name)] = $deathMunicipality;
                 }
 
-                // Validate gov_folio: accept 9 digits or the alphanumeric defunction format.
-                if (is_null($folio) || !preg_match('/^(?:[0-9]{9}|[0-9]{2}[A-Z][0-9]{5}[A-Z][0-9]{8})$/i', (string)$folio)) {
-                    $errors[] = 'Folio gubernamental inválido o ausente (se requieren 9 dígitos o el formato alfanumérico de defunción)';
-                }
-
                 // map or create death location: use existing or create new if missing
                 $deathLocation = null;
                 if ($siteName) {
-                    $normSite = mb_strtolower(trim($siteName));
-                    $deathLocation = $deathLocationLookup[$normSite] ?? null;
-                    if (!$deathLocation) {
-                        // create new DeathLocation and add to lookup
-                        $deathLocation = DeathLocation::firstOrCreate(['name' => $siteName]);
-                        $deathLocationLookup[mb_strtolower(trim($deathLocation->name))] = $deathLocation;
+                    if (mb_strlen($siteName) > 191) {
+                        $errors[] = 'Lugar de defunción: excede 191 caracteres. Reduzca su longitud.';
+                    } else {
+                        $normSite = mb_strtolower(trim($siteName));
+                        $deathLocation = $deathLocationLookup[$normSite] ?? null;
+                        if (!$deathLocation) {
+                            // Preserve the current policy: new death locations may be added during import.
+                            $deathLocation = DeathLocation::firstOrCreate(['name' => $siteName]);
+                            $deathLocationLookup[mb_strtolower(trim($deathLocation->name))] = $deathLocation;
+                        }
                     }
                 } else {
-                    $errors[] = 'Lugar de defunción vacío';
+                    $errors[] = 'Lugar de defunción: este campo es obligatorio.';
                 }
 
                 // Resolve cause against the closed catalog. Accept row value first, then sheet name.
@@ -393,23 +371,13 @@ class DeathImportController extends Controller
                     }
 
                     $errors[] = $causeSource
-                        ? 'Causa no reconocida: "' . $causeSource . '". Use una de las causas permitidas.'
-                        : 'Causa no indicada en la hoja ni en la fila.';
+                        ? 'Causa de defunción: "' . $causeSource . '" no es una opción válida. Seleccione una causa permitida.'
+                        : 'Causa de defunción: no está indicada. Seleccione una causa permitida.';
                 }
 
                 // If the folio is duplicated inside the uploaded file, reject ALL its occurrences
                 if (!is_null($folio) && isset($folioCounts[$folio]) && $folioCounts[$folio] > 1) {
-                    $rowsFailed++;
-                    $rowData = array_merge(['sheet' => $causeName, 'row' => $rowNum + 2], $rowAssoc);
-                    $failedRows[] = $rowData;
-                    // Save to failed_import_records table for manual correction
-                    FailedImportRecord::create([
-                        'import_id' => $importId,
-                        'original_row_data' => $rowData,
-                        'error_message' => 'Folio duplicado en el archivo (todas las ocurrencias rechazadas)',
-                        'status' => 'pending',
-                    ]);
-                    continue;
+                    $errors[] = 'Folio: está repetido dentro del archivo. Corrija o elimine las filas duplicadas.';
                 }
 
                 // If errors, mark failed
@@ -417,140 +385,8 @@ class DeathImportController extends Controller
                     $rowsFailed++;
                     $rowData = array_merge(['sheet' => $causeName, 'row' => $rowNum + 2], $rowAssoc);
                     $failedRows[] = $rowData;
-                    // Save to failed_import_records table for manual correction
-                    FailedImportRecord::create([
-                        'import_id' => $importId,
-                        'original_row_data' => $rowData,
-                        'error_message' => implode('; ', $errors),
-                        'status' => 'pending',
-                    ]);
+                    $this->storeFailedImportRecord($importId, $rowData, $errors);
                     continue;
-                }
-
-                // normalize sex
-                if ($sex) {
-                    if (in_array($sex, ['F','FEM','FEMENINO','MUJER'])) $sex = 'F';
-                    elseif (in_array($sex, ['M','MAS','MASC','MASCULINO','HOMBRE'])) $sex = 'M';
-                    else $sex = strtoupper(substr($sex,0,1));
-                }
-
-                // deathLocation was mapped earlier in strict mode; $deathLocation is set
-
-                // Determine normalized age fields: age_years / age_months / age_days
-                // Note: DB does not currently store age_days; we validate it and keep age fields compatible.
-                $ageYears = null;
-                $ageMonths = null;
-                $ageDays = null;
-                if ($claveEdad) {
-                    // Normalize unit string: trim, uppercase, remove accents and non-alphanumerics
-                    $claveNorm = mb_strtoupper(trim($claveEdad));
-                    $claveNormAscii = iconv('UTF-8', 'ASCII//TRANSLIT', $claveNorm) ?: $claveNorm;
-                    // collapse to letters/numbers only to simplify matching (e.g. 'DÍAS' -> 'DIAS')
-                    $claveNormAscii = preg_replace('/[^A-Z0-9]/', '', $claveNormAscii);
-
-                    if (strpos($claveNormAscii, 'MES') !== false) {
-                        $ageYears = 0;
-                        $ageMonths = is_null($age) ? null : (int)$age;
-                    } elseif (strpos($claveNormAscii, 'DIA') !== false || strpos($claveNormAscii, 'DIAS') !== false) {
-                        // Unit in days: validate days but DB doesn't store separate days field.
-                        $ageYears = 0;
-                        $ageMonths = 0;
-                        $ageDays = is_null($age) ? null : (int)$age;
-                    } elseif (strpos($claveNormAscii, 'ANO') !== false || strpos($claveNormAscii, 'ANOS') !== false || strpos($claveNormAscii, 'A') === 0) {
-                        $ageYears = is_null($age) ? null : (int)$age;
-                        $ageMonths = null;
-                    } else {
-                        // Unknown unit: keep as years by default (backwards-compatible)
-                        $ageYears = is_null($age) ? null : (int)$age;
-                        $ageMonths = null;
-                    }
-                } else {
-                    // No unit provided: keep existing behavior (treat as years)
-                    $ageYears = is_null($age) ? null : (int)$age;
-                    $ageMonths = null;
-                }
-                // Validate months
-                if (!is_null($ageMonths)) {
-                    if ($ageMonths < 0) {
-                        $rowsFailed++;
-                        $rowData = array_merge(['sheet' => $causeName, 'row' => $rowNum + 2], $rowAssoc);
-                        $failedRows[] = $rowData;
-                        FailedImportRecord::create([
-                            'import_id' => $importId,
-                            'original_row_data' => $rowData,
-                            'error_message' => 'Edad inválida: meses debe ser mayor o igual a 0',
-                            'status' => 'pending',
-                        ]);
-                        continue;
-                    }
-                    if ($ageMonths >= 12) {
-                        $rowsFailed++;
-                        $rowData = array_merge(['sheet' => $causeName, 'row' => $rowNum + 2], $rowAssoc);
-                        $failedRows[] = $rowData;
-                        FailedImportRecord::create([
-                            'import_id' => $importId,
-                            'original_row_data' => $rowData,
-                            'error_message' => 'Edad inválida: meses debe ser menor a 12',
-                            'status' => 'pending',
-                        ]);
-                        continue;
-                    }
-                }
-
-                // Validate days (we don't persist days separately yet) — require 0..30 so it doesn't roll into a month
-                if (!is_null($ageDays)) {
-                    if ($ageDays < 0) {
-                        $rowsFailed++;
-                        $rowData = array_merge(['sheet' => $causeName, 'row' => $rowNum + 2], $rowAssoc);
-                        $failedRows[] = $rowData;
-                        FailedImportRecord::create([
-                            'import_id' => $importId,
-                            'original_row_data' => $rowData,
-                            'error_message' => 'Edad inválida: días debe ser mayor o igual a 0',
-                            'status' => 'pending',
-                        ]);
-                        continue;
-                    }
-                    if ($ageDays > 30) {
-                        $rowsFailed++;
-                        $rowData = array_merge(['sheet' => $causeName, 'row' => $rowNum + 2], $rowAssoc);
-                        $failedRows[] = $rowData;
-                        FailedImportRecord::create([
-                            'import_id' => $importId,
-                            'original_row_data' => $rowData,
-                            'error_message' => 'Edad inválida: días debe ser menor o igual a 30',
-                            'status' => 'pending',
-                        ]);
-                        continue;
-                    }
-                }
-
-                // Validate years maximum and non-negative
-                if (!is_null($ageYears)) {
-                    if ($ageYears < 0) {
-                        $rowsFailed++;
-                        $rowData = array_merge(['sheet' => $causeName, 'row' => $rowNum + 2], $rowAssoc);
-                        $failedRows[] = $rowData;
-                        FailedImportRecord::create([
-                            'import_id' => $importId,
-                            'original_row_data' => $rowData,
-                            'error_message' => 'Edad inválida: años debe ser mayor o igual a 0',
-                            'status' => 'pending',
-                        ]);
-                        continue;
-                    }
-                    if ($ageYears > 150) {
-                        $rowsFailed++;
-                        $rowData = array_merge(['sheet' => $causeName, 'row' => $rowNum + 2], $rowAssoc);
-                        $failedRows[] = $rowData;
-                        FailedImportRecord::create([
-                            'import_id' => $importId,
-                            'original_row_data' => $rowData,
-                            'error_message' => 'Edad inválida: años debe ser menor o igual a 150',
-                            'status' => 'pending',
-                        ]);
-                        continue;
-                    }
                 }
 
                 $incomingDistrictId = null;
@@ -624,7 +460,22 @@ class DeathImportController extends Controller
                 $d->death_cause_id = $deathCause->id;
                 // Track which import batch this record came from
                 $d->import_id = $importId;
-                $d->save();
+                try {
+                    $d->save();
+                } catch (\Illuminate\Database\QueryException $e) {
+                    Log::warning('Import row could not be persisted', [
+                        'import_id' => $importId,
+                        'row' => $rowNum + 2,
+                        'error' => $e->getMessage(),
+                    ]);
+                    $rowsFailed++;
+                    $rowData = array_merge(['sheet' => $causeName, 'row' => $rowNum + 2], $rowAssoc);
+                    $failedRows[] = $rowData;
+                    $this->storeFailedImportRecord($importId, $rowData, [
+                        'Registro: uno o más datos no cumplen el formato permitido. Revise los campos e inténtelo nuevamente.',
+                    ]);
+                    continue;
+                }
 
                 $rowsImported++;
             }
@@ -938,11 +789,16 @@ class DeathImportController extends Controller
     public function getFailedRecords($importId)
     {
         try {
-            $perPage = min(max((int) request()->query('per_page', 10), 1), 100);
+            $perPage = min(max((int) request()->query('per_page', 4), 1), 10);
             $search = trim((string) request()->query('search', ''));
+            $totalPending = $search === ''
+                ? null
+                : FailedImportRecord::where('import_id', $importId)
+                    ->whereIn('status', ['pending', 'corrected'])
+                    ->count();
 
             $failedRecords = FailedImportRecord::where('import_id', $importId)
-                ->where('status', 'pending')
+                ->whereIn('status', ['pending', 'corrected'])
                 ->when($search !== '', function ($query) use ($search) {
                     $term = '%' . $search . '%';
                     $query->where(function ($nested) use ($term) {
@@ -954,7 +810,13 @@ class DeathImportController extends Controller
                 ->orderBy('created_at', 'desc')
                 ->paginate($perPage);
 
-            return response()->json(['ok' => true, 'data' => $failedRecords]);
+            $totalPending ??= $failedRecords->total();
+
+            return response()->json([
+                'ok' => true,
+                'data' => $failedRecords,
+                'total_pending' => $totalPending,
+            ]);
         } catch (\Throwable $e) {
             Log::error("Error fetching failed records: " . $e->getMessage());
             return response()->json(['ok' => false, 'message' => 'No se pudieron cargar los registros fallidos. Inténtalo nuevamente.'], 500);
@@ -973,8 +835,58 @@ class DeathImportController extends Controller
 
             $failedRecord = FailedImportRecord::findOrFail($recordId);
 
+            $rowData = array_replace(
+                $failedRecord->original_row_data ?? [],
+                $failedRecord->corrected_data ?? [],
+                $request->input('corrected_data', [])
+            );
+            $validated = $this->validateAndNormalizeImportRow($rowData);
+            $errors = $validated['errors'];
+            $errors = array_merge($errors, $this->validateCorrectionMunicipalities($rowData));
+
+            if ($validated['folio'] && Death::where('gov_folio', $validated['folio'])->exists()) {
+                $errors[] = 'Folio: ya existe en el sistema. Ingrese uno diferente.';
+            }
+
+            $siteName = trim((string) ($rowData['sitiodefunciond'] ?? $rowData['sitiodefuncion'] ?? ''));
+            if ($siteName === '') {
+                $errors[] = 'Lugar de defunción: este campo es obligatorio.';
+            } elseif (mb_strlen($siteName) > 191) {
+                $errors[] = 'Lugar de defunción: excede 191 caracteres. Reduzca su longitud.';
+            }
+
+            $causeCandidates = [
+                $rowData['causa'] ?? null,
+                $rowData['causadefuncion'] ?? null,
+                $rowData['causadefunciond'] ?? null,
+                $rowData['sheet'] ?? null,
+                $rowData['ciecausabasicad'] ?? null,
+            ];
+            if (!$this->resolveAllowedDeathCause($causeCandidates, $this->buildAllowedDeathCauseLookup())) {
+                $causeSource = collect($causeCandidates)
+                    ->filter(fn ($candidate) => is_scalar($candidate) && trim((string) $candidate) !== '')
+                    ->map(fn ($candidate) => trim((string) $candidate))
+                    ->first();
+                $errors[] = $causeSource
+                    ? 'Causa de defunción: "' . $causeSource . '" no es una opción válida. Seleccione una causa permitida.'
+                    : 'Causa de defunción: no está indicada. Seleccione una causa permitida.';
+            }
+
+            if ($errors !== []) {
+                $errors = array_values(array_unique($errors));
+                $this->updateFailedImportErrors($failedRecord, $errors);
+
+                return response()->json([
+                    'ok' => false,
+                    'message' => 'El registro aún tiene errores de validación.',
+                    'errors' => $errors,
+                ], 422);
+            }
+
             // Update with corrected data
-            $failedRecord->corrected_data = $request->input('corrected_data');
+            $failedRecord->corrected_data = $rowData;
+            $failedRecord->error_message = '';
+            $failedRecord->error_details = [];
             $failedRecord->status = 'corrected';
             $failedRecord->save();
 
@@ -993,6 +905,144 @@ class DeathImportController extends Controller
      * Retry a failed record with corrected data
      */
     public function retryFailedRecord(Request $request, $recordId)
+    {
+        try {
+            $failedRecord = FailedImportRecord::findOrFail($recordId);
+
+            if ($failedRecord->status === 'discarded') {
+                return response()->json(['ok' => false, 'message' => 'Este registro fue descartado y ya no puede importarse.'], 400);
+            }
+
+            $rowData = array_replace(
+                $failedRecord->original_row_data ?? [],
+                $failedRecord->corrected_data ?? [],
+                $request->input('corrected_data', [])
+            );
+            $validated = $this->validateAndNormalizeImportRow($rowData);
+            $errors = $validated['errors'];
+            $errors = array_merge($errors, $this->validateCorrectionMunicipalities($rowData));
+
+            if ($validated['folio'] && Death::where('gov_folio', $validated['folio'])->exists()) {
+                $errors[] = 'Folio: ya existe en el sistema. Ingrese uno diferente.';
+            }
+
+            $siteName = trim((string) ($rowData['sitiodefunciond'] ?? $rowData['sitiodefuncion'] ?? '')) ?: null;
+            if (!$siteName) {
+                $errors[] = 'Lugar de defunción: este campo es obligatorio.';
+            } elseif (mb_strlen($siteName) > 191) {
+                $errors[] = 'Lugar de defunción: excede 191 caracteres. Reduzca su longitud.';
+            }
+
+            $causeCandidates = [
+                $rowData['causa'] ?? null,
+                $rowData['causadefuncion'] ?? null,
+                $rowData['causadefunciond'] ?? null,
+                $rowData['sheet'] ?? null,
+                $rowData['ciecausabasicad'] ?? null,
+            ];
+            $deathCause = $this->resolveAllowedDeathCause(
+                $causeCandidates,
+                $this->buildAllowedDeathCauseLookup()
+            );
+            if (!$deathCause) {
+                $causeSource = collect($causeCandidates)
+                    ->filter(fn ($candidate) => is_scalar($candidate) && trim((string) $candidate) !== '')
+                    ->map(fn ($candidate) => trim((string) $candidate))
+                    ->first();
+                $errors[] = $causeSource
+                    ? 'Causa de defunción: "' . $causeSource . '" no es una opción válida. Seleccione una causa permitida.'
+                    : 'Causa de defunción: no está indicada. Seleccione una causa permitida.';
+            }
+
+            if (!empty($errors)) {
+                $this->updateFailedImportErrors($failedRecord, $errors);
+
+                return response()->json([
+                    'ok' => false,
+                    'message' => 'El registro aún tiene errores de validación.',
+                    'errors' => $failedRecord->error_details,
+                ], 422);
+            }
+
+            $otherDistrict = District::firstOrCreate(['name' => District::OTHER_NAME]);
+            $otherMunicipality = Municipality::firstOrCreate(
+                ['name' => 'OTRO'],
+                ['district_id' => $otherDistrict->id]
+            );
+            $municipalityLookup = [];
+            foreach (Municipality::all() as $municipality) {
+                $municipalityLookup[$this->normalizeMunicipalityName($municipality->name)] = $municipality;
+            }
+
+            $residenceName = trim((string) ($rowData['municipioresidenciad'] ?? $rowData['municipioresidencia'] ?? ''));
+            $deathMunicipalityName = trim((string) ($rowData['municipiodefunciond'] ?? $rowData['municipiodefuncion'] ?? ''));
+            $residenceMunicipality = $municipalityLookup[$this->normalizeMunicipalityName($residenceName)] ?? $otherMunicipality;
+            $deathMunicipality = $municipalityLookup[$this->normalizeMunicipalityName($deathMunicipalityName)] ?? $otherMunicipality;
+            $deathLocation = DeathLocation::firstOrCreate(['name' => $siteName]);
+
+            DB::transaction(function () use (
+                $failedRecord,
+                $rowData,
+                $validated,
+                $deathCause,
+                $deathLocation,
+                $residenceMunicipality,
+                $deathMunicipality,
+                $otherDistrict
+            ) {
+                $death = new Death();
+                $death->import_id = $failedRecord->import_id;
+                $death->name = $validated['name'];
+                $death->gov_folio = $validated['folio'];
+                $death->first_last_name = $validated['first'];
+                $death->second_last_name = $validated['second'];
+                $death->age = $validated['age_years'] ?? $validated['age'];
+                $death->age_years = $validated['age_years'];
+                $death->age_months = $validated['age_months'];
+                $death->age_days = $validated['age_days'];
+                $death->sex = $validated['sex'];
+                $death->death_date = $validated['death_date']->format('Y-m-d');
+                $death->residence_municipality_id = $residenceMunicipality->id;
+                $death->death_municipality_id = $deathMunicipality->id;
+                $death->district_id = $residenceMunicipality->district_id ?? $otherDistrict->id;
+                $death->death_district_id = $deathMunicipality->district_id ?? $otherDistrict->id;
+                $death->death_location_id = $deathLocation->id;
+                $death->death_cause_id = $deathCause->id;
+                $death->save();
+
+                $failedRecord->corrected_data = $rowData;
+                $failedRecord->status = 'imported';
+                $failedRecord->save();
+
+                $import = DB::table('imports')->where('id', $failedRecord->import_id)->first();
+                if ($import) {
+                    DB::table('imports')->where('id', $failedRecord->import_id)->update([
+                        'rows_imported' => $import->rows_imported + 1,
+                        'rows_failed' => max(0, $import->rows_failed - 1),
+                        'updated_at' => now(),
+                    ]);
+                }
+            });
+
+            return response()->json([
+                'ok' => true,
+                'message' => 'El registro se importó correctamente.',
+            ]);
+        } catch (\Throwable $e) {
+            Log::error('Error retrying failed record: ' . $e->getMessage(), ['exception' => $e]);
+
+            return response()->json([
+                'ok' => false,
+                'message' => 'No se pudo importar el registro. Revisa los datos e inténtalo nuevamente.',
+            ], 500);
+        }
+    }
+
+    /**
+     * Previous retry implementation retained temporarily for reference while
+     * existing integrations migrate to the shared validation flow.
+     */
+    private function retryFailedRecordLegacy(Request $request, $recordId)
     {
         try {
             $failedRecord = FailedImportRecord::findOrFail($recordId);
@@ -1343,6 +1393,204 @@ class DeathImportController extends Controller
         return $raw;
     }
 
+    /** Validate both municipality selections against the existing catalog. */
+    private function validateCorrectionMunicipalities(array $rowData): array
+    {
+        $knownMunicipalities = Municipality::query()
+            ->pluck('name')
+            ->mapWithKeys(fn ($name) => [$this->normalizeMunicipalityName((string) $name) => true]);
+        $errors = [];
+        $fields = [
+            ['municipioresidenciad', 'municipioresidencia', 'Municipio de residencia'],
+            ['municipiodefunciond', 'municipiodefuncion', 'Municipio de defunción'],
+        ];
+
+        foreach ($fields as [$primaryKey, $legacyKey, $label]) {
+            $value = trim((string) ($rowData[$primaryKey] ?? $rowData[$legacyKey] ?? ''));
+            if ($value === '') {
+                $errors[] = $label . ': este campo es obligatorio.';
+                continue;
+            }
+
+            if (!$knownMunicipalities->has($this->normalizeMunicipalityName($value))) {
+                $errors[] = $label . ': seleccione una opción permitida.';
+            }
+        }
+
+        return $errors;
+    }
+
+    /**
+     * Validate and normalize the scalar fields shared by the initial import and
+     * the manual retry flow. Catalog-backed fields are resolved by the caller.
+     *
+     * @return array{errors: array<int, string>, name: ?string, first: ?string, second: ?string,
+     *     folio: ?string, sex: ?string, age: ?int, age_years: ?int, age_months: ?int,
+     *     age_days: ?int, death_date: ?Carbon}
+     */
+    private function validateAndNormalizeImportRow(array $rowData): array
+    {
+        $errors = [];
+        $name = trim((string) ($rowData['nombre'] ?? '')) ?: null;
+        $first = trim((string) ($rowData['primerapellido'] ?? $rowData['primerapellid'] ?? '')) ?: null;
+        $second = $this->normalizeOptionalSecondLastName(
+            $rowData['segundoapellido'] ?? $rowData['segundoapellid'] ?? null
+        );
+
+        if (!$name) {
+            $errors[] = 'Nombre: este campo es obligatorio.';
+        } elseif (mb_strlen($name) > 191) {
+            $errors[] = 'Nombre: excede 191 caracteres. Reduzca su longitud.';
+        }
+
+        if (!$first) {
+            $errors[] = 'Primer apellido: este campo es obligatorio.';
+        } elseif (mb_strlen($first) > 191) {
+            $errors[] = 'Primer apellido: excede 191 caracteres. Reduzca su longitud.';
+        }
+
+        if ($second !== null && mb_strlen($second) > 191) {
+            $errors[] = 'Segundo apellido: excede 191 caracteres. Reduzca su longitud.';
+        }
+
+        $folio = null;
+        foreach (['folio', 'folio_gob', 'folio_gubernamental', 'folio_gobierno', 'id', 'numero', 'nfolio', 'no_folio'] as $key) {
+            if (isset($rowData[$key]) && trim((string) $rowData[$key]) !== '') {
+                $folio = strtoupper(preg_replace('/[^A-Z0-9]/i', '', trim((string) $rowData[$key])));
+                break;
+            }
+        }
+
+        if (!$folio || !preg_match('/^(?:[0-9]{9}|[0-9]{2}[A-Z][0-9]{5}[A-Z][0-9]{8})$/', $folio)) {
+            $errors[] = 'Folio: ingrese 9 dígitos o un folio alfanumérico de defunción válido.';
+        }
+
+        $sexRaw = mb_strtoupper(trim((string) ($rowData['sexod'] ?? $rowData['sexo'] ?? '')));
+        $sexNormalized = Str::ascii($sexRaw);
+        $sex = null;
+        if (in_array($sexNormalized, ['F', 'FEM', 'FEMENINO', 'MUJER', 'FEMALE'], true)) {
+            $sex = 'F';
+        } elseif (in_array($sexNormalized, ['M', 'MAS', 'MASC', 'MASCULINO', 'HOMBRE', 'MALE'], true)) {
+            $sex = 'M';
+        } else {
+            $errors[] = 'Sexo: seleccione Masculino o Femenino.';
+        }
+
+        $ageRaw = array_key_exists('edad_valor', $rowData)
+            ? $rowData['edad_valor']
+            : ($rowData['edad'] ?? null);
+        $age = null;
+        if ($ageRaw === null || trim((string) $ageRaw) === '') {
+            $errors[] = 'Edad: este campo es obligatorio.';
+        } elseif (!is_numeric($ageRaw) || floor((float) $ageRaw) !== (float) $ageRaw) {
+            $errors[] = 'Edad: ingrese un número entero.';
+        } else {
+            $age = (int) $ageRaw;
+        }
+
+        $unitRaw = (string) ($rowData['edad_unidad'] ?? $rowData['claveedadd'] ?? $rowData['claveedad'] ?? '');
+        $unitNormalized = mb_strtoupper(Str::ascii(trim($unitRaw)));
+        $unitNormalized = preg_replace('/[^A-Z0-9]/', '', $unitNormalized) ?? '';
+        $ageUnit = null;
+        if (str_contains($unitNormalized, 'MES')) {
+            $ageUnit = 'meses';
+        } elseif (str_contains($unitNormalized, 'DIA')) {
+            $ageUnit = 'dias';
+        } elseif (str_contains($unitNormalized, 'ANO') || $unitNormalized === 'A' || str_contains($unitNormalized, 'YEAR')) {
+            $ageUnit = 'anos';
+        } else {
+            $errors[] = 'Unidad de edad: seleccione años, meses o días.';
+        }
+
+        $ageYears = null;
+        $ageMonths = null;
+        $ageDays = null;
+        if ($age !== null && $ageUnit === 'anos') {
+            if ($age < 0 || $age > 150) {
+                $errors[] = 'Edad: para años, ingrese un valor entre 0 y 150.';
+            } else {
+                $ageYears = $age;
+            }
+        } elseif ($age !== null && $ageUnit === 'meses') {
+            if ($age < 0 || $age > 11) {
+                $errors[] = 'Edad: para meses, ingrese un valor entre 0 y 11.';
+            } else {
+                $ageYears = 0;
+                $ageMonths = $age;
+            }
+        } elseif ($age !== null && $ageUnit === 'dias') {
+            if ($age < 0 || $age > 30) {
+                $errors[] = 'Edad: para días, ingrese un valor entre 0 y 30.';
+            } else {
+                $ageYears = 0;
+                $ageMonths = 0;
+                $ageDays = $age;
+            }
+        }
+
+        $dateRaw = $rowData['fechadefuncion'] ?? null;
+        $deathDate = null;
+        if ($dateRaw === null || trim((string) $dateRaw) === '') {
+            $errors[] = 'Fecha de defunción: este campo es obligatorio.';
+        } else {
+            try {
+                if (!is_numeric($dateRaw) && !preg_match(
+                    '/^\d{1,4}[\/.-]\d{1,2}[\/.-]\d{1,4}(?:[ T].*)?$/',
+                    trim((string) $dateRaw)
+                )) {
+                    throw new \InvalidArgumentException('Unsupported date format.');
+                }
+
+                $parsedDate = is_numeric($dateRaw)
+                    ? ExcelDate::excelToDateTimeObject($dateRaw)
+                    : Carbon::parse($dateRaw);
+                $deathDate = $parsedDate instanceof Carbon ? $parsedDate : Carbon::instance($parsedDate);
+
+                if ($deathDate->copy()->startOfDay()->gt(Carbon::today())) {
+                    $errors[] = 'Fecha de defunción: no puede ser posterior a hoy.';
+                }
+            } catch (\Throwable $e) {
+                $errors[] = 'Fecha de defunción: ingrese una fecha válida.';
+            }
+        }
+
+        return [
+            'errors' => array_values(array_unique($errors)),
+            'name' => $name,
+            'first' => $first,
+            'second' => $second,
+            'folio' => $folio,
+            'sex' => $sex,
+            'age' => $age,
+            'age_years' => $ageYears,
+            'age_months' => $ageMonths,
+            'age_days' => $ageDays,
+            'death_date' => $deathDate,
+        ];
+    }
+
+    private function storeFailedImportRecord(int $importId, array $rowData, array $errors): FailedImportRecord
+    {
+        $errors = array_values(array_unique(array_filter(array_map('trim', $errors))));
+
+        return FailedImportRecord::create([
+            'import_id' => $importId,
+            'original_row_data' => $rowData,
+            'error_message' => implode('; ', $errors),
+            'error_details' => $errors,
+            'status' => 'pending',
+        ]);
+    }
+
+    private function updateFailedImportErrors(FailedImportRecord $record, array $errors): void
+    {
+        $errors = array_values(array_unique(array_filter(array_map('trim', $errors))));
+        $record->error_message = implode('; ', $errors);
+        $record->error_details = $errors;
+        $record->status = 'pending';
+        $record->save();
+    }
+
     /**
      * Closed death-cause catalog accepted by imports.
      */
@@ -1400,6 +1648,7 @@ class DeathImportController extends Controller
             'ENVENENAMIENTO RESIDENCIA' => 'ENVENENAMIENTO RES',
             'ENVENAMIENTO RES' => 'ENVENENAMIENTO RES',
             'OTROS ACIDENTES' => 'OTROS ACCIDENTES',
+            'OTROS ACCIDENTEES' => 'OTROS ACCIDENTES',
             'OTRO ACCIDENTE' => 'OTROS ACCIDENTES',
             'OTROS ACCIDENTE' => 'OTROS ACCIDENTES',
             'OTROS ACCIDENTES RESIDENCIA' => 'OTROS ACCIDENTES',

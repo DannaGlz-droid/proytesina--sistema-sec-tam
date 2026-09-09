@@ -281,6 +281,11 @@ Excepciones:
 - No mezclar familias dentro de un mismo componente. Los Ionicons existentes se reemplazarán gradualmente al migrar cada pantalla, sin hacer una sustitución global riesgosa.
 - Mantener el mismo grosor visual y tamaño entre iconos equivalentes.
 - Iconos normales se colocan antes del texto; chevrons de apertura se colocan al extremo derecho.
+- Para estados semánticos, mantener este mapeo en todas las pantallas:
+  - **Advertencia o decisión peligrosa:** triángulo con exclamación, `fa-triangle-exclamation`. Usarlo cuando exista un riesgo, una consecuencia importante o una acción destructiva que requiera atención; no utilizarlo para cualquier mensaje rojo.
+  - **Error de validación o corrección pendiente:** círculo con exclamación, `fa-circle-exclamation`. Usarlo en errores de campos, datos rechazados o registros que la persona puede corregir.
+  - **Éxito:** círculo con palomita, `fa-circle-check`. Usarlo para confirmar que una operación finalizó correctamente.
+- No intercambiar estos iconos solo por su color: la forma debe comunicar el tipo de estado aun cuando el color no sea perceptible. En todos los casos, el icono es complementario y el estado también debe expresarse mediante texto.
 
 ### 5.4 Orden de acciones
 
@@ -295,6 +300,8 @@ Excepciones:
 
 - Agrupar por significado, no por cantidad de campos.
 - Cada sección usa una franja gris clara de 38 px, icono opcional y título.
+- La franja es la variante oficial para formularios de página completa. Un editor breve incrustado en una tarjeta puede usar una variante compacta: leyenda en Open Sans, peso 600, mayúsculas con espaciado moderado y una línea neutral que complete el ancho. No añadir una segunda franja ni iconos decorativos en esta variante.
+- La variante compacta no modifica el contrato del formulario: conserva etiquetas, campos, ayudas, validaciones, orden de lectura y componentes compartidos. La diferencia responde únicamente al espacio y jerarquía del contexto incrustado.
 - Dos columnas desde 1024 px; una columna debajo de ese ancho.
 - Mantener campos relacionados en la misma fila: correo/teléfono, contraseña/confirmación.
 - El orden del DOM debe coincidir con la lectura y navegación por teclado en móvil; no reordenar campos únicamente con CSS.
@@ -332,6 +339,9 @@ Estados:
 - Conservar selección anterior, validación, navegación por teclado y limpieza del formulario.
 - “Seleccione…” funciona únicamente como placeholder; no debe aparecer como una opción elegible dentro del menú.
 - El menú debe mostrarse completo sobre las secciones y acciones siguientes; ningún contenedor del formulario puede recortarlo.
+- El menú elige automáticamente su dirección según el espacio útil del viewport: abre debajo cuando cabe y arriba cuando está próximo al borde inferior. Su altura máxima se limita al espacio disponible y las opciones usan desplazamiento interno; no desplazar toda la página para hacer visible el menú.
+- Recalcular la dirección y altura del menú al abrir, escribir, cargar opciones, desplazar cualquier contenedor o redimensionar la ventana. La flecha del control debe corresponder con la dirección en la que aparece el menú.
+- Este posicionamiento adaptativo pertenece al componente compartido de Tom Select. No duplicar observadores, cálculos de posición ni valores de `z-index` en cada vista.
 - Diferenciar sin iconos el valor seleccionado y la opción activa: el seleccionado conserva un fondo neutral muy tenue y peso 600; la opción recorrida por cursor o teclado usa un gris ligeramente más marcado.
 - Si la opción seleccionada también está activa, prevalece el fondo del estado activo y se conserva el peso 600.
 - La opción activa usa azul grisáceo o neutral, no el color institucional.
@@ -374,6 +384,18 @@ Estados:
 - Enviar correctamente el formulario no muestra una advertencia de salida.
 - “Restablecer cambios” solicita confirmación únicamente cuando existen cambios y devuelve todos los controles, incluidos los selects enriquecidos, a su valor inicial.
 - Si el usuario devuelve manualmente todos los campos a sus valores iniciales, el formulario deja de considerarse modificado.
+
+### 6.8 Corrección inline en tarjetas
+
+- Usar este patrón cuando una persona deba revisar y corregir registros concretos sin abandonar un listado. No sustituye un formulario completo ni debe utilizarse para editar entidades con muchas secciones o flujos secundarios.
+- El ciclo oficial contiene tres estados: **Requiere corrección**, **Editando corrección** y **Corrección guardada**. Pendiente usa rojo semántico y `fa-circle-exclamation`; edición usa superficie e icono neutrales; guardado usa verde semántico y `fa-circle-check`.
+- Al editar un registro pendiente, conservar visible el motivo original en rojo y añadir por separado el aviso neutral de cambios sin guardar. Al editar una corrección previamente guardada, mostrar únicamente el estado neutral de edición hasta volver a guardar o cancelar.
+- El motivo identifica el campo, conserva entre comillas el valor rechazado cuando ayude a reconocerlo y termina con una acción concreta, por ejemplo: `Causa de defunción: "Causa1" no es una opción válida. Seleccione una causa permitida.` Los mensajes del cliente y del servidor usan el mismo estilo y vocabulario.
+- Guardar una corrección valida y persiste los cambios, pero no importa el registro. El estado guardado debe indicarlo con claridad y habilitar la importación posterior. “Guardar e importar” constituye una operación distinta y es la acción primaria cuando ambas opciones aparecen juntas.
+- En consulta, conservar la misma cuadrícula, orden y geometría general del editor, pero presentar los valores sobre superficies suaves sin borde de campo, asteriscos, flechas, calendario, spinner ni respuesta de foco. Al pulsar Editar regresan los controles reales sin reordenar el contenido.
+- Una tarjeta puede crecer al editarse, mostrar validaciones o abrir contenido adicional. No forzar la misma altura que sus tarjetas vecinas; mantenerlas alineadas al inicio y fijar las acciones al pie de cada una.
+- Cancelar restaura valores y estado anteriores. Si el registro estaba pendiente, vuelve a mostrar el motivo; si ya estaba corregido, vuelve a mostrar la confirmación guardada.
+- Los estados persistentes renderizados al cargar no usan `role="alert"` ni una región viva, porque anunciar muchas tarjetas simultáneamente produciría ruido. Solo los cambios originados por una acción se anuncian mediante `aria-live`, `role="status"` o el toast global, según su importancia; los errores de campos permanecen asociados mediante `aria-describedby`.
 
 ## 7. Tablas y páginas de consulta
 
@@ -459,6 +481,15 @@ Estados:
 - Sin datos: estado neutral dentro del contenedor, icono relacionado con el módulo, título, una oración y la acción principal pertinente.
 - Error: franja inline rojo suave, icono de advertencia, explicación directa y botón secundario “Reintentar”; no usar modal para errores de carga.
 - Selección múltiple: barra contextual con cantidad y acciones disponibles.
+
+### 7.6 Colecciones paginadas de tarjetas altas
+
+- Los listados de tarjetas operativas altas reutilizan el encabezado, buscador, selector de cantidad, resumen de rango, estados y paginación de los listados administrativos; no reconstruyen variantes locales de esos controles.
+- Paginar en el servidor. Como referencia para tarjetas que contienen formularios, mostrar 4 por defecto y ofrecer 4, 6 y 10; no reutilizar las opciones de 25, 50 o 100 propias de filas compactas.
+- La paginación permanece al final porque acompaña el recorrido natural de revisión. Si el volumen produce muchas páginas, añadir primera, última o salto directo de página antes de duplicar el paginador en la parte superior.
+- No renderizar decenas de Tom Select, validadores y formularios completos simultáneamente. El número total de registros no determina cuántas tarjetas debe cargar el navegador.
+- Si una importación genera cientos de fallos equivalentes, presentar un resumen agrupado por tipo de error y orientar a corregir el archivo de origen o utilizar una corrección masiva autorizada. Aumentar el tamaño de página no sustituye ese flujo.
+- La carga inicial usa skeletons con la forma y altura aproximada de las tarjetas. Vacío, sin resultados y error conservan el componente y la jerarquía textual compartidos, ocupan todo el ancho del listado y no reaccionan al hover.
 
 ## 8. Paneles, menús y confirmaciones
 

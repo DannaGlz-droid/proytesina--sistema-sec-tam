@@ -1,6 +1,12 @@
-<div id="report-confirm-dialog" class="hidden fixed inset-0 z-[1000000] items-center justify-center p-4" aria-hidden="true">
-    <div class="confirm-dialog-overlay absolute inset-0" data-confirm-cancel></div>
-    <section class="confirm-dialog-card relative w-full border bg-white" role="dialog" aria-modal="true" aria-labelledby="report-confirm-title" aria-describedby="report-confirm-message">
+<x-ui.dialog
+    id="report-confirm-dialog"
+    size="sm"
+    labelledby="report-confirm-title"
+    describedby="report-confirm-message"
+    class="confirm-dialog"
+    panel-class="confirm-dialog-card"
+    :overlay-attributes="['class' => 'confirm-dialog-overlay', 'data-confirm-cancel' => '']"
+>
         <div class="confirm-dialog-content">
             <div class="confirm-dialog-heading flex items-start">
                 <i id="report-confirm-icon" class="confirm-dialog-icon fas fa-question-circle" aria-hidden="true"></i>
@@ -19,8 +25,7 @@
                 </button>
             </div>
         </div>
-    </section>
-</div>
+</x-ui.dialog>
 
 <script>
     (function() {
@@ -28,32 +33,16 @@
 
         const variants = {
             danger: {
-                iconColor: '#AB1A1A',
-                icon: 'fas fa-exclamation-circle',
-                buttonBg: '#AB1A1A',
-                buttonHover: '#8F1616',
-                focusColor: 'rgba(171, 26, 26, 0.28)'
+                icon: 'fas fa-triangle-exclamation'
             },
             warning: {
-                iconColor: '#9A7610',
-                icon: 'fas fa-exclamation-triangle',
-                buttonBg: '#7A5B00',
-                buttonHover: '#624900',
-                focusColor: 'rgba(179, 142, 26, 0.32)'
+                icon: 'fas fa-triangle-exclamation'
             },
             success: {
-                iconColor: '#237A3B',
-                icon: 'fas fa-check-circle',
-                buttonBg: '#237A3B',
-                buttonHover: '#1D6531',
-                focusColor: 'rgba(35, 122, 59, 0.28)'
+                icon: 'fas fa-circle-check'
             },
             neutral: {
-                iconColor: 'var(--brand-primary)',
-                icon: 'fas fa-question-circle',
-                buttonBg: 'var(--brand-primary)',
-                buttonHover: 'var(--brand-primary-hover)',
-                focusColor: 'rgba(97, 17, 50, 0.30)'
+                icon: 'fas fa-circle-question'
             }
         };
 
@@ -145,7 +134,8 @@
             const parts = getDialogParts();
             if (!parts) return Promise.resolve(false);
 
-            const config = variants[options.variant || 'neutral'] || variants.neutral;
+            const variant = variants[options.variant || 'neutral'] ? (options.variant || 'neutral') : 'neutral';
+            const config = variants[variant];
             if (state.closeTimer) window.clearTimeout(state.closeTimer);
             state.isClosing = false;
             state.previousFocus = document.activeElement;
@@ -178,25 +168,7 @@
 
             parts.icon.className = config.icon;
             parts.icon.classList.add('confirm-dialog-icon');
-            parts.icon.style.color = config.iconColor;
-            parts.accept.style.backgroundColor = config.buttonBg;
-            parts.accept.style.borderColor = config.buttonBg;
-            parts.accept.style.color = '#FFFFFF';
-            parts.accept.style.boxShadow = `0 0 0 0 ${config.focusColor}`;
-            parts.accept.onmouseenter = () => {
-                parts.accept.style.backgroundColor = config.buttonHover;
-                parts.accept.style.borderColor = config.buttonHover;
-            };
-            parts.accept.onmouseleave = () => {
-                parts.accept.style.backgroundColor = config.buttonBg;
-                parts.accept.style.borderColor = config.buttonBg;
-            };
-            parts.accept.onfocus = () => {
-                parts.accept.style.boxShadow = `0 0 0 3px ${config.focusColor}`;
-            };
-            parts.accept.onblur = () => {
-                parts.accept.style.boxShadow = `0 0 0 0 ${config.focusColor}`;
-            };
+            parts.root.dataset.variant = variant;
 
             parts.root.classList.remove('hidden');
             parts.root.classList.add('flex');

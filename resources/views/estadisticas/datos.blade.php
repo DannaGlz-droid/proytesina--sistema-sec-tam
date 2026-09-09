@@ -242,20 +242,29 @@
             }
         </style>
 
-        <div id="statistics-import-dialog" class="statistics-import-dialog hidden fixed inset-0 items-center justify-center p-4" aria-hidden="true">
-            <div class="statistics-import-dialog-overlay absolute inset-0" data-import-close></div>
-            <section class="statistics-import-dialog-card relative w-full" role="dialog" aria-modal="true" aria-labelledby="statistics-import-title" aria-describedby="statistics-import-description">
-                <header class="statistics-import-dialog-header">
-                    <div>
-                        <h2 id="statistics-import-title">Importar datos</h2>
-                        <p id="statistics-import-description">Agregue registros utilizando el formato oficial.</p>
+        <x-ui.dialog
+            id="statistics-import-dialog"
+            size="task"
+            labelledby="statistics-import-title"
+            describedby="statistics-import-description"
+            class="statistics-import-dialog"
+            panel-class="statistics-import-dialog-card"
+            :overlay-attributes="['class' => 'statistics-import-dialog-overlay', 'data-import-close' => '']"
+        >
+                <header class="ui-dialog__header statistics-import-dialog-header">
+                    <div class="ui-dialog__heading">
+                        <div class="ui-dialog__title-row">
+                            <i class="fas fa-file-arrow-up" aria-hidden="true"></i>
+                            <h2 id="statistics-import-title" class="ui-dialog__title">Importar datos</h2>
+                        </div>
+                        <p id="statistics-import-description" class="ui-dialog__description">Agregue registros utilizando el formato oficial.</p>
                     </div>
-                    <button type="button" class="statistics-import-dialog-close" data-import-close aria-label="Cerrar">
+                    <button type="button" class="ui-dialog__close statistics-import-dialog-close" data-import-close aria-label="Cerrar">
                         <i class="fas fa-times" aria-hidden="true"></i>
                     </button>
                 </header>
 
-                <div class="statistics-import-dialog-body">
+                <div class="ui-dialog__body statistics-import-dialog-body">
                     <button id="statistics-import-dropzone" type="button" class="statistics-import-dropzone" aria-describedby="statistics-import-help">
                         <i class="fas fa-cloud-arrow-up" aria-hidden="true"></i>
                         <span class="statistics-import-dropzone-copy">
@@ -279,15 +288,14 @@
                     <p id="statistics-import-error" class="statistics-inline-error hidden" role="alert"></p>
                 </div>
 
-                <footer class="statistics-import-dialog-actions">
+                <footer class="ui-dialog__actions statistics-import-dialog-actions">
                     <button id="statistics-import-cancel" type="button" class="ui-button ui-button--secondary" data-import-close>Cancelar</button>
                     <button id="statistics-import-submit" type="button" class="ui-button ui-button--primary" disabled>
                         <span data-import-default>Importar datos</span>
                         <span data-import-loading class="hidden items-center gap-2"><i class="fas fa-circle-notch fa-spin" aria-hidden="true"></i><span>Procesando…</span></span>
                     </button>
                 </footer>
-            </section>
-        </div>
+        </x-ui.dialog>
     </div>
 
 @endsection

@@ -56,7 +56,7 @@
         @endphp
 
         <div class="report-road-form-card users-form-card">
-            <form id="alcoholimetriaForm" class="report-road-form" action="{{ isset($publication) ? route('reportes.alcoholimetria.update', $publication) : route('reportes.alcoholimetria.store') }}" method="POST" enctype="multipart/form-data">
+            <form id="alcoholimetriaForm" class="report-road-form ui-form-fields" action="{{ isset($publication) ? route('reportes.alcoholimetria.update', $publication) : route('reportes.alcoholimetria.store') }}" method="POST" enctype="multipart/form-data">
                 @csrf
                 @if(isset($publication)) @method('PUT') @endif
 
