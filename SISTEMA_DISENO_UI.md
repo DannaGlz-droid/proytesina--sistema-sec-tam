@@ -491,6 +491,19 @@ Estados:
 - Si una importación genera cientos de fallos equivalentes, presentar un resumen agrupado por tipo de error y orientar a corregir el archivo de origen o utilizar una corrección masiva autorizada. Aumentar el tamaño de página no sustituye ese flujo.
 - La carga inicial usa skeletons con la forma y altura aproximada de las tarjetas. Vacío, sin resultados y error conservan el componente y la jerarquía textual compartidos, ocupan todo el ancho del listado y no reaccionan al hover.
 
+### 7.7 Paneles de estadísticas interactivas
+
+- La jerarquía oficial es: encabezado de página, pestañas de métrica, toolbar de filtros, controles de presentación, filtros aplicados y visualización. No mantener una barra lateral permanente si reduce innecesariamente el ancho útil de la gráfica.
+- Los filtros de datos reutilizan el patrón de la sección 7.3: botón con contador, popover de máximo `22rem`, encabezado y acciones fijas, y cuerpo desplazable. Los cambios permanecen como borrador hasta pulsar “Aplicar filtros”.
+- Cancelar, pulsar Escape, cerrar el popover o hacer clic fuera restaura los valores aplicados previamente. Ninguna de estas salidas ejecuta consultas ni deja cambios parciales.
+- “Limpiar” modifica el borrador del panel; el gráfico cambia únicamente después de aplicar. Los chips sobre la visualización representan solo filtros efectivamente aplicados y permiten retirar un criterio individual.
+- Tipo de gráfica, etiquetas, cantidad de resultados y paleta son controles de presentación, no filtros de datos. Permanecen en un panel visible independiente y pueden actualizar la visualización de inmediato porque no alteran el universo filtrado.
+- La selección de pestañas y controles de presentación usa superficies y bordes neutrales. El color institucional no comunica selección funcional; puede formar parte de una paleta de datos elegida por la persona usuaria sin convertirse en color de estado de la interfaz.
+- Descargar o exportar es una acción secundaria neutral. El botón primario institucional se reserva para “Aplicar filtros” dentro del popover.
+- Las etiquetas de opciones breves, como “Top 10”, no se dividen en dos líneas. Si no caben, los grupos de presentación se reorganizan antes de comprimir o cortar el texto.
+- La navegación de métricas permite desplazamiento horizontal cuando sea necesario, pero nunca genera desplazamiento vertical interno.
+- La visualización conserva título, total, estados de carga, vacío y error, y una altura útil estable. En móvil, los grupos de presentación se apilan y el popover de filtros se presenta como panel inferior con acciones de al menos 40 px.
+
 ## 8. Paneles, menús y confirmaciones
 
 - Menús y dropdowns deben cerrar con Escape y clic exterior.
@@ -502,10 +515,10 @@ Estados:
 ### 8.1 Modal de confirmación
 
 - Diseñar y revisar siempre al 100 % de zoom del navegador.
-- Tamaños oficiales: pequeño 400 px, normal 440 px y amplio 640 px; una confirmación breve de eliminación usa el tamaño pequeño.
+- Tamaños oficiales: pequeño 400 px, tarea y confirmación estándar 460 px, y amplio 640 px. Las confirmaciones breves comparten el ancho de 460 px con los modales de tarea para conservar una sola geometría en todo el sistema.
 - Usar una sola superficie cohesiva. No segmentar encabezado, mensaje y acciones con franjas, fondos o divisores salvo que el contenido realmente lo requiera.
 - Padding horizontal de 20 px, padding vertical de 16-18 px y radio de 7 px, igual que los controles del piloto.
-- Título en Open Sans, 15 px y peso 700.
+- Título en Lora, 17 px y peso 600, acompañado por una línea neutral que completa la fila, igual que los modales de tarea del sistema.
 - Descripción en Open Sans, 13 px, peso 400 e interlineado 1.45.
 - En confirmaciones destructivas, usar un icono semántico pequeño junto al título. Debe ir sin fondo, círculo ni contenedor decorativo y compartir la alineación del bloque de texto.
 - Resaltar el nombre o identificador del elemento afectado con peso 600 y color de texto principal. No usar rojo, píldoras ni recuadros para este énfasis.
@@ -527,14 +540,20 @@ Estados:
 ### 8.2 Modal de tarea breve
 
 - Usarlo para una operación contextual de pocos campos que permita continuar en la vista de origen, como cambiar una contraseña.
+- Construirlo sobre `x-ui.dialog`; la vista aporta solo encabezado, contenido y acciones del dominio. No duplicar overlay, superficie, medidas, sombra ni animación.
 - No usarlo para editar una entidad completa, formularios largos ni tareas con varias secciones; esos flujos conservan una página propia.
 - Tamaño normal de 440-480 px, campos en una columna y acciones separadas por un único divisor neutral.
+- El encabezado de tarea usa icono semántico pequeño, título Lora de 17 px y una línea neutral que completa la fila. Debajo puede incluir contexto o consecuencia en Open Sans; no usar una franja de color ni un contenedor decorativo para el icono.
+- Usar tono neutral para importar, descargar, editar o cambiar credenciales. Reservar rojo para una acción destructiva o de rechazo, amarillo para advertencia y verde para resultado satisfactorio.
 - Mostrar al inicio la entidad afectada para evitar que la persona modifique el registro equivocado.
 - Incluir estados de validación, envío, error y éxito dentro del flujo. No depender de alertas del navegador.
 - Para importar un archivo desde un listado, abrir un modal de tarea breve antes del explorador: mostrar formatos y tamaño máximo, permitir selección o arrastre, presentar el archivo elegido y habilitar la acción primaria únicamente después de validarlo.
 - La importación usa una sola confirmación explícita dentro del modal; no encadenar un segundo diálogo de confirmación después de seleccionar el archivo. Los errores de formato o procesamiento permanecen en el mismo flujo.
 - Si existen cambios escritos, cerrar, usar Escape o pulsar el overlay debe pedir confirmación antes de descartarlos.
 - La ruta de página debe conservarse como respaldo cuando JavaScript no esté disponible o se acceda mediante URL directa.
+- Todo modal de tarea ofrece cierre visible, Escape y clic en el overlay; contiene Tab, devuelve el foco al disparador y bloquea el desplazamiento de fondo mientras está abierto.
+- La entrada y salida reutilizan la transición compartida de opacidad y desplazamiento vertical de hasta 4 px. No usar escala, rebote ni una animación propia por módulo.
+- Los expedientes, galerías y vistas previas de archivo son visores, no tareas breves. Pueden conservar un panel amplio o de pantalla completa, pero reutilizan los tokens de overlay, borde, sombra, cierre, foco y movimiento.
 
 ### 8.3 Notificaciones toast
 
@@ -610,6 +629,7 @@ Componentes Blade propuestos:
 
 ```text
 resources/views/components/ui/
+  dialog.blade.php
   page-header.blade.php
   button.blade.php
   back-link.blade.php
@@ -624,6 +644,7 @@ resources/views/components/ui/
 API mínima recomendada:
 
 - `x-ui.button variant="primary|secondary|danger|text|icon" size="compact|default"`
+- `x-ui.dialog size="sm|task|md|lg" labelledby="..." describedby="..."`
 - `x-ui.page-header title="..." description="..." backHref="..."`
 - `x-ui.form.field label="..." required error="..." help="..."`
 - `x-ui.form.select searchable="true|false"`

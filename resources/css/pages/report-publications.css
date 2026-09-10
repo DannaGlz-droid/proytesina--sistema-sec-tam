@@ -41,6 +41,14 @@
   transition: color 150ms ease, transform 120ms ease;
 }
 
+.report-modal-overlay {
+  z-index: var(--ui-report-dialog-layer, 999980);
+}
+
+.report-nav-layer {
+  z-index: calc(var(--ui-report-dialog-layer, 999980) + 1);
+}
+
 .publication-detail-modal[data-report-layout="editorial"] .modal-cerrar:hover {
   background: transparent;
   color: #374151;
@@ -2656,33 +2664,6 @@
   outline-offset: -2px;
 }
 
-.reports-reject-modal {
-  position: fixed;
-  inset: 0;
-  z-index: 75;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 1rem;
-  background: rgba(30, 41, 59, .34);
-  font-family: "Open Sans", system-ui, sans-serif;
-  animation: reports-backdrop-in .18s ease-out;
-}
-
-.reports-reject-modal.hidden {
-  display: none;
-}
-
-.reports-reject-card {
-  width: min(30rem, 100%);
-  overflow: hidden;
-  border: 1px solid #d8dee8;
-  border-radius: 7px;
-  background: #fff;
-  box-shadow: 0 18px 44px rgba(30, 50, 75, .2);
-  animation: reports-dialog-in .2s cubic-bezier(.2, .8, .2, 1);
-}
-
 @keyframes reports-popover-in {
   from { opacity: 0; transform: translateY(-4px); }
   to { opacity: 1; transform: translateY(0); }
@@ -2703,74 +2684,9 @@
   to { opacity: 1; transform: translateY(0); }
 }
 
-@keyframes reports-backdrop-in {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
-@keyframes reports-dialog-in {
-  from { opacity: 0; transform: translateY(4px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-.reports-reject-heading {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 1rem;
-  padding: 1rem 1.25rem .65rem;
-}
-
-.reports-reject-heading-copy,
-.reports-reject-title-row {
-  display: flex;
-  align-items: center;
-  gap: .55rem;
-}
-
-.reports-reject-title-row > i {
-  color: var(--ui-danger-text, #b91c1c);
-  font-size: .9rem;
-}
-
-.reports-reject-heading-context {
-  display: none;
-}
-
-.reports-reject-heading h3 {
-  margin: 0;
-  color: var(--ui-text, #10233f);
-  font-size: .94rem;
-  font-weight: 700;
-}
-
-.reports-reject-heading .modal-cerrar {
-  display: inline-flex;
-  width: 32px;
-  height: 32px;
-  align-items: center;
-  justify-content: center;
-  border: 0;
-  border-radius: 7px;
-  background: transparent;
-  color: #64748b;
-}
-
-.reports-reject-heading .modal-cerrar:hover {
-  background: #f1f5f9;
-  color: #10233f;
-}
-
-.reports-reject-heading .modal-cerrar:focus-visible,
 .reports-reject-body textarea:focus-visible {
   outline: 2px solid var(--ui-focus, #475569);
   outline-offset: 2px;
-}
-
-.reports-reject-body {
-  display: grid;
-  gap: .5rem;
-  padding: .35rem 1.25rem 1rem;
 }
 
 .reports-reject-body p,
@@ -2778,58 +2694,14 @@
   margin: 0;
 }
 
-.reports-reject-question {
-  margin: 0;
-  color: #526278;
-  font-size: .8rem;
-  line-height: 1.45;
-}
-
-.reports-reject-question strong {
-  color: var(--ui-text, #10233f);
-  font-weight: 600;
-  overflow-wrap: anywhere;
-}
-
-.reports-reject-heading-consequence,
-#rejection-reason-count,
-.reports-reject-help-alcohol,
-.reports-reject-report-title {
-  display: none;
-}
-
-.reports-reject-body label {
-  margin-top: .35rem;
-  color: var(--ui-text, #10233f);
-  font-size: .74rem;
-  font-weight: 600;
-}
-
 .reports-reject-body label span {
   color: var(--ui-danger, #dc2626);
-}
-
-.reports-reject-body textarea {
-  width: 100%;
-  resize: vertical;
-  padding: .55rem .65rem;
-  border: 1px solid var(--ui-border, #cbd5e1);
-  border-radius: 7px;
-  background: #fff;
-  color: var(--ui-text, #10233f);
-  font-size: .8rem;
-  line-height: 1.45;
 }
 
 .reports-reject-body textarea:focus {
   outline: 0;
   border-color: var(--ui-focus, #475569);
   box-shadow: 0 0 0 2px var(--ui-focus-ring, rgba(71, 85, 105, .18));
-}
-
-.reports-reject-help {
-  color: #64748b;
-  font-size: .68rem;
 }
 
 .reports-reject-field-meta {
@@ -2839,105 +2711,28 @@
   gap: .75rem;
 }
 
-.reports-reject-error {
+/* Rejection task: one shared presentation for every report type. */
+.reports-reject-modal .reports-reject-title-row > i {
   color: var(--ui-danger-text, #b91c1c);
-  font-size: .68rem;
-  font-weight: 600;
+  transform: translateY(1px);
 }
 
-.reports-reject-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: .55rem;
-  padding: .8rem 1.25rem 1rem;
-  border-top: 1px solid #e5e7eb;
-}
-
-/* Rejection task opened from the redesigned Alcoholimetry report detail. */
-.reports-reject-modal:is([data-report-type="alcoholimetria"], [data-report-type="observatorio de lesiones"], [data-report-type="seguridad_vial"], [data-report-type="grupos_vulnerables"]) .reports-reject-card {
-  width: min(28.75rem, 100%);
-  border-color: #d8dee8;
-  border-radius: 7px;
-  box-shadow: 0 18px 46px rgb(15 23 42 / 18%), 0 2px 6px rgb(15 23 42 / 8%);
-}
-
-.reports-reject-modal:is([data-report-type="alcoholimetria"], [data-report-type="observatorio de lesiones"], [data-report-type="seguridad_vial"], [data-report-type="grupos_vulnerables"]) .reports-reject-heading {
-  align-items: flex-start;
-  padding: 20px 24px 18px;
-}
-
-.reports-reject-modal:is([data-report-type="alcoholimetria"], [data-report-type="observatorio de lesiones"], [data-report-type="seguridad_vial"], [data-report-type="grupos_vulnerables"]) .reports-reject-heading-copy {
+.reports-reject-modal .reports-reject-body {
   display: grid;
-  min-width: 0;
-  flex: 1 1 auto;
-  gap: 0;
-}
-
-.reports-reject-modal:is([data-report-type="alcoholimetria"], [data-report-type="observatorio de lesiones"], [data-report-type="seguridad_vial"], [data-report-type="grupos_vulnerables"]) .reports-reject-title-row {
-  gap: 7px;
-}
-
-.reports-reject-modal:is([data-report-type="alcoholimetria"], [data-report-type="observatorio de lesiones"], [data-report-type="seguridad_vial"], [data-report-type="grupos_vulnerables"]) .reports-reject-title-row::after {
-  height: 1px;
-  min-width: 24px;
-  flex: 1 1 auto;
-  margin-left: 5px;
-  background: var(--ui-border-soft, #dbe3ec);
-  content: "";
-}
-
-.reports-reject-modal:is([data-report-type="alcoholimetria"], [data-report-type="observatorio de lesiones"], [data-report-type="seguridad_vial"], [data-report-type="grupos_vulnerables"]) .reports-reject-title-row > i {
-  width: 14px;
-  flex: 0 0 14px;
-  color: var(--ui-danger-text, #b91c1c);
-  font-size: 13px;
-  text-align: center;
-  transform: translateY(1px);
-}
-
-.reports-reject-modal:is([data-report-type="alcoholimetria"], [data-report-type="observatorio de lesiones"], [data-report-type="seguridad_vial"], [data-report-type="grupos_vulnerables"]) .reports-reject-heading h3 {
-  font-family: "Lora", Georgia, serif;
-  font-size: 17px;
-  font-weight: 600;
-  letter-spacing: -.01em;
-  line-height: 1.25;
-}
-
-.reports-reject-modal:is([data-report-type="alcoholimetria"], [data-report-type="observatorio de lesiones"], [data-report-type="seguridad_vial"], [data-report-type="grupos_vulnerables"]) .reports-reject-heading .modal-cerrar {
-  width: 32px;
-  height: 32px;
-  flex: 0 0 32px;
-  color: #6b7280;
-  font-size: 14px;
-  margin-top: -4px;
-  transition: color 160ms ease, transform 160ms ease;
-}
-
-.reports-reject-modal:is([data-report-type="alcoholimetria"], [data-report-type="observatorio de lesiones"], [data-report-type="seguridad_vial"], [data-report-type="grupos_vulnerables"]) .reports-reject-heading .modal-cerrar:hover:not(:disabled) {
-  background: transparent;
-  color: #374151;
-}
-
-.reports-reject-modal:is([data-report-type="alcoholimetria"], [data-report-type="observatorio de lesiones"], [data-report-type="seguridad_vial"], [data-report-type="grupos_vulnerables"]) .reports-reject-heading .modal-cerrar:active:not(:disabled) {
-  transform: translateY(1px);
-}
-
-.reports-reject-modal:is([data-report-type="alcoholimetria"], [data-report-type="observatorio de lesiones"], [data-report-type="seguridad_vial"], [data-report-type="grupos_vulnerables"]) .reports-reject-body {
   gap: 8px;
-  padding: 0 24px 22px;
 }
 
-.reports-reject-modal:is([data-report-type="alcoholimetria"], [data-report-type="observatorio de lesiones"], [data-report-type="seguridad_vial"], [data-report-type="grupos_vulnerables"]) .reports-reject-context {
+.reports-reject-modal .reports-reject-context {
   display: none;
 }
 
-.reports-reject-modal:is([data-report-type="alcoholimetria"], [data-report-type="observatorio de lesiones"], [data-report-type="seguridad_vial"], [data-report-type="grupos_vulnerables"]) .reports-reject-heading-context {
+.reports-reject-modal .reports-reject-heading-context {
   display: grid;
   gap: 5px;
   margin-top: 14px;
 }
 
-.reports-reject-modal:is([data-report-type="alcoholimetria"], [data-report-type="observatorio de lesiones"], [data-report-type="seguridad_vial"], [data-report-type="grupos_vulnerables"]) .reports-reject-heading-consequence {
+.reports-reject-modal .reports-reject-heading-consequence {
   display: block;
   margin: 0;
   color: var(--ui-text-muted, #64748b);
@@ -2946,7 +2741,7 @@
   line-height: 1.45;
 }
 
-.reports-reject-modal:is([data-report-type="alcoholimetria"], [data-report-type="observatorio de lesiones"], [data-report-type="seguridad_vial"], [data-report-type="grupos_vulnerables"]) .reports-reject-report-title {
+.reports-reject-modal .reports-reject-report-title {
   display: -webkit-box;
   overflow: hidden;
   margin: 0;
@@ -2962,78 +2757,73 @@
   -webkit-line-clamp: 2;
 }
 
-.reports-reject-modal:is([data-report-type="alcoholimetria"], [data-report-type="observatorio de lesiones"], [data-report-type="seguridad_vial"], [data-report-type="grupos_vulnerables"]) .reports-reject-body label {
+.reports-reject-modal .reports-reject-body label {
   margin-top: 0;
   font-size: 12px;
   font-weight: 600;
   line-height: 1.2;
 }
 
-.reports-reject-modal:is([data-report-type="alcoholimetria"], [data-report-type="observatorio de lesiones"], [data-report-type="seguridad_vial"], [data-report-type="grupos_vulnerables"]) .reports-reject-body textarea {
+.reports-reject-modal .reports-reject-body textarea {
+  width: 100%;
   min-height: 104px;
   max-height: 220px;
+  resize: vertical;
   padding: 10px 12px;
-  border-color: var(--ui-border, #cbd5e1);
+  border: 1px solid var(--ui-border, #cbd5e1);
   border-radius: 7px;
+  background: var(--ui-surface, #fff);
   color: var(--ui-text, #10233f);
   font-size: 13px;
   line-height: 1.45;
   transition: border-color 160ms ease, box-shadow 160ms ease;
 }
 
-.reports-reject-modal:is([data-report-type="alcoholimetria"], [data-report-type="observatorio de lesiones"], [data-report-type="seguridad_vial"], [data-report-type="grupos_vulnerables"]) .reports-reject-body textarea::placeholder {
+.reports-reject-modal .reports-reject-body textarea::placeholder {
   color: #9ca3af;
 }
 
-.reports-reject-modal:is([data-report-type="alcoholimetria"], [data-report-type="observatorio de lesiones"], [data-report-type="seguridad_vial"], [data-report-type="grupos_vulnerables"]) .reports-reject-body textarea:hover:not(:disabled) {
+.reports-reject-modal .reports-reject-body textarea:hover:not(:disabled) {
   border-color: #9ca3af;
   background: var(--ui-surface, #fff);
 }
 
-.reports-reject-modal:is([data-report-type="alcoholimetria"], [data-report-type="observatorio de lesiones"], [data-report-type="seguridad_vial"], [data-report-type="grupos_vulnerables"]) .reports-reject-body textarea[aria-invalid="true"] {
+.reports-reject-modal .reports-reject-body textarea[aria-invalid="true"] {
   border-color: var(--ui-danger, #dc2626);
 }
 
-.reports-reject-modal:is([data-report-type="alcoholimetria"], [data-report-type="observatorio de lesiones"], [data-report-type="seguridad_vial"], [data-report-type="grupos_vulnerables"]) .reports-reject-body textarea[aria-invalid="true"]:focus {
+.reports-reject-modal .reports-reject-body textarea[aria-invalid="true"]:focus {
   box-shadow: 0 0 0 2px rgb(220 38 38 / 14%);
 }
 
-.reports-reject-modal:is([data-report-type="alcoholimetria"], [data-report-type="observatorio de lesiones"], [data-report-type="seguridad_vial"], [data-report-type="grupos_vulnerables"]) .reports-reject-help,
-.reports-reject-modal:is([data-report-type="alcoholimetria"], [data-report-type="observatorio de lesiones"], [data-report-type="seguridad_vial"], [data-report-type="grupos_vulnerables"]) #rejection-reason-count,
-.reports-reject-modal:is([data-report-type="alcoholimetria"], [data-report-type="observatorio de lesiones"], [data-report-type="seguridad_vial"], [data-report-type="grupos_vulnerables"]) .reports-reject-error {
+.reports-reject-modal .reports-reject-help,
+.reports-reject-modal #rejection-reason-count,
+.reports-reject-modal .reports-reject-error {
   color: var(--ui-text-muted, #64748b);
   font-size: 11px;
   line-height: 1.3;
 }
 
-.reports-reject-modal:is([data-report-type="alcoholimetria"], [data-report-type="observatorio de lesiones"], [data-report-type="seguridad_vial"], [data-report-type="grupos_vulnerables"]) #rejection-reason-count {
+.reports-reject-modal #rejection-reason-count {
   display: block;
   flex: 0 0 auto;
   font-variant-numeric: tabular-nums;
 }
 
-.reports-reject-modal:is([data-report-type="alcoholimetria"], [data-report-type="observatorio de lesiones"], [data-report-type="seguridad_vial"], [data-report-type="grupos_vulnerables"]) .reports-reject-help-default {
+.reports-reject-modal .reports-reject-help-default {
   display: none;
 }
 
-.reports-reject-modal:is([data-report-type="alcoholimetria"], [data-report-type="observatorio de lesiones"], [data-report-type="seguridad_vial"], [data-report-type="grupos_vulnerables"]) .reports-reject-help-alcohol {
+.reports-reject-modal .reports-reject-help-alcohol {
   display: inline;
 }
 
-.reports-reject-modal:is([data-report-type="alcoholimetria"], [data-report-type="observatorio de lesiones"], [data-report-type="seguridad_vial"], [data-report-type="grupos_vulnerables"]) .reports-reject-error {
+.reports-reject-modal .reports-reject-error {
   color: var(--ui-danger-text, #b91c1c);
   font-weight: 600;
 }
 
-.reports-reject-modal:is([data-report-type="alcoholimetria"], [data-report-type="observatorio de lesiones"], [data-report-type="seguridad_vial"], [data-report-type="grupos_vulnerables"]) .reports-reject-actions {
-  min-height: 62px;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 24px;
-  border-top-color: #e5e7eb;
-}
-
-.reports-reject-modal:is([data-report-type="alcoholimetria"], [data-report-type="observatorio de lesiones"], [data-report-type="seguridad_vial"], [data-report-type="grupos_vulnerables"]) .reports-reject-actions .reports-button {
+.reports-reject-modal .reports-reject-actions .reports-button {
   width: 112px;
   min-width: 112px;
   height: 34px;
@@ -3046,55 +2836,44 @@
   transition: background-color 150ms ease, border-color 150ms ease, color 150ms ease, transform 120ms ease;
 }
 
-.reports-reject-modal:is([data-report-type="alcoholimetria"], [data-report-type="observatorio de lesiones"], [data-report-type="seguridad_vial"], [data-report-type="grupos_vulnerables"]) #reject-modal-cancel {
+.reports-reject-modal #reject-modal-cancel {
   border: 1px solid var(--ui-border, #cbd5e1);
   background: var(--ui-surface, #fff);
   color: var(--ui-text, #10233f);
 }
 
-.reports-reject-modal:is([data-report-type="alcoholimetria"], [data-report-type="observatorio de lesiones"], [data-report-type="seguridad_vial"], [data-report-type="grupos_vulnerables"]) #reject-modal-submit {
+.reports-reject-modal #reject-modal-submit {
   border: 1px solid var(--ui-danger-text, #b91c1c);
   background: var(--ui-danger-text, #b91c1c);
   color: #fff;
 }
 
-.reports-reject-modal:is([data-report-type="alcoholimetria"], [data-report-type="observatorio de lesiones"], [data-report-type="seguridad_vial"], [data-report-type="grupos_vulnerables"]) #reject-modal-cancel:hover:not(:disabled) {
+.reports-reject-modal #reject-modal-cancel:hover:not(:disabled) {
   border-color: #94a3b8;
   background: var(--ui-surface-soft, #f8fafc);
 }
 
-.reports-reject-modal:is([data-report-type="alcoholimetria"], [data-report-type="observatorio de lesiones"], [data-report-type="seguridad_vial"], [data-report-type="grupos_vulnerables"]) #reject-modal-submit:hover:not(:disabled) {
+.reports-reject-modal #reject-modal-submit:hover:not(:disabled) {
   border-color: #991b1b;
   background: #991b1b;
 }
 
-.reports-reject-modal:is([data-report-type="alcoholimetria"], [data-report-type="observatorio de lesiones"], [data-report-type="seguridad_vial"], [data-report-type="grupos_vulnerables"]) .reports-reject-actions .reports-button:active:not(:disabled) {
+.reports-reject-modal .reports-reject-actions .reports-button:active:not(:disabled) {
   transform: translateY(1px);
 }
 
-.reports-reject-modal:is([data-report-type="alcoholimetria"], [data-report-type="observatorio de lesiones"], [data-report-type="seguridad_vial"], [data-report-type="grupos_vulnerables"]) .reports-reject-actions .reports-button:focus-visible {
+.reports-reject-modal .reports-reject-actions .reports-button:focus-visible {
   outline: 2px solid var(--ui-focus, #475569);
   outline-offset: 2px;
 }
 
-.reports-reject-modal:is([data-report-type="alcoholimetria"], [data-report-type="observatorio de lesiones"], [data-report-type="seguridad_vial"], [data-report-type="grupos_vulnerables"]) .modal-cerrar:disabled {
-  cursor: not-allowed;
-  opacity: .58;
-}
-
-.reports-reject-modal:is([data-report-type="alcoholimetria"], [data-report-type="observatorio de lesiones"], [data-report-type="seguridad_vial"], [data-report-type="grupos_vulnerables"]) .reports-button:disabled {
+.reports-reject-modal .reports-button:disabled {
   border-color: var(--ui-border-soft, #e5e7eb);
   background: var(--ui-surface-section, #f3f4f6);
   color: #6b7280;
   cursor: not-allowed;
   opacity: 1;
   transform: none;
-}
-
-.reports-reject-modal:is([data-report-type="alcoholimetria"], [data-report-type="observatorio de lesiones"], [data-report-type="seguridad_vial"], [data-report-type="grupos_vulnerables"]) #reject-modal-submit:disabled {
-  border-color: var(--ui-border-soft, #e5e7eb);
-  background: var(--ui-surface-section, #f3f4f6);
-  color: #6b7280;
 }
 
 .reports-filter-field .ts-wrapper {
@@ -3166,7 +2945,7 @@
   --archivo-preview-header-height: 56px;
   position: fixed;
   inset: 0;
-  z-index: 1000010 !important;
+  z-index: var(--ui-file-preview-layer, 1000010);
   overflow: hidden;
   background: rgb(29 29 29 / 96%);
   color: #f5f5f5;
@@ -3532,52 +3311,39 @@
     height: 44px;
   }
 
-  .reports-reject-actions {
-    flex-direction: column-reverse;
-  }
-
-  .reports-reject-actions .reports-button {
-    width: 100%;
-    min-height: 40px;
-  }
-
-  .reports-reject-modal:is([data-report-type="alcoholimetria"], [data-report-type="observatorio de lesiones"], [data-report-type="seguridad_vial"], [data-report-type="grupos_vulnerables"]) {
-    padding: 12px;
-  }
-
-  .reports-reject-modal:is([data-report-type="alcoholimetria"], [data-report-type="observatorio de lesiones"], [data-report-type="seguridad_vial"], [data-report-type="grupos_vulnerables"]) .reports-reject-heading {
+  .reports-reject-modal .reports-reject-heading {
     padding: 16px 16px 14px;
   }
 
-  .reports-reject-modal:is([data-report-type="alcoholimetria"], [data-report-type="observatorio de lesiones"], [data-report-type="seguridad_vial"], [data-report-type="grupos_vulnerables"]) .reports-reject-heading .modal-cerrar {
+  .reports-reject-modal .reports-reject-heading .modal-cerrar {
     width: 40px;
     height: 40px;
     flex-basis: 40px;
   }
 
-  .reports-reject-modal:is([data-report-type="alcoholimetria"], [data-report-type="observatorio de lesiones"], [data-report-type="seguridad_vial"], [data-report-type="grupos_vulnerables"]) .reports-reject-body {
+  .reports-reject-modal .reports-reject-body {
     padding: 0 16px 18px;
   }
 
-  .reports-reject-modal:is([data-report-type="alcoholimetria"], [data-report-type="observatorio de lesiones"], [data-report-type="seguridad_vial"], [data-report-type="grupos_vulnerables"]) .reports-reject-heading-context {
+  .reports-reject-modal .reports-reject-heading-context {
     gap: 5px;
     margin-top: 12px;
   }
 
-  .reports-reject-modal:is([data-report-type="alcoholimetria"], [data-report-type="observatorio de lesiones"], [data-report-type="seguridad_vial"], [data-report-type="grupos_vulnerables"]) .reports-reject-report-title {
+  .reports-reject-modal .reports-reject-report-title {
     font-size: 12.5px;
   }
 
-  .reports-reject-modal:is([data-report-type="alcoholimetria"], [data-report-type="observatorio de lesiones"], [data-report-type="seguridad_vial"], [data-report-type="grupos_vulnerables"]) .reports-reject-body textarea {
+  .reports-reject-modal .reports-reject-body textarea {
     min-height: 96px;
   }
 
-  .reports-reject-modal:is([data-report-type="alcoholimetria"], [data-report-type="observatorio de lesiones"], [data-report-type="seguridad_vial"], [data-report-type="grupos_vulnerables"]) .reports-reject-actions {
+  .reports-reject-modal .reports-reject-actions {
     gap: 8px;
     padding: 12px 16px 16px;
   }
 
-  .reports-reject-modal:is([data-report-type="alcoholimetria"], [data-report-type="observatorio de lesiones"], [data-report-type="seguridad_vial"], [data-report-type="grupos_vulnerables"]) .reports-reject-actions .reports-button {
+  .reports-reject-modal .reports-reject-actions .reports-button {
     width: 100%;
     min-width: 0;
     height: 40px;
@@ -3594,8 +3360,6 @@
 
 @media (prefers-reduced-motion: reduce) {
   .reports-publications-page *,
-  #reject-modal,
-  #reject-modal .reports-reject-card,
   #archivo-preview-overlay,
   #archivo-preview-content {
     scroll-behavior: auto !important;

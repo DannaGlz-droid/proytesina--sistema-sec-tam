@@ -550,7 +550,7 @@
 </div>
 
 <!-- Navegación de Reportes (Flechas) -->
-<div id="report-nav-container" class="hidden fixed inset-0 z-[9999999] pointer-events-none">
+<div id="report-nav-container" class="report-nav-layer hidden fixed inset-0 pointer-events-none">
     <!-- Flecha izquierda (posicionada a la izquierda) -->
     <button id="report-nav-prev"
             type="button"
@@ -2209,6 +2209,7 @@ document.addEventListener('DOMContentLoaded', function() {
         index: 0,
         renderToken: 0,
         previousFocus: null,
+        backgroundDialog: null,
     };
     let pdfJsLoadingPromise = null;
     let archivoPreviewCloseTimer = null;
@@ -2231,6 +2232,16 @@ document.addEventListener('DOMContentLoaded', function() {
 
         archivoPreviewState.files = supportedFiles;
         archivoPreviewState.index = selectedIndex;
+        const backgroundDialog = document.querySelector('.report-modal-overlay:not(.hidden)');
+        archivoPreviewState.backgroundDialog = backgroundDialog ? {
+            element: backgroundDialog,
+            ariaHidden: backgroundDialog.getAttribute('aria-hidden'),
+            wasInert: backgroundDialog.hasAttribute('inert'),
+        } : null;
+        if (backgroundDialog) {
+            backgroundDialog.setAttribute('aria-hidden', 'true');
+            backgroundDialog.setAttribute('inert', '');
+        }
         renderArchivoPreviewOverlay();
 
         const overlay = document.getElementById('archivo-preview-overlay');
@@ -2293,6 +2304,14 @@ document.addEventListener('DOMContentLoaded', function() {
             overlay.setAttribute('aria-hidden', 'true');
             overlay.classList.remove('archivo-preview-closing');
             archivoPreviewCloseTimer = null;
+
+            const backgroundDialog = archivoPreviewState.backgroundDialog;
+            if (backgroundDialog?.element?.isConnected) {
+                if (backgroundDialog.ariaHidden === null) backgroundDialog.element.removeAttribute('aria-hidden');
+                else backgroundDialog.element.setAttribute('aria-hidden', backgroundDialog.ariaHidden);
+                if (!backgroundDialog.wasInert) backgroundDialog.element.removeAttribute('inert');
+            }
+            archivoPreviewState.backgroundDialog = null;
 
             syncReportPageScroll();
             if (document.querySelector('.report-modal-overlay:not(.hidden)')) {
@@ -2774,6 +2793,26 @@ document.addEventListener('DOMContentLoaded', function() {
             e.preventDefault();
             e.stopImmediatePropagation();
             navigateArchivoPreview(1);
+        } else if (e.key === 'Tab') {
+            const focusable = Array.from(overlay.querySelectorAll(
+                'button:not([disabled]):not([hidden]), a[href], [tabindex]:not([tabindex="-1"])'
+            )).filter((element) => element.offsetParent !== null);
+
+            if (!focusable.length) return;
+            e.stopImmediatePropagation();
+            const first = focusable[0];
+            const last = focusable[focusable.length - 1];
+
+            if (!overlay.contains(document.activeElement)) {
+                e.preventDefault();
+                first.focus();
+            } else if (e.shiftKey && document.activeElement === first) {
+                e.preventDefault();
+                last.focus();
+            } else if (!e.shiftKey && document.activeElement === last) {
+                e.preventDefault();
+                first.focus();
+            }
         }
     }, true);
 
@@ -3205,17 +3244,23 @@ document.addEventListener('DOMContentLoaded', function() {
             const rejectModal = document.getElementById('reject-modal');
             const reasonField = document.getElementById('rejection-reason');
             rejectModal.dataset.reportType = sourceReportType;
-            rejectModal.classList.remove('hidden');
+            rejectModal.classList.remove('hidden', 'is-closing');
+            rejectModal.setAttribute('aria-hidden', 'false');
             if (reasonField) reasonField.value = '';
             setRejectSubmitting(false);
             updateRejectReasonState();
             // Desactivar scroll de la página
             syncReportPageScroll();
-            reasonField?.focus();
+            requestAnimationFrame(() => {
+                rejectModal.classList.add('is-open');
+                reasonField?.focus();
+            });
         }, 350);
     };
 
     window.closeRejectModal = async function(returnToPrevious = true) {
+        const rejectModal = document.getElementById('reject-modal');
+        if (!rejectModal || rejectModal.classList.contains('is-closing')) return;
         const rejectCard = document.querySelector('#reject-modal .reports-reject-card');
         if (returnToPrevious && rejectCard?.getAttribute('aria-busy') === 'true') return;
 
@@ -3225,14 +3270,20 @@ document.addEventListener('DOMContentLoaded', function() {
                 title: 'Descartar motivo',
                 subject: 'el motivo escrito',
                 description: 'El texto no se guardará y regresará al detalle del reporte.',
-                confirmLabel: 'Descartar'
+                confirmText: 'Descartar'
             });
             if (!confirmed) {
                 reasonField.focus();
                 return;
             }
         }
-        document.getElementById('reject-modal').classList.add('hidden');
+        const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        rejectModal.classList.remove('is-open');
+        rejectModal.classList.add('is-closing');
+        await new Promise(resolve => window.setTimeout(resolve, reducedMotion ? 0 : 130));
+        rejectModal.classList.add('hidden');
+        rejectModal.classList.remove('is-closing');
+        rejectModal.setAttribute('aria-hidden', 'true');
         if (reasonField) reasonField.value = '';
         setRejectSubmitting(false);
         updateRejectReasonState();

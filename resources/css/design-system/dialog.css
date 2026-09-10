@@ -48,13 +48,11 @@ body:has(.ui-dialog:not(.hidden)) {
 .ui-dialog--task .ui-dialog__panel { width: min(28.75rem, 100%); }
 .ui-dialog--lg .ui-dialog__panel { width: min(40rem, 100%); }
 
-.ui-dialog.is-open .ui-dialog__overlay,
-.ui-dialog:not(.hidden):not(.is-closing) .ui-dialog__overlay {
+.ui-dialog.is-open .ui-dialog__overlay {
   opacity: 1;
 }
 
-.ui-dialog.is-open .ui-dialog__panel,
-.ui-dialog:not(.hidden):not(.is-closing) .ui-dialog__panel {
+.ui-dialog.is-open .ui-dialog__panel {
   opacity: 1;
   transform: translateY(0);
 }
@@ -206,3 +204,55 @@ body:has(.ui-dialog:not(.hidden)) {
 .download-dialog__option strong { font-size: 12.5px; font-weight: 600; line-height: 1.3; }
 .download-dialog__option small { color: var(--ui-text-muted, #64748b); font-size: 11px; line-height: 1.35; }
 .download-dialog__chevron { color: #94a3b8; font-size: 10px; }
+.download-dialog__option:disabled { cursor: wait; opacity: .65; }
+
+.download-dialog__error {
+  display: flex;
+  align-items: flex-start;
+  gap: 7px;
+  margin: 10px 0 0;
+  border: 1px solid var(--ui-danger-border, #fecaca);
+  border-radius: 7px;
+  background: var(--ui-danger-soft, #fef2f2);
+  padding: 8px 10px;
+  color: var(--ui-danger-text, #b91c1c);
+  font-size: 11.5px;
+  line-height: 1.4;
+}
+
+.download-dialog__error.hidden { display: none; }
+.download-dialog__error > i { margin-top: 2px; flex: 0 0 auto; }
+
+/* Compatibility shell for the Alpine modal used by the account area. */
+.legacy-dialog {
+  z-index: var(--ui-task-dialog-layer, 999990);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow-y: auto;
+  padding: 1rem;
+  font-family: "Open Sans", system-ui, sans-serif;
+}
+
+.legacy-dialog__overlay {
+  position: fixed;
+  inset: 0;
+  background: rgb(15 23 42 / 34%);
+}
+
+.legacy-dialog__panel {
+  position: relative;
+  width: 100%;
+  max-height: calc(100dvh - 2rem);
+  overflow: auto;
+  border: 1px solid var(--ui-border-soft, #d8dee8);
+  border-radius: 7px;
+  background: var(--ui-surface, #fff);
+  color: var(--ui-text, #10233f);
+  box-shadow: 0 18px 46px rgb(15 23 42 / 18%), 0 2px 6px rgb(15 23 42 / 8%);
+}
+
+@media (max-width: 639px) {
+  .legacy-dialog { padding: .75rem; }
+  .legacy-dialog__panel { max-height: calc(100dvh - 1.5rem); }
+}

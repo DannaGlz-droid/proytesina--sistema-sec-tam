@@ -88,159 +88,6 @@
                 </div>
                 </div>
             </div>
-        </div>
-
-        <style id="statistics-import-dialog-styles">
-            body.statistics-import-dialog-open { overflow: hidden; }
-            #statistics-import-dialog {
-                position: fixed !important;
-                inset: 0 !important;
-                z-index: 999990 !important;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                padding: 1rem;
-                font-family: "Open Sans", sans-serif;
-            }
-            #statistics-import-dialog.hidden { display: none !important; }
-            #statistics-import-dialog .statistics-import-dialog-overlay {
-                position: absolute;
-                inset: 0;
-                background: rgba(15, 23, 42, .34);
-                opacity: 0;
-                transition: opacity 150ms ease;
-            }
-            #statistics-import-dialog .statistics-import-dialog-card {
-                position: relative;
-                width: min(30rem, 100%);
-                max-height: calc(100dvh - 2rem);
-                overflow: hidden;
-                border: 1px solid #d8dee8;
-                border-radius: 7px;
-                background: #fff;
-                color: #10233f;
-                box-shadow: 0 10px 24px rgba(15, 23, 42, .14), 0 1px 3px rgba(15, 23, 42, .06);
-                opacity: 0;
-                transform: translateY(4px);
-                transition: opacity 150ms ease, transform 150ms ease;
-            }
-            #statistics-import-dialog.is-open .statistics-import-dialog-overlay { opacity: 1; }
-            #statistics-import-dialog.is-open .statistics-import-dialog-card { opacity: 1; transform: translateY(0); }
-            #statistics-import-dialog.is-closing .statistics-import-dialog-overlay { opacity: 0; transition-duration: 120ms; }
-            #statistics-import-dialog.is-closing .statistics-import-dialog-card { opacity: 0; transform: translateY(4px); transition-duration: 120ms; }
-            #statistics-import-dialog .statistics-import-dialog-header {
-                display: flex;
-                align-items: flex-start;
-                justify-content: space-between;
-                gap: 1rem;
-                padding: 1.125rem 1.25rem .9rem;
-                border-bottom: 1px solid #e5e7eb;
-            }
-            #statistics-import-dialog .statistics-import-dialog-header h2 { margin: 0; color: #10233f; font-size: .9375rem; font-weight: 700; line-height: 1.3; }
-            #statistics-import-dialog .statistics-import-dialog-header p { margin: .2rem 0 0; color: #526278; font-size: .78rem; line-height: 1.45; }
-            #statistics-import-dialog .statistics-import-dialog-close,
-            #statistics-import-dialog .statistics-import-file > button {
-                display: inline-flex;
-                width: 2rem;
-                height: 2rem;
-                flex: 0 0 2rem;
-                align-items: center;
-                justify-content: center;
-                border: 0;
-                border-radius: 6px;
-                background: transparent;
-                color: #64748b;
-                font-size: .75rem;
-            }
-            #statistics-import-dialog .statistics-import-dialog-close { margin: -.3rem -.45rem 0 0; }
-            #statistics-import-dialog .statistics-import-dialog-close:hover,
-            #statistics-import-dialog .statistics-import-file > button:hover { background: #f3f6f9; color: #10233f; }
-            #statistics-import-dialog .statistics-import-dialog-body { overflow-y: auto; padding: 1rem 1.25rem 1.15rem; }
-            #statistics-import-dialog .statistics-import-dropzone {
-                display: flex;
-                width: 100%;
-                min-height: 88px;
-                flex-direction: row;
-                align-items: center;
-                justify-content: center;
-                gap: .72rem;
-                border: 1px dashed #cbd5e1;
-                border-radius: 7px;
-                background: #f8fafc;
-                padding: .8rem 1rem;
-                color: #475569;
-                text-align: left;
-                transition: background-color 160ms ease, border-color 160ms ease, box-shadow 160ms ease;
-            }
-            #statistics-import-dialog .statistics-import-dropzone:hover,
-            #statistics-import-dialog .statistics-import-dropzone.is-dragging { border-color: #475569; background: #f1f5f9; }
-            #statistics-import-dialog .statistics-import-dropzone:disabled:hover {
-                border-color: #cbd5e1;
-                background: #f8fafc;
-            }
-            #statistics-import-dialog .statistics-import-dropzone:focus-visible { border-color: #475569; outline: 0; box-shadow: 0 0 0 2px rgba(71, 85, 105, .18); }
-            #statistics-import-dialog .statistics-import-dropzone > i { width: 1.8rem; height: 1.8rem; flex: 0 0 1.8rem; color: #526278; font-size: 1.65rem; }
-            #statistics-import-dialog .statistics-import-dropzone-copy { display: grid; min-width: 0; gap: .16rem; color: #526278; font-size: .76rem; line-height: 1.3; }
-            #statistics-import-dialog .statistics-import-dropzone-copy strong { color: #10233f; font-weight: 600; text-decoration: underline; text-underline-offset: 3px; }
-            #statistics-import-dialog .statistics-import-dropzone small { color: #64748b; font-size: .67rem; line-height: 1.3; }
-            #statistics-import-dialog .statistics-import-file {
-                display: grid;
-                grid-template-columns: 30px minmax(0, 1fr) 32px;
-                align-items: center;
-                gap: .62rem;
-                margin-top: .75rem;
-                border: 1px solid #e2e8f0;
-                border-radius: 7px;
-                background: #fff;
-                padding: .42rem .72rem;
-            }
-            #statistics-import-dialog .statistics-import-file.hidden { display: none !important; }
-            #statistics-import-dialog .statistics-import-file-icon {
-                display: inline-flex;
-                width: 30px;
-                height: 30px;
-                align-items: center;
-                justify-content: center;
-                border: 1px solid #dbe2ea;
-                border-radius: 6px;
-                background: #f8fafc;
-                color: #52637a;
-            }
-            #statistics-import-dialog .statistics-import-file-copy { display: grid; min-width: 0; gap: .08rem; }
-            #statistics-import-dialog .statistics-import-file-copy strong { overflow: hidden; color: #10233f; font-size: .73rem; font-weight: 600; line-height: 1.25; text-overflow: ellipsis; white-space: nowrap; }
-            #statistics-import-dialog .statistics-import-file-copy small { color: #64748b; font-size: .65rem; line-height: 1.2; }
-            #statistics-import-dialog .statistics-inline-error { margin: .75rem 0 0; border: 1px solid #f1b7b2; border-radius: 7px; background: #fff1f0; padding: .5rem .65rem; color: #9f2018; font-size: .72rem; line-height: 1.4; }
-            #statistics-import-dialog .statistics-import-dialog-actions {
-                display: flex;
-                align-items: center;
-                justify-content: flex-end;
-                gap: .5rem;
-                border-top: 1px solid #e5e7eb;
-                padding: .95rem 1.25rem 1.05rem;
-            }
-            #statistics-import-dialog .statistics-import-dialog-actions .ui-button { height: 34px; min-height: 34px; padding: 0 .85rem; border-radius: 7px; font-size: .75rem; }
-            #statistics-import-dialog .statistics-import-dialog-actions .ui-button:active { transform: translateY(1px); }
-            #statistics-import-dialog .statistics-import-dialog-actions .ui-button:disabled { cursor: not-allowed; opacity: .65; }
-            #statistics-import-dialog .statistics-import-dialog-actions .ui-button:disabled:hover,
-            #statistics-import-dialog .statistics-import-dialog-actions .ui-button:disabled:active { transform: none; }
-            #statistics-import-dialog .statistics-import-dialog-actions .ui-button--primary:disabled:hover {
-                border-color: #611132;
-                background: #611132;
-            }
-            #statistics-import-dialog button:focus-visible { outline: 2px solid #475569; outline-offset: 2px; }
-            @media (max-width: 639px) {
-                #statistics-import-dialog { align-items: flex-end; padding: 0; }
-                #statistics-import-dialog .statistics-import-dialog-card { max-height: calc(100dvh - 1rem); border-radius: 7px 7px 0 0; }
-                #statistics-import-dialog .statistics-import-dropzone { min-height: 80px; justify-content: flex-start; padding: .72rem; }
-                #statistics-import-dialog .statistics-import-dialog-actions { flex-direction: column-reverse; }
-                #statistics-import-dialog .statistics-import-dialog-actions .ui-button { width: 100%; min-height: 2.5rem; }
-            }
-            @media (prefers-reduced-motion: reduce) {
-                #statistics-import-dialog .statistics-import-dialog-overlay,
-                #statistics-import-dialog .statistics-import-dialog-card { transition-duration: 1ms !important; }
-                #statistics-import-dialog .statistics-import-dialog-card { transform: none !important; }
-            }
-        </style>
 
         <x-ui.dialog
             id="statistics-import-dialog"
@@ -253,11 +100,11 @@
         >
                 <header class="ui-dialog__header statistics-import-dialog-header">
                     <div class="ui-dialog__heading">
-                        <div class="ui-dialog__title-row">
+                        <div class="ui-dialog__title-row statistics-import-dialog-title-row">
                             <i class="fas fa-file-arrow-up" aria-hidden="true"></i>
                             <h2 id="statistics-import-title" class="ui-dialog__title">Importar datos</h2>
                         </div>
-                        <p id="statistics-import-description" class="ui-dialog__description">Agregue registros utilizando el formato oficial.</p>
+                        <p id="statistics-import-description" class="ui-dialog__description">Seleccione el archivo oficial de defunciones que desea cargar.</p>
                     </div>
                     <button type="button" class="ui-dialog__close statistics-import-dialog-close" data-import-close aria-label="Cerrar">
                         <i class="fas fa-times" aria-hidden="true"></i>
@@ -265,27 +112,41 @@
                 </header>
 
                 <div class="ui-dialog__body statistics-import-dialog-body">
-                    <button id="statistics-import-dropzone" type="button" class="statistics-import-dropzone" aria-describedby="statistics-import-help">
-                        <i class="fas fa-cloud-arrow-up" aria-hidden="true"></i>
-                        <span class="statistics-import-dropzone-copy">
-                            <span><strong>Seleccionar archivo</strong> o arrástrelo aquí</span>
-                            <small id="statistics-import-help">XLSX o XLS · máximo 10 MB</small>
-                        </span>
-                    </button>
-                    <input id="fileInput" type="file" accept=".xlsx,.xls" class="hidden">
-
-                    <div id="statistics-import-file" class="statistics-import-file hidden" aria-live="polite">
-                        <span class="statistics-import-file-icon"><i class="far fa-file-excel" aria-hidden="true"></i></span>
-                        <span class="statistics-import-file-copy">
-                            <strong id="statistics-import-file-name"></strong>
-                            <small id="statistics-import-file-meta"></small>
-                        </span>
-                        <button id="statistics-import-remove" type="button" aria-label="Quitar archivo" title="Quitar archivo">
-                            <i class="fas fa-times" aria-hidden="true"></i>
+                    <div class="statistics-import-field">
+                        <p id="statistics-import-field-label" class="statistics-import-field-label">
+                            Archivo de defunciones <span aria-hidden="true">*</span>
+                        </p>
+                        <button
+                            id="statistics-import-dropzone"
+                            type="button"
+                            class="statistics-import-dropzone"
+                            aria-labelledby="statistics-import-field-label statistics-import-dropzone-action"
+                            aria-describedby="statistics-import-help"
+                        >
+                            <i class="fas fa-cloud-arrow-up" aria-hidden="true"></i>
+                            <span class="statistics-import-dropzone-copy">
+                                <span><strong id="statistics-import-dropzone-action">Seleccionar archivo</strong> o arrástrelo aquí</span>
+                                <small id="statistics-import-help">Un archivo XLSX o XLS · máximo 10 MB</small>
+                            </span>
                         </button>
-                    </div>
+                        <input id="fileInput" type="file" accept=".xlsx,.xls" class="hidden">
 
-                    <p id="statistics-import-error" class="statistics-inline-error hidden" role="alert"></p>
+                        <div id="statistics-import-file" class="statistics-import-file hidden" aria-live="polite">
+                            <span class="statistics-import-file-icon"><i class="far fa-file-excel" aria-hidden="true"></i></span>
+                            <span class="statistics-import-file-copy">
+                                <strong id="statistics-import-file-name"></strong>
+                                <small id="statistics-import-file-meta"></small>
+                            </span>
+                            <button id="statistics-import-remove" type="button" aria-label="Quitar archivo" title="Quitar archivo">
+                                <i class="fas fa-times" aria-hidden="true"></i>
+                            </button>
+                        </div>
+
+                        <p id="statistics-import-error" class="statistics-inline-error hidden" role="alert">
+                            <i class="fas fa-circle-exclamation" aria-hidden="true"></i>
+                            <span id="statistics-import-error-text"></span>
+                        </p>
+                    </div>
                 </div>
 
                 <footer class="ui-dialog__actions statistics-import-dialog-actions">
@@ -365,6 +226,7 @@ document.addEventListener('DOMContentLoaded', function () {
     var importFileName = document.getElementById('statistics-import-file-name');
     var importFileMeta = document.getElementById('statistics-import-file-meta');
     var importError = document.getElementById('statistics-import-error');
+    var importErrorText = document.getElementById('statistics-import-error-text');
     var importDefault = importSubmit ? importSubmit.querySelector('[data-import-default]') : null;
     var importLoading = importSubmit ? importSubmit.querySelector('[data-import-loading]') : null;
     var importCloseControls = importDialog ? Array.from(importDialog.querySelectorAll('[data-import-close]')) : [];
@@ -375,7 +237,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function setDeathImportError(message) {
         if (!importError) return;
-        importError.textContent = message || '';
+        if (importErrorText) importErrorText.textContent = message || '';
         importError.classList.toggle('hidden', !message);
     }
 

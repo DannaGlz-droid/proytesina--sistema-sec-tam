@@ -1,30 +1,30 @@
 <x-ui.dialog
     id="report-confirm-dialog"
-    size="sm"
+    size="task"
     labelledby="report-confirm-title"
     describedby="report-confirm-message"
     class="confirm-dialog"
     panel-class="confirm-dialog-card"
     :overlay-attributes="['class' => 'confirm-dialog-overlay', 'data-confirm-cancel' => '']"
 >
-        <div class="confirm-dialog-content">
-            <div class="confirm-dialog-heading flex items-start">
+        <header class="ui-dialog__header confirm-dialog-heading">
+            <div class="ui-dialog__heading">
+                <div class="ui-dialog__title-row confirm-dialog-title-row">
                 <i id="report-confirm-icon" class="confirm-dialog-icon fas fa-question-circle" aria-hidden="true"></i>
-                <h2 id="report-confirm-title" class="confirm-dialog-title min-w-0">Confirmar acción</h2>
+                    <h2 id="report-confirm-title" class="ui-dialog__title confirm-dialog-title">Confirmar acción</h2>
+                </div>
             </div>
-            <div id="report-confirm-message" class="confirm-dialog-body">
-                <p id="report-confirm-question" class="confirm-dialog-question hidden"></p>
-                <p id="report-confirm-description" class="confirm-dialog-description">Revisa la acción antes de continuar.</p>
-            </div>
-            <div class="confirm-dialog-actions flex flex-col-reverse sm:flex-row sm:justify-end">
-                <button type="button" id="report-confirm-cancel" class="confirm-dialog-button confirm-dialog-button-secondary">
-                    Cancelar
-                </button>
-                <button type="button" id="report-confirm-accept" class="confirm-dialog-button confirm-dialog-button-primary">
-                    Confirmar
-                </button>
-            </div>
+        </header>
+
+        <div id="report-confirm-message" class="ui-dialog__body confirm-dialog-body">
+            <p id="report-confirm-question" class="confirm-dialog-question hidden"></p>
+            <p id="report-confirm-description" class="confirm-dialog-description">Revisa la acción antes de continuar.</p>
         </div>
+
+        <footer class="ui-dialog__actions confirm-dialog-actions">
+            <button type="button" id="report-confirm-cancel" class="confirm-dialog-button confirm-dialog-button-secondary">Cancelar</button>
+            <button type="button" id="report-confirm-accept" class="confirm-dialog-button confirm-dialog-button-primary">Confirmar</button>
+        </footer>
 </x-ui.dialog>
 
 <script>
@@ -50,9 +50,37 @@
             resolver: null,
             previousFocus: null,
             previousBodyOverflow: '',
+            backgroundDialogs: [],
             isClosing: false,
             closeTimer: null
         };
+
+        function suspendBackgroundDialogs(currentDialog) {
+            state.backgroundDialogs = Array.from(document.querySelectorAll(
+                '.ui-dialog:not(.hidden), .report-modal-overlay:not(.hidden), #archivo-preview-overlay:not(.hidden)'
+            ))
+                .filter(dialog => dialog !== currentDialog)
+                .map(dialog => ({
+                    dialog,
+                    ariaHidden: dialog.getAttribute('aria-hidden'),
+                    wasInert: dialog.hasAttribute('inert')
+                }));
+
+            state.backgroundDialogs.forEach(({ dialog }) => {
+                dialog.setAttribute('aria-hidden', 'true');
+                dialog.setAttribute('inert', '');
+            });
+        }
+
+        function restoreBackgroundDialogs() {
+            state.backgroundDialogs.forEach(({ dialog, ariaHidden, wasInert }) => {
+                if (ariaHidden === null) dialog.removeAttribute('aria-hidden');
+                else dialog.setAttribute('aria-hidden', ariaHidden);
+
+                if (!wasInert) dialog.removeAttribute('inert');
+            });
+            state.backgroundDialogs = [];
+        }
 
         function getDialogParts() {
             const root = document.getElementById('report-confirm-dialog');
@@ -80,6 +108,7 @@
             document.body.style.overflow = state.previousBodyOverflow;
             state.isClosing = false;
             state.closeTimer = null;
+            restoreBackgroundDialogs();
 
             if (state.previousFocus && typeof state.previousFocus.focus === 'function') {
                 state.previousFocus.focus();
@@ -99,7 +128,7 @@
             state.isClosing = true;
             parts.root.classList.remove('is-open');
             parts.root.classList.add('is-closing');
-            document.removeEventListener('keydown', handleKeydown);
+            document.removeEventListener('keydown', handleKeydown, true);
 
             const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
             state.closeTimer = window.setTimeout(() => finishResolve(value), reducedMotion ? 0 : 130);
@@ -108,11 +137,13 @@
         function handleKeydown(event) {
             if (event.key === 'Escape') {
                 event.preventDefault();
+                event.stopImmediatePropagation();
                 resolveDialog(false);
                 return;
             }
 
             if (event.key === 'Tab') {
+                event.stopImmediatePropagation();
                 const parts = getDialogParts();
                 if (!parts) return;
 
@@ -140,6 +171,7 @@
             state.isClosing = false;
             state.previousFocus = document.activeElement;
             state.previousBodyOverflow = document.body.style.overflow;
+            suspendBackgroundDialogs(parts.root);
 
             parts.title.textContent = options.title || 'Confirmar acción';
             if (options.subject) {
@@ -176,7 +208,7 @@
             parts.root.setAttribute('aria-hidden', 'false');
             document.body.style.overflow = 'hidden';
 
-            document.addEventListener('keydown', handleKeydown);
+            document.addEventListener('keydown', handleKeydown, true);
             requestAnimationFrame(() => {
                 parts.root.classList.add('is-open');
                 parts.cancel.focus();

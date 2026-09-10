@@ -5,74 +5,80 @@
     @include('components.header-admin')
     @include('components.nav-estadisticas')
 
-    <div class="px-4 lg:pl-10 pt-6 lg:pt-10 pb-8 lg:pb-12">
-        <!-- HEADER -->
-        <div class="flex flex-col lg:flex-row lg:justify-between lg:items-center gap-4 mb-8">
-            <div>
-                <h1 class="text-2xl lg:text-3xl font-lora font-bold text-[#404041] mb-2">Estadísticas Interactivas</h1>
-                <p class="text-sm lg:text-base text-[#404041] font-lora">
-                    Seleccione una métrica para analizar y explore los datos con filtros personalizados.
-                </p>
-            </div>
-            
-        </div>
+    <main class="statistics-page">
+        <div class="statistics-page__inner">
+        <x-ui.page-header
+            class="statistics-page-header"
+            title="Estadísticas interactivas"
+            description="Seleccione una métrica y explore los datos de defunciones con filtros personalizados."
+        />
 
         <!-- CONTENEDOR PRINCIPAL -->
-        <div class="border border-[#404041] rounded-lg lg:rounded-xl bg-white bg-opacity-95 max-w-full shadow-md overflow-hidden">
-            <div class="border-b border-gray-300 bg-gray-50 px-4 lg:px-6 pt-4">
-                <nav class="flex flex-wrap gap-1 overflow-x-auto pb-0" aria-label="Tabs">
-                    <button type="button" class="chart-tab-btn active" data-chart="municipios" title="Distribución de defunciones por municipio" style="border-bottom-color: #611132;">
-                        <span class="font-lora text-sm">Municipios</span>
+        <section class="statistics-shell" aria-label="Panel de estadísticas">
+            <div class="statistics-metric-nav">
+                <nav class="statistics-metric-tabs" aria-label="Métricas estadísticas" role="tablist">
+                    <button type="button" class="chart-tab-btn active" data-chart="municipios" title="Distribución de defunciones por municipio" role="tab" aria-selected="true" aria-controls="statisticsChartPanel" tabindex="0">
+                        <span>Municipios</span>
                     </button>
-                    <button type="button" class="chart-tab-btn" data-chart="tendencias" title="Tendencia temporal de defunciones" style="border-bottom-color: #4C8CC4;">
-                        <span class="font-lora text-sm">Tendencias</span>
+                    <button type="button" class="chart-tab-btn" data-chart="tendencias" title="Tendencia temporal de defunciones" role="tab" aria-selected="false" aria-controls="statisticsChartPanel" tabindex="-1">
+                        <span>Tendencias</span>
                     </button>
-                    <button type="button" class="chart-tab-btn" data-chart="edades" title="Distribución por rangos etarios" style="border-bottom-color: #75A84E;">
-                        <span class="font-lora text-sm">Edades</span>
+                    <button type="button" class="chart-tab-btn" data-chart="edades" title="Distribución por rangos etarios" role="tab" aria-selected="false" aria-controls="statisticsChartPanel" tabindex="-1">
+                        <span>Edades</span>
                     </button>
-                    <button type="button" class="chart-tab-btn" data-chart="genero" title="Distribución por género" style="border-bottom-color: #9D2449;">
-                        <span class="font-lora text-sm">Género</span>
+                    <button type="button" class="chart-tab-btn" data-chart="genero" title="Distribución por género" role="tab" aria-selected="false" aria-controls="statisticsChartPanel" tabindex="-1">
+                        <span>Género</span>
                     </button>
-                    <button type="button" class="chart-tab-btn" data-chart="causas" title="Causas principales de defunción" style="border-bottom-color: #6B4C8A;">
-                        <span class="font-lora text-sm">Causas</span>
+                    <button type="button" class="chart-tab-btn" data-chart="causas" title="Causas principales de defunción" role="tab" aria-selected="false" aria-controls="statisticsChartPanel" tabindex="-1">
+                        <span>Causas</span>
                     </button>
-                    <button type="button" class="chart-tab-btn" data-chart="distritoes" title="Distribución por distrito" style="border-bottom-color: #C08400;">
-                        <span class="font-lora text-sm">Distritos</span>
+                    <button type="button" class="chart-tab-btn" data-chart="distritoes" title="Distribución por distrito" role="tab" aria-selected="false" aria-controls="statisticsChartPanel" tabindex="-1">
+                        <span>Distritos</span>
                     </button>
-                    <button type="button" class="chart-tab-btn" data-chart="comparativa" title="Residencia vs Lugar de Defunción" style="border-bottom-color: #4A7C7E;">
-                        <span class="font-lora text-sm">Comparativa</span>
+                    <button type="button" class="chart-tab-btn" data-chart="comparativa" title="Residencia frente a lugar de defunción" role="tab" aria-selected="false" aria-controls="statisticsChartPanel" tabindex="-1">
+                        <span>Comparativa</span>
                     </button>
                 </nav>
             </div>
 
-            <div class="p-4 lg:p-6 pt-8 lg:pt-12">
+            <div class="statistics-shell__body">
+                <div class="statistics-workbench-toolbar">
+                    <button type="button" id="statisticsFiltersToggle" class="statistics-filter-toggle" aria-expanded="false" aria-controls="estadisticas-filtros" aria-haspopup="dialog">
+                        <i class="fas fa-sliders" aria-hidden="true"></i>
+                        <span>Filtros</span>
+                        <span id="statisticsFilterCount" class="statistics-filter-count hidden" aria-label="Filtros aplicados">0</span>
+                    </button>
+                </div>
                 <!-- Layout: Filtros + Gráfica -->
-                <div class="flex flex-col lg:flex-row gap-6 lg:items-stretch">
+                <div class="statistics-layout">
                     
                     <!-- COLUMNA IZQUIERDA - Filtros (DINÁMICOS según gráfica) -->
-                    <div id="estadisticas-filtros" class="lg:w-80 flex-shrink-0">
-                        <div class="border border-[#404041] rounded-lg bg-white bg-opacity-95 overflow-visible shadow-sm">
+                    <aside id="estadisticas-filtros" class="statistics-sidebar statistics-filter-popover" role="dialog" aria-modal="false" aria-label="Filtros" aria-labelledby="statistics-filters-title">
+                        <section class="statistics-panel statistics-filters-panel">
                             <!-- Header de Filtros -->
-                            <div class="bg-white px-4 py-3 border-b border-[#e5e7eb] flex justify-between items-center">
-                                <h3 class="text-sm font-lora font-semibold text-[#404041]">Filtros</h3>
-                                <button type="button" class="text-[#611132] text-xs font-semibold hover:text-[#4a0e26] transition-all duration-300 font-lora flex items-center gap-1" id="limpiarFiltros">
-                                    <i class="fas fa-redo text-xs"></i>
+                            <header class="statistics-panel__header">
+                                <div>
+                                    <h2 id="statistics-filters-title">Filtros</h2>
+                                    <p>Acote los datos de la métrica actual.</p>
+                                </div>
+                                <button type="button" class="statistics-clear-button" id="limpiarFiltros">
+                                    <i class="fas fa-rotate-left" aria-hidden="true"></i>
                                     Limpiar
                                 </button>
-                            </div>
+                            </header>
 
                             <!-- Contenido de Filtros -->
-                            <div class="px-4 py-4 space-y-4">
+                            <div class="statistics-panel__body statistics-filter-list">
                                 <!-- Filtro de Fechas (siempre visible) -->
                                 <div class="filter-section">
                                     <div class="flex items-center gap-2 mb-3 pb-2 border-b border-gray-200">
-                                        <i class="fas fa-calendar-alt text-[#611132] text-sm"></i>
+                                        <i class="fas fa-calendar-alt text-sm" aria-hidden="true"></i>
                                         <h4 class="text-xs font-semibold text-[#404041] font-lora">Fechas</h4>
                                     </div>
                                     <div class="space-y-2">
                                         <div class="filter-group">
                                             <label class="block text-xs text-gray-600 font-lora mb-1">Rango:</label>
-                                            <select id="dateRange" class="w-full border border-[#404041] rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-[#611132] focus:border-transparent">
+                                            <select id="dateRange" class="w-full rounded-lg px-3 py-1.5 text-xs">
                                                 <option value="all">Todas las fechas</option>
                                                 <option value="years">Año(s)</option>
                                                 <option value="months">Mes(es)</option>
@@ -136,8 +142,8 @@
                                 <!-- Tipo de Municipio (Defunción vs Residencia) -->
                                 <div id="filterTipoMunicipio" class="filter-section dynamic-filter" style="display: none;">
                                     <div class="flex items-center gap-2 mb-3 pb-2 border-b border-gray-200">
-                                        <i class="fas fa-map-marker text-[#611132] text-sm"></i>
-                                        <h4 class="text-xs font-semibold text-[#404041] font-lora">Tipo de Municipio</h4>
+                                        <i class="fas fa-map-marker text-sm" aria-hidden="true"></i>
+                                        <h4 class="text-xs font-semibold text-[#404041] font-lora">Tipo de municipio</h4>
                                     </div>
                                     <select id="tipoMunicipioFilter" class="w-full border border-[#404041] rounded-lg px-3 py-1.5 text-xs">
                                         <option value="defuncion">Municipio de Defunción</option>
@@ -148,7 +154,7 @@
                                 <!-- Filtro de Municipios (contextual) -->
                                 <div id="filterMunicipios" class="filter-section dynamic-filter" style="display: none;">
                                     <div class="flex items-center gap-2 mb-3 pb-2 border-b border-gray-200">
-                                        <i class="fas fa-city text-[#611132] text-sm"></i>
+                                        <i class="fas fa-city text-sm" aria-hidden="true"></i>
                                         <h4 class="text-xs font-semibold text-[#404041] font-lora">Municipios</h4>
                                     </div>
                                     <select id="municipiosFilter" class="tomselect-select" multiple data-placeholder="Selecciona municipios">
@@ -161,7 +167,7 @@
                                 <!-- Filtro de Causas (contextual) -->
                                 <div id="filterCausas" class="filter-section dynamic-filter" style="display: none;">
                                     <div class="flex items-center gap-2 mb-3 pb-2 border-b border-gray-200">
-                                        <i class="fas fa-heartbeat text-[#611132] text-sm"></i>
+                                        <i class="fas fa-heartbeat text-sm" aria-hidden="true"></i>
                                         <h4 class="text-xs font-semibold text-[#404041] font-lora">Causas</h4>
                                     </div>
                                     <select id="causasFilter" class="tomselect-select" multiple data-placeholder="Selecciona causas">
@@ -175,7 +181,7 @@
                                 @if($districts->count() > 0)
                                 <div id="filterdistritoes" class="filter-section dynamic-filter" style="display: none;">
                                     <div class="flex items-center gap-2 mb-3 pb-2 border-b border-gray-200">
-                                        <i class="fas fa-building text-[#611132] text-sm"></i>
+                                        <i class="fas fa-building text-sm" aria-hidden="true"></i>
                                         <h4 class="text-xs font-semibold text-[#404041] font-lora">Distritos</h4>
                                     </div>
                                     <select id="distritoesFilter" class="tomselect-select" multiple data-placeholder="Selecciona distritos">
@@ -189,7 +195,7 @@
                                 <!-- Filtro de Sexo (contextual) -->
                                 <div id="filterSexo" class="filter-section dynamic-filter" style="display: none;">
                                     <div class="flex items-center gap-2 mb-3 pb-2 border-b border-gray-200">
-                                        <i class="fas fa-venus-mars text-[#611132] text-sm"></i>
+                                        <i class="fas fa-venus-mars text-sm" aria-hidden="true"></i>
                                         <h4 class="text-xs font-semibold text-[#404041] font-lora">Sexo</h4>
                                     </div>
                                     <select id="sexoFilter" class="w-full border border-[#404041] rounded-lg px-3 py-1.5 text-xs">
@@ -203,7 +209,7 @@
                                 <!-- Selector de Granularidad para Tendencias (contextual) -->
                                 <div id="filterGranularidad" class="filter-section dynamic-filter" style="display: none;">
                                     <div class="flex items-center gap-2 mb-3 pb-2 border-b border-gray-200">
-                                        <i class="fas fa-hourglass-half text-[#611132] text-sm"></i>
+                                        <i class="fas fa-hourglass-half text-sm" aria-hidden="true"></i>
                                         <h4 class="text-xs font-semibold text-[#404041] font-lora">Granularidad</h4>
                                     </div>
                                     <select id="granularidadFilter" class="w-full border border-[#404041] rounded-lg px-3 py-1.5 text-xs">
@@ -216,51 +222,46 @@
                                 <!-- Selector de Tipo de Comparativa (contextual) -->
                                 <div id="filterTipoComparativa" class="filter-section dynamic-filter" style="display: none;">
                                     <div class="flex items-center gap-2 mb-3 pb-2 border-b border-gray-200">
-                                        <i class="fas fa-exchange-alt text-[#611132] text-sm"></i>
-                                        <h4 class="text-xs font-semibold text-[#404041] font-lora">Tipo de Comparativa</h4>
+                                        <i class="fas fa-exchange-alt text-sm" aria-hidden="true"></i>
+                                        <h4 class="text-xs font-semibold text-[#404041] font-lora">Tipo de comparativa</h4>
                                     </div>
                                     <select id="tipoComparativaFilter" class="w-full border border-[#404041] rounded-lg px-3 py-1.5 text-xs">
-                                        <option value="residencia-defuncion">Residencia vs Lugar de Defunción</option>
-                                        <option value="genero-causa">Género vs Causa</option>
-                                        <option value="edad-causa">Rango Etario vs Causa</option>
-                                        <option value="lugar-causa">Lugar de Defunción vs Causa</option>
+                                        <option value="residencia-defuncion">Residencia frente a lugar de defunción</option>
+                                        <option value="genero-causa">Género por causa</option>
+                                        <option value="edad-causa">Rango etario por causa</option>
+                                        <option value="lugar-causa">Lugar de defunción por causa</option>
                                     </select>
                                 </div>
 
                                 <!-- Toggle de Causas Principales para Edades (contextual) -->
                                 <div id="filterCausasPrincipales" class="filter-section dynamic-filter" style="display: none;">
                                     <div class="flex items-center gap-2 pb-2 border-b border-gray-200 mb-3">
-                                        <i class="fas fa-star text-[#611132] text-sm"></i>
+                                        <i class="fas fa-star text-sm" aria-hidden="true"></i>
                                         <h4 class="text-xs font-semibold text-[#404041] font-lora">Información</h4>
                                     </div>
                                     <label class="flex items-center gap-3 cursor-pointer hover:bg-gray-50 p-2 rounded-lg transition-colors">
-                                        <input type="checkbox" id="mostrarCausasPrincipales" class="w-4 h-4 rounded border-[#404041] text-[#611132] cursor-pointer">
+                                        <input type="checkbox" id="mostrarCausasPrincipales" class="w-4 h-4 rounded cursor-pointer">
                                         <span class="text-xs text-gray-700 font-lora">Mostrar causas principales por edad</span>
                                     </label>
                                 </div>
 
                             </div>
-                        </div>
+                        </section>
 
-                        <div class="mt-4 border border-[#404041] rounded-lg bg-white bg-opacity-95 overflow-visible shadow-sm">
-                            <div class="bg-white px-4 py-3 border-b border-[#e5e7eb] flex items-center gap-2">
-                                <i class="fas fa-palette text-[#611132] text-sm"></i>
-                                <h3 class="text-sm font-lora font-semibold text-[#404041]">Paletas</h3>
-                            </div>
-                            <div class="px-4 py-4">
-                                <div id="colorPalettePicker" class="grid grid-cols-2 gap-2"></div>
-                            </div>
-                        </div>
-                    </div>
+                    </aside>
 
                     <!-- COLUMNA DERECHA - Gráfica -->
-                    <div class="lg:flex-1 flex flex-col min-h-0">
+                    <div class="statistics-content">
                         <!-- Controles de Presentación -->
-                        <div class="mb-6">
-                            <div class="grid grid-cols-3 gap-4 items-stretch">
+                        <section class="statistics-display-panel" aria-labelledby="statistics-display-title">
+                            <header class="statistics-display-panel__heading">
+                                <h2 id="statistics-display-title">Presentación</h2>
+                                <p>Configure cómo se representa la información.</p>
+                            </header>
+                            <div class="statistics-display-groups">
                                 <!-- Tipo de Gráfica -->
-                                <div class="flex flex-col gap-3 rounded-lg border border-gray-200 bg-white p-4 shadow-sm min-w-0">
-                                    <label class="text-[11px] font-semibold uppercase tracking-[0.12em] text-gray-500 font-lora">Tipo de Gráfica</label>
+                                <div class="statistics-display-group">
+                                    <label>Tipo de gráfica</label>
                                     <select id="chartTypeSelector" class="hidden">
                                         <option value="bar">Barras</option>
                                         <option value="barHorizontal">Barras Horizontales</option>
@@ -269,124 +270,143 @@
                                         <option value="line">Línea</option>
                                         <option value="area">Área</option>
                                     </select>
-                                    <div id="chartTypeButtons" class="grid grid-flow-col auto-cols-fr gap-2 w-full max-w-[26rem]"></div>
+                                    <div id="chartTypeButtons" class="statistics-visual-options"></div>
                                 </div>
 
                                 <!-- Etiquetas -->
-                                <div class="flex flex-col gap-3 rounded-lg border border-gray-200 bg-white p-4 shadow-sm min-w-0">
-                                    <label class="text-[11px] font-semibold uppercase tracking-[0.12em] text-gray-500 font-lora">Etiquetas</label>
+                                <div class="statistics-display-group">
+                                    <label>Etiquetas</label>
                                     <select id="datalabelMode" class="hidden">
-                                        <option value="value">Solo Valores</option>
-                                        <option value="percent">Solo Porc.</option>
+                                        <option value="value">Solo valores</option>
+                                        <option value="percent">Solo porcentaje</option>
                                         <option value="both">Ambos</option>
                                     </select>
-                                    <div id="dataLabelButtons" class="grid grid-flow-col auto-cols-fr gap-2 w-full max-w-[28rem]"></div>
+                                    <div id="dataLabelButtons" class="statistics-visual-options"></div>
                                 </div>
 
                                 <!-- Top N -->
-                                <div id="filterTop" class="flex flex-col gap-3 rounded-lg border border-gray-200 bg-white p-4 shadow-sm min-w-0" style="display: none;">
-                                    <label class="text-[11px] font-semibold uppercase tracking-[0.12em] text-gray-500 font-lora">Top</label>
+                                <div id="filterTop" class="statistics-display-group" style="display: none;">
+                                    <label>Cantidad de resultados</label>
                                     <select id="chartLimit" class="hidden">
                                         <option value="all">Todos</option>
                                         <option value="5">Top 5</option>
-                                        <option value="10">Top 10</option>
+                                        <option value="10" selected>Top 10</option>
                                         <option value="15">Top 15</option>
                                     </select>
-                                    <div id="chartLimitButtons" class="grid grid-flow-col auto-cols-fr gap-2 w-full max-w-[28rem]"></div>
+                                    <div id="chartLimitButtons" class="statistics-visual-options"></div>
+                                </div>
+
+                                <!-- Paleta -->
+                                <div class="statistics-display-group statistics-display-group--palette">
+                                    <label>Apariencia</label>
+                                    <div class="statistics-palette-popover">
+                                        <button type="button" id="statisticsPaletteToggle" class="statistics-palette-toggle" aria-expanded="false" aria-controls="statisticsPaletteMenu" aria-haspopup="true">
+                                            <span id="statisticsPaletteSelection" class="statistics-palette-selection" aria-hidden="true"></span>
+                                            <span id="statisticsPaletteLabel" class="statistics-palette-label">Granate institucional</span>
+                                            <i class="fas fa-chevron-down" aria-hidden="true"></i>
+                                        </button>
+                                        <div id="statisticsPaletteMenu" class="statistics-palette-menu hidden" aria-label="Paleta de colores">
+                                            <div id="colorPalettePicker" class="statistics-palette-grid"></div>
+                                        </div>
+                                    </div>
                                 </div>
 
                             </div>
 
-                        
-                        </div>
+                            <footer class="statistics-filter-actions">
+                                <button type="button" id="statisticsFiltersCancel" class="statistics-filter-action statistics-filter-action--secondary">Cancelar</button>
+                                <button type="button" id="statisticsFiltersApply" class="statistics-filter-action statistics-filter-action--primary">Aplicar filtros</button>
+                            </footer>
+                        </section>
 
                         <!-- Gráfica Principal -->
-                        <div class="bg-white p-4 rounded-lg border border-gray-200 shadow-sm flex flex-col flex-1 min-h-0">
+                        <section id="statisticsChartPanel" class="statistics-chart-panel" aria-labelledby="chartTitle" role="tabpanel">
                             <!-- Filtros Activos/Aplicados -->
-                            <div id="filtrosActivos" class="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg hidden">
-                                <p class="text-xs font-semibold text-[#404041] font-lora mb-2">Filtros aplicados:</p>
-                                <div id="filtrosActivosList" class="flex flex-wrap gap-2">
+                            <div id="filtrosActivos" class="statistics-active-filters hidden">
+                                <p>Filtros aplicados</p>
+                                <div id="filtrosActivosList" class="statistics-active-filters__list">
                                     <!-- Los chips se generan dinámicamente con JavaScript -->
                                 </div>
                             </div>
 
-                            <div class="flex items-center justify-between gap-4 mb-4">
-                                <div class="flex items-center gap-3">
-                                    <h2 id="chartTitle" class="text-lg font-bold text-[#404041] font-lora">Cargando...</h2>
-                                    <div id="chartTotalBadge" class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#f8f2f5] border border-[#e7d7de] text-sm font-semibold text-[#611132]">
-                                        <span class="text-xs">Total</span>
+                            <header class="statistics-chart-header">
+                                <div class="statistics-chart-heading">
+                                    <h2 id="chartTitle">Cargando...</h2>
+                                    <div id="chartTotalBadge" class="statistics-chart-total">
+                                        <span>Total</span>
                                         <span id="chartTotalValue">0</span>
                                     </div>
                                 </div>
-                                <div class="relative" id="downloadMenuWrapper">
-                                    <div class="inline-flex overflow-hidden rounded-lg shadow-sm">
-                                        <button type="button" class="bg-[#611132] text-white px-5 py-3 text-sm font-semibold hover:bg-[#4a0e26] transition-all duration-300 font-lora flex items-center gap-2 whitespace-nowrap" id="descargarActual">
-                                            <i class="fas fa-download text-sm"></i>
-                                            Descargar Gráfica
+                                <div class="statistics-download" id="downloadMenuWrapper">
+                                    <div class="statistics-download__group">
+                                        <button type="button" class="statistics-download__primary" id="descargarActual">
+                                            <i class="fas fa-download" aria-hidden="true"></i>
+                                            Descargar gráfica
                                         </button>
-                                        <button type="button" class="bg-[#4a0e26] text-white px-3 py-3 text-sm font-semibold hover:bg-[#3c0b1f] transition-all duration-300 border-l border-white/10" id="descargarOpciones" aria-label="Abrir opciones de descarga">
-                                            <i class="fas fa-chevron-down text-xs opacity-90"></i>
+                                        <button type="button" class="statistics-download__toggle" id="descargarOpciones" aria-label="Abrir opciones de descarga" aria-haspopup="menu" aria-expanded="false" aria-controls="downloadMenu">
+                                            <i class="fas fa-chevron-down" aria-hidden="true"></i>
                                         </button>
                                     </div>
-                                    <div id="downloadMenu" class="hidden absolute right-0 mt-2 w-64 rounded-lg border border-gray-200 bg-white shadow-lg z-50 overflow-hidden">
-                                        <button type="button" class="download-option w-full text-left px-5 py-3 text-sm font-lora text-[#404041] hover:bg-gray-50 flex items-center gap-3" data-export="png-transparent">
-                                            <i class="fas fa-image text-[#611132] text-sm"></i>
+                                    <div id="downloadMenu" class="statistics-download-menu hidden" role="menu">
+                                        <button type="button" class="download-option" data-export="png-transparent" role="menuitem">
+                                            <i class="fas fa-image" aria-hidden="true"></i>
                                             PNG (transparente)
                                         </button>
-                                        <button type="button" class="download-option w-full text-left px-5 py-3 text-sm font-lora text-[#404041] hover:bg-gray-50 flex items-center gap-3" data-export="png-white">
-                                            <i class="fas fa-image text-[#611132] text-sm"></i>
+                                        <button type="button" class="download-option" data-export="png-white" role="menuitem">
+                                            <i class="fas fa-image" aria-hidden="true"></i>
                                             PNG (fondo blanco)
                                         </button>
-                                        <button type="button" class="download-option w-full text-left px-5 py-3 text-sm font-lora text-[#404041] hover:bg-gray-50 flex items-center gap-3" data-export="pdf">
-                                            <i class="fas fa-file-pdf text-[#611132] text-sm"></i>
+                                        <button type="button" class="download-option" data-export="pdf" role="menuitem">
+                                            <i class="fas fa-file-pdf" aria-hidden="true"></i>
                                             PDF
                                         </button>
                                     </div>
                                 </div>
-                            </div>
-                            <div class="chart-wrapper relative flex-none h-[520px]" style="position:relative;">
+                            </header>
+                            <div class="chart-wrapper statistics-chart-canvas">
                                 <div id="mainChart" style="width: 100%; height: 100%;"></div>
-                                <div id="loadingMessage" class="absolute inset-0 z-40 items-center justify-center bg-white/70 backdrop-blur-[1px] rounded-lg" style="display: none;">
-                                    <div class="bg-white rounded-full p-3 shadow-sm border border-gray-200">
-                                        <i class="fas fa-spinner fa-spin text-2xl text-[#611132]"></i>
+                                <div id="loadingMessage" class="statistics-chart-state statistics-chart-state--loading" style="display: none;" role="status" aria-live="polite">
+                                    <div class="statistics-chart-skeleton" aria-hidden="true">
+                                        <span></span><span></span><span></span><span></span><span></span>
                                     </div>
+                                    <p>Cargando datos...</p>
                                 </div>
-                                <div id="errorMessage" class="absolute inset-0 z-40 items-center justify-center rounded-lg bg-white/70 px-4 text-center" style="display: none;">
-                                    <div class="flex flex-col items-center gap-3">
-                                        <div class="flex h-16 w-16 items-center justify-center rounded-full bg-gray-100 text-gray-400">
-                                            <i class="fas fa-inbox text-3xl"></i>
+                                <div id="errorMessage" class="statistics-chart-state statistics-chart-state--empty" style="display: none;" role="status" aria-live="polite">
+                                    <div>
+                                        <div class="statistics-chart-state__icon">
+                                            <i class="fas fa-chart-column" aria-hidden="true"></i>
                                         </div>
-                                        <p class="text-lg font-lora text-gray-600" id="errorText">No hay datos para los filtros seleccionados</p>
-                                        <p class="text-sm text-gray-500 font-lora">Intenta ajustar los criterios de búsqueda</p>
+                                        <p id="errorText">No hay datos para los filtros seleccionados.</p>
+                                        <span>Pruebe con otros criterios o limpie los filtros aplicados.</span>
                                     </div>
                                 </div>
                             </div>
                             
                             <!-- Tabla de Causas Principales (solo para Edades) -->
-                            <div id="causasPrincipalesContainer" class="hidden mt-6 pt-4 border-t border-gray-200 w-full">
-                                <h3 class="text-base font-bold text-[#404041] mb-4 font-lora">Causas Principales de Muerte por Grupo de Edad</h3>
-                                <div class="overflow-x-auto w-full mx-auto causas-table-wrapper">
-                                    <table class="w-full text-sm border-collapse table-fixed">
+                            <section id="causasPrincipalesContainer" class="statistics-causes hidden" aria-labelledby="statistics-causes-title">
+                                <h3 id="statistics-causes-title">Causas principales de defunción por grupo de edad</h3>
+                                <div class="causas-table-wrapper">
+                                    <table>
                                         <colgroup>
                                             <col style="width: 16%;">
                                             <col style="width: 8%;">
                                             <col style="width: 76%;">
                                         </colgroup>
                                         <thead>
-                                            <tr class="bg-gray-50 border-b border-gray-200">
-                                                <th class="px-3 py-2 text-left font-semibold text-[#404041] font-lora">Grupo de Edad</th>
-                                                <th id="causasTotalHeader" class="px-3 py-2 text-left font-semibold text-[#404041] font-lora">Total</th>
-                                                <th id="causasDetalleHeader" class="px-3 py-2 text-left font-semibold text-[#404041] font-lora">Causas Principales</th>
+                                            <tr>
+                                                <th>Grupo de edad</th>
+                                                <th id="causasTotalHeader">Total</th>
+                                                <th id="causasDetalleHeader">Causas principales</th>
                                             </tr>
                                         </thead>
-                                        <tbody id="causasPrincipalesBody" class="align-top">
+                                        <tbody id="causasPrincipalesBody">
                                             <!-- Se llena dinámicamente con JavaScript -->
                                         </tbody>
                                     </table>
                                 </div>
-                            </div>
+                            </section>
 
-                            <style>
+                            <style media="not all" data-legacy-statistics-table-styles>
                                 /* Asegurar que la tabla use todo el ancho disponible y las causas puedan mostrarse completas */
                                 #causasPrincipalesContainer { width: 100%; }
                                 #causasPrincipalesContainer .causas-table-wrapper {
@@ -438,12 +458,13 @@
                                     #causasPrincipalesContainer .causas-table-wrapper { max-width: 100%; }
                                 }
                             </style>
-                        </div>
+                        </section>
                     </div>
                 </div>
             </div>
+        </section>
         </div>
-    </div>
+    </main>
 
     <!-- Incluir ECharts -->
     <script src="https://cdn.jsdelivr.net/npm/echarts@5.5.1/dist/echarts.min.js"></script>
@@ -457,11 +478,13 @@
     <script>
         let currentChartType = 'municipios';
         let currentEchartsInstance = null;
+        let filterDraftSnapshot = null;
+        let restoringFilterDraft = false;
         let chartConfig = {
             type: 'bar',
             dataLabelMode: 'value',
-            limit: null,
-            colorPalette: 'aqua',
+            limit: 10,
+            colorPalette: 'maroon611132',
             groupBy: 'month'
         };
 
@@ -470,7 +493,7 @@
         let preferredConfig = {
             type: 'bar',
             dataLabelMode: 'value',
-            limit: null
+            limit: 10
         };
 
         // DEPRECATED: Las configuraciones son GLOBALES, no por métrica
@@ -619,7 +642,8 @@
             ],
             // Paleta monocromática basada en #611132, de tintes claros a sombras profundas.
             maroon611132: [
-                '#611132'
+                '#611132', '#8B2A52', '#9D2449', '#B84C3A', '#7A2946',
+                '#4A0E26', '#C25C6F', '#9C4460', '#6F344C', '#A74F62'
             ],
             // Paleta Monocromática Azul Corporativa: progresión de azul oscuro a azul claro con 5 colores adicionales.
             institutional: [
@@ -654,14 +678,14 @@
         };
 
         const colorPaletteLabels = {
-            aqua: 'Aqua',
-            autumn: 'Autumn',
-            rose: 'Rose',
-            spectrum: 'Spectrum',
-            earth: 'Earth',
-            goldenEarth: 'Golden Earth',
-            maroon611132: 'Maroon 611132',
-            institutional: 'Institucional'
+            aqua: 'Verde natural',
+            autumn: 'Tonos tierra',
+            rose: 'Rojos',
+            spectrum: 'Espectro',
+            earth: 'Multicolor',
+            goldenEarth: 'Violetas',
+            maroon611132: 'Granate institucional',
+            institutional: 'Azul institucional'
         };
 
         const chartTypeDefaults = {
@@ -685,20 +709,20 @@
         };
 
         const chartTitles = {
-            municipios: 'Distribución por Municipios',
-            tendencias: 'Tendencia Temporal',
-            edades: 'Distribución por Edades',
-            genero: 'Distribución por Género',
-            causas: 'Causas de Defunción',
-            distritoes: 'Distribución por Distritos',
-            comparativa: 'Comparativa: Residencia vs Defunción'
+            municipios: 'Distribución por municipios',
+            tendencias: 'Tendencia temporal',
+            edades: 'Distribución por edades',
+            genero: 'Distribución por género',
+            causas: 'Causas de defunción',
+            distritoes: 'Distribución por distritos',
+            comparativa: 'Comparación entre residencia y defunción'
         };
 
         const comparativaLabels = {
-            'residencia-defuncion': 'Residencia vs Lugar de Defunción',
-            'genero-causa': 'Género vs Causa de Defunción',
-            'edad-causa': 'Rango Etario vs Causa de Defunción',
-            'lugar-causa': 'Lugar de Defunción vs Causa'
+            'residencia-defuncion': 'Residencia frente a lugar de defunción',
+            'genero-causa': 'Género por causa de defunción',
+            'edad-causa': 'Rango etario por causa de defunción',
+            'lugar-causa': 'Lugar de defunción por causa'
         };
 
         const filtersForChart = {
@@ -712,7 +736,7 @@
         };
 
         // Gráficas que deben mostrar el selector "Top"
-        const chartTypesWithTopSelector = ['municipios', 'distritoes', 'comparativa'];
+        const chartTypesWithTopSelector = ['municipios', 'causas', 'distritoes', 'comparativa'];
 
         const chartTypeIcons = {
             bar: 'fa-chart-column',
@@ -808,15 +832,12 @@
                             }
                         },
                         onChange: (value) => {
-                            // Actualizar los filtros mostrados en "Filtros aplicados:"
-                            collectFilters();
-                            updateActiveFiltersDisplay();
                             // Si cambió el distrito mientras se ve 'municipios', actualizar la lista disponible.
                             if (element.id === 'distritoesFilter' && currentChartType === 'municipios') {
                                 const selected = Array.isArray(value) ? value.map(String) : (value ? [String(value)] : []);
                                 updateMunicipiosOptions(selected);
                             }
-                            updateChart();
+                            markStatisticsFilterDraft();
                         },
                         onOptionSelect: () => {
                             // Cerrar después de seleccionar para mejorar UX
@@ -878,6 +899,80 @@
             });
         }
 
+        function captureStatisticsFilterState() {
+            const panel = document.getElementById('estadisticas-filtros');
+            if (!panel) return {};
+
+            return Array.from(panel.querySelectorAll('input[id], select[id]')).reduce((state, control) => {
+                if (control.type === 'checkbox') {
+                    state[control.id] = control.checked;
+                } else if (control.multiple) {
+                    state[control.id] = control.tomselect
+                        ? [].concat(control.tomselect.getValue() || [])
+                        : Array.from(control.selectedOptions).map(option => option.value);
+                } else {
+                    state[control.id] = control.value;
+                }
+                return state;
+            }, {});
+        }
+
+        function restoreStatisticsFilterState(state) {
+            if (!state) return;
+            restoringFilterDraft = true;
+
+            Object.entries(state).forEach(([id, value]) => {
+                const control = document.getElementById(id);
+                if (!control) return;
+
+                if (control.type === 'checkbox') {
+                    control.checked = Boolean(value);
+                } else if (control.tomselect) {
+                    control.tomselect.setValue(value, true);
+                } else if (control.multiple) {
+                    const selectedValues = new Set([].concat(value || []).map(String));
+                    Array.from(control.options).forEach(option => {
+                        option.selected = selectedValues.has(String(option.value));
+                    });
+                } else {
+                    control.value = value ?? '';
+                }
+            });
+
+            onDateRangeChange();
+            const districts = state.distritoesFilter || [];
+            if (currentChartType === 'municipios') updateMunicipiosOptions([].concat(districts || []));
+            restoringFilterDraft = false;
+        }
+
+        function markStatisticsFilterDraft() {
+            if (restoringFilterDraft) return;
+            const panel = document.getElementById('estadisticas-filtros');
+            if (panel?.classList.contains('is-open')) panel.classList.add('has-draft-changes');
+        }
+
+        function openStatisticsFilters() {
+            const panel = document.getElementById('estadisticas-filtros');
+            const toggle = document.getElementById('statisticsFiltersToggle');
+            if (!panel || !toggle) return;
+
+            filterDraftSnapshot = captureStatisticsFilterState();
+            panel.classList.remove('has-draft-changes');
+            panel.classList.add('is-open');
+            toggle.setAttribute('aria-expanded', 'true');
+        }
+
+        function closeStatisticsFilters({ restore = false } = {}) {
+            const panel = document.getElementById('estadisticas-filtros');
+            const toggle = document.getElementById('statisticsFiltersToggle');
+            if (!panel || !toggle) return;
+
+            if (restore && filterDraftSnapshot) restoreStatisticsFilterState(filterDraftSnapshot);
+            filterDraftSnapshot = null;
+            panel.classList.remove('is-open', 'has-draft-changes');
+            toggle.setAttribute('aria-expanded', 'false');
+        }
+
         // Actualiza las opciones del select de municipios según las distritoes seleccionadas
         function updateMunicipiosOptions(selectedJurIds = []) {
             const munEl = document.getElementById('municipiosFilter');
@@ -913,31 +1008,99 @@
             // Inicializar Tom Select para multiselects
             initializeTomSelect();
 
-            document.querySelectorAll('.chart-tab-btn').forEach(btn => {
+            const chartTabs = Array.from(document.querySelectorAll('.chart-tab-btn'));
+            chartTabs.forEach((btn, index) => {
                 btn.addEventListener('click', function() {
                     selectChart(this.dataset.chart);
                 });
+
+                btn.addEventListener('keydown', function(event) {
+                    let targetIndex = null;
+                    if (event.key === 'ArrowRight') targetIndex = (index + 1) % chartTabs.length;
+                    if (event.key === 'ArrowLeft') targetIndex = (index - 1 + chartTabs.length) % chartTabs.length;
+                    if (event.key === 'Home') targetIndex = 0;
+                    if (event.key === 'End') targetIndex = chartTabs.length - 1;
+                    if (targetIndex === null) return;
+
+                    event.preventDefault();
+                    chartTabs[targetIndex].focus();
+                    chartTabs[targetIndex].click();
+                });
             });
 
-            document.getElementById('dateRange').addEventListener('change', onDateRangeChange);
+            const filtersToggle = document.getElementById('statisticsFiltersToggle');
+            const filtersSidebar = document.getElementById('estadisticas-filtros');
+            const filtersCancel = document.getElementById('statisticsFiltersCancel');
+            const filtersApply = document.getElementById('statisticsFiltersApply');
+            if (filtersToggle && filtersSidebar) {
+                filtersToggle.addEventListener('click', function() {
+                    const willOpen = this.getAttribute('aria-expanded') !== 'true';
+                    if (willOpen) {
+                        openStatisticsFilters();
+                    } else {
+                        closeStatisticsFilters({ restore: true });
+                    }
+                });
+
+                document.addEventListener('click', function(event) {
+                    if (filtersToggle.contains(event.target) || filtersSidebar.contains(event.target)) return;
+                    if (filtersSidebar.classList.contains('is-open')) closeStatisticsFilters({ restore: true });
+                }, true);
+
+                document.addEventListener('keydown', function(event) {
+                    if (event.key !== 'Escape' || !filtersSidebar.classList.contains('is-open')) return;
+                    closeStatisticsFilters({ restore: true });
+                    filtersToggle.focus();
+                });
+
+                filtersCancel?.addEventListener('click', function() {
+                    closeStatisticsFilters({ restore: true });
+                    filtersToggle.focus();
+                });
+
+                filtersApply?.addEventListener('click', function() {
+                    collectFilters();
+                    filterDraftSnapshot = captureStatisticsFilterState();
+                    closeStatisticsFilters();
+                    updateChart();
+                    filtersToggle.focus();
+                });
+            }
+
+            const chartCanvas = document.querySelector('.statistics-chart-canvas');
+            if (chartCanvas && typeof ResizeObserver !== 'undefined') {
+                let resizeFrame = null;
+                const chartResizeObserver = new ResizeObserver(() => {
+                    if (resizeFrame) window.cancelAnimationFrame(resizeFrame);
+                    resizeFrame = window.requestAnimationFrame(() => currentEchartsInstance?.resize());
+                });
+                chartResizeObserver.observe(chartCanvas);
+            } else {
+                window.addEventListener('resize', () => currentEchartsInstance?.resize());
+            }
+
+            document.getElementById('dateRange').addEventListener('change', function() {
+                onDateRangeChange();
+                markStatisticsFilterDraft();
+            });
             
             // Event listeners para campos de fecha
             const yearInput = document.getElementById('year');
-            if (yearInput) yearInput.addEventListener('change', updateChart);
+            if (yearInput) yearInput.addEventListener('change', markStatisticsFilterDraft);
             
             // Event listener para mes específico (select simple)
             const monthSelect = document.getElementById('month');
             if (monthSelect && monthSelect.tagName === 'SELECT') {
-                monthSelect.addEventListener('change', updateChart);
+                monthSelect.addEventListener('change', markStatisticsFilterDraft);
             }
             
             const quarterSelect = document.getElementById('quarter');
-            if (quarterSelect) quarterSelect.addEventListener('change', updateChart);
+            if (quarterSelect) quarterSelect.addEventListener('change', markStatisticsFilterDraft);
             
             // Manejar checkboxes de meses
             document.querySelectorAll('.month-checkbox').forEach(checkbox => {
                 checkbox.addEventListener('change', function() {
-                    updateChart();
+                    markStatisticsFilterDraft();
                 });
             });
             
@@ -958,15 +1121,15 @@
                 });
             }
             
-            document.getElementById('customStartDate').addEventListener('change', updateChart);
-            document.getElementById('customEndDate').addEventListener('change', updateChart);
+            document.getElementById('customStartDate').addEventListener('change', markStatisticsFilterDraft);
+            document.getElementById('customEndDate').addEventListener('change', markStatisticsFilterDraft);
             // Nota: Los eventos para municipiosFilter, causasFilter, distritoesFilter 
             // se manejan dentro de Tom Select (onChange), no aquí
-            document.getElementById('sexoFilter').addEventListener('change', updateChart);
-            document.getElementById('granularidadFilter').addEventListener('change', updateChart);
-            document.getElementById('mostrarCausasPrincipales').addEventListener('change', updateChart);
-            document.getElementById('tipoComparativaFilter').addEventListener('change', updateChart);
-            document.getElementById('tipoMunicipioFilter').addEventListener('change', updateChart);
+            document.getElementById('sexoFilter').addEventListener('change', markStatisticsFilterDraft);
+            document.getElementById('granularidadFilter').addEventListener('change', markStatisticsFilterDraft);
+            document.getElementById('mostrarCausasPrincipales').addEventListener('change', markStatisticsFilterDraft);
+            document.getElementById('tipoComparativaFilter').addEventListener('change', markStatisticsFilterDraft);
+            document.getElementById('tipoMunicipioFilter').addEventListener('change', markStatisticsFilterDraft);
 
             document.getElementById('chartTypeSelector').addEventListener('change', function() {
                 chartConfig.type = this.value;
@@ -1009,19 +1172,50 @@
             });
 
             const palettePicker = document.getElementById('colorPalettePicker');
+            const paletteToggle = document.getElementById('statisticsPaletteToggle');
+            const paletteMenu = document.getElementById('statisticsPaletteMenu');
+            const palettePopover = paletteToggle?.closest('.statistics-palette-popover');
+
+            if (paletteToggle && paletteMenu) {
+                paletteToggle.addEventListener('click', function() {
+                    const willOpen = paletteMenu.classList.contains('hidden');
+                    paletteMenu.classList.toggle('hidden', !willOpen);
+                    this.setAttribute('aria-expanded', String(willOpen));
+                });
+
+                document.addEventListener('click', function(event) {
+                    if (palettePopover?.contains(event.target)) return;
+                    paletteMenu.classList.add('hidden');
+                    paletteToggle.setAttribute('aria-expanded', 'false');
+                });
+
+                document.addEventListener('keydown', function(event) {
+                    if (event.key !== 'Escape' || paletteMenu.classList.contains('hidden')) return;
+                    paletteMenu.classList.add('hidden');
+                    paletteToggle.setAttribute('aria-expanded', 'false');
+                    paletteToggle.focus();
+                });
+            }
+
             if (palettePicker) {
                 palettePicker.addEventListener('click', function(event) {
                     const button = event.target.closest('.palette-chip');
                     if (!button) return;
                     const paletteName = button.dataset.palette;
-                    if (!paletteName || chartConfig.colorPalette === paletteName) return;
+                    if (!paletteName) return;
+                    const changed = chartConfig.colorPalette !== paletteName;
                     chartConfig.colorPalette = paletteName;
                     renderColorPalettePreview(paletteName);
-                    updateChart();
+                    paletteMenu?.classList.add('hidden');
+                    paletteToggle?.setAttribute('aria-expanded', 'false');
+                    if (changed) updateChart();
                 });
             }
 
-            document.getElementById('limpiarFiltros').addEventListener('click', clearFilters);
+            document.getElementById('limpiarFiltros').addEventListener('click', function() {
+                clearFilters(true);
+                markStatisticsFilterDraft();
+            });
 
             const downloadMenuWrapper = document.getElementById('downloadMenuWrapper');
             const downloadMenu = document.getElementById('downloadMenu');
@@ -1037,7 +1231,9 @@
                 if (downloadOptionsButton) {
                     downloadOptionsButton.addEventListener('click', function(event) {
                         event.stopPropagation();
-                        downloadMenu.classList.toggle('hidden');
+                        const willOpen = downloadMenu.classList.contains('hidden');
+                        downloadMenu.classList.toggle('hidden', !willOpen);
+                        this.setAttribute('aria-expanded', String(willOpen));
                     });
                 }
 
@@ -1045,6 +1241,7 @@
                     option.addEventListener('click', async function() {
                         const exportType = this.dataset.export;
                         downloadMenu.classList.add('hidden');
+                        downloadOptionsButton?.setAttribute('aria-expanded', 'false');
                         await exportCurrentChart(exportType);
                     });
                 });
@@ -1052,7 +1249,15 @@
                 document.addEventListener('click', function(event) {
                     if (downloadMenuWrapper && !downloadMenuWrapper.contains(event.target)) {
                         downloadMenu.classList.add('hidden');
+                        downloadOptionsButton?.setAttribute('aria-expanded', 'false');
                     }
+                });
+
+                document.addEventListener('keydown', function(event) {
+                    if (event.key !== 'Escape' || downloadMenu.classList.contains('hidden')) return;
+                    downloadMenu.classList.add('hidden');
+                    downloadOptionsButton?.setAttribute('aria-expanded', 'false');
+                    downloadOptionsButton?.focus();
                 });
             }
         }
@@ -1082,7 +1287,8 @@
 
         async function captureChartAsCanvas(transparent = false) {
             if (currentChartType === 'edades' && document.getElementById('mostrarCausasPrincipales').checked && typeof html2canvas !== 'undefined') {
-                const element = document.querySelector('[id="mainChart"]').closest('.bg-white');
+                const element = document.getElementById('mainChart')?.closest('.statistics-chart-panel');
+                if (!element) return null;
                 return html2canvas(element, {
                     scale: 2,
                     useCORS: true,
@@ -1110,14 +1316,14 @@
         }
 
         async function exportCurrentChart(exportType) {
-            if (!currentEchartsInstance) return;
+            if (!currentEchartsInstance) return false;
 
             if (exportType === 'pdf') {
                 const canvas = await captureChartAsCanvas(false);
-                if (!canvas) return;
+                if (!canvas) return false;
 
                 const { jsPDF } = window.jspdf || {};
-                if (!jsPDF) return;
+                if (!jsPDF) return false;
 
                 const pdf = new jsPDF({ orientation: canvas.width >= canvas.height ? 'landscape' : 'portrait', unit: 'pt', format: 'a4' });
                 const pageWidth = pdf.internal.pageSize.getWidth();
@@ -1130,25 +1336,31 @@
 
                 pdf.addImage(canvas.toDataURL('image/png'), 'PNG', x, y, width, height);
                 pdf.save(getCurrentDownloadName('pdf'));
-                return;
+                return true;
             }
 
             const transparent = exportType === 'png-transparent';
             const canvas = await captureChartAsCanvas(transparent);
-            if (!canvas) return;
+            if (!canvas) return false;
 
             const link = document.createElement('a');
             link.href = canvas.toDataURL('image/png');
             link.download = getCurrentDownloadName('png');
             link.click();
+            return true;
         }
+
+        window.exportStatisticsChart = exportCurrentChart;
 
         function selectChart(chartType) {
             currentChartType = chartType;
             
             // Actualizar botones de tab
             document.querySelectorAll('.chart-tab-btn').forEach(btn => {
-                btn.classList.toggle('active', btn.dataset.chart === chartType);
+                const isSelected = btn.dataset.chart === chartType;
+                btn.classList.toggle('active', isSelected);
+                btn.setAttribute('aria-selected', String(isSelected));
+                btn.tabIndex = isSelected ? 0 : -1;
             });
             
             // Actualizar filtros contextuales disponibles para esta métrica
@@ -1226,7 +1438,9 @@
             // Mostrar/ocultar selector Top según el tipo de gráfica
             const filterTopElement = document.getElementById('filterTop');
             if (filterTopElement) {
-                filterTopElement.style.display = chartTypesWithTopSelector.includes(chartType) ? 'flex' : 'none';
+                const showTopSelector = chartTypesWithTopSelector.includes(chartType);
+                filterTopElement.style.display = showTopSelector ? '' : 'none';
+                filterTopElement.parentElement?.classList.toggle('has-top-filter', showTopSelector);
             }
 
             updateChartTypeOptions(chartType);
@@ -1336,7 +1550,6 @@
                     break;
             }
             
-            updateChart();
         }
 
         function setupMonthLabels() {
@@ -1355,7 +1568,7 @@
             // Re-agregar listeners a los checkboxes clonados
             updated.querySelectorAll('.month-checkbox').forEach(checkbox => {
                 checkbox.addEventListener('change', function() {
-                    updateChart();
+                    markStatisticsFilterDraft();
                 });
             });
             
@@ -1380,19 +1593,29 @@
             if (!picker) return;
 
             const paletteKeys = Object.keys(colorPalettes);
+            const selectedPalette = colorPalettes[paletteName] || [];
+            const selectedLabel = colorPaletteLabels[paletteName] || paletteName;
+            const selection = document.getElementById('statisticsPaletteSelection');
+            const label = document.getElementById('statisticsPaletteLabel');
+
+            if (selection) {
+                selection.innerHTML = selectedPalette.slice(0, 4)
+                    .map(color => `<span style="background:${color};"></span>`)
+                    .join('');
+            }
+            if (label) label.textContent = selectedLabel;
 
             picker.innerHTML = paletteKeys.map(key => {
                 const palette = colorPalettes[key] || [];
                 const label = colorPaletteLabels[key] || key;
-                const activeClass = key === paletteName ? 'border-[#611132] bg-[#f8f2f5] ring-1 ring-[#611132]' : 'border-gray-200 bg-white hover:bg-gray-50';
                 const swatches = palette.slice(0, 4);
 
                 return `
-                    <button type="button" class="palette-chip w-full rounded-lg border px-2 py-2 text-left transition-all duration-200 ${activeClass}" data-palette="${key}" aria-pressed="${key === paletteName}">
-                        <div class="flex items-center gap-1 mb-1">
-                            ${swatches.map(color => `<span class="h-3.5 w-3.5 rounded-sm border border-white shadow-sm" style="background:${color};" title="${color}"></span>`).join('')}
+                    <button type="button" class="palette-chip" data-palette="${key}" aria-pressed="${key === paletteName}" aria-label="Usar paleta ${label}">
+                        <div class="palette-chip__swatches">
+                            ${swatches.map(color => `<span style="background:${color};" title="${color}"></span>`).join('')}
                         </div>
-                        <div class="text-[11px] font-semibold font-lora text-[#404041] truncate">${label}</div>
+                        <div class="palette-chip__label">${label}</div>
                     </button>
                 `;
             }).join('');
@@ -1415,22 +1638,20 @@
             const isSingleType = availableTypes.length === 1;
             const labels = {
                 bar: 'Barras',
-                barHorizontal: 'Horiz.',
+                barHorizontal: 'Horizontal',
                 pie: 'Pastel',
                 doughnut: 'Rosquilla',
                 line: 'Línea',
                 area: 'Área'
             };
 
-            container.className = isSingleType
-                ? 'flex items-start justify-start gap-2 w-fit max-w-none'
-                : 'grid grid-flow-col auto-cols-fr gap-2 w-full max-w-[26rem]';
+            container.className = `statistics-visual-options${isSingleType ? ' is-single' : ''}`;
 
             container.innerHTML = availableTypes.map(type => {
                 const active = type === currentValue;
                 return `
                     <button type="button" class="visual-option-btn visual-option-card ${isSingleType ? 'is-compact-single' : ''} ${active ? 'active' : ''}" data-target="chartTypeSelector" data-value="${type}" aria-pressed="${active}">
-                        <i class="fas ${chartTypeIcons[type] || 'fa-chart-simple'} text-xl"></i>
+                        <i class="fas ${chartTypeIcons[type] || 'fa-chart-simple'}"></i>
                         <span class="visual-option-label">${labels[type] || type}</span>
                     </button>
                 `;
@@ -1445,7 +1666,7 @@
             const currentValue = select.value || chartConfig.dataLabelMode || 'value';
             let options = [
                 { value: 'value', label: 'Valores' },
-                { value: 'percent', label: 'Porc.' },
+                { value: 'percent', label: 'Porcentaje' },
                 { value: 'both', label: 'Ambos' }
             ];
 
@@ -1456,15 +1677,13 @@
 
             const isSingleOption = options.length === 1;
 
-            container.className = isSingleOption
-                ? 'flex items-start justify-start gap-2 w-fit max-w-none'
-                : 'grid grid-flow-col auto-cols-fr gap-2 w-full max-w-[28rem]';
+            container.className = `statistics-visual-options${isSingleOption ? ' is-single' : ''}`;
 
             container.innerHTML = options.map(option => {
                 const active = option.value === currentValue;
                 return `
                     <button type="button" class="visual-option-btn visual-option-card ${isSingleOption ? 'is-compact-single' : ''} ${active ? 'active' : ''}" data-target="datalabelMode" data-value="${option.value}" aria-pressed="${active}">
-                        <i class="fas ${dataLabelIcons[option.value] || 'fa-circle'} text-xl"></i>
+                        <i class="fas ${dataLabelIcons[option.value] || 'fa-circle'}"></i>
                         <span class="visual-option-label">${option.label}</span>
                     </button>
                 `;
@@ -1492,9 +1711,7 @@
 
             const isSingleOption = options.length === 1;
 
-            container.className = isSingleOption
-                ? 'flex items-start justify-start gap-2 w-fit max-w-none'
-                : 'grid grid-flow-col auto-cols-fr gap-2 w-full max-w-[28rem]';
+            container.className = `statistics-visual-options${isSingleOption ? ' is-single' : ''}`;
 
             container.innerHTML = options.map(option => {
                 const active = option.value === currentValue;
@@ -1506,7 +1723,9 @@
                 `;
             }).join('');
 
-            wrapper.style.display = chartTypesWithTopSelector.includes(chartType) ? 'flex' : 'none';
+            const showTopSelector = chartTypesWithTopSelector.includes(chartType);
+            wrapper.style.display = showTopSelector ? '' : 'none';
+            wrapper.parentElement?.classList.toggle('has-top-filter', showTopSelector);
         }
 
         function collectFilters() {
@@ -1675,62 +1894,73 @@
         function updateActiveFiltersDisplay() {
             const container = document.getElementById('filtrosActivosList');
             const section = document.getElementById('filtrosActivos');
+            const countBadge = document.getElementById('statisticsFilterCount');
             container.innerHTML = '';
             
             let hasActiveFilters = false;
+            let activeFilterCount = 0;
 
             // Mostrar rango de fechas
             const dateText = getDateFilterText();
             if (dateText) {
-                container.innerHTML += `<span class="inline-flex items-center gap-1 bg-[#611132] text-white text-xs px-2.5 py-1 rounded-full font-lora">
+                container.innerHTML += `<span class="statistics-filter-chip">
                     ${dateText}
-                    <button onclick="clearDateFilter()" class="ml-1 hover:opacity-70">×</button>
+                    <button type="button" onclick="clearDateFilter()" aria-label="Quitar filtro de fecha">&times;</button>
                 </span>`;
                 hasActiveFilters = true;
+                activeFilterCount++;
             }
 
             // Mostrar municipios seleccionados
             if (activeFilters.municipios.length > 0) {
                 const municipiosText = activeFilters.municipiosNames.join(', ');
-                container.innerHTML += `<span class="inline-flex items-center gap-1 bg-[#8B6F47] text-white text-xs px-2.5 py-1 rounded-full font-lora">
+                container.innerHTML += `<span class="statistics-filter-chip">
                     ${municipiosText}
-                    <button onclick="clearFilter('municipios')" class="ml-1 hover:opacity-70">×</button>
+                    <button type="button" onclick="clearFilter('municipios')" aria-label="Quitar filtro de municipios">&times;</button>
                 </span>`;
                 hasActiveFilters = true;
+                activeFilterCount++;
             }
 
             // Mostrar causas seleccionadas
             if (activeFilters.causas.length > 0) {
                 const causasText = activeFilters.causasNames.join(', ');
-                container.innerHTML += `<span class="inline-flex items-center gap-1 bg-[#2C5F5D] text-white text-xs px-2.5 py-1 rounded-full font-lora">
+                container.innerHTML += `<span class="statistics-filter-chip">
                     ${causasText}
-                    <button onclick="clearFilter('causas')" class="ml-1 hover:opacity-70">×</button>
+                    <button type="button" onclick="clearFilter('causas')" aria-label="Quitar filtro de causas">&times;</button>
                 </span>`;
                 hasActiveFilters = true;
+                activeFilterCount++;
             }
 
             // Mostrar distritoes seleccionadas
             if (activeFilters.distritoes.length > 0) {
                 const distritoesText = activeFilters.distritoesNames.join(', ');
-                container.innerHTML += `<span class="inline-flex items-center gap-1 bg-[#9B4D6F] text-white text-xs px-2.5 py-1 rounded-full font-lora">
+                container.innerHTML += `<span class="statistics-filter-chip">
                     ${distritoesText}
-                    <button onclick="clearFilter('distritoes')" class="ml-1 hover:opacity-70">×</button>
+                    <button type="button" onclick="clearFilter('distritoes')" aria-label="Quitar filtro de distritos">&times;</button>
                 </span>`;
                 hasActiveFilters = true;
+                activeFilterCount++;
             }
 
             // Mostrar sexo seleccionado
             if (activeFilters.sexo) {
                 const sexoLabel = activeFilters.sexo === 'M' ? 'Hombre' : (activeFilters.sexo === 'F' ? 'Mujer' : activeFilters.sexo);
-                container.innerHTML += `<span class="inline-flex items-center gap-1 bg-[#4A7C7E] text-white text-xs px-2.5 py-1 rounded-full font-lora">
+                container.innerHTML += `<span class="statistics-filter-chip">
                     ${sexoLabel}
-                    <button onclick="clearFilter('sexo')" class="ml-1 hover:opacity-70">×</button>
+                    <button type="button" onclick="clearFilter('sexo')" aria-label="Quitar filtro de sexo">&times;</button>
                 </span>`;
                 hasActiveFilters = true;
+                activeFilterCount++;
             }
 
             // Mostrar sección si hay filtros activos
             section.classList.toggle('hidden', !hasActiveFilters);
+            if (countBadge) {
+                countBadge.textContent = String(activeFilterCount);
+                countBadge.classList.toggle('hidden', activeFilterCount === 0);
+            }
         }
 
         function clearDateFilter() {
@@ -1789,7 +2019,7 @@
                 ...(activeFilters.causas.length && { causas: activeFilters.causas }),
                 ...(activeFilters.distritoes.length && { distritoes: activeFilters.distritoes }),
                 ...(activeFilters.sexo && { sex: activeFilters.sexo }),
-                ...(chartConfig.limit && { limit: chartConfig.limit }),
+                ...(chartTypesWithTopSelector.includes(chartType) && chartConfig.limit && { limit: chartConfig.limit }),
                 ...(chartType === 'tendencias' && { group_by: activeFilters.granularidad }),
                 ...(chartType === 'comparativa' && { comparativa_type: activeFilters.tipoComparativa }),
                 ...(chartType === 'municipios' && { municipio_type: activeFilters.tipoMunicipio })
@@ -1827,9 +2057,9 @@
             if (loadingMessage) loadingMessage.style.display = 'none';
             if (errorMessage) errorMessage.style.display = 'none';
             if (chartContainer) chartContainer.style.visibility = 'visible';
-            const axisFontSize = 14;
-            const valueLabelFontSize = 13;
-            const legendFontSize = 15;
+            const axisFontSize = 12;
+            const valueLabelFontSize = 12;
+            const legendFontSize = 12;
             
             // Grids diferentes según chart type para espaciado consistente
             const verticalBarGrids = {
@@ -1862,8 +2092,9 @@
                 : ['pie', 'doughnut'].includes(chartConfig.type);
 
             if (chartWrapper) {
+                chartWrapper.style.height = '';
+                chartWrapper.style.minHeight = '';
                 if (isPieLikeChart) {
-                    chartWrapper.style.height = '650px';
                     // Mostrar el chart en modo compacto: solo espacio para la gráfica + leyenda
                     chartWrapper.style.display = 'flex';
                     chartWrapper.style.justifyContent = 'center';
@@ -1874,9 +2105,6 @@
                     chartWrapper.style.alignItems = '';
                     
                     // Altura uniforme para todas las gráficas no circulares
-                    chartWrapper.style.height = '650px';
-                    
-                    chartWrapper.style.minHeight = '';
                     // Reset chart container width when not using compact pie layout
                     if (chartContainer) chartContainer.style.width = '';
                 }
@@ -1891,7 +2119,7 @@
             
             // Agregar tipo de municipio en el título si aplica
             if (currentChartType === 'municipios' && activeFilters.tipoMunicipio) {
-                const tipoLabel = activeFilters.tipoMunicipio === 'residencia' ? 'Residencia' : 'Defunción';
+                const tipoLabel = activeFilters.tipoMunicipio === 'residencia' ? 'residencia' : 'defunción';
                 chartTitle += ` (${tipoLabel})`;
             }
             
@@ -2385,7 +2613,7 @@
             
             dataWithCauses.forEach(item => {
                 const row = document.createElement('tr');
-                row.className = 'border-b border-gray-200 hover:bg-gray-50';
+                row.className = 'statistics-causes__row';
 
                 const sortedCauses = Object.entries(item.top_causes || {})
                     .map(([cause, count]) => ({ cause, count: Number(count || 0) }))
@@ -2400,9 +2628,9 @@
                     .join(' | ');
                 
                 row.innerHTML = `
-                    <td class="px-3 py-2 font-semibold text-[#611132] font-lora">${item.range}</td>
-                    <td class="px-3 py-2 text-[#404041] font-extrabold">${formatTotal(item.total)}</td>
-                    <td class="px-3 py-2 text-[#404041] causas-principales-cell" title="${escapeAttr(causasTitle)}">${causasText || 'No disponible'}</td>
+                    <td class="statistics-causes__range">${item.range}</td>
+                    <td class="statistics-causes__total">${formatTotal(item.total)}</td>
+                    <td class="causas-principales-cell" title="${escapeAttr(causasTitle)}">${causasText || 'No disponible'}</td>
                 `;
                 
                 tbody.appendChild(row);
@@ -2447,6 +2675,10 @@
             safeSetValue('customEndDate', '');
             safeSetValue('sexoFilter', '');
             safeSetValue('granularidadFilter', 'month');
+            safeSetValue('tipoComparativaFilter', 'residencia-defuncion');
+            safeSetValue('tipoMunicipioFilter', 'defuncion');
+            const causesToggle = document.getElementById('mostrarCausasPrincipales');
+            if (causesToggle) causesToggle.checked = false;
             
             // Limpiar checkboxes de meses
             document.querySelectorAll('.month-checkbox').forEach(checkbox => {
@@ -2460,10 +2692,11 @@
                 if (element) {
                     element.value = '';
                     if (element.tomselect) {
-                        element.tomselect.clear();
+                        element.tomselect.clear(true);
                     }
                 }
             });
+            if (currentChartType === 'municipios') updateMunicipiosOptions([]);
             
             // Ocultar selectores condicionales de fecha
             const selectors = [
@@ -2495,6 +2728,10 @@
             safeSetValue('customEndDate', '');
             safeSetValue('sexoFilter', '');
             safeSetValue('granularidadFilter', 'month');
+            safeSetValue('tipoComparativaFilter', 'residencia-defuncion');
+            safeSetValue('tipoMunicipioFilter', 'defuncion');
+            const causesToggle = document.getElementById('mostrarCausasPrincipales');
+            if (causesToggle) causesToggle.checked = false;
             // NO resetear chartLimit aquí - preservar configuración de visualización por métrica
             // safeSetValue('chartLimit', 'all');
             // chartConfig.limit = null;
@@ -2512,10 +2749,11 @@
                     element.value = '';
                     // Si Tom Select está inicializado, actualizar su valor
                     if (element.tomselect) {
-                        element.tomselect.clear();
+                        element.tomselect.clear(true);
                     }
                 }
             });
+            if (currentChartType === 'municipios') updateMunicipiosOptions([]);
             
             // Ocultar todos los selectores condicionales
             const selectors = [
@@ -2543,7 +2781,7 @@
             if (loadingMessage) loadingMessage.style.display = 'flex';
             if (errorMessage) errorMessage.style.display = 'none';
             const chartEl = document.getElementById('mainChart');
-            if (chartEl) chartEl.style.visibility = 'visible';
+            if (chartEl) chartEl.style.visibility = 'hidden';
         }
 
         function hideLoadingMessage() {
@@ -2562,7 +2800,7 @@
         }
     </script>
 
-    <style>
+    <style media="not all" data-legacy-statistics-page-styles>
         /* Estilos para botones de pestaña */
         .chart-tab-btn {
             display: flex;

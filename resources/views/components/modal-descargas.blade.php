@@ -13,7 +13,7 @@
                 <i class="fas fa-download" aria-hidden="true"></i>
                 <h2 id="download-dialog-title" class="ui-dialog__title">Opciones de descarga</h2>
             </div>
-            <p id="download-dialog-description" class="ui-dialog__description">Seleccione el formato en el que desea exportar las gráficas.</p>
+            <p id="download-dialog-description" class="ui-dialog__description">Seleccione el formato para exportar la gráfica actual.</p>
         </div>
         <button type="button" class="ui-dialog__close" data-download-dialog-close aria-label="Cerrar opciones de descarga" title="Cerrar">
             <i class="fas fa-times" aria-hidden="true"></i>
@@ -33,6 +33,10 @@
                 <i class="fas fa-chevron-right download-dialog__chevron" aria-hidden="true"></i>
             </button>
         </div>
+        <p id="download-dialog-error" class="download-dialog__error hidden" role="alert">
+            <i class="fas fa-circle-exclamation" aria-hidden="true"></i>
+            <span>No se pudo generar el archivo. Inténtelo nuevamente.</span>
+        </p>
     </div>
 
     <footer class="ui-dialog__actions">
@@ -48,20 +52,17 @@ document.addEventListener('DOMContentLoaded', function() {
     const closeControls = modal.querySelectorAll('[data-download-dialog-close]');
     const descargarPDF = document.getElementById('descargarPDF');
     const descargarPNG = document.getElementById('descargarPNG');
-    let tipoDescarga = 'todo';
-    let chartIdIndividual = '';
     let previousFocus = null;
     let previousOverflow = '';
     let closing = false;
 
     function mostrarModal(tipo, chartId = '') {
-        tipoDescarga = tipo;
-        chartIdIndividual = chartId;
         previousFocus = document.activeElement;
         previousOverflow = document.body.style.overflow;
         closing = false;
         modal.classList.remove('hidden', 'is-closing');
         modal.setAttribute('aria-hidden', 'false');
+        document.getElementById('download-dialog-error')?.classList.add('hidden');
         document.body.style.overflow = 'hidden';
         requestAnimationFrame(() => {
             modal.classList.add('is-open');
@@ -103,41 +104,36 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
     });
 
-    descargarPDF.addEventListener('click', () => cerrarModal(() => tipoDescarga === 'todo' ? descargarTodoPDF() : descargarIndividualPDF(chartIdIndividual)));
-    descargarPNG.addEventListener('click', () => cerrarModal(() => tipoDescarga === 'todo' ? descargarTodoPNG() : descargarIndividualPNG(chartIdIndividual)));
-
-    function descargarTodoPDF() {
-        const link = document.createElement('a');
-        link.href = '#';
-        link.download = `estadisticas_completas_${new Date().toISOString().slice(0, 10)}.pdf`;
-        link.click();
-    }
-    function descargarIndividualPDF(chartId) {
-        const link = document.createElement('a');
-        link.href = '#';
-        link.download = `${chartId}_${new Date().toISOString().slice(0, 10)}.pdf`;
-        link.click();
-    }
-    function descargarTodoPNG() {
-        Object.keys(charts).forEach((chartId, index) => {
-            setTimeout(() => {
-                const chart = charts[chartId];
-                if (!chart) return;
-                const imageLink = document.createElement('a');
-                imageLink.href = chart.toBase64Image();
-                imageLink.download = `${chartId}_${new Date().toISOString().slice(0, 10)}.png`;
-                imageLink.click();
-            }, index * 300);
+    async function exportFromDialog(exportType) {
+        const error = document.getElementById('download-dialog-error');
+        error?.classList.add('hidden');
+        [descargarPDF, descargarPNG].forEach(button => {
+            button.disabled = true;
+            button.setAttribute('aria-busy', 'true');
         });
+
+        try {
+            const exported = typeof window.exportStatisticsChart === 'function'
+                ? await window.exportStatisticsChart(exportType)
+                : false;
+            if (!exported) {
+                error?.classList.remove('hidden');
+                return;
+            }
+            cerrarModal();
+        } catch (exportError) {
+            console.error('No se pudo exportar la gráfica:', exportError);
+            error?.classList.remove('hidden');
+        } finally {
+            [descargarPDF, descargarPNG].forEach(button => {
+                button.disabled = false;
+                button.removeAttribute('aria-busy');
+            });
+        }
     }
-    function descargarIndividualPNG(chartId) {
-        const chart = charts[chartId];
-        if (!chart) return;
-        const imageLink = document.createElement('a');
-        imageLink.href = chart.toBase64Image();
-        imageLink.download = `${chartId}_${new Date().toISOString().slice(0, 10)}.png`;
-        imageLink.click();
-    }
+
+    descargarPDF.addEventListener('click', () => exportFromDialog('pdf'));
+    descargarPNG.addEventListener('click', () => exportFromDialog('png-white'));
     window.mostrarModalDescargas = mostrarModal;
 });
 </script>
