@@ -41,19 +41,25 @@
 
                 <div class="app-table-toolbar reports-toolbar">
                     <div class="reports-filter-popover-wrap">
-                        <button type="button" id="reports-filter-toggle" class="reports-filter-toggle" aria-expanded="false" aria-controls="reports-filter-panel">
-                            <i class="fas fa-sliders-h" aria-hidden="true"></i>
-                            <span>Filtros</span>
-                            @if($activeFilterCount > 0)
-                                <span class="reports-filter-count">{{ $activeFilterCount }}</span>
-                            @endif
-                        </button>
+                        <x-filtros.boton
+                            id="reports-filter-toggle"
+                            controls="reports-filter-panel"
+                            :count="$activeFilterCount"
+                            count-id="reports-filter-count"
+                            count-class="reports-filter-count"
+                            class="reports-filter-toggle"
+                        />
 
-                        <div id="reports-filter-panel" class="reports-filter-panel hidden" role="dialog" aria-modal="false" aria-labelledby="reports-filter-title">
-                            <div class="reports-filter-panel-header">
-                                <h2 id="reports-filter-title">Filtros</h2>
-                                <a href="{{ route('reportes.index', array_filter(['tipo' => request('tipo', 'todos'), 'q' => request('q'), 'order_by' => request('order_by'), 'per_page' => request('per_page')])) }}">Limpiar</a>
-                            </div>
+                        <x-filtros.panel
+                            id="reports-filter-panel"
+                            title-id="reports-filter-title"
+                            :clear-href="route('reportes.index', array_filter(['tipo' => request('tipo', 'todos'), 'q' => request('q'), 'order_by' => request('order_by'), 'per_page' => request('per_page')]))"
+                            :open="true"
+                            class="reports-filter-panel hidden"
+                            header-class="reports-filter-panel-header"
+                            body-class="reports-filter-panel-body"
+                        >
+                            <x-slot:beforeBody>
                             <div class="reports-filter-native-controls" aria-hidden="true">
                                 <select name="status" tabindex="-1">
                                     @foreach(['' => 'Todos', 'pendiente' => 'Pendiente', 'aprobado' => 'Aprobado', 'rechazado' => 'Rechazado'] as $value => $label)
@@ -71,8 +77,8 @@
                                     @endforeach
                                 </select>
                             </div>
+                            </x-slot:beforeBody>
 
-                            <div class="reports-filter-panel-body">
                                 @foreach([
                                     'status' => ['label' => 'Estado', 'value' => request('status', ''), 'options' => ['' => 'Todos', 'pendiente' => 'Pendiente', 'aprobado' => 'Aprobado', 'rechazado' => 'Rechazado']],
                                     'date_filter' => ['label' => 'Periodo', 'value' => request('date_filter', ''), 'options' => ['' => 'Todas las fechas', 'hoy' => 'Hoy', 'semana' => 'Esta semana', 'mes' => 'Este mes', '3meses' => 'Últimos 3 meses', 'anio' => 'Este año']],
@@ -126,12 +132,13 @@
                                         </div>
                                     </div>
                                 </div>
-                            </div>
-                            <div class="reports-filter-panel-footer">
-                                <button type="button" id="reports-filter-cancel" class="reports-button reports-button--secondary">Cancelar</button>
-                                <button type="submit" class="reports-button reports-button--primary">Aplicar filtros</button>
-                            </div>
-                        </div>
+                            <x-slot:footer>
+                                <div class="reports-filter-panel-footer">
+                                    <button type="button" id="reports-filter-cancel" class="reports-button reports-button--secondary">Cancelar</button>
+                                    <button type="submit" class="reports-button reports-button--primary">Aplicar filtros</button>
+                                </div>
+                            </x-slot:footer>
+                        </x-filtros.panel>
                     </div>
 
                     <div class="reports-search">

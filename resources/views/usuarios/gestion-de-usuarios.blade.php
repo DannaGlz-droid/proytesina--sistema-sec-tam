@@ -223,18 +223,9 @@
 
             function initUsersDistrictTomSelect() {
                 const districtSelect = document.getElementById('distrito');
-                if (!districtSelect || districtSelect.tomselect || typeof TomSelect === 'undefined') return false;
+                if (!districtSelect || districtSelect.tomselect || !window.AppFilterSelect) return false;
 
-                new TomSelect(districtSelect, {
-                    create: false,
-                    allowEmptyOption: false,
-                    maxItems: 1,
-                    placeholder: districtSelect.dataset.placeholder || 'Todos',
-                    render: {
-                        no_results: function() {
-                            return '<div class="no-results">Sin resultados</div>';
-                        }
-                    },
+                window.AppFilterSelect.init(districtSelect, {
                     onChange: function() {
                         updateUsersFilterChips();
                     }

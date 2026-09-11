@@ -43,61 +43,56 @@
 
             <div class="statistics-shell__body">
                 <div class="statistics-workbench-toolbar">
-                    <button type="button" id="statisticsFiltersToggle" class="statistics-filter-toggle" aria-expanded="false" aria-controls="estadisticas-filtros" aria-haspopup="dialog">
-                        <i class="fas fa-sliders" aria-hidden="true"></i>
-                        <span>Filtros</span>
-                        <span id="statisticsFilterCount" class="statistics-filter-count hidden" aria-label="Filtros aplicados">0</span>
-                    </button>
+                    <x-filtros.boton
+                        id="statisticsFiltersToggle"
+                        controls="estadisticas-filtros"
+                        count-id="statisticsFilterCount"
+                        class="statistics-filter-toggle"
+                    />
+                    <div id="filtrosActivos" class="statistics-active-filters hidden">
+                        <div id="filtrosActivosList" class="statistics-active-filters__list users-filter-chips" aria-live="polite">
+                            <!-- Los chips se generan dinámicamente con JavaScript -->
+                        </div>
+                    </div>
                 </div>
                 <!-- Layout: Filtros + Gráfica -->
                 <div class="statistics-layout">
                     
                     <!-- COLUMNA IZQUIERDA - Filtros (DINÁMICOS según gráfica) -->
-                    <aside id="estadisticas-filtros" class="statistics-sidebar statistics-filter-popover" role="dialog" aria-modal="false" aria-label="Filtros" aria-labelledby="statistics-filters-title">
-                        <section class="statistics-panel statistics-filters-panel">
-                            <!-- Header de Filtros -->
-                            <header class="statistics-panel__header">
-                                <div>
-                                    <h2 id="statistics-filters-title">Filtros</h2>
-                                    <p>Acote los datos de la métrica actual.</p>
-                                </div>
-                                <button type="button" class="statistics-clear-button" id="limpiarFiltros">
-                                    <i class="fas fa-rotate-left" aria-hidden="true"></i>
-                                    Limpiar
-                                </button>
-                            </header>
-
-                            <!-- Contenido de Filtros -->
-                            <div class="statistics-panel__body statistics-filter-list">
-                                <!-- Filtro de Fechas (siempre visible) -->
-                                <div class="filter-section">
-                                    <div class="flex items-center gap-2 mb-3 pb-2 border-b border-gray-200">
-                                        <i class="fas fa-calendar-alt text-sm" aria-hidden="true"></i>
-                                        <h4 class="text-xs font-semibold text-[#404041] font-lora">Fechas</h4>
-                                    </div>
-                                    <div class="space-y-2">
-                                        <div class="filter-group">
-                                            <label class="block text-xs text-gray-600 font-lora mb-1">Rango:</label>
-                                            <select id="dateRange" class="w-full rounded-lg px-3 py-1.5 text-xs">
+                    <x-filtros.panel
+                        id="estadisticas-filtros"
+                        title-id="statistics-filters-title"
+                        clear-id="limpiarFiltros"
+                        cancel-id="statisticsFiltersCancel"
+                        apply-id="statisticsFiltersApply"
+                        :open="true"
+                        class="statistics-sidebar statistics-filter-popover"
+                        body-class="statistics-panel__body statistics-filter-list"
+                        footer-class="statistics-filter-actions"
+                        cancel-class="statistics-filter-action statistics-filter-action--secondary"
+                        apply-class="statistics-filter-action statistics-filter-action--primary"
+                    >
+                                <x-filtros.seccion titulo="Fecha de defunción" :abierto="true" data-statistics-filter-section>
+                                        <div class="statistics-filter-control">
+                                            <label for="dateRange">Periodo</label>
+                                            <x-filtros.select id="dateRange" placeholder="Todas las fechas">
                                                 <option value="all">Todas las fechas</option>
-                                                <option value="years">Año(s)</option>
-                                                <option value="months">Mes(es)</option>
-                                                <option value="quarter">Trimestre</option>
-                                                <option value="custom">Personalizado</option>
-                                            </select>
+                                                <option value="years">Por año</option>
+                                                <option value="months">Por meses</option>
+                                                <option value="quarter">Por trimestre</option>
+                                                <option value="custom">Rango personalizado</option>
+                                            </x-filtros.select>
                                         </div>
 
-                                        <div class="filter-group" id="yearSelector" style="display: none;">
-                                            <label class="block text-xs text-gray-600 font-lora mb-1">Año(s) de defunción:</label>
+                                        <div class="statistics-filter-control" id="yearSelector" style="display: none;">
+                                            <label for="year">Año o periodo</label>
                                             @php $currentYear = now()->year; @endphp
-                                            <input type="text" id="year" placeholder="Ej: 2024 o 2024, 2025, 2026" class="w-full border border-[#404041] rounded-lg px-3 py-1.5 text-xs" title="Escribe años separados por coma">
+                                            <input type="text" id="year" placeholder="Ej. 2026 o 2024-2026" title="Escribe años separados por coma o un periodo">
                                         </div>
 
-                                        <!-- Se usa un único selector de meses que permite seleccionar 1 o varios -->
-
-                                        <div class="filter-group" id="monthSelector" style="display: none;">
-                                            <label class="block text-xs text-gray-600 font-lora mb-1">Meses de defunción:</label>
-                                            <div class="grid grid-cols-3 gap-2 mt-2 months-container">
+                                        <div class="statistics-filter-control" id="monthSelector" style="display: none;">
+                                            <span class="statistics-filter-control__label">Meses</span>
+                                            <div class="months-container">
                                                 @php
                                                     $months = [
                                                         '01' => 'Ene','02' => 'Feb','03' => 'Mar','04' => 'Abr','05' => 'May','06' => 'Jun',
@@ -107,156 +102,125 @@
                                                 @foreach($months as $mval => $mlabel)
                                                     <div>
                                                         <input type="checkbox" id="month-{{ $mval }}" name="selectedMonths[]" class="month-checkbox" value="{{ $mval }}">
-                                                        <label for="month-{{ $mval }}" class="month-label block text-center text-xs py-1.5 bg-gray-100 border border-gray-300 rounded cursor-pointer hover:bg-gray-200">{{ $mlabel }}</label>
+                                                        <label for="month-{{ $mval }}" class="month-label">{{ $mlabel }}</label>
                                                     </div>
                                                 @endforeach
                                             </div>
                                         </div>
 
-                                        <div class="filter-group" id="quarterSelector" style="display: none;">
-                                            <label class="block text-xs text-gray-600 font-lora mb-1">Trimestre de defunción:</label>
-                                            <select id="quarter" class="w-full border border-[#404041] rounded-lg px-3 py-1.5 text-xs">
+                                        <div class="statistics-filter-control" id="quarterSelector" style="display: none;">
+                                            <label for="quarter">Trimestre</label>
+                                            <x-filtros.select id="quarter" placeholder="Seleccionar trimestre">
                                                 <option value="">Seleccionar trimestre</option>
-                                                <option value="1">Q1 (Ene-Mar)</option>
-                                                <option value="2">Q2 (Abr-Jun)</option>
-                                                <option value="3">Q3 (Jul-Sep)</option>
-                                                <option value="4">Q4 (Oct-Dic)</option>
-                                            </select>
+                                                <option value="1">Q1 (Ene–Mar)</option>
+                                                <option value="2">Q2 (Abr–Jun)</option>
+                                                <option value="3">Q3 (Jul–Sep)</option>
+                                                <option value="4">Q4 (Oct–Dic)</option>
+                                            </x-filtros.select>
                                         </div>
 
-                                        <div id="customDateSelector" style="display: none;">
-                                            <div class="filter-group">
-                                                <label class="block text-xs text-gray-600 font-lora mb-1">Desde (fecha de defunción):</label>
-                                                <input type="date" id="customStartDate" class="w-full border border-[#404041] rounded-lg px-3 py-1.5 text-xs">
-                                            </div>
-                                            <div class="filter-group">
-                                                <label class="block text-xs text-gray-600 font-lora mb-1">Hasta (fecha de defunción):</label>
-                                                <input type="date" id="customEndDate" class="w-full border border-[#404041] rounded-lg px-3 py-1.5 text-xs">
-                                            </div>
+                                        <div id="customDateSelector" class="statistics-filter-date-grid" style="display: none;">
+                                            <label>Desde<input type="date" id="customStartDate"></label>
+                                            <label>Hasta<input type="date" id="customEndDate"></label>
                                         </div>
-                                    </div>
-                                </div>
+                                </x-filtros.seccion>
 
-                                <!-- FILTROS CONTEXTUALES DINÁMICOS -->
-                                
-                                <!-- Tipo de Municipio (Defunción vs Residencia) -->
-                                <div id="filterTipoMunicipio" class="filter-section dynamic-filter" style="display: none;">
-                                    <div class="flex items-center gap-2 mb-3 pb-2 border-b border-gray-200">
-                                        <i class="fas fa-map-marker text-sm" aria-hidden="true"></i>
-                                        <h4 class="text-xs font-semibold text-[#404041] font-lora">Tipo de municipio</h4>
-                                    </div>
-                                    <select id="tipoMunicipioFilter" class="w-full border border-[#404041] rounded-lg px-3 py-1.5 text-xs">
-                                        <option value="defuncion">Municipio de Defunción</option>
-                                        <option value="residencia">Municipio de Residencia</option>
-                                    </select>
-                                </div>
+                                <x-filtros.seccion id="statisticsLocationFilterGroup" titulo="Ubicación" data-statistics-filter-section data-statistics-filter-group hidden>
+                                        <div id="filterTipoMunicipio" class="statistics-filter-control dynamic-filter" style="display: none;">
+                                            <label for="tipoMunicipioFilter">Tipo de municipio</label>
+                                            <x-filtros.select id="tipoMunicipioFilter" placeholder="Municipio de defunción">
+                                                <option value="defuncion">Municipio de defunción</option>
+                                                <option value="residencia">Municipio de residencia</option>
+                                            </x-filtros.select>
+                                        </div>
+                                        <div id="filterMunicipios" class="statistics-filter-control dynamic-filter" style="display: none;">
+                                            <label for="municipiosFilter">Municipios</label>
+                                            <x-filtros.select id="municipiosFilter" placeholder="Selecciona municipios" multiple>
+                                                @foreach($municipalities as $mun)
+                                                    <option value="{{ $mun->id }}">{{ $mun->name }}</option>
+                                                @endforeach
+                                            </x-filtros.select>
+                                        </div>
+                                        @if($districts->count() > 0)
+                                        <div id="filterdistritoes" class="statistics-filter-control dynamic-filter" style="display: none;">
+                                            <label for="distritoesFilter">Distritos</label>
+                                            <x-filtros.select id="distritoesFilter" placeholder="Selecciona distritos" multiple>
+                                                @foreach($districts as $district)
+                                                    <option value="{{ $district->id }}">{{ $district->name }}</option>
+                                                @endforeach
+                                            </x-filtros.select>
+                                        </div>
+                                        @endif
+                                </x-filtros.seccion>
 
-                                <!-- Filtro de Municipios (contextual) -->
-                                <div id="filterMunicipios" class="filter-section dynamic-filter" style="display: none;">
-                                    <div class="flex items-center gap-2 mb-3 pb-2 border-b border-gray-200">
-                                        <i class="fas fa-city text-sm" aria-hidden="true"></i>
-                                        <h4 class="text-xs font-semibold text-[#404041] font-lora">Municipios</h4>
-                                    </div>
-                                    <select id="municipiosFilter" class="tomselect-select" multiple data-placeholder="Selecciona municipios">
-                                        @foreach($municipalities as $mun)
-                                            <option value="{{ $mun->id }}">{{ $mun->name }}</option>
-                                        @endforeach
-                                    </select>
-                                </div>
+                                <x-filtros.seccion id="statisticsDemographicFilterGroup" titulo="Datos demográficos" data-statistics-filter-section data-statistics-filter-group hidden>
+                                        <div id="filterSexo" class="statistics-filter-control dynamic-filter" style="display: none;">
+                                            <label for="sexoFilter">Sexo</label>
+                                            <x-filtros.select id="sexoFilter" placeholder="Todos">
+                                                <option value="">Todos</option>
+                                                @foreach($sexes as $sex)
+                                                    <option value="{{ $sex->value }}">{{ $sex->label }}</option>
+                                                @endforeach
+                                            </x-filtros.select>
+                                        </div>
+                                        <div id="filterEdad" class="statistics-filter-control dynamic-filter" style="display: none;">
+                                            <label for="edadFilter">Edad</label>
+                                            <input
+                                                type="text"
+                                                id="edadFilter"
+                                                inputmode="numeric"
+                                                placeholder="Ej. 25, 20-30 o 5,10,15"
+                                                aria-describedby="edadFilterHelp"
+                                            >
+                                            <small id="edadFilterHelp" class="statistics-filter-help">Edad exacta, rango o valores separados por coma.</small>
+                                        </div>
+                                </x-filtros.seccion>
 
-                                <!-- Filtro de Causas (contextual) -->
-                                <div id="filterCausas" class="filter-section dynamic-filter" style="display: none;">
-                                    <div class="flex items-center gap-2 mb-3 pb-2 border-b border-gray-200">
-                                        <i class="fas fa-heartbeat text-sm" aria-hidden="true"></i>
-                                        <h4 class="text-xs font-semibold text-[#404041] font-lora">Causas</h4>
-                                    </div>
-                                    <select id="causasFilter" class="tomselect-select" multiple data-placeholder="Selecciona causas">
-                                        @foreach($causes as $cause)
-                                            <option value="{{ $cause->id }}">{{ $cause->name }}</option>
-                                        @endforeach
-                                    </select>
-                                </div>
+                                <x-filtros.seccion id="statisticsCauseFilterGroup" titulo="Causa de defunción" data-statistics-filter-section data-statistics-filter-group hidden>
+                                        <div id="filterCausas" class="statistics-filter-control dynamic-filter" style="display: none;">
+                                            <label for="causasFilter">Causas</label>
+                                            <x-filtros.select id="causasFilter" placeholder="Selecciona causas" multiple>
+                                                @foreach($causes as $cause)
+                                                    <option value="{{ $cause->id }}">{{ $cause->name }}</option>
+                                                @endforeach
+                                            </x-filtros.select>
+                                        </div>
+                                </x-filtros.seccion>
 
-                                <!-- Filtro de distritos (contextual) -->
-                                @if($districts->count() > 0)
-                                <div id="filterdistritoes" class="filter-section dynamic-filter" style="display: none;">
-                                    <div class="flex items-center gap-2 mb-3 pb-2 border-b border-gray-200">
-                                        <i class="fas fa-building text-sm" aria-hidden="true"></i>
-                                        <h4 class="text-xs font-semibold text-[#404041] font-lora">Distritos</h4>
-                                    </div>
-                                    <select id="distritoesFilter" class="tomselect-select" multiple data-placeholder="Selecciona distritos">
-                                        @foreach($districts as $district)
-                                            <option value="{{ $district->id }}">{{ $district->name }}</option>
-                                        @endforeach
-                                    </select>
-                                </div>
-                                @endif
-
-                                <!-- Filtro de Sexo (contextual) -->
-                                <div id="filterSexo" class="filter-section dynamic-filter" style="display: none;">
-                                    <div class="flex items-center gap-2 mb-3 pb-2 border-b border-gray-200">
-                                        <i class="fas fa-venus-mars text-sm" aria-hidden="true"></i>
-                                        <h4 class="text-xs font-semibold text-[#404041] font-lora">Sexo</h4>
-                                    </div>
-                                    <select id="sexoFilter" class="w-full border border-[#404041] rounded-lg px-3 py-1.5 text-xs">
-                                        <option value="">Todos</option>
-                                        @foreach($sexes as $sex)
-                                            <option value="{{ $sex->value }}">{{ $sex->label }}</option>
-                                        @endforeach
-                                    </select>
-                                </div>
-
-                                <!-- Selector de Granularidad para Tendencias (contextual) -->
-                                <div id="filterGranularidad" class="filter-section dynamic-filter" style="display: none;">
-                                    <div class="flex items-center gap-2 mb-3 pb-2 border-b border-gray-200">
-                                        <i class="fas fa-hourglass-half text-sm" aria-hidden="true"></i>
-                                        <h4 class="text-xs font-semibold text-[#404041] font-lora">Granularidad</h4>
-                                    </div>
-                                    <select id="granularidadFilter" class="w-full border border-[#404041] rounded-lg px-3 py-1.5 text-xs">
-                                        <option value="day">Diaria</option>
-                                        <option value="month" selected>Mensual</option>
-                                        <option value="year">Anual</option>
-                                    </select>
-                                </div>
-
-                                <!-- Selector de Tipo de Comparativa (contextual) -->
-                                <div id="filterTipoComparativa" class="filter-section dynamic-filter" style="display: none;">
-                                    <div class="flex items-center gap-2 mb-3 pb-2 border-b border-gray-200">
-                                        <i class="fas fa-exchange-alt text-sm" aria-hidden="true"></i>
-                                        <h4 class="text-xs font-semibold text-[#404041] font-lora">Tipo de comparativa</h4>
-                                    </div>
-                                    <select id="tipoComparativaFilter" class="w-full border border-[#404041] rounded-lg px-3 py-1.5 text-xs">
-                                        <option value="residencia-defuncion">Residencia frente a lugar de defunción</option>
-                                        <option value="genero-causa">Género por causa</option>
-                                        <option value="edad-causa">Rango etario por causa</option>
-                                        <option value="lugar-causa">Lugar de defunción por causa</option>
-                                    </select>
-                                </div>
-
-                                <!-- Toggle de Causas Principales para Edades (contextual) -->
-                                <div id="filterCausasPrincipales" class="filter-section dynamic-filter" style="display: none;">
-                                    <div class="flex items-center gap-2 pb-2 border-b border-gray-200 mb-3">
-                                        <i class="fas fa-star text-sm" aria-hidden="true"></i>
-                                        <h4 class="text-xs font-semibold text-[#404041] font-lora">Información</h4>
-                                    </div>
-                                    <label class="flex items-center gap-3 cursor-pointer hover:bg-gray-50 p-2 rounded-lg transition-colors">
-                                        <input type="checkbox" id="mostrarCausasPrincipales" class="w-4 h-4 rounded cursor-pointer">
-                                        <span class="text-xs text-gray-700 font-lora">Mostrar causas principales por edad</span>
-                                    </label>
-                                </div>
-
-                            </div>
-                        </section>
-
-                    </aside>
+                                <x-filtros.seccion id="statisticsMetricFilterGroup" titulo="Opciones de la métrica" data-statistics-filter-section data-statistics-filter-group hidden>
+                                        <div id="filterGranularidad" class="statistics-filter-control dynamic-filter" style="display: none;">
+                                            <label for="granularidadFilter">Granularidad</label>
+                                            <x-filtros.select id="granularidadFilter" placeholder="Mensual">
+                                                <option value="day">Diaria</option>
+                                                <option value="month" selected>Mensual</option>
+                                                <option value="year">Anual</option>
+                                            </x-filtros.select>
+                                        </div>
+                                        <div id="filterTipoComparativa" class="statistics-filter-control dynamic-filter" style="display: none;">
+                                            <label for="tipoComparativaFilter">Tipo de comparativa</label>
+                                            <x-filtros.select id="tipoComparativaFilter" placeholder="Residencia frente a lugar de defunción">
+                                                <option value="residencia-defuncion">Residencia frente a lugar de defunción</option>
+                                                <option value="genero-causa">Género por causa</option>
+                                                <option value="edad-causa">Rango etario por causa</option>
+                                                <option value="lugar-causa">Lugar de defunción por causa</option>
+                                            </x-filtros.select>
+                                        </div>
+                                        <div id="filterCausasPrincipales" class="statistics-filter-control dynamic-filter" style="display: none;">
+                                            <label class="statistics-filter-check-row">
+                                                <input type="checkbox" id="mostrarCausasPrincipales">
+                                                <span>Mostrar causas principales por edad</span>
+                                            </label>
+                                        </div>
+                                </x-filtros.seccion>
+                    </x-filtros.panel>
 
                     <!-- COLUMNA DERECHA - Gráfica -->
                     <div class="statistics-content">
                         <!-- Controles de Presentación -->
-                        <section class="statistics-display-panel" aria-labelledby="statistics-display-title">
+                        <aside class="statistics-display-panel" aria-labelledby="statistics-display-title">
                             <header class="statistics-display-panel__heading">
                                 <h2 id="statistics-display-title">Presentación</h2>
-                                <p>Configure cómo se representa la información.</p>
+                                <p>Ajuste la visualización.</p>
                             </header>
                             <div class="statistics-display-groups">
                                 <!-- Tipo de Gráfica -->
@@ -271,6 +235,7 @@
                                         <option value="area">Área</option>
                                     </select>
                                     <div id="chartTypeButtons" class="statistics-visual-options"></div>
+                                    <p id="chartTypeAdaptationNote" class="statistics-presentation-note hidden" aria-live="polite"></p>
                                 </div>
 
                                 <!-- Etiquetas -->
@@ -282,6 +247,7 @@
                                         <option value="both">Ambos</option>
                                     </select>
                                     <div id="dataLabelButtons" class="statistics-visual-options"></div>
+                                    <p id="dataLabelAdaptationNote" class="statistics-presentation-note hidden" aria-live="polite"></p>
                                 </div>
 
                                 <!-- Top N -->
@@ -294,6 +260,7 @@
                                         <option value="15">Top 15</option>
                                     </select>
                                     <div id="chartLimitButtons" class="statistics-visual-options"></div>
+                                    <p id="chartLimitAdaptationNote" class="statistics-presentation-note hidden" aria-live="polite"></p>
                                 </div>
 
                                 <!-- Paleta -->
@@ -313,31 +280,38 @@
 
                             </div>
 
-                            <footer class="statistics-filter-actions">
-                                <button type="button" id="statisticsFiltersCancel" class="statistics-filter-action statistics-filter-action--secondary">Cancelar</button>
-                                <button type="button" id="statisticsFiltersApply" class="statistics-filter-action statistics-filter-action--primary">Aplicar filtros</button>
-                            </footer>
-                        </section>
+                        </aside>
 
                         <!-- Gráfica Principal -->
                         <section id="statisticsChartPanel" class="statistics-chart-panel" aria-labelledby="chartTitle" role="tabpanel">
-                            <!-- Filtros Activos/Aplicados -->
-                            <div id="filtrosActivos" class="statistics-active-filters hidden">
-                                <p>Filtros aplicados</p>
-                                <div id="filtrosActivosList" class="statistics-active-filters__list">
-                                    <!-- Los chips se generan dinámicamente con JavaScript -->
-                                </div>
-                            </div>
-
                             <header class="statistics-chart-header">
                                 <div class="statistics-chart-heading">
-                                    <h2 id="chartTitle">Cargando...</h2>
-                                    <div id="chartTotalBadge" class="statistics-chart-total">
-                                        <span>Total</span>
-                                        <span id="chartTotalValue">0</span>
+                                    <div class="statistics-chart-heading__main">
+                                        <h2 id="chartTitle">Cargando...</h2>
+                                        <div id="chartTotalBadge" class="statistics-chart-total">
+                                            <span>Total analizado</span>
+                                            <span id="chartTotalValue">0</span>
+                                        </div>
+                                        <span id="statisticsPreviousComparison" class="statistics-previous-comparison hidden" aria-live="polite">
+                                            <i id="statisticsPreviousComparisonIcon" class="fas fa-minus" aria-hidden="true"></i>
+                                            <span id="statisticsPreviousComparisonText"></span>
+                                        </span>
+                                    </div>
+                                    <div id="statisticsChartContext" class="statistics-chart-context hidden" aria-live="polite">
+                                        <span id="statisticsChartPeriod"></span>
+                                        <span id="statisticsChartCoverage" class="hidden"></span>
+                                        <span id="statisticsChartQuality" class="statistics-chart-quality hidden">
+                                            <i class="fas fa-triangle-exclamation" aria-hidden="true"></i>
+                                            <span id="statisticsChartQualityText"></span>
+                                            <a id="statisticsReviewExcluded" href="#">Revisar</a>
+                                        </span>
                                     </div>
                                 </div>
                                 <div class="statistics-download" id="downloadMenuWrapper">
+                                    <a id="statisticsViewData" class="statistics-view-data" href="#" aria-disabled="true">
+                                        <i class="fas fa-table-list" aria-hidden="true"></i>
+                                        Ver datos
+                                    </a>
                                     <div class="statistics-download__group">
                                         <button type="button" class="statistics-download__primary" id="descargarActual">
                                             <i class="fas fa-download" aria-hidden="true"></i>
@@ -348,6 +322,13 @@
                                         </button>
                                     </div>
                                     <div id="downloadMenu" class="statistics-download-menu hidden" role="menu">
+                                        <label class="statistics-download-context-option">
+                                            <input type="checkbox" id="includeChartContext" checked>
+                                            <span>
+                                                <strong>Incluir contexto</strong>
+                                                <small>Título, periodo, total y comparación</small>
+                                            </span>
+                                        </label>
                                         <button type="button" class="download-option" data-export="png-transparent" role="menuitem">
                                             <i class="fas fa-image" aria-hidden="true"></i>
                                             PNG (transparente)
@@ -359,6 +340,10 @@
                                         <button type="button" class="download-option" data-export="pdf" role="menuitem">
                                             <i class="fas fa-file-pdf" aria-hidden="true"></i>
                                             PDF
+                                        </button>
+                                        <button type="button" class="download-option" data-export="csv" role="menuitem">
+                                            <i class="fas fa-file-csv" aria-hidden="true"></i>
+                                            Datos en CSV
                                         </button>
                                     </div>
                                 </div>
@@ -381,6 +366,26 @@
                                     </div>
                                 </div>
                             </div>
+                            <footer id="statisticsChartSource" class="statistics-chart-source hidden">
+                                <details id="statisticsChartSourceDetails" class="statistics-chart-source__details">
+                                    <summary>
+                                        <span class="statistics-chart-source__summary">
+                                            <i class="fas fa-file-import" aria-hidden="true"></i>
+                                            <span id="statisticsChartSourceSummary">Origen de los registros</span>
+                                        </span>
+                                        <span class="statistics-chart-source__action">
+                                            Ver detalle
+                                            <i class="fas fa-chevron-down" aria-hidden="true"></i>
+                                        </span>
+                                    </summary>
+                                    <div class="statistics-chart-source__popover">
+                                        <h3>Origen de los registros</h3>
+                                        <p>Registros que cumplen los filtros de datos aplicados.</p>
+                                        <ul id="statisticsChartSourceList"></ul>
+                                        <div id="statisticsChartSourceTotal" class="statistics-chart-source__total"></div>
+                                    </div>
+                                </details>
+                            </footer>
                             
                             <!-- Tabla de Causas Principales (solo para Edades) -->
                             <section id="causasPrincipalesContainer" class="statistics-causes hidden" aria-labelledby="statistics-causes-title">
@@ -478,6 +483,11 @@
     <script>
         let currentChartType = 'municipios';
         let currentEchartsInstance = null;
+        let latestChartData = null;
+        let latestChartDataType = null;
+        let chartRequestController = null;
+        let chartRequestSequence = 0;
+        let defaultDateRange = { startDate: '', endDate: '' };
         let filterDraftSnapshot = null;
         let restoringFilterDraft = false;
         let chartConfig = {
@@ -488,25 +498,12 @@
             groupBy: 'month'
         };
 
-        // Preferencias GLOBALES del usuario - se mantienen al cambiar de métrica
-        // Si la métrica actual no soporta la preferencia, se ajusta automáticamente
+        // Preferencias deseadas: una vista puede adaptarlas sin sobrescribirlas.
         let preferredConfig = {
             type: 'bar',
             dataLabelMode: 'value',
             limit: 10
         };
-
-        // DEPRECATED: Las configuraciones son GLOBALES, no por métrica
-        // Las configuraciones (tipo gráfica, etiquetas, top) se mantienen al cambiar de métrica
-        // let metricConfigs = {
-        //     municipios: { type: 'bar', dataLabelMode: 'value', limit: null },
-        //     tendencias: { type: 'line', dataLabelMode: 'value', limit: null },
-        //     edades: { type: 'bar', dataLabelMode: 'value', limit: null },
-        //     genero: { type: 'pie', dataLabelMode: 'value', limit: null },
-        //     causas: { type: 'bar', dataLabelMode: 'value', limit: null },
-        //     distritoes: { type: 'bar', dataLabelMode: 'value', limit: null },
-        //     comparativa: { type: 'bar', dataLabelMode: 'value', limit: null }
-        // };
 
         let activeFilters = {
             dateRange: 'all',
@@ -521,6 +518,7 @@
             distritoes: [],
             distritoesNames: [],
             sexo: null,
+            edad: null,
             granularidad: 'month',
             mostrarCausasPrincipales: false,
             tipoComparativa: 'residencia-defuncion',
@@ -726,12 +724,12 @@
         };
 
         const filtersForChart = {
-            municipios: ['dates', 'tipoMunicipio', 'causas', 'distritoes', 'sexo'],
-            tendencias: ['dates', 'municipios', 'causas', 'sexo', 'granularidad'],
+            municipios: ['dates', 'tipoMunicipio', 'causas', 'distritoes', 'sexo', 'edad'],
+            tendencias: ['dates', 'municipios', 'causas', 'sexo', 'edad', 'granularidad'],
             edades: ['dates', 'municipios', 'causas', 'distritoes', 'causasPrincipales'],
-            genero: ['dates', 'municipios', 'causas', 'distritoes'],
-            causas: ['dates', 'municipios', 'distritoes', 'sexo'],
-            distritoes: ['dates', 'causas', 'sexo'],
+            genero: ['dates', 'municipios', 'causas', 'distritoes', 'edad'],
+            causas: ['dates', 'municipios', 'distritoes', 'sexo', 'edad'],
+            distritoes: ['dates', 'causas', 'sexo', 'edad'],
             comparativa: ['dates', 'tipoComparativa']
         };
 
@@ -760,6 +758,21 @@
             15: 'Top 15'
         };
 
+        const chartTypeLabels = {
+            bar: 'Barras',
+            barHorizontal: 'Horizontal',
+            pie: 'Pastel',
+            doughnut: 'Rosquilla',
+            line: 'Línea',
+            area: 'Área'
+        };
+
+        const dataLabelModeLabels = {
+            value: 'Valores',
+            percent: 'Porcentaje',
+            both: 'Ambos'
+        };
+
         // Definir límites disponibles por tipo de gráfico
         const chartLimitsByType = {
             municipios: [5, 10, 15],
@@ -768,7 +781,7 @@
             default: [5, 10, 15]
         };
 
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', async function() {
             try {
                 if (typeof ChartDataLabels !== 'undefined') Chart.register(ChartDataLabels);
             } catch (e) {
@@ -776,7 +789,7 @@
             }
 
             // Cargar rangos de fecha default antes de inicializar
-            loadDefaultDateRange();
+            await loadDefaultDateRange();
             renderColorPalettePreview(chartConfig.colorPalette);
             renderChartTypeButtons('municipios');
             renderDataLabelButtons('municipios');
@@ -784,25 +797,38 @@
             
             initializeEventListeners();
             selectChart('municipios');
+
+            const sourceDetails = document.getElementById('statisticsChartSourceDetails');
+            document.addEventListener('click', function(event) {
+                if (sourceDetails?.open && !sourceDetails.contains(event.target)) {
+                    sourceDetails.open = false;
+                }
+            });
+            document.addEventListener('keydown', function(event) {
+                if (event.key !== 'Escape' || !sourceDetails?.open) return;
+                sourceDetails.open = false;
+                sourceDetails.querySelector('summary')?.focus();
+            });
         });
 
         // Función para cargar los rangos de fecha default
         async function loadDefaultDateRange() {
             try {
                 const response = await fetch('{{ route("api.default-date-range") }}');
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
                 const data = await response.json();
+                defaultDateRange = {
+                    startDate: data.start_date || '',
+                    endDate: data.end_date || ''
+                };
                 
                 // Actualizar los inputs de fecha
                 const startDateInput = document.getElementById('customStartDate');
                 const endDateInput = document.getElementById('customEndDate');
                 
                 if (startDateInput && endDateInput) {
-                    startDateInput.value = data.start_date;
-                    endDateInput.value = data.end_date;
-                    
-                    // Actualizar también los valores en activeFilters
-                    activeFilters.startDate = data.start_date;
-                    activeFilters.endDate = data.end_date;
+                    startDateInput.value = defaultDateRange.startDate;
+                    endDateInput.value = defaultDateRange.endDate;
                 }
             } catch (error) {
                 console.error('Error loading default date range:', error);
@@ -810,40 +836,32 @@
         }
 
         function initializeTomSelect() {
-            // Inicializar Tom Select para multiselects - permite deseleccionar fácilmente
-            const multiSelectIds = ['municipiosFilter', 'causasFilter', 'distritoesFilter'];
-            
-            multiSelectIds.forEach(id => {
+            const filterSelectIds = [
+                'dateRange',
+                'quarter',
+                'tipoMunicipioFilter',
+                'municipiosFilter',
+                'causasFilter',
+                'distritoesFilter',
+                'sexoFilter',
+                'granularidadFilter',
+                'tipoComparativaFilter'
+            ];
+
+            filterSelectIds.forEach(id => {
                 const element = document.getElementById(id);
-                if (element && !element.tomselect && typeof TomSelect !== 'undefined') {
-                    new TomSelect(element, {
-                        valueField: 'value',
-                        labelField: 'text',
-                        searchField: 'text',
-                        maxOptions: 100,
-                        maxItems: null,
-                        create: false,
-                        placeholder: element.dataset.placeholder || 'Selecciona opciones',
-                        hideSelected: false,
-                        closeAfterSelect: false,
-                        plugins: {
-                            'remove_button': {
-                                title: 'Eliminar esta selección'
-                            }
-                        },
+                if (element && !element.tomselect && window.AppFilterSelect) {
+                    const isMultiple = element.multiple;
+                    const isSearchable = isMultiple || element.options.length > 8;
+                    window.AppFilterSelect.init(element, {
+                        searchable: isSearchable,
                         onChange: (value) => {
                             // Si cambió el distrito mientras se ve 'municipios', actualizar la lista disponible.
-                            if (element.id === 'distritoesFilter' && currentChartType === 'municipios') {
+                            if (element.id === 'distritoesFilter' && metricUsesMunicipalityAndDistrict()) {
                                 const selected = Array.isArray(value) ? value.map(String) : (value ? [String(value)] : []);
                                 updateMunicipiosOptions(selected);
                             }
                             markStatisticsFilterDraft();
-                        },
-                        onOptionSelect: () => {
-                            // Cerrar después de seleccionar para mejorar UX
-                            setTimeout(() => {
-                                element.tomselect.close();
-                            }, 100);
                         }
                     });
                 }
@@ -851,17 +869,15 @@
         }
 
         // Intentar inicializar Tom Select inmediatamente
-        if (typeof TomSelect !== 'undefined') {
+        if (window.AppFilterSelect) {
             initializeTomSelect();
-            manageTomSelectDropdowns();
         } else {
             // Si Tom Select no está disponible, esperar a que lo esté
             let attempts = 0;
             const checkTomSelect = setInterval(() => {
-                if (typeof TomSelect !== 'undefined') {
+                if (window.AppFilterSelect) {
                     clearInterval(checkTomSelect);
                     initializeTomSelect();
-                    manageTomSelectDropdowns();
                 }
                 attempts++;
                 if (attempts > 50) { // Stop after 5 seconds (50 * 100ms)
@@ -869,34 +885,6 @@
                     console.warn('TomSelect did not load in time');
                 }
             }, 100);
-        }
-
-        // Manejar dinámicamente el z-index de los dropdowns de Tom Select
-        function manageTomSelectDropdowns() {
-            const tomSelectElements = document.querySelectorAll('.tomselect-select');
-            
-            tomSelectElements.forEach(select => {
-                // Buscar la instancia de TomSelect asociada
-                if (select.tomselect) {
-                    const tomSelectInstance = select.tomselect;
-                    
-                    // Cuando se abre el dropdown
-                    tomSelectInstance.on('dropdown_open', function() {
-                        const wrapper = tomSelectInstance.wrapper;
-                        if (wrapper) {
-                            wrapper.classList.add('ts-dropdown-open');
-                        }
-                    });
-                    
-                    // Cuando se cierra el dropdown
-                    tomSelectInstance.on('dropdown_close', function() {
-                        const wrapper = tomSelectInstance.wrapper;
-                        if (wrapper) {
-                            wrapper.classList.remove('ts-dropdown-open');
-                        }
-                    });
-                }
-            });
         }
 
         function captureStatisticsFilterState() {
@@ -921,7 +909,7 @@
             if (!state) return;
             restoringFilterDraft = true;
 
-            Object.entries(state).forEach(([id, value]) => {
+            const restoreControl = (id, value) => {
                 const control = document.getElementById(id);
                 if (!control) return;
 
@@ -937,11 +925,18 @@
                 } else {
                     control.value = value ?? '';
                 }
+            };
+
+            Object.entries(state).forEach(([id, value]) => {
+                if (id === 'distritoesFilter' || id === 'municipiosFilter') return;
+                restoreControl(id, value);
             });
 
+            restoreControl('distritoesFilter', state.distritoesFilter || []);
+            if (metricUsesMunicipalityAndDistrict()) updateMunicipiosOptions([].concat(state.distritoesFilter || []));
+            restoreControl('municipiosFilter', state.municipiosFilter || []);
+
             onDateRangeChange();
-            const districts = state.distritoesFilter || [];
-            if (currentChartType === 'municipios') updateMunicipiosOptions([].concat(districts || []));
             restoringFilterDraft = false;
         }
 
@@ -1000,8 +995,17 @@
             allowed.forEach(m => tom.addOption({ value: String(m.id), text: m.name }));
 
             // Restaurar selección válida
-            tom.clear();
-            if (keep.length) tom.setValue(keep);
+            tom.clear(true);
+            if (keep.length) tom.setValue(keep, true);
+        }
+
+        function metricSupportsFilter(chartType, filterName) {
+            return (filtersForChart[chartType] || []).includes(filterName);
+        }
+
+        function metricUsesMunicipalityAndDistrict() {
+            return metricSupportsFilter(currentChartType, 'municipios')
+                && metricSupportsFilter(currentChartType, 'distritoes');
         }
 
         function initializeEventListeners() {
@@ -1065,6 +1069,18 @@
                     updateChart();
                     filtersToggle.focus();
                 });
+
+                filtersSidebar.querySelectorAll('[data-statistics-filter-section]').forEach(section => {
+                    const sectionToggle = section.querySelector('[data-filter-section-toggle]');
+                    sectionToggle?.addEventListener('click', function() {
+                        const willOpen = !section.classList.contains('is-open');
+                        section.classList.toggle('is-open', willOpen);
+                        this.setAttribute('aria-expanded', String(willOpen));
+                        const icon = this.querySelector('i');
+                        icon?.classList.toggle('fa-chevron-down', willOpen);
+                        icon?.classList.toggle('fa-chevron-right', !willOpen);
+                    });
+                });
             }
 
             const chartCanvas = document.querySelector('.statistics-chart-canvas');
@@ -1126,6 +1142,7 @@
             // Nota: Los eventos para municipiosFilter, causasFilter, distritoesFilter 
             // se manejan dentro de Tom Select (onChange), no aquí
             document.getElementById('sexoFilter').addEventListener('change', markStatisticsFilterDraft);
+            document.getElementById('edadFilter').addEventListener('input', markStatisticsFilterDraft);
             document.getElementById('granularidadFilter').addEventListener('change', markStatisticsFilterDraft);
             document.getElementById('mostrarCausasPrincipales').addEventListener('change', markStatisticsFilterDraft);
             document.getElementById('tipoComparativaFilter').addEventListener('change', markStatisticsFilterDraft);
@@ -1136,20 +1153,23 @@
                 preferredConfig.type = this.value;  // Guardar preferencia global
                 // CONFIGURACIONES SON GLOBALES - se mantienen al cambiar de métrica
                 renderChartTypeButtons(currentChartType);
-                updateChart();
+                setPresentationAdaptationNote('chartTypeAdaptationNote');
+                rerenderLatestChart();
             });
             document.getElementById('datalabelMode').addEventListener('change', function() {
                 chartConfig.dataLabelMode = this.value;
                 preferredConfig.dataLabelMode = this.value;  // Guardar preferencia global
                 // CONFIGURACIONES SON GLOBALES - se mantienen al cambiar de métrica
                 renderDataLabelButtons(currentChartType);
-                updateChart();
+                setPresentationAdaptationNote('dataLabelAdaptationNote');
+                rerenderLatestChart();
             });
             document.getElementById('chartLimit').addEventListener('change', function() {
                 chartConfig.limit = this.value === 'all' ? null : parseInt(this.value);
                 preferredConfig.limit = chartConfig.limit;  // Guardar preferencia global
                 // CONFIGURACIONES SON GLOBALES - se mantienen al cambiar de métrica
                 renderChartLimitButtons(currentChartType);
+                setPresentationAdaptationNote('chartLimitAdaptationNote');
                 updateChart();
             });
 
@@ -1208,7 +1228,7 @@
                     renderColorPalettePreview(paletteName);
                     paletteMenu?.classList.add('hidden');
                     paletteToggle?.setAttribute('aria-expanded', 'false');
-                    if (changed) updateChart();
+                    if (changed) rerenderLatestChart();
                 });
             }
 
@@ -1221,6 +1241,9 @@
             const downloadMenu = document.getElementById('downloadMenu');
             const downloadButton = document.getElementById('descargarActual');
             const downloadOptionsButton = document.getElementById('descargarOpciones');
+            document.getElementById('statisticsViewData')?.addEventListener('click', function(event) {
+                if (this.getAttribute('aria-disabled') === 'true') event.preventDefault();
+            });
 
             if (downloadButton && downloadMenu) {
                 downloadButton.addEventListener('click', function(event) {
@@ -1242,6 +1265,10 @@
                         const exportType = this.dataset.export;
                         downloadMenu.classList.add('hidden');
                         downloadOptionsButton?.setAttribute('aria-expanded', 'false');
+                        if (exportType === 'csv') {
+                            downloadAnalysisCsv();
+                            return;
+                        }
                         await exportCurrentChart(exportType);
                     });
                 });
@@ -1285,14 +1312,170 @@
             return currentEchartsInstance.getDataURL({ type: 'png', pixelRatio: 2, ...backgroundOptions });
         }
 
-        async function captureChartAsCanvas(transparent = false) {
+        function shouldIncludeChartContext() {
+            return document.getElementById('includeChartContext')?.checked !== false;
+        }
+
+        function formatExportDate(value) {
+            if (!value) return '';
+            const date = new Date(`${String(value).slice(0, 10)}T12:00:00Z`);
+            if (Number.isNaN(date.getTime())) return '';
+            return new Intl.DateTimeFormat('es-MX', {
+                day: 'numeric',
+                month: 'short',
+                year: 'numeric',
+                timeZone: 'UTC'
+            }).format(date);
+        }
+
+        function getExportComparisonText(comparison) {
+            if (!comparison?.available) return '';
+
+            const period = comparison.period || {};
+            let periodText = '';
+            if (period.start_date && period.end_date) {
+                periodText = `${formatExportDate(period.start_date)} – ${formatExportDate(period.end_date)}`;
+            } else if (Array.isArray(period.years) && period.years.length) {
+                periodText = period.years.join(', ');
+                if (Array.isArray(period.months) && period.months.length) {
+                    periodText += ' (mismos meses seleccionados)';
+                }
+            }
+
+            if (comparison.direction === 'no_baseline') {
+                return `Sin registros en el periodo anterior${periodText ? ` (${periodText})` : ''}`;
+            }
+
+            const percentage = Math.abs(Number(comparison.percentage_change || 0)).toLocaleString('es-MX', {
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 1
+            });
+            const marker = comparison.direction === 'increase'
+                ? '↑'
+                : (comparison.direction === 'decrease' ? '↓' : '—');
+            const difference = Number(comparison.difference || 0);
+            const signedDifference = `${difference > 0 ? '+' : ''}${difference.toLocaleString('es-MX')}`;
+
+            return `${marker} ${percentage}% frente a ${periodText || 'periodo anterior'} · Diferencia: ${signedDifference}`;
+        }
+
+        function wrapCanvasText(context, value, maxWidth) {
+            const words = String(value || '').trim().split(/\s+/).filter(Boolean);
+            if (!words.length) return [];
+            const lines = [];
+            let line = words.shift();
+
+            words.forEach(word => {
+                const candidate = `${line} ${word}`;
+                if (context.measureText(candidate).width <= maxWidth) {
+                    line = candidate;
+                } else {
+                    lines.push(line);
+                    line = word;
+                }
+            });
+            lines.push(line);
+            return lines;
+        }
+
+        function composeChartWithContext(chartCanvas, transparent = false) {
+            const chartElement = document.getElementById('mainChart');
+            const displayWidth = chartElement?.clientWidth || (chartCanvas.width / 2);
+            const scale = Math.max(1, chartCanvas.width / Math.max(1, displayWidth));
+            const padding = 22 * scale;
+            const accentOffset = 11 * scale;
+            const maxTextWidth = chartCanvas.width - (padding * 2) - accentOffset;
+            const title = document.getElementById('chartTitle')?.textContent?.trim() || 'Estadísticas';
+            const total = Number(latestChartData?.filtered_total ?? latestChartData?.total ?? 0).toLocaleString('es-MX');
+            const periodElement = document.getElementById('statisticsChartPeriod');
+            const coverageElement = document.getElementById('statisticsChartCoverage');
+            const qualityElement = document.getElementById('statisticsChartQualityText');
+            const contextLines = [];
+            const periodText = periodElement && !periodElement.classList.contains('hidden')
+                ? periodElement.textContent.trim()
+                : '';
+
+            contextLines.push(`${periodText ? `${periodText} · ` : ''}Total analizado: ${total}`);
+            const comparisonText = getExportComparisonText(latestChartData?.previous_period_comparison);
+            if (comparisonText) contextLines.push(comparisonText);
+            if (coverageElement && !coverageElement.classList.contains('hidden') && coverageElement.textContent.trim()) {
+                contextLines.push(coverageElement.textContent.trim());
+            }
+            if (qualityElement?.textContent?.trim()) {
+                contextLines.push(`Nota: ${qualityElement.textContent.trim()}`);
+            }
+
+            const measureCanvas = document.createElement('canvas');
+            const measureContext = measureCanvas.getContext('2d');
+            if (!measureContext) return chartCanvas;
+            measureContext.font = `600 ${18 * scale}px Lora, Georgia, serif`;
+            const titleLines = wrapCanvasText(measureContext, title, maxTextWidth);
+            measureContext.font = `500 ${11.5 * scale}px "Open Sans", Arial, sans-serif`;
+            const bodyLines = contextLines.flatMap(line => wrapCanvasText(measureContext, line, maxTextWidth));
+            const titleLineHeight = 24 * scale;
+            const bodyLineHeight = 17 * scale;
+            const headerHeight = Math.ceil(
+                padding + (titleLines.length * titleLineHeight) + (7 * scale) +
+                (bodyLines.length * bodyLineHeight) + padding
+            );
+
+            const canvas = document.createElement('canvas');
+            canvas.width = chartCanvas.width;
+            canvas.height = headerHeight + chartCanvas.height;
+            const context = canvas.getContext('2d');
+            if (!context) return chartCanvas;
+
+            if (!transparent) {
+                context.fillStyle = '#ffffff';
+                context.fillRect(0, 0, canvas.width, canvas.height);
+            }
+
+            context.fillStyle = '#6f0f37';
+            context.fillRect(padding, padding + (2 * scale), 3 * scale, Math.max(titleLineHeight, titleLines.length * titleLineHeight - (4 * scale)));
+            let y = padding + (19 * scale);
+            context.fillStyle = '#10233f';
+            context.font = `600 ${18 * scale}px Lora, Georgia, serif`;
+            titleLines.forEach(line => {
+                context.fillText(line, padding + accentOffset, y);
+                y += titleLineHeight;
+            });
+
+            y += 2 * scale;
+            context.fillStyle = '#526278';
+            context.font = `500 ${11.5 * scale}px "Open Sans", Arial, sans-serif`;
+            bodyLines.forEach(line => {
+                context.fillText(line, padding + accentOffset, y);
+                y += bodyLineHeight;
+            });
+
+            context.strokeStyle = '#dbe3ec';
+            context.lineWidth = Math.max(1, scale / 2);
+            context.beginPath();
+            context.moveTo(padding, headerHeight - (8 * scale));
+            context.lineTo(canvas.width - padding, headerHeight - (8 * scale));
+            context.stroke();
+            context.drawImage(chartCanvas, 0, headerHeight);
+
+            return canvas;
+        }
+
+        async function captureChartAsCanvas(transparent = false, includeContext = shouldIncludeChartContext()) {
             if (currentChartType === 'edades' && document.getElementById('mostrarCausasPrincipales').checked && typeof html2canvas !== 'undefined') {
                 const element = document.getElementById('mainChart')?.closest('.statistics-chart-panel');
                 if (!element) return null;
                 return html2canvas(element, {
                     scale: 2,
                     useCORS: true,
-                    backgroundColor: transparent ? null : '#ffffff'
+                    backgroundColor: transparent ? null : '#ffffff',
+                    onclone: clonedDocument => {
+                        const panel = clonedDocument.getElementById('statisticsChartPanel');
+                        const header = panel?.querySelector('.statistics-chart-header');
+                        const source = panel?.querySelector('.statistics-chart-source');
+                        const actions = panel?.querySelector('.statistics-download');
+                        if (actions) actions.style.display = 'none';
+                        if (source) source.style.display = 'none';
+                        if (header && !includeContext) header.style.display = 'none';
+                    }
                 });
             }
 
@@ -1312,7 +1495,7 @@
                 ctx.drawImage(img, 0, 0);
             }
 
-            return canvas;
+            return includeContext ? composeChartWithContext(canvas, transparent) : canvas;
         }
 
         async function exportCurrentChart(exportType) {
@@ -1353,7 +1536,14 @@
         window.exportStatisticsChart = exportCurrentChart;
 
         function selectChart(chartType) {
+            const filtersPanel = document.getElementById('estadisticas-filtros');
+            if (filtersPanel?.classList.contains('is-open')) {
+                closeStatisticsFilters({ restore: true });
+            }
+
             currentChartType = chartType;
+            latestChartData = null;
+            latestChartDataType = null;
             
             // Actualizar botones de tab
             document.querySelectorAll('.chart-tab-btn').forEach(btn => {
@@ -1371,52 +1561,16 @@
             if (causasContainer) {
                 causasContainer.classList.add('hidden');
             }
-            
-            // Limpiar SOLO filtros de datos (fechas, municipios, etc.), NO la visualización (tipo gráfica, etiquetas)
-            clearFiltersDataOnly(true);
-            
-            // CONFIGURACIONES GLOBALES:
-            // Usar las preferencias del usuario, ajustando si la métrica actual no las soporta
-            const validTypes = chartTypeOptions[chartType] || [];
-            
-            // Aplicar preferencia de tipo, validando que sea válido para esta métrica
-            if (validTypes.includes(preferredConfig.type)) {
-                chartConfig.type = preferredConfig.type;
-            } else {
-                chartConfig.type = chartTypeDefaults[chartType];
-            }
-            
-            // Aplicar preferencia de etiquetas
-            chartConfig.dataLabelMode = preferredConfig.dataLabelMode;
-            
-            // Para Tendencias: si está en modo percent o both, forzar a value
-            if (chartType === 'tendencias' && (chartConfig.dataLabelMode === 'percent' || chartConfig.dataLabelMode === 'both')) {
-                chartConfig.dataLabelMode = 'value';
-            }
-            
-            // Aplicar preferencia de límite (top)
-            chartConfig.limit = preferredConfig.limit;
-            
-            // Actualizar selectores HTML con los valores actuales
-            document.getElementById('chartTypeSelector').value = chartConfig.type;
-            document.getElementById('datalabelMode').value = chartConfig.dataLabelMode;
-            document.getElementById('chartLimit').value = chartConfig.limit ? String(chartConfig.limit) : 'all';
-            
-            // Actualizar visibilidad y opciones de selectores según la métrica
-            updateDataLabelOptions(chartType);
-            updateChartTypeOptions(chartType);
-            
-            // Renderizar botones visuales con los valores actuales
-            renderChartTypeButtons(chartType);
-            renderDataLabelButtons(chartType);
-            renderChartLimitButtons(chartType);
+
+            applyPreferredPresentation(chartType);
+            updateActiveFiltersDisplay();
             
             // Cargar datos de la nueva métrica
             loadChart(chartType);
         }
 
         function updateVisibleFilters(chartType) {
-            const allFilters = ['filterTipoMunicipio', 'filterMunicipios', 'filterCausas', 'filterdistritoes', 'filterSexo', 'filterGranularidad', 'filterCausasPrincipales', 'filterTipoComparativa'];
+            const allFilters = ['filterTipoMunicipio', 'filterMunicipios', 'filterCausas', 'filterdistritoes', 'filterSexo', 'filterEdad', 'filterGranularidad', 'filterCausasPrincipales', 'filterTipoComparativa'];
             const availableFilters = filtersForChart[chartType] || [];
 
             allFilters.forEach(filterId => {
@@ -1428,11 +1582,18 @@
                     if (filterId === 'filterCausas' && availableFilters.includes('causas')) show = true;
                     if (filterId === 'filterdistritoes' && availableFilters.includes('distritoes')) show = true;
                     if (filterId === 'filterSexo' && availableFilters.includes('sexo')) show = true;
+                    if (filterId === 'filterEdad' && availableFilters.includes('edad')) show = true;
                     if (filterId === 'filterGranularidad' && availableFilters.includes('granularidad')) show = true;
                     if (filterId === 'filterCausasPrincipales' && availableFilters.includes('causasPrincipales')) show = true;
                     if (filterId === 'filterTipoComparativa' && availableFilters.includes('tipoComparativa')) show = true;
                     element.style.display = show ? 'block' : 'none';
                 }
+            });
+
+            document.querySelectorAll('[data-statistics-filter-group]').forEach(group => {
+                const hasVisibleControl = Array.from(group.querySelectorAll('.dynamic-filter'))
+                    .some(control => control.style.display !== 'none');
+                group.hidden = !hasVisibleControl;
             });
 
             // Mostrar/ocultar selector Top según el tipo de gráfica
@@ -1443,9 +1604,66 @@
                 filterTopElement.parentElement?.classList.toggle('has-top-filter', showTopSelector);
             }
 
-            updateChartTypeOptions(chartType);
+        }
+
+        function setPresentationAdaptationNote(id, text = '') {
+            const note = document.getElementById(id);
+            if (!note) return;
+            note.textContent = text;
+            note.classList.toggle('hidden', !text);
+        }
+
+        function getEffectiveLimit(chartType) {
+            if (!chartTypesWithTopSelector.includes(chartType)) return null;
+            if (preferredConfig.limit === null) return null;
+
+            const available = chartLimitsByType[chartType] || chartLimitsByType.default;
+            if (available.includes(preferredConfig.limit)) return preferredConfig.limit;
+
+            const lowerOrEqual = available.filter(limit => limit <= preferredConfig.limit);
+            return lowerOrEqual.length ? Math.max(...lowerOrEqual) : Math.min(...available);
+        }
+
+        function applyPreferredPresentation(chartType) {
+            const validTypes = chartTypeOptions[chartType] || ['bar'];
+            const effectiveType = validTypes.includes(preferredConfig.type)
+                ? preferredConfig.type
+                : chartTypeDefaults[chartType];
+            const effectiveDataLabel = chartType === 'tendencias' && ['percent', 'both'].includes(preferredConfig.dataLabelMode)
+                ? 'value'
+                : preferredConfig.dataLabelMode;
+            const effectiveLimit = getEffectiveLimit(chartType);
+
+            chartConfig.type = effectiveType;
+            chartConfig.dataLabelMode = effectiveDataLabel;
+            chartConfig.limit = effectiveLimit;
+
+            updateChartTypeOptions(chartType, effectiveType);
+            document.getElementById('datalabelMode').value = effectiveDataLabel;
+            document.getElementById('chartLimit').value = effectiveLimit === null ? 'all' : String(effectiveLimit);
             updateDataLabelOptions(chartType);
+            renderChartTypeButtons(chartType);
+            renderDataLabelButtons(chartType);
             renderChartLimitButtons(chartType);
+
+            setPresentationAdaptationNote(
+                'chartTypeAdaptationNote',
+                effectiveType !== preferredConfig.type
+                    ? `Esta vista usa ${chartTypeLabels[effectiveType]}; se conserva ${chartTypeLabels[preferredConfig.type]}.`
+                    : ''
+            );
+            setPresentationAdaptationNote(
+                'dataLabelAdaptationNote',
+                effectiveDataLabel !== preferredConfig.dataLabelMode
+                    ? `Esta vista usa ${dataLabelModeLabels[effectiveDataLabel]}; se conserva ${dataLabelModeLabels[preferredConfig.dataLabelMode]}.`
+                    : ''
+            );
+            setPresentationAdaptationNote(
+                'chartLimitAdaptationNote',
+                chartTypesWithTopSelector.includes(chartType) && effectiveLimit !== preferredConfig.limit
+                    ? `${chartLimitLabels[effectiveLimit]} aplicado; se conserva ${chartLimitLabels[preferredConfig.limit]}.`
+                    : ''
+            );
         }
 
         function updateDataLabelOptions(chartType) {
@@ -1478,11 +1696,11 @@
             renderDataLabelButtons(chartType);
         }
 
-        function updateChartTypeOptions(chartType) {
+        function updateChartTypeOptions(chartType, selectedValue = chartConfig.type) {
             const selector = document.getElementById('chartTypeSelector');
             if (!selector) return;
             const availableTypes = chartTypeOptions[chartType] || ['bar'];
-            const currentValue = selector.value;
+            const currentValue = selectedValue;
             const allOptions = {
                 'bar': 'Barras',
                 'barHorizontal': 'Barras Horizontales',
@@ -1543,7 +1761,7 @@
                     if (quarterSelector) quarterSelector.style.display = 'block';
                     break;
                 case 'custom':
-                    if (customDateSelector) customDateSelector.style.display = 'block';
+                    if (customDateSelector) customDateSelector.style.display = 'grid';
                     break;
                 default:
                     // all - no mostrar nada extra
@@ -1733,6 +1951,11 @@
             let startDate = null, endDate = null;
             const currentYear = new Date().getFullYear();
 
+            // Estos valores dependen del modo de fecha actual. Reiniciarlos evita
+            // enviar meses/años de una selección anterior al cambiar de modo.
+            activeFilters.selectedMonths = [];
+            activeFilters.selectedYears = [];
+
             if (dateRange === 'years') {
                 const yearVal = document.getElementById('year').value;
                 if (yearVal) {
@@ -1802,6 +2025,7 @@
             activeFilters.distritoes = Array.from(document.getElementById('distritoesFilter').selectedOptions || []).map(o => o.value);
             activeFilters.distritoesNames = Array.from(document.getElementById('distritoesFilter').selectedOptions || []).map(o => o.text);
             activeFilters.sexo = document.getElementById('sexoFilter').value || null;
+            activeFilters.edad = document.getElementById('edadFilter').value.trim() || null;
             activeFilters.granularidad = document.getElementById('granularidadFilter').value || 'month';
             activeFilters.mostrarCausasPrincipales = document.getElementById('mostrarCausasPrincipales').checked || false;
             activeFilters.tipoComparativa = document.getElementById('tipoComparativaFilter').value || 'residencia-defuncion';
@@ -1896,6 +2120,12 @@
             const section = document.getElementById('filtrosActivos');
             const countBadge = document.getElementById('statisticsFilterCount');
             container.innerHTML = '';
+            const escapeFilterLabel = value => String(value ?? '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
             
             let hasActiveFilters = false;
             let activeFilterCount = 0;
@@ -1903,8 +2133,8 @@
             // Mostrar rango de fechas
             const dateText = getDateFilterText();
             if (dateText) {
-                container.innerHTML += `<span class="statistics-filter-chip">
-                    ${dateText}
+                container.innerHTML += `<span class="users-filter-chip statistics-filter-chip">
+                    Fecha: ${escapeFilterLabel(dateText)}
                     <button type="button" onclick="clearDateFilter()" aria-label="Quitar filtro de fecha">&times;</button>
                 </span>`;
                 hasActiveFilters = true;
@@ -1912,10 +2142,11 @@
             }
 
             // Mostrar municipios seleccionados
-            if (activeFilters.municipios.length > 0) {
+            if (metricSupportsFilter(currentChartType, 'municipios') && activeFilters.municipios.length > 0) {
                 const municipiosText = activeFilters.municipiosNames.join(', ');
-                container.innerHTML += `<span class="statistics-filter-chip">
-                    ${municipiosText}
+                const municipiosLabel = activeFilters.municipios.length === 1 ? 'Municipio' : 'Municipios';
+                container.innerHTML += `<span class="users-filter-chip statistics-filter-chip">
+                    ${municipiosLabel}: ${escapeFilterLabel(municipiosText)}
                     <button type="button" onclick="clearFilter('municipios')" aria-label="Quitar filtro de municipios">&times;</button>
                 </span>`;
                 hasActiveFilters = true;
@@ -1923,10 +2154,11 @@
             }
 
             // Mostrar causas seleccionadas
-            if (activeFilters.causas.length > 0) {
+            if (metricSupportsFilter(currentChartType, 'causas') && activeFilters.causas.length > 0) {
                 const causasText = activeFilters.causasNames.join(', ');
-                container.innerHTML += `<span class="statistics-filter-chip">
-                    ${causasText}
+                const causasLabel = activeFilters.causas.length === 1 ? 'Causa' : 'Causas';
+                container.innerHTML += `<span class="users-filter-chip statistics-filter-chip">
+                    ${causasLabel}: ${escapeFilterLabel(causasText)}
                     <button type="button" onclick="clearFilter('causas')" aria-label="Quitar filtro de causas">&times;</button>
                 </span>`;
                 hasActiveFilters = true;
@@ -1934,10 +2166,11 @@
             }
 
             // Mostrar distritoes seleccionadas
-            if (activeFilters.distritoes.length > 0) {
+            if (metricSupportsFilter(currentChartType, 'distritoes') && activeFilters.distritoes.length > 0) {
                 const distritoesText = activeFilters.distritoesNames.join(', ');
-                container.innerHTML += `<span class="statistics-filter-chip">
-                    ${distritoesText}
+                const distritosLabel = activeFilters.distritoes.length === 1 ? 'Distrito' : 'Distritos';
+                container.innerHTML += `<span class="users-filter-chip statistics-filter-chip">
+                    ${distritosLabel}: ${escapeFilterLabel(distritoesText)}
                     <button type="button" onclick="clearFilter('distritoes')" aria-label="Quitar filtro de distritos">&times;</button>
                 </span>`;
                 hasActiveFilters = true;
@@ -1945,11 +2178,20 @@
             }
 
             // Mostrar sexo seleccionado
-            if (activeFilters.sexo) {
-                const sexoLabel = activeFilters.sexo === 'M' ? 'Hombre' : (activeFilters.sexo === 'F' ? 'Mujer' : activeFilters.sexo);
-                container.innerHTML += `<span class="statistics-filter-chip">
-                    ${sexoLabel}
+            if (metricSupportsFilter(currentChartType, 'sexo') && activeFilters.sexo) {
+                const sexoLabel = activeFilters.sexo === 'M' ? 'Masculino' : (activeFilters.sexo === 'F' ? 'Femenino' : activeFilters.sexo);
+                container.innerHTML += `<span class="users-filter-chip statistics-filter-chip">
+                    Sexo: ${escapeFilterLabel(sexoLabel)}
                     <button type="button" onclick="clearFilter('sexo')" aria-label="Quitar filtro de sexo">&times;</button>
+                </span>`;
+                hasActiveFilters = true;
+                activeFilterCount++;
+            }
+
+            if (metricSupportsFilter(currentChartType, 'edad') && activeFilters.edad) {
+                container.innerHTML += `<span class="users-filter-chip statistics-filter-chip">
+                    Edad: ${escapeFilterLabel(activeFilters.edad)}
+                    <button type="button" onclick="clearFilter('edad')" aria-label="Quitar filtro de edad">&times;</button>
                 </span>`;
                 hasActiveFilters = true;
                 activeFilterCount++;
@@ -1964,16 +2206,20 @@
         }
 
         function clearDateFilter() {
-            document.getElementById('dateRange').value = 'all';
+            const dateRangeControl = document.getElementById('dateRange');
+            if (dateRangeControl.tomselect) dateRangeControl.tomselect.setValue('all', true);
+            else dateRangeControl.value = 'all';
             ['yearSelector','monthSimpleSelector','monthSelector','quarterSelector','customDateSelector'].forEach(id => {
                 const el = document.getElementById(id);
                 if (el) el.style.display = 'none';
             });
             // Limpiar input de año
             document.getElementById('year').value = '';
-            document.getElementById('quarter').value = '';
-            document.getElementById('customStartDate').value = '';
-            document.getElementById('customEndDate').value = '';
+            const quarterControl = document.getElementById('quarter');
+            if (quarterControl.tomselect) quarterControl.tomselect.clear(true);
+            else quarterControl.value = '';
+            document.getElementById('customStartDate').value = defaultDateRange.startDate;
+            document.getElementById('customEndDate').value = defaultDateRange.endDate;
             // Limpiar checkboxes de meses
             document.querySelectorAll('.month-checkbox').forEach(checkbox => {
                 checkbox.checked = false;
@@ -1998,16 +2244,22 @@
                 el.value = '';
                 if (el.tomselect) el.tomselect.clear();
             } else if (filterType === 'sexo') {
-                document.getElementById('sexoFilter').value = '';
+                const el = document.getElementById('sexoFilter');
+                if (el.tomselect) el.tomselect.clear(true);
+                else el.value = '';
+            } else if (filterType === 'edad') {
+                document.getElementById('edadFilter').value = '';
             } else if (filterType === 'tipoMunicipio') {
-                document.getElementById('tipoMunicipioFilter').value = 'defuncion';
+                const el = document.getElementById('tipoMunicipioFilter');
+                if (el.tomselect) el.tomselect.setValue('defuncion', true);
+                else el.value = 'defuncion';
             }
             collectFilters();
             updateActiveFiltersDisplay();
             updateChart();
         }
 
-        function loadChart(chartType) {
+        async function loadChart(chartType) {
             collectFilters();
 
             const filters = {
@@ -2015,10 +2267,11 @@
                 ...(activeFilters.endDate && { end_date: activeFilters.endDate }),
                 ...(activeFilters.selectedMonths.length && { months: activeFilters.selectedMonths }),
                 ...(activeFilters.selectedYears.length && { years: activeFilters.selectedYears }),
-                ...(activeFilters.municipios.length && { municipios: activeFilters.municipios }),
-                ...(activeFilters.causas.length && { causas: activeFilters.causas }),
-                ...(activeFilters.distritoes.length && { distritoes: activeFilters.distritoes }),
-                ...(activeFilters.sexo && { sex: activeFilters.sexo }),
+                ...(metricSupportsFilter(chartType, 'municipios') && activeFilters.municipios.length && { municipios: activeFilters.municipios }),
+                ...(metricSupportsFilter(chartType, 'causas') && activeFilters.causas.length && { causas: activeFilters.causas }),
+                ...(metricSupportsFilter(chartType, 'distritoes') && activeFilters.distritoes.length && { distritoes: activeFilters.distritoes }),
+                ...(metricSupportsFilter(chartType, 'sexo') && activeFilters.sexo && { sex: activeFilters.sexo }),
+                ...(metricSupportsFilter(chartType, 'edad') && activeFilters.edad && { age: activeFilters.edad }),
                 ...(chartTypesWithTopSelector.includes(chartType) && chartConfig.limit && { limit: chartConfig.limit }),
                 ...(chartType === 'tendencias' && { group_by: activeFilters.granularidad }),
                 ...(chartType === 'comparativa' && { comparativa_type: activeFilters.tipoComparativa }),
@@ -2034,19 +2287,314 @@
                     params.append(k, v);
                 }
             });
-            fetch(`{{ route('api.chart.data') }}/` + chartType + '?' + params.toString())
-                .then(response => response.json())
-                .then(data => {
-                    if (data.error) {
-                        showErrorMessage(data.message || 'No se pudieron obtener los datos.');
-                    } else {
-                        renderChart(data);
-                    }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
+            chartRequestController?.abort();
+            chartRequestController = new AbortController();
+            const requestController = chartRequestController;
+            const requestId = ++chartRequestSequence;
+            showLoadingMessage();
+
+            try {
+                const response = await fetch(
+                    `{{ route('api.chart.data') }}/` + chartType + '?' + params.toString(),
+                    { signal: requestController.signal }
+                );
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+                const data = await response.json();
+                if (requestId !== chartRequestSequence || chartType !== currentChartType) return;
+
+                if (data.error) {
+                    showErrorMessage(data.message || 'No se pudieron obtener los datos.');
+                    return;
+                }
+
+                latestChartData = data;
+                latestChartDataType = chartType;
+                renderChart(cloneChartData(data));
+            } catch (error) {
+                if (error.name === 'AbortError') return;
+                console.error('Error:', error);
+                if (requestId === chartRequestSequence) {
                     showErrorMessage('No se pudieron cargar los datos. Intenta nuevamente.');
-                });
+                }
+            } finally {
+                if (chartRequestController === requestController) chartRequestController = null;
+            }
+        }
+
+        function cloneChartData(data) {
+            if (typeof structuredClone === 'function') return structuredClone(data);
+            return JSON.parse(JSON.stringify(data));
+        }
+
+        function rerenderLatestChart() {
+            if (latestChartData && latestChartDataType === currentChartType) {
+                renderChart(cloneChartData(latestChartData));
+                return;
+            }
+            updateChart();
+        }
+
+        function buildStatisticsAnalysisParams(data, { excluded = false, csv = false } = {}) {
+            const params = new URLSearchParams();
+            const appendMany = (key, values) => {
+                [].concat(values || []).filter(value => value !== null && value !== '').forEach(value => params.append(`${key}[]`, value));
+            };
+            const period = data?.period || {};
+
+            if (period.start_date) params.set('start_date', period.start_date);
+            if (period.end_date) params.set('end_date', period.end_date);
+            if (!period.start_date && !period.end_date) {
+                appendMany('years', period.years);
+                appendMany('months', period.months);
+            }
+
+            if (metricSupportsFilter(currentChartType, 'municipios')) {
+                appendMany('death_municipality_ids', activeFilters.municipios);
+            }
+            if (metricSupportsFilter(currentChartType, 'causas')) appendMany('cause_ids', activeFilters.causas);
+            if (metricSupportsFilter(currentChartType, 'distritoes')) appendMany('district_ids', activeFilters.distritoes);
+            if (metricSupportsFilter(currentChartType, 'sexo') && activeFilters.sexo) params.set('sex', activeFilters.sexo);
+            if (metricSupportsFilter(currentChartType, 'edad') && activeFilters.edad) params.set('age', activeFilters.edad);
+
+            params.set('analysis_type', currentChartType);
+            if (currentChartType === 'comparativa') params.set('comparativa_type', activeFilters.tipoComparativa);
+            if (currentChartType === 'municipios') params.set('municipio_type', activeFilters.tipoMunicipio);
+            if (excluded) params.set('analysis_excluded', '1');
+            if (csv) params.set('format', 'csv');
+
+            return params;
+        }
+
+        function updateStatisticsAnalysisActions(data) {
+            const viewData = document.getElementById('statisticsViewData');
+            const reviewExcluded = document.getElementById('statisticsReviewExcluded');
+            const dataUrl = `{{ route('statistic.data') }}?${buildStatisticsAnalysisParams(data).toString()}`;
+            const excludedUrl = `{{ route('statistic.data') }}?${buildStatisticsAnalysisParams(data, { excluded: true }).toString()}`;
+
+            if (viewData) {
+                viewData.href = dataUrl;
+                viewData.removeAttribute('aria-disabled');
+            }
+            if (reviewExcluded) reviewExcluded.href = excludedUrl;
+        }
+
+        function showNoChartData(data) {
+            const excludedTotal = Number(data?.quality?.excluded_total || 0);
+            showErrorMessage(
+                excludedTotal > 0
+                    ? 'No hay registros completos para construir esta gráfica.'
+                    : 'No hay datos para los filtros seleccionados.',
+                excludedTotal > 0
+            );
+        }
+
+        function downloadAnalysisCsv() {
+            if (!latestChartData || latestChartDataType !== currentChartType) return;
+            const params = buildStatisticsAnalysisParams(latestChartData, { csv: true });
+            window.location.assign(`{{ route('statistic.export') }}?${params.toString()}`);
+        }
+
+        function updateChartSourceSummary(sourceSummary) {
+            const footer = document.getElementById('statisticsChartSource');
+            const details = document.getElementById('statisticsChartSourceDetails');
+            const summary = document.getElementById('statisticsChartSourceSummary');
+            const list = document.getElementById('statisticsChartSourceList');
+            const total = document.getElementById('statisticsChartSourceTotal');
+            if (!footer || !details || !summary || !list || !total) return;
+
+            const imports = Array.isArray(sourceSummary?.imports) ? sourceSummary.imports : [];
+            const manualRecords = Number(sourceSummary?.manual_records || 0);
+            const totalRecords = Number(sourceSummary?.total_records || 0);
+
+            details.open = false;
+            list.replaceChildren();
+
+            if (totalRecords <= 0) {
+                footer.classList.add('hidden');
+                return;
+            }
+
+            const importText = imports.length === 1 ? '1 importación' : `${imports.length} importaciones`;
+            const manualText = manualRecords === 1 ? '1 registro manual' : `${manualRecords.toLocaleString('es-MX')} registros manuales`;
+            summary.textContent = imports.length > 0
+                ? `Origen: ${importText}${manualRecords > 0 ? ` · ${manualText}` : ''}`
+                : 'Origen: captura manual';
+
+            const dateFormatter = new Intl.DateTimeFormat('es-MX', {
+                day: 'numeric',
+                month: 'short',
+                year: 'numeric'
+            });
+            const appendSource = (name, records, description) => {
+                const item = document.createElement('li');
+                const copy = document.createElement('span');
+                const title = document.createElement('strong');
+                const meta = document.createElement('small');
+                const count = document.createElement('strong');
+
+                title.textContent = name;
+                meta.textContent = description;
+                count.textContent = `${Number(records).toLocaleString('es-MX')} ${Number(records) === 1 ? 'registro' : 'registros'}`;
+                copy.append(title, meta);
+                item.append(copy, count);
+                list.append(item);
+            };
+
+            imports.forEach(source => {
+                let importedAt = 'Importación registrada';
+                if (source.imported_at) {
+                    const date = new Date(source.imported_at);
+                    if (!Number.isNaN(date.getTime())) importedAt = `Importado el ${dateFormatter.format(date)}`;
+                }
+                appendSource(source.name || `Importación #${source.id}`, source.records, importedAt);
+            });
+
+            if (manualRecords > 0) {
+                appendSource('Captura manual', manualRecords, 'Registros agregados directamente en el sistema');
+            }
+
+            total.textContent = `${totalRecords.toLocaleString('es-MX')} ${totalRecords === 1 ? 'registro considerado' : 'registros considerados'}`;
+            footer.classList.remove('hidden');
+        }
+
+        function updatePreviousPeriodComparison(data) {
+            const element = document.getElementById('statisticsPreviousComparison');
+            const icon = document.getElementById('statisticsPreviousComparisonIcon');
+            const text = document.getElementById('statisticsPreviousComparisonText');
+            if (!element || !icon || !text) return;
+
+            const comparison = data?.previous_period_comparison;
+            if (!comparison?.available) {
+                element.className = 'statistics-previous-comparison hidden';
+                element.removeAttribute('title');
+                text.textContent = '';
+                return;
+            }
+
+            const direction = comparison.direction || 'unchanged';
+            const percentage = Number(comparison.percentage_change);
+            const percentageText = Number.isFinite(percentage)
+                ? Math.abs(percentage).toLocaleString('es-MX', { minimumFractionDigits: 0, maximumFractionDigits: 1 })
+                : null;
+            const settings = {
+                increase: {
+                    icon: 'fas fa-arrow-up',
+                    label: `${percentageText}% vs. periodo anterior`
+                },
+                decrease: {
+                    icon: 'fas fa-arrow-down',
+                    label: `${percentageText}% vs. periodo anterior`
+                },
+                unchanged: {
+                    icon: 'fas fa-minus',
+                    label: 'Sin cambio vs. periodo anterior'
+                },
+                no_baseline: {
+                    icon: 'fas fa-minus',
+                    label: 'Sin registros en el periodo anterior'
+                }
+            };
+            const selected = settings[direction] || settings.unchanged;
+
+            const dateFormatter = new Intl.DateTimeFormat('es-MX', {
+                day: 'numeric',
+                month: 'short',
+                year: 'numeric',
+                timeZone: 'UTC'
+            });
+            const formatDate = value => {
+                const date = new Date(`${String(value).slice(0, 10)}T12:00:00Z`);
+                return Number.isNaN(date.getTime()) ? '' : dateFormatter.format(date);
+            };
+            const period = comparison.period || {};
+            let previousPeriodLabel = '';
+            if (period.start_date && period.end_date) {
+                previousPeriodLabel = `${formatDate(period.start_date)} – ${formatDate(period.end_date)}`;
+            } else if (Array.isArray(period.years) && period.years.length) {
+                previousPeriodLabel = period.years.join(', ');
+                if (Array.isArray(period.months) && period.months.length) {
+                    previousPeriodLabel += ' · mismos meses seleccionados';
+                }
+            }
+
+            const difference = Number(comparison.difference || 0);
+            const signedDifference = `${difference > 0 ? '+' : ''}${difference.toLocaleString('es-MX')}`;
+            const previousTotal = Number(comparison.previous_total || 0).toLocaleString('es-MX');
+
+            element.className = `statistics-previous-comparison is-${direction}`;
+            icon.className = selected.icon;
+            text.textContent = selected.label;
+            element.title = [
+                previousPeriodLabel ? `Periodo anterior: ${previousPeriodLabel}` : '',
+                `${previousTotal} registros analizados`,
+                `Diferencia: ${signedDifference}`
+            ].filter(Boolean).join(' · ');
+        }
+
+        function updateChartContext(data) {
+            const context = document.getElementById('statisticsChartContext');
+            const periodElement = document.getElementById('statisticsChartPeriod');
+            const coverageElement = document.getElementById('statisticsChartCoverage');
+            const qualityElement = document.getElementById('statisticsChartQuality');
+            const qualityText = document.getElementById('statisticsChartQualityText');
+            if (!context || !periodElement || !coverageElement || !qualityElement || !qualityText) return;
+
+            const period = data.period || {};
+            const dateFormatter = new Intl.DateTimeFormat('es-MX', {
+                day: 'numeric',
+                month: 'short',
+                year: 'numeric',
+                timeZone: 'UTC'
+            });
+            const formatDate = value => {
+                if (!value) return '';
+                const date = new Date(`${String(value).slice(0, 10)}T12:00:00Z`);
+                return Number.isNaN(date.getTime()) ? '' : dateFormatter.format(date);
+            };
+
+            let periodText = '';
+            if (period.start_date && period.end_date) {
+                periodText = `${period.is_default ? 'Periodo predeterminado' : 'Periodo'}: ${formatDate(period.start_date)} – ${formatDate(period.end_date)}`;
+            } else if (Array.isArray(period.years) && period.years.length) {
+                const years = period.years.map(Number).filter(Number.isFinite).sort((a, b) => a - b);
+                const months = Array.isArray(period.months) ? period.months.filter(Boolean) : [];
+                periodText = months.length
+                    ? `Periodo: ${months.length * years.length} ${months.length * years.length === 1 ? 'mes seleccionado' : 'meses seleccionados'}`
+                    : `Periodo: ${years.join(', ')}`;
+            } else if (period.data_start && period.data_end) {
+                periodText = `Datos: ${formatDate(period.data_start)} – ${formatDate(period.data_end)}`;
+            }
+
+            const displayedCategories = Number(data.displayed_categories || 0);
+            const availableCategories = Number(data.available_categories || displayedCategories);
+            const coverage = Number(data.coverage_percentage || 0);
+            const hasLimitedCoverage = availableCategories > displayedCategories || coverage < 99.95;
+
+            periodElement.textContent = periodText;
+            periodElement.classList.toggle('hidden', !periodText);
+            if (hasLimitedCoverage && Number(data.filtered_total || 0) > 0) {
+                const dimension = data.ranking_label || 'categorías';
+                coverageElement.textContent = `Top ${displayedCategories} de ${availableCategories} ${dimension} · cobertura ${coverage.toFixed(1)}%`;
+                coverageElement.classList.remove('hidden');
+            } else {
+                coverageElement.textContent = '';
+                coverageElement.classList.add('hidden');
+            }
+
+            const excludedTotal = Number(data.quality?.excluded_total || 0);
+            const requiredFields = Array.isArray(data.quality?.required_fields) ? data.quality.required_fields : [];
+            if (excludedTotal > 0) {
+                qualityText.textContent = `${excludedTotal.toLocaleString('es-MX')} ${excludedTotal === 1 ? 'registro no incluido' : 'registros no incluidos'} por información incompleta`;
+                qualityElement.title = requiredFields.length ? `Campos necesarios: ${requiredFields.join(', ')}` : '';
+                qualityElement.classList.remove('hidden');
+            } else {
+                qualityText.textContent = '';
+                qualityElement.removeAttribute('title');
+                qualityElement.classList.add('hidden');
+            }
+
+            context.classList.toggle('hidden', !periodText && coverageElement.classList.contains('hidden') && qualityElement.classList.contains('hidden'));
         }
 
         function renderChart(data) {
@@ -2063,17 +2611,17 @@
             
             // Grids diferentes según chart type para espaciado consistente
             const verticalBarGrids = {
-                municipios: { left: '3%', right: '4%', top: 55, bottom: 60, containLabel: true },
-                edades: { left: '3%', right: '4%', top: 55, bottom: 60, containLabel: true },
-                genero: { left: '3%', right: '4%', top: 55, bottom: 70, containLabel: true },
-                causas: { left: '3%', right: '4%', top: 55, bottom: 70, containLabel: true },
-                distritoes: { left: '3%', right: '4%', top: 55, bottom: 70, containLabel: true },
-                comparativa: { left: '3%', right: '4%', top: 55, bottom: 70, containLabel: true },
-                tendencias: { left: '3%', right: '4%', bottom: 70, top: 55, containLabel: true }
+                municipios: { left: '3%', right: '4%', top: 42, bottom: 52, containLabel: true },
+                edades: { left: '3%', right: '4%', top: 42, bottom: 48, containLabel: true },
+                genero: { left: '3%', right: '4%', top: 42, bottom: 54, containLabel: true },
+                causas: { left: '3%', right: '4%', top: 42, bottom: 54, containLabel: true },
+                distritoes: { left: '3%', right: '4%', top: 42, bottom: 54, containLabel: true },
+                comparativa: { left: '3%', right: '4%', top: 38, bottom: 68, containLabel: true },
+                tendencias: { left: '3%', right: '4%', top: 40, bottom: 56, containLabel: true }
             };
             
             // Obtener grid para el chart type actual
-            const verticalBarGrid = verticalBarGrids[currentChartType] || { left: '3%', right: '4%', top: 55, bottom: 70, containLabel: true };
+            const verticalBarGrid = verticalBarGrids[currentChartType] || { left: '3%', right: '4%', top: 42, bottom: 54, containLabel: true };
             const expandedCircularCharts = ['municipios', 'edades', 'genero', 'causas', 'distritoes'].includes(currentChartType);
             const formatNumber = (num) => Number(num || 0).toLocaleString('es-MX');
             const labelRich = {
@@ -2087,13 +2635,15 @@
                 currentEchartsInstance.dispose();
             }
 
-            const isPieLikeChart = chartConfig.type === 'auto'
-                ? ['pie', 'doughnut'].includes(getOptimalChartType(currentChartType))
-                : ['pie', 'doughnut'].includes(chartConfig.type);
+            const resolvedChartType = chartConfig.type === 'auto'
+                ? getOptimalChartType(currentChartType)
+                : chartConfig.type;
+            const isPieLikeChart = ['pie', 'doughnut'].includes(resolvedChartType);
 
             if (chartWrapper) {
                 chartWrapper.style.height = '';
                 chartWrapper.style.minHeight = '';
+                chartWrapper.style.flexBasis = '';
                 if (isPieLikeChart) {
                     // Mostrar el chart en modo compacto: solo espacio para la gráfica + leyenda
                     chartWrapper.style.display = 'flex';
@@ -2110,9 +2660,6 @@
                 }
             }
 
-            // Recrear instancia limpia
-            currentEchartsInstance = echarts.init(chartContainer);
-
             let chartTitle = currentChartType === 'comparativa' 
                 ? comparativaLabels[activeFilters.tipoComparativa] || chartTitles[currentChartType]
                 : (chartTitles[currentChartType] || 'Gráfica');
@@ -2124,11 +2671,16 @@
             }
             
             document.getElementById('chartTitle').textContent = chartTitle;
-            const totalStr = (data.total || 0).toLocaleString();
+            const filteredTotal = Number(data.filtered_total ?? data.total ?? 0);
+            const totalStr = filteredTotal.toLocaleString('es-MX');
             const totalEl = document.getElementById('totalRecords');
             if (totalEl) totalEl.textContent = totalStr;
             const badgeEl = document.getElementById('chartTotalValue');
             if (badgeEl) badgeEl.textContent = totalStr;
+            updatePreviousPeriodComparison(data);
+            updateChartContext(data);
+            updateChartSourceSummary(data.source_summary);
+            updateStatisticsAnalysisActions(data);
 
             let labels = data.labels || [];
             let values = currentChartType === 'comparativa' ? null : (data.counts || []);
@@ -2139,7 +2691,7 @@
             const colors = labels.map((_, i) => palette[i % palette.length]);
 
             // Determinar tipo de gráfica: usar la selección del usuario o el óptimo si es "auto"
-            let chartType = chartConfig.type === 'auto' ? getOptimalChartType(currentChartType) : chartConfig.type;
+            let chartType = resolvedChartType;
             
             // Detectar si es área antes de convertir a line
             const isAreaChart = chartType === 'area';
@@ -2169,7 +2721,7 @@
                             }
                         }
                         if (fLabels.length === 0) {
-                            showErrorMessage('No hay datos para los filtros seleccionados');
+                            showNoChartData(data);
                             return;
                         }
                         labels = fLabels;
@@ -2186,7 +2738,7 @@
                             }
                         }
                         if (fLabels.length === 0) {
-                            showErrorMessage('No hay datos para los filtros seleccionados');
+                            showNoChartData(data);
                             return;
                         }
                         labels = fLabels;
@@ -2197,8 +2749,113 @@
                 console.warn('Filter zeros failed', e);
             }
 
+            const normalizeCategoryLabel = (value) => String(value ?? '').replace(/\s+/g, ' ').trim();
+            const plotWidth = Math.max(280, (chartWrapper?.clientWidth || 960) * 0.88);
+            const categorySlotWidth = plotWidth / Math.max(labels.length, 1);
+            const charsPerAxisLine = Math.max(7, Math.min(22, Math.floor(categorySlotWidth / 8.5)));
+            const wrapCategoryLabel = (value, maxCharsPerLine) => {
+                const text = normalizeCategoryLabel(value);
+                if (text.length <= maxCharsPerLine) return text;
+
+                const words = text.split(' ').flatMap(word => {
+                    if (word.length <= maxCharsPerLine) return [word];
+                    const parts = [];
+                    for (let index = 0; index < word.length; index += maxCharsPerLine) {
+                        parts.push(word.slice(index, index + maxCharsPerLine));
+                    }
+                    return parts;
+                });
+                const lines = [];
+                let currentLine = '';
+
+                for (const word of words) {
+                    const candidate = currentLine ? `${currentLine} ${word}` : word;
+                    if (candidate.length <= maxCharsPerLine) {
+                        currentLine = candidate;
+                        continue;
+                    }
+
+                    if (currentLine) lines.push(currentLine);
+                    currentLine = word;
+                }
+
+                if (currentLine) lines.push(currentLine);
+                return lines.join('\n');
+            };
+
+            const formatVerticalCategoryLabel = value => wrapCategoryLabel(value, charsPerAxisLine);
+            const verticalLabelLineCount = Math.max(
+                1,
+                ...labels.map(label => formatVerticalCategoryLabel(label).split('\n').length)
+            );
+
+            const verticalCategoryAxisLabel = {
+                interval: 0,
+                rotate: 0,
+                align: 'center',
+                verticalAlign: 'top',
+                lineHeight: 14,
+                fontSize: labels.length > 10 ? 11 : axisFontSize,
+                color: '#404041',
+                formatter: formatVerticalCategoryLabel
+            };
+
+            const horizontalCategoryAxisLabel = {
+                interval: 0,
+                align: 'right',
+                lineHeight: 14,
+                fontSize: labels.length > 12 ? 11 : axisFontSize,
+                color: '#404041',
+                formatter: value => wrapCategoryLabel(value, 28)
+            };
+
+            if (verticalLabelLineCount > 1) {
+                verticalBarGrid.bottom += (verticalLabelLineCount - 1) * 14;
+            }
+
+            if (chartWrapper) {
+                const presentationPanel = document.querySelector('.statistics-display-panel');
+                const chartPanel = document.getElementById('statisticsChartPanel');
+                const chartHeader = chartPanel?.querySelector('.statistics-chart-header');
+                const chartSource = document.getElementById('statisticsChartSource');
+                const baseHeight = Math.min(448, Math.max(368, window.innerHeight * 0.44));
+                let contentHeight = baseHeight;
+
+                if (resolvedChartType === 'barHorizontal') {
+                    contentHeight = Math.min(680, Math.max(baseHeight, labels.length * 34 + 108));
+                } else if (resolvedChartType === 'bar') {
+                    contentHeight = Math.min(620, baseHeight + Math.max(0, verticalLabelLineCount - 1) * 18);
+                } else if (isPieLikeChart) {
+                    contentHeight = Math.max(baseHeight, 420);
+                }
+
+                const chartChromeHeight = (chartHeader?.offsetHeight || 0)
+                    + (chartSource && !chartSource.classList.contains('hidden') ? chartSource.offsetHeight : 0);
+                const sidebarMatchedHeight = window.matchMedia('(min-width: 1280px)').matches
+                    ? Math.max(0, (presentationPanel?.offsetHeight || 0) - chartChromeHeight)
+                    : 0;
+                const targetHeight = Math.ceil(Math.min(680, Math.max(contentHeight, sidebarMatchedHeight)));
+
+                chartWrapper.style.height = `${targetHeight}px`;
+                chartWrapper.style.minHeight = `${targetHeight}px`;
+                chartWrapper.style.flexBasis = `${targetHeight}px`;
+            }
+
+            // Inicializar ECharts cuando el lienzo ya tiene su altura definitiva.
+            // Así su canvas interno ocupa toda la tarjeta desde el primer render.
+            currentEchartsInstance = echarts.init(chartContainer);
+
             if (currentChartType === 'comparativa') {
-                // Gráfica de barras agrupadas para comparativa
+                const comparisonSeries = Array.isArray(data.series) && data.series.length
+                    ? data.series
+                    : [
+                        { name: 'Municipio de residencia', data: data.residence_counts || [] },
+                        { name: 'Municipio de defunción', data: data.death_counts || [] }
+                    ];
+                const comparisonLegend = comparisonSeries.map(series => series.name);
+                const showComparisonLabels = comparisonSeries.length <= 3;
+                const comparisonDenominator = Number(data.filtered_total || 0);
+
                 option = {
                     color: palette,
                     animation: true,
@@ -2207,7 +2864,8 @@
                     title: { text: '' },
                     tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' }, textStyle: { fontSize: axisFontSize } },
                     legend: {
-                        data: ['Residencia', 'Lugar de Defunción'],
+                        type: 'scroll',
+                        data: comparisonLegend,
                         bottom: 10,
                         itemWidth: 18,
                         itemHeight: 16,
@@ -2217,26 +2875,36 @@
                     xAxis: {
                         type: 'category',
                         data: labels,
-                        axisLabel: { rotate: 45, interval: 0, fontSize: axisFontSize, color: '#404041' }
+                        axisLabel: verticalCategoryAxisLabel
                     },
                     yAxis: {
                         type: 'value',
                         axisLabel: { fontSize: axisFontSize, color: '#404041' }
                     },
-                    series: [
-                        {
-                            name: 'Residencia',
-                            type: 'bar',
-                            data: data.residence_counts || [],
-                            itemStyle: { color: palette[0] }
-                        },
-                        {
-                            name: 'Lugar de Defunción',
-                            type: 'bar',
-                            data: data.death_counts || [],
-                            itemStyle: { color: palette[1] }
+                    series: comparisonSeries.map((series, index) => ({
+                        name: series.name,
+                        type: 'bar',
+                        stack: data.stacked ? 'total' : undefined,
+                        data: series.data || [],
+                        itemStyle: { color: palette[index % palette.length] },
+                        emphasis: { focus: 'series' },
+                        label: {
+                            show: showComparisonLabels && chartConfig.dataLabelMode !== 'none',
+                            position: data.stacked ? 'inside' : 'top',
+                            fontSize: valueLabelFontSize,
+                            fontWeight: 700,
+                            formatter: params => {
+                                const value = Number(params.value || 0);
+                                if (!value) return '';
+                                const percentage = comparisonDenominator > 0
+                                    ? `${((value / comparisonDenominator) * 100).toFixed(1)}%`
+                                    : '0.0%';
+                                if (chartConfig.dataLabelMode === 'percent') return percentage;
+                                if (chartConfig.dataLabelMode === 'both') return `${formatNumber(value)} (${percentage})`;
+                                return formatNumber(value);
+                            }
                         }
-                    ]
+                    }))
                 };
             } else if (chartType === 'pie' || chartType === 'doughnut') {
                 // Gráficas de pastel
@@ -2244,10 +2912,14 @@
                     name: label,
                     value: values[i]
                 }));
+                const omittedTotal = Number(data.omitted_total || 0);
+                if (omittedTotal > 0) {
+                    pieData.push({ name: 'Otros', value: omittedTotal, itemStyle: { color: '#cbd5e1' } });
+                }
                 // Filtrar slices con valor 0 para evitar mostrar muchos 0 alrededor del pastel
                 const filteredPieData = pieData.filter(d => Number(d.value || 0) !== 0);
                 if (filteredPieData.length === 0) {
-                    showErrorMessage('No hay datos para los filtros seleccionados');
+                    showNoChartData(data);
                     return;
                 }
                 // Calcular medidas en píxeles para ocupar solo lo necesario
@@ -2342,12 +3014,15 @@
                             width: expandedCircularCharts ? 260 : 180,
                             rich: labelRich,
                             formatter: (params) => {
+                                const percentage = filteredTotal > 0
+                                    ? `${((Number(params.value || 0) / filteredTotal) * 100).toFixed(1)}%`
+                                    : '0.0%';
                                 if (chartConfig.dataLabelMode === 'value') {
                                     return `{value|${formatNumber(params.value)}}`;
                                 } else if (chartConfig.dataLabelMode === 'percent') {
-                                    return `{percent|${params.percent}%}`;
+                                    return `{percent|${percentage}}`;
                                 } else if (chartConfig.dataLabelMode === 'both') {
-                                    return `{value|${formatNumber(params.value)}} {normal|(${params.percent}%)}`;
+                                    return `{value|${formatNumber(params.value)}} {normal|(${percentage})}`;
                                 }
                                 // Por defecto: mostrar valor en lugar del nombre
                                 return `{value|${formatNumber(params.value)}}`;
@@ -2464,8 +3139,8 @@
                         ? {
                             left: '3%',
                             right: '4%',
-                            bottom: 70,
-                            top: 55,
+                            bottom: 40,
+                            top: 36,
                             containLabel: true
                         }
                         : verticalBarGrid,
@@ -2476,12 +3151,14 @@
                     [isHorizontal ? 'yAxis' : 'xAxis']: {
                         type: 'category',
                         data: labels,
-                        axisLabel: { 
-                            interval: 0, 
-                            fontSize: categoryAxisFontSize, 
-                            color: '#404041' 
-                        },
-                        ...(isHorizontal ? {} : { rotate: 45 })
+                        axisLabel: isHorizontal
+                            ? { ...horizontalCategoryAxisLabel, fontSize: Math.min(horizontalCategoryAxisLabel.fontSize, categoryAxisFontSize) }
+                            : {
+                                ...verticalCategoryAxisLabel,
+                                fontSize: verticalLabelLineCount > 1
+                                    ? Math.min(verticalCategoryAxisLabel.fontSize, categoryAxisFontSize)
+                                    : categoryAxisFontSize
+                            }
                     },
                     series: [{
                         name: chartTitles[currentChartType],
@@ -2498,13 +3175,13 @@
                             color: '#404041',
                             rich: labelRich,
                             formatter: (params) => {
-                                const total = values.reduce((a, b) => a + b, 0);
+                                const total = filteredTotal;
                                 if (chartConfig.dataLabelMode === 'value') return `{value|${formatNumber(params.value)}}`;
                                 if (chartConfig.dataLabelMode === 'percent') {
-                                    return `{percent|${((params.value / total) * 100).toFixed(1)}%}`;
+                                    return `{percent|${total > 0 ? ((params.value / total) * 100).toFixed(1) : '0.0'}%}`;
                                 }
                                 if (chartConfig.dataLabelMode === 'both') {
-                                    return `{value|${formatNumber(params.value)}} {normal|(${((params.value / total) * 100).toFixed(1)}%)}`;
+                                    return `{value|${formatNumber(params.value)}} {normal|(${total > 0 ? ((params.value / total) * 100).toFixed(1) : '0.0'}%)}`;
                                 }
                                 return '';
                             }
@@ -2516,9 +3193,11 @@
             // Aplicar opción y preservar animaciones: para pie/rosquilla
             // hacemos resize ANTES de setOption para que echarts inicie
             // con las dimensiones correctas y ejecute la animación inicial.
+            const chartInstance = currentEchartsInstance;
             function applyOptionAndFinish() {
+                if (!chartInstance || currentEchartsInstance !== chartInstance) return;
                 try {
-                    currentEchartsInstance.setOption(option, false);
+                    chartInstance.setOption(option, false);
                 } catch (e) {
                     console.warn('setOption failed', e);
                 }
@@ -2528,15 +3207,16 @@
                 if (isPieLikeChart) {
                     // Pequeño timeout para permitir que el DOM aplique estilos antes del resize
                     setTimeout(() => {
-                        if (currentEchartsInstance && typeof currentEchartsInstance.resize === 'function') {
-                            currentEchartsInstance.resize();
+                        if (currentEchartsInstance !== chartInstance) return;
+                        if (typeof chartInstance.resize === 'function') {
+                            chartInstance.resize();
                         }
                         applyOptionAndFinish();
                     }, 60);
                 } else {
                     // Para gráficas no circulares: también hacer resize antes de setOption para permitir animaciones
-                    if (currentEchartsInstance && typeof currentEchartsInstance.resize === 'function') {
-                        currentEchartsInstance.resize();
+                    if (typeof chartInstance.resize === 'function') {
+                        chartInstance.resize();
                     }
                     applyOptionAndFinish();
                 }
@@ -2659,74 +3339,44 @@
             loadChart(currentChartType);
         }
 
-        // Limpia SOLO los filtros de datos (fechas, municipios, etc.)
-        // NO resetea las configuraciones de visualización (tipo gráfica, etiquetas, top)
-        function clearFiltersDataOnly(suppressUpdate = false) {
-            const safeSetValue = (id, value) => {
-                const el = document.getElementById(id);
-                if (el) el.value = value;
-            };
-            
-            safeSetValue('dateRange', 'all');
-            safeSetValue('year', '');
-            safeSetValue('month', '');
-            safeSetValue('quarter', '');
-            safeSetValue('customStartDate', '');
-            safeSetValue('customEndDate', '');
-            safeSetValue('sexoFilter', '');
-            safeSetValue('granularidadFilter', 'month');
-            safeSetValue('tipoComparativaFilter', 'residencia-defuncion');
-            safeSetValue('tipoMunicipioFilter', 'defuncion');
-            const causesToggle = document.getElementById('mostrarCausasPrincipales');
-            if (causesToggle) causesToggle.checked = false;
-            
-            // Limpiar checkboxes de meses
-            document.querySelectorAll('.month-checkbox').forEach(checkbox => {
-                checkbox.checked = false;
+        function resetActiveDataFilters() {
+            Object.assign(activeFilters, {
+                dateRange: 'all',
+                startDate: null,
+                endDate: null,
+                selectedMonths: [],
+                selectedYears: [],
+                municipios: [],
+                municipiosNames: [],
+                causas: [],
+                causasNames: [],
+                distritoes: [],
+                distritoesNames: [],
+                sexo: null,
+                edad: null,
+                granularidad: 'month',
+                mostrarCausasPrincipales: false,
+                tipoComparativa: 'residencia-defuncion',
+                tipoMunicipio: 'defuncion'
             });
-            
-            // Limpiar multiselects
-            const multiSelectIds = ['municipiosFilter', 'causasFilter', 'distritoesFilter'];
-            multiSelectIds.forEach(id => {
-                const element = document.getElementById(id);
-                if (element) {
-                    element.value = '';
-                    if (element.tomselect) {
-                        element.tomselect.clear(true);
-                    }
-                }
-            });
-            if (currentChartType === 'municipios') updateMunicipiosOptions([]);
-            
-            // Ocultar selectores condicionales de fecha
-            const selectors = [
-                document.getElementById('yearSelector'),
-                document.getElementById('monthSimpleSelector'),
-                document.getElementById('monthSelector'),
-                document.getElementById('quarterSelector'),
-                document.getElementById('customDateSelector')
-            ];
-            selectors.forEach(selector => {
-                if (selector) selector.style.display = 'none';
-            });
-
-            updateActiveFiltersDisplay();
-            if (!suppressUpdate) updateChart();
         }
 
         function clearFilters(suppressUpdate = false) {
             const safeSetValue = (id, value) => {
                 const el = document.getElementById(id);
-                if (el) el.value = value;
+                if (!el) return;
+                if (el.tomselect) el.tomselect.setValue(value, true);
+                else el.value = value;
             };
             
             safeSetValue('dateRange', 'all');
             safeSetValue('year', '');
             safeSetValue('month', '');
             safeSetValue('quarter', '');
-            safeSetValue('customStartDate', '');
-            safeSetValue('customEndDate', '');
+            safeSetValue('customStartDate', defaultDateRange.startDate);
+            safeSetValue('customEndDate', defaultDateRange.endDate);
             safeSetValue('sexoFilter', '');
+            safeSetValue('edadFilter', '');
             safeSetValue('granularidadFilter', 'month');
             safeSetValue('tipoComparativaFilter', 'residencia-defuncion');
             safeSetValue('tipoMunicipioFilter', 'defuncion');
@@ -2753,7 +3403,7 @@
                     }
                 }
             });
-            if (currentChartType === 'municipios') updateMunicipiosOptions([]);
+            if (metricUsesMunicipalityAndDistrict()) updateMunicipiosOptions([]);
             
             // Ocultar todos los selectores condicionales
             const selectors = [
@@ -2771,6 +3421,7 @@
             renderDataLabelButtons(currentChartType);
             renderChartLimitButtons(currentChartType);
             
+            resetActiveDataFilters();
             updateActiveFiltersDisplay();
             if (!suppressUpdate) updateChart();
         }
@@ -2782,6 +3433,14 @@
             if (errorMessage) errorMessage.style.display = 'none';
             const chartEl = document.getElementById('mainChart');
             if (chartEl) chartEl.style.visibility = 'hidden';
+            document.getElementById('statisticsPreviousComparison')?.classList.add('hidden');
+            document.getElementById('statisticsChartContext')?.classList.add('hidden');
+            document.getElementById('statisticsChartSource')?.classList.add('hidden');
+            const viewData = document.getElementById('statisticsViewData');
+            if (viewData) {
+                viewData.href = '#';
+                viewData.setAttribute('aria-disabled', 'true');
+            }
         }
 
         function hideLoadingMessage() {
@@ -2789,7 +3448,7 @@
             if (loadingMessage) loadingMessage.style.display = 'none';
         }
 
-        function showErrorMessage(message) {
+        function showErrorMessage(message, preserveContext = false) {
             document.getElementById('errorText').textContent = message;
             const errorMessage = document.getElementById('errorMessage');
             const loadingMessage = document.getElementById('loadingMessage');
@@ -2797,6 +3456,14 @@
             if (loadingMessage) loadingMessage.style.display = 'none';
             const chartEl = document.getElementById('mainChart');
             if (chartEl) chartEl.style.visibility = 'hidden';
+            document.getElementById('statisticsPreviousComparison')?.classList.add('hidden');
+            if (!preserveContext) document.getElementById('statisticsChartContext')?.classList.add('hidden');
+            document.getElementById('statisticsChartSource')?.classList.add('hidden');
+            const viewData = document.getElementById('statisticsViewData');
+            if (viewData) {
+                viewData.href = '#';
+                viewData.setAttribute('aria-disabled', 'true');
+            }
         }
     </script>
 
@@ -3003,50 +3670,6 @@
             padding: 0.375rem 0.75rem;
         }
 
-        /* Estilos para filtros activos */
-        #filtrosActivosList span {
-            animation: fadeInSlide 0.3s ease-out;
-        }
-
-        #filtrosActivosList button {
-            cursor: pointer;
-            transition: all 0.2s ease;
-            background: rgba(0, 0, 0, 0.2);
-            border: none;
-            border-radius: 50%;
-            width: 16px;
-            height: 16px;
-            padding: 0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-size: 0.9rem;
-            line-height: 1;
-            flex-shrink: 0;
-            min-width: 16px;
-        }
-
-        #filtrosActivosList button:hover {
-            background: rgba(0, 0, 0, 0.4);
-            transform: scale(1.15);
-        }
-
-        #filtrosActivosList button {
-            font-weight: normal;
-        }
-
-        @keyframes fadeInSlide {
-            from {
-                opacity: 0;
-                transform: translateY(-5px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
         /* Estilos para checkboxes de meses */
         .month-checkbox {
             display: none;
@@ -3082,172 +3705,6 @@
             outline-offset: 1px;
         }
 
-        /* === Tom Select Styling === */
-        #estadisticas-filtros {
-            overflow: visible !important;
-            position: relative;
-        }
-
-        #estadisticas-filtros > div {
-            overflow: visible !important;
-        }
-
-        #estadisticas-filtros .px-4 {
-            overflow: visible !important;
-        }
-
-        select.tomselect-select {
-            position: absolute !important;
-            left: -9999px !important;
-            width: 1px !important;
-            height: 1px !important;
-            overflow: hidden !important;
-            opacity: 0 !important;
-            pointer-events: none !important;
-            border: 0 !important;
-            margin: 0 !important;
-            padding: 0 !important;
-            background: transparent !important;
-            -webkit-appearance: none !important;
-            -moz-appearance: none !important;
-            appearance: none !important;
-            display: none !important;
-        }
-
-        select.tomselect-select::-ms-expand { display: none !important; }
-        select.tomselect-select { 
-            background-image: none !important;
-            visibility: hidden !important;
-        }
-
-        .ts-wrapper { 
-            display: block; 
-            width: 100%;
-            position: relative;
-            z-index: 9999 !important;
-            margin: 0 !important;
-            padding: 0 !important;
-        }
-
-        .ts-control {
-            z-index: 9999 !important;
-            position: relative;
-            border: 1px solid #404041 !important;
-            border-radius: 0.5rem !important;
-            padding: 8px 12px !important;
-            background: #ffffff !important;
-            font-family: inherit;
-            font-size: 0.75rem;
-            line-height: 1.25rem !important;
-            display: flex;
-            align-items: center;
-            justify-content: flex-start;
-            box-sizing: border-box;
-            margin: 0 !important;
-            box-shadow: none !important;
-            height: auto !important;
-            min-height: 36px !important;
-            max-height: 36px !important;
-            transition: all 0.2s ease;
-        }
-
-        .ts-control:focus-within {
-            border-color: #404041 !important;
-            outline: none !important;
-            box-shadow: 0 0 0 1px #611132 !important;
-        }
-
-        .ts-control .item, .ts-control input {
-            padding: 0 !important;
-            margin: 0 !important;
-            height: auto !important;
-            line-height: 1.25rem !important;
-            font-size: inherit;
-            font-family: inherit;
-        }
-
-        .ts-control .item {
-            display: none !important;
-        }
-
-        .ts-control input {
-            flex: 1;
-            min-width: 150px;
-        }
-
-        .ts-control input::placeholder {
-            color: #9ca3af;
-            font-style: italic;
-        }
-        }
-
-        .ts-control .dropdown-toggle,
-        .ts-control .ts-dropdown-toggle,
-        .ts-control .dropdown_toggle,
-        .ts-control .ts-clear {
-            display: none !important;
-        }
-
-        .ts-dropdown {
-            border: 1px solid #404041;
-            border-radius: 0.5rem;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-            max-height: 250px;
-            overflow-y: auto;
-            z-index: 999999 !important;
-            position: absolute !important;
-            top: 100% !important;
-            left: 0 !important;
-            right: 0 !important;
-            background: white;
-            margin-top: 2px;
-        }
-
-        .ts-dropdown .ts-option {
-            padding: 0.5rem 0.75rem;
-            cursor: pointer;
-            transition: background-color 0.15s ease;
-        }
-
-        .ts-dropdown .ts-option:hover {
-            background-color: #f3f4f6;
-        }
-
-        .ts-dropdown .ts-option.selected {
-            background-color: #e5e7eb;
-            color: #404041;
-        }
-
-        .ts-control::after {
-            content: "";
-            position: absolute;
-            right: 12px;
-            top: 50%;
-            transform: translateY(-50%);
-            width: 18px;
-            height: 18px;
-            background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'/></svg>");
-            background-repeat: no-repeat;
-            background-position: center;
-            background-size: 12px 12px;
-            pointer-events: none;
-            opacity: 0.92;
-        }
-
-        .ts-wrapper, .ts-control { vertical-align: middle; }
-
-        /* Asegurar que TomSelect dropdown tenga muy alto z-index */
-        .filter-section-content {
-            position: relative;
-        }
-
-        .ts-wrapper.ts-dropdown-open {
-            z-index: 999999 !important;
-        }
-
-        .ts-wrapper:not(.ts-dropdown-open) {
-            z-index: 1 !important;
-        }
     </style>
 
 @endsection

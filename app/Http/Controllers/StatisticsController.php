@@ -2,6 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\DeathCause;
+use App\Models\District;
+use App\Services\DeathFilterService;
+use App\Services\StatisticsAnalysisService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Cache;
@@ -9,6 +13,11 @@ use Illuminate\Support\Facades\Schema;
 
 class StatisticsController extends Controller
 {
+    public function __construct(
+        private readonly DeathFilterService $deathFilters,
+        private readonly StatisticsAnalysisService $statisticsAnalysis,
+    ) {}
+
     /**
      * Mostrar la vista de estadísticas con los datos agregados para los gráficos.
      */
@@ -149,48 +158,16 @@ class StatisticsController extends Controller
      */
     protected function commonLists()
     {
-    $municipalities = DB::table('municipalities')->select('id','name','district_id')->orderBy('name')->get();
-        $causes = DB::table('death_causes')->select('id','name')->orderBy('name')->get();
-        // districts list (if the table exists)
-        $districts = [];
-        if (Schema::hasTable('districts')) {
-            $districts = DB::table('districts')->select('id','name')->orderBy('name')->get();
-        }
-
-        // Sex values: prefer distinct values stored in deaths table, but map common codes to readable labels
-        $sexes = [];
-        if (Schema::hasTable('deaths')) {
-            $raw = DB::table('deaths')->select('sex')->distinct()->pluck('sex')->filter()->values();
-            // Normalize into value/label pairs
-            $sexes = $raw->map(function ($s) {
-                $label = $s;
-                // common codes mapping
-                if (is_string($s)) {
-                    $low = mb_strtolower($s);
-                    if ($low === 'm' || $low === 'masculino' || $low === 'hombre') $label = 'Hombre';
-                    elseif ($low === 'f' || $low === 'femenino' || $low === 'mujer') $label = 'Mujer';
-                    elseif ($low === 'otro' || $low === 'o') $label = 'Otro';
-                }
-                return (object)['value' => $s, 'label' => $label];
-            })->values();
-        }
-
-        // If the `districts` table contains the 12 jurisdicciones de Tamaulipas
-        // (como indicas), preferir mostrar sólo municipios pertenecientes a esas
-        // jurisdicciones. Esto evita mostrar municipios de otros estados.
-        try {
-            if (!empty($districts) && is_iterable($districts) && count($districts) === 12) {
-                $distIds = collect($districts)->pluck('id')->values()->all();
-                // Always include district_id to allow frontend dependent filtering
-                $municipalities = DB::table('municipalities')
-                    ->select('id','name','district_id')
-                    ->whereIn('district_id', $distIds)
-                    ->orderBy('name')
-                    ->get();
-            }
-        } catch (\Throwable $e) {
-            // if anything goes wrong, keep the original municipalities list
-        }
+        $municipalities = DB::table('municipalities')
+            ->select('id', 'name', 'district_id')
+            ->orderBy('name')
+            ->get();
+        $causes = DeathCause::allowedCatalog();
+        $districts = Schema::hasTable('districts') ? District::statisticsCatalog() : collect();
+        $sexes = collect([
+            (object) ['value' => 'F', 'label' => 'Femenino'],
+            (object) ['value' => 'M', 'label' => 'Masculino'],
+        ]);
 
         return compact('municipalities','causes','districts','sexes');
     }
@@ -214,99 +191,10 @@ class StatisticsController extends Controller
                 $munCol = 'residence_municipality_id';
             }
 
-            // helper para aplicar filtros a un query builder
-            $applyFilters = function ($query) use ($filters, $dateColumn, $munCol) {
-                // Fecha: soportar start_date/end_date, o arrays de years/months
-                if (!empty($filters['months']) && is_array($filters['months']) && !empty($filters['years']) && is_array($filters['years'])) {
-                    $periods = [];
-                    foreach ($filters['years'] as $y) {
-                        foreach ($filters['months'] as $m) {
-                            $yy = (int)$y;
-                            $mm = sprintf('%02d', (int)$m);
-                            $periods[] = "{$yy}-{$mm}";
-                        }
-                    }
-                    if (!empty($periods)) {
-                        $query->whereIn(DB::raw("DATE_FORMAT({$dateColumn}, '%Y-%m')"), $periods);
-                    }
-                } elseif (!empty($filters['years']) && is_array($filters['years'])) {
-                    $years = array_map('strval', $filters['years']);
-                    $query->whereIn(DB::raw("DATE_FORMAT({$dateColumn}, '%Y')"), $years);
-                } elseif (!empty($filters['start_date']) && !empty($filters['end_date'])) {
-                    $query->whereBetween($dateColumn, [$filters['start_date'], $filters['end_date']]);
-                }
-
-                // Municipio: accept numeric id (municipality_id) or name (municipio)
-                if (!empty($filters['municipality_id']) && is_numeric($filters['municipality_id'])) {
-                    $query->where($munCol, (int)$filters['municipality_id']);
-                } elseif (!empty($filters['municipio'])) {
-                    // filter by municipality name: find matching ids
-                    $names = (array) $filters['municipio'];
-                    $query->whereIn($munCol, DB::table('municipalities')->select('id')->whereIn('name', $names));
-                } elseif (!empty($filters['municipioDefuncion'])) {
-                    $names = (array) $filters['municipioDefuncion'];
-                    $query->whereIn($munCol, DB::table('municipalities')->select('id')->whereIn('name', $names));
-                }
-
-                // Causa: numeric id or name
-                if (!empty($filters['cause_id']) && is_numeric($filters['cause_id'])) {
-                    $query->where('death_cause_id', (int)$filters['cause_id']);
-                } elseif (!empty($filters['causa'])) {
-                    $names = (array) $filters['causa'];
-                    $query->whereIn('death_cause_id', DB::table('death_causes')->select('id')->whereIn('name', $names));
-                }
-
-                // Sexo: accept 'M'/'F' or Spanish words
-                if (!empty($filters['sex'])) {
-                    $s = $filters['sex'];
-                    if (!is_string($s)) $s = (string) $s;
-                    $sLower = mb_strtolower($s);
-                    if ($sLower === 'hombre' || $sLower === 'm') $s = 'M';
-                    elseif ($sLower === 'mujer' || $sLower === 'f') $s = 'F';
-                    $query->where('sex', $s);
-                } elseif (!empty($filters['sexo'])) {
-                    $s = $filters['sexo'];
-                    $sLower = mb_strtolower($s);
-                    if ($sLower === 'hombre' || $sLower === 'm') $s = 'M';
-                    elseif ($sLower === 'mujer' || $sLower === 'f') $s = 'F';
-                    $query->where('sex', $s);
-                }
-
-                // Edad: soporta formatos "25" o "20-30" o "5,10,15" (aplica sobre 'age' si existe, o calcula desde birth_date)
-                if (!empty($filters['edad'])) {
-                    $edadRaw = trim((string) $filters['edad']);
-                    // solo números, rango o lista separados por coma
-                    if (Schema::hasColumn('deaths', 'age')) {
-                        if (preg_match('/^\d+$/', $edadRaw)) {
-                            $query->where('age', (int)$edadRaw);
-                        } elseif (preg_match('/^(\d+)\s*-\s*(\d+)$/', $edadRaw, $m)) {
-                            $low = (int)$m[1]; $high = (int)$m[2];
-                            if ($low > $high) { $tmp = $low; $low = $high; $high = $tmp; }
-                            $query->whereBetween('age', [$low, $high]);
-                        } else {
-                            $parts = array_filter(array_map('trim', explode(',', $edadRaw)), fn($v) => $v !== '');
-                            $nums = array_map('intval', $parts);
-                            if (!empty($nums)) $query->whereIn('age', $nums);
-                        }
-                    } elseif (Schema::hasColumn('deaths', 'birth_date')) {
-                        // calcular edad en años en SQL
-                        if (preg_match('/^\d+$/', $edadRaw)) {
-                            $query->whereRaw('TIMESTAMPDIFF(YEAR, birth_date, CURDATE()) = ?', [(int)$edadRaw]);
-                        } elseif (preg_match('/^(\d+)\s*-\s*(\d+)$/', $edadRaw, $m)) {
-                            $low = (int)$m[1]; $high = (int)$m[2];
-                            if ($low > $high) { $tmp = $low; $low = $high; $high = $tmp; }
-                            $query->whereRaw('TIMESTAMPDIFF(YEAR, birth_date, CURDATE()) BETWEEN ? AND ?', [$low, $high]);
-                        } else {
-                            $parts = array_filter(array_map('trim', explode(',', $edadRaw)), fn($v) => $v !== '');
-                            $nums = array_map('intval', $parts);
-                            if (!empty($nums)) {
-                                $placeholders = implode(',', array_fill(0, count($nums), '?'));
-                                $query->whereRaw("TIMESTAMPDIFF(YEAR, birth_date, CURDATE()) IN ($placeholders)", $nums);
-                            }
-                        }
-                    }
-                }
-            };
+            $canonicalFilters = $this->deathFilters->normalize($filters, [
+                'municipality_column' => $munCol,
+            ]);
+            $applyFilters = fn ($query) => $this->deathFilters->apply($query, $canonicalFilters);
 
             // Municipios: build a list that includes ALL municipalities (so ones with 0 deaths
             // are shown when user selects 'Todos'). We'll compute counts from deaths applying
@@ -538,10 +426,11 @@ class StatisticsController extends Controller
     {
         try {
             $filters = $request->all();
+            $usesDefaultPeriod = empty($filters['start_date']) && empty($filters['end_date']) &&
+                empty($filters['months']) && empty($filters['years']);
             
             // Si no hay filtros de fecha especificados, aplicar rango default (últimos 12 meses)
-            if (empty($filters['start_date']) && empty($filters['end_date']) && 
-                empty($filters['months']) && empty($filters['years'])) {
+            if ($usesDefaultPeriod) {
                 $defaultRange = $this->calculateDefaultDateRange();
                 $filters['start_date'] = $defaultRange['start_date'];
                 $filters['end_date'] = $defaultRange['end_date'];
@@ -555,63 +444,22 @@ class StatisticsController extends Controller
                 ? 'residence_municipality_id' 
                 : 'death_municipality_id';
             
-            // Helper para aplicar filtros comunes
-            $applyFilters = function ($query) use ($filters, $dateColumn, $munCol) {
-                // Rango de fechas: soportar arrays `months` y `years` o start/end
-                if (!empty($filters['months']) && is_array($filters['months']) && !empty($filters['years']) && is_array($filters['years'])) {
-                    $periods = [];
-                    foreach ($filters['years'] as $y) {
-                        foreach ($filters['months'] as $m) {
-                            $yy = (int)$y;
-                            $mm = sprintf('%02d', (int)$m);
-                            $periods[] = "{$yy}-{$mm}";
-                        }
-                    }
-                    if (!empty($periods)) {
-                        $query->whereIn(DB::raw("DATE_FORMAT({$dateColumn}, '%Y-%m')"), $periods);
-                    }
-                } elseif (!empty($filters['years']) && is_array($filters['years'])) {
-                    $years = array_map('strval', $filters['years']);
-                    $query->whereIn(DB::raw("DATE_FORMAT({$dateColumn}, '%Y')"), $years);
-                } elseif (!empty($filters['start_date']) && !empty($filters['end_date'])) {
-                    $query->whereBetween($dateColumn, [$filters['start_date'], $filters['end_date']]);
+            $canonicalFilters = $this->deathFilters->normalize($filters, [
+                'municipality_column' => $munCol,
+            ]);
+            $analysisContext = $this->statisticsAnalysis->context([
+                'analysis_type' => $chartType,
+                'comparativa_type' => $filters['comparativa_type'] ?? null,
+                'municipio_type' => $filters['municipio_type'] ?? null,
+            ]);
+            $applyDataFilters = fn ($query) => $this->deathFilters->apply($query, $canonicalFilters);
+            $applyFilters = function ($query) use ($applyDataFilters, $analysisContext) {
+                $applyDataFilters($query);
+                if ($analysisContext) {
+                    $this->statisticsAnalysis->applyEligible($query, $analysisContext);
                 }
-                
-                // Municipio
-                if (!empty($filters['municipality_id']) && is_numeric($filters['municipality_id'])) {
-                    $query->where($munCol, (int)$filters['municipality_id']);
-                } elseif (!empty($filters['municipios']) && is_array($filters['municipios'])) {
-                    $query->whereIn($munCol, $filters['municipios']);
-                }
-                
-                // Causa
-                if (!empty($filters['cause_id']) && is_numeric($filters['cause_id'])) {
-                    $query->where('death_cause_id', (int)$filters['cause_id']);
-                } elseif (!empty($filters['causas']) && is_array($filters['causas'])) {
-                    $query->whereIn('death_cause_id', $filters['causas']);
-                }
-                
-                // Sexo
-                if (!empty($filters['sex'])) {
-                    $query->where('sex', $filters['sex']);
-                }
-                
-                // Jurisdicción: aceptar un id numérico o un array de ids (`jurisdicciones[]` o `distritoes[]`)
-                if (!empty($filters['district_id']) && is_numeric($filters['district_id'])) {
-                    $query->where('district_id', (int)$filters['district_id']);
-                } elseif (!empty($filters['jurisdicciones']) && is_array($filters['jurisdicciones'])) {
-                    // Normalizar valores numéricos
-                    $ids = array_values(array_filter($filters['jurisdicciones'], fn($v) => is_numeric($v)));
-                    if (!empty($ids)) {
-                        $query->whereIn('district_id', $ids);
-                    }
-                } elseif (!empty($filters['distritoes']) && is_array($filters['distritoes'])) {
-                    // Normalizar valores numéricos
-                    $ids = array_values(array_filter($filters['distritoes'], fn($v) => is_numeric($v)));
-                    if (!empty($ids)) {
-                        $query->whereIn('district_id', $ids);
-                    }
-                }
+
+                return $query;
             };
             
             $limit = !empty($filters['limit']) && is_numeric($filters['limit']) ? (int)$filters['limit'] : null;
@@ -619,30 +467,89 @@ class StatisticsController extends Controller
             // Según el tipo de gráfica, ejecutar consultas específicas
             switch ($chartType) {
                 case 'municipios':
-                    return $this->getChartMunicipios($filters, $dateColumn, $munCol, $applyFilters, $limit);
+                    $response = $this->getChartMunicipios($filters, $dateColumn, $munCol, $applyFilters, $limit);
+                    break;
                     
                 case 'tendencias':
-                    return $this->getChartTendencias($filters, $dateColumn, $applyFilters);
+                    $response = $this->getChartTendencias($filters, $dateColumn, $applyFilters);
+                    break;
                     
                 case 'edades':
-                    return $this->getChartEdades($filters, $dateColumn, $applyFilters, $limit);
+                    $response = $this->getChartEdades($filters, $dateColumn, $applyFilters, $limit);
+                    break;
                     
                 case 'genero':
-                    return $this->getChartGenero($filters, $dateColumn, $applyFilters);
+                    $response = $this->getChartGenero($filters, $dateColumn, $applyFilters);
+                    break;
                     
                 case 'causas':
-                    return $this->getChartCausas($filters, $dateColumn, $applyFilters, $limit);
+                    $response = $this->getChartCausas($filters, $dateColumn, $applyFilters, $limit);
+                    break;
                     
                 case 'jurisdicciones':
                 case 'distritoes':
-                    return $this->getChartJurisdicciones($filters, $dateColumn, $applyFilters, $limit);
+                    $response = $this->getChartJurisdicciones($filters, $dateColumn, $applyFilters, $limit);
+                    break;
                     
                 case 'comparativa':
-                    return $this->getChartComparativa($filters, $dateColumn, $munCol, $applyFilters, $limit);
+                    $response = $this->getChartComparativa($filters, $dateColumn, $munCol, $applyFilters, $limit);
+                    break;
                     
                 default:
                     return response()->json(['error' => 'El tipo de gráfica seleccionado no es válido.'], 400);
             }
+
+            if ($response->getStatusCode() >= 400) {
+                return $response;
+            }
+
+            $payload = $response->getData(true);
+            $matchedQuery = DB::table('deaths');
+            $applyDataFilters($matchedQuery);
+            $matchedTotal = $matchedQuery->count();
+
+            $contextQuery = DB::table('deaths')
+                ->selectRaw("COUNT(*) as filtered_total, MIN({$dateColumn}) as data_start, MAX({$dateColumn}) as data_end");
+            $applyFilters($contextQuery);
+            $context = $contextQuery->first();
+            $filteredTotal = (int) ($context->filtered_total ?? 0);
+            $displayedTotal = (int) ($payload['displayed_total'] ?? $payload['total'] ?? 0);
+            $coverageNumerator = (int) ($payload['coverage_numerator'] ?? $displayedTotal);
+
+            $payload['filtered_total'] = $filteredTotal;
+            $payload['matched_total'] = $matchedTotal;
+            $payload['excluded_total'] = max(0, $matchedTotal - $filteredTotal);
+            $payload['quality'] = [
+                'excluded_total' => max(0, $matchedTotal - $filteredTotal),
+                'required_fields' => $analysisContext['required_fields'] ?? [],
+            ];
+            $payload['displayed_total'] = $displayedTotal;
+            $payload['total'] = $filteredTotal;
+            $payload['displayed_categories'] = (int) ($payload['displayed_categories'] ?? count($payload['labels'] ?? []));
+            $payload['available_categories'] = (int) ($payload['available_categories'] ?? $payload['displayed_categories']);
+            $payload['coverage_percentage'] = $filteredTotal > 0
+                ? round(min(100, ($coverageNumerator / $filteredTotal) * 100), 1)
+                : 0.0;
+            $payload['omitted_total'] = max(0, $filteredTotal - $displayedTotal);
+            $payload['period'] = [
+                'start_date' => $filters['start_date'] ?? null,
+                'end_date' => $filters['end_date'] ?? null,
+                'years' => array_values($filters['years'] ?? []),
+                'months' => array_values($filters['months'] ?? []),
+                'data_start' => $context->data_start ?? null,
+                'data_end' => $context->data_end ?? null,
+                'is_default' => $usesDefaultPeriod,
+            ];
+            $payload['previous_period_comparison'] = $this->getPreviousPeriodComparison(
+                $canonicalFilters,
+                $analysisContext,
+                $filteredTotal,
+            );
+            $payload['source_summary'] = $this->getChartSourceSummary($applyFilters);
+
+            unset($payload['coverage_numerator']);
+
+            return response()->json($payload);
         } catch (\Throwable $e) {
             \Log::error('getChartData error: ' . $e->getMessage(), ['exception' => $e]);
             $debug = config('app.debug') ? $e->getMessage() . ' in ' . $e->getFile() . ':' . $e->getLine() : null;
@@ -652,6 +559,154 @@ class StatisticsController extends Controller
                 'debug' => $debug,
             ], 500);
         }
+    }
+
+    /**
+     * Compare the analyzed total with an immediately preceding equivalent period.
+     * Presentation options such as Top N never affect either total.
+     */
+    private function getPreviousPeriodComparison(
+        array $currentFilters,
+        ?array $analysisContext,
+        int $currentTotal,
+    ): array {
+        $previousFilters = $currentFilters;
+        $previousPeriod = [
+            'start_date' => null,
+            'end_date' => null,
+            'years' => [],
+            'months' => [],
+        ];
+
+        $startDate = $currentFilters['start_date'] ?? null;
+        $endDate = $currentFilters['end_date'] ?? null;
+        $years = collect($currentFilters['years'] ?? [])
+            ->map(fn ($year) => (int) $year)
+            ->unique()
+            ->sort()
+            ->values()
+            ->all();
+
+        if ($startDate && $endDate) {
+            $start = \Carbon\Carbon::parse($startDate)->startOfDay();
+            $end = \Carbon\Carbon::parse($endDate)->startOfDay();
+
+            if ($start->gt($end)) {
+                return ['available' => false, 'reason' => 'invalid_period'];
+            }
+
+            $durationInDays = (int) $start->diffInDays($end) + 1;
+            $previousEnd = $start->copy()->subDay();
+            $previousStart = $previousEnd->copy()->subDays($durationInDays - 1);
+
+            $previousFilters['start_date'] = $previousStart->toDateString();
+            $previousFilters['end_date'] = $previousEnd->toDateString();
+            $previousFilters['years'] = [];
+            $previousFilters['months'] = [];
+            $previousPeriod['start_date'] = $previousFilters['start_date'];
+            $previousPeriod['end_date'] = $previousFilters['end_date'];
+        } elseif ($startDate || $endDate) {
+            return ['available' => false, 'reason' => 'open_period'];
+        } elseif ($years !== []) {
+            $yearSpan = max($years) - min($years) + 1;
+            $previousYears = array_map(fn (int $year) => $year - $yearSpan, $years);
+
+            if (min($previousYears) < 1950) {
+                return ['available' => false, 'reason' => 'period_out_of_range'];
+            }
+
+            $previousFilters['start_date'] = null;
+            $previousFilters['end_date'] = null;
+            $previousFilters['years'] = $previousYears;
+            $previousPeriod['years'] = $previousYears;
+            $previousPeriod['months'] = array_values($currentFilters['months'] ?? []);
+        } else {
+            return ['available' => false, 'reason' => 'period_required'];
+        }
+
+        $previousQuery = DB::table('deaths');
+        $this->deathFilters->apply($previousQuery, $previousFilters);
+        if ($analysisContext) {
+            $this->statisticsAnalysis->applyEligible($previousQuery, $analysisContext);
+        }
+
+        $previousTotal = $previousQuery->count();
+        $difference = $currentTotal - $previousTotal;
+        $percentageChange = $previousTotal > 0
+            ? round(($difference / $previousTotal) * 100, 1)
+            : null;
+
+        $direction = match (true) {
+            $previousTotal === 0 => 'no_baseline',
+            $difference > 0 => 'increase',
+            $difference < 0 => 'decrease',
+            default => 'unchanged',
+        };
+
+        return [
+            'available' => true,
+            'current_total' => $currentTotal,
+            'previous_total' => $previousTotal,
+            'difference' => $difference,
+            'percentage_change' => $percentageChange,
+            'direction' => $direction,
+            'period' => $previousPeriod,
+        ];
+    }
+
+    /**
+     * Resume el origen de todos los registros que cumplen los filtros de datos.
+     * El límite Top N no interviene porque es una opción de presentación.
+     */
+    private function getChartSourceSummary(callable $applyFilters): array
+    {
+        $sourceQuery = DB::table('deaths')
+            ->select('import_id', DB::raw('COUNT(*) as records'))
+            ->groupBy('import_id');
+
+        $applyFilters($sourceQuery);
+        $sourceGroups = $sourceQuery->get();
+        $importIds = $sourceGroups
+            ->pluck('import_id')
+            ->filter(fn ($id) => $id !== null)
+            ->map(fn ($id) => (int) $id)
+            ->values();
+        $importsById = $importIds->isEmpty()
+            ? collect()
+            : DB::table('imports')
+                ->whereIn('id', $importIds->all())
+                ->get(['id', 'original_name', 'created_at'])
+                ->keyBy('id');
+
+        $manualRecords = 0;
+        $imports = [];
+
+        foreach ($sourceGroups as $group) {
+            $records = (int) $group->records;
+
+            if ($group->import_id === null) {
+                $manualRecords += $records;
+                continue;
+            }
+
+            $importId = (int) $group->import_id;
+            $import = $importsById->get($importId);
+            $imports[] = [
+                'id' => $importId,
+                'name' => $import?->original_name ?: "Importación #{$importId}",
+                'records' => $records,
+                'imported_at' => $import?->created_at,
+            ];
+        }
+
+        usort($imports, fn (array $left, array $right) => $right['records'] <=> $left['records']);
+
+        return [
+            'imports_count' => count($imports),
+            'manual_records' => $manualRecords,
+            'total_records' => $sourceGroups->sum(fn ($group) => (int) $group->records),
+            'imports' => $imports,
+        ];
     }
 
     private function getChartMunicipios($filters, $dateColumn, $munCol, $applyFilters, $limit)
@@ -666,21 +721,6 @@ class StatisticsController extends Controller
             ->select(DB::raw("{$finalMunCol} as muni_id"), DB::raw('COUNT(*) as total'))
             ->groupBy(DB::raw("{$finalMunCol}"));
 
-        // If districts filter is present, compute municipality ids belonging to those
-        // districts and restrict the counts query by those municipality ids. This
-        // ensures the distribution by municipalities shows only municipios that belong
-        // to the selected jurisdicción(es), regardless of deaths.district_id values.
-        $distisdictionMunIds = null;
-        if (!empty($filters['jurisdicciones']) && is_array($filters['jurisdicciones'])) {
-            $distIdsFilter = array_values(array_filter($filters['jurisdicciones'], fn($v) => is_numeric($v)));
-            if (!empty($distIdsFilter)) {
-                $distisdictionMunIds = DB::table('municipalities')->whereIn('district_id', $distIdsFilter)->pluck('id')->all();
-                if (!empty($distisdictionMunIds)) {
-                    $munCountsQ->whereIn($finalMunCol, $distisdictionMunIds);
-                }
-            }
-        }
-
         $applyFilters($munCountsQ);
         $munCountsRaw = $munCountsQ->get()->pluck('total', 'muni_id')->all();
 
@@ -690,101 +730,76 @@ class StatisticsController extends Controller
             $municipalitiesQ->whereIn('district_id', $distIds);
         }
         $municipalitiesFull = $municipalitiesQ->get();
-        // If frontend requested specific districts, restrict the municipalities list
-        if (!empty($filters['jurisdicciones']) && is_array($filters['jurisdicciones'])) {
-            $distIdsFilter = array_values(array_filter($filters['jurisdicciones'], fn($v) => is_numeric($v)));
-            if (!empty($distIdsFilter)) {
-                $municipalitiesFull = $municipalitiesFull->filter(function($m) use ($distIdsFilter) {
-                    return in_array($m->district_id, $distIdsFilter);
-                })->values();
-            }
-        }
-
         $municipios = $municipalitiesFull->map(function($m) use ($munCountsRaw) {
             $total = isset($munCountsRaw[$m->id]) ? (int)$munCountsRaw[$m->id] : 0;
-            return ['name' => $m->name ?? 'Sin dato', 'total' => $total];
-        })->sortByDesc('total');
+            return ['id' => (int) $m->id, 'name' => $m->name ?? 'Sin dato', 'total' => $total];
+        })->filter(fn ($municipality) => $municipality['total'] > 0)->sortByDesc('total')->values();
+
+        $availableCategories = $municipios->count();
         
         if ($limit) {
             $municipios = $municipios->take($limit);
         }
 
+        $displayedTotal = (int) $municipios->sum('total');
+
         return response()->json([
             'type' => 'municipios',
             'labels' => $municipios->pluck('name')->values()->all(),
             'counts' => $municipios->pluck('total')->values()->all(),
-            'total' => array_sum($municipios->pluck('total')->all()),
+            'displayed_total' => $displayedTotal,
+            'available_categories' => $availableCategories,
         ]);
     }
 
     private function getChartTendencias($filters, $dateColumn, $applyFilters)
     {
         $groupBy = $filters['group_by'] ?? 'month';
-        
-        // Meses en español para traducción
-        $monthsSpanish = [
-            'Jan' => 'Ene', 'Feb' => 'Feb', 'Mar' => 'Mar', 'Apr' => 'Abr',
-            'May' => 'May', 'Jun' => 'Jun', 'Jul' => 'Jul', 'Aug' => 'Ago',
-            'Sep' => 'Sep', 'Oct' => 'Oct', 'Nov' => 'Nov', 'Dec' => 'Dic'
-        ];
-        
-        if ($groupBy === 'day') {
-            $query = DB::table('deaths')
-                ->select(DB::raw("DATE(deaths.{$dateColumn}) as period"),
-                         DB::raw("MIN(DATE_FORMAT(deaths.{$dateColumn}, '%d %b')) as period_label"),
-                         DB::raw('COUNT(*) as total'))
-                ->groupBy(DB::raw("DATE(deaths.{$dateColumn})"))->orderBy(DB::raw("DATE(deaths.{$dateColumn})"));
-        } elseif ($groupBy === 'year') {
-            $query = DB::table('deaths')
-                ->select(DB::raw("DATE_FORMAT(deaths.{$dateColumn}, '%Y') as period"),
-                         DB::raw("DATE_FORMAT(deaths.{$dateColumn}, '%Y') as period_label"),
-                         DB::raw('COUNT(*) as total'))
-                ->groupBy(DB::raw("DATE_FORMAT(deaths.{$dateColumn}, '%Y')"))
-                ->orderBy(DB::raw("DATE_FORMAT(deaths.{$dateColumn}, '%Y')"));
-        } else {
-            // month (default)
-            $query = DB::table('deaths')
-                ->select(DB::raw("DATE_FORMAT(deaths.{$dateColumn}, '%Y-%m') as period"),
-                         DB::raw("MIN(DATE_FORMAT(deaths.{$dateColumn}, '%b %Y')) as period_label"),
-                         DB::raw('COUNT(*) as total'))
-                ->groupBy(DB::raw("DATE_FORMAT(deaths.{$dateColumn}, '%Y-%m')"))
-                ->orderBy(DB::raw("DATE_FORMAT(deaths.{$dateColumn}, '%Y-%m')"));
-        }
+        $driver = DB::connection()->getDriverName();
+        $column = "deaths.{$dateColumn}";
+        $periodExpression = match ($groupBy) {
+            'day' => "DATE({$column})",
+            'year' => $driver === 'sqlite'
+                ? "strftime('%Y', {$column})"
+                : "DATE_FORMAT({$column}, '%Y')",
+            default => $driver === 'sqlite'
+                ? "strftime('%Y-%m', {$column})"
+                : "DATE_FORMAT({$column}, '%Y-%m')",
+        };
+
+        $query = DB::table('deaths')
+            ->selectRaw("{$periodExpression} as period, COUNT(*) as total")
+            ->groupByRaw($periodExpression)
+            ->orderByRaw($periodExpression);
         
         $applyFilters($query);
         $data = $query->get();
         
-        // Traducir meses al español si es agrupación por mes
-        if ($groupBy === 'month') {
-            $data = $data->map(function($item) use ($monthsSpanish) {
-                // Cambiar formato "Jan 2026" a "Ene 2026"
-                foreach ($monthsSpanish as $en => $es) {
-                    $item->period_label = str_replace($en, $es, $item->period_label);
-                }
-                return $item;
-            });
-        } elseif ($groupBy === 'day') {
-            // Traducir meses también para días
-            $data = $data->map(function($item) use ($monthsSpanish) {
-                foreach ($monthsSpanish as $en => $es) {
-                    $item->period_label = str_replace($en, $es, $item->period_label);
-                }
-                return $item;
-            });
-        }
+        $monthsSpanish = [1 => 'Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+        $data->each(function ($item) use ($groupBy, $monthsSpanish) {
+            if ($groupBy === 'day') {
+                [$year, $month, $day] = array_map('intval', explode('-', $item->period));
+                $item->period_label = sprintf('%02d %s %d', $day, $monthsSpanish[$month], $year);
+            } elseif ($groupBy === 'year') {
+                $item->period_label = (string) $item->period;
+            } else {
+                [$year, $month] = array_map('intval', explode('-', $item->period));
+                $item->period_label = $monthsSpanish[$month].' '.$year;
+            }
+        });
 
         return response()->json([
             'type' => 'tendencias',
             'group_by' => $groupBy,
             'labels' => $data->pluck('period_label')->values()->all(),
             'counts' => $data->pluck('total')->map(fn($v) => (int)$v)->values()->all(),
-            'total' => array_sum($data->pluck('total')->all()),
+            'displayed_total' => array_sum($data->pluck('total')->all()),
         ]);
     }
 
     private function getChartEdades($filters, $dateColumn, $applyFilters, $limit)
     {
-        $ageOrder = ['<5 años','5-19 años','20-64 años','65+ años'];
+        $ageOrder = ['<5 años','5-19 años','20-64 años','65+ años','Sin dato'];
         $edades = collect();
         $causasPorEdad = [];
 
@@ -793,6 +808,7 @@ class StatisticsController extends Controller
             ->leftJoin('death_causes', 'death_causes.id', '=', 'deaths.death_cause_id')
             ->select(
                 DB::raw("CASE
+                    WHEN age IS NULL OR age < 0 THEN 'Sin dato'
                     WHEN age < 5 THEN '<5 años'
                     WHEN age >= 5 AND age < 20 THEN '5-19 años'
                     WHEN age >= 20 AND age < 65 THEN '20-64 años'
@@ -836,7 +852,7 @@ class StatisticsController extends Controller
             'type' => 'edades',
             'labels' => $edades->pluck('range')->values()->all(),
             'counts' => $edades->pluck('total')->values()->all(),
-            'total' => array_sum($edades->pluck('total')->all()),
+            'displayed_total' => array_sum($edades->pluck('total')->all()),
             'data_with_causes' => $edades->toArray(),
         ]);
     }
@@ -861,7 +877,7 @@ class StatisticsController extends Controller
             'type' => 'genero',
             'labels' => $generos->pluck('label')->values()->all(),
             'counts' => $generos->pluck('total')->values()->all(),
-            'total' => array_sum($generos->pluck('total')->all()),
+            'displayed_total' => array_sum($generos->pluck('total')->all()),
         ]);
     }
 
@@ -873,16 +889,16 @@ class StatisticsController extends Controller
             ->groupBy('death_causes.name')
             ->orderByDesc('total');
         $applyFilters($query);
-        if ($limit) {
-            $query->limit($limit);
-        }
         $causas = $query->get();
+        $availableCategories = $causas->count();
+        if ($limit) $causas = $causas->take($limit);
 
         return response()->json([
             'type' => 'causas',
             'labels' => $causas->pluck('name')->map(fn($v) => $v ?? 'Sin dato')->values()->all(),
             'counts' => $causas->pluck('total')->map(fn($v) => (int)$v)->values()->all(),
-            'total' => array_sum($causas->pluck('total')->all()),
+            'displayed_total' => array_sum($causas->pluck('total')->all()),
+            'available_categories' => $availableCategories,
         ]);
     }
 
@@ -898,16 +914,16 @@ class StatisticsController extends Controller
             ->groupBy('districts.name')
             ->orderByDesc('total');
         $applyFilters($query);
-        if ($limit) {
-            $query->limit($limit);
-        }
         $districts = $query->get();
+        $availableCategories = $districts->count();
+        if ($limit) $districts = $districts->take($limit);
 
         return response()->json([
             'type' => 'jurisdicciones',
             'labels' => $districts->pluck('name')->map(fn($v) => $v ?? 'Sin dato')->values()->all(),
             'counts' => $districts->pluck('total')->map(fn($v) => (int)$v)->values()->all(),
-            'total' => array_sum($districts->pluck('total')->all()),
+            'displayed_total' => array_sum($districts->pluck('total')->all()),
+            'available_categories' => $availableCategories,
         ]);
     }
 
@@ -954,11 +970,16 @@ class StatisticsController extends Controller
             $resCount = isset($resCounts[$m->id]) ? (int)$resCounts[$m->id] : 0;
             $deathCount = isset($deathCounts[$m->id]) ? (int)$deathCounts[$m->id] : 0;
             return [
+                'id' => (int) $m->id,
                 'name' => $m->name ?? 'Sin dato',
                 'residence' => $resCount,
                 'death' => $deathCount
             ];
-        })->sortByDesc(function($m) { return $m['residence'] + $m['death']; });
+        })->filter(fn ($m) => $m['residence'] > 0 || $m['death'] > 0)
+            ->sortByDesc(function($m) { return $m['residence'] + $m['death']; })
+            ->values();
+
+        $availableCategories = $municipios->count();
 
         if ($limit) {
             $municipios = $municipios->take($limit);
@@ -967,13 +988,30 @@ class StatisticsController extends Controller
         $labels = $municipios->pluck('name')->values()->all();
         $residence = $municipios->pluck('residence')->values()->all();
         $death = $municipios->pluck('death')->values()->all();
+        $selectedMunicipalityIds = $municipios->pluck('id')->all();
+
+        $coverageQuery = DB::table('deaths');
+        $applyFilters($coverageQuery);
+        if (!empty($selectedMunicipalityIds)) {
+            $coverageQuery->where(function ($query) use ($selectedMunicipalityIds) {
+                $query->whereIn('residence_municipality_id', $selectedMunicipalityIds)
+                    ->orWhereIn('death_municipality_id', $selectedMunicipalityIds);
+            });
+        }
+        $representedRecords = empty($selectedMunicipalityIds) ? 0 : $coverageQuery->count();
 
         return response()->json([
             'type' => 'comparativa',
             'labels' => $labels,
             'residence_counts' => $residence,
             'death_counts' => $death,
-            'total' => array_sum($residence) + array_sum($death),
+            'series' => [
+                ['name' => 'Municipio de residencia', 'data' => $residence],
+                ['name' => 'Municipio de defunción', 'data' => $death],
+            ],
+            'displayed_total' => $representedRecords,
+            'coverage_numerator' => $representedRecords,
+            'available_categories' => $availableCategories,
         ]);
     }
 
@@ -982,63 +1020,78 @@ class StatisticsController extends Controller
         // Obtener causas agrupadas por género
         $dataQ = DB::table('deaths')
             ->leftJoin('death_causes', 'death_causes.id', '=', 'deaths.death_cause_id')
-            ->select('deaths.sex', 'death_causes.name as cause', DB::raw('COUNT(deaths.id) as total'))
-            ->groupBy('deaths.sex', 'death_causes.name');
+            ->select('deaths.sex', 'death_causes.id as cause_id', 'death_causes.name as cause', DB::raw('COUNT(deaths.id) as total'))
+            ->groupBy('deaths.sex', 'death_causes.id', 'death_causes.name');
         $applyFilters($dataQ);
         $data = $dataQ->get();
 
-        // Agrupar por causa
+        // Agrupar por causa y normalizar todos los valores de sexo presentes.
         $causes = [];
+        $sexLabels = [];
         foreach ($data as $row) {
             $cause = $row->cause ?? 'Sin dato';
+            $sex = match (strtolower((string) ($row->sex ?? ''))) {
+                'm', 'masculino', 'hombre' => 'Hombres',
+                'f', 'femenino', 'mujer' => 'Mujeres',
+                default => 'Sin dato',
+            };
             if (!isset($causes[$cause])) {
-                $causes[$cause] = ['M' => 0, 'F' => 0, 'Otro' => 0];
+                $causes[$cause] = ['cause_id' => $row->cause_id, 'series' => []];
             }
-            $causes[$cause][$row->sex] = (int)$row->total;
+            $causes[$cause]['series'][$sex] = ($causes[$cause]['series'][$sex] ?? 0) + (int) $row->total;
+            $sexLabels[$sex] = true;
         }
 
         // Ordenar por total descendente y tomar top N si aplica
         uasort($causes, function($a, $b) {
-            $totalA = array_sum($a);
-            $totalB = array_sum($b);
+            $totalA = array_sum($a['series']);
+            $totalB = array_sum($b['series']);
             return $totalB <=> $totalA;
         });
 
+        $availableCategories = count($causes);
         if ($limit) {
             $causes = array_slice($causes, 0, $limit, true);
         }
 
         $labels = array_keys($causes);
-        $male_counts = array_map(function($c) { return $c['M'] ?? 0; }, $causes);
-        $female_counts = array_map(function($c) { return $c['F'] ?? 0; }, $causes);
+        $orderedSexLabels = array_values(array_filter(['Hombres', 'Mujeres', 'Sin dato'], fn ($label) => isset($sexLabels[$label])));
+        $series = array_map(function ($sex) use ($causes) {
+            return [
+                'name' => $sex,
+                'data' => array_values(array_map(fn ($cause) => (int) ($cause['series'][$sex] ?? 0), $causes)),
+            ];
+        }, $orderedSexLabels);
+        $displayedTotal = array_sum(array_map(fn ($cause) => array_sum($cause['series']), $causes));
 
         return response()->json([
             'type' => 'comparativa',
             'labels' => $labels,
-            'residence_counts' => $male_counts,
-            'death_counts' => $female_counts,
-            'total' => array_sum($male_counts) + array_sum($female_counts),
+            'series' => $series,
+            'displayed_total' => $displayedTotal,
+            'coverage_numerator' => $displayedTotal,
+            'available_categories' => $availableCategories,
         ]);
     }
 
     private function getChartComparativaEdadCausa($filters, $dateColumn, $applyFilters, $limit)
     {
         // Rango de edades
-        $ageOrder = ['0-4','5-14','15-24','25-34','35-44','45-54','55-64','65-74','75+'];
+        $ageOrder = ['0-4','5-14','15-24','25-34','35-44','45-54','55-64','65-74','75+','Sin dato'];
         
         $dataQ = DB::table('deaths')
             ->leftJoin('death_causes', 'death_causes.id', '=', 'deaths.death_cause_id')
             ->select(
                 DB::raw("CASE
-                    WHEN deaths.age_years IS NULL OR deaths.age_years < 0 THEN 'Desconocido'
-                    WHEN deaths.age_years BETWEEN 0 AND 4 THEN '0-4'
-                    WHEN deaths.age_years BETWEEN 5 AND 14 THEN '5-14'
-                    WHEN deaths.age_years BETWEEN 15 AND 24 THEN '15-24'
-                    WHEN deaths.age_years BETWEEN 25 AND 34 THEN '25-34'
-                    WHEN deaths.age_years BETWEEN 35 AND 44 THEN '35-44'
-                    WHEN deaths.age_years BETWEEN 45 AND 54 THEN '45-54'
-                    WHEN deaths.age_years BETWEEN 55 AND 64 THEN '55-64'
-                    WHEN deaths.age_years BETWEEN 65 AND 74 THEN '65-74'
+                    WHEN deaths.age IS NULL OR deaths.age < 0 THEN 'Sin dato'
+                    WHEN deaths.age BETWEEN 0 AND 4 THEN '0-4'
+                    WHEN deaths.age BETWEEN 5 AND 14 THEN '5-14'
+                    WHEN deaths.age BETWEEN 15 AND 24 THEN '15-24'
+                    WHEN deaths.age BETWEEN 25 AND 34 THEN '25-34'
+                    WHEN deaths.age BETWEEN 35 AND 44 THEN '35-44'
+                    WHEN deaths.age BETWEEN 45 AND 54 THEN '45-54'
+                    WHEN deaths.age BETWEEN 55 AND 64 THEN '55-64'
+                    WHEN deaths.age BETWEEN 65 AND 74 THEN '65-74'
                     ELSE '75+' END as age_range"),
                 'death_causes.name as cause',
                 DB::raw('COUNT(deaths.id) as total')
@@ -1047,42 +1100,43 @@ class StatisticsController extends Controller
         $applyFilters($dataQ);
         $data = $dataQ->get();
 
-        // Agrupar por rango de edad
-        $ageGroups = [];
-        foreach ($ageOrder as $age) {
-            $ageGroups[$age] = ['causes' => []];
-        }
-        
+        $ageGroups = array_fill_keys($ageOrder, []);
+        $causeTotals = [];
         foreach ($data as $row) {
-            $age = $row->age_range ?? 'Desconocido';
+            $age = $row->age_range ?? 'Sin dato';
             $cause = $row->cause ?? 'Sin dato';
-            if (!isset($ageGroups[$age])) {
-                $ageGroups[$age] = ['causes' => []];
-            }
-            $ageGroups[$age]['causes'][$cause] = (int)$row->total;
+            $ageGroups[$age][$cause] = (int) $row->total;
+            $causeTotals[$cause] = ($causeTotals[$cause] ?? 0) + (int) $row->total;
         }
 
-        // Para cada rango de edad, obtener causa principal
-        $labels = [];
-        $primary_cause_counts = [];
-        
-        foreach ($ageGroups as $age => $group) {
-            if (empty($group['causes'])) continue;
-            
-            arsort($group['causes']);
-            $primaryCause = key($group['causes']);
-            $count = current($group['causes']);
-            
-            $labels[] = $age;
-            $primary_cause_counts[] = $count;
+        arsort($causeTotals);
+        $availableCategories = count($causeTotals);
+        $selectedCauses = array_keys($limit ? array_slice($causeTotals, 0, $limit, true) : $causeTotals);
+        $labels = array_values(array_filter($ageOrder, fn ($age) => array_sum($ageGroups[$age] ?? []) > 0));
+        $series = [];
+        foreach ($selectedCauses as $cause) {
+            $series[] = [
+                'name' => $cause,
+                'data' => array_map(fn ($age) => (int) ($ageGroups[$age][$cause] ?? 0), $labels),
+            ];
         }
+
+        $selectedTotal = array_sum(array_intersect_key($causeTotals, array_flip($selectedCauses)));
+        $otherData = array_map(function ($age) use ($ageGroups, $selectedCauses) {
+            return array_sum(array_diff_key($ageGroups[$age] ?? [], array_flip($selectedCauses)));
+        }, $labels);
+        if (array_sum($otherData) > 0) $series[] = ['name' => 'Otras causas', 'data' => $otherData];
 
         return response()->json([
             'type' => 'comparativa',
             'labels' => $labels,
-            'residence_counts' => array_fill(0, count($labels), 0), // Placeholder
-            'death_counts' => $primary_cause_counts,
-            'total' => array_sum($primary_cause_counts),
+            'series' => $series,
+            'stacked' => true,
+            'displayed_total' => (int) $data->sum('total'),
+            'coverage_numerator' => $selectedTotal,
+            'available_categories' => $availableCategories,
+            'displayed_categories' => count($selectedCauses),
+            'ranking_label' => 'causas',
         ]);
     }
 
@@ -1097,8 +1151,8 @@ class StatisticsController extends Controller
         $applyFilters($dataQ);
         $data = $dataQ->get();
 
-        // Agrupar por lugar
         $locations = [];
+        $causeTotals = [];
         foreach ($data as $row) {
             $location = $row->location ?? 'Sin dato';
             $cause = $row->cause ?? 'Sin dato';
@@ -1106,6 +1160,7 @@ class StatisticsController extends Controller
                 $locations[$location] = [];
             }
             $locations[$location][$cause] = (int)$row->total;
+            $causeTotals[$cause] = ($causeTotals[$cause] ?? 0) + (int) $row->total;
         }
 
         // Ordenar por total descendente y tomar top N si aplica
@@ -1113,25 +1168,35 @@ class StatisticsController extends Controller
             return array_sum($b) <=> array_sum($a);
         });
 
-        if ($limit) {
-            $locations = array_slice($locations, 0, $limit, true);
-        }
+        $availableCategories = count($locations);
+        if ($limit) $locations = array_slice($locations, 0, $limit, true);
 
         $labels = array_keys($locations);
-        
-        // Para cada lugar, obtener causa principal
-        $primary_cause_counts = [];
-        foreach ($locations as $location => $causes) {
-            arsort($causes);
-            $primary_cause_counts[] = current($causes);
+        arsort($causeTotals);
+        $selectedCauses = array_keys(array_slice($causeTotals, 0, 4, true));
+        $series = [];
+        foreach ($selectedCauses as $cause) {
+            $series[] = [
+                'name' => $cause,
+                'data' => array_map(fn ($location) => (int) ($locations[$location][$cause] ?? 0), $labels),
+            ];
         }
+
+        $otherData = array_map(function ($location) use ($locations, $selectedCauses) {
+            return array_sum(array_diff_key($locations[$location], array_flip($selectedCauses)));
+        }, $labels);
+        if (array_sum($otherData) > 0) $series[] = ['name' => 'Otras causas', 'data' => $otherData];
+        $displayedTotal = array_sum(array_map('array_sum', $locations));
 
         return response()->json([
             'type' => 'comparativa',
             'labels' => $labels,
-            'residence_counts' => array_fill(0, count($labels), 0), // Placeholder
-            'death_counts' => $primary_cause_counts,
-            'total' => array_sum($primary_cause_counts),
+            'series' => $series,
+            'stacked' => true,
+            'displayed_total' => $displayedTotal,
+            'coverage_numerator' => $displayedTotal,
+            'available_categories' => $availableCategories,
+            'ranking_label' => 'lugares',
         ]);
     }
 }

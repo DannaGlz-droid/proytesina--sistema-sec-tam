@@ -1,5 +1,6 @@
 import './bootstrap';
 import './notifications-handler';
+import './filter-select';
 
 import Alpine from 'alpinejs';
 

@@ -20,18 +20,10 @@
     <form id="filtersForm" method="GET" action="{{ route('user.user-gestion') }}" class="users-filter-form">
         <div class="users-filter-topbar">
             <div class="users-filter-popover-wrap">
-                <button type="button" id="usersFilterToggle" class="users-filter-toggle" aria-expanded="false" aria-controls="usersFilterPanel">
-                    <i class="fas fa-sliders-h" aria-hidden="true"></i>
-                    <span>Filtros</span>
-                    <span id="usersFilterCount" class="users-filter-count hidden">0</span>
-                </button>
+                <x-filtros.boton id="usersFilterToggle" controls="usersFilterPanel" count-id="usersFilterCount" />
 
-                <div id="usersFilterPanel" class="users-filter-panel users-filter-menu is-collapsed">
-                    <div class="users-filter-panel-header">
-                        <h2>Filtros</h2>
-                        <button type="button" id="clearUsersFilters" class="users-filter-clear">Limpiar</button>
-                    </div>
-
+                <x-filtros.panel id="usersFilterPanel" clear-id="clearUsersFilters" cancel-id="closeUsersFilters" apply-id="aplicarFiltros" apply-type="submit">
+                    <x-slot:beforeBody>
                     <div class="users-filter-native-controls" aria-hidden="true">
                         <select name="date_range" id="dateRange" tabindex="-1">
                             <option value="all" {{ $dateRangeValue === 'all' ? 'selected' : '' }}>Todas las fechas</option>
@@ -81,8 +73,7 @@
                         <input type="date" name="date_from" id="startDate" value="{{ request('date_from') }}" max="{{ now()->toDateString() }}" tabindex="-1">
                         <input type="date" name="date_to" id="endDate" value="{{ request('date_to') }}" max="{{ now()->toDateString() }}" tabindex="-1">
                     </div>
-
-                    <div class="users-filter-panel-body">
+                    </x-slot:beforeBody>
                         <div class="users-filter-section" data-filter-section>
                             <button type="button" class="users-filter-section-toggle" data-filter-section-toggle>
                                 <i class="fas fa-chevron-right" aria-hidden="true"></i>
@@ -183,7 +174,7 @@
                                 <span>Distrito</span>
                             </button>
                             <div class="users-filter-section-content">
-                                <select name="district_id" id="distrito" class="users-district-tomselect" data-placeholder="Todos">
+                                <x-filtros.select name="district_id" id="distrito" placeholder="Todos">
                                     <option value="" {{ $districtValue === null || $districtValue === '' ? 'selected' : '' }}>Todos</option>
                                     @if($districtsList->isNotEmpty())
                                         @foreach($districtsList as $district)
@@ -194,7 +185,7 @@
                                         <option>Distrito Sanitario II</option>
                                         <option>Distrito Sanitario III</option>
                                     @endif
-                                </select>
+                                </x-filtros.select>
                             </div>
                         </div>
 
@@ -218,13 +209,7 @@
                                 </div>
                             </div>
                         </div>
-                    </div>
-
-                    <div class="users-filter-panel-footer">
-                        <button type="button" id="closeUsersFilters" class="users-filter-secondary">Cancelar</button>
-                        <button type="submit" id="aplicarFiltros" class="users-filter-apply">Aplicar filtros</button>
-                    </div>
-                </div>
+                </x-filtros.panel>
             </div>
 
             <div class="users-filter-search">

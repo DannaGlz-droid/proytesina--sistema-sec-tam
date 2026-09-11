@@ -2,38 +2,33 @@
     <form id="filters-imports-form" class="users-filter-form" novalidate>
         <div class="users-filter-topbar">
             <div class="users-filter-popover-wrap">
-                <button type="button" id="importsFilterToggle" class="users-filter-toggle" aria-expanded="false" aria-controls="importsFilterPanel">
-                    <i class="fas fa-sliders-h" aria-hidden="true"></i><span>Filtros</span><span id="importsFilterCount" class="users-filter-count hidden">0</span>
-                </button>
-                <div id="importsFilterPanel" class="users-filter-panel users-filter-menu is-collapsed">
-                    <div class="users-filter-panel-header"><h2>Filtros</h2><button type="button" id="limpiarFiltrosImportaciones" class="users-filter-clear">Limpiar</button></div>
-                    <div class="users-filter-panel-body">
-                        <div class="users-filter-section is-open" data-filter-section>
-                            <button type="button" class="users-filter-section-toggle" data-filter-section-toggle><i class="fas fa-chevron-down" aria-hidden="true"></i><span>Fecha de carga</span></button>
-                            <div class="users-filter-section-content"><div class="imports-filter-fields">
-                                <div class="imports-filter-field"><label for="dateRangeImports">Periodo</label><select id="dateRangeImports" name="dateRangeImports" class="users-district-tomselect" data-placeholder="Todas las fechas"><option value="all">Todas las fechas</option><option value="today">Hoy</option><option value="week">Últimos 7 días</option><option value="month">Últimos 30 días</option><option value="year">Último año</option><option value="custom">Rango personalizado</option></select></div>
+                <x-filtros.boton id="importsFilterToggle" controls="importsFilterPanel" count-id="importsFilterCount" />
+                <x-filtros.panel
+                    id="importsFilterPanel"
+                    clear-id="limpiarFiltrosImportaciones"
+                    cancel-id="closeImportsFilters"
+                    apply-id="aplicarFiltrosImportaciones"
+                >
+                        <x-filtros.seccion titulo="Fecha de carga" :abierto="true">
+                            <div class="imports-filter-fields">
+                                <div class="imports-filter-field"><label for="dateRangeImports">Periodo</label><x-filtros.select id="dateRangeImports" name="dateRangeImports" placeholder="Todas las fechas"><option value="all">Todas las fechas</option><option value="today">Hoy</option><option value="week">Últimos 7 días</option><option value="month">Últimos 30 días</option><option value="year">Último año</option><option value="custom">Rango personalizado</option></x-filtros.select></div>
                                 <div id="customRangeSelectorImports" class="imports-filter-date-grid hidden"><label>Desde<input type="date" id="startDateImports" name="startDateImports"></label><label>Hasta<input type="date" id="endDateImports" name="endDateImports"></label></div>
-                            </div></div>
-                        </div>
-                        <div class="users-filter-section" data-filter-section>
-                            <button type="button" class="users-filter-section-toggle" data-filter-section-toggle><i class="fas fa-chevron-right" aria-hidden="true"></i><span>Estado</span></button>
-                            <div class="users-filter-section-content"><div class="users-filter-options">
+                            </div>
+                        </x-filtros.seccion>
+                        <x-filtros.seccion titulo="Estado">
+                            <div class="users-filter-options">
                                 @foreach(['completed' => 'Completado', 'reversed' => 'Revertido', 'failed' => 'Fallido', 'processing' => 'Procesando'] as $value => $label)
                                     <label class="users-filter-option imports-filter-option"><input type="checkbox" name="statuses" value="{{ $value }}" class="status-checkbox sr-only"><span class="users-filter-check"><i class="fas fa-check" aria-hidden="true"></i></span><span>{{ $label }}</span></label>
                                 @endforeach
-                            </div></div>
-                        </div>
-                        <div class="users-filter-section" data-filter-section>
-                            <button type="button" class="users-filter-section-toggle" data-filter-section-toggle><i class="fas fa-chevron-right" aria-hidden="true"></i><span>Usuario</span></button>
-                            <div class="users-filter-section-content"><div class="imports-filter-field"><label for="usuarioImports">Cargado por</label><select id="usuarioImports" name="usuarioImports" class="users-district-tomselect" data-placeholder="Todos los usuarios"><option value="">Todos los usuarios</option></select></div></div>
-                        </div>
-                        <div class="users-filter-section" data-filter-section>
-                            <button type="button" class="users-filter-section-toggle" data-filter-section-toggle><i class="fas fa-chevron-right" aria-hidden="true"></i><span>Resultado</span></button>
-                            <div class="users-filter-section-content"><label class="users-filter-option imports-filter-option"><input type="checkbox" id="conFallidos" name="conFallidos" class="sr-only"><span class="users-filter-check"><i class="fas fa-check" aria-hidden="true"></i></span><span>Con registros fallidos</span></label></div>
-                        </div>
-                    </div>
-                    <div class="users-filter-panel-footer"><button type="button" id="closeImportsFilters" class="users-filter-secondary">Cancelar</button><button type="button" id="aplicarFiltrosImportaciones" class="users-filter-apply">Aplicar filtros</button></div>
-                </div>
+                            </div>
+                        </x-filtros.seccion>
+                        <x-filtros.seccion titulo="Usuario">
+                            <div class="imports-filter-field"><label for="usuarioImports">Cargado por</label><x-filtros.select id="usuarioImports" name="usuarioImports" placeholder="Todos los usuarios"><option value="">Todos los usuarios</option></x-filtros.select></div>
+                        </x-filtros.seccion>
+                        <x-filtros.seccion titulo="Resultado">
+                            <label class="users-filter-option imports-filter-option"><input type="checkbox" id="conFallidos" name="conFallidos" class="sr-only"><span class="users-filter-check"><i class="fas fa-check" aria-hidden="true"></i></span><span>Con registros fallidos</span></label>
+                        </x-filtros.seccion>
+                </x-filtros.panel>
             </div>
             <div class="users-filter-search"><i class="fas fa-search" aria-hidden="true"></i><input type="search" id="search-imports" placeholder="Buscar importaciones..." aria-label="Buscar importaciones" autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false" enterkeyhint="search" aria-busy="false"><span class="users-search-progress" aria-hidden="true"></span><button type="button" id="clear-imports-btn" class="hidden" title="Limpiar búsqueda" aria-label="Limpiar búsqueda"><i class="fas fa-times" aria-hidden="true"></i></button></div>
             <div class="app-table-page-size users-filter-page-size"><select id="per-page-imports" class="users-native-page-size" aria-hidden="true" tabindex="-1">@foreach([10,25,50,100] as $size)<option value="{{ $size }}" @selected($size === 10)>{{ $size }}</option>@endforeach</select><div class="users-page-size-dropdown"><button id="per-page-imports-button" type="button" class="users-page-size-button" aria-haspopup="listbox" aria-expanded="false"><span>Mostrar</span><strong id="per-page-imports-label">10</strong><i class="fas fa-list-ul users-page-size-icon" aria-hidden="true"></i></button><div id="per-page-imports-menu" class="users-page-size-menu hidden" role="listbox" aria-labelledby="per-page-imports-button">@foreach([10,25,50,100] as $size)<button type="button" role="option" class="users-page-size-option {{ $size === 10 ? 'is-active' : '' }}" data-value="{{ $size }}">{{ $size }}</button>@endforeach</div></div></div>
@@ -62,10 +57,10 @@ document.addEventListener('DOMContentLoaded', function () {
     form.querySelectorAll('.imports-filter-option input').forEach(input => input.addEventListener('change', () => input.closest('.imports-filter-option')?.classList.toggle('is-active', input.checked)));
 
     function initImportsTomSelect() {
-        if (typeof TomSelect === 'undefined') return false;
-        if (dateRange && !dateRange.tomselect) new TomSelect(dateRange, { create: false, allowEmptyOption: false, controlInput: null, maxItems: 1, searchField: [], hideSelected: false });
+        if (!window.AppFilterSelect) return false;
+        if (dateRange && !dateRange.tomselect) window.AppFilterSelect.init(dateRange, { searchable: false });
         const user = document.getElementById('usuarioImports');
-        if (user && !user.tomselect) new TomSelect(user, {
+        if (user && !user.tomselect) window.AppFilterSelect.init(user, {
             valueField: 'id', labelField: 'display_name', searchField: ['name','username'], maxItems: 1, create: false, preload: 'focus', placeholder: 'Todos los usuarios',
             load: function (query, callback) { fetch('/api/users/search?importers_only=1&q=' + encodeURIComponent(query)).then(response => response.ok ? response.json() : []).then(items => callback(Array.isArray(items) ? items : [])).catch(() => callback([])); },
             render: { option: function (data, escape) { const name = data.full_name || data.name || ''; const username = data.username ? '@' + data.username : ''; return '<div><strong>' + escape(name) + '</strong>' + (username ? '<small>' + escape(username) + '</small>' : '') + '</div>'; }, item: function (data, escape) { return '<div>' + escape(data.full_name || data.name || data.display_name || '') + '</div>'; } }

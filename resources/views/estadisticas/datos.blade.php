@@ -26,6 +26,49 @@
                 </a>
             </x-slot:actions>
         </x-ui.page-header>
+
+        @if($analysisContext)
+            @php
+                $analysisCount = $deaths->total();
+                $analysisCsvUrl = route('statistic.export').'?'.http_build_query(array_merge(request()->query(), ['format' => 'csv']));
+                $isExcludedReview = $analysisContext['excluded'];
+            @endphp
+            <section id="statisticsAnalysisContext" class="statistics-analysis-context {{ $isExcludedReview ? 'is-warning' : '' }}" aria-labelledby="statistics-analysis-title">
+                <div class="statistics-analysis-context__icon" aria-hidden="true">
+                    <i class="fas {{ $isExcludedReview ? 'fa-triangle-exclamation' : 'fa-chart-column' }}"></i>
+                </div>
+                <div class="statistics-analysis-context__body">
+                    <p id="statistics-analysis-title" class="statistics-analysis-context__title">
+                        @if($isExcludedReview)
+                            {{ number_format($analysisCount) }} {{ $analysisCount === 1 ? 'registro excluido' : 'registros excluidos' }} de “{{ $analysisContext['label'] }}”
+                        @else
+                            {{ number_format($analysisCount) }} {{ $analysisCount === 1 ? 'registro utilizado' : 'registros utilizados' }} en “{{ $analysisContext['label'] }}”
+                        @endif
+                    </p>
+                    <p class="statistics-analysis-context__description">
+                        {{ $isExcludedReview
+                            ? 'Estos registros no cuentan con todos los campos necesarios para formar parte de la gráfica.'
+                            : 'Esta tabla conserva el periodo y los filtros con los que se calculó la gráfica.' }}
+                    </p>
+                    @if($analysisFilterLabels)
+                        <div class="statistics-analysis-context__filters" aria-label="Filtros provenientes de la gráfica">
+                            @foreach($analysisFilterLabels as $filterLabel)
+                                <span>{{ $filterLabel }}</span>
+                            @endforeach
+                        </div>
+                    @endif
+                </div>
+                <div class="statistics-analysis-context__actions">
+                    <a href="{{ route('estadisticas.graficas') }}" class="statistics-analysis-context__secondary">
+                        <i class="fas fa-arrow-left" aria-hidden="true"></i> Volver a gráficas
+                    </a>
+                    <a href="{{ $analysisCsvUrl }}" class="statistics-analysis-context__primary">
+                        <i class="fas fa-file-csv" aria-hidden="true"></i> Descargar CSV
+                    </a>
+                </div>
+            </section>
+        @endif
+
         <div class="space-y-4">
             <div class="min-w-0">
                 <div class="app-table-card users-table-card statistics-table-card">
@@ -602,6 +645,7 @@ document.addEventListener('DOMContentLoaded', function () {
             ? `${window.location.pathname}?${params.toString()}`
             : window.location.pathname;
         window.history.pushState({}, '', nextUrl);
+        document.getElementById('statisticsAnalysisContext')?.remove();
 
         clearVisibleDeathSelection();
         window.deathsTable.ajax.reload();

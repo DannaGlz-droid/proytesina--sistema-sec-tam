@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Maatwebsite\Excel\Facades\Excel;
+use Maatwebsite\Excel\Excel as ExcelFormat;
 use App\Exports\DeathsExport;
 
 class DeathExportController extends Controller
@@ -14,8 +15,13 @@ class DeathExportController extends Controller
         $filters = $request->all();
 
         $ext = $format === 'csv' ? 'csv' : 'xlsx';
-        $fileName = 'defunciones_' . now()->format('Ymd_His') . '.' . $ext;
+        $scope = $request->filled('analysis_type') ? '_datos_grafica' : '';
+        $fileName = 'defunciones' . $scope . '_' . now()->format('Ymd_His') . '.' . $ext;
 
-        return Excel::download(new DeathsExport($filters), $fileName);
+        return Excel::download(
+            new DeathsExport($filters),
+            $fileName,
+            $format === 'csv' ? ExcelFormat::CSV : ExcelFormat::XLSX
+        );
     }
 }

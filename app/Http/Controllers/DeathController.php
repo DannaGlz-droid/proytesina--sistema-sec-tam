@@ -8,12 +8,19 @@ use App\Models\DeathCause;
 use App\Models\Municipality;
 use App\Models\District;
 use App\Models\DeathLocation;
+use App\Services\DeathFilterService;
+use App\Services\StatisticsAnalysisService;
 use Illuminate\Support\Facades\Redirect;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class DeathController extends Controller
 {
+    public function __construct(
+        private readonly DeathFilterService $deathFilters,
+        private readonly StatisticsAnalysisService $statisticsAnalysis,
+    ) {}
+
     /**
      * DataTables server-side endpoint for AJAX requests.
      */
@@ -53,62 +60,8 @@ class DeathController extends Controller
             });
         }
         
-        // Apply existing filters from form (same as index method)
-        $this->applyDateFilters($query, $request);
-        
-        if ($request->filled('distrito') || $request->filled('jurisdiccion')) {
-            $val = $request->input('distrito', $request->input('jurisdiccion'));
-            $query->whereHas('district', function ($qj) use ($val) {
-                $qj->whereRaw('LOWER(name) = ?', [strtolower($val)])
-                   ->orWhere('name', 'like', "%{$val}%");
-            });
-        }
-        
-        if ($request->filled('municipio')) {
-            $val = $request->input('municipio');
-            $query->whereHas('residenceMunicipality', function ($qm) use ($val) {
-                $qm->whereRaw('LOWER(name) = ?', [strtolower($val)])
-                   ->orWhere('name', 'like', "%{$val}%");
-            });
-        }
-        
-        if ($request->filled('municipioDefuncion')) {
-            $val = $request->input('municipioDefuncion');
-            $query->whereHas('deathMunicipality', function ($qm) use ($val) {
-                $qm->whereRaw('LOWER(name) = ?', [strtolower($val)])
-                   ->orWhere('name', 'like', "%{$val}%");
-            });
-        }
-        
-        if ($request->filled('sexo')) {
-            $val = $request->input('sexo');
-            $query->whereRaw('LOWER(sex) = ?', [strtolower($val)]);
-        }
-        
-        if ($request->filled('edad')) {
-            $edad = trim($request->input('edad'));
-            if (strpos($edad, '-') !== false) {
-                [$min, $max] = array_map('intval', explode('-', $edad, 2));
-                $query->whereBetween('age', [$min, $max]);
-            } elseif (strpos($edad, ',') !== false) {
-                $vals = array_map('intval', array_filter(array_map('trim', explode(',', $edad))));
-                $query->whereIn('age', $vals);
-            } elseif (is_numeric($edad)) {
-                $query->where('age', (int) $edad);
-            }
-        }
-        
-        if ($request->filled('causa')) {
-            $val = $request->input('causa');
-            if (is_numeric($val)) {
-                $query->where('death_cause_id', (int) $val);
-            } else {
-                $query->whereHas('deathCause', function ($qc) use ($val) {
-                    $qc->whereRaw('LOWER(name) = ?', [strtolower($val)])
-                       ->orWhere('name', 'like', "%{$val}%");
-                });
-            }
-        }
+        $this->deathFilters->apply($query, $this->deathFilters->normalize($request->all()));
+        $this->statisticsAnalysis->applyRequestedScope($query, $request->all());
         
         // Get total count
         $recordsTotal = Death::count();
@@ -195,6 +148,10 @@ class DeathController extends Controller
             'sexo' => ['nullable', 'string'],
             'edad' => ['nullable', 'string'],
             'causa' => ['nullable', 'string'],
+            'analysis_type' => ['nullable', 'in:municipios,tendencias,edades,genero,causas,distritoes,comparativa'],
+            'comparativa_type' => ['nullable', 'in:residencia-defuncion,genero-causa,edad-causa,lugar-causa'],
+            'municipio_type' => ['nullable', 'in:defuncion,residencia'],
+            'analysis_excluded' => ['nullable', 'boolean'],
         ]);
 
     $perPage = isset($validated['per_page']) ? (int) $validated['per_page'] : 25;
@@ -217,65 +174,8 @@ class DeathController extends Controller
             });
         }
 
-        $this->applyDateFilters($query, $request);
-
-        // Jurisdiction / Municipality (residence) / death municipality filters
-        if ($request->filled('jurisdiccion')) {
-            $val = $request->input('jurisdiccion');
-            $query->whereHas('district', function ($qj) use ($val) {
-                $qj->whereRaw('LOWER(name) = ?', [strtolower($val)])
-                   ->orWhere('name', 'like', "%{$val}%");
-            });
-        }
-
-        if ($request->filled('municipio')) {
-            $val = $request->input('municipio');
-            $query->whereHas('residenceMunicipality', function ($qm) use ($val) {
-                $qm->whereRaw('LOWER(name) = ?', [strtolower($val)])
-                   ->orWhere('name', 'like', "%{$val}%");
-            });
-        }
-
-        if ($request->filled('municipioDefuncion')) {
-            $val = $request->input('municipioDefuncion');
-            $query->whereHas('deathMunicipality', function ($qm) use ($val) {
-                $qm->whereRaw('LOWER(name) = ?', [strtolower($val)])
-                   ->orWhere('name', 'like', "%{$val}%");
-            });
-        }
-
-        // Sex filter (case-insensitive)
-        if ($request->filled('sexo')) {
-            $val = $request->input('sexo');
-            $query->whereRaw('LOWER(sex) = ?', [strtolower($val)]);
-        }
-
-        // Age filter parsing: single, range (min-max) or csv list
-        if ($request->filled('edad')) {
-            $edad = trim($request->input('edad'));
-            if (strpos($edad, '-') !== false) {
-                [$min, $max] = array_map('intval', explode('-', $edad, 2));
-                $query->whereBetween('age', [$min, $max]);
-            } elseif (strpos($edad, ',') !== false) {
-                $vals = array_map('intval', array_filter(array_map('trim', explode(',', $edad))));
-                $query->whereIn('age', $vals);
-            } elseif (is_numeric($edad)) {
-                $query->where('age', (int) $edad);
-            }
-        }
-
-        // Cause filter: try numeric id or match by name
-        if ($request->filled('causa')) {
-            $val = $request->input('causa');
-            if (is_numeric($val)) {
-                $query->where('death_cause_id', (int) $val);
-            } else {
-                $query->whereHas('deathCause', function ($qc) use ($val) {
-                    $qc->whereRaw('LOWER(name) = ?', [strtolower($val)])
-                       ->orWhere('name', 'like', "%{$val}%");
-                });
-            }
-        }
+        $this->deathFilters->apply($query, $this->deathFilters->normalize($request->all()));
+        $this->statisticsAnalysis->applyRequestedScope($query, $request->all());
 
         // Allowed sorts
         $allowedSorts = [
@@ -319,7 +219,10 @@ class DeathController extends Controller
             ->where('is_resolved', false)
             ->count();
 
-        return view('estadisticas.datos', compact('deaths', 'causes', 'districts', 'municipalities', 'unresolvedFailures'));
+        $analysisContext = $this->statisticsAnalysis->context($request->all());
+        $analysisFilterLabels = $analysisContext ? $this->deathFilters->describe($request->all()) : [];
+
+        return view('estadisticas.datos', compact('deaths', 'causes', 'districts', 'municipalities', 'unresolvedFailures', 'analysisContext', 'analysisFilterLabels'));
     }
 
     /**
@@ -665,125 +568,6 @@ class DeathController extends Controller
                 }
             },
         ];
-    }
-
-    private function applyDateFilters($query, Request $request): void
-    {
-        $dateRange = $request->input('dateRange');
-
-        if (!$dateRange || $dateRange === 'all') {
-            return;
-        }
-
-        if (is_numeric($dateRange)) {
-            $query->whereDate('death_date', '>=', now()->subDays((int) $dateRange));
-            return;
-        }
-
-        if ($dateRange === 'custom') {
-            if ($request->filled('startDate')) {
-                $query->whereDate('death_date', '>=', $request->input('startDate'));
-            }
-
-            if ($request->filled('endDate')) {
-                $query->whereDate('death_date', '<=', $request->input('endDate'));
-            }
-
-            return;
-        }
-
-        $years = $this->parseYears($request->input('year'));
-        if (empty($years)) {
-            return;
-        }
-
-        if (in_array($dateRange, ['year', 'years'], true)) {
-            $this->applyYearFilter($query, $years);
-            return;
-        }
-
-        if (in_array($dateRange, ['month', 'months', 'multiple-months'], true)) {
-            $months = $this->parseMonths($request->input('selectedMonths', []), $request->input('month'));
-            if (!empty($months)) {
-                $this->applyYearFilter($query, $years);
-                $query->whereIn(DB::raw('MONTH(death_date)'), $months);
-            }
-
-            return;
-        }
-
-        if ($dateRange === 'quarter') {
-            $quarter = (int) $request->input('quarter');
-            if ($quarter >= 1 && $quarter <= 4) {
-                $startMonth = ($quarter - 1) * 3 + 1;
-                $endMonth = $startMonth + 2;
-                $this->applyYearFilter($query, $years);
-                $query->whereBetween(DB::raw('MONTH(death_date)'), [$startMonth, $endMonth]);
-            }
-        }
-    }
-
-    private function parseYears($value): array
-    {
-        if (is_array($value)) {
-            $value = implode(',', $value);
-        }
-
-        $currentYear = now()->year;
-        $years = [];
-        $parts = preg_split('/[,\s]+/', (string) $value, -1, PREG_SPLIT_NO_EMPTY);
-
-        foreach ($parts as $part) {
-            $part = trim($part);
-
-            if (preg_match('/^(\d{4})-(\d{4})$/', $part, $matches)) {
-                $start = (int) $matches[1];
-                $end = (int) $matches[2];
-
-                if ($start > $end) {
-                    [$start, $end] = [$end, $start];
-                }
-
-                $years = array_merge($years, range($start, $end));
-                continue;
-            }
-
-            if (preg_match('/^\d{4}$/', $part)) {
-                $years[] = (int) $part;
-            }
-        }
-
-        return collect($years)
-            ->filter(fn ($year) => $year >= 1950 && $year <= $currentYear)
-            ->unique()
-            ->values()
-            ->all();
-    }
-
-    private function parseMonths($selectedMonths, $singleMonth = null): array
-    {
-        $months = is_array($selectedMonths) ? $selectedMonths : [$selectedMonths];
-
-        if (empty(array_filter($months)) && $singleMonth) {
-            $months = [$singleMonth];
-        }
-
-        return collect($months)
-            ->map(fn ($month) => (int) $month)
-            ->filter(fn ($month) => $month >= 1 && $month <= 12)
-            ->unique()
-            ->values()
-            ->all();
-    }
-
-    private function applyYearFilter($query, array $years): void
-    {
-        if (count($years) === 1) {
-            $query->whereYear('death_date', $years[0]);
-            return;
-        }
-
-        $query->whereIn(DB::raw('YEAR(death_date)'), $years);
     }
 
     private function displayValue($value): string

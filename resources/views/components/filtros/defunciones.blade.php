@@ -11,18 +11,10 @@
     <form id="filters-form" method="GET" action="{{ route('statistic.data') }}" class="users-filter-form">
         <div class="users-filter-topbar">
                 <div class="users-filter-popover-wrap">
-                    <button type="button" id="deathsFilterToggle" class="users-filter-toggle" aria-expanded="false" aria-controls="deathsFilterPanel">
-                        <i class="fas fa-sliders-h" aria-hidden="true"></i>
-                        <span>Filtros</span>
-                        <span id="deathsFilterCount" class="users-filter-count hidden">0</span>
-                    </button>
+                    <x-filtros.boton id="deathsFilterToggle" controls="deathsFilterPanel" count-id="deathsFilterCount" />
 
-                    <div id="deathsFilterPanel" class="users-filter-panel users-filter-menu is-collapsed">
-                        <div class="users-filter-panel-header">
-                            <h2>Filtros</h2>
-                            <button type="button" id="limpiarFiltros" class="users-filter-clear">Limpiar</button>
-                        </div>
-
+                    <x-filtros.panel id="deathsFilterPanel" clear-id="limpiarFiltros" cancel-id="closeDeathsFilters" apply-type="submit">
+                        <x-slot:beforeBody>
                         <div class="users-filter-native-controls" aria-hidden="true">
                             <select name="sexo" id="sexo" tabindex="-1">
                                 <option value="" @selected($sexValue === '')>Todos</option>
@@ -32,7 +24,7 @@
                         </div>
 
                         <p id="statistics-filter-error" class="statistics-inline-error hidden" role="alert"></p>
-                        <div class="users-filter-panel-body">
+                        </x-slot:beforeBody>
                             <div class="users-filter-section is-open" data-filter-section>
                                 <button type="button" class="users-filter-section-toggle" data-filter-section-toggle>
                                     <i class="fas fa-chevron-down" aria-hidden="true"></i><span>Fecha de defunción</span>
@@ -41,13 +33,13 @@
                                     <div class="statistics-date-picker">
                                         <div class="statistics-filter-field">
                                             <label for="dateRange">Periodo</label>
-                                            <select name="dateRange" id="dateRange" class="users-district-tomselect" data-placeholder="Todas las fechas" aria-describedby="statisticsDateModeHelp">
+                                            <x-filtros.select name="dateRange" id="dateRange" placeholder="Todas las fechas" aria-describedby="statisticsDateModeHelp">
                                                 <option value="all" @selected($dateRangeValue === 'all')>Todas las fechas</option>
                                                 <option value="years" @selected(in_array($dateRangeValue, ['year','years'], true))>Por año</option>
                                                 <option value="months" @selected(in_array($dateRangeValue, ['month','months','multiple-months'], true))>Por meses</option>
                                                 <option value="quarter" @selected($dateRangeValue === 'quarter')>Por trimestre</option>
                                                 <option value="custom" @selected($dateRangeValue === 'custom')>Rango personalizado</option>
-                                            </select>
+                                            </x-filtros.select>
                                             <p id="statisticsDateModeHelp" class="statistics-date-mode-help">Muestra todos los registros disponibles.</p>
                                         </div>
                                     </div>
@@ -68,13 +60,13 @@
                                         </div>
                                         <div class="statistics-filter-detail" data-date-detail="quarter">
                                             <label for="quarter">Trimestre</label>
-                                            <select id="quarter" name="quarter" class="users-district-tomselect" data-placeholder="Seleccionar trimestre">
+                                            <x-filtros.select id="quarter" name="quarter" placeholder="Seleccionar trimestre">
                                                 <option value="">Seleccionar trimestre</option>
                                                 <option value="1" @selected(request('quarter') === '1')>Q1 (Ene–Mar)</option>
                                                 <option value="2" @selected(request('quarter') === '2')>Q2 (Abr–Jun)</option>
                                                 <option value="3" @selected(request('quarter') === '3')>Q3 (Jul–Sep)</option>
                                                 <option value="4" @selected(request('quarter') === '4')>Q4 (Oct–Dic)</option>
-                                            </select>
+                                            </x-filtros.select>
                                         </div>
                                         <div class="statistics-filter-detail statistics-filter-date-grid" data-date-detail="custom">
                                             <label>Desde<input type="date" id="startDate" name="startDate" value="{{ request('startDate') }}"></label>
@@ -92,15 +84,15 @@
                                     <div class="statistics-filter-fields">
                                         <div class="statistics-filter-field">
                                             <label for="distrito">Distrito de residencia</label>
-                                            <select id="distrito" name="distrito" class="users-district-tomselect" data-placeholder="Todos"><option value="">Todos</option>@foreach($districts ?? [] as $district)<option value="{{ $district->name }}" @selected(request('distrito') === $district->name)>{{ $district->name }}</option>@endforeach</select>
+                                            <x-filtros.select id="distrito" name="distrito" placeholder="Todos"><option value="">Todos</option>@foreach($districts ?? [] as $district)<option value="{{ $district->name }}" @selected(request('distrito') === $district->name)>{{ $district->name }}</option>@endforeach</x-filtros.select>
                                         </div>
                                         <div class="statistics-filter-field">
                                             <label for="municipio">Municipio de residencia</label>
-                                            <select id="municipio" name="municipio" class="users-district-tomselect" data-placeholder="Todos"><option value="">Todos</option>@foreach($municipalities ?? [] as $municipality)<option value="{{ $municipality->name }}" @selected(request('municipio') === $municipality->name)>{{ $municipality->name }}</option>@endforeach</select>
+                                            <x-filtros.select id="municipio" name="municipio" placeholder="Todos"><option value="">Todos</option>@foreach($municipalities ?? [] as $municipality)<option value="{{ $municipality->name }}" @selected(request('municipio') === $municipality->name)>{{ $municipality->name }}</option>@endforeach</x-filtros.select>
                                         </div>
                                         <div class="statistics-filter-field">
                                             <label for="municipioDefuncion">Municipio de defunción</label>
-                                            <select id="municipioDefuncion" name="municipioDefuncion" class="users-district-tomselect" data-placeholder="Todos"><option value="">Todos</option>@foreach($municipalities ?? [] as $municipality)<option value="{{ $municipality->name }}" @selected(request('municipioDefuncion') === $municipality->name)>{{ $municipality->name }}</option>@endforeach</select>
+                                            <x-filtros.select id="municipioDefuncion" name="municipioDefuncion" placeholder="Todos"><option value="">Todos</option>@foreach($municipalities ?? [] as $municipality)<option value="{{ $municipality->name }}" @selected(request('municipioDefuncion') === $municipality->name)>{{ $municipality->name }}</option>@endforeach</x-filtros.select>
                                         </div>
                                     </div>
                                 </div>
@@ -125,16 +117,10 @@
                                     <i class="fas {{ request('causa') ? 'fa-chevron-down' : 'fa-chevron-right' }}" aria-hidden="true"></i><span>Causa de defunción</span>
                                 </button>
                                 <div class="users-filter-section-content">
-                                    <select id="causa" name="causa" class="users-district-tomselect" data-placeholder="Todas" aria-label="Causa de defunción"><option value="">Todas</option>@foreach($causes ?? [] as $cause)<option value="{{ $cause->id }}" @selected(request('causa') == $cause->id)>{{ $cause->name }}</option>@endforeach</select>
+                                    <x-filtros.select id="causa" name="causa" placeholder="Todas" aria-label="Causa de defunción"><option value="">Todas</option>@foreach($causes ?? [] as $cause)<option value="{{ $cause->id }}" @selected(request('causa') == $cause->id)>{{ $cause->name }}</option>@endforeach</x-filtros.select>
                                 </div>
                             </div>
-                        </div>
-
-                        <div class="users-filter-panel-footer">
-                            <button type="button" id="closeDeathsFilters" class="users-filter-secondary">Cancelar</button>
-                            <button type="submit" class="users-filter-apply">Aplicar filtros</button>
-                        </div>
-                    </div>
+                    </x-filtros.panel>
                 </div>
 
             <div class="users-filter-search">
@@ -307,20 +293,13 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     });
 
-    form.querySelectorAll('.users-district-tomselect').forEach(select => {
-        if (typeof TomSelect === 'undefined' || select.tomselect) return;
-        new TomSelect(select, {
-            create: false, maxItems: 1, allowEmptyOption: false,
-            placeholder: select.dataset.placeholder || 'Todos',
-            searchField: select.options.length > 8 ? ['text'] : [],
-            render: { no_results: () => '<div class="no-results">Sin resultados</div>' },
-            onChange: updateChips
-        });
+    form.querySelectorAll('select[data-filter-select]').forEach(select => {
+        window.AppFilterSelect?.init(select, { onChange: updateChips });
     });
 
     document.getElementById('limpiarFiltros')?.addEventListener('click', function () {
         form.reset();
-        form.querySelectorAll('.users-district-tomselect').forEach(select => select.tomselect?.clear(true));
+        form.querySelectorAll('select[data-filter-select]').forEach(select => select.tomselect?.clear(true));
         setFilterValue('dateRange', 'all');
         updateChips();
         form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
