@@ -2,10 +2,10 @@
 
 namespace App\Models;
 
+use App\Support\CatalogLabel;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Str;
 
 class District extends Model
 {
@@ -95,23 +95,7 @@ class District extends Model
 
     public static function formatName(?string $name): string
     {
-        $rawName = trim((string) $name);
-
-        if ($rawName === '') {
-            return '';
-        }
-
-        $rawName = preg_replace('/^Distrito:\s*/iu', '', $rawName) ?? $rawName;
-
-        if (preg_match('/^([IVX]+)\s*(?:-|·)\s*(.+)$/iu', $rawName, $matches)) {
-            $roman = strtoupper($matches[1]);
-
-            if (array_key_exists($roman, self::ROMAN_DISTRICT_ORDER)) {
-                return $roman . ' · ' . Str::title(Str::lower(trim($matches[2])));
-            }
-        }
-
-        return Str::title(Str::lower($rawName));
+        return CatalogLabel::district($name);
     }
 
     public function getDisplayNameAttribute(): string

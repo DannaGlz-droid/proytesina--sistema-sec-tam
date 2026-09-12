@@ -10,6 +10,7 @@ use App\Models\District;
 use App\Models\DeathLocation;
 use App\Services\DeathFilterService;
 use App\Services\StatisticsAnalysisService;
+use App\Support\CatalogLabel;
 use Illuminate\Support\Facades\Redirect;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -106,11 +107,11 @@ class DeathController extends Controller
                 'age_display' => $death->pretty_age ?? '—',  // Valor formateado para mostrar
                 'sex' => $this->displaySex($death->sex),
                 'death_date' => $death->death_date ? $death->death_date->format('d/m/Y') : '—',
-                'residence_municipality' => $this->displayTitleText(optional($death->residenceMunicipality)->name),
-                'death_municipality' => $this->displayTitleText(optional($death->deathMunicipality)->name),
+                'residence_municipality' => $this->displayMunicipality(optional($death->residenceMunicipality)->name),
+                'death_municipality' => $this->displayMunicipality(optional($death->deathMunicipality)->name),
                 'district' => $this->displayDistrict(optional($death->district)->name),
                 'death_district' => $this->displayDistrict(optional($death->deathDistrict)->name),
-                'death_location' => $this->displayTitleText(optional($death->deathLocation)->name),
+                'death_location' => $this->displayLocation(optional($death->deathLocation)->name),
                 'death_cause' => $this->displayCause(optional($death->deathCause)->name),
                 'actions' => view('estadisticas.partials.table-actions', compact('death'))->render(),
             ];
@@ -577,11 +578,11 @@ class DeathController extends Controller
         return ($value === null || $value === '') ? '—' : (string) $value;
     }
 
-    private function displayTitleText($value): string
+    private function displayMunicipality($value): string
     {
         $value = $this->displayValue($value);
 
-        return $value === '—' ? $value : Death::formatPersonName($value);
+        return $value === '—' ? $value : CatalogLabel::municipality($value);
     }
 
     private function displayDistrict($value): string
@@ -592,28 +593,21 @@ class DeathController extends Controller
             return $value;
         }
 
-        $normalized = mb_strtoupper($value, 'UTF-8');
-
-        if (preg_match('/^([IVXLCDM]+)\s*-\s*(.+)$/u', $normalized, $matches)) {
-            return $matches[1] . ' - ' . $matches[2];
-        }
-
-        return Death::formatPersonName($value);
+        return CatalogLabel::district($value);
     }
 
     private function displayCause($value): string
     {
-        $formatted = $this->displayTitleText($value);
+        $value = $this->displayValue($value);
 
-        if ($formatted === '—') {
-            return $formatted;
-        }
+        return $value === '—' ? $value : CatalogLabel::cause($value);
+    }
 
-        foreach (['Imss', 'Issste', 'Sedena', 'Insabi'] as $acronym) {
-            $formatted = preg_replace('/\b' . preg_quote($acronym, '/') . '\b/u', mb_strtoupper($acronym, 'UTF-8'), $formatted);
-        }
+    private function displayLocation($value): string
+    {
+        $value = $this->displayValue($value);
 
-        return $formatted;
+        return $value === '—' ? $value : CatalogLabel::location($value);
     }
 
     private function displaySex($value): string

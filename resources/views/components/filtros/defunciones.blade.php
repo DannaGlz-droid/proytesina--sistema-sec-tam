@@ -84,15 +84,15 @@
                                     <div class="statistics-filter-fields">
                                         <div class="statistics-filter-field">
                                             <label for="distrito">Distrito de residencia</label>
-                                            <x-filtros.select id="distrito" name="distrito" placeholder="Todos"><option value="">Todos</option>@foreach($districts ?? [] as $district)<option value="{{ $district->name }}" @selected(request('distrito') === $district->name)>{{ $district->name }}</option>@endforeach</x-filtros.select>
+                                            <x-filtros.select id="distrito" name="distrito" placeholder="Todos"><option value="">Todos</option>@foreach($districts ?? [] as $district)<option value="{{ $district->name }}" @selected(request('distrito') === $district->name)>{{ $district->display_name }}</option>@endforeach</x-filtros.select>
                                         </div>
                                         <div class="statistics-filter-field">
                                             <label for="municipio">Municipio de residencia</label>
-                                            <x-filtros.select id="municipio" name="municipio" placeholder="Todos"><option value="">Todos</option>@foreach($municipalities ?? [] as $municipality)<option value="{{ $municipality->name }}" @selected(request('municipio') === $municipality->name)>{{ $municipality->name }}</option>@endforeach</x-filtros.select>
+                                            <x-filtros.select id="municipio" name="municipio" placeholder="Todos"><option value="">Todos</option>@foreach($municipalities ?? [] as $municipality)<option value="{{ $municipality->name }}" @selected(request('municipio') === $municipality->name)>{{ $municipality->display_name }}</option>@endforeach</x-filtros.select>
                                         </div>
                                         <div class="statistics-filter-field">
                                             <label for="municipioDefuncion">Municipio de defunción</label>
-                                            <x-filtros.select id="municipioDefuncion" name="municipioDefuncion" placeholder="Todos"><option value="">Todos</option>@foreach($municipalities ?? [] as $municipality)<option value="{{ $municipality->name }}" @selected(request('municipioDefuncion') === $municipality->name)>{{ $municipality->name }}</option>@endforeach</x-filtros.select>
+                                            <x-filtros.select id="municipioDefuncion" name="municipioDefuncion" placeholder="Todos"><option value="">Todos</option>@foreach($municipalities ?? [] as $municipality)<option value="{{ $municipality->name }}" @selected(request('municipioDefuncion') === $municipality->name)>{{ $municipality->display_name }}</option>@endforeach</x-filtros.select>
                                         </div>
                                     </div>
                                 </div>
@@ -117,7 +117,7 @@
                                     <i class="fas {{ request('causa') ? 'fa-chevron-down' : 'fa-chevron-right' }}" aria-hidden="true"></i><span>Causa de defunción</span>
                                 </button>
                                 <div class="users-filter-section-content">
-                                    <x-filtros.select id="causa" name="causa" placeholder="Todas" aria-label="Causa de defunción"><option value="">Todas</option>@foreach($causes ?? [] as $cause)<option value="{{ $cause->id }}" @selected(request('causa') == $cause->id)>{{ $cause->name }}</option>@endforeach</x-filtros.select>
+                                    <x-filtros.select id="causa" name="causa" placeholder="Todas" aria-label="Causa de defunción"><option value="">Todas</option>@foreach($causes ?? [] as $cause)<option value="{{ $cause->id }}" @selected(request('causa') == $cause->id)>{{ $cause->display_name }}</option>@endforeach</x-filtros.select>
                                 </div>
                             </div>
                     </x-filtros.panel>

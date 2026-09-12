@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\CatalogLabel;
 use Illuminate\Database\Eloquent\Model;
 
 class Municipality extends Model
@@ -19,6 +20,11 @@ class Municipality extends Model
         'name',
         'district_id'
     ];
+
+    public function getDisplayNameAttribute(): string
+    {
+        return CatalogLabel::municipality($this->name);
+    }
 
     /**
      * Relationship: Municipality belongs to District

@@ -60,13 +60,13 @@ class DeathsExport implements FromQuery, WithHeadings, WithMapping
             $death->second_last_name_formatted,
             $death->sex,
             $death->pretty_age,
-            $death->residenceMunicipality?->name,
+            $death->residenceMunicipality?->display_name,
             $death->district?->display_name,
-            $death->deathMunicipality?->name,
+            $death->deathMunicipality?->display_name,
             $death->deathDistrict?->display_name,
             $death->death_date?->format('d/m/Y'),
-            $death->deathLocation?->name,
-            $death->deathCause?->name,
+            $death->deathLocation?->display_name,
+            $death->deathCause?->display_name,
         ];
     }
 }

@@ -137,7 +137,7 @@
                                             <label for="municipiosFilter">Municipios</label>
                                             <x-filtros.select id="municipiosFilter" placeholder="Selecciona municipios" multiple>
                                                 @foreach($municipalities as $mun)
-                                                    <option value="{{ $mun->id }}">{{ $mun->name }}</option>
+                                                    <option value="{{ $mun->id }}">{{ \App\Support\CatalogLabel::municipality($mun->name) }}</option>
                                                 @endforeach
                                             </x-filtros.select>
                                         </div>
@@ -146,7 +146,7 @@
                                             <label for="distritoesFilter">Distritos</label>
                                             <x-filtros.select id="distritoesFilter" placeholder="Selecciona distritos" multiple>
                                                 @foreach($districts as $district)
-                                                    <option value="{{ $district->id }}">{{ $district->name }}</option>
+                                                    <option value="{{ $district->id }}">{{ $district->display_name }}</option>
                                                 @endforeach
                                             </x-filtros.select>
                                         </div>
@@ -181,7 +181,7 @@
                                             <label for="causasFilter">Causas</label>
                                             <x-filtros.select id="causasFilter" placeholder="Selecciona causas" multiple>
                                                 @foreach($causes as $cause)
-                                                    <option value="{{ $cause->id }}">{{ $cause->name }}</option>
+                                                    <option value="{{ $cause->id }}">{{ $cause->display_name }}</option>
                                                 @endforeach
                                             </x-filtros.select>
                                         </div>
@@ -205,12 +205,6 @@
                                                 <option value="lugar-causa">Lugar de defunción por causa</option>
                                             </x-filtros.select>
                                         </div>
-                                        <div id="filterCausasPrincipales" class="statistics-filter-control dynamic-filter" style="display: none;">
-                                            <label class="statistics-filter-check-row">
-                                                <input type="checkbox" id="mostrarCausasPrincipales">
-                                                <span>Mostrar causas principales por edad</span>
-                                            </label>
-                                        </div>
                                 </x-filtros.seccion>
                     </x-filtros.panel>
 
@@ -219,14 +213,21 @@
                         <!-- Controles de Presentación -->
                         <aside class="statistics-display-panel" aria-labelledby="statistics-display-title">
                             <header class="statistics-display-panel__heading">
-                                <h2 id="statistics-display-title">Presentación</h2>
-                                <p>Ajuste la visualización.</p>
+                                <div class="statistics-display-panel__title-row">
+                                    <h2 id="statistics-display-title">Presentación</h2>
+                                    <div class="statistics-display-panel__actions">
+                                        <button type="button" id="statisticsPresentationReset" class="statistics-presentation-reset">Restablecer</button>
+                                        <button type="button" id="statisticsPresentationCollapse" class="statistics-presentation-collapse" aria-expanded="true" aria-controls="statisticsPresentationGroups" aria-label="Contraer opciones de presentación">
+                                            <i class="fas fa-chevron-up" aria-hidden="true"></i>
+                                        </button>
+                                    </div>
+                                </div>
                             </header>
-                            <div class="statistics-display-groups">
+                            <div id="statisticsPresentationGroups" class="statistics-display-groups">
                                 <!-- Tipo de Gráfica -->
-                                <div class="statistics-display-group">
-                                    <label>Tipo de gráfica</label>
-                                    <select id="chartTypeSelector" class="hidden">
+                                <fieldset class="statistics-display-group">
+                                    <legend id="statisticsChartTypeLegend">Tipo de gráfica</legend>
+                                    <select id="chartTypeSelector" class="hidden" aria-hidden="true" tabindex="-1">
                                         <option value="bar">Barras</option>
                                         <option value="barHorizontal">Barras Horizontales</option>
                                         <option value="pie">Pastel</option>
@@ -234,52 +235,72 @@
                                         <option value="line">Línea</option>
                                         <option value="area">Área</option>
                                     </select>
-                                    <div id="chartTypeButtons" class="statistics-visual-options"></div>
+                                    <div id="chartTypeButtons" class="statistics-visual-options" role="group" aria-labelledby="statisticsChartTypeLegend"></div>
                                     <p id="chartTypeAdaptationNote" class="statistics-presentation-note hidden" aria-live="polite"></p>
-                                </div>
+                                </fieldset>
 
                                 <!-- Etiquetas -->
-                                <div class="statistics-display-group">
-                                    <label>Etiquetas</label>
-                                    <select id="datalabelMode" class="hidden">
-                                        <option value="value">Solo valores</option>
-                                        <option value="percent">Solo porcentaje</option>
-                                        <option value="both">Ambos</option>
+                                <fieldset class="statistics-display-group">
+                                    <legend id="statisticsDataLabelLegend">Etiquetas</legend>
+                                    <select id="datalabelMode" class="hidden" aria-hidden="true" tabindex="-1">
+                                        <option value="value">Valor</option>
+                                        <option value="percent">Porcentaje</option>
+                                        <option value="both">Valor y porcentaje</option>
+                                        <option value="none">Sin etiquetas</option>
                                     </select>
-                                    <div id="dataLabelButtons" class="statistics-visual-options"></div>
+                                    <div id="dataLabelButtons" class="statistics-visual-options" role="group" aria-labelledby="statisticsDataLabelLegend"></div>
                                     <p id="dataLabelAdaptationNote" class="statistics-presentation-note hidden" aria-live="polite"></p>
-                                </div>
+                                </fieldset>
 
                                 <!-- Top N -->
-                                <div id="filterTop" class="statistics-display-group" style="display: none;">
-                                    <label>Cantidad de resultados</label>
-                                    <select id="chartLimit" class="hidden">
+                                <fieldset id="filterTop" class="statistics-display-group" style="display: none;">
+                                    <legend id="statisticsChartLimitLegend">Cantidad de resultados</legend>
+                                    <select id="chartLimit" class="hidden" aria-hidden="true" tabindex="-1">
                                         <option value="all">Todos</option>
                                         <option value="5">Top 5</option>
                                         <option value="10" selected>Top 10</option>
                                         <option value="15">Top 15</option>
                                     </select>
-                                    <div id="chartLimitButtons" class="statistics-visual-options"></div>
+                                    <div id="chartLimitButtons" class="statistics-visual-options" role="group" aria-labelledby="statisticsChartLimitLegend"></div>
                                     <p id="chartLimitAdaptationNote" class="statistics-presentation-note hidden" aria-live="polite"></p>
-                                </div>
+                                    <p id="chartLimitReadabilityNote" class="statistics-presentation-note statistics-presentation-note--guidance hidden" aria-live="polite"></p>
+                                </fieldset>
 
                                 <!-- Paleta -->
-                                <div class="statistics-display-group statistics-display-group--palette">
-                                    <label>Apariencia</label>
+                                <fieldset class="statistics-display-group statistics-display-group--palette">
+                                    <legend id="statisticsPaletteLegend">Apariencia</legend>
                                     <div class="statistics-palette-popover">
                                         <button type="button" id="statisticsPaletteToggle" class="statistics-palette-toggle" aria-expanded="false" aria-controls="statisticsPaletteMenu" aria-haspopup="true">
                                             <span id="statisticsPaletteSelection" class="statistics-palette-selection" aria-hidden="true"></span>
                                             <span id="statisticsPaletteLabel" class="statistics-palette-label">Granate institucional</span>
                                             <i class="fas fa-chevron-down" aria-hidden="true"></i>
                                         </button>
-                                        <div id="statisticsPaletteMenu" class="statistics-palette-menu hidden" aria-label="Paleta de colores">
+                                        <div id="statisticsPaletteMenu" class="statistics-palette-menu hidden" aria-labelledby="statisticsPaletteLegend">
                                             <div id="colorPalettePicker" class="statistics-palette-grid"></div>
                                         </div>
                                     </div>
-                                </div>
+                                </fieldset>
+
+                                <fieldset id="statisticsAgeDetailGroup" class="statistics-display-group statistics-display-group--age-detail" style="display: none;">
+                                    <legend id="statisticsAgeDetailLegend">Contenido</legend>
+                                    <select id="ageDetailMode" class="hidden" aria-hidden="true" tabindex="-1">
+                                        <option value="summary" selected>Solo edades</option>
+                                        <option value="causes">Edades y causas</option>
+                                    </select>
+                                    <div id="ageDetailButtons" class="statistics-visual-options" role="group" aria-labelledby="statisticsAgeDetailLegend">
+                                        <button type="button" class="visual-option-btn visual-option-card active" data-target="ageDetailMode" data-value="summary" aria-pressed="true">
+                                            <i class="fas fa-chart-column" aria-hidden="true"></i>
+                                            <span class="visual-option-label">Solo edades</span>
+                                        </button>
+                                        <button type="button" class="visual-option-btn visual-option-card" data-target="ageDetailMode" data-value="causes" aria-pressed="false">
+                                            <i class="fas fa-list-ol" aria-hidden="true"></i>
+                                            <span class="visual-option-label">Edades y causas</span>
+                                        </button>
+                                    </div>
+                                </fieldset>
 
                             </div>
-
+                            <span id="statisticsPresentationStatus" class="sr-only" aria-live="polite"></span>
                         </aside>
 
                         <!-- Gráfica Principal -->
@@ -356,16 +377,26 @@
                                     </div>
                                     <p>Cargando datos...</p>
                                 </div>
-                                <div id="errorMessage" class="statistics-chart-state statistics-chart-state--empty" style="display: none;" role="status" aria-live="polite">
-                                    <div>
-                                        <div class="statistics-chart-state__icon">
-                                            <i class="fas fa-chart-column" aria-hidden="true"></i>
-                                        </div>
-                                        <p id="errorText">No hay datos para los filtros seleccionados.</p>
-                                        <span>Pruebe con otros criterios o limpie los filtros aplicados.</span>
+                                <div id="errorMessage" class="statistics-chart-state statistics-chart-state--empty" style="display: none;" role="status" aria-live="polite" aria-atomic="true">
+                                    <div id="statisticsChartStateContent" class="statistics-chart-state__content">
+                                        <i id="statisticsChartStateIcon" class="statistics-chart-state__icon fas fa-chart-column" aria-hidden="true"></i>
+                                        <strong id="errorText">No hay datos para los filtros seleccionados.</strong>
+                                        <span id="statisticsChartStateDescription">Prueba con otros criterios o limpia los filtros aplicados.</span>
+                                        <button id="statisticsChartStateAction" class="statistics-chart-state__action hidden" type="button"></button>
                                     </div>
                                 </div>
                             </div>
+                            <section id="causasPrincipalesContainer" class="statistics-causes hidden" aria-labelledby="statistics-causes-title">
+                                <header class="statistics-causes__header">
+                                    <div>
+                                        <h3 id="statistics-causes-title">Causas principales por grupo de edad</h3>
+                                        <p>Las tres causas con más registros dentro de cada grupo.</p>
+                                    </div>
+                                    <span id="statisticsCausesSummary" class="statistics-causes__summary"></span>
+                                </header>
+                                <div id="causasPrincipalesBody" class="statistics-causes__list"></div>
+                            </section>
+
                             <footer id="statisticsChartSource" class="statistics-chart-source hidden">
                                 <details id="statisticsChartSourceDetails" class="statistics-chart-source__details">
                                     <summary>
@@ -387,82 +418,6 @@
                                 </details>
                             </footer>
                             
-                            <!-- Tabla de Causas Principales (solo para Edades) -->
-                            <section id="causasPrincipalesContainer" class="statistics-causes hidden" aria-labelledby="statistics-causes-title">
-                                <h3 id="statistics-causes-title">Causas principales de defunción por grupo de edad</h3>
-                                <div class="causas-table-wrapper">
-                                    <table>
-                                        <colgroup>
-                                            <col style="width: 16%;">
-                                            <col style="width: 8%;">
-                                            <col style="width: 76%;">
-                                        </colgroup>
-                                        <thead>
-                                            <tr>
-                                                <th>Grupo de edad</th>
-                                                <th id="causasTotalHeader">Total</th>
-                                                <th id="causasDetalleHeader">Causas principales</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody id="causasPrincipalesBody">
-                                            <!-- Se llena dinámicamente con JavaScript -->
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </section>
-
-                            <style media="not all" data-legacy-statistics-table-styles>
-                                /* Asegurar que la tabla use todo el ancho disponible y las causas puedan mostrarse completas */
-                                #causasPrincipalesContainer { width: 100%; }
-                                #causasPrincipalesContainer .causas-table-wrapper {
-                                    width: 100%;
-                                    max-width: 100%;
-                                }
-                                /* Permitir que la tabla ajuste sus columnas según contenido para dar más espacio a la columna de causas */
-                                #causasPrincipalesContainer table { table-layout: auto; width: 100%; }
-                                #causasPrincipalesContainer th, #causasPrincipalesContainer td { word-wrap: break-word; white-space: normal; }
-                                #causasPrincipalesContainer td:nth-child(3) { white-space: normal; }
-                                /* Un poco más de interlineado para legibilidad */
-                                #causasPrincipalesContainer td, #causasPrincipalesContainer th { line-height: 1.45; }
-                                /* Permitir que las causas se envuelvan en varias líneas en lugar de truncar */
-                                #causasPrincipalesContainer td.causas-principales-cell {
-                                    white-space: normal;
-                                    overflow: visible;
-                                    text-overflow: unset;
-                                    font-size: 0.95rem;
-                                }
-                                #causasPrincipalesContainer .causa-chip { margin-right: 0.5rem; display: inline-flex; align-items: center; gap: 0.35rem; }
-                                /* Separar visualmente ranking (#1) y cantidad para evitar confusión */
-                                #causasPrincipalesContainer .causa-chip {
-                                    display: inline-flex;
-                                    align-items: center;
-                                    gap: 0.25rem;
-                                }
-                                #causasPrincipalesContainer .top-rank-badge {
-                                    display: inline-block;
-                                    padding: 0.05rem 0.35rem;
-                                    border-radius: 9999px;
-                                    background: #f3f4f6;
-                                    color: #374151;
-                                    font-size: 0.72rem;
-                                    font-weight: 700;
-                                    line-height: 1.2;
-                                }
-                                #causasPrincipalesContainer .top-count-pill {
-                                    display: inline-block;
-                                    padding: 0.05rem 0.35rem;
-                                    border-radius: 0.3rem;
-                                    background: #fef3c7;
-                                    color: #78350f;
-                                    font-weight: 800;
-                                    line-height: 1.2;
-                                    border: 1px solid #f59e0b;
-                                }
-
-                                @media (max-width: 1024px) {
-                                    #causasPrincipalesContainer .causas-table-wrapper { max-width: 100%; }
-                                }
-                            </style>
                         </section>
                     </div>
                 </div>
@@ -490,19 +445,25 @@
         let defaultDateRange = { startDate: '', endDate: '' };
         let filterDraftSnapshot = null;
         let restoringFilterDraft = false;
-        let chartConfig = {
+        const defaultPresentationConfig = Object.freeze({
             type: 'bar',
             dataLabelMode: 'value',
             limit: 10,
-            colorPalette: 'maroon611132',
+            ageDetailMode: 'summary',
+            colorPalette: 'maroon611132'
+        });
+
+        let chartConfig = {
+            ...defaultPresentationConfig,
             groupBy: 'month'
         };
 
         // Preferencias deseadas: una vista puede adaptarlas sin sobrescribirlas.
         let preferredConfig = {
-            type: 'bar',
-            dataLabelMode: 'value',
-            limit: 10
+            type: defaultPresentationConfig.type,
+            dataLabelMode: defaultPresentationConfig.dataLabelMode,
+            limit: defaultPresentationConfig.limit,
+            ageDetailMode: defaultPresentationConfig.ageDetailMode
         };
 
         let activeFilters = {
@@ -520,7 +481,6 @@
             sexo: null,
             edad: null,
             granularidad: 'month',
-            mostrarCausasPrincipales: false,
             tipoComparativa: 'residencia-defuncion',
             tipoMunicipio: 'defuncion'
         };
@@ -660,6 +620,11 @@
                 '#B7D7EA', // azul muy claro
                 '#D8E8F5', // azul pálido (NUEVO)
                 '#E2EFF6'  // casi blanco azulado
+            ],
+            grayscale: [
+                '#1F2937', '#334155', '#475569', '#58677B', '#64748B',
+                '#718096', '#7C8998', '#8793A1', '#929DAA', '#9DA7B2',
+                '#A8B1BB', '#B2BAC3', '#BCC4CC', '#C6CDD4', '#D0D6DC'
             ]
         };
 
@@ -672,19 +637,24 @@
             earth: ['#4D7300', '#99CC33', '#CCEE66', '#33CCAA', '#006699', '#990066', '#E066CC', '#FF6600', '#FF9900', '#FFCC00'],
             goldenEarth: ['#2A0E47', '#431259', '#6A3FA0', '#805EBF', '#8F6FC9', '#9A99F2', '#B3BEFF', '#CCDCFF', '#D9E6FF', '#E6F2FF'],
             institutional: ['#001A3A', '#003A70', '#1965A0', '#0F558F', '#2D82BD', '#5CA5D0', '#8FC5E0', '#B7D7EA', '#D8E8F5', '#E2EFF6'],
-            maroon611132: ['#2C0617', '#4a0e26', '#611132', '#8B2A52', '#9C4460', '#B84C3A', '#C97C8A', '#D96969', '#E8A8A8', '#F0CCCC']
+            maroon611132: ['#2C0617', '#4a0e26', '#611132', '#8B2A52', '#9C4460', '#B84C3A', '#C97C8A', '#D96969', '#E8A8A8', '#F0CCCC'],
+            grayscale: ['#1F2937', '#334155', '#475569', '#58677B', '#64748B', '#718096', '#7C8998', '#8793A1', '#929DAA', '#9DA7B2']
         };
 
         const colorPaletteLabels = {
             aqua: 'Verde natural',
             autumn: 'Tonos tierra',
             rose: 'Rojos',
-            spectrum: 'Espectro',
+            spectrum: 'Alto contraste',
             earth: 'Multicolor',
             goldenEarth: 'Violetas',
             maroon611132: 'Granate institucional',
-            institutional: 'Azul institucional'
+            institutional: 'Azul institucional',
+            grayscale: 'Escala de grises'
         };
+
+        const primaryPaletteKeys = ['maroon611132', 'institutional', 'spectrum', 'grayscale'];
+        const additionalPaletteKeys = ['aqua', 'autumn', 'rose', 'earth', 'goldenEarth'];
 
         const chartTypeDefaults = {
             municipios: 'bar',
@@ -726,7 +696,7 @@
         const filtersForChart = {
             municipios: ['dates', 'tipoMunicipio', 'causas', 'distritoes', 'sexo', 'edad'],
             tendencias: ['dates', 'municipios', 'causas', 'sexo', 'edad', 'granularidad'],
-            edades: ['dates', 'municipios', 'causas', 'distritoes', 'causasPrincipales'],
+            edades: ['dates', 'municipios', 'causas', 'distritoes'],
             genero: ['dates', 'municipios', 'causas', 'distritoes', 'edad'],
             causas: ['dates', 'municipios', 'distritoes', 'sexo', 'edad'],
             distritoes: ['dates', 'causas', 'sexo', 'edad'],
@@ -748,7 +718,8 @@
         const dataLabelIcons = {
             value: 'fa-hashtag',
             percent: 'fa-percent',
-            both: 'fa-layer-group'
+            both: 'fa-layer-group',
+            none: 'fa-eye-slash'
         };
 
         const chartLimitLabels = {
@@ -760,7 +731,7 @@
 
         const chartTypeLabels = {
             bar: 'Barras',
-            barHorizontal: 'Horizontal',
+            barHorizontal: 'Barras horizontales',
             pie: 'Pastel',
             doughnut: 'Rosquilla',
             line: 'Línea',
@@ -768,9 +739,10 @@
         };
 
         const dataLabelModeLabels = {
-            value: 'Valores',
+            value: 'Valor',
             percent: 'Porcentaje',
-            both: 'Ambos'
+            both: 'Valor y porcentaje',
+            none: 'Sin etiquetas'
         };
 
         // Definir límites disponibles por tipo de gráfico
@@ -1144,7 +1116,6 @@
             document.getElementById('sexoFilter').addEventListener('change', markStatisticsFilterDraft);
             document.getElementById('edadFilter').addEventListener('input', markStatisticsFilterDraft);
             document.getElementById('granularidadFilter').addEventListener('change', markStatisticsFilterDraft);
-            document.getElementById('mostrarCausasPrincipales').addEventListener('change', markStatisticsFilterDraft);
             document.getElementById('tipoComparativaFilter').addEventListener('change', markStatisticsFilterDraft);
             document.getElementById('tipoMunicipioFilter').addEventListener('change', markStatisticsFilterDraft);
 
@@ -1153,6 +1124,7 @@
                 preferredConfig.type = this.value;  // Guardar preferencia global
                 // CONFIGURACIONES SON GLOBALES - se mantienen al cambiar de métrica
                 renderChartTypeButtons(currentChartType);
+                renderChartLimitButtons(currentChartType);
                 setPresentationAdaptationNote('chartTypeAdaptationNote');
                 rerenderLatestChart();
             });
@@ -1172,23 +1144,39 @@
                 setPresentationAdaptationNote('chartLimitAdaptationNote');
                 updateChart();
             });
+            document.getElementById('ageDetailMode').addEventListener('change', function() {
+                chartConfig.ageDetailMode = this.value;
+                preferredConfig.ageDetailMode = this.value;
+                renderAgeDetailButtons();
+                rerenderLatestChart();
+            });
 
             document.getElementById('chartTypeButtons')?.addEventListener('click', function(event) {
                 const button = event.target.closest('.visual-option-btn[data-target="chartTypeSelector"]');
                 if (!button || button.disabled) return;
                 setSelectValueAndTrigger('chartTypeSelector', button.dataset.value);
+                restorePresentationFocus(this, button.dataset.value);
             });
 
             document.getElementById('dataLabelButtons')?.addEventListener('click', function(event) {
                 const button = event.target.closest('.visual-option-btn[data-target="datalabelMode"]');
                 if (!button || button.disabled) return;
                 setSelectValueAndTrigger('datalabelMode', button.dataset.value);
+                restorePresentationFocus(this, button.dataset.value);
             });
 
             document.getElementById('chartLimitButtons')?.addEventListener('click', function(event) {
                 const button = event.target.closest('.visual-option-btn[data-target="chartLimit"]');
                 if (!button || button.disabled) return;
                 setSelectValueAndTrigger('chartLimit', button.dataset.value);
+                restorePresentationFocus(this, button.dataset.value);
+            });
+
+            document.getElementById('ageDetailButtons')?.addEventListener('click', function(event) {
+                const button = event.target.closest('.visual-option-btn[data-target="ageDetailMode"]');
+                if (!button || button.disabled) return;
+                setSelectValueAndTrigger('ageDetailMode', button.dataset.value);
+                restorePresentationFocus(this, button.dataset.value);
             });
 
             const palettePicker = document.getElementById('colorPalettePicker');
@@ -1196,29 +1184,75 @@
             const paletteMenu = document.getElementById('statisticsPaletteMenu');
             const palettePopover = paletteToggle?.closest('.statistics-palette-popover');
 
+            const closePaletteMenu = () => {
+                if (!paletteMenu || !paletteToggle) return;
+                paletteMenu.classList.add('hidden');
+                paletteMenu.classList.remove('opens-up');
+                paletteMenu.style.removeProperty('max-height');
+                paletteToggle.setAttribute('aria-expanded', 'false');
+            };
+
+            const positionPaletteMenu = () => {
+                if (!paletteMenu || !paletteToggle || paletteMenu.classList.contains('hidden')) return;
+
+                const viewportEdge = 12;
+                const menuGap = 6;
+                const maximumHeight = 352;
+                const triggerRect = paletteToggle.getBoundingClientRect();
+                const spaceBelow = Math.max(0, window.innerHeight - triggerRect.bottom - viewportEdge);
+                const spaceAbove = Math.max(0, triggerRect.top - viewportEdge);
+
+                paletteMenu.style.removeProperty('max-height');
+                const desiredHeight = Math.min(paletteMenu.scrollHeight, maximumHeight);
+                const opensUp = spaceBelow < desiredHeight && spaceAbove > spaceBelow;
+                const availableHeight = Math.max(96, (opensUp ? spaceAbove : spaceBelow) - menuGap);
+
+                paletteMenu.classList.toggle('opens-up', opensUp);
+                paletteMenu.style.maxHeight = `${Math.min(desiredHeight, availableHeight)}px`;
+            };
+
             if (paletteToggle && paletteMenu) {
                 paletteToggle.addEventListener('click', function() {
                     const willOpen = paletteMenu.classList.contains('hidden');
-                    paletteMenu.classList.toggle('hidden', !willOpen);
-                    this.setAttribute('aria-expanded', String(willOpen));
+                    if (!willOpen) {
+                        closePaletteMenu();
+                        return;
+                    }
+
+                    paletteMenu.classList.remove('hidden');
+                    this.setAttribute('aria-expanded', 'true');
+                    window.requestAnimationFrame(positionPaletteMenu);
                 });
 
                 document.addEventListener('click', function(event) {
                     if (palettePopover?.contains(event.target)) return;
-                    paletteMenu.classList.add('hidden');
-                    paletteToggle.setAttribute('aria-expanded', 'false');
+                    closePaletteMenu();
                 });
 
                 document.addEventListener('keydown', function(event) {
                     if (event.key !== 'Escape' || paletteMenu.classList.contains('hidden')) return;
-                    paletteMenu.classList.add('hidden');
-                    paletteToggle.setAttribute('aria-expanded', 'false');
+                    closePaletteMenu();
                     paletteToggle.focus();
                 });
+
+                document.addEventListener('scroll', positionPaletteMenu, true);
+                window.addEventListener('resize', positionPaletteMenu);
             }
 
             if (palettePicker) {
                 palettePicker.addEventListener('click', function(event) {
+                    const moreButton = event.target.closest('[data-palette-more]');
+                    if (moreButton) {
+                        const additional = this.querySelector('[data-additional-palettes]');
+                        const willOpen = additional?.classList.contains('hidden');
+                        additional?.classList.toggle('hidden', !willOpen);
+                        moreButton.setAttribute('aria-expanded', String(willOpen));
+                        moreButton.querySelector('i')?.classList.toggle('fa-chevron-down', !willOpen);
+                        moreButton.querySelector('i')?.classList.toggle('fa-chevron-up', willOpen);
+                        window.requestAnimationFrame(positionPaletteMenu);
+                        return;
+                    }
+
                     const button = event.target.closest('.palette-chip');
                     if (!button) return;
                     const paletteName = button.dataset.palette;
@@ -1226,11 +1260,22 @@
                     const changed = chartConfig.colorPalette !== paletteName;
                     chartConfig.colorPalette = paletteName;
                     renderColorPalettePreview(paletteName);
-                    paletteMenu?.classList.add('hidden');
-                    paletteToggle?.setAttribute('aria-expanded', 'false');
+                    closePaletteMenu();
+                    paletteToggle?.focus();
                     if (changed) rerenderLatestChart();
                 });
             }
+
+            document.getElementById('statisticsPresentationReset')?.addEventListener('click', resetPresentation);
+            document.getElementById('statisticsPresentationCollapse')?.addEventListener('click', function() {
+                const panel = this.closest('.statistics-display-panel');
+                const collapsed = !panel?.classList.contains('is-collapsed');
+                panel?.classList.toggle('is-collapsed', collapsed);
+                this.setAttribute('aria-expanded', String(!collapsed));
+                this.setAttribute('aria-label', collapsed ? 'Expandir opciones de presentación' : 'Contraer opciones de presentación');
+                this.querySelector('i')?.classList.toggle('fa-chevron-down', collapsed);
+                this.querySelector('i')?.classList.toggle('fa-chevron-up', !collapsed);
+            });
 
             document.getElementById('limpiarFiltros').addEventListener('click', function() {
                 clearFilters(true);
@@ -1243,6 +1288,13 @@
             const downloadOptionsButton = document.getElementById('descargarOpciones');
             document.getElementById('statisticsViewData')?.addEventListener('click', function(event) {
                 if (this.getAttribute('aria-disabled') === 'true') event.preventDefault();
+            });
+            document.getElementById('statisticsChartStateAction')?.addEventListener('click', function() {
+                if (this.dataset.action === 'clear') {
+                    clearFilters();
+                    return;
+                }
+                updateChart();
             });
 
             if (downloadButton && downloadMenu) {
@@ -1460,7 +1512,7 @@
         }
 
         async function captureChartAsCanvas(transparent = false, includeContext = shouldIncludeChartContext()) {
-            if (currentChartType === 'edades' && document.getElementById('mostrarCausasPrincipales').checked && typeof html2canvas !== 'undefined') {
+            if (currentChartType === 'edades' && chartConfig.ageDetailMode === 'causes' && typeof html2canvas !== 'undefined') {
                 const element = document.getElementById('mainChart')?.closest('.statistics-chart-panel');
                 if (!element) return null;
                 return html2canvas(element, {
@@ -1570,7 +1622,7 @@
         }
 
         function updateVisibleFilters(chartType) {
-            const allFilters = ['filterTipoMunicipio', 'filterMunicipios', 'filterCausas', 'filterdistritoes', 'filterSexo', 'filterEdad', 'filterGranularidad', 'filterCausasPrincipales', 'filterTipoComparativa'];
+            const allFilters = ['filterTipoMunicipio', 'filterMunicipios', 'filterCausas', 'filterdistritoes', 'filterSexo', 'filterEdad', 'filterGranularidad', 'filterTipoComparativa'];
             const availableFilters = filtersForChart[chartType] || [];
 
             allFilters.forEach(filterId => {
@@ -1584,7 +1636,6 @@
                     if (filterId === 'filterSexo' && availableFilters.includes('sexo')) show = true;
                     if (filterId === 'filterEdad' && availableFilters.includes('edad')) show = true;
                     if (filterId === 'filterGranularidad' && availableFilters.includes('granularidad')) show = true;
-                    if (filterId === 'filterCausasPrincipales' && availableFilters.includes('causasPrincipales')) show = true;
                     if (filterId === 'filterTipoComparativa' && availableFilters.includes('tipoComparativa')) show = true;
                     element.style.display = show ? 'block' : 'none';
                 }
@@ -1602,6 +1653,11 @@
                 const showTopSelector = chartTypesWithTopSelector.includes(chartType);
                 filterTopElement.style.display = showTopSelector ? '' : 'none';
                 filterTopElement.parentElement?.classList.toggle('has-top-filter', showTopSelector);
+            }
+
+            const ageDetailGroup = document.getElementById('statisticsAgeDetailGroup');
+            if (ageDetailGroup) {
+                ageDetailGroup.style.display = chartType === 'edades' ? '' : 'none';
             }
 
         }
@@ -1637,14 +1693,17 @@
             chartConfig.type = effectiveType;
             chartConfig.dataLabelMode = effectiveDataLabel;
             chartConfig.limit = effectiveLimit;
+            chartConfig.ageDetailMode = preferredConfig.ageDetailMode;
 
             updateChartTypeOptions(chartType, effectiveType);
             document.getElementById('datalabelMode').value = effectiveDataLabel;
             document.getElementById('chartLimit').value = effectiveLimit === null ? 'all' : String(effectiveLimit);
+            document.getElementById('ageDetailMode').value = preferredConfig.ageDetailMode;
             updateDataLabelOptions(chartType);
             renderChartTypeButtons(chartType);
             renderDataLabelButtons(chartType);
             renderChartLimitButtons(chartType);
+            renderAgeDetailButtons();
 
             setPresentationAdaptationNote(
                 'chartTypeAdaptationNote',
@@ -1672,7 +1731,7 @@
 
             const options = datalabelModeSelect.querySelectorAll('option');
             
-            // Para Tendencias, deshabilitar "Solo %" y "Ambos"
+            // Tendencias admite mostrar el valor u ocultar sus etiquetas.
             if (chartType === 'tendencias') {
                 options.forEach(option => {
                     if (option.value === 'percent' || option.value === 'both') {
@@ -1810,7 +1869,6 @@
             const picker = document.getElementById('colorPalettePicker');
             if (!picker) return;
 
-            const paletteKeys = Object.keys(colorPalettes);
             const selectedPalette = colorPalettes[paletteName] || [];
             const selectedLabel = colorPaletteLabels[paletteName] || paletteName;
             const selection = document.getElementById('statisticsPaletteSelection');
@@ -1823,7 +1881,7 @@
             }
             if (label) label.textContent = selectedLabel;
 
-            picker.innerHTML = paletteKeys.map(key => {
+            const renderPaletteButton = key => {
                 const palette = colorPalettes[key] || [];
                 const label = colorPaletteLabels[key] || key;
                 const swatches = palette.slice(0, 4);
@@ -1836,7 +1894,21 @@
                         <div class="palette-chip__label">${label}</div>
                     </button>
                 `;
-            }).join('');
+            };
+
+            const showAdditional = additionalPaletteKeys.includes(paletteName);
+            picker.innerHTML = `
+                <div class="statistics-palette-options" role="group" aria-label="Paletas recomendadas">
+                    ${primaryPaletteKeys.map(renderPaletteButton).join('')}
+                </div>
+                <button type="button" class="statistics-palette-more" data-palette-more aria-expanded="${showAdditional}">
+                    <span>Más paletas</span>
+                    <i class="fas ${showAdditional ? 'fa-chevron-up' : 'fa-chevron-down'}" aria-hidden="true"></i>
+                </button>
+                <div class="statistics-palette-options statistics-palette-options--additional ${showAdditional ? '' : 'hidden'}" data-additional-palettes role="group" aria-label="Paletas adicionales">
+                    ${additionalPaletteKeys.map(renderPaletteButton).join('')}
+                </div>
+            `;
         }
 
         function setSelectValueAndTrigger(selectId, value) {
@@ -1844,6 +1916,32 @@
             if (!select) return;
             select.value = value;
             select.dispatchEvent(new Event('change', { bubbles: true }));
+        }
+
+        function restorePresentationFocus(container, value) {
+            window.requestAnimationFrame(() => {
+                Array.from(container?.querySelectorAll('.visual-option-btn') || [])
+                    .find(button => button.dataset.value === value)
+                    ?.focus();
+            });
+        }
+
+        function resetPresentation() {
+            preferredConfig = {
+                type: defaultPresentationConfig.type,
+                dataLabelMode: defaultPresentationConfig.dataLabelMode,
+                limit: defaultPresentationConfig.limit,
+                ageDetailMode: defaultPresentationConfig.ageDetailMode
+            };
+            chartConfig.colorPalette = defaultPresentationConfig.colorPalette;
+
+            applyPreferredPresentation(currentChartType);
+            renderColorPalettePreview(defaultPresentationConfig.colorPalette);
+
+            const status = document.getElementById('statisticsPresentationStatus');
+            if (status) status.textContent = 'Presentación restablecida a los valores predeterminados.';
+
+            updateChart();
         }
 
         function renderChartTypeButtons(chartType) {
@@ -1862,14 +1960,18 @@
                 line: 'Línea',
                 area: 'Área'
             };
+            const accessibleLabels = {
+                ...labels,
+                barHorizontal: 'Barras horizontales'
+            };
 
             container.className = `statistics-visual-options${isSingleType ? ' is-single' : ''}`;
 
             container.innerHTML = availableTypes.map(type => {
                 const active = type === currentValue;
                 return `
-                    <button type="button" class="visual-option-btn visual-option-card ${isSingleType ? 'is-compact-single' : ''} ${active ? 'active' : ''}" data-target="chartTypeSelector" data-value="${type}" aria-pressed="${active}">
-                        <i class="fas ${chartTypeIcons[type] || 'fa-chart-simple'}"></i>
+                    <button type="button" class="visual-option-btn visual-option-card ${isSingleType ? 'is-compact-single' : ''} ${active ? 'active' : ''}" data-target="chartTypeSelector" data-value="${type}" aria-pressed="${active}" aria-label="${accessibleLabels[type] || type}">
+                        <i class="fas ${chartTypeIcons[type] || 'fa-chart-simple'}" aria-hidden="true"></i>
                         <span class="visual-option-label">${labels[type] || type}</span>
                     </button>
                 `;
@@ -1883,14 +1985,15 @@
 
             const currentValue = select.value || chartConfig.dataLabelMode || 'value';
             let options = [
-                { value: 'value', label: 'Valores' },
+                { value: 'value', label: 'Valor' },
                 { value: 'percent', label: 'Porcentaje' },
-                { value: 'both', label: 'Ambos' }
+                { value: 'both', label: 'Valor y %' },
+                { value: 'none', label: 'Sin etiquetas' }
             ];
 
-            // Para Tendencias, mostrar solo Valores
+            // Tendencias no dispone de un denominador categórico para porcentajes.
             if (chartType === 'tendencias') {
-                options = options.filter(opt => opt.value === 'value');
+                options = options.filter(opt => ['value', 'none'].includes(opt.value));
             }
 
             const isSingleOption = options.length === 1;
@@ -1901,11 +2004,24 @@
                 const active = option.value === currentValue;
                 return `
                     <button type="button" class="visual-option-btn visual-option-card ${isSingleOption ? 'is-compact-single' : ''} ${active ? 'active' : ''}" data-target="datalabelMode" data-value="${option.value}" aria-pressed="${active}">
-                        <i class="fas ${dataLabelIcons[option.value] || 'fa-circle'}"></i>
+                        <i class="fas ${dataLabelIcons[option.value] || 'fa-circle'}" aria-hidden="true"></i>
                         <span class="visual-option-label">${option.label}</span>
                     </button>
                 `;
             }).join('');
+        }
+
+        function renderAgeDetailButtons() {
+            const container = document.getElementById('ageDetailButtons');
+            const select = document.getElementById('ageDetailMode');
+            if (!container || !select) return;
+
+            const currentValue = select.value || chartConfig.ageDetailMode || 'summary';
+            container.querySelectorAll('.visual-option-btn').forEach(button => {
+                const active = button.dataset.value === currentValue;
+                button.classList.toggle('active', active);
+                button.setAttribute('aria-pressed', String(active));
+            });
         }
 
         function renderChartLimitButtons(chartType) {
@@ -1918,9 +2034,17 @@
             
             // Obtener los límites disponibles para este tipo de gráfico
             const availableLimits = chartLimitsByType[chartType] || chartLimitsByType.default;
-            
+            const availableCategoryCount = latestChartDataType === chartType
+                ? Number(latestChartData?.available_categories || 0)
+                : 0;
+
             const options = [
-                { value: 'all', label: chartLimitLabels.all },
+                {
+                    value: 'all',
+                    label: availableCategoryCount > 0
+                        ? `${chartLimitLabels.all} (${availableCategoryCount.toLocaleString('es-MX')})`
+                        : chartLimitLabels.all
+                },
                 ...availableLimits.map(limit => ({ 
                     value: String(limit), 
                     label: chartLimitLabels[limit] 
@@ -1940,6 +2064,23 @@
                     </button>
                 `;
             }).join('');
+
+            const readabilityNote = document.getElementById('chartLimitReadabilityNote');
+            const needsGuidance = currentValue === 'all' && availableCategoryCount > 15;
+            if (readabilityNote) {
+                const effectiveChartType = chartConfig.type === 'auto'
+                    ? getOptimalChartType(chartType)
+                    : chartConfig.type;
+                const supportsHorizontal = (chartTypeOptions[chartType] || []).includes('barHorizontal');
+                readabilityNote.textContent = !needsGuidance
+                    ? ''
+                    : ['pie', 'doughnut'].includes(effectiveChartType)
+                        ? `${availableCategoryCount.toLocaleString('es-MX')} categorías se resumen en los 10 segmentos principales y un segmento Resto para conservar la legibilidad.`
+                    : effectiveChartType === 'barHorizontal'
+                        ? `${availableCategoryCount.toLocaleString('es-MX')} categorías amplían la altura de la gráfica. Usa Top 15 para una comparación más rápida.`
+                        : `${availableCategoryCount.toLocaleString('es-MX')} categorías pueden saturar la gráfica.${supportsHorizontal ? ' Usa Top 15 o Barras horizontales para facilitar la lectura.' : ' Usa Top 15 para facilitar la lectura.'}`;
+                readabilityNote.classList.toggle('hidden', !needsGuidance);
+            }
 
             const showTopSelector = chartTypesWithTopSelector.includes(chartType);
             wrapper.style.display = showTopSelector ? '' : 'none';
@@ -2027,7 +2168,6 @@
             activeFilters.sexo = document.getElementById('sexoFilter').value || null;
             activeFilters.edad = document.getElementById('edadFilter').value.trim() || null;
             activeFilters.granularidad = document.getElementById('granularidadFilter').value || 'month';
-            activeFilters.mostrarCausasPrincipales = document.getElementById('mostrarCausasPrincipales').checked || false;
             activeFilters.tipoComparativa = document.getElementById('tipoComparativaFilter').value || 'residencia-defuncion';
             activeFilters.tipoMunicipio = document.getElementById('tipoMunicipioFilter').value || 'defuncion';
             
@@ -2304,18 +2444,19 @@
                 if (requestId !== chartRequestSequence || chartType !== currentChartType) return;
 
                 if (data.error) {
-                    showErrorMessage(data.message || 'No se pudieron obtener los datos.');
+                    showErrorMessage('No se pudo cargar la gráfica');
                     return;
                 }
 
                 latestChartData = data;
                 latestChartDataType = chartType;
+                renderChartLimitButtons(chartType);
                 renderChart(cloneChartData(data));
             } catch (error) {
                 if (error.name === 'AbortError') return;
                 console.error('Error:', error);
                 if (requestId === chartRequestSequence) {
-                    showErrorMessage('No se pudieron cargar los datos. Intenta nuevamente.');
+                    showErrorMessage('No se pudo cargar la gráfica');
                 }
             } finally {
                 if (chartRequestController === requestController) chartRequestController = null;
@@ -2376,16 +2517,24 @@
                 viewData.href = dataUrl;
                 viewData.removeAttribute('aria-disabled');
             }
+            setChartOutputActionsEnabled(true);
             if (reviewExcluded) reviewExcluded.href = excludedUrl;
         }
 
         function showNoChartData(data) {
             const excludedTotal = Number(data?.quality?.excluded_total || 0);
-            showErrorMessage(
+            const filteredResults = hasAppliedChartFilters();
+            showEmptyMessage(
                 excludedTotal > 0
                     ? 'No hay registros completos para construir esta gráfica.'
                     : 'No hay datos para los filtros seleccionados.',
+                excludedTotal > 0,
+                Number(data?.filtered_total ?? data?.total ?? 0),
                 excludedTotal > 0
+                    ? 'Revisa los registros no incluidos o ajusta los filtros aplicados.'
+                    : (filteredResults
+                        ? 'Prueba con otros criterios o limpia los filtros aplicados.'
+                        : 'No hay registros disponibles para esta visualización.')
             );
         }
 
@@ -2606,29 +2755,33 @@
             if (errorMessage) errorMessage.style.display = 'none';
             if (chartContainer) chartContainer.style.visibility = 'visible';
             const axisFontSize = 12;
-            const valueLabelFontSize = 12;
+            const valueLabelFontSize = 13;
             const legendFontSize = 12;
+            const chartFontFamily = 'Open Sans';
             
             // Grids diferentes según chart type para espaciado consistente
             const verticalBarGrids = {
-                municipios: { left: '3%', right: '4%', top: 42, bottom: 52, containLabel: true },
-                edades: { left: '3%', right: '4%', top: 42, bottom: 48, containLabel: true },
-                genero: { left: '3%', right: '4%', top: 42, bottom: 54, containLabel: true },
-                causas: { left: '3%', right: '4%', top: 42, bottom: 54, containLabel: true },
-                distritoes: { left: '3%', right: '4%', top: 42, bottom: 54, containLabel: true },
-                comparativa: { left: '3%', right: '4%', top: 38, bottom: 68, containLabel: true },
-                tendencias: { left: '3%', right: '4%', top: 40, bottom: 56, containLabel: true }
+                municipios: { left: 14, right: 14, top: 28, bottom: 18, containLabel: true },
+                edades: { left: 14, right: 14, top: 28, bottom: 18, containLabel: true },
+                genero: { left: 14, right: 14, top: 28, bottom: 18, containLabel: true },
+                causas: { left: 14, right: 14, top: 28, bottom: 18, containLabel: true },
+                distritoes: { left: 14, right: 14, top: 28, bottom: 18, containLabel: true },
+                comparativa: { left: 18, right: 18, top: 34, bottom: 54, containLabel: true },
+                tendencias: { left: 18, right: 18, top: 34, bottom: 36, containLabel: true }
             };
             
             // Obtener grid para el chart type actual
-            const verticalBarGrid = verticalBarGrids[currentChartType] || { left: '3%', right: '4%', top: 42, bottom: 54, containLabel: true };
-            const expandedCircularCharts = ['municipios', 'edades', 'genero', 'causas', 'distritoes'].includes(currentChartType);
+            const verticalBarGrid = verticalBarGrids[currentChartType] || { left: 14, right: 14, top: 28, bottom: 18, containLabel: true };
             const formatNumber = (num) => Number(num || 0).toLocaleString('es-MX');
             const labelRich = {
-                value: { fontWeight: 800, color: '#1f2937', fontSize: expandedCircularCharts ? 18 : valueLabelFontSize + 1 },
-                percent: { fontWeight: 800, color: '#1f2937', fontSize: expandedCircularCharts ? 18 : valueLabelFontSize + 1 },
-                normal: { fontWeight: 600, color: '#404041', fontSize: expandedCircularCharts ? 16 : valueLabelFontSize }
+                value: { fontFamily: chartFontFamily, fontWeight: 600, color: '#1f2937', fontSize: 13, lineHeight: 16 },
+                percent: { fontFamily: chartFontFamily, fontWeight: 600, color: '#1f2937', fontSize: 13, lineHeight: 16 },
+                normal: { fontFamily: chartFontFamily, fontWeight: 500, color: '#64748b', fontSize: 10, lineHeight: 13 }
             };
+
+            if (chartConfig.dataLabelMode === 'both') {
+                verticalBarGrid.top += 8;
+            }
             
             // Limpiar instancia anterior completamente
             if (currentEchartsInstance) {
@@ -2656,27 +2809,21 @@
                     
                     // Altura uniforme para todas las gráficas no circulares
                     // Reset chart container width when not using compact pie layout
-                    if (chartContainer) chartContainer.style.width = '';
+                    if (chartContainer) {
+                        chartContainer.style.width = '';
+                        chartContainer.style.margin = '';
+                    }
                 }
             }
 
-            let chartTitle = currentChartType === 'comparativa' 
-                ? comparativaLabels[activeFilters.tipoComparativa] || chartTitles[currentChartType]
-                : (chartTitles[currentChartType] || 'Gráfica');
-            
-            // Agregar tipo de municipio en el título si aplica
-            if (currentChartType === 'municipios' && activeFilters.tipoMunicipio) {
-                const tipoLabel = activeFilters.tipoMunicipio === 'residencia' ? 'residencia' : 'defunción';
-                chartTitle += ` (${tipoLabel})`;
-            }
-            
-            document.getElementById('chartTitle').textContent = chartTitle;
+            document.getElementById('chartTitle').textContent = getCurrentChartTitle();
             const filteredTotal = Number(data.filtered_total ?? data.total ?? 0);
             const totalStr = filteredTotal.toLocaleString('es-MX');
             const totalEl = document.getElementById('totalRecords');
             if (totalEl) totalEl.textContent = totalStr;
             const badgeEl = document.getElementById('chartTotalValue');
             if (badgeEl) badgeEl.textContent = totalStr;
+            document.getElementById('chartTotalBadge')?.classList.remove('hidden');
             updatePreviousPeriodComparison(data);
             updateChartContext(data);
             updateChartSourceSummary(data.source_summary);
@@ -2688,7 +2835,13 @@
             // Usar paleta de alto contraste para gráficas circulares, paleta normal para barras/líneas
             const paletteSource = isPieLikeChart ? colorPalettesCircular : colorPalettes;
             const palette = paletteSource[chartConfig.colorPalette];
-            const colors = labels.map((_, i) => palette[i % palette.length]);
+            const colors = labels.map((_, i) => {
+                if (isPieLikeChart && labels.length > 1 && labels.length <= 5) {
+                    const distributedIndex = Math.floor(i * palette.length / labels.length);
+                    return palette[Math.min(distributedIndex, palette.length - 1)];
+                }
+                return palette[i % palette.length];
+            });
 
             // Determinar tipo de gráfica: usar la selección del usuario o el óptimo si es "auto"
             let chartType = resolvedChartType;
@@ -2757,11 +2910,13 @@
                 const text = normalizeCategoryLabel(value);
                 if (text.length <= maxCharsPerLine) return text;
 
+                const minimumWholeWordLength = 12;
+                const wordChunkSize = Math.max(maxCharsPerLine, minimumWholeWordLength);
                 const words = text.split(' ').flatMap(word => {
-                    if (word.length <= maxCharsPerLine) return [word];
+                    if (word.length <= wordChunkSize) return [word];
                     const parts = [];
-                    for (let index = 0; index < word.length; index += maxCharsPerLine) {
-                        parts.push(word.slice(index, index + maxCharsPerLine));
+                    for (let index = 0; index < word.length; index += wordChunkSize) {
+                        parts.push(word.slice(index, index + wordChunkSize));
                     }
                     return parts;
                 });
@@ -2789,44 +2944,48 @@
                 ...labels.map(label => formatVerticalCategoryLabel(label).split('\n').length)
             );
 
+            const verticalAxisLabelStep = labels.length > 20 ? Math.ceil(labels.length / 12) : 1;
             const verticalCategoryAxisLabel = {
-                interval: 0,
+                interval: labels.length > 20
+                    ? index => index % verticalAxisLabelStep === 0 || index === labels.length - 1
+                    : 0,
                 rotate: 0,
                 align: 'center',
                 verticalAlign: 'top',
                 lineHeight: 14,
                 fontSize: labels.length > 10 ? 11 : axisFontSize,
+                fontFamily: chartFontFamily,
+                fontWeight: 500,
                 color: '#404041',
+                hideOverlap: true,
                 formatter: formatVerticalCategoryLabel
             };
 
             const horizontalCategoryAxisLabel = {
                 interval: 0,
                 align: 'right',
-                lineHeight: 14,
-                fontSize: labels.length > 12 ? 11 : axisFontSize,
+                lineHeight: labels.length > 15 ? 14 : 15,
+                fontSize: labels.length > 15 ? 11 : axisFontSize,
+                fontFamily: chartFontFamily,
+                fontWeight: 500,
                 color: '#404041',
                 formatter: value => wrapCategoryLabel(value, 28)
             };
-
-            if (verticalLabelLineCount > 1) {
-                verticalBarGrid.bottom += (verticalLabelLineCount - 1) * 14;
-            }
 
             if (chartWrapper) {
                 const presentationPanel = document.querySelector('.statistics-display-panel');
                 const chartPanel = document.getElementById('statisticsChartPanel');
                 const chartHeader = chartPanel?.querySelector('.statistics-chart-header');
                 const chartSource = document.getElementById('statisticsChartSource');
-                const baseHeight = Math.min(448, Math.max(368, window.innerHeight * 0.44));
+                const baseHeight = Math.min(420, Math.max(350, window.innerHeight * 0.4));
                 let contentHeight = baseHeight;
 
                 if (resolvedChartType === 'barHorizontal') {
-                    contentHeight = Math.min(680, Math.max(baseHeight, labels.length * 34 + 108));
+                    contentHeight = Math.max(baseHeight, labels.length * 34 + 82);
                 } else if (resolvedChartType === 'bar') {
-                    contentHeight = Math.min(620, baseHeight + Math.max(0, verticalLabelLineCount - 1) * 18);
+                    contentHeight = baseHeight;
                 } else if (isPieLikeChart) {
-                    contentHeight = Math.max(baseHeight, 420);
+                    contentHeight = Math.max(baseHeight, 400);
                 }
 
                 const chartChromeHeight = (chartHeader?.offsetHeight || 0)
@@ -2834,7 +2993,11 @@
                 const sidebarMatchedHeight = window.matchMedia('(min-width: 1280px)').matches
                     ? Math.max(0, (presentationPanel?.offsetHeight || 0) - chartChromeHeight)
                     : 0;
-                const targetHeight = Math.ceil(Math.min(680, Math.max(contentHeight, sidebarMatchedHeight)));
+                const targetHeight = Math.ceil(
+                    resolvedChartType === 'barHorizontal'
+                        ? Math.max(contentHeight, sidebarMatchedHeight)
+                        : Math.min(680, Math.max(contentHeight, sidebarMatchedHeight))
+                );
 
                 chartWrapper.style.height = `${targetHeight}px`;
                 chartWrapper.style.minHeight = `${targetHeight}px`;
@@ -2862,37 +3025,49 @@
                     animationDuration: 800,
                     animationEasing: 'cubicOut',
                     title: { text: '' },
-                    tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' }, textStyle: { fontSize: axisFontSize } },
+                    tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' }, textStyle: { fontFamily: chartFontFamily, fontSize: axisFontSize } },
                     legend: {
                         type: 'scroll',
                         data: comparisonLegend,
                         bottom: 10,
                         itemWidth: 18,
                         itemHeight: 16,
-                        textStyle: { fontSize: legendFontSize, color: '#404041' }
+                        textStyle: { fontFamily: chartFontFamily, fontSize: legendFontSize, fontWeight: 500, color: '#404041' }
                     },
                     grid: verticalBarGrid,
                     xAxis: {
                         type: 'category',
                         data: labels,
+                        axisLine: { lineStyle: { color: '#94a3b8' } },
+                        axisTick: { lineStyle: { color: '#94a3b8' } },
                         axisLabel: verticalCategoryAxisLabel
                     },
                     yAxis: {
                         type: 'value',
-                        axisLabel: { fontSize: axisFontSize, color: '#404041' }
+                        axisLine: { show: false },
+                        axisTick: { show: false },
+                        axisLabel: { fontFamily: chartFontFamily, fontSize: axisFontSize, fontWeight: 400, color: '#526278' },
+                        splitLine: { lineStyle: { color: '#dbe3ec', width: 1 } }
                     },
                     series: comparisonSeries.map((series, index) => ({
                         name: series.name,
                         type: 'bar',
                         stack: data.stacked ? 'total' : undefined,
                         data: series.data || [],
-                        itemStyle: { color: palette[index % palette.length] },
+                        barMaxWidth: data.stacked
+                            ? (labels.length <= 5 ? 72 : (labels.length <= 10 ? 58 : 42))
+                            : (labels.length <= 5 ? 42 : (labels.length <= 10 ? 36 : 28)),
+                        itemStyle: {
+                            color: palette[index % palette.length],
+                            borderRadius: data.stacked ? 0 : [3, 3, 0, 0]
+                        },
                         emphasis: { focus: 'series' },
                         label: {
                             show: showComparisonLabels && chartConfig.dataLabelMode !== 'none',
                             position: data.stacked ? 'inside' : 'top',
                             fontSize: valueLabelFontSize,
-                            fontWeight: 700,
+                            fontFamily: chartFontFamily,
+                            fontWeight: 600,
                             formatter: params => {
                                 const value = Number(params.value || 0);
                                 if (!value) return '';
@@ -2900,7 +3075,7 @@
                                     ? `${((value / comparisonDenominator) * 100).toFixed(1)}%`
                                     : '0.0%';
                                 if (chartConfig.dataLabelMode === 'percent') return percentage;
-                                if (chartConfig.dataLabelMode === 'both') return `${formatNumber(value)} (${percentage})`;
+                                if (chartConfig.dataLabelMode === 'both') return `${formatNumber(value)}\n${percentage}`;
                                 return formatNumber(value);
                             }
                         }
@@ -2908,13 +3083,31 @@
                 };
             } else if (chartType === 'pie' || chartType === 'doughnut') {
                 // Gráficas de pastel
-                const pieData = labels.map((label, i) => ({
+                const sourcePieData = labels.map((label, i) => ({
                     name: label,
                     value: values[i]
                 }));
                 const omittedTotal = Number(data.omitted_total || 0);
-                if (omittedTotal > 0) {
-                    pieData.push({ name: 'Otros', value: omittedTotal, itemStyle: { color: '#cbd5e1' } });
+                const omittedCategories = Math.max(
+                    0,
+                    Number(data.available_categories || 0) - Number(data.displayed_categories || labels.length)
+                );
+
+                // Un pastel con decenas de sectores deja de ser comparable. En listados
+                // extensos conservamos los diez principales y reunimos la cola en Resto.
+                const circularDetailLimit = sourcePieData.length > 15 ? 10 : 12;
+                const pieData = sourcePieData.slice(0, circularDetailLimit);
+                const groupedPieData = sourcePieData.slice(circularDetailLimit);
+                const groupedCategories = omittedCategories + groupedPieData.length;
+                const groupedTotal = omittedTotal + groupedPieData.reduce(
+                    (sum, item) => sum + Number(item.value || 0),
+                    0
+                );
+                if (groupedTotal > 0) {
+                    const remainderLabel = groupedCategories > 0
+                        ? `Resto (${groupedCategories})`
+                        : 'Resto';
+                    pieData.push({ name: remainderLabel, value: groupedTotal, itemStyle: { color: '#cbd5e1' } });
                 }
                 // Filtrar slices con valor 0 para evitar mostrar muchos 0 alrededor del pastel
                 const filteredPieData = pieData.filter(d => Number(d.value || 0) !== 0);
@@ -2922,118 +3115,205 @@
                     showNoChartData(data);
                     return;
                 }
-                // Calcular medidas en píxeles para ocupar solo lo necesario
-                let pieDiameterPx = 0;
-                let legendEstimatePx = 180; // ancho estimado para la leyenda
-                let legendRightOffset = 12;
-                let containerHeightAdjusted = null;
-                
-                if (chartWrapper) {
-                    const wrapperRect = chartWrapper.getBoundingClientRect();
-                    const wrapperH = Math.max(380, wrapperRect.height || 520);
-                    const pieScale = expandedCircularCharts ? 0.84 : 0.9;
-                    pieDiameterPx = Math.floor(wrapperH * pieScale);
-                } else {
-                    pieDiameterPx = expandedCircularCharts ? 420 : 420;
-                }
+                chartContainer.style.width = '100%';
+                chartContainer.style.margin = '0';
 
-                // Para 'edades', 'genero' y 'causas' (gráficas expandidas): ajustar leyenda
-                if (expandedCircularCharts) {
-                    legendEstimatePx = Math.max(230, filteredPieData.length * 13 + 70);
-                    // Espaciado especial para Causas: mucho más espacio
-                    legendRightOffset = currentChartType === 'causas' ? 130 : 90;
-                }
-
-                // Ajustar ancho del contenedor del canvas para que no ocupe todo el espacio
-                let estimatedTotalWidth = pieDiameterPx + legendEstimatePx + 40;
-                if (expandedCircularCharts) {
-                    // Espacio generoso para que los números de la izquierda no se corten y la leyenda tenga distancia
-                    let additionalSpacing = currentChartType === 'causas' ? 320 : 240;
-                    estimatedTotalWidth = pieDiameterPx + legendEstimatePx + additionalSpacing;
-                }
-                chartContainer.style.width = estimatedTotalWidth + 'px';
-                chartContainer.style.margin = '0 auto';
-
-                // Calcular centro y radios en píxeles para que el pie esté a la izquierda y la leyenda a la derecha
-                let centerX = Math.round(pieDiameterPx / 2 + 20) + 'px';
-                const centerY = '50%';
-                let outerRadius = Math.round(pieDiameterPx / 2) + 'px';
-                let innerRadius = chartType === 'doughnut' ? Math.round(pieDiameterPx * 0.35) + 'px' : null;
-
-                // Para 'edades', 'genero' y 'causas' (gráficas expandidas): mover el pie más a la derecha y agrandar el radio
-                if (expandedCircularCharts) {
-                    centerX = Math.round(pieDiameterPx / 2 + 90) + 'px';
-                    outerRadius = Math.round(pieDiameterPx * 0.42) + 'px';
-                    if (chartType === 'doughnut') {
-                        innerRadius = Math.round(pieDiameterPx * 0.26) + 'px';
-                    }
-                }
-
-                // Determinar tamaño de fuente de leyenda según el tipo de gráfica
-                let legendFontSizeActual = 15;
-                if (expandedCircularCharts) {
-                    // Para causas, reducir fuente un poco para que quepa mejor
-                    legendFontSizeActual = currentChartType === 'causas' ? 12 : 14;
-                }
+                const circularWidth = chartWrapper?.clientWidth || 960;
+                const circularHeight = chartWrapper?.clientHeight || 400;
+                const compactCircularLayout = circularWidth < 760;
+                const circularSegmentCount = filteredPieData.length;
+                const crowdedCircularChart = circularSegmentCount > 6;
+                const veryCrowdedCircularChart = circularSegmentCount > 12;
+                const longestCircularLabel = Math.max(0, ...filteredPieData.map(item => String(item.name).length));
+                const circularLegendNeedsMoreRoom = currentChartType === 'causas' || longestCircularLabel > 22;
+                const useCircularCallouts = !compactCircularLayout
+                    && chartConfig.dataLabelMode !== 'none'
+                    && circularSegmentCount <= 6
+                    && !circularLegendNeedsMoreRoom;
+                const sparseCircularRadiusCap = circularSegmentCount <= 2
+                    ? 174
+                    : (circularSegmentCount <= 4 ? 184 : 192);
+                // El diámetro se expresa en px y tiene un tope estable. Si se usara un
+                // porcentaje, el círculo cambiaría al crecer el panel por notas o controles.
+                const desktopOuterRadius = Math.max(
+                    148,
+                    Math.min(
+                        circularLegendNeedsMoreRoom ? Math.min(184, sparseCircularRadiusCap) : sparseCircularRadiusCap,
+                        Math.floor((circularHeight - 56) / 2),
+                        Math.floor(circularWidth * .22)
+                    )
+                );
+                const desktopInnerRadius = Math.round(desktopOuterRadius * .58);
+                const desktopCenterRatio = useCircularCallouts
+                    ? .5
+                    : circularLegendNeedsMoreRoom
+                    ? .32
+                    : .35;
+                const center = compactCircularLayout
+                    ? ['50%', '39%']
+                    : [`${Math.round(desktopCenterRatio * 100)}%`, '50%'];
+                const radius = chartType === 'doughnut'
+                    ? (compactCircularLayout
+                        ? ['29%', '50%']
+                        : [desktopInnerRadius, desktopOuterRadius])
+                    : (compactCircularLayout ? '50%' : desktopOuterRadius);
+                const circularTotal = filteredPieData.reduce((sum, item) => sum + Number(item.value || 0), 0);
+                const pieValueByName = new Map(filteredPieData.map(item => [String(item.name), Number(item.value || 0)]));
+                const formatCircularMetric = (name) => {
+                    const value = pieValueByName.get(String(name)) || 0;
+                    const percentage = circularTotal > 0 ? `${((value / circularTotal) * 100).toFixed(1)}%` : '0.0%';
+                    if (chartConfig.dataLabelMode === 'none') return '';
+                    if (chartConfig.dataLabelMode === 'percent') return percentage;
+                    if (chartConfig.dataLabelMode === 'both') return `${formatNumber(value)} · ${percentage}`;
+                    return formatNumber(value);
+                };
+                const formatCircularCallout = (params) => {
+                    const percentage = filteredTotal > 0
+                        ? `${((Number(params.value || 0) / filteredTotal) * 100).toFixed(1)}%`
+                        : '0.0%';
+                    const metric = chartConfig.dataLabelMode === 'percent'
+                        ? percentage
+                        : chartConfig.dataLabelMode === 'both'
+                            ? `${formatNumber(params.value)} · ${percentage}`
+                            : formatNumber(params.value);
+                    return `{calloutName|${params.name}}\n{calloutMetric|${metric}}`;
+                };
 
                 option = {
                     color: colors,
-                    // Activar animaciones explícitamente para pie/doughnut
                     animation: true,
                     animationDuration: 800,
                     animationEasing: 'cubicOut',
-                    tooltip: { trigger: 'item', textStyle: { fontSize: axisFontSize } },
+                    tooltip: {
+                        trigger: 'item',
+                        confine: true,
+                        backgroundColor: '#ffffff',
+                        borderColor: '#cbd5e1',
+                        borderWidth: 1,
+                        textStyle: { fontFamily: chartFontFamily, fontSize: axisFontSize, color: '#10233f' },
+                        formatter: params => `${params.marker}<strong>${params.name}</strong><br>${formatNumber(params.value)} · ${params.percent.toFixed(1)}%`
+                    },
                     legend: {
-                        orient: 'vertical',
-                        left: 'auto',
-                        right: legendRightOffset,
-                        top: 'middle',
-                        itemWidth: expandedCircularCharts ? 36 : 18,
-                        itemHeight: expandedCircularCharts ? 22 : 16,
-                        itemGap: 12,
+                        show: !useCircularCallouts,
+                        type: compactCircularLayout || veryCrowdedCircularChart ? 'scroll' : 'plain',
+                        orient: compactCircularLayout ? 'horizontal' : 'vertical',
+                        left: compactCircularLayout
+                            ? 18
+                            : (circularLegendNeedsMoreRoom ? '50%' : (crowdedCircularChart ? '55%' : '57%')),
+                        right: compactCircularLayout ? 18 : 16,
+                        top: compactCircularLayout ? 'auto' : 'middle',
+                        bottom: compactCircularLayout ? 4 : 'auto',
+                        itemWidth: 12,
+                        itemHeight: 12,
+                        itemGap: compactCircularLayout ? 14 : (circularSegmentCount > 10 ? 7 : 10),
+                        icon: 'roundRect',
+                        formatter: name => {
+                            const metric = !useCircularCallouts ? formatCircularMetric(name) : '';
+                            return metric ? `{legendName|${name}}  {legendMetric|${metric}}` : `{legendName|${name}}`;
+                        },
                         textStyle: {
-                            fontSize: legendFontSizeActual,
-                            color: '#404041'
+                            fontFamily: 'Open Sans',
+                            fontSize: 12,
+                            color: '#334155',
+                            rich: {
+                                legendName: {
+                                    width: compactCircularLayout ? undefined : (circularLegendNeedsMoreRoom ? 250 : 190),
+                                    color: '#334155',
+                                    lineHeight: 18,
+                                    overflow: 'break'
+                                },
+                                legendMetric: { width: compactCircularLayout ? undefined : 74, align: 'right', color: '#10233f', fontWeight: 600, lineHeight: 18 }
+                            }
                         }
                     },
                     series: [{
                         name: chartTitles[currentChartType],
                         type: 'pie',
-                        center: [centerX, centerY],
-                        radius: innerRadius ? [innerRadius, outerRadius] : outerRadius,
+                        center,
+                        radius,
                         avoidLabelOverlap: true,
+                        minAngle: 1,
+                        selectedOffset: 4,
                         data: filteredPieData,
+                        itemStyle: {
+                            borderColor: '#ffffff',
+                            borderWidth: 2,
+                            borderJoin: 'round'
+                        },
+                        emphasis: {
+                            scale: true,
+                            scaleSize: 5,
+                            itemStyle: { shadowBlur: 10, shadowColor: 'rgba(15, 23, 42, .16)' }
+                        },
                         label: {
-                            show: true,
+                            show: useCircularCallouts,
                             position: 'outside',
-                            distance: expandedCircularCharts ? 8 : 6,
-                            fontSize: expandedCircularCharts ? 14 : 15,
-                            fontWeight: 700,
+                            alignTo: 'none',
+                            distanceToLabelLine: 7,
+                            fontSize: 12,
+                            fontFamily: chartFontFamily,
+                            fontWeight: 600,
                             color: '#404041',
-                            overflow: 'none',
-                            width: expandedCircularCharts ? 260 : 180,
-                            rich: labelRich,
-                            formatter: (params) => {
-                                const percentage = filteredTotal > 0
-                                    ? `${((Number(params.value || 0) / filteredTotal) * 100).toFixed(1)}%`
-                                    : '0.0%';
-                                if (chartConfig.dataLabelMode === 'value') {
-                                    return `{value|${formatNumber(params.value)}}`;
-                                } else if (chartConfig.dataLabelMode === 'percent') {
-                                    return `{percent|${percentage}}`;
-                                } else if (chartConfig.dataLabelMode === 'both') {
-                                    return `{value|${formatNumber(params.value)}} {normal|(${percentage})}`;
+                            rich: {
+                                calloutName: {
+                                    fontFamily: chartFontFamily,
+                                    fontWeight: 600,
+                                    color: '#334155',
+                                    fontSize: 12,
+                                    lineHeight: 17
+                                },
+                                calloutMetric: {
+                                    fontFamily: chartFontFamily,
+                                    fontWeight: 600,
+                                    color: '#64748b',
+                                    fontSize: 11,
+                                    lineHeight: 15
                                 }
-                                // Por defecto: mostrar valor en lugar del nombre
-                                return `{value|${formatNumber(params.value)}}`;
-                            }
+                            },
+                            formatter: formatCircularCallout
                         },
                         labelLine: {
-                            show: true,
-                            length: 12,
-                            length2: expandedCircularCharts ? 12 : 8
+                            show: useCircularCallouts,
+                            length: 18,
+                            length2: 14,
+                            minTurnAngle: 75,
+                            lineStyle: { width: 1, color: '#94a3b8' }
+                        },
+                        labelLayout: {
+                            hideOverlap: true
                         }
-                    }]
+                    }],
+                    graphic: chartType === 'doughnut' ? [{
+                        type: 'group',
+                        x: Math.round(circularWidth * (compactCircularLayout ? .5 : desktopCenterRatio)),
+                        y: Math.round(circularHeight * (compactCircularLayout ? .39 : .5)),
+                        children: [
+                            {
+                                type: 'text',
+                                style: {
+                                    x: 0,
+                                    y: -5,
+                                    text: formatNumber(circularTotal),
+                                    textAlign: 'center',
+                                    textVerticalAlign: 'bottom',
+                                    fill: '#10233f',
+                                    font: '700 22px Open Sans'
+                                }
+                            },
+                            {
+                                type: 'text',
+                                style: {
+                                    x: 0,
+                                    y: 7,
+                                    text: 'Total',
+                                    textAlign: 'center',
+                                    textVerticalAlign: 'top',
+                                    fill: '#64748b',
+                                    font: '600 11px Open Sans'
+                                }
+                            }
+                        ]
+                    }] : []
                 };
             } else if (chartType === 'line') {
                 // Línea o Área para tendencias
@@ -3042,12 +3322,19 @@
                     type: 'line',
                     data: values,
                     smooth: false,
+                    symbol: 'circle',
+                    symbolSize: 6,
+                    showSymbol: labels.length <= 24,
+                    lineStyle: { width: 2.5, color: palette[0] },
                     itemStyle: { color: palette[0] },
+                    emphasis: { focus: 'series', scale: true },
+                    labelLayout: { hideOverlap: true },
                     label: {
                         show: chartConfig.dataLabelMode !== 'none',
                         position: 'top',
                         fontSize: valueLabelFontSize,
-                        fontWeight: 800,
+                        fontFamily: chartFontFamily,
+                        fontWeight: 600,
                         color: '#404041',
                         rich: labelRich,
                         formatter: (params) => {
@@ -3072,17 +3359,22 @@
                     animationDuration: 800,
                     animationEasing: 'cubicOut',
                     title: { text: '' },
-                    tooltip: { trigger: 'axis', axisPointer: { type: 'cross' }, textStyle: { fontSize: axisFontSize } },
+                    tooltip: { trigger: 'axis', axisPointer: { type: 'cross' }, textStyle: { fontFamily: chartFontFamily, fontSize: axisFontSize } },
                     grid: verticalBarGrid,
                     xAxis: {
                         type: 'category',
                         data: labels,
                         boundaryGap: false,
-                        axisLabel: { rotate: 45, interval: 'auto', fontSize: axisFontSize, color: '#404041' }
+                        axisLine: { lineStyle: { color: '#94a3b8' } },
+                        axisTick: { lineStyle: { color: '#94a3b8' } },
+                        axisLabel: { rotate: 45, interval: 'auto', fontFamily: chartFontFamily, fontSize: axisFontSize, fontWeight: 500, color: '#526278' }
                     },
                     yAxis: {
                         type: 'value',
-                        axisLabel: { fontSize: axisFontSize, color: '#404041' }
+                        axisLine: { show: false },
+                        axisTick: { show: false },
+                        axisLabel: { fontFamily: chartFontFamily, fontSize: axisFontSize, fontWeight: 400, color: '#526278' },
+                        splitLine: { lineStyle: { color: '#dbe3ec', width: 1 } }
                     },
                     series: [seriesConfig]
                 };
@@ -3090,20 +3382,45 @@
                 // Barras verticales u horizontales
                 const isHorizontal = chartType === 'barHorizontal';
                 let categoryAxisFontSize = ['edades', 'genero'].includes(currentChartType)
-                    ? 16
-                    : (currentChartType === 'distritoes' ? 12 : axisFontSize);
+                    ? 13
+                    : (labels.length <= 5 ? 13 : (labels.length <= 10 ? 12 : 11));
 
                 if (['municipios', 'distritoes'].includes(currentChartType)) {
-                    if (chartConfig.limit === 10) {
-                        categoryAxisFontSize = 15;
-                    } else if (chartConfig.limit === 5) {
-                        categoryAxisFontSize = 16;
-                    }
+                    categoryAxisFontSize = labels.length <= 5 ? 13 : (labels.length <= 15 ? 12 : 11);
                 }
+
+                const denseVerticalBars = !isHorizontal && labels.length > 15;
+                const barLabelRich = {
+                    value: {
+                        ...labelRich.value,
+                        fontSize: denseVerticalBars ? 11 : (labels.length > 10 ? 12 : 13),
+                        lineHeight: denseVerticalBars ? 13 : (labels.length > 10 ? 15 : 16)
+                    },
+                    percent: {
+                        ...labelRich.percent,
+                        fontSize: denseVerticalBars ? 10 : (labels.length > 10 ? 11 : 13),
+                        lineHeight: denseVerticalBars ? 12 : (labels.length > 10 ? 14 : 16)
+                    },
+                    normal: {
+                        ...labelRich.normal,
+                        fontSize: denseVerticalBars ? 9 : 10,
+                        lineHeight: denseVerticalBars ? 11 : 13
+                    }
+                };
+                const sparseVerticalInset = labels.length <= 2
+                    ? '26%'
+                    : (labels.length === 3 ? '12%' : (labels.length === 4 ? '8%' : null));
+                const categoricalGrid = !isHorizontal && sparseVerticalInset
+                    ? {
+                        ...verticalBarGrid,
+                        left: sparseVerticalInset,
+                        right: sparseVerticalInset
+                    }
+                    : verticalBarGrid;
                 
                 // Preparar tooltip especial para Edades con causas principales
                 let tooltipFormatter = null;
-                if (currentChartType === 'edades' && activeFilters.mostrarCausasPrincipales && data.data_with_causes) {
+                if (currentChartType === 'edades' && chartConfig.ageDetailMode === 'causes' && data.data_with_causes) {
                     tooltipFormatter = (params) => {
                         if (params.length === 0) return '';
                         const dataIndex = params[0].dataIndex;
@@ -3131,26 +3448,39 @@
                     title: { text: '' },
                     tooltip: { 
                         trigger: 'axis', 
-                        axisPointer: { type: 'shadow' },
-                        textStyle: { fontSize: axisFontSize },
+                        confine: true,
+                        backgroundColor: '#ffffff',
+                        borderColor: '#cbd5e1',
+                        borderWidth: 1,
+                        axisPointer: {
+                            type: 'shadow',
+                            shadowStyle: { color: 'rgba(71, 85, 105, .08)' }
+                        },
+                        textStyle: { fontSize: axisFontSize, color: '#10233f' },
                         ...(tooltipFormatter ? { formatter: tooltipFormatter } : {})
                     },
                     grid: isHorizontal
                         ? {
-                            left: '3%',
-                            right: '4%',
-                            bottom: 40,
-                            top: 36,
+                            left: 18,
+                            right: chartConfig.dataLabelMode === 'none' ? 18 : 46,
+                            bottom: 22,
+                            top: 22,
                             containLabel: true
                         }
-                        : verticalBarGrid,
+                        : categoricalGrid,
                     [isHorizontal ? 'xAxis' : 'yAxis']: {
                         type: 'value',
-                        axisLabel: { fontSize: axisFontSize, color: '#404041' }
+                        axisLine: { show: false },
+                        axisTick: { show: false },
+                        axisLabel: { fontFamily: chartFontFamily, fontSize: axisFontSize, fontWeight: 400, color: '#526278' },
+                        splitLine: { lineStyle: { color: '#dbe3ec', width: 1 } }
                     },
                     [isHorizontal ? 'yAxis' : 'xAxis']: {
                         type: 'category',
                         data: labels,
+                        inverse: isHorizontal,
+                        axisLine: { lineStyle: { color: '#94a3b8' } },
+                        axisTick: { alignWithLabel: true, lineStyle: { color: '#94a3b8' } },
                         axisLabel: isHorizontal
                             ? { ...horizontalCategoryAxisLabel, fontSize: Math.min(horizontalCategoryAxisLabel.fontSize, categoryAxisFontSize) }
                             : {
@@ -3164,16 +3494,26 @@
                         name: chartTitles[currentChartType],
                         type: 'bar',
                         data: values,
+                        barMaxWidth: isHorizontal
+                            ? (labels.length <= 5 ? 40 : (labels.length <= 10 ? 34 : (labels.length <= 15 ? 28 : 22)))
+                            : (labels.length <= 2 ? 96 : (labels.length <= 4 ? 108 : (labels.length <= 5 ? 112 : (labels.length <= 10 ? 82 : (labels.length <= 15 ? 62 : 42))))),
+                        barCategoryGap: isHorizontal
+                            ? (labels.length <= 5 ? '38%' : (labels.length <= 10 ? '32%' : (labels.length <= 15 ? '28%' : '24%')))
+                            : (labels.length <= 5 ? '45%' : (labels.length <= 10 ? '30%' : (labels.length <= 15 ? '22%' : '12%'))),
                         itemStyle: {
-                            color: (params) => colors[params.dataIndex]
+                            color: (params) => colors[params.dataIndex],
+                            borderRadius: isHorizontal ? [0, 3, 3, 0] : [3, 3, 0, 0]
                         },
+                        emphasis: { focus: 'self', itemStyle: { opacity: .88 } },
                         label: {
                             show: chartConfig.dataLabelMode !== 'none',
                             position: isHorizontal ? 'right' : 'top',
+                            distance: isHorizontal ? 7 : 5,
                             fontSize: valueLabelFontSize,
-                            fontWeight: 800,
+                            fontFamily: chartFontFamily,
+                            fontWeight: 600,
                             color: '#404041',
-                            rich: labelRich,
+                            rich: barLabelRich,
                             formatter: (params) => {
                                 const total = filteredTotal;
                                 if (chartConfig.dataLabelMode === 'value') return `{value|${formatNumber(params.value)}}`;
@@ -3181,14 +3521,22 @@
                                     return `{percent|${total > 0 ? ((params.value / total) * 100).toFixed(1) : '0.0'}%}`;
                                 }
                                 if (chartConfig.dataLabelMode === 'both') {
-                                    return `{value|${formatNumber(params.value)}} {normal|(${total > 0 ? ((params.value / total) * 100).toFixed(1) : '0.0'}%)}`;
+                                    return `{value|${formatNumber(params.value)}}\n{normal|${total > 0 ? ((params.value / total) * 100).toFixed(1) : '0.0'}%}`;
                                 }
                                 return '';
                             }
-                        }
+                        },
+                        labelLayout: { hideOverlap: true }
                     }]
                 };
             }
+
+            option.textStyle = {
+                fontFamily: chartFontFamily,
+                fontWeight: 400,
+                color: '#334155',
+                ...(option.textStyle || {})
+            };
 
             // Aplicar opción y preservar animaciones: para pie/rosquilla
             // hacemos resize ANTES de setOption para que echarts inicie
@@ -3225,7 +3573,7 @@
                 applyOptionAndFinish();
             }
             
-            // Actualizar tabla de causas principales si es Edades
+            // Actualizar el detalle de causas principales si es Edades
             if (currentChartType === 'edades' && data.data_with_causes) {
                 updateCausasTable(data.data_with_causes, data.total || 0);
             }
@@ -3233,27 +3581,13 @@
         
         function updateCausasTable(dataWithCauses, grandTotal = 0) {
             const container = document.getElementById('causasPrincipalesContainer');
-            const tbody = document.getElementById('causasPrincipalesBody');
-            const totalHeader = document.getElementById('causasTotalHeader');
-            const detailHeader = document.getElementById('causasDetalleHeader');
+            const list = document.getElementById('causasPrincipalesBody');
+            const summary = document.getElementById('statisticsCausesSummary');
             
-            if (!container || !tbody) return;
+            if (!container || !list) return;
 
             const mode = chartConfig.dataLabelMode;
             const safeGrandTotal = Number(grandTotal || 0);
-
-            if (totalHeader && detailHeader) {
-                if (mode === 'percent') {
-                    totalHeader.textContent = 'Total (%)';
-                    detailHeader.textContent = 'Causas Principales (%)';
-                } else if (mode === 'both') {
-                    totalHeader.textContent = 'Total (Valor y %)';
-                    detailHeader.textContent = 'Causas Principales (Valor y %)';
-                } else {
-                    totalHeader.textContent = 'Total';
-                    detailHeader.textContent = 'Causas Principales';
-                }
-            }
 
             const formatPct = (value, total) => {
                 const num = Number(value || 0);
@@ -3269,13 +3603,6 @@
                 return num.toLocaleString('es-MX');
             };
 
-            const formatCauseValue = (count, rowTotal) => {
-                const num = Number(count || 0);
-                if (mode === 'percent') return `<span class="font-bold text-[#1f2937]">${formatPct(num, rowTotal)}</span>`;
-                if (mode === 'both') return `<span class="font-bold text-[#1f2937]">${num.toLocaleString('es-MX')} (${formatPct(num, rowTotal)})</span>`;
-                return `<span class="font-bold text-[#1f2937]">${num.toLocaleString('es-MX')}</span>`;
-            };
-
             const formatCauseValueText = (count, rowTotal) => {
                 const num = Number(count || 0);
                 if (mode === 'percent') return formatPct(num, rowTotal);
@@ -3283,41 +3610,47 @@
                 return num.toLocaleString('es-MX');
             };
 
-            const escapeAttr = (text) => String(text || '')
+            const escapeHtml = (text) => String(text || '')
                 .replace(/&/g, '&amp;')
                 .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;')
                 .replace(/</g, '&lt;')
                 .replace(/>/g, '&gt;');
             
-            tbody.innerHTML = '';
-            
-            dataWithCauses.forEach(item => {
-                const row = document.createElement('tr');
-                row.className = 'statistics-causes__row';
+            const visibleItems = dataWithCauses.filter(item => Number(item.total || 0) > 0);
+            const items = visibleItems.length ? visibleItems : dataWithCauses;
 
+            list.innerHTML = items.map(item => {
                 const sortedCauses = Object.entries(item.top_causes || {})
                     .map(([cause, count]) => ({ cause, count: Number(count || 0) }))
                     .sort((a, b) => b.count - a.count);
+                const causes = sortedCauses.length
+                    ? `<ol class="statistics-causes__ranking">${sortedCauses.map((entry, index) => `
+                        <li>
+                            <span class="statistics-causes__rank" aria-hidden="true">${index + 1}</span>
+                            <span class="statistics-causes__name">${escapeHtml(entry.cause)}</span>
+                            <strong class="statistics-causes__value">${formatCauseValueText(entry.count, item.total)}</strong>
+                        </li>
+                    `).join('')}</ol>`
+                    : '<p class="statistics-causes__empty">No hay causas registradas para este grupo.</p>';
 
-                const causasText = sortedCauses
-                    .map((entry, idx) => `<span class="causa-chip"><span class="top-rank-badge">#${idx + 1}</span>${entry.cause}<span class="top-count-pill">${formatCauseValue(entry.count, item.total)}</span></span>`)
-                    .join(' · ');
-
-                const causasTitle = sortedCauses
-                    .map((entry, idx) => `#${idx + 1}: ${entry.cause} = ${formatCauseValueText(entry.count, item.total)}`)
-                    .join(' | ');
-                
-                row.innerHTML = `
-                    <td class="statistics-causes__range">${item.range}</td>
-                    <td class="statistics-causes__total">${formatTotal(item.total)}</td>
-                    <td class="causas-principales-cell" title="${escapeAttr(causasTitle)}">${causasText || 'No disponible'}</td>
+                return `
+                    <article class="statistics-causes__item">
+                        <div class="statistics-causes__group">
+                            <span>Grupo de edad</span>
+                            <h4>${escapeHtml(item.range)}</h4>
+                            <p><strong>${formatTotal(item.total)}</strong> defunciones</p>
+                        </div>
+                        ${causes}
+                    </article>
                 `;
-                
-                tbody.appendChild(row);
-            });
+            }).join('');
+
+            if (summary) {
+                summary.textContent = `${items.length} ${items.length === 1 ? 'grupo' : 'grupos'} · hasta 3 causas por grupo`;
+            }
             
-            // Mostrar u ocultar la tabla SOLO si estamos en Edades Y el checkbox está marcado
-            const shouldShow = currentChartType === 'edades' && document.getElementById('mostrarCausasPrincipales').checked;
+            const shouldShow = currentChartType === 'edades' && chartConfig.ageDetailMode === 'causes';
             container.classList.toggle('hidden', !shouldShow);
         }
 
@@ -3355,7 +3688,6 @@
                 sexo: null,
                 edad: null,
                 granularidad: 'month',
-                mostrarCausasPrincipales: false,
                 tipoComparativa: 'residencia-defuncion',
                 tipoMunicipio: 'defuncion'
             });
@@ -3380,8 +3712,6 @@
             safeSetValue('granularidadFilter', 'month');
             safeSetValue('tipoComparativaFilter', 'residencia-defuncion');
             safeSetValue('tipoMunicipioFilter', 'defuncion');
-            const causesToggle = document.getElementById('mostrarCausasPrincipales');
-            if (causesToggle) causesToggle.checked = false;
             // NO resetear chartLimit aquí - preservar configuración de visualización por métrica
             // safeSetValue('chartLimit', 'all');
             // chartConfig.limit = null;
@@ -3433,14 +3763,12 @@
             if (errorMessage) errorMessage.style.display = 'none';
             const chartEl = document.getElementById('mainChart');
             if (chartEl) chartEl.style.visibility = 'hidden';
+            document.getElementById('chartTitle').textContent = getCurrentChartTitle();
+            document.getElementById('chartTotalBadge')?.classList.add('hidden');
             document.getElementById('statisticsPreviousComparison')?.classList.add('hidden');
             document.getElementById('statisticsChartContext')?.classList.add('hidden');
             document.getElementById('statisticsChartSource')?.classList.add('hidden');
-            const viewData = document.getElementById('statisticsViewData');
-            if (viewData) {
-                viewData.href = '#';
-                viewData.setAttribute('aria-disabled', 'true');
-            }
+            setChartOutputActionsEnabled(false);
         }
 
         function hideLoadingMessage() {
@@ -3448,263 +3776,105 @@
             if (loadingMessage) loadingMessage.style.display = 'none';
         }
 
+        function getCurrentChartTitle() {
+            let title = currentChartType === 'comparativa'
+                ? comparativaLabels[activeFilters.tipoComparativa] || chartTitles[currentChartType]
+                : (chartTitles[currentChartType] || 'Gráfica');
+
+            if (currentChartType === 'municipios' && activeFilters.tipoMunicipio) {
+                const typeLabel = activeFilters.tipoMunicipio === 'residencia' ? 'residencia' : 'defunción';
+                title += ` (${typeLabel})`;
+            }
+
+            return title;
+        }
+
+        function hasAppliedChartFilters() {
+            return !document.getElementById('filtrosActivos')?.classList.contains('hidden');
+        }
+
+        function setChartOutputActionsEnabled(enabled) {
+            const viewData = document.getElementById('statisticsViewData');
+            const downloadButton = document.getElementById('descargarActual');
+            const downloadToggle = document.getElementById('descargarOpciones');
+            const downloadMenu = document.getElementById('downloadMenu');
+
+            if (!enabled && viewData) {
+                viewData.href = '#';
+                viewData.setAttribute('aria-disabled', 'true');
+            }
+            [downloadButton, downloadToggle].forEach(button => {
+                if (button) button.disabled = !enabled;
+            });
+            if (!enabled) {
+                downloadMenu?.classList.add('hidden');
+                downloadToggle?.setAttribute('aria-expanded', 'false');
+            }
+        }
+
+        function configureChartState(kind, title, description, actionLabel = '', action = '') {
+            const state = document.getElementById('errorMessage');
+            const content = document.getElementById('statisticsChartStateContent');
+            const icon = document.getElementById('statisticsChartStateIcon');
+            const actionButton = document.getElementById('statisticsChartStateAction');
+
+            document.getElementById('errorText').textContent = title;
+            document.getElementById('statisticsChartStateDescription').textContent = description;
+            state?.classList.toggle('statistics-chart-state--empty', kind === 'empty');
+            state?.classList.toggle('statistics-chart-state--error', kind === 'error');
+            state?.setAttribute('role', kind === 'error' ? 'alert' : 'status');
+            state?.setAttribute('aria-live', kind === 'error' ? 'assertive' : 'polite');
+            icon?.classList.toggle('fa-chart-column', kind === 'empty');
+            icon?.classList.toggle('fa-triangle-exclamation', kind === 'error');
+
+            if (actionButton) {
+                actionButton.textContent = actionLabel;
+                actionButton.dataset.action = action;
+                actionButton.classList.toggle('hidden', !actionLabel);
+            }
+        }
+
+        function showEmptyMessage(message, preserveContext = false, total = 0, description = 'No hay registros disponibles para esta visualización.') {
+            configureChartState(
+                'empty',
+                message,
+                description,
+                hasAppliedChartFilters() ? 'Limpiar filtros' : '',
+                'clear'
+            );
+            showUnavailableChartState(preserveContext);
+            const totalBadge = document.getElementById('chartTotalBadge');
+            const totalValue = document.getElementById('chartTotalValue');
+            if (totalValue) totalValue.textContent = Number(total).toLocaleString('es-MX');
+            totalBadge?.classList.remove('hidden');
+        }
+
         function showErrorMessage(message, preserveContext = false) {
-            document.getElementById('errorText').textContent = message;
+            configureChartState(
+                'error',
+                message,
+                'Revisa tu conexión e inténtalo nuevamente.',
+                'Reintentar',
+                'retry'
+            );
+            showUnavailableChartState(preserveContext);
+            document.getElementById('chartTotalBadge')?.classList.add('hidden');
+        }
+
+        function showUnavailableChartState(preserveContext = false) {
             const errorMessage = document.getElementById('errorMessage');
             const loadingMessage = document.getElementById('loadingMessage');
             if (errorMessage) errorMessage.style.display = 'flex';
             if (loadingMessage) loadingMessage.style.display = 'none';
             const chartEl = document.getElementById('mainChart');
             if (chartEl) chartEl.style.visibility = 'hidden';
+            document.getElementById('chartTitle').textContent = getCurrentChartTitle();
             document.getElementById('statisticsPreviousComparison')?.classList.add('hidden');
             if (!preserveContext) document.getElementById('statisticsChartContext')?.classList.add('hidden');
             document.getElementById('statisticsChartSource')?.classList.add('hidden');
-            const viewData = document.getElementById('statisticsViewData');
-            if (viewData) {
-                viewData.href = '#';
-                viewData.setAttribute('aria-disabled', 'true');
-            }
+            setChartOutputActionsEnabled(false);
         }
     </script>
 
-    <style media="not all" data-legacy-statistics-page-styles>
-        /* Estilos para botones de pestaña */
-        .chart-tab-btn {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 0.625rem 1rem;
-            border: 1px solid #d1d5db;
-            border-bottom: 0;
-            border-top-left-radius: 0.5rem;
-            border-top-right-radius: 0.5rem;
-            background: white;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            color: #404041;
-            font-weight: 500;
-            white-space: nowrap;
-            position: relative;
-        }
-
-        .chart-tab-btn:hover:not(.active) {
-            background-color: #f3f4f6;
-        }
-
-        .chart-tab-btn.active {
-            color: white;
-            background-color: #404041;
-            border-color: #d1d5db;
-        }
-
-        .chart-tab-btn i {
-            color: currentColor;
-        }
-
-        .visual-option-btn {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            gap: 0.25rem;
-            justify-content: center;
-            width: 100%;
-            min-height: 4.9rem;
-            padding: 0.65rem 0.5rem;
-            border: 1px solid #e5e7eb;
-            background: #fff;
-            color: #404041;
-            transition: all 0.2s ease;
-            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
-            text-align: center;
-            border-radius: 0.75rem;
-        }
-
-        .visual-option-btn.is-compact-single {
-            width: auto;
-            min-width: 9.5rem;
-            padding-left: 0.9rem;
-            padding-right: 0.9rem;
-        }
-
-        .visual-option-btn span {
-            line-height: 1.05;
-        }
-
-        .visual-option-label {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.35rem;
-            padding: 0.18rem 0.48rem;
-            border-radius: 9999px;
-            background: #f8f2f5;
-            color: #611132;
-            font-size: 0.74rem;
-            font-weight: 700;
-            letter-spacing: 0.08em;
-            text-transform: uppercase;
-            width: fit-content;
-        }
-
-        .visual-option-btn:hover:not(:disabled) {
-            border-color: #c7b0bb;
-            background: #fdf8fa;
-            transform: translateY(-1px);
-        }
-
-        .visual-option-btn.active {
-            border-color: #611132;
-            background: #f8f2f5;
-            color: #611132;
-            box-shadow: 0 0 0 1px rgba(97, 17, 50, 0.08);
-        }
-
-        .visual-option-btn:disabled {
-            opacity: 0.45;
-            cursor: not-allowed;
-        }
-
-        .visual-option-card {
-            min-height: 4.9rem;
-        }
-
-        .visual-option-pill {
-            min-height: 4.9rem;
-        }
-
-        .visual-limit-badge {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            width: 1.7rem;
-            height: 1.7rem;
-            border-radius: 9999px;
-            background: #f3f4f6;
-            color: #611132;
-            font-size: 0.88rem;
-            font-weight: 800;
-            line-height: 1;
-        }
-
-        .visual-limit-badge.is-all {
-            width: 1.7rem;
-            height: 1.7rem;
-            font-size: 1.35rem;
-        }
-
-        .hide-scrollbar {
-            -ms-overflow-style: none;
-            scrollbar-width: none;
-        }
-
-        .hide-scrollbar::-webkit-scrollbar {
-            width: 0;
-            height: 0;
-            display: none;
-        }
-
-        /* Estilos para el selector de gráficas */
-        .chart-selector-btn {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 1.25rem 1rem;
-            border: 2px solid #e5e7eb;
-            border-radius: 0.5rem;
-            background: white;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            color: #404041;
-            font-weight: 500;
-        }
-
-        .chart-selector-btn:hover {
-            border-color: #611132;
-            background-color: #f8f4f6;
-            transform: translateY(-2px);
-        }
-
-        .chart-selector-btn.active {
-            border-color: #611132;
-            background-color: #611132;
-            color: white;
-            box-shadow: 0 4px 12px rgba(97, 17, 50, 0.3);
-        }
-
-        .chart-selector-btn i {
-            color: currentColor;
-        }
-
-        /* Estilos para los filtros */
-        .filter-section {
-            animation: slideIn 0.3s ease-out;
-        }
-
-        @keyframes slideIn {
-            from {
-                opacity: 0;
-                max-height: 0;
-            }
-            to {
-                opacity: 1;
-                max-height: 500px;
-            }
-        }
-
-        .dynamic-filter {
-            border: none;
-            padding: 0;
-        }
-
-        .dynamic-filter select {
-            max-height: 150px;
-            overflow-y: auto;
-        }
-
-        #estadisticas-filtros select[multiple] {
-            padding: 0.375rem 0;
-        }
-
-        #estadisticas-filtros select[multiple] option {
-            padding: 0.375rem 0.75rem;
-        }
-
-        /* Estilos para checkboxes de meses */
-        .month-checkbox {
-            display: none;
-        }
-
-        .month-label {
-            display: block;
-            text-center;
-            text-xs;
-            padding: 0.375rem 0;
-            background-color: #f3f4f6;
-            border: 1px solid #d1d5db;
-            border-radius: 0.375rem;
-            cursor: pointer;
-            user-select: none;
-            transition: all 0.2s ease;
-        }
-
-        .month-label:hover {
-            background-color: #e5e7eb;
-            border-color: #9ca3af;
-        }
-
-        .month-checkbox:checked + .month-label {
-            background-color: #611132;
-            color: white;
-            border-color: #611132;
-            font-weight: 500;
-        }
-
-        .month-checkbox:focus + .month-label {
-            outline: 2px solid #611132;
-            outline-offset: 1px;
-        }
-
-    </style>
 
 @endsection

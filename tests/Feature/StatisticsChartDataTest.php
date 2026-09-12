@@ -66,6 +66,21 @@ it('keeps the filtered total while reporting Top N coverage', function (): void 
         ->and($data['period']['end_date'])->toBe('2026-01-31');
 });
 
+it('uses consistent presentation labels without changing catalog values', function (): void {
+    $this->municipalityA->update(['name' => 'OTRO']);
+    $this->causeA->update(['name' => 'OTROS ACCIDENTES']);
+
+    $municipalities = statisticsChartResponse('municipios');
+    $causes = statisticsChartResponse('causas');
+    $districts = statisticsChartResponse('jurisdicciones');
+
+    expect($municipalities['labels'])->toContain('Otro')
+        ->and($causes['labels'])->toContain('Otros accidentes')
+        ->and($districts['labels'])->toContain('I · Prueba')
+        ->and($this->municipalityA->fresh()->name)->toBe('OTRO')
+        ->and($this->causeA->fresh()->name)->toBe('OTROS ACCIDENTES');
+});
+
 it('compares the analyzed total with an immediately preceding period of equal length', function (): void {
     foreach (range(1, 3) as $index) {
         $previousDeath = Death::query()->where('gov_folio', 'STAT-'.$index)->firstOrFail()->replicate();

@@ -15,14 +15,14 @@
             $selectedDistrict = (string) optional($municipalities->firstWhere('id', (int) $selectedResidenceMunicipality))->district_id;
         }
         $selectedDistrictName = $selectedDistrict !== ''
-            ? optional($districts->firstWhere('id', (int) $selectedDistrict))->name
+            ? optional($districts->firstWhere('id', (int) $selectedDistrict))->display_name
             : null;
         $selectedDeathDistrict = (string) old('death_district_id', $defuncion->death_district_id ?? '');
         if ($selectedDeathDistrict === '' && $selectedDeathMunicipality !== '') {
             $selectedDeathDistrict = (string) optional($municipalities->firstWhere('id', (int) $selectedDeathMunicipality))->district_id;
         }
         $selectedDeathDistrictName = $selectedDeathDistrict !== ''
-            ? optional($districts->firstWhere('id', (int) $selectedDeathDistrict))->name
+            ? optional($districts->firstWhere('id', (int) $selectedDeathDistrict))->display_name
             : null;
 
         $selectedSex = strtolower((string) old('sex', $defuncion->sex ?? ''));
@@ -142,7 +142,7 @@
                             @error('residence_municipality_id') aria-invalid="true" aria-describedby="residence-municipality-error" @enderror>
                             <option value="">Seleccione un municipio</option>
                             @foreach($municipalities as $municipality)
-                                <option value="{{ $municipality->id }}" @selected($selectedResidenceMunicipality === (string) $municipality->id)>{{ $municipality->name }}</option>
+                                <option value="{{ $municipality->id }}" @selected($selectedResidenceMunicipality === (string) $municipality->id)>{{ $municipality->display_name }}</option>
                             @endforeach
                         </select>
                         <p id="residence-municipality-client-error" class="statistics-field-error hidden" role="alert"></p>
@@ -164,7 +164,7 @@
                             @error('death_municipality_id') aria-invalid="true" aria-describedby="death-municipality-error" @enderror>
                             <option value="">Seleccione un municipio</option>
                             @foreach($municipalities as $municipality)
-                                <option value="{{ $municipality->id }}" @selected($selectedDeathMunicipality === (string) $municipality->id)>{{ $municipality->name }}</option>
+                                <option value="{{ $municipality->id }}" @selected($selectedDeathMunicipality === (string) $municipality->id)>{{ $municipality->display_name }}</option>
                             @endforeach
                         </select>
                         <p id="death-municipality-client-error" class="statistics-field-error hidden" role="alert"></p>
@@ -186,7 +186,7 @@
                             @error('death_location_id') aria-invalid="true" aria-describedby="death-location-error" @enderror>
                             <option value="">Seleccione un lugar</option>
                             @foreach($locations as $location)
-                                <option value="{{ $location->id }}" @selected($selectedDeathLocation === (string) $location->id)>{{ $location->name }}</option>
+                                <option value="{{ $location->id }}" @selected($selectedDeathLocation === (string) $location->id)>{{ $location->display_name }}</option>
                             @endforeach
                         </select>
                         <p id="death-location-client-error" class="statistics-field-error hidden" role="alert"></p>
@@ -201,7 +201,7 @@
                             @error('death_cause_id') aria-invalid="true" aria-describedby="death-cause-error" @enderror>
                             <option value="">Seleccione una causa</option>
                             @foreach($causes as $cause)
-                                <option value="{{ $cause->id }}" @selected($selectedDeathCause === (string) $cause->id)>{{ $cause->name }}</option>
+                                <option value="{{ $cause->id }}" @selected($selectedDeathCause === (string) $cause->id)>{{ $cause->display_name }}</option>
                             @endforeach
                         </select>
                         <p id="death-cause-client-error" class="statistics-field-error hidden" role="alert"></p>
@@ -231,7 +231,7 @@ document.addEventListener('DOMContentLoaded', function () {
     if (!form || typeof TomSelect === 'undefined') return;
 
     const municipalityToDistrict = @json($municipalities->mapWithKeys(fn ($municipality) => [(string) $municipality->id => (string) $municipality->district_id]));
-    const districtNames = @json($districts->mapWithKeys(fn ($district) => [(string) $district->id => $district->name]));
+    const districtNames = @json($districts->mapWithKeys(fn ($district) => [(string) $district->id => $district->display_name]));
     const residenceMunicipality = document.getElementById('residence_municipality_select');
     const deathMunicipality = document.getElementById('death_municipality_select');
     const districtInput = document.getElementById('jurisdiction_input');

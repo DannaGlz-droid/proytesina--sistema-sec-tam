@@ -49,3 +49,9 @@ function initAll(root = document, optionsFactory = null) {
 
 window.AppFilterSelect = Object.freeze({ init, initAll });
 window.dispatchEvent(new CustomEvent('app-filter-select:ready'));
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => initAll(), { once: true });
+} else {
+    initAll();
+}

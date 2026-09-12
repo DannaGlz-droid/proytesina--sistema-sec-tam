@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\CatalogLabel;
 use Illuminate\Database\Eloquent\Model;
 
 class DeathCause extends Model
@@ -43,6 +44,11 @@ class DeathCause extends Model
             ->whereIn('name', self::ALLOWED_NAMES)
             ->orderBy('name')
             ->get();
+    }
+
+    public function getDisplayNameAttribute(): string
+    {
+        return CatalogLabel::cause($this->name);
     }
 
     /**

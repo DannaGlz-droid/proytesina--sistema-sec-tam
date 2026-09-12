@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\CatalogLabel;
 use Illuminate\Database\Eloquent\Model;
 
 class DeathLocation extends Model
@@ -27,6 +28,11 @@ class DeathLocation extends Model
         'is_active' => 'boolean',
         'usage_count' => 'integer',
     ];
+
+    public function getDisplayNameAttribute(): string
+    {
+        return CatalogLabel::location($this->name);
+    }
 
     /**
      * Relationship: DeathLocation has many Deaths

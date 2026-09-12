@@ -158,7 +158,7 @@
                 <option value="">Todos</option>
                 @isset($municipalities)
                     @foreach($municipalities as $m)
-                        <option value="{{ $m->id }}">{{ $m->name }}</option>
+                        <option value="{{ $m->id }}">{{ \App\Support\CatalogLabel::municipality($m->name) }}</option>
                     @endforeach
                 @else
                     <option value="allende">Allende</option>
@@ -177,7 +177,7 @@
                 <option value="">Todos</option>
                 @isset($municipalities)
                     @foreach($municipalities as $m)
-                        <option value="{{ $m->id }}">{{ $m->name }}</option>
+                        <option value="{{ $m->id }}">{{ \App\Support\CatalogLabel::municipality($m->name) }}</option>
                     @endforeach
                 @else
                     <option value="allende">Allende</option>
@@ -223,7 +223,7 @@
                 <option value="">Todas</option>
                 @isset($causes)
                     @foreach($causes as $c)
-                        <option value="{{ $c->id }}">{{ $c->name }}</option>
+                        <option value="{{ $c->id }}">{{ $c->display_name }}</option>
                     @endforeach
                 @else
                     <option value="cardiopatia">Enfermedades del corazón</option>

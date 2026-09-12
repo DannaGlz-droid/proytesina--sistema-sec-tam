@@ -178,7 +178,7 @@
                                     <option value="" {{ $districtValue === null || $districtValue === '' ? 'selected' : '' }}>Todos</option>
                                     @if($districtsList->isNotEmpty())
                                         @foreach($districtsList as $district)
-                                            <option value="{{ $district->id }}" {{ (string) $districtValue === (string) $district->id ? 'selected' : '' }}>{{ $district->name }}</option>
+                                            <option value="{{ $district->id }}" {{ (string) $districtValue === (string) $district->id ? 'selected' : '' }}>{{ $district->display_name }}</option>
                                         @endforeach
                                     @else
                                         <option>Distrito Sanitario I</option>

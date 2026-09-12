@@ -6,6 +6,7 @@ use App\Models\DeathCause;
 use App\Models\District;
 use App\Services\DeathFilterService;
 use App\Services\StatisticsAnalysisService;
+use App\Support\CatalogLabel;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Cache;
@@ -126,7 +127,7 @@ class StatisticsController extends Controller
         });
 
         // Preparar arrays simples para JS (labels y datos)
-        $municipiosLabels = collect($data['municipios'])->pluck('name')->map(function ($v) { return $v ?? 'Sin dato'; })->toArray();
+        $municipiosLabels = collect($data['municipios'])->pluck('name')->map(fn ($v) => $v ? CatalogLabel::municipality($v) : 'Sin dato')->toArray();
         $municipiosCounts = collect($data['municipios'])->pluck('total')->map(function ($v) { return (int)$v; })->toArray();
 
         $mesLabels = collect($data['meses'])->pluck('month_name')->toArray();
@@ -135,7 +136,7 @@ class StatisticsController extends Controller
     $generoLabels = collect($data['generos'])->pluck('sex')->map(function ($v) { return $v ?? 'Sin dato'; })->toArray();
         $generoCounts = collect($data['generos'])->pluck('total')->map(function ($v) { return (int)$v; })->toArray();
 
-        $causaLabels = collect($data['causas'])->pluck('name')->map(function ($v) { return $v ?? 'Sin dato'; })->toArray();
+        $causaLabels = collect($data['causas'])->pluck('name')->map(fn ($v) => $v ? CatalogLabel::cause($v) : 'Sin dato')->toArray();
         $causaCounts = collect($data['causas'])->pluck('total')->map(function ($v) { return (int)$v; })->toArray();
 
         $edadLabels = collect($data['edades'])->pluck('range')->toArray();
@@ -348,16 +349,16 @@ class StatisticsController extends Controller
             $deathCounts = $deathCountsQ->get()->pluck('total','muni_id')->all();
 
             $response = [
-                'municipios' => [ 'labels' => $municipios->pluck('name')->map(fn($v) => $v ?? 'Sin dato')->values()->all(), 'counts' => $municipios->pluck('total')->map(fn($v) => (int)$v)->values()->all() ],
+                'municipios' => [ 'labels' => $municipios->pluck('name')->map(fn($v) => $v ? CatalogLabel::municipality($v) : 'Sin dato')->values()->all(), 'counts' => $municipios->pluck('total')->map(fn($v) => (int)$v)->values()->all() ],
                 'meses' => [ 'labels' => $meses->pluck('period_label')->values()->all(), 'counts' => $meses->pluck('total')->map(fn($v) => (int)$v)->values()->all() ],
                 'generos' => [ 'labels' => $generos->pluck('sex')->map(fn($v) => $v ?? 'Sin dato')->values()->all(), 'counts' => $generos->pluck('total')->map(fn($v) => (int)$v)->values()->all() ],
-                'causas' => [ 'labels' => $causas->pluck('name')->map(fn($v) => $v ?? 'Sin dato')->values()->all(), 'counts' => $causas->pluck('total')->map(fn($v) => (int)$v)->values()->all() ],
+                'causas' => [ 'labels' => $causas->pluck('name')->map(fn($v) => $v ? CatalogLabel::cause($v) : 'Sin dato')->values()->all(), 'counts' => $causas->pluck('total')->map(fn($v) => (int)$v)->values()->all() ],
                 'edades' => [ 'labels' => $edades->pluck('range')->values()->all(), 'counts' => $edades->pluck('total')->map(fn($v) => (int)$v)->values()->all() ],
                 // districts
-                'districts' => [ 'labels' => $districts->pluck('name')->map(fn($v) => $v ?? 'Sin dato')->values()->all(), 'counts' => $districts->pluck('total')->map(fn($v) => (int)$v)->values()->all() ],
+                'districts' => [ 'labels' => $districts->pluck('name')->map(fn($v) => $v ? CatalogLabel::district($v) : 'Sin dato')->values()->all(), 'counts' => $districts->pluck('total')->map(fn($v) => (int)$v)->values()->all() ],
                 // Residence vs Death per municipality (aligned to full municipalities list)
                 'municipios_compare' => (function() use ($municipios, $resCounts, $deathCounts) {
-                    $labels = $municipios->pluck('name')->values()->all();
+                    $labels = $municipios->pluck('name')->map(fn ($v) => $v ? CatalogLabel::municipality($v) : 'Sin dato')->values()->all();
                     $res = [];
                     $death = [];
                     foreach ($municipios as $m) {
@@ -745,7 +746,7 @@ class StatisticsController extends Controller
 
         return response()->json([
             'type' => 'municipios',
-            'labels' => $municipios->pluck('name')->values()->all(),
+            'labels' => $municipios->pluck('name')->map(fn ($v) => $v ? CatalogLabel::municipality($v) : 'Sin dato')->values()->all(),
             'counts' => $municipios->pluck('total')->values()->all(),
             'displayed_total' => $displayedTotal,
             'available_categories' => $availableCategories,
@@ -833,7 +834,11 @@ class StatisticsController extends Controller
                 ->sortDesc()
                 ->take(3);
             
-            $causasPorEdad[$ageLabel] = $causesInAge->toArray();
+            $causasPorEdad[$ageLabel] = $causesInAge
+                ->mapWithKeys(fn ($total, $cause) => [
+                    $cause ? CatalogLabel::cause($cause) : 'Sin dato' => $total,
+                ])
+                ->toArray();
         }
 
         // Build ordered result
@@ -895,7 +900,7 @@ class StatisticsController extends Controller
 
         return response()->json([
             'type' => 'causas',
-            'labels' => $causas->pluck('name')->map(fn($v) => $v ?? 'Sin dato')->values()->all(),
+            'labels' => $causas->pluck('name')->map(fn($v) => $v ? CatalogLabel::cause($v) : 'Sin dato')->values()->all(),
             'counts' => $causas->pluck('total')->map(fn($v) => (int)$v)->values()->all(),
             'displayed_total' => array_sum($causas->pluck('total')->all()),
             'available_categories' => $availableCategories,
@@ -920,7 +925,7 @@ class StatisticsController extends Controller
 
         return response()->json([
             'type' => 'jurisdicciones',
-            'labels' => $districts->pluck('name')->map(fn($v) => $v ?? 'Sin dato')->values()->all(),
+            'labels' => $districts->pluck('name')->map(fn($v) => $v ? CatalogLabel::district($v) : 'Sin dato')->values()->all(),
             'counts' => $districts->pluck('total')->map(fn($v) => (int)$v)->values()->all(),
             'displayed_total' => array_sum($districts->pluck('total')->all()),
             'available_categories' => $availableCategories,
@@ -985,7 +990,7 @@ class StatisticsController extends Controller
             $municipios = $municipios->take($limit);
         }
 
-        $labels = $municipios->pluck('name')->values()->all();
+        $labels = $municipios->pluck('name')->map(fn ($v) => $v ? CatalogLabel::municipality($v) : 'Sin dato')->values()->all();
         $residence = $municipios->pluck('residence')->values()->all();
         $death = $municipios->pluck('death')->values()->all();
         $selectedMunicipalityIds = $municipios->pluck('id')->all();
@@ -1054,7 +1059,7 @@ class StatisticsController extends Controller
             $causes = array_slice($causes, 0, $limit, true);
         }
 
-        $labels = array_keys($causes);
+        $labels = array_map(fn ($cause) => CatalogLabel::cause($cause), array_keys($causes));
         $orderedSexLabels = array_values(array_filter(['Hombres', 'Mujeres', 'Sin dato'], fn ($label) => isset($sexLabels[$label])));
         $series = array_map(function ($sex) use ($causes) {
             return [
@@ -1116,7 +1121,7 @@ class StatisticsController extends Controller
         $series = [];
         foreach ($selectedCauses as $cause) {
             $series[] = [
-                'name' => $cause,
+                'name' => CatalogLabel::cause($cause),
                 'data' => array_map(fn ($age) => (int) ($ageGroups[$age][$cause] ?? 0), $labels),
             ];
         }
@@ -1171,13 +1176,13 @@ class StatisticsController extends Controller
         $availableCategories = count($locations);
         if ($limit) $locations = array_slice($locations, 0, $limit, true);
 
-        $labels = array_keys($locations);
+        $labels = array_map(fn ($location) => CatalogLabel::location($location), array_keys($locations));
         arsort($causeTotals);
         $selectedCauses = array_keys(array_slice($causeTotals, 0, 4, true));
         $series = [];
         foreach ($selectedCauses as $cause) {
             $series[] = [
-                'name' => $cause,
+                'name' => CatalogLabel::cause($cause),
                 'data' => array_map(fn ($location) => (int) ($locations[$location][$cause] ?? 0), $labels),
             ];
         }
