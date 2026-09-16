@@ -52,7 +52,7 @@
                     
                     @if(in_array('doughnut', $tipos))
                         <button class="chart-type-btn {{ $tipoInicial == 'doughnut' ? 'active bg-[#611132] text-white' : 'bg-transparent text-gray-600' }} px-3 py-1 rounded text-xs flex items-center gap-1" 
-                                data-chart-type="doughnut" title="Gráfico de Donas">
+                                data-chart-type="doughnut" title="Gráfica de dona">
                             <i class="fas fa-circle"></i>
                         </button>
                     @endif

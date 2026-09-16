@@ -26,8 +26,8 @@
                     <button type="button" class="chart-tab-btn" data-chart="edades" title="Distribución por rangos etarios" role="tab" aria-selected="false" aria-controls="statisticsChartPanel" tabindex="-1">
                         <span>Edades</span>
                     </button>
-                    <button type="button" class="chart-tab-btn" data-chart="genero" title="Distribución por género" role="tab" aria-selected="false" aria-controls="statisticsChartPanel" tabindex="-1">
-                        <span>Género</span>
+                    <button type="button" class="chart-tab-btn" data-chart="genero" title="Distribución por sexo" role="tab" aria-selected="false" aria-controls="statisticsChartPanel" tabindex="-1">
+                        <span>Sexo</span>
                     </button>
                     <button type="button" class="chart-tab-btn" data-chart="causas" title="Causas principales de defunción" role="tab" aria-selected="false" aria-controls="statisticsChartPanel" tabindex="-1">
                         <span>Causas</span>
@@ -75,8 +75,9 @@
                                 <x-filtros.seccion titulo="Fecha de defunción" :abierto="true" data-statistics-filter-section>
                                         <div class="statistics-filter-control">
                                             <label for="dateRange">Periodo</label>
-                                            <x-filtros.select id="dateRange" placeholder="Todas las fechas">
-                                                <option value="all">Todas las fechas</option>
+                                            <x-filtros.select id="dateRange" placeholder="Periodo predeterminado">
+                                                <option value="all">Periodo predeterminado</option>
+                                                <option value="full">Todas las fechas</option>
                                                 <option value="years">Por año</option>
                                                 <option value="months">Por meses</option>
                                                 <option value="quarter">Por trimestre</option>
@@ -87,7 +88,8 @@
                                         <div class="statistics-filter-control" id="yearSelector" style="display: none;">
                                             <label for="year">Año o periodo</label>
                                             @php $currentYear = now()->year; @endphp
-                                            <input type="text" id="year" placeholder="Ej. 2026 o 2024-2026" title="Escribe años separados por coma o un periodo">
+                                            <input type="text" id="year" placeholder="Ej. 2026 o 2024-2026" title="Escribe años separados por coma o un periodo" aria-describedby="yearFilterError">
+                                            <small id="yearFilterError" class="statistics-filter-error hidden" role="alert"></small>
                                         </div>
 
                                         <div class="statistics-filter-control" id="monthSelector" style="display: none;">
@@ -120,21 +122,22 @@
                                         </div>
 
                                         <div id="customDateSelector" class="statistics-filter-date-grid" style="display: none;">
-                                            <label>Desde<input type="date" id="customStartDate"></label>
-                                            <label>Hasta<input type="date" id="customEndDate"></label>
+                                            <label>Desde<input type="date" id="customStartDate" aria-describedby="customDateFilterError"></label>
+                                            <label>Hasta<input type="date" id="customEndDate" aria-describedby="customDateFilterError"></label>
+                                            <small id="customDateFilterError" class="statistics-filter-error statistics-filter-date-grid__error hidden" role="alert"></small>
                                         </div>
                                 </x-filtros.seccion>
 
                                 <x-filtros.seccion id="statisticsLocationFilterGroup" titulo="Ubicación" data-statistics-filter-section data-statistics-filter-group hidden>
                                         <div id="filterTipoMunicipio" class="statistics-filter-control dynamic-filter" style="display: none;">
-                                            <label for="tipoMunicipioFilter">Tipo de municipio</label>
-                                            <x-filtros.select id="tipoMunicipioFilter" placeholder="Municipio de defunción">
-                                                <option value="defuncion">Municipio de defunción</option>
-                                                <option value="residencia">Municipio de residencia</option>
+                                            <label for="tipoMunicipioFilter">Ámbito geográfico</label>
+                                            <x-filtros.select id="tipoMunicipioFilter" placeholder="Lugar de defunción">
+                                                <option value="defuncion">Lugar de defunción</option>
+                                                <option value="residencia">Residencia</option>
                                             </x-filtros.select>
                                         </div>
                                         <div id="filterMunicipios" class="statistics-filter-control dynamic-filter" style="display: none;">
-                                            <label for="municipiosFilter">Municipios</label>
+                                            <label id="municipiosFilterLabel" for="municipiosFilter">Municipios de defunción</label>
                                             <x-filtros.select id="municipiosFilter" placeholder="Selecciona municipios" multiple>
                                                 @foreach($municipalities as $mun)
                                                     <option value="{{ $mun->id }}">{{ \App\Support\CatalogLabel::municipality($mun->name) }}</option>
@@ -143,7 +146,7 @@
                                         </div>
                                         @if($districts->count() > 0)
                                         <div id="filterdistritoes" class="statistics-filter-control dynamic-filter" style="display: none;">
-                                            <label for="distritoesFilter">Distritos</label>
+                                            <label id="distritoesFilterLabel" for="distritoesFilter">Distritos de defunción</label>
                                             <x-filtros.select id="distritoesFilter" placeholder="Selecciona distritos" multiple>
                                                 @foreach($districts as $district)
                                                     <option value="{{ $district->id }}">{{ $district->display_name }}</option>
@@ -170,9 +173,10 @@
                                                 id="edadFilter"
                                                 inputmode="numeric"
                                                 placeholder="Ej. 25, 20-30 o 5,10,15"
-                                                aria-describedby="edadFilterHelp"
+                                                aria-describedby="edadFilterHelp edadFilterError"
                                             >
                                             <small id="edadFilterHelp" class="statistics-filter-help">Edad exacta, rango o valores separados por coma.</small>
+                                            <small id="edadFilterError" class="statistics-filter-error hidden" role="alert"></small>
                                         </div>
                                 </x-filtros.seccion>
 
@@ -200,7 +204,8 @@
                                             <label for="tipoComparativaFilter">Tipo de comparativa</label>
                                             <x-filtros.select id="tipoComparativaFilter" placeholder="Residencia frente a lugar de defunción">
                                                 <option value="residencia-defuncion">Residencia frente a lugar de defunción</option>
-                                                <option value="genero-causa">Género por causa</option>
+                                                <option value="distrito-residencia-defuncion">Distrito de residencia frente a distrito de defunción</option>
+                                                <option value="genero-causa">Sexo por causa</option>
                                                 <option value="edad-causa">Rango etario por causa</option>
                                                 <option value="lugar-causa">Lugar de defunción por causa</option>
                                             </x-filtros.select>
@@ -225,23 +230,25 @@
                             </header>
                             <div id="statisticsPresentationGroups" class="statistics-display-groups">
                                 <!-- Tipo de Gráfica -->
-                                <fieldset class="statistics-display-group">
+                                <fieldset id="statisticsChartTypeGroup" class="statistics-display-group">
                                     <legend id="statisticsChartTypeLegend">Tipo de gráfica</legend>
                                     <select id="chartTypeSelector" class="hidden" aria-hidden="true" tabindex="-1">
-                                        <option value="bar">Barras</option>
-                                        <option value="barHorizontal">Barras Horizontales</option>
+                                        <option value="bar">Columnas</option>
+                                        <option value="barHorizontal">Barras</option>
                                         <option value="pie">Pastel</option>
-                                        <option value="doughnut">Rosquilla</option>
+                                        <option value="doughnut">Dona</option>
                                         <option value="line">Línea</option>
                                         <option value="area">Área</option>
+                                        <option value="map">Mapa</option>
+                                        <option value="heatmap">Mapa de calor</option>
                                     </select>
                                     <div id="chartTypeButtons" class="statistics-visual-options" role="group" aria-labelledby="statisticsChartTypeLegend"></div>
                                     <p id="chartTypeAdaptationNote" class="statistics-presentation-note hidden" aria-live="polite"></p>
                                 </fieldset>
 
-                                <!-- Etiquetas -->
-                                <fieldset class="statistics-display-group">
-                                    <legend id="statisticsDataLabelLegend">Etiquetas</legend>
+                                <!-- Etiquetas de datos -->
+                                <fieldset id="statisticsDataLabelGroup" class="statistics-display-group">
+                                    <legend id="statisticsDataLabelLegend">Etiquetas de datos</legend>
                                     <select id="datalabelMode" class="hidden" aria-hidden="true" tabindex="-1">
                                         <option value="value">Valor</option>
                                         <option value="percent">Porcentaje</option>
@@ -254,9 +261,9 @@
 
                                 <!-- Top N -->
                                 <fieldset id="filterTop" class="statistics-display-group" style="display: none;">
-                                    <legend id="statisticsChartLimitLegend">Cantidad de resultados</legend>
+                                    <legend id="statisticsChartLimitLegend">Mostrar</legend>
                                     <select id="chartLimit" class="hidden" aria-hidden="true" tabindex="-1">
-                                        <option value="all">Todos</option>
+                                        <option value="all">Todas</option>
                                         <option value="5">Top 5</option>
                                         <option value="10" selected>Top 10</option>
                                         <option value="15">Top 15</option>
@@ -264,39 +271,40 @@
                                     <div id="chartLimitButtons" class="statistics-visual-options" role="group" aria-labelledby="statisticsChartLimitLegend"></div>
                                     <p id="chartLimitAdaptationNote" class="statistics-presentation-note hidden" aria-live="polite"></p>
                                     <p id="chartLimitReadabilityNote" class="statistics-presentation-note statistics-presentation-note--guidance hidden" aria-live="polite"></p>
+                                    <button type="button" id="statisticsShowAllAsBars" class="statistics-presentation-link hidden">
+                                        <i class="fas fa-chart-bar" aria-hidden="true"></i>
+                                        Ver todas en Barras
+                                    </button>
                                 </fieldset>
 
                                 <!-- Paleta -->
                                 <fieldset class="statistics-display-group statistics-display-group--palette">
-                                    <legend id="statisticsPaletteLegend">Apariencia</legend>
+                                    <legend id="statisticsPaletteLegend">Paleta de colores</legend>
                                     <div class="statistics-palette-popover">
-                                        <button type="button" id="statisticsPaletteToggle" class="statistics-palette-toggle" aria-expanded="false" aria-controls="statisticsPaletteMenu" aria-haspopup="true">
+                                        <button type="button" id="statisticsPaletteToggle" class="statistics-palette-toggle" aria-expanded="false" aria-controls="statisticsPaletteMenu" aria-haspopup="dialog">
                                             <span id="statisticsPaletteSelection" class="statistics-palette-selection" aria-hidden="true"></span>
-                                            <span id="statisticsPaletteLabel" class="statistics-palette-label">Granate institucional</span>
+                                            <span id="statisticsPaletteLabel" class="statistics-palette-label">Granate profundo</span>
                                             <i class="fas fa-chevron-down" aria-hidden="true"></i>
                                         </button>
-                                        <div id="statisticsPaletteMenu" class="statistics-palette-menu hidden" aria-labelledby="statisticsPaletteLegend">
+                                        <div id="statisticsPaletteMenu" class="statistics-palette-menu hidden" role="dialog" aria-labelledby="statisticsPaletteLegend">
                                             <div id="colorPalettePicker" class="statistics-palette-grid"></div>
                                         </div>
                                     </div>
                                 </fieldset>
 
                                 <fieldset id="statisticsAgeDetailGroup" class="statistics-display-group statistics-display-group--age-detail" style="display: none;">
-                                    <legend id="statisticsAgeDetailLegend">Contenido</legend>
+                                    <legend id="statisticsAgeDetailLegend">Información adicional</legend>
                                     <select id="ageDetailMode" class="hidden" aria-hidden="true" tabindex="-1">
                                         <option value="summary" selected>Solo edades</option>
                                         <option value="causes">Edades y causas</option>
                                     </select>
-                                    <div id="ageDetailButtons" class="statistics-visual-options" role="group" aria-labelledby="statisticsAgeDetailLegend">
-                                        <button type="button" class="visual-option-btn visual-option-card active" data-target="ageDetailMode" data-value="summary" aria-pressed="true">
-                                            <i class="fas fa-chart-column" aria-hidden="true"></i>
-                                            <span class="visual-option-label">Solo edades</span>
-                                        </button>
-                                        <button type="button" class="visual-option-btn visual-option-card" data-target="ageDetailMode" data-value="causes" aria-pressed="false">
-                                            <i class="fas fa-list-ol" aria-hidden="true"></i>
-                                            <span class="visual-option-label">Edades y causas</span>
-                                        </button>
-                                    </div>
+                                    <label class="statistics-age-detail-option" for="includeAgeCauses">
+                                        <input type="checkbox" id="includeAgeCauses" class="statistics-system-checkbox" aria-describedby="includeAgeCausesHelp">
+                                        <span class="statistics-age-detail-option__copy">
+                                            <strong>Mostrar causas principales</strong>
+                                            <small id="includeAgeCausesHelp">Muestra debajo las tres causas con más registros de cada grupo.</small>
+                                        </span>
+                                    </label>
                                 </fieldset>
 
                             </div>
@@ -334,35 +342,35 @@
                                         Ver datos
                                     </a>
                                     <div class="statistics-download__group">
-                                        <button type="button" class="statistics-download__primary" id="descargarActual">
+                                        <button type="button" class="statistics-download__primary" id="descargarActual" aria-label="Descargar gráfica en PNG con fondo blanco">
                                             <i class="fas fa-download" aria-hidden="true"></i>
                                             Descargar gráfica
                                         </button>
-                                        <button type="button" class="statistics-download__toggle" id="descargarOpciones" aria-label="Abrir opciones de descarga" aria-haspopup="menu" aria-expanded="false" aria-controls="downloadMenu">
+                                        <button type="button" class="statistics-download__toggle" id="descargarOpciones" aria-label="Abrir opciones de descarga" aria-expanded="false" aria-controls="downloadMenu">
                                             <i class="fas fa-chevron-down" aria-hidden="true"></i>
                                         </button>
                                     </div>
-                                    <div id="downloadMenu" class="statistics-download-menu hidden" role="menu">
+                                    <div id="downloadMenu" class="statistics-download-menu hidden" role="group" aria-label="Opciones de descarga">
                                         <label class="statistics-download-context-option">
-                                            <input type="checkbox" id="includeChartContext" checked>
+                                            <input type="checkbox" id="includeChartContext" class="statistics-system-checkbox" checked>
                                             <span>
                                                 <strong>Incluir contexto</strong>
-                                                <small>Título, periodo, total y comparación</small>
+                                                <small>Para PNG y PDF: título, periodo, total y comparación</small>
                                             </span>
                                         </label>
-                                        <button type="button" class="download-option" data-export="png-transparent" role="menuitem">
+                                        <button type="button" class="download-option" data-export="png-transparent">
                                             <i class="fas fa-image" aria-hidden="true"></i>
                                             PNG (transparente)
                                         </button>
-                                        <button type="button" class="download-option" data-export="png-white" role="menuitem">
+                                        <button type="button" class="download-option" data-export="png-white">
                                             <i class="fas fa-image" aria-hidden="true"></i>
                                             PNG (fondo blanco)
                                         </button>
-                                        <button type="button" class="download-option" data-export="pdf" role="menuitem">
+                                        <button type="button" class="download-option" data-export="pdf">
                                             <i class="fas fa-file-pdf" aria-hidden="true"></i>
                                             PDF
                                         </button>
-                                        <button type="button" class="download-option" data-export="csv" role="menuitem">
+                                        <button type="button" class="download-option" data-export="csv">
                                             <i class="fas fa-file-csv" aria-hidden="true"></i>
                                             Datos en CSV
                                         </button>
@@ -386,15 +394,22 @@
                                     </div>
                                 </div>
                             </div>
-                            <section id="causasPrincipalesContainer" class="statistics-causes hidden" aria-labelledby="statistics-causes-title">
+                            <section id="causasPrincipalesContainer" class="statistics-causes hidden" aria-labelledby="statistics-causes-title" aria-hidden="true">
                                 <header class="statistics-causes__header">
                                     <div>
                                         <h3 id="statistics-causes-title">Causas principales por grupo de edad</h3>
                                         <p>Las tres causas con más registros dentro de cada grupo.</p>
                                     </div>
-                                    <span id="statisticsCausesSummary" class="statistics-causes__summary"></span>
                                 </header>
-                                <div id="causasPrincipalesBody" class="statistics-causes__list"></div>
+                                <div class="statistics-causes__list">
+                                    <div class="statistics-causes__columns" aria-hidden="true">
+                                        <span>Grupo de edad</span>
+                                        <span>1.ª causa</span>
+                                        <span>2.ª causa</span>
+                                        <span>3.ª causa</span>
+                                    </div>
+                                    <div id="causasPrincipalesBody" class="statistics-causes__body"></div>
+                                </div>
                             </section>
 
                             <footer id="statisticsChartSource" class="statistics-chart-source hidden">
@@ -405,7 +420,7 @@
                                             <span id="statisticsChartSourceSummary">Origen de los registros</span>
                                         </span>
                                         <span class="statistics-chart-source__action">
-                                            Ver detalle
+                                            <span id="statisticsChartSourceActionLabel">Ver desglose</span>
                                             <i class="fas fa-chevron-down" aria-hidden="true"></i>
                                         </span>
                                     </summary>
@@ -442,6 +457,16 @@
         let latestChartDataType = null;
         let chartRequestController = null;
         let chartRequestSequence = 0;
+        let chartLoadingTimer = null;
+        let chartPrefetchTimer = null;
+        let chartDataCacheGeneration = 0;
+        const chartDataCache = new Map();
+        const chartPrefetchRequests = new Map();
+        const chartLoadingDelay = 160;
+        const chartDataEndpoint = @json(route('api.chart.data'));
+        const tamaulipasMapName = 'tamaulipas-municipios';
+        const tamaulipasMapUrl = @json(asset('data/tamaulipas-municipios.geojson').'?v='.filemtime(public_path('data/tamaulipas-municipios.geojson')));
+        let tamaulipasMapPromise = null;
         let defaultDateRange = { startDate: '', endDate: '' };
         let filterDraftSnapshot = null;
         let restoringFilterDraft = false;
@@ -466,6 +491,36 @@
             ageDetailMode: defaultPresentationConfig.ageDetailMode
         };
 
+        const defaultLimitPreferences = Object.freeze({
+            vertical: defaultPresentationConfig.limit,
+            horizontal: null,
+            circular: null,
+            comparison: defaultPresentationConfig.limit
+        });
+        let preferredLimitByVisualFamily = { ...defaultLimitPreferences };
+        let preferredMunicipalityColumnLimit = defaultPresentationConfig.limit;
+
+        async function ensureTamaulipasMap() {
+            if (echarts.getMap(tamaulipasMapName)) return;
+
+            if (!tamaulipasMapPromise) {
+                tamaulipasMapPromise = fetch(tamaulipasMapUrl)
+                    .then(response => {
+                        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                        return response.json();
+                    })
+                    .then(geoJson => {
+                        echarts.registerMap(tamaulipasMapName, geoJson);
+                    })
+                    .catch(error => {
+                        tamaulipasMapPromise = null;
+                        throw error;
+                    });
+            }
+
+            await tamaulipasMapPromise;
+        }
+
         let activeFilters = {
             dateRange: 'all',
             startDate: null,
@@ -486,7 +541,7 @@
         };
 
         // Lista de municipios con su distrito (se usa para filtrar por distrito).
-        const municipalitiesFull = @json($municipalities->map(function($m) { return ['id' => $m->id, 'name' => $m->name, 'district_id' => $m->district_id ?? null]; })->values());
+        const municipalitiesFull = @json($municipalities->map(function($m) { return ['id' => $m->id, 'name' => \App\Support\CatalogLabel::municipality($m->name), 'district_id' => $m->district_id ?? null]; })->values());
 
         const colorPalettes = {
             // Paleta aqua de 15 colores armoniosos oscuro a medio (para Top <= 15)
@@ -628,33 +683,68 @@
             ]
         };
 
-        // Paletas de ALTO CONTRASTE para gráficas circulares (pie/doughnut) - 10 colores más contrastantes seleccionados de los 15 originales
+        // Paletas de alto contraste para gráficas circulares. La variante institucional
+        // es cualitativa: conserva el granate como ancla y usa matices distinguibles.
         const colorPalettesCircular = {
             aqua: ['#2F3D14', '#3D4E1B', '#6C7836', '#8B9852', '#A8C363', '#B8CC76', '#C2D67E', '#D6E4A5', '#DFE9B8', '#485C24'],
             autumn: ['#1A140D', '#3D3120', '#5C4624', '#83673F', '#A9875A', '#C4976C', '#DCAF85', '#EAC39C', '#F8D6B3', '#F7E1BE'],
             rose: ['#6B1114', '#9C191B', '#BD1F21', '#DD2C2F', '#E35053', '#E95D60', '#EC8385', '#F1A7A9', '#F4B5B8', '#F6CACC'],
-            spectrum: ['#264653', '#2A9D8F', '#8AB17D', '#E9C46A', '#F4A261', '#E76F51', '#D1623E', '#A84A2A', '#6B3E2E', '#3A3A3A'],
-            earth: ['#4D7300', '#99CC33', '#CCEE66', '#33CCAA', '#006699', '#990066', '#E066CC', '#FF6600', '#FF9900', '#FFCC00'],
+            spectrum: ['#0072B2', '#E69F00', '#009E73', '#CC79A7', '#D55E00', '#56A7C7', '#725A8E', '#8A6D1D', '#2F6F62', '#A64B3C'],
+            earth: ['#3D5A73', '#B36A3C', '#5F7A55', '#A58B4B', '#765A7A', '#2F7774', '#8B4A3E', '#6B705C', '#A06C78', '#4F6D7A'],
             goldenEarth: ['#2A0E47', '#431259', '#6A3FA0', '#805EBF', '#8F6FC9', '#9A99F2', '#B3BEFF', '#CCDCFF', '#D9E6FF', '#E6F2FF'],
             institutional: ['#001A3A', '#003A70', '#1965A0', '#0F558F', '#2D82BD', '#5CA5D0', '#8FC5E0', '#B7D7EA', '#D8E8F5', '#E2EFF6'],
-            maroon611132: ['#2C0617', '#4a0e26', '#611132', '#8B2A52', '#9C4460', '#B84C3A', '#C97C8A', '#D96969', '#E8A8A8', '#F0CCCC'],
+            maroon611132: ['#611132', '#BC955C', '#3D5A73', '#5C7A54', '#9C4A3C', '#725A7A', '#2F7470', '#A36B3F', '#53633F', '#8B5B68'],
             grayscale: ['#1F2937', '#334155', '#475569', '#58677B', '#64748B', '#718096', '#7C8998', '#8793A1', '#929DAA', '#9DA7B2']
         };
 
         const colorPaletteLabels = {
-            aqua: 'Verde natural',
-            autumn: 'Tonos tierra',
-            rose: 'Rojos',
-            spectrum: 'Alto contraste',
-            earth: 'Multicolor',
-            goldenEarth: 'Violetas',
-            maroon611132: 'Granate institucional',
+            aqua: 'Verde oliva claro',
+            autumn: 'Tierra cálida',
+            rose: 'Rojo carmín',
+            spectrum: 'Azul, ámbar y verde',
+            earth: 'Azul, tierra y verde',
+            goldenEarth: 'Violeta gradual',
+            maroon611132: 'Granate gradual',
+            institutional: 'Azul gradual',
+            grayscale: 'Gris gradual'
+        };
+
+        const circularColorPaletteLabels = {
+            ...colorPaletteLabels,
+            maroon611132: 'Granate, oro y azul',
+            spectrum: 'Azul, ámbar y verde',
+            earth: 'Azul, tierra y verde'
+        };
+
+        const cartesianSolidColors = {
+            maroon611132: '#6B1238',
+            institutional: '#1965A0',
+            spectrum: '#264653',
+            grayscale: '#475569',
+            aqua: '#526B2D',
+            autumn: '#7A5A34',
+            rose: '#A92835',
+            earth: '#D96B00',
+            goldenEarth: '#6A3FA0'
+        };
+
+        const cartesianSolidColorLabels = {
+            maroon611132: 'Granate profundo',
             institutional: 'Azul institucional',
-            grayscale: 'Escala de grises'
+            spectrum: 'Azul petróleo',
+            grayscale: 'Gris pizarra',
+            aqua: 'Verde oliva',
+            autumn: 'Café tierra',
+            rose: 'Rojo carmín',
+            earth: 'Naranja quemado',
+            goldenEarth: 'Violeta intenso'
         };
 
         const primaryPaletteKeys = ['maroon611132', 'institutional', 'spectrum', 'grayscale'];
         const additionalPaletteKeys = ['aqua', 'autumn', 'rose', 'earth', 'goldenEarth'];
+        const circularPaletteKeys = ['maroon611132', 'spectrum', 'earth'];
+        const sequentialPrimaryPaletteKeys = ['maroon611132', 'institutional', 'grayscale'];
+        const sequentialAdditionalPaletteKeys = ['aqua', 'autumn', 'rose', 'earth', 'goldenEarth'];
 
         const chartTypeDefaults = {
             municipios: 'bar',
@@ -667,20 +757,20 @@
         };
 
         const chartTypeOptions = {
-            municipios: ['bar', 'barHorizontal', 'pie', 'doughnut'],
+            municipios: ['bar', 'barHorizontal', 'pie', 'doughnut', 'map'],
             tendencias: ['line', 'area'],
-            edades: ['bar', 'pie', 'doughnut'],
-            genero: ['bar', 'pie', 'doughnut'],
+            edades: ['bar', 'barHorizontal', 'pie', 'doughnut'],
+            genero: ['bar', 'barHorizontal', 'pie', 'doughnut'],
             causas: ['bar', 'barHorizontal', 'pie', 'doughnut'],
             distritoes: ['bar', 'barHorizontal', 'pie', 'doughnut'],
-            comparativa: ['bar']
+            comparativa: ['bar', 'heatmap']
         };
 
         const chartTitles = {
             municipios: 'Distribución por municipios',
             tendencias: 'Tendencia temporal',
             edades: 'Distribución por edades',
-            genero: 'Distribución por género',
+            genero: 'Distribución por sexo',
             causas: 'Causas de defunción',
             distritoes: 'Distribución por distritos',
             comparativa: 'Comparación entre residencia y defunción'
@@ -688,19 +778,27 @@
 
         const comparativaLabels = {
             'residencia-defuncion': 'Residencia frente a lugar de defunción',
-            'genero-causa': 'Género por causa de defunción',
+            'distrito-residencia-defuncion': 'Distrito de residencia frente a distrito de defunción',
+            'genero-causa': 'Sexo por causa de defunción',
             'edad-causa': 'Rango etario por causa de defunción',
             'lugar-causa': 'Lugar de defunción por causa'
         };
 
         const filtersForChart = {
             municipios: ['dates', 'tipoMunicipio', 'causas', 'distritoes', 'sexo', 'edad'],
-            tendencias: ['dates', 'municipios', 'causas', 'sexo', 'edad', 'granularidad'],
-            edades: ['dates', 'municipios', 'causas', 'distritoes'],
-            genero: ['dates', 'municipios', 'causas', 'distritoes', 'edad'],
-            causas: ['dates', 'municipios', 'distritoes', 'sexo', 'edad'],
-            distritoes: ['dates', 'causas', 'sexo', 'edad'],
-            comparativa: ['dates', 'tipoComparativa']
+            tendencias: ['dates', 'tipoMunicipio', 'municipios', 'causas', 'distritoes', 'sexo', 'edad', 'granularidad'],
+            edades: ['dates', 'tipoMunicipio', 'municipios', 'causas', 'distritoes', 'sexo'],
+            genero: ['dates', 'tipoMunicipio', 'municipios', 'causas', 'distritoes', 'edad'],
+            causas: ['dates', 'tipoMunicipio', 'municipios', 'distritoes', 'sexo', 'edad'],
+            distritoes: ['dates', 'tipoMunicipio', 'causas', 'sexo', 'edad']
+        };
+
+        const filtersForComparison = {
+            'residencia-defuncion': ['dates', 'tipoComparativa', 'causas', 'sexo', 'edad'],
+            'distrito-residencia-defuncion': ['dates', 'tipoComparativa', 'causas', 'sexo', 'edad'],
+            'genero-causa': ['dates', 'tipoComparativa', 'tipoMunicipio', 'municipios', 'distritoes', 'edad'],
+            'edad-causa': ['dates', 'tipoComparativa', 'tipoMunicipio', 'municipios', 'distritoes', 'sexo'],
+            'lugar-causa': ['dates', 'tipoComparativa', 'tipoMunicipio', 'municipios', 'distritoes', 'sexo', 'edad']
         };
 
         // Gráficas que deben mostrar el selector "Top"
@@ -712,7 +810,9 @@
             pie: 'fa-chart-pie',
             doughnut: 'fa-circle-notch',
             line: 'fa-chart-line',
-            area: 'fa-chart-area'
+            area: 'fa-chart-area',
+            map: 'fa-map',
+            heatmap: 'fa-table-cells'
         };
 
         const dataLabelIcons = {
@@ -730,12 +830,14 @@
         };
 
         const chartTypeLabels = {
-            bar: 'Barras',
-            barHorizontal: 'Barras horizontales',
+            bar: 'Columnas',
+            barHorizontal: 'Barras',
             pie: 'Pastel',
-            doughnut: 'Rosquilla',
+            doughnut: 'Dona',
             line: 'Línea',
-            area: 'Área'
+            area: 'Área',
+            map: 'Mapa',
+            heatmap: 'Mapa de calor'
         };
 
         const dataLabelModeLabels = {
@@ -748,10 +850,15 @@
         // Definir límites disponibles por tipo de gráfico
         const chartLimitsByType = {
             municipios: [5, 10, 15],
-            distritoes: [5, 10],  // Solo hasta 10 porque hay 12 distritoes en total
+            distritoes: [5, 10],
             comparativa: [5, 10, 15],
             default: [5, 10, 15]
         };
+
+        // Un recorte debe ocultar al menos tres categorías para justificar el Top.
+        const minimumCategoriesOmittedByTop = 3;
+        const maximumVerticalCategories = 15;
+        const circularSummaryCategoryLimit = 5;
 
         document.addEventListener('DOMContentLoaded', async function() {
             try {
@@ -771,6 +878,14 @@
             selectChart('municipios');
 
             const sourceDetails = document.getElementById('statisticsChartSourceDetails');
+            const sourceActionLabel = document.getElementById('statisticsChartSourceActionLabel');
+            const syncSourceActionLabel = () => {
+                if (sourceActionLabel) {
+                    sourceActionLabel.textContent = sourceDetails?.open ? 'Ocultar desglose' : 'Ver desglose';
+                }
+            };
+            sourceDetails?.addEventListener('toggle', syncSourceActionLabel);
+            syncSourceActionLabel();
             document.addEventListener('click', function(event) {
                 if (sourceDetails?.open && !sourceDetails.contains(event.target)) {
                     sourceDetails.open = false;
@@ -909,6 +1024,8 @@
             restoreControl('municipiosFilter', state.municipiosFilter || []);
 
             onDateRangeChange();
+            updateVisibleFilters(currentChartType);
+            updateGeographicFilterLabels(document.getElementById('tipoMunicipioFilter')?.value || 'defuncion');
             restoringFilterDraft = false;
         }
 
@@ -971,13 +1088,46 @@
             if (keep.length) tom.setValue(keep, true);
         }
 
+        function getComparisonFilterType() {
+            return document.getElementById('tipoComparativaFilter')?.value
+                || activeFilters.tipoComparativa
+                || 'residencia-defuncion';
+        }
+
+        function getFiltersForChart(chartType) {
+            if (chartType === 'comparativa') {
+                return filtersForComparison[getComparisonFilterType()] || filtersForComparison['residencia-defuncion'];
+            }
+            return filtersForChart[chartType] || [];
+        }
+
         function metricSupportsFilter(chartType, filterName) {
-            return (filtersForChart[chartType] || []).includes(filterName);
+            return getFiltersForChart(chartType).includes(filterName);
         }
 
         function metricUsesMunicipalityAndDistrict() {
             return metricSupportsFilter(currentChartType, 'municipios')
                 && metricSupportsFilter(currentChartType, 'distritoes');
+        }
+
+        function updateGeographicFilterLabels(scope = 'defuncion') {
+            const isResidence = scope === 'residencia';
+            const municipalityLabel = document.getElementById('municipiosFilterLabel');
+            const districtLabel = document.getElementById('distritoesFilterLabel');
+            const municipalitySelect = document.getElementById('municipiosFilter');
+
+            if (municipalityLabel) municipalityLabel.textContent = isResidence ? 'Municipios de residencia' : 'Municipios de defunción';
+            if (districtLabel) districtLabel.textContent = isResidence ? 'Distritos de residencia' : 'Distritos de defunción';
+
+            const placeholder = isResidence ? 'Selecciona municipios de residencia' : 'Selecciona municipios de defunción';
+            if (municipalitySelect) municipalitySelect.setAttribute('placeholder', placeholder);
+            if (municipalitySelect?.tomselect) {
+                municipalitySelect.tomselect.settings.placeholder = placeholder;
+                if (municipalitySelect.tomselect.control_input) {
+                    municipalitySelect.tomselect.control_input.placeholder = placeholder;
+                }
+                municipalitySelect.tomselect.inputState?.();
+            }
         }
 
         function initializeEventListeners() {
@@ -986,6 +1136,16 @@
 
             const chartTabs = Array.from(document.querySelectorAll('.chart-tab-btn'));
             chartTabs.forEach((btn, index) => {
+                const warmChartData = () => {
+                    const chartType = btn.dataset.chart;
+                    if (chartType && chartType !== currentChartType) {
+                        prefetchChartData(chartType, chartDataCacheGeneration);
+                    }
+                };
+
+                btn.addEventListener('pointerenter', warmChartData);
+                btn.addEventListener('focus', warmChartData);
+
                 btn.addEventListener('click', function() {
                     selectChart(this.dataset.chart);
                 });
@@ -1035,7 +1195,9 @@
                 });
 
                 filtersApply?.addEventListener('click', function() {
+                    if (!validateStatisticsFilterDraft()) return;
                     collectFilters();
+                    invalidateChartDataCache();
                     filterDraftSnapshot = captureStatisticsFilterState();
                     closeStatisticsFilters();
                     updateChart();
@@ -1092,23 +1254,6 @@
                 });
             });
             
-            // Manejar labels de meses para mejor UX usando event delegation
-            const monthsContainer = document.querySelector('.months-container');
-            if (monthsContainer) {
-                monthsContainer.addEventListener('click', function(e) {
-                    // Si se hace clic en un label de mes
-                    if (e.target.classList.contains('month-label')) {
-                        const label = e.target;
-                        const checkbox = label.previousElementSibling;
-                        if (checkbox && checkbox.classList.contains('month-checkbox')) {
-                            checkbox.checked = !checkbox.checked;
-                            checkbox.dispatchEvent(new Event('change', { bubbles: true }));
-                            checkbox.focus();
-                        }
-                    }
-                });
-            }
-            
             document.getElementById('customStartDate').addEventListener('change', markStatisticsFilterDraft);
             document.getElementById('customEndDate').addEventListener('change', markStatisticsFilterDraft);
             // Nota: Los eventos para municipiosFilter, causasFilter, distritoesFilter 
@@ -1116,17 +1261,36 @@
             document.getElementById('sexoFilter').addEventListener('change', markStatisticsFilterDraft);
             document.getElementById('edadFilter').addEventListener('input', markStatisticsFilterDraft);
             document.getElementById('granularidadFilter').addEventListener('change', markStatisticsFilterDraft);
-            document.getElementById('tipoComparativaFilter').addEventListener('change', markStatisticsFilterDraft);
-            document.getElementById('tipoMunicipioFilter').addEventListener('change', markStatisticsFilterDraft);
+            document.getElementById('tipoComparativaFilter').addEventListener('change', function() {
+                updateVisibleFilters(currentChartType);
+                markStatisticsFilterDraft();
+            });
+            document.getElementById('tipoMunicipioFilter').addEventListener('change', function() {
+                updateGeographicFilterLabels(this.value);
+                if (metricUsesMunicipalityAndDistrict()) {
+                    const selectedDistricts = [].concat(document.getElementById('distritoesFilter')?.tomselect?.getValue() || []);
+                    updateMunicipiosOptions(selectedDistricts);
+                }
+                markStatisticsFilterDraft();
+            });
 
             document.getElementById('chartTypeSelector').addEventListener('change', function() {
                 chartConfig.type = this.value;
                 preferredConfig.type = this.value;  // Guardar preferencia global
+                const previousLimit = chartConfig.limit;
+                syncChartLimitForPresentation(currentChartType, this.value);
                 // CONFIGURACIONES SON GLOBALES - se mantienen al cambiar de métrica
                 renderChartTypeButtons(currentChartType);
                 renderChartLimitButtons(currentChartType);
+                renderColorPalettePreview(chartConfig.colorPalette);
                 setPresentationAdaptationNote('chartTypeAdaptationNote');
-                rerenderLatestChart();
+                if (previousLimit !== chartConfig.limit) {
+                    // Conservar la composición anterior hasta recibir el alcance correcto.
+                    // Evita mostrar brevemente, por ejemplo, Columnas con "Todos"
+                    // antes de sustituirlas por el Top configurado para esa familia.
+                    updateChart({ preserveCurrentChart: true });
+                }
+                else rerenderLatestChart();
             });
             document.getElementById('datalabelMode').addEventListener('change', function() {
                 chartConfig.dataLabelMode = this.value;
@@ -1139,16 +1303,26 @@
             document.getElementById('chartLimit').addEventListener('change', function() {
                 chartConfig.limit = this.value === 'all' ? null : parseInt(this.value);
                 preferredConfig.limit = chartConfig.limit;  // Guardar preferencia global
+                setPreferredLimit(currentChartType, getVisualLimitFamily(currentChartType), chartConfig.limit);
                 // CONFIGURACIONES SON GLOBALES - se mantienen al cambiar de métrica
                 renderChartLimitButtons(currentChartType);
                 setPresentationAdaptationNote('chartLimitAdaptationNote');
-                updateChart();
+                updateChart({ preserveCurrentChart: true });
+            });
+
+            document.getElementById('statisticsShowAllAsBars')?.addEventListener('click', function() {
+                preferredLimitByVisualFamily.horizontal = null;
+                setSelectValueAndTrigger('chartTypeSelector', 'barHorizontal');
             });
             document.getElementById('ageDetailMode').addEventListener('change', function() {
                 chartConfig.ageDetailMode = this.value;
                 preferredConfig.ageDetailMode = this.value;
-                renderAgeDetailButtons();
+                renderAgeDetailCheckbox();
                 rerenderLatestChart();
+            });
+
+            document.getElementById('includeAgeCauses')?.addEventListener('change', function() {
+                setSelectValueAndTrigger('ageDetailMode', this.checked ? 'causes' : 'summary');
             });
 
             document.getElementById('chartTypeButtons')?.addEventListener('click', function(event) {
@@ -1172,13 +1346,6 @@
                 restorePresentationFocus(this, button.dataset.value);
             });
 
-            document.getElementById('ageDetailButtons')?.addEventListener('click', function(event) {
-                const button = event.target.closest('.visual-option-btn[data-target="ageDetailMode"]');
-                if (!button || button.disabled) return;
-                setSelectValueAndTrigger('ageDetailMode', button.dataset.value);
-                restorePresentationFocus(this, button.dataset.value);
-            });
-
             const palettePicker = document.getElementById('colorPalettePicker');
             const paletteToggle = document.getElementById('statisticsPaletteToggle');
             const paletteMenu = document.getElementById('statisticsPaletteMenu');
@@ -1197,7 +1364,7 @@
 
                 const viewportEdge = 12;
                 const menuGap = 6;
-                const maximumHeight = 352;
+                const maximumHeight = 416;
                 const triggerRect = paletteToggle.getBoundingClientRect();
                 const spaceBelow = Math.max(0, window.innerHeight - triggerRect.bottom - viewportEdge);
                 const spaceAbove = Math.max(0, triggerRect.top - viewportEdge);
@@ -1221,7 +1388,10 @@
 
                     paletteMenu.classList.remove('hidden');
                     this.setAttribute('aria-expanded', 'true');
-                    window.requestAnimationFrame(positionPaletteMenu);
+                    window.requestAnimationFrame(() => {
+                        positionPaletteMenu();
+                        paletteMenu.querySelector('.palette-chip[aria-pressed="true"]')?.focus();
+                    });
                 });
 
                 document.addEventListener('click', function(event) {
@@ -1241,18 +1411,6 @@
 
             if (palettePicker) {
                 palettePicker.addEventListener('click', function(event) {
-                    const moreButton = event.target.closest('[data-palette-more]');
-                    if (moreButton) {
-                        const additional = this.querySelector('[data-additional-palettes]');
-                        const willOpen = additional?.classList.contains('hidden');
-                        additional?.classList.toggle('hidden', !willOpen);
-                        moreButton.setAttribute('aria-expanded', String(willOpen));
-                        moreButton.querySelector('i')?.classList.toggle('fa-chevron-down', !willOpen);
-                        moreButton.querySelector('i')?.classList.toggle('fa-chevron-up', willOpen);
-                        window.requestAnimationFrame(positionPaletteMenu);
-                        return;
-                    }
-
                     const button = event.target.closest('.palette-chip');
                     if (!button) return;
                     const paletteName = button.dataset.palette;
@@ -1286,6 +1444,16 @@
             const downloadMenu = document.getElementById('downloadMenu');
             const downloadButton = document.getElementById('descargarActual');
             const downloadOptionsButton = document.getElementById('descargarOpciones');
+            const setDownloadMenuOpen = (open, { restoreFocus = false } = {}) => {
+                if (!downloadMenu || !downloadOptionsButton) return;
+                downloadMenu.classList.toggle('hidden', !open);
+                downloadOptionsButton.setAttribute('aria-expanded', String(open));
+                downloadOptionsButton.setAttribute(
+                    'aria-label',
+                    open ? 'Cerrar opciones de descarga' : 'Abrir opciones de descarga'
+                );
+                if (restoreFocus) downloadOptionsButton.focus();
+            };
             document.getElementById('statisticsViewData')?.addEventListener('click', function(event) {
                 if (this.getAttribute('aria-disabled') === 'true') event.preventDefault();
             });
@@ -1307,16 +1475,14 @@
                     downloadOptionsButton.addEventListener('click', function(event) {
                         event.stopPropagation();
                         const willOpen = downloadMenu.classList.contains('hidden');
-                        downloadMenu.classList.toggle('hidden', !willOpen);
-                        this.setAttribute('aria-expanded', String(willOpen));
+                        setDownloadMenuOpen(willOpen);
                     });
                 }
 
                 document.querySelectorAll('.download-option').forEach(option => {
                     option.addEventListener('click', async function() {
                         const exportType = this.dataset.export;
-                        downloadMenu.classList.add('hidden');
-                        downloadOptionsButton?.setAttribute('aria-expanded', 'false');
+                        setDownloadMenuOpen(false);
                         if (exportType === 'csv') {
                             downloadAnalysisCsv();
                             return;
@@ -1327,16 +1493,13 @@
 
                 document.addEventListener('click', function(event) {
                     if (downloadMenuWrapper && !downloadMenuWrapper.contains(event.target)) {
-                        downloadMenu.classList.add('hidden');
-                        downloadOptionsButton?.setAttribute('aria-expanded', 'false');
+                        setDownloadMenuOpen(false);
                     }
                 });
 
                 document.addEventListener('keydown', function(event) {
                     if (event.key !== 'Escape' || downloadMenu.classList.contains('hidden')) return;
-                    downloadMenu.classList.add('hidden');
-                    downloadOptionsButton?.setAttribute('aria-expanded', 'false');
-                    downloadOptionsButton?.focus();
+                    setDownloadMenuOpen(false, { restoreFocus: true });
                 });
             }
         }
@@ -1430,10 +1593,10 @@
             return lines;
         }
 
-        function composeChartWithContext(chartCanvas, transparent = false) {
+        function composeChartWithContext(chartCanvas, transparent = false, sourceScale = null) {
             const chartElement = document.getElementById('mainChart');
             const displayWidth = chartElement?.clientWidth || (chartCanvas.width / 2);
-            const scale = Math.max(1, chartCanvas.width / Math.max(1, displayWidth));
+            const scale = sourceScale || Math.max(1, chartCanvas.width / Math.max(1, displayWidth));
             const padding = 22 * scale;
             const accentOffset = 11 * scale;
             const maxTextWidth = chartCanvas.width - (padding * 2) - accentOffset;
@@ -1511,24 +1674,167 @@
             return canvas;
         }
 
+        function cropFocusedChartCanvas(sourceCanvas, transparent = false) {
+            const renderedSeriesType = currentEchartsInstance?.getOption?.()?.series?.[0]?.type;
+            const isMunicipalityMap = currentChartType === 'municipios' && renderedSeriesType === 'map';
+            const isCircularChart = renderedSeriesType === 'pie';
+            if (!isMunicipalityMap && !isCircularChart) return sourceCanvas;
+
+            const sourceContext = sourceCanvas.getContext('2d', { willReadFrequently: true });
+            if (!sourceContext) return sourceCanvas;
+
+            const { width, height } = sourceCanvas;
+            const pixels = sourceContext.getImageData(0, 0, width, height).data;
+            let minimumX = width;
+            let minimumY = height;
+            let maximumX = -1;
+            let maximumY = -1;
+
+            for (let y = 0; y < height; y += 1) {
+                for (let x = 0; x < width; x += 1) {
+                    const offset = (y * width + x) * 4;
+                    const alpha = pixels[offset + 3];
+                    const differsFromWhite = Math.max(
+                        255 - pixels[offset],
+                        255 - pixels[offset + 1],
+                        255 - pixels[offset + 2]
+                    ) > 6;
+                    const hasVisibleContent = transparent ? alpha > 8 : alpha > 8 && differsFromWhite;
+                    if (!hasVisibleContent) continue;
+
+                    minimumX = Math.min(minimumX, x);
+                    minimumY = Math.min(minimumY, y);
+                    maximumX = Math.max(maximumX, x);
+                    maximumY = Math.max(maximumY, y);
+                }
+            }
+
+            if (maximumX < minimumX || maximumY < minimumY) return sourceCanvas;
+
+            const chartElement = document.getElementById('mainChart');
+            const renderedScale = Math.max(1, width / Math.max(1, chartElement?.clientWidth || width));
+            const horizontalPadding = Math.round((isCircularChart ? 30 : 28) * renderedScale);
+            const verticalPadding = Math.round((isCircularChart ? 24 : 18) * renderedScale);
+            const cropX = Math.max(0, minimumX - horizontalPadding);
+            const cropY = Math.max(0, minimumY - verticalPadding);
+            const cropRight = Math.min(width, maximumX + horizontalPadding + 1);
+            const cropBottom = Math.min(height, maximumY + verticalPadding + 1);
+            const croppedCanvas = document.createElement('canvas');
+            croppedCanvas.width = Math.max(1, cropRight - cropX);
+            croppedCanvas.height = Math.max(1, cropBottom - cropY);
+            const croppedContext = croppedCanvas.getContext('2d');
+            if (!croppedContext) return sourceCanvas;
+
+            if (!transparent) {
+                croppedContext.fillStyle = '#ffffff';
+                croppedContext.fillRect(0, 0, croppedCanvas.width, croppedCanvas.height);
+            }
+            croppedContext.drawImage(
+                sourceCanvas,
+                cropX,
+                cropY,
+                croppedCanvas.width,
+                croppedCanvas.height,
+                0,
+                0,
+                croppedCanvas.width,
+                croppedCanvas.height
+            );
+
+            return croppedCanvas;
+        }
+
         async function captureChartAsCanvas(transparent = false, includeContext = shouldIncludeChartContext()) {
             if (currentChartType === 'edades' && chartConfig.ageDetailMode === 'causes' && typeof html2canvas !== 'undefined') {
                 const element = document.getElementById('mainChart')?.closest('.statistics-chart-panel');
                 if (!element) return null;
-                return html2canvas(element, {
+
+                if (document.fonts?.ready) {
+                    await document.fonts.ready;
+                }
+
+                const chartCanvas = element.querySelector('.statistics-chart-canvas');
+                const source = element.querySelector('.statistics-chart-source');
+                const elementRect = element.getBoundingClientRect();
+                const chartCanvasHeight = chartCanvas?.getBoundingClientRect().height || 0;
+                const captureHeight = source
+                    ? Math.max(1, source.getBoundingClientRect().top - elementRect.top)
+                    : elementRect.height;
+
+                const capturedCanvas = await html2canvas(element, {
                     scale: 2,
                     useCORS: true,
                     backgroundColor: transparent ? null : '#ffffff',
-                    onclone: clonedDocument => {
+                    windowWidth: document.documentElement.clientWidth,
+                    scrollX: window.scrollX,
+                    scrollY: window.scrollY,
+                    onclone: async clonedDocument => {
                         const panel = clonedDocument.getElementById('statisticsChartPanel');
                         const header = panel?.querySelector('.statistics-chart-header');
-                        const source = panel?.querySelector('.statistics-chart-source');
+                        const clonedSource = panel?.querySelector('.statistics-chart-source');
                         const actions = panel?.querySelector('.statistics-download');
-                        if (actions) actions.style.display = 'none';
-                        if (source) source.style.display = 'none';
+                        const clonedChartCanvas = panel?.querySelector('.statistics-chart-canvas');
+                        const causesColumnHeaders = panel?.querySelectorAll('.statistics-causes__columns span') || [];
+                        if (panel && elementRect.width) {
+                            const fixedWidth = `${elementRect.width}px`;
+                            panel.style.width = fixedWidth;
+                            panel.style.minWidth = fixedWidth;
+                            panel.style.maxWidth = fixedWidth;
+                        }
+                        if (clonedChartCanvas && chartCanvasHeight) {
+                            const fixedHeight = `${chartCanvasHeight}px`;
+                            clonedChartCanvas.style.height = fixedHeight;
+                            clonedChartCanvas.style.minHeight = fixedHeight;
+                            clonedChartCanvas.style.flexBasis = fixedHeight;
+                            clonedChartCanvas.style.flexGrow = '0';
+                            clonedChartCanvas.style.flexShrink = '0';
+                        }
+                        // Ocultar sin retirar del flujo evita que la copia cambie su geometría.
+                        if (actions) actions.style.visibility = 'hidden';
+                        if (clonedSource) clonedSource.style.visibility = 'hidden';
                         if (header && !includeContext) header.style.display = 'none';
+
+                        // html2canvas coloca la línea base de estos rótulos ligeramente más abajo
+                        // que Chromium. La corrección es solo óptica y solo afecta al PNG/PDF.
+                        causesColumnHeaders.forEach(columnHeader => {
+                            columnHeader.style.position = 'relative';
+                            columnHeader.style.top = '-2px';
+                        });
+
+                        if (clonedDocument.fonts?.ready) {
+                            await clonedDocument.fonts.ready;
+                        }
                     }
                 });
+
+                // El pie se elimina después de rasterizar para no provocar un reflow en el clon.
+                const renderedScale = elementRect.width
+                    ? capturedCanvas.width / elementRect.width
+                    : 1;
+                const croppedHeight = Math.min(
+                    capturedCanvas.height,
+                    Math.max(1, Math.round(captureHeight * renderedScale))
+                );
+
+                if (croppedHeight >= capturedCanvas.height) return capturedCanvas;
+
+                const croppedCanvas = document.createElement('canvas');
+                croppedCanvas.width = capturedCanvas.width;
+                croppedCanvas.height = croppedHeight;
+                const croppedContext = croppedCanvas.getContext('2d');
+                if (!croppedContext) return capturedCanvas;
+                croppedContext.drawImage(
+                    capturedCanvas,
+                    0,
+                    0,
+                    capturedCanvas.width,
+                    croppedHeight,
+                    0,
+                    0,
+                    capturedCanvas.width,
+                    croppedHeight
+                );
+                return croppedCanvas;
             }
 
             const dataUrl = getChartDataUrl(transparent);
@@ -1547,7 +1853,12 @@
                 ctx.drawImage(img, 0, 0);
             }
 
-            return includeContext ? composeChartWithContext(canvas, transparent) : canvas;
+            const chartElement = document.getElementById('mainChart');
+            const sourceScale = Math.max(1, canvas.width / Math.max(1, chartElement?.clientWidth || canvas.width));
+            const preparedCanvas = cropFocusedChartCanvas(canvas, transparent);
+            return includeContext
+                ? composeChartWithContext(preparedCanvas, transparent, sourceScale)
+                : preparedCanvas;
         }
 
         async function exportCurrentChart(exportType) {
@@ -1588,6 +1899,7 @@
         window.exportStatisticsChart = exportCurrentChart;
 
         function selectChart(chartType) {
+            const hasRenderedChart = Boolean(currentEchartsInstance);
             const filtersPanel = document.getElementById('estadisticas-filtros');
             if (filtersPanel?.classList.contains('is-open')) {
                 closeStatisticsFilters({ restore: true });
@@ -1611,19 +1923,20 @@
             // Ocultar tabla de causas si no es Edades
             const causasContainer = document.getElementById('causasPrincipalesContainer');
             if (causasContainer) {
-                causasContainer.classList.add('hidden');
+                setAgeCausesVisibility(causasContainer, false, { animate: false });
             }
 
             applyPreferredPresentation(chartType);
             updateActiveFiltersDisplay();
+            setChartOutputActionsEnabled(false);
             
             // Cargar datos de la nueva métrica
-            loadChart(chartType);
+            loadChart(chartType, { preservePreviousMetric: hasRenderedChart });
         }
 
         function updateVisibleFilters(chartType) {
             const allFilters = ['filterTipoMunicipio', 'filterMunicipios', 'filterCausas', 'filterdistritoes', 'filterSexo', 'filterEdad', 'filterGranularidad', 'filterTipoComparativa'];
-            const availableFilters = filtersForChart[chartType] || [];
+            const availableFilters = getFiltersForChart(chartType);
 
             allFilters.forEach(filterId => {
                 const element = document.getElementById(filterId);
@@ -1647,18 +1960,23 @@
                 group.hidden = !hasVisibleControl;
             });
 
-            // Mostrar/ocultar selector Top según el tipo de gráfica
-            const filterTopElement = document.getElementById('filterTop');
-            if (filterTopElement) {
-                const showTopSelector = chartTypesWithTopSelector.includes(chartType);
-                filterTopElement.style.display = showTopSelector ? '' : 'none';
-                filterTopElement.parentElement?.classList.toggle('has-top-filter', showTopSelector);
+            const chartTypeGroup = document.getElementById('statisticsChartTypeGroup');
+            if (chartTypeGroup) {
+                const hasChartTypeChoice = (chartTypeOptions[chartType] || []).length > 1;
+                chartTypeGroup.style.display = hasChartTypeChoice ? '' : 'none';
+                chartTypeGroup.parentElement?.classList.toggle('no-chart-type-choice', !hasChartTypeChoice);
             }
+
+            // La cantidad visible termina de ajustarse al recibir el total real
+            // de categorías para la métrica y los filtros activos.
+            renderChartLimitButtons(chartType);
 
             const ageDetailGroup = document.getElementById('statisticsAgeDetailGroup');
             if (ageDetailGroup) {
                 ageDetailGroup.style.display = chartType === 'edades' ? '' : 'none';
             }
+
+            updateGeographicFilterLabels(document.getElementById('tipoMunicipioFilter')?.value || activeFilters.tipoMunicipio);
 
         }
 
@@ -1669,15 +1987,90 @@
             note.classList.toggle('hidden', !text);
         }
 
-        function getEffectiveLimit(chartType) {
+        function getVisualLimitFamily(chartType, visualType = chartConfig.type) {
+            if (visualType === 'map') return 'map';
+            if (chartType === 'comparativa') return 'comparison';
+            if (['pie', 'doughnut'].includes(visualType)) return 'circular';
+            if (visualType === 'barHorizontal') return 'horizontal';
+            return 'vertical';
+        }
+
+        function getKnownCategoryCount(chartType) {
+            if (latestChartDataType !== chartType) return null;
+            const count = Number(latestChartData?.available_categories);
+            return Number.isFinite(count) ? Math.max(0, count) : null;
+        }
+
+        function getPreferredLimit(chartType, family) {
+            if (chartType === 'municipios' && family === 'vertical') {
+                return preferredMunicipalityColumnLimit;
+            }
+
+            return preferredLimitByVisualFamily[family];
+        }
+
+        function setPreferredLimit(chartType, family, limit) {
+            if (chartType === 'municipios' && family === 'vertical') {
+                preferredMunicipalityColumnLimit = limit;
+                return;
+            }
+
+            preferredLimitByVisualFamily[family] = limit;
+        }
+
+        function getAvailableChartLimits(chartType, visualType = chartConfig.type, categoryCount = getKnownCategoryCount(chartType)) {
+            const family = getVisualLimitFamily(chartType, visualType);
+            if (family === 'map') return [];
+            const configured = chartLimitsByType[chartType] || chartLimitsByType.default;
+            // En gráficas circulares el universo completo se resume internamente
+            // como cinco categorías principales + Resto; un Top 5 adicional sería
+            // visualmente idéntico y duplicaría controles sin aportar información.
+            const familyLimits = family === 'circular' ? [] : configured;
+
+            if (categoryCount === null) return familyLimits;
+            return familyLimits.filter(limit => categoryCount - limit >= minimumCategoriesOmittedByTop);
+        }
+
+        function canShowAllCategories(chartType, visualType = chartConfig.type, categoryCount = getKnownCategoryCount(chartType)) {
+            if (getVisualLimitFamily(chartType, visualType) === 'map') return true;
+            if (categoryCount === null || categoryCount <= maximumVerticalCategories) return true;
+            const family = getVisualLimitFamily(chartType, visualType);
+            if (chartType === 'municipios' && family === 'vertical') return true;
+            return family === 'horizontal' || family === 'circular';
+        }
+
+        function getEffectiveLimit(chartType, visualType = chartConfig.type, categoryCount = getKnownCategoryCount(chartType)) {
             if (!chartTypesWithTopSelector.includes(chartType)) return null;
-            if (preferredConfig.limit === null) return null;
 
-            const available = chartLimitsByType[chartType] || chartLimitsByType.default;
-            if (available.includes(preferredConfig.limit)) return preferredConfig.limit;
+            const family = getVisualLimitFamily(chartType, visualType);
+            const preferredLimit = getPreferredLimit(chartType, family);
+            const availableLimits = getAvailableChartLimits(chartType, visualType, categoryCount);
+            const allowsAll = canShowAllCategories(chartType, visualType, categoryCount);
 
-            const lowerOrEqual = available.filter(limit => limit <= preferredConfig.limit);
-            return lowerOrEqual.length ? Math.max(...lowerOrEqual) : Math.min(...available);
+            if (preferredLimit === null && allowsAll) return null;
+            if (availableLimits.includes(preferredLimit)) return preferredLimit;
+
+            // Si el Top preferido apenas omitiría categorías, conservar el universo
+            // completo es más informativo que descender a un Top mucho menor.
+            if (allowsAll) return null;
+
+            if (preferredLimit !== null) {
+                const lowerOrEqual = availableLimits.filter(limit => limit <= preferredLimit);
+                if (lowerOrEqual.length) return Math.max(...lowerOrEqual);
+            }
+
+            if (!allowsAll && availableLimits.length) return Math.max(...availableLimits);
+            return null;
+        }
+
+        function syncChartLimitForPresentation(chartType, visualType = chartConfig.type, categoryCount = getKnownCategoryCount(chartType)) {
+            const previousLimit = chartConfig.limit;
+            const effectiveLimit = getEffectiveLimit(chartType, visualType, categoryCount);
+            chartConfig.limit = effectiveLimit;
+
+            const select = document.getElementById('chartLimit');
+            if (select) select.value = effectiveLimit === null ? 'all' : String(effectiveLimit);
+            return previousLimit !== effectiveLimit;
         }
 
         function applyPreferredPresentation(chartType) {
@@ -1688,7 +2081,7 @@
             const effectiveDataLabel = chartType === 'tendencias' && ['percent', 'both'].includes(preferredConfig.dataLabelMode)
                 ? 'value'
                 : preferredConfig.dataLabelMode;
-            const effectiveLimit = getEffectiveLimit(chartType);
+            const effectiveLimit = getEffectiveLimit(chartType, effectiveType);
 
             chartConfig.type = effectiveType;
             chartConfig.dataLabelMode = effectiveDataLabel;
@@ -1703,24 +2096,24 @@
             renderChartTypeButtons(chartType);
             renderDataLabelButtons(chartType);
             renderChartLimitButtons(chartType);
-            renderAgeDetailButtons();
+            renderColorPalettePreview(chartConfig.colorPalette);
+            renderAgeDetailCheckbox();
 
             setPresentationAdaptationNote(
                 'chartTypeAdaptationNote',
-                effectiveType !== preferredConfig.type
-                    ? `Esta vista usa ${chartTypeLabels[effectiveType]}; se conserva ${chartTypeLabels[preferredConfig.type]}.`
-                    : ''
+                ''
             );
             setPresentationAdaptationNote(
                 'dataLabelAdaptationNote',
-                effectiveDataLabel !== preferredConfig.dataLabelMode
+                chartType !== 'tendencias' && effectiveDataLabel !== preferredConfig.dataLabelMode
                     ? `Esta vista usa ${dataLabelModeLabels[effectiveDataLabel]}; se conserva ${dataLabelModeLabels[preferredConfig.dataLabelMode]}.`
                     : ''
             );
             setPresentationAdaptationNote(
                 'chartLimitAdaptationNote',
-                chartTypesWithTopSelector.includes(chartType) && effectiveLimit !== preferredConfig.limit
-                    ? `${chartLimitLabels[effectiveLimit]} aplicado; se conserva ${chartLimitLabels[preferredConfig.limit]}.`
+                chartTypesWithTopSelector.includes(chartType)
+                    && effectiveLimit !== getPreferredLimit(chartType, getVisualLimitFamily(chartType, effectiveType))
+                    ? `${chartLimitLabels[effectiveLimit] || 'Todas'} aplicado para esta visualización.`
                     : ''
             );
         }
@@ -1761,12 +2154,14 @@
             const availableTypes = chartTypeOptions[chartType] || ['bar'];
             const currentValue = selectedValue;
             const allOptions = {
-                'bar': 'Barras',
-                'barHorizontal': 'Barras Horizontales',
+                'bar': 'Columnas',
+                'barHorizontal': 'Barras',
                 'pie': 'Pastel',
-                'doughnut': 'Rosquilla',
+                'doughnut': 'Dona',
                 'line': 'Línea',
-                'area': 'Área'
+                'area': 'Área',
+                'map': 'Mapa',
+                'heatmap': 'Mapa de calor'
             };
             selector.innerHTML = '';
             availableTypes.forEach((type, index) => {
@@ -1807,14 +2202,10 @@
                     case 'years':
                         if (yearSelector) yearSelector.style.display = 'block';
                         break;
-                    case 'months':
-                        if (yearSelector) yearSelector.style.display = 'block';
-                        if (monthSelector) monthSelector.style.display = 'block';
-                        // Agregar event listeners a los labels cuando se muestren meses
-                        setTimeout(() => {
-                            setupMonthLabels();
-                        }, 100);
-                        break;
+                case 'months':
+                    if (yearSelector) yearSelector.style.display = 'block';
+                    if (monthSelector) monthSelector.style.display = 'block';
+                    break;
                 case 'quarter':
                     if (yearSelector) yearSelector.style.display = 'block';
                     if (quarterSelector) quarterSelector.style.display = 'block';
@@ -1829,86 +2220,133 @@
             
         }
 
-        function setupMonthLabels() {
-            const monthsContainer = document.querySelector('.months-container');
-            if (!monthsContainer) return;
-            
-            // Limpiar listeners previos removiendo y recreando el contenedor
-            const parent = monthsContainer.parentElement;
-            const newContainer = monthsContainer.cloneNode(true);
-            parent.replaceChild(newContainer, monthsContainer);
-            
-            // Obtener el contenedor actualizado
-            const updated = document.querySelector('.months-container');
-            if (!updated) return;
-            
-            // Re-agregar listeners a los checkboxes clonados
-            updated.querySelectorAll('.month-checkbox').forEach(checkbox => {
-                checkbox.addEventListener('change', function() {
-                    markStatisticsFilterDraft();
-                });
-            });
-            
-            // Agregar listener con event delegation para los labels
-            updated.addEventListener('click', handleMonthLabelClick);
-        }
-        
-        function handleMonthLabelClick(e) {
-            if (e.target.classList.contains('month-label')) {
-                e.preventDefault();
-                const label = e.target;
-                const checkbox = label.previousElementSibling;
-                if (checkbox && checkbox.classList.contains('month-checkbox')) {
-                    checkbox.checked = !checkbox.checked;
-                    checkbox.dispatchEvent(new Event('change', { bubbles: true }));
-                }
-            }
-        }
-
         function renderColorPalettePreview(paletteName) {
             const picker = document.getElementById('colorPalettePicker');
             if (!picker) return;
 
-            const selectedPalette = colorPalettes[paletteName] || [];
-            const selectedLabel = colorPaletteLabels[paletteName] || paletteName;
+            const isCircularChart = ['pie', 'doughnut'].includes(chartConfig.type);
+            const isSequentialChart = ['map', 'heatmap'].includes(chartConfig.type);
+            const isComparisonChart = currentChartType === 'comparativa' && !isSequentialChart;
+            const isSimpleCategoricalChart = ['bar', 'barHorizontal'].includes(chartConfig.type)
+                && currentChartType !== 'comparativa';
+            const latestLabels = Array.isArray(latestChartData?.labels) ? latestChartData.labels : [];
+            const latestCounts = Array.isArray(latestChartData?.counts) ? latestChartData.counts : [];
+            const visibleCategoryCount = latestChartDataType === currentChartType
+                ? latestLabels.filter((_, index) => !latestCounts.length || Number(latestCounts[index] || 0) !== 0).length
+                : 0;
+            const canPreviewSmallQualitativeBars = isSimpleCategoricalChart
+                && visibleCategoryCount > 1
+                && visibleCategoryCount <= 5;
+            const previewPalettes = isCircularChart ? colorPalettesCircular : colorPalettes;
+            const visiblePrimaryKeys = isCircularChart
+                ? circularPaletteKeys
+                : (isSequentialChart ? sequentialPrimaryPaletteKeys : primaryPaletteKeys);
+            const visibleAdditionalKeys = isCircularChart
+                ? []
+                : (isSequentialChart ? sequentialAdditionalPaletteKeys : additionalPaletteKeys);
+            const availableKeys = [...visiblePrimaryKeys, ...visibleAdditionalKeys];
+            const resolvedPaletteName = availableKeys.includes(paletteName)
+                ? paletteName
+                : visiblePrimaryKeys[0];
+            if (chartConfig.colorPalette !== resolvedPaletteName) {
+                chartConfig.colorPalette = resolvedPaletteName;
+            }
+            const getPreviewColors = key => {
+                if (canPreviewSmallQualitativeBars && circularPaletteKeys.includes(key)) {
+                    return (colorPalettesCircular[key] || []).slice(0, visibleCategoryCount);
+                }
+                if (!isCircularChart && !isSequentialChart && !isComparisonChart) {
+                    return [cartesianSolidColors[key] || colorPalettes[key]?.[0] || '#64748b'];
+                }
+
+                const palette = isComparisonChart
+                    ? (colorPalettesCircular[key] || colorPalettesCircular.maroon611132)
+                    : (previewPalettes[key] || colorPalettes[key] || []);
+                const sampleSize = Math.min(5, palette.length);
+                if (sampleSize === 0) return [];
+                if (palette.length <= sampleSize) return palette;
+
+                return Array.from({ length: sampleSize }, (_, index) => {
+                    const paletteIndex = Math.round(index * (palette.length - 1) / (sampleSize - 1));
+                    return palette[paletteIndex];
+                });
+            };
+            const getPreviewLabel = key => {
+                if (isCircularChart || isComparisonChart
+                    || (canPreviewSmallQualitativeBars && circularPaletteKeys.includes(key))) {
+                    return circularColorPaletteLabels[key] || colorPaletteLabels[key] || key;
+                }
+                if (!isSequentialChart) return cartesianSolidColorLabels[key] || colorPaletteLabels[key] || key;
+                return colorPaletteLabels[key] || key;
+            };
+            const selectedPalette = getPreviewColors(resolvedPaletteName);
+            const selectedLabel = getPreviewLabel(resolvedPaletteName);
             const selection = document.getElementById('statisticsPaletteSelection');
             const label = document.getElementById('statisticsPaletteLabel');
 
             if (selection) {
-                selection.innerHTML = selectedPalette.slice(0, 4)
+                selection.classList.toggle('is-solid', selectedPalette.length === 1);
+                selection.innerHTML = selectedPalette
                     .map(color => `<span style="background:${color};"></span>`)
                     .join('');
             }
             if (label) label.textContent = selectedLabel;
 
             const renderPaletteButton = key => {
-                const palette = colorPalettes[key] || [];
-                const label = colorPaletteLabels[key] || key;
-                const swatches = palette.slice(0, 4);
+                const label = getPreviewLabel(key);
+                const swatches = getPreviewColors(key);
+                const selected = key === resolvedPaletteName;
+                const isSolid = swatches.length === 1;
 
                 return `
-                    <button type="button" class="palette-chip" data-palette="${key}" aria-pressed="${key === paletteName}" aria-label="Usar paleta ${label}">
+                    <button type="button" class="palette-chip${isSolid ? ' palette-chip--solid' : ''}" data-palette="${key}" aria-pressed="${selected}" aria-label="Usar paleta ${label}">
                         <div class="palette-chip__swatches">
                             ${swatches.map(color => `<span style="background:${color};" title="${color}"></span>`).join('')}
                         </div>
-                        <div class="palette-chip__label">${label}</div>
+                        <div class="palette-chip__meta">
+                            <span class="palette-chip__label">${label}</span>
+                            <i class="fas fa-check palette-chip__check ${selected ? '' : 'hidden'}" aria-hidden="true"></i>
+                        </div>
                     </button>
                 `;
             };
 
-            const showAdditional = additionalPaletteKeys.includes(paletteName);
-            picker.innerHTML = `
-                <div class="statistics-palette-options" role="group" aria-label="Paletas recomendadas">
-                    ${primaryPaletteKeys.map(renderPaletteButton).join('')}
-                </div>
-                <button type="button" class="statistics-palette-more" data-palette-more aria-expanded="${showAdditional}">
-                    <span>Más paletas</span>
-                    <i class="fas ${showAdditional ? 'fa-chevron-up' : 'fa-chevron-down'}" aria-hidden="true"></i>
-                </button>
-                <div class="statistics-palette-options statistics-palette-options--additional ${showAdditional ? '' : 'hidden'}" data-additional-palettes role="group" aria-label="Paletas adicionales">
-                    ${additionalPaletteKeys.map(renderPaletteButton).join('')}
-                </div>
-            `;
+            const renderPaletteGroup = (title, keys, ariaLabel) => {
+                if (!keys.length) return '';
+
+                return `
+                    <section class="statistics-palette-section">
+                        <p class="statistics-palette-section-title">${title}</p>
+                        <div class="statistics-palette-options" role="group" aria-label="${ariaLabel}">
+                            ${keys.map(renderPaletteButton).join('')}
+                        </div>
+                    </section>
+                `;
+            };
+
+            const multiColorKeys = availableKeys.filter(key => getPreviewColors(key).length > 1);
+            const solidColorKeys = availableKeys.filter(key => getPreviewColors(key).length === 1);
+
+            if (isSequentialChart) {
+                picker.innerHTML = renderPaletteGroup(
+                    'Escalas de color',
+                    availableKeys,
+                    'Escalas de color disponibles'
+                );
+            } else {
+                picker.innerHTML = [
+                    renderPaletteGroup(
+                        'Paletas de varios colores',
+                        multiColorKeys,
+                        'Paletas de varios colores disponibles'
+                    ),
+                    renderPaletteGroup(
+                        'Colores sólidos',
+                        solidColorKeys,
+                        'Colores sólidos disponibles'
+                    )
+                ].join('');
+            }
         }
 
         function setSelectValueAndTrigger(selectId, value) {
@@ -1933,6 +2371,8 @@
                 limit: defaultPresentationConfig.limit,
                 ageDetailMode: defaultPresentationConfig.ageDetailMode
             };
+            preferredLimitByVisualFamily = { ...defaultLimitPreferences };
+            preferredMunicipalityColumnLimit = defaultPresentationConfig.limit;
             chartConfig.colorPalette = defaultPresentationConfig.colorPalette;
 
             applyPreferredPresentation(currentChartType);
@@ -1953,16 +2393,21 @@
             const currentValue = selector.value || chartConfig.type || availableTypes[0];
             const isSingleType = availableTypes.length === 1;
             const labels = {
-                bar: 'Barras',
-                barHorizontal: 'Horizontal',
+                bar: 'Columnas',
+                barHorizontal: 'Barras',
                 pie: 'Pastel',
-                doughnut: 'Rosquilla',
+                doughnut: 'Dona',
                 line: 'Línea',
-                area: 'Área'
+                area: 'Área',
+                map: 'Mapa',
+                heatmap: 'Mapa de calor'
             };
             const accessibleLabels = {
                 ...labels,
-                barHorizontal: 'Barras horizontales'
+                bar: 'Gráfica de columnas',
+                barHorizontal: 'Gráfica de barras horizontales',
+                map: 'Mapa por municipio',
+                heatmap: 'Mapa de calor comparativo'
             };
 
             container.className = `statistics-visual-options${isSingleType ? ' is-single' : ''}`;
@@ -1976,6 +2421,9 @@
                     </button>
                 `;
             }).join('');
+
+            const dataLabelGroup = document.getElementById('statisticsDataLabelGroup');
+            if (dataLabelGroup) dataLabelGroup.hidden = currentValue === 'map';
         }
 
         function renderDataLabelButtons(chartType) {
@@ -2011,17 +2459,13 @@
             }).join('');
         }
 
-        function renderAgeDetailButtons() {
-            const container = document.getElementById('ageDetailButtons');
+        function renderAgeDetailCheckbox() {
+            const checkbox = document.getElementById('includeAgeCauses');
             const select = document.getElementById('ageDetailMode');
-            if (!container || !select) return;
+            if (!checkbox || !select) return;
 
             const currentValue = select.value || chartConfig.ageDetailMode || 'summary';
-            container.querySelectorAll('.visual-option-btn').forEach(button => {
-                const active = button.dataset.value === currentValue;
-                button.classList.toggle('active', active);
-                button.setAttribute('aria-pressed', String(active));
-            });
+            checkbox.checked = currentValue === 'causes';
         }
 
         function renderChartLimitButtons(chartType) {
@@ -2030,24 +2474,33 @@
             const wrapper = document.getElementById('filterTop');
             if (!container || !select || !wrapper) return;
 
-            const currentValue = select.value || (chartConfig.limit ? String(chartConfig.limit) : 'all');
-            
-            // Obtener los límites disponibles para este tipo de gráfico
-            const availableLimits = chartLimitsByType[chartType] || chartLimitsByType.default;
-            const availableCategoryCount = latestChartDataType === chartType
-                ? Number(latestChartData?.available_categories || 0)
-                : 0;
+            const supportsTopSelector = chartTypesWithTopSelector.includes(chartType);
+            const visualType = chartConfig.type === 'auto' ? getOptimalChartType(chartType) : chartConfig.type;
+            const visualFamily = getVisualLimitFamily(chartType, visualType);
+            const knownCategoryCount = getKnownCategoryCount(chartType);
+            const availableCategoryCount = knownCategoryCount ?? 0;
+            const availableLimits = getAvailableChartLimits(chartType, visualType, knownCategoryCount);
+            const allowsAll = canShowAllCategories(chartType, visualType, knownCategoryCount);
+            const effectiveLimit = getEffectiveLimit(chartType, visualType, knownCategoryCount);
+            const currentValue = effectiveLimit === null ? 'all' : String(effectiveLimit);
+            const isCircularSummary = visualFamily === 'circular'
+                && knownCategoryCount !== null
+                && availableCategoryCount > circularSummaryCategoryLimit;
 
             const options = [
-                {
+                ...(allowsAll ? [{
                     value: 'all',
-                    label: availableCategoryCount > 0
-                        ? `${chartLimitLabels.all} (${availableCategoryCount.toLocaleString('es-MX')})`
+                    label: isCircularSummary && knownCategoryCount !== null
+                        ? `Resumen (${availableCategoryCount.toLocaleString('es-MX')})`
+                        : chartLimitLabels.all,
+                    accessibleLabel: knownCategoryCount !== null
+                        ? `${isCircularSummary ? 'Resumen del total' : 'Mostrar todas las categorías'} (${availableCategoryCount.toLocaleString('es-MX')})`
                         : chartLimitLabels.all
-                },
+                }] : []),
                 ...availableLimits.map(limit => ({ 
                     value: String(limit), 
-                    label: chartLimitLabels[limit] 
+                    label: 'Top',
+                    accessibleLabel: chartLimitLabels[limit]
                 }))
             ];
 
@@ -2058,7 +2511,7 @@
             container.innerHTML = options.map(option => {
                 const active = option.value === currentValue;
                 return `
-                    <button type="button" class="visual-option-btn visual-option-card ${isSingleOption ? 'is-compact-single' : ''} ${active ? 'active' : ''}" data-target="chartLimit" data-value="${option.value}" aria-pressed="${active}">
+                    <button type="button" class="visual-option-btn visual-option-card ${isSingleOption ? 'is-compact-single' : ''} ${active ? 'active' : ''}" data-target="chartLimit" data-value="${option.value}" aria-pressed="${active}" aria-label="${option.accessibleLabel}">
                         <span class="visual-limit-badge ${option.value === 'all' ? 'is-all' : ''}">${option.value === 'all' ? '∞' : option.value}</span>
                         <span class="visual-option-label">${option.label}</span>
                     </button>
@@ -2066,25 +2519,138 @@
             }).join('');
 
             const readabilityNote = document.getElementById('chartLimitReadabilityNote');
-            const needsGuidance = currentValue === 'all' && availableCategoryCount > 15;
+            const showAllAsBars = document.getElementById('statisticsShowAllAsBars');
+            const hasManyCategories = knownCategoryCount !== null && availableCategoryCount > maximumVerticalCategories;
+            const supportsHorizontal = (chartTypeOptions[chartType] || []).includes('barHorizontal');
+            const canMoveToHorizontal = visualFamily === 'vertical'
+                && hasManyCategories
+                && supportsHorizontal
+                && chartType !== 'municipios';
             if (readabilityNote) {
-                const effectiveChartType = chartConfig.type === 'auto'
-                    ? getOptimalChartType(chartType)
-                    : chartConfig.type;
-                const supportsHorizontal = (chartTypeOptions[chartType] || []).includes('barHorizontal');
-                readabilityNote.textContent = !needsGuidance
-                    ? ''
-                    : ['pie', 'doughnut'].includes(effectiveChartType)
-                        ? `${availableCategoryCount.toLocaleString('es-MX')} categorías se resumen en los 10 segmentos principales y un segmento Resto para conservar la legibilidad.`
-                    : effectiveChartType === 'barHorizontal'
-                        ? `${availableCategoryCount.toLocaleString('es-MX')} categorías amplían la altura de la gráfica. Usa Top 15 para una comparación más rápida.`
-                        : `${availableCategoryCount.toLocaleString('es-MX')} categorías pueden saturar la gráfica.${supportsHorizontal ? ' Usa Top 15 o Barras horizontales para facilitar la lectura.' : ' Usa Top 15 para facilitar la lectura.'}`;
-                readabilityNote.classList.toggle('hidden', !needsGuidance);
+                let guidance = '';
+                if (visualFamily === 'comparison' && hasManyCategories) {
+                    guidance = `La comparativa muestra hasta ${effectiveLimit || maximumVerticalCategories} categorías. Consulta el universo completo en Ver datos.`;
+                } else if (canMoveToHorizontal) {
+                    guidance = `Columnas muestra hasta ${effectiveLimit || maximumVerticalCategories} categorías para evitar saturación.`;
+                }
+                readabilityNote.textContent = guidance;
+                readabilityNote.classList.toggle('hidden', !guidance);
             }
 
-            const showTopSelector = chartTypesWithTopSelector.includes(chartType);
+            if (showAllAsBars) {
+                showAllAsBars.classList.toggle('hidden', !canMoveToHorizontal);
+            }
+
+            const showTopSelector = supportsTopSelector && options.length > 1;
             wrapper.style.display = showTopSelector ? '' : 'none';
             wrapper.parentElement?.classList.toggle('has-top-filter', showTopSelector);
+        }
+
+        function parseStatisticsYears(value) {
+            const currentYear = new Date().getFullYear();
+            const parts = String(value || '').split(',').map(part => part.trim()).filter(Boolean);
+            const years = [];
+
+            for (const part of parts) {
+                const range = part.match(/^(\d{4})\s*-\s*(\d{4})$/);
+                if (range) {
+                    const first = Number(range[1]);
+                    const last = Number(range[2]);
+                    const start = Math.min(first, last);
+                    const end = Math.max(first, last);
+                    if (start < 1950 || end > currentYear) return { valid: false, years: [] };
+                    for (let year = start; year <= end; year++) years.push(year);
+                    continue;
+                }
+
+                if (!/^\d{4}$/.test(part)) return { valid: false, years: [] };
+                const year = Number(part);
+                if (year < 1950 || year > currentYear) return { valid: false, years: [] };
+                years.push(year);
+            }
+
+            return { valid: parts.length > 0, years: [...new Set(years)].sort((a, b) => a - b) };
+        }
+
+        function setStatisticsFilterError(controlIds, errorId, message = '') {
+            const error = document.getElementById(errorId);
+            if (error) {
+                error.textContent = message;
+                error.classList.toggle('hidden', !message);
+            }
+            [].concat(controlIds).forEach(id => {
+                const control = document.getElementById(id);
+                if (!control) return;
+                if (message) control.setAttribute('aria-invalid', 'true');
+                else control.removeAttribute('aria-invalid');
+            });
+        }
+
+        function validateStatisticsFilterDraft() {
+            setStatisticsFilterError('year', 'yearFilterError');
+            setStatisticsFilterError(['customStartDate', 'customEndDate'], 'customDateFilterError');
+            setStatisticsFilterError('edadFilter', 'edadFilterError');
+
+            const dateRange = document.getElementById('dateRange').value;
+            const yearValue = document.getElementById('year').value;
+
+            if (['years', 'months'].includes(dateRange)) {
+                const parsed = parseStatisticsYears(yearValue);
+                if (!parsed.valid) {
+                    setStatisticsFilterError('year', 'yearFilterError', 'Escribe un año, una lista o un periodo válido entre 1950 y el año actual.');
+                    document.getElementById('year').focus();
+                    return false;
+                }
+                if (dateRange === 'months' && !document.querySelector('.month-checkbox:checked')) {
+                    setStatisticsFilterError('year', 'yearFilterError', 'Selecciona al menos un mes para el año o periodo indicado.');
+                    document.querySelector('.month-checkbox')?.focus();
+                    return false;
+                }
+            }
+
+            if (dateRange === 'quarter') {
+                const parsed = yearValue.trim() ? parseStatisticsYears(yearValue) : { valid: true, years: [new Date().getFullYear()] };
+                if (!parsed.valid || parsed.years.length !== 1) {
+                    setStatisticsFilterError('year', 'yearFilterError', 'Para un trimestre selecciona un solo año válido.');
+                    document.getElementById('year').focus();
+                    return false;
+                }
+                if (!document.getElementById('quarter').value) {
+                    setStatisticsFilterError('year', 'yearFilterError', 'Selecciona el trimestre que deseas consultar.');
+                    document.getElementById('quarter').tomselect?.focus();
+                    return false;
+                }
+            }
+
+            if (dateRange === 'custom') {
+                const start = document.getElementById('customStartDate').value;
+                const end = document.getElementById('customEndDate').value;
+                if (!start || !end || start > end) {
+                    setStatisticsFilterError(
+                        ['customStartDate', 'customEndDate'],
+                        'customDateFilterError',
+                        !start || !end ? 'Selecciona ambas fechas.' : 'La fecha inicial debe ser anterior o igual a la fecha final.'
+                    );
+                    document.getElementById(!start ? 'customStartDate' : 'customEndDate').focus();
+                    return false;
+                }
+            }
+
+            if (metricSupportsFilter(currentChartType, 'edad')) {
+                const ageValue = document.getElementById('edadFilter').value.trim();
+                if (ageValue) {
+                    const validFormat = /^\d{1,3}(?:\s*-\s*\d{1,3})?$/.test(ageValue)
+                        || /^\d{1,3}(?:\s*,\s*\d{1,3})+$/.test(ageValue);
+                    const ages = ageValue.match(/\d+/g)?.map(Number) || [];
+                    if (!validFormat || ages.some(age => age < 0 || age > 130)) {
+                        setStatisticsFilterError('edadFilter', 'edadFilterError', 'Usa edades entre 0 y 130: exacta, rango o lista separada por comas.');
+                        document.getElementById('edadFilter').focus();
+                        return false;
+                    }
+                }
+            }
+
+            return true;
         }
 
         function collectFilters() {
@@ -2098,49 +2664,13 @@
             activeFilters.selectedYears = [];
 
             if (dateRange === 'years') {
-                const yearVal = document.getElementById('year').value;
-                if (yearVal) {
-                    // Parsear años separados por coma
-                    const yearsRaw = yearVal.split(',').map(y => y.trim()).filter(y => y !== '');
-                    const yearsNums = yearsRaw.map(y => Number(y)).filter(y => !isNaN(y) && y > 0);
-                    if (yearsNums.length > 0) {
-                        yearsNums.sort((a, b) => a - b);
-                        const minY = Math.min(...yearsNums);
-                        const maxY = Math.max(...yearsNums);
-                        startDate = `${minY}-01-01`;
-                        endDate = `${maxY}-12-31`;
-                        activeFilters.selectedYears = yearsNums;
-                    }
-                }
+                activeFilters.selectedYears = parseStatisticsYears(document.getElementById('year').value).years;
             } else if (dateRange === 'months') {
-                const yearVal = document.getElementById('year').value;
                 const checkedMonths = Array.from(document.querySelectorAll('.month-checkbox:checked')).map(cb => cb.value);
-                if (checkedMonths.length > 0 && yearVal) {
-                    // Parsear años separados por coma
-                    const yearsRaw = yearVal.split(',').map(y => y.trim()).filter(y => y !== '');
-                    const yearsNums = yearsRaw.map(y => Number(y)).filter(y => !isNaN(y) && y > 0).sort((a, b) => a - b);
-                    const monthsNums = checkedMonths.map(m => parseInt(m));
-                    if (yearsNums.length > 0) {
-                        // construir periodos y calcular primero/ultimo periodo
-                        let periods = [];
-                        yearsNums.forEach(y => monthsNums.forEach(m => periods.push(y * 100 + m)));
-                        const minPeriod = Math.min(...periods);
-                        const maxPeriod = Math.max(...periods);
-                        const startYear = Math.floor(minPeriod / 100);
-                        const startMonth = minPeriod % 100;
-                        const endYear = Math.floor(maxPeriod / 100);
-                        const endMonth = maxPeriod % 100;
-                        startDate = `${startYear}-${String(startMonth).padStart(2, '0')}-01`;
-                        const nextMonth = endMonth === 12 ? `${endYear + 1}-01-01` : `${endYear}-${String(endMonth + 1).padStart(2, '0')}-01`;
-                        const endDateObj = new Date(nextMonth);
-                        endDateObj.setDate(endDateObj.getDate() - 1);
-                        endDate = endDateObj.toISOString().split('T')[0];
-                        activeFilters.selectedMonths = monthsNums.sort((a,b) => a - b);
-                        activeFilters.selectedYears = yearsNums;
-                    }
-                }
+                activeFilters.selectedMonths = checkedMonths.map(Number).sort((a, b) => a - b);
+                activeFilters.selectedYears = parseStatisticsYears(document.getElementById('year').value).years;
             } else if (dateRange === 'quarter') {
-                const year = document.getElementById('year').value || currentYear;
+                const year = parseStatisticsYears(document.getElementById('year').value).years[0] || currentYear;
                 const quarter = document.getElementById('quarter').value;
                 if (quarter) {
                     const startMonth = (parseInt(quarter) - 1) * 3 + 1;
@@ -2176,83 +2706,36 @@
 
         function getDateFilterText() {
             const monthNames = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
-            const monthFullNames = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
-            
             const dateRange = activeFilters.dateRange;
             const startDate = activeFilters.startDate;
             const endDate = activeFilters.endDate;
-            
-            if (!startDate || !endDate) return null;
-            
-            const year = startDate.split('-')[0];
-            const startMonth = parseInt(startDate.split('-')[1]);
-            const endMonth = parseInt(endDate.split('-')[1]);
-            
-            switch(dateRange) {
-                case 'years':
-                    const yrs = activeFilters.selectedYears || [];
-                    if (yrs.length === 0) return null;
-                    if (yrs.length === 1) return `${yrs[0]}`;
-                    // Verificar si los años son consecutivos
-                    let consecY = true;
-                    for (let i = 1; i < yrs.length; i++) if (yrs[i] !== yrs[i-1] + 1) { consecY = false; break; }
-                    if (consecY) return `${yrs[0]}-${yrs[yrs.length - 1]}`;
-                    return yrs.join(', ');
 
-                case 'months':
-                    // Obtener meses y años seleccionados desde activeFilters
-                    const selMonths = activeFilters.selectedMonths || [];
-                    const selYears = activeFilters.selectedYears || [];
-                    if (selMonths.length === 0) return null;
-                    // Si sólo hay un año seleccionado, mostrar meses con ese año
-                    if (selYears.length === 1) {
-                        const y0 = selYears[0];
-                        // Verificar si los meses son consecutivos
-                        let isConsecutive = true;
-                        for (let i = 1; i < selMonths.length; i++) {
-                            if (selMonths[i] !== selMonths[i-1] + 1) { isConsecutive = false; break; }
-                        }
-                        if (isConsecutive && selMonths.length > 1) {
-                            return `${monthNames[selMonths[0] - 1]}-${monthNames[selMonths[selMonths.length - 1] - 1]} ${y0}`;
-                        } else {
-                            return `${selMonths.map(m => monthNames[m - 1]).join(', ')} ${y0}`;
-                        }
-                    }
-                    // Varios años seleccionados: mostrar meses y rango/lista de años
-                    const yrsText = selYears.length > 0 ? (
-                        selYears.length === 2 && selYears[1] === selYears[0] + 1 
-                            ? `${selYears[0]}-${selYears[1]}` 
-                            : selYears.join(', ')
-                    ) : '';
-                    return `${selMonths.map(m => monthNames[m - 1]).join(', ')} (${yrsText})`;
-                    // Obtener meses seleccionados desde activeFilters
-                    const selectedMonths = activeFilters.selectedMonths || [];
-                    if (selectedMonths.length === 0) return null;
-                    
-                    // Verificar si los meses son consecutivos
-                    let isConsecutive = true;
-                    for (let i = 1; i < selectedMonths.length; i++) {
-                        if (selectedMonths[i] !== selectedMonths[i-1] + 1) {
-                            isConsecutive = false;
-                            break;
-                        }
-                    }
-                    
-                    if (isConsecutive && selectedMonths.length > 1) {
-                        // Meses consecutivos: "Ene-Mar 2026"
-                        return `${monthNames[selectedMonths[0] - 1]}-${monthNames[selectedMonths[selectedMonths.length - 1] - 1]} ${year}`;
-                    } else {
-                        // Meses no consecutivos: "Ene, Abr, Jul, Ago 2026"
-                        return `${selectedMonths.map(m => monthNames[m - 1]).join(', ')} ${year}`;
-                    }
-                case 'quarter':
-                    const quarter = Math.ceil(startMonth / 3);
-                    return `Q${quarter} ${year}`;
-                case 'custom':
-                    return `${startDate} a ${endDate}`;
-                default:
-                    return null;
+            if (dateRange === 'full') return 'Todas las fechas';
+
+            if (dateRange === 'years') {
+                const years = activeFilters.selectedYears || [];
+                if (!years.length) return null;
+                const consecutive = years.every((year, index) => index === 0 || year === years[index - 1] + 1);
+                return consecutive && years.length > 1 ? `${years[0]}-${years.at(-1)}` : years.join(', ');
             }
+
+            if (dateRange === 'months') {
+                const months = activeFilters.selectedMonths || [];
+                const years = activeFilters.selectedYears || [];
+                if (!months.length || !years.length) return null;
+                const monthsText = months.map(month => monthNames[month - 1]).join(', ');
+                const consecutiveYears = years.every((year, index) => index === 0 || year === years[index - 1] + 1);
+                const yearsText = consecutiveYears && years.length > 1 ? `${years[0]}-${years.at(-1)}` : years.join(', ');
+                return `${monthsText} · ${yearsText}`;
+            }
+
+            if (!startDate || !endDate) return null;
+            if (dateRange === 'quarter') {
+                const quarter = Math.ceil(Number(startDate.split('-')[1]) / 3);
+                return `Q${quarter} ${startDate.split('-')[0]}`;
+            }
+            if (dateRange === 'custom') return `${startDate} a ${endDate}`;
+            return null;
         }
 
         function updateActiveFiltersDisplay() {
@@ -2284,7 +2767,7 @@
             // Mostrar municipios seleccionados
             if (metricSupportsFilter(currentChartType, 'municipios') && activeFilters.municipios.length > 0) {
                 const municipiosText = activeFilters.municipiosNames.join(', ');
-                const municipiosLabel = activeFilters.municipios.length === 1 ? 'Municipio' : 'Municipios';
+                const municipiosLabel = `${activeFilters.municipios.length === 1 ? 'Municipio' : 'Municipios'} de ${activeFilters.tipoMunicipio === 'residencia' ? 'residencia' : 'defunción'}`;
                 container.innerHTML += `<span class="users-filter-chip statistics-filter-chip">
                     ${municipiosLabel}: ${escapeFilterLabel(municipiosText)}
                     <button type="button" onclick="clearFilter('municipios')" aria-label="Quitar filtro de municipios">&times;</button>
@@ -2308,7 +2791,7 @@
             // Mostrar distritoes seleccionadas
             if (metricSupportsFilter(currentChartType, 'distritoes') && activeFilters.distritoes.length > 0) {
                 const distritoesText = activeFilters.distritoesNames.join(', ');
-                const distritosLabel = activeFilters.distritoes.length === 1 ? 'Distrito' : 'Distritos';
+                const distritosLabel = `${activeFilters.distritoes.length === 1 ? 'Distrito' : 'Distritos'} de ${activeFilters.tipoMunicipio === 'residencia' ? 'residencia' : 'defunción'}`;
                 container.innerHTML += `<span class="users-filter-chip statistics-filter-chip">
                     ${distritosLabel}: ${escapeFilterLabel(distritoesText)}
                     <button type="button" onclick="clearFilter('distritoes')" aria-label="Quitar filtro de distritos">&times;</button>
@@ -2367,6 +2850,7 @@
             activeFilters.selectedMonths = [];
             activeFilters.selectedYears = [];
             collectFilters();
+            invalidateChartDataCache();
             updateChart();
         }
 
@@ -2395,27 +2879,34 @@
                 else el.value = 'defuncion';
             }
             collectFilters();
+            invalidateChartDataCache();
             updateActiveFiltersDisplay();
             updateChart();
         }
 
-        async function loadChart(chartType) {
-            collectFilters();
-
+        function buildChartDataParams(chartType, limit = chartConfig.limit) {
             const filters = {
                 ...(activeFilters.startDate && { start_date: activeFilters.startDate }),
                 ...(activeFilters.endDate && { end_date: activeFilters.endDate }),
+                ...(activeFilters.dateRange === 'full' && { all_time: 1 }),
                 ...(activeFilters.selectedMonths.length && { months: activeFilters.selectedMonths }),
                 ...(activeFilters.selectedYears.length && { years: activeFilters.selectedYears }),
                 ...(metricSupportsFilter(chartType, 'municipios') && activeFilters.municipios.length && { municipios: activeFilters.municipios }),
                 ...(metricSupportsFilter(chartType, 'causas') && activeFilters.causas.length && { causas: activeFilters.causas }),
-                ...(metricSupportsFilter(chartType, 'distritoes') && activeFilters.distritoes.length && { distritoes: activeFilters.distritoes }),
+                ...(metricSupportsFilter(chartType, 'distritoes') && activeFilters.distritoes.length && (
+                    activeFilters.tipoMunicipio === 'residencia'
+                        ? { district_ids: activeFilters.distritoes }
+                        : { death_district_ids: activeFilters.distritoes }
+                )),
+                ...(metricSupportsFilter(chartType, 'tipoMunicipio') && {
+                    municipio_kind: activeFilters.tipoMunicipio === 'residencia' ? 'residence' : 'death'
+                }),
                 ...(metricSupportsFilter(chartType, 'sexo') && activeFilters.sexo && { sex: activeFilters.sexo }),
                 ...(metricSupportsFilter(chartType, 'edad') && activeFilters.edad && { age: activeFilters.edad }),
-                ...(chartTypesWithTopSelector.includes(chartType) && chartConfig.limit && { limit: chartConfig.limit }),
+                ...(chartTypesWithTopSelector.includes(chartType) && limit && { limit }),
                 ...(chartType === 'tendencias' && { group_by: activeFilters.granularidad }),
                 ...(chartType === 'comparativa' && { comparativa_type: activeFilters.tipoComparativa }),
-                ...(chartType === 'municipios' && { municipio_type: activeFilters.tipoMunicipio })
+                ...(['municipios', 'distritoes'].includes(chartType) && { municipio_type: activeFilters.tipoMunicipio })
             };
 
             const params = new URLSearchParams();
@@ -2427,21 +2918,147 @@
                     params.append(k, v);
                 }
             });
+            return params;
+        }
+
+        function getChartDataCacheKey(chartType, params) {
+            return `${chartType}?${params.toString()}`;
+        }
+
+        function clearScheduledChartLoading() {
+            if (!chartLoadingTimer) return;
+            window.clearTimeout(chartLoadingTimer);
+            chartLoadingTimer = null;
+        }
+
+        function scheduleChartLoading(chartType, requestId) {
+            clearScheduledChartLoading();
+            chartLoadingTimer = window.setTimeout(() => {
+                chartLoadingTimer = null;
+                if (requestId === chartRequestSequence && chartType === currentChartType) {
+                    showLoadingMessage();
+                }
+            }, chartLoadingDelay);
+        }
+
+        function invalidateChartDataCache() {
+            chartDataCacheGeneration++;
+            chartDataCache.clear();
+            chartPrefetchRequests.clear();
+            if (chartPrefetchTimer) {
+                window.clearTimeout(chartPrefetchTimer);
+                chartPrefetchTimer = null;
+            }
+        }
+
+        function getPrefetchPresentation(chartType) {
+            const validTypes = chartTypeOptions[chartType] || ['bar'];
+            const visualType = validTypes.includes(preferredConfig.type)
+                ? preferredConfig.type
+                : chartTypeDefaults[chartType];
+            return {
+                visualType,
+                limit: getEffectiveLimit(chartType, visualType, null)
+            };
+        }
+
+        function prefetchChartData(chartType, generation) {
+            const { limit } = getPrefetchPresentation(chartType);
+            const params = buildChartDataParams(chartType, limit);
+            const cacheKey = getChartDataCacheKey(chartType, params);
+            if (chartDataCache.has(cacheKey) || chartPrefetchRequests.has(cacheKey)) return;
+
+            const request = fetch(`${chartDataEndpoint}/${chartType}?${params.toString()}`)
+                .then(response => {
+                    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                    return response.json();
+                })
+                .then(data => {
+                    if (!data.error && generation === chartDataCacheGeneration) {
+                        chartDataCache.set(cacheKey, data);
+                    }
+                })
+                .catch(error => {
+                    console.debug(`No se pudo precargar ${chartType}:`, error);
+                })
+                .finally(() => chartPrefetchRequests.delete(cacheKey));
+
+            chartPrefetchRequests.set(cacheKey, request);
+        }
+
+        function scheduleChartPrefetches(activeChartType) {
+            if (chartPrefetchTimer) window.clearTimeout(chartPrefetchTimer);
+            const generation = chartDataCacheGeneration;
+            chartPrefetchTimer = window.setTimeout(() => {
+                chartPrefetchTimer = null;
+                Object.keys(chartTypeOptions)
+                    .filter(chartType => chartType !== activeChartType)
+                    .forEach(chartType => prefetchChartData(chartType, generation));
+            }, 120);
+        }
+
+        async function loadChart(chartType, { preserveCurrentChart = false, preservePreviousMetric = false } = {}) {
+            collectFilters();
+            const requestedLimit = chartConfig.limit;
+            const params = buildChartDataParams(chartType, requestedLimit);
+            const cacheKey = getChartDataCacheKey(chartType, params);
+            const cachedData = chartDataCache.get(cacheKey);
+
             chartRequestController?.abort();
+            clearScheduledChartLoading();
+
+            if (cachedData) {
+                chartRequestController = null;
+                ++chartRequestSequence;
+                latestChartData = cachedData;
+                latestChartDataType = chartType;
+                const responseCategoryCount = Number(cachedData.available_categories);
+                syncChartLimitForPresentation(
+                    chartType,
+                    chartConfig.type,
+                    Number.isFinite(responseCategoryCount) ? responseCategoryCount : null
+                );
+                renderChartLimitButtons(chartType);
+                renderColorPalettePreview(chartConfig.colorPalette);
+
+                const cachedResponseAlreadyIncludesAll = requestedLimit !== null
+                    && Number.isFinite(responseCategoryCount)
+                    && responseCategoryCount <= requestedLimit
+                    && chartConfig.limit === null;
+                if (requestedLimit !== chartConfig.limit && !cachedResponseAlreadyIncludesAll) {
+                    loadChart(chartType, { preservePreviousMetric });
+                    return;
+                }
+                if (chartConfig.type === 'map') await ensureTamaulipasMap();
+                if (chartType !== currentChartType) return;
+                renderChart(cloneChartData(cachedData));
+                scheduleChartPrefetches(chartType);
+                return;
+            }
+
             chartRequestController = new AbortController();
             const requestController = chartRequestController;
             const requestId = ++chartRequestSequence;
-            showLoadingMessage();
+            const requestGeneration = chartDataCacheGeneration;
+            const canPreserveCurrentChart = preservePreviousMetric
+                ? Boolean(currentEchartsInstance)
+                : preserveCurrentChart && latestChartData && latestChartDataType === chartType;
+            if (canPreserveCurrentChart) showChartRefreshingState();
+            else scheduleChartLoading(chartType, requestId);
 
             try {
                 const response = await fetch(
-                    `{{ route('api.chart.data') }}/` + chartType + '?' + params.toString(),
+                    `${chartDataEndpoint}/${chartType}?${params.toString()}`,
                     { signal: requestController.signal }
                 );
                 if (!response.ok) throw new Error(`HTTP ${response.status}`);
 
                 const data = await response.json();
+                if (!data.error && requestGeneration === chartDataCacheGeneration) {
+                    chartDataCache.set(cacheKey, data);
+                }
                 if (requestId !== chartRequestSequence || chartType !== currentChartType) return;
+                clearScheduledChartLoading();
 
                 if (data.error) {
                     showErrorMessage('No se pudo cargar la gráfica');
@@ -2450,15 +3067,47 @@
 
                 latestChartData = data;
                 latestChartDataType = chartType;
+                const responseCategoryCount = Number(data.available_categories);
+                syncChartLimitForPresentation(
+                    chartType,
+                    chartConfig.type,
+                    Number.isFinite(responseCategoryCount) ? responseCategoryCount : null
+                );
                 renderChartLimitButtons(chartType);
+                renderColorPalettePreview(chartConfig.colorPalette);
+
+                // Si el universo conocido vuelve inválida la cantidad solicitada,
+                // repetir una sola vez con el límite adecuado antes de dibujar.
+                const responseAlreadyIncludesAll = requestedLimit !== null
+                    && Number.isFinite(responseCategoryCount)
+                    && responseCategoryCount <= requestedLimit
+                    && chartConfig.limit === null;
+                if (requestedLimit !== chartConfig.limit && !responseAlreadyIncludesAll) {
+                    loadChart(chartType, {
+                        preserveCurrentChart: canPreserveCurrentChart,
+                        preservePreviousMetric
+                    });
+                    return;
+                }
+                if (chartConfig.type === 'map') {
+                    await ensureTamaulipasMap();
+                    if (requestId !== chartRequestSequence || chartType !== currentChartType) return;
+                }
                 renderChart(cloneChartData(data));
+                scheduleChartPrefetches(chartType);
             } catch (error) {
                 if (error.name === 'AbortError') return;
+                clearScheduledChartLoading();
                 console.error('Error:', error);
                 if (requestId === chartRequestSequence) {
-                    showErrorMessage('No se pudo cargar la gráfica');
+                    if (canPreserveCurrentChart) {
+                        finishChartRefreshingState('No se pudo actualizar la gráfica. Se conserva la vista anterior.');
+                    } else {
+                        showErrorMessage('No se pudo cargar la gráfica');
+                    }
                 }
             } finally {
+                if (requestId === chartRequestSequence) clearScheduledChartLoading();
                 if (chartRequestController === requestController) chartRequestController = null;
             }
         }
@@ -2468,12 +3117,18 @@
             return JSON.parse(JSON.stringify(data));
         }
 
-        function rerenderLatestChart() {
-            if (latestChartData && latestChartDataType === currentChartType) {
-                renderChart(cloneChartData(latestChartData));
-                return;
+        async function rerenderLatestChart() {
+            try {
+                if (chartConfig.type === 'map') await ensureTamaulipasMap();
+                if (latestChartData && latestChartDataType === currentChartType) {
+                    renderChart(cloneChartData(latestChartData));
+                    return;
+                }
+                updateChart();
+            } catch (error) {
+                console.error('Error al cargar el mapa:', error);
+                showErrorMessage('No se pudo cargar el mapa municipal');
             }
-            updateChart();
         }
 
         function buildStatisticsAnalysisParams(data, { excluded = false, csv = false } = {}) {
@@ -2483,24 +3138,41 @@
             };
             const period = data?.period || {};
 
-            if (period.start_date) params.set('start_date', period.start_date);
-            if (period.end_date) params.set('end_date', period.end_date);
+            if (period.is_all_time || activeFilters.dateRange === 'full') {
+                params.set('all_time', '1');
+            } else {
+                if (period.start_date) params.set('start_date', period.start_date);
+                if (period.end_date) params.set('end_date', period.end_date);
+            }
             if (!period.start_date && !period.end_date) {
                 appendMany('years', period.years);
                 appendMany('months', period.months);
             }
 
             if (metricSupportsFilter(currentChartType, 'municipios')) {
-                appendMany('death_municipality_ids', activeFilters.municipios);
+                appendMany(
+                    activeFilters.tipoMunicipio === 'residencia' ? 'residence_municipality_ids' : 'death_municipality_ids',
+                    activeFilters.municipios
+                );
             }
             if (metricSupportsFilter(currentChartType, 'causas')) appendMany('cause_ids', activeFilters.causas);
-            if (metricSupportsFilter(currentChartType, 'distritoes')) appendMany('district_ids', activeFilters.distritoes);
+            if (metricSupportsFilter(currentChartType, 'distritoes')) {
+                appendMany(
+                    activeFilters.tipoMunicipio === 'residencia' ? 'district_ids' : 'death_district_ids',
+                    activeFilters.distritoes
+                );
+            }
             if (metricSupportsFilter(currentChartType, 'sexo') && activeFilters.sexo) params.set('sex', activeFilters.sexo);
             if (metricSupportsFilter(currentChartType, 'edad') && activeFilters.edad) params.set('age', activeFilters.edad);
 
             params.set('analysis_type', currentChartType);
             if (currentChartType === 'comparativa') params.set('comparativa_type', activeFilters.tipoComparativa);
-            if (currentChartType === 'municipios') params.set('municipio_type', activeFilters.tipoMunicipio);
+            if (metricSupportsFilter(currentChartType, 'tipoMunicipio')) {
+                params.set('municipio_kind', activeFilters.tipoMunicipio === 'residencia' ? 'residence' : 'death');
+            }
+            if (['municipios', 'distritoes'].includes(currentChartType)) {
+                params.set('municipio_type', activeFilters.tipoMunicipio);
+            }
             if (excluded) params.set('analysis_excluded', '1');
             if (csv) params.set('format', 'csv');
 
@@ -2703,7 +3375,9 @@
             };
 
             let periodText = '';
-            if (period.start_date && period.end_date) {
+            if (period.is_all_time) {
+                periodText = 'Todas las fechas';
+            } else if (period.start_date && period.end_date) {
                 periodText = `${period.is_default ? 'Periodo predeterminado' : 'Periodo'}: ${formatDate(period.start_date)} – ${formatDate(period.end_date)}`;
             } else if (Array.isArray(period.years) && period.years.length) {
                 const years = period.years.map(Number).filter(Number.isFinite).sort((a, b) => a - b);
@@ -2751,6 +3425,7 @@
             const chartWrapper = chartContainer.closest('.chart-wrapper');
             const loadingMessage = document.getElementById('loadingMessage');
             const errorMessage = document.getElementById('errorMessage');
+            finishChartRefreshingState();
             if (loadingMessage) loadingMessage.style.display = 'none';
             if (errorMessage) errorMessage.style.display = 'none';
             if (chartContainer) chartContainer.style.visibility = 'visible';
@@ -2835,6 +3510,9 @@
             // Usar paleta de alto contraste para gráficas circulares, paleta normal para barras/líneas
             const paletteSource = isPieLikeChart ? colorPalettesCircular : colorPalettes;
             const palette = paletteSource[chartConfig.colorPalette];
+            const cartesianSolidColor = cartesianSolidColors[chartConfig.colorPalette] || palette[0];
+            const qualitativePalette = colorPalettesCircular[chartConfig.colorPalette]
+                || colorPalettesCircular.maroon611132;
             const colors = labels.map((_, i) => {
                 if (isPieLikeChart && labels.length > 1 && labels.length <= 5) {
                     const distributedIndex = Math.floor(i * palette.length / labels.length);
@@ -2903,7 +3581,28 @@
             }
 
             const normalizeCategoryLabel = (value) => String(value ?? '').replace(/\s+/g, ' ').trim();
-            const plotWidth = Math.max(280, (chartWrapper?.clientWidth || 960) * 0.88);
+            const usesCategoricalColumns = resolvedChartType === 'bar';
+            const usesCategoricalHorizontalBars = resolvedChartType === 'barHorizontal'
+                && currentChartType !== 'comparativa';
+            const usesDenseCategoricalColumns = usesCategoricalColumns
+                && labels.length > maximumVerticalCategories;
+            const usesDenseCategoricalHorizontalBars = usesCategoricalHorizontalBars
+                && labels.length > maximumVerticalCategories;
+            const usesSimpleCategoricalBars = (usesCategoricalColumns || usesCategoricalHorizontalBars)
+                && currentChartType !== 'comparativa';
+            const usesDistinctSmallCategoryColors = usesSimpleCategoricalBars
+                && labels.length > 1
+                && labels.length <= 5
+                && circularPaletteKeys.includes(chartConfig.colorPalette);
+            const getCategoricalBarColor = (dataIndex) => {
+                if (!usesSimpleCategoricalBars) return colors[dataIndex];
+                if (usesDistinctSmallCategoryColors) {
+                    return qualitativePalette[dataIndex % qualitativePalette.length];
+                }
+                return cartesianSolidColor;
+            };
+            const chartAvailableWidth = chartContainer?.clientWidth || chartWrapper?.clientWidth || 960;
+            const plotWidth = Math.max(280, chartAvailableWidth * 0.88);
             const categorySlotWidth = plotWidth / Math.max(labels.length, 1);
             const charsPerAxisLine = Math.max(7, Math.min(22, Math.floor(categorySlotWidth / 8.5)));
             const wrapCategoryLabel = (value, maxCharsPerLine) => {
@@ -2938,26 +3637,73 @@
                 return lines.join('\n');
             };
 
-            const formatVerticalCategoryLabel = value => wrapCategoryLabel(value, charsPerAxisLine);
+            const canKeepCategoricalTopLabelsOnOneLine = usesCategoricalColumns && labels.length <= 15;
+            const getVerticalAxisCategoryLabel = value => {
+                const text = normalizeCategoryLabel(value);
+                if (currentChartType !== 'causas' || !usesCategoricalColumns) return text;
+
+                // En Columnas, el sufijo repetido se abrevia solo en el eje;
+                // tooltip, datos y exportaciones
+                // tabulares conservan el nombre completo del catálogo.
+                const causeAxisAliases = {
+                    'vehículo de motor residencia': 'Vehículo motor (res.)',
+                    'exposición a fuego y humo residencia': 'Expo. a fuego y humo (res.)'
+                };
+                const alias = causeAxisAliases[text.toLocaleLowerCase('es-MX')];
+                if (alias) return alias;
+
+                return text.replace(/\s+residencia$/iu, ' (res.)');
+            };
+            const districtAxisFontSize = 11;
+            const districtLabelsFitOnOneLine = currentChartType === 'distritoes'
+                && labels.length <= 10
+                && Math.max(
+                    0,
+                    ...labels.map(label => normalizeCategoryLabel(label).length * districtAxisFontSize * .54)
+                ) <= categorySlotWidth - 4;
+            const formatVerticalCategoryLabel = value => {
+                const text = getVerticalAxisCategoryLabel(value);
+                if (usesDenseCategoricalColumns) return text;
+                if (districtLabelsFitOnOneLine) return text;
+                if (currentChartType === 'distritoes' && labels.length > 10) {
+                    return wrapCategoryLabel(
+                        text,
+                        Math.max(charsPerAxisLine, Math.ceil(text.length / 2))
+                    );
+                }
+
+                // Conservar nombres breves completos, pero envolver los que no caben
+                // en su categoría para que ECharts no los oculte por solapamiento.
+                const estimatedTextWidth = text.length * (labels.length > 10 ? 6.1 : 6.6);
+                const safeCategoryWidth = Math.max(48, categorySlotWidth - 12);
+                if (canKeepCategoricalTopLabelsOnOneLine && estimatedTextWidth <= safeCategoryWidth) {
+                    return text;
+                }
+
+                return wrapCategoryLabel(text, charsPerAxisLine);
+            };
             const verticalLabelLineCount = Math.max(
                 1,
                 ...labels.map(label => formatVerticalCategoryLabel(label).split('\n').length)
             );
 
-            const verticalAxisLabelStep = labels.length > 20 ? Math.ceil(labels.length / 12) : 1;
+            const verticalAxisLabelStep = !usesDenseCategoricalColumns && labels.length > 20
+                ? Math.ceil(labels.length / 12)
+                : 1;
             const verticalCategoryAxisLabel = {
-                interval: labels.length > 20
+                interval: !usesDenseCategoricalColumns && labels.length > 20
                     ? index => index % verticalAxisLabelStep === 0 || index === labels.length - 1
                     : 0,
-                rotate: 0,
-                align: 'center',
-                verticalAlign: 'top',
-                lineHeight: 14,
-                fontSize: labels.length > 10 ? 11 : axisFontSize,
+                rotate: usesDenseCategoricalColumns ? 90 : 0,
+                align: usesDenseCategoricalColumns ? 'right' : 'center',
+                verticalAlign: usesDenseCategoricalColumns ? 'middle' : 'top',
+                lineHeight: usesDenseCategoricalColumns ? 12 : 14,
+                fontSize: usesDenseCategoricalColumns ? 11 : (labels.length > 10 ? 11 : axisFontSize),
                 fontFamily: chartFontFamily,
                 fontWeight: 500,
                 color: '#404041',
-                hideOverlap: true,
+                margin: usesDenseCategoricalColumns ? 13 : 8,
+                hideOverlap: !usesDenseCategoricalColumns,
                 formatter: formatVerticalCategoryLabel
             };
 
@@ -2969,7 +3715,9 @@
                 fontFamily: chartFontFamily,
                 fontWeight: 500,
                 color: '#404041',
-                formatter: value => wrapCategoryLabel(value, 28)
+                formatter: value => currentChartType === 'causas' && chartAvailableWidth >= 900
+                    ? normalizeCategoryLabel(value)
+                    : wrapCategoryLabel(value, 28)
             };
 
             if (chartWrapper) {
@@ -2980,10 +3728,28 @@
                 const baseHeight = Math.min(420, Math.max(350, window.innerHeight * 0.4));
                 let contentHeight = baseHeight;
 
+                chartWrapper.removeAttribute('tabindex');
+                chartWrapper.removeAttribute('role');
+                chartWrapper.removeAttribute('aria-label');
+                if (!isPieLikeChart) {
+                    chartContainer.style.width = '';
+                    chartContainer.style.margin = '';
+                }
+
                 if (resolvedChartType === 'barHorizontal') {
-                    contentHeight = Math.max(baseHeight, labels.length * 34 + 82);
+                    contentHeight = Math.max(
+                        baseHeight,
+                        usesDenseCategoricalHorizontalBars
+                            ? labels.length * 27 + 70
+                            : labels.length * 34 + 82
+                    );
                 } else if (resolvedChartType === 'bar') {
-                    contentHeight = baseHeight;
+                    contentHeight = usesDenseCategoricalColumns ? Math.max(baseHeight, 440) : baseHeight;
+                } else if (resolvedChartType === 'map') {
+                    contentHeight = Math.max(baseHeight, chartAvailableWidth >= 900 ? 620 : 540);
+                } else if (resolvedChartType === 'heatmap') {
+                    const comparisonRows = Array.isArray(data.series) ? data.series.length : 0;
+                    contentHeight = Math.max(baseHeight, Math.min(620, comparisonRows * 32 + 150));
                 } else if (isPieLikeChart) {
                     contentHeight = Math.max(baseHeight, 400);
                 }
@@ -3008,7 +3774,165 @@
             // Así su canvas interno ocupa toda la tarjeta desde el primer render.
             currentEchartsInstance = echarts.init(chartContainer);
 
-            if (currentChartType === 'comparativa') {
+            if (chartType === 'map' && currentChartType === 'municipios') {
+                const normalizeMunicipalityKey = value => {
+                    const normalized = String(value || '')
+                        .normalize('NFD')
+                        .replace(/[\u0300-\u036f]/g, '')
+                        .replace(/[^a-zA-Z0-9]+/g, ' ')
+                        .trim()
+                        .toLowerCase();
+                    return {
+                        'ciudad madero': 'madero',
+                        'el mante': 'mante'
+                    }[normalized] || normalized;
+                };
+                const valuesByMunicipality = new Map();
+                labels.forEach((label, index) => {
+                    const key = normalizeMunicipalityKey(label);
+                    valuesByMunicipality.set(key, (valuesByMunicipality.get(key) || 0) + Number(values[index] || 0));
+                });
+                const registeredMap = echarts.getMap(tamaulipasMapName);
+                const geoJson = registeredMap?.geoJSON || registeredMap?.geoJson;
+                const mapData = (geoJson?.features || []).map(feature => ({
+                    name: feature.properties?.name || '',
+                    value: valuesByMunicipality.get(normalizeMunicipalityKey(feature.properties?.name)) || 0
+                }));
+                const maximumMapValue = Math.max(1, ...mapData.map(item => Number(item.value || 0)));
+                const tintMapColor = (hexColor, whiteWeight) => {
+                    const match = String(hexColor || '').match(/^#([0-9a-f]{6})$/i);
+                    if (!match) return hexColor;
+                    const value = Number.parseInt(match[1], 16);
+                    const components = [value >> 16, (value >> 8) & 255, value & 255];
+                    const mixed = components.map(component => Math.round(component + (255 - component) * whiteWeight));
+                    return `#${mixed.map(component => component.toString(16).padStart(2, '0')).join('')}`;
+                };
+                const uniquePositiveValues = [...new Set(
+                    mapData.map(item => Number(item.value || 0)).filter(value => value > 0)
+                )].sort((left, right) => left - right);
+                const quantileValue = percentile => uniquePositiveValues[
+                    Math.round((uniquePositiveValues.length - 1) * percentile)
+                ];
+                const mapClassCuts = [...new Set([.25, .5, .75].map(quantileValue))]
+                    .filter(value => Number.isFinite(value) && value < maximumMapValue)
+                    .sort((left, right) => left - right);
+                const positiveMapPieces = [];
+                let mapClassMinimum = 1;
+                const mapClassCount = mapClassCuts.length + 1;
+                if (uniquePositiveValues.length) {
+                    [...mapClassCuts, maximumMapValue].forEach((maximum, index) => {
+                        const strength = mapClassCount === 1 ? 1 : index / (mapClassCount - 1);
+                        positiveMapPieces.push({
+                            min: mapClassMinimum,
+                            max: maximum,
+                            label: mapClassMinimum === maximum
+                                ? formatNumber(maximum)
+                                : `${formatNumber(mapClassMinimum)}–${formatNumber(maximum)}`,
+                            color: tintMapColor(palette[0], .78 * (1 - strength))
+                        });
+                        mapClassMinimum = maximum + 1;
+                    });
+                }
+                const mapColorPieces = [
+                    { value: 0, label: '0', color: '#eef1f5' },
+                    ...positiveMapPieces
+                ];
+
+                if (!geoJson || filteredTotal <= 0) {
+                    showNoChartData(data);
+                    return;
+                }
+
+                option = {
+                    animation: true,
+                    animationDuration: 850,
+                    animationEasing: 'cubicOut',
+                    tooltip: {
+                        trigger: 'item',
+                        confine: true,
+                        formatter: params => {
+                            const value = Number(params.value || 0);
+                            const percentage = filteredTotal > 0 ? ((value / filteredTotal) * 100).toFixed(1) : '0.0';
+                            return `<strong>${params.name}</strong><br>${formatNumber(value)} registros · ${percentage}%`;
+                        },
+                        textStyle: { fontFamily: chartFontFamily, fontSize: axisFontSize }
+                    },
+                    visualMap: {
+                        type: 'piecewise',
+                        seriesIndex: 0,
+                        pieces: mapColorPieces,
+                        show: false,
+                        selectedMode: false,
+                    },
+                    graphic: [{
+                        type: 'group',
+                        left: 'center',
+                        bottom: 8,
+                        children: [{
+                            type: 'text',
+                            x: 112,
+                            style: {
+                                text: 'Registros',
+                                fill: '#526278',
+                                font: `600 11px ${chartFontFamily}`,
+                                textAlign: 'center'
+                            }
+                        }, {
+                            type: 'text',
+                            x: 0,
+                            y: 29,
+                            style: {
+                                text: '0',
+                                fill: '#64748b',
+                                font: `500 10px ${chartFontFamily}`,
+                                textVerticalAlign: 'middle'
+                            }
+                        }, {
+                            type: 'rect',
+                            shape: { x: 20, y: 23, width: 184, height: 12, r: 6 },
+                            style: {
+                                fill: new echarts.graphic.LinearGradient(0, 0, 1, 0, mapColorPieces.map((piece, index) => ({
+                                    offset: mapColorPieces.length === 1 ? 0 : index / (mapColorPieces.length - 1),
+                                    color: piece.color
+                                })))
+                            },
+                            silent: true
+                        }, {
+                            type: 'text',
+                            x: 214,
+                            y: 29,
+                            style: {
+                                text: formatNumber(maximumMapValue),
+                                fill: '#64748b',
+                                font: `500 10px ${chartFontFamily}`,
+                                textVerticalAlign: 'middle'
+                            }
+                        }]
+                    }],
+                    series: [{
+                        name: 'Municipios',
+                        type: 'map',
+                        map: tamaulipasMapName,
+                        roam: false,
+                        selectedMode: false,
+                        layoutCenter: ['50%', '44.5%'],
+                        layoutSize: '88%',
+                        data: mapData,
+                        itemStyle: {
+                            areaColor: '#eef1f5',
+                            borderColor: '#ffffff',
+                            borderWidth: .75
+                        },
+                        emphasis: {
+                            label: {
+                                show: false
+                            },
+                            itemStyle: { areaColor: palette[Math.min(3, palette.length - 1)] }
+                        },
+                        label: { show: false }
+                    }]
+                };
+            } else if (currentChartType === 'comparativa') {
                 const comparisonSeries = Array.isArray(data.series) && data.series.length
                     ? data.series
                     : [
@@ -3019,8 +3943,109 @@
                 const showComparisonLabels = comparisonSeries.length <= 3;
                 const comparisonDenominator = Number(data.filtered_total || 0);
 
+                if (chartType === 'heatmap') {
+                    const heatmapData = comparisonSeries.flatMap((series, rowIndex) =>
+                        labels.map((label, columnIndex) => [
+                            columnIndex,
+                            rowIndex,
+                            Number(series.data?.[columnIndex] || 0)
+                        ])
+                    );
+                    const maximumCellValue = Math.max(1, ...heatmapData.map(point => point[2]));
+                    if (!heatmapData.some(point => point[2] > 0)) {
+                        showNoChartData(data);
+                        return;
+                    }
+
+                    const formatHeatmapLabel = params => {
+                        const value = Number(params.value?.[2] || 0);
+                        if (!value) return '';
+                        const percentage = comparisonDenominator > 0
+                            ? `${((value / comparisonDenominator) * 100).toFixed(1)}%`
+                            : '0.0%';
+                        if (chartConfig.dataLabelMode === 'percent') return percentage;
+                        if (chartConfig.dataLabelMode === 'both') return `${formatNumber(value)}\n${percentage}`;
+                        return formatNumber(value);
+                    };
+
+                    option = {
+                        animation: true,
+                        animationDuration: 800,
+                        animationEasing: 'cubicOut',
+                        tooltip: {
+                            position: 'top',
+                            confine: true,
+                            formatter: params => {
+                                const [columnIndex, rowIndex, value] = params.value;
+                                const percentage = comparisonDenominator > 0
+                                    ? ((Number(value) / comparisonDenominator) * 100).toFixed(1)
+                                    : '0.0';
+                                return `<strong>${comparisonSeries[rowIndex]?.name || ''}</strong><br>${labels[columnIndex] || ''}: ${formatNumber(value)} · ${percentage}%`;
+                            },
+                            textStyle: { fontFamily: chartFontFamily, fontSize: axisFontSize }
+                        },
+                        grid: { left: 22, right: 26, top: 18, bottom: 68, containLabel: true },
+                        xAxis: {
+                            type: 'category',
+                            name: data.x_axis_label || '',
+                            nameLocation: 'middle',
+                            nameGap: labels.length > 12 ? 62 : 46,
+                            data: labels,
+                            splitArea: { show: true },
+                            axisLabel: {
+                                interval: 0,
+                                rotate: labels.length > 12 ? 45 : 0,
+                                fontFamily: chartFontFamily,
+                                fontSize: labels.length > 15 ? 10 : 11,
+                                color: '#404041',
+                                formatter: value => wrapCategoryLabel(value, labels.length > 12 ? 18 : 24)
+                            }
+                        },
+                        yAxis: {
+                            type: 'category',
+                            name: data.y_axis_label || '',
+                            nameLocation: 'middle',
+                            nameGap: 92,
+                            data: comparisonSeries.map(series => series.name),
+                            splitArea: { show: true },
+                            axisLabel: {
+                                fontFamily: chartFontFamily,
+                                fontSize: 11,
+                                color: '#404041',
+                                formatter: value => wrapCategoryLabel(value, 24)
+                            }
+                        },
+                        visualMap: {
+                            min: 0,
+                            max: maximumCellValue,
+                            calculable: false,
+                            orient: 'horizontal',
+                            left: 'center',
+                            bottom: 2,
+                            itemWidth: 150,
+                            itemHeight: 10,
+                            text: [formatNumber(maximumCellValue), '0'],
+                            textStyle: { fontFamily: chartFontFamily, fontSize: 11, color: '#526278' },
+                            inRange: { color: ['#eef1f5', palette[palette.length - 1], palette[Math.min(1, palette.length - 1)], palette[0]] }
+                        },
+                        series: [{
+                            name: 'Registros',
+                            type: 'heatmap',
+                            data: heatmapData,
+                            label: {
+                                show: chartConfig.dataLabelMode !== 'none',
+                                fontFamily: chartFontFamily,
+                                fontSize: 10,
+                                fontWeight: 600,
+                                formatter: formatHeatmapLabel
+                            },
+                            itemStyle: { borderColor: '#ffffff', borderWidth: 2 },
+                            emphasis: { itemStyle: { borderColor: '#611132', borderWidth: 2 } }
+                        }]
+                    };
+                } else {
                 option = {
-                    color: palette,
+                    color: qualitativePalette,
                     animation: true,
                     animationDuration: 800,
                     animationEasing: 'cubicOut',
@@ -3058,7 +4083,7 @@
                             ? (labels.length <= 5 ? 72 : (labels.length <= 10 ? 58 : 42))
                             : (labels.length <= 5 ? 42 : (labels.length <= 10 ? 36 : 28)),
                         itemStyle: {
-                            color: palette[index % palette.length],
+                            color: qualitativePalette[index % qualitativePalette.length],
                             borderRadius: data.stacked ? 0 : [3, 3, 0, 0]
                         },
                         emphasis: { focus: 'series' },
@@ -3081,6 +4106,7 @@
                         }
                     }))
                 };
+                }
             } else if (chartType === 'pie' || chartType === 'doughnut') {
                 // Gráficas de pastel
                 const sourcePieData = labels.map((label, i) => ({
@@ -3093,9 +4119,9 @@
                     Number(data.available_categories || 0) - Number(data.displayed_categories || labels.length)
                 );
 
-                // Un pastel con decenas de sectores deja de ser comparable. En listados
-                // extensos conservamos los diez principales y reunimos la cola en Resto.
-                const circularDetailLimit = sourcePieData.length > 15 ? 10 : 12;
+                // Pastel y Dona conservan como máximo siete categorías individuales;
+                // el resto sigue representado dentro de un único segmento neutral.
+                const circularDetailLimit = circularSummaryCategoryLimit;
                 const pieData = sourcePieData.slice(0, circularDetailLimit);
                 const groupedPieData = sourcePieData.slice(circularDetailLimit);
                 const groupedCategories = omittedCategories + groupedPieData.length;
@@ -3104,8 +4130,15 @@
                     0
                 );
                 if (groupedTotal > 0) {
+                    const groupedCategoryNoun = {
+                        municipios: 'municipios',
+                        distritoes: 'distritos',
+                        causas: 'causas',
+                        edades: 'rangos',
+                        genero: 'categorías'
+                    }[currentChartType] || 'categorías';
                     const remainderLabel = groupedCategories > 0
-                        ? `Resto (${groupedCategories})`
+                        ? `Resto (${groupedCategories} ${groupedCategoryNoun})`
                         : 'Resto';
                     pieData.push({ name: remainderLabel, value: groupedTotal, itemStyle: { color: '#cbd5e1' } });
                 }
@@ -3126,16 +4159,18 @@
                 const veryCrowdedCircularChart = circularSegmentCount > 12;
                 const longestCircularLabel = Math.max(0, ...filteredPieData.map(item => String(item.name).length));
                 const circularLegendNeedsMoreRoom = currentChartType === 'causas' || longestCircularLabel > 22;
+                const circularLegendShowsMetrics = chartConfig.dataLabelMode !== 'none';
                 const useCircularCallouts = !compactCircularLayout
-                    && chartConfig.dataLabelMode !== 'none'
+                    && circularLegendShowsMetrics
                     && circularSegmentCount <= 6
+                    && groupedTotal <= 0
                     && !circularLegendNeedsMoreRoom;
                 const sparseCircularRadiusCap = circularSegmentCount <= 2
                     ? 174
                     : (circularSegmentCount <= 4 ? 184 : 192);
                 // El diámetro se expresa en px y tiene un tope estable. Si se usara un
                 // porcentaje, el círculo cambiaría al crecer el panel por notas o controles.
-                const desktopOuterRadius = Math.max(
+                const calculatedDesktopOuterRadius = Math.max(
                     148,
                     Math.min(
                         circularLegendNeedsMoreRoom ? Math.min(184, sparseCircularRadiusCap) : sparseCircularRadiusCap,
@@ -3143,12 +4178,17 @@
                         Math.floor(circularWidth * .22)
                     )
                 );
+                const desktopOuterRadius = !circularLegendShowsMetrics && !circularLegendNeedsMoreRoom
+                    ? Math.round(calculatedDesktopOuterRadius * .95)
+                    : calculatedDesktopOuterRadius;
                 const desktopInnerRadius = Math.round(desktopOuterRadius * .58);
                 const desktopCenterRatio = useCircularCallouts
                     ? .5
                     : circularLegendNeedsMoreRoom
                     ? .32
-                    : .35;
+                    : !circularLegendShowsMetrics
+                    ? .43
+                    : .36;
                 const center = compactCircularLayout
                     ? ['50%', '39%']
                     : [`${Math.round(desktopCenterRatio * 100)}%`, '50%'];
@@ -3199,30 +4239,40 @@
                         orient: compactCircularLayout ? 'horizontal' : 'vertical',
                         left: compactCircularLayout
                             ? 18
-                            : (circularLegendNeedsMoreRoom ? '50%' : (crowdedCircularChart ? '55%' : '57%')),
+                            : (circularLegendNeedsMoreRoom
+                                ? '50%'
+                                : (!circularLegendShowsMetrics ? '62%' : (crowdedCircularChart ? '54.5%' : '56%'))),
                         right: compactCircularLayout ? 18 : 16,
                         top: compactCircularLayout ? 'auto' : 'middle',
                         bottom: compactCircularLayout ? 4 : 'auto',
                         itemWidth: 12,
                         itemHeight: 12,
-                        itemGap: compactCircularLayout ? 14 : (circularSegmentCount > 10 ? 7 : 10),
+                        itemGap: compactCircularLayout ? 14 : 12,
                         icon: 'roundRect',
                         formatter: name => {
                             const metric = !useCircularCallouts ? formatCircularMetric(name) : '';
-                            return metric ? `{legendName|${name}}  {legendMetric|${metric}}` : `{legendName|${name}}`;
+                            const nameStyle = String(name).startsWith('Resto (') ? 'legendRemainder' : 'legendName';
+                            return metric ? `{${nameStyle}|${name}}  {legendMetric|${metric}}` : `{${nameStyle}|${name}}`;
                         },
                         textStyle: {
                             fontFamily: 'Open Sans',
-                            fontSize: 12,
+                            fontSize: 13,
                             color: '#334155',
                             rich: {
                                 legendName: {
                                     width: compactCircularLayout ? undefined : (circularLegendNeedsMoreRoom ? 250 : 190),
                                     color: '#334155',
-                                    lineHeight: 18,
+                                    lineHeight: 20,
                                     overflow: 'break'
                                 },
-                                legendMetric: { width: compactCircularLayout ? undefined : 74, align: 'right', color: '#10233f', fontWeight: 600, lineHeight: 18 }
+                                legendRemainder: {
+                                    width: compactCircularLayout ? undefined : (circularLegendNeedsMoreRoom ? 250 : 190),
+                                    color: '#64748b',
+                                    fontStyle: 'italic',
+                                    lineHeight: 20,
+                                    overflow: 'break'
+                                },
+                                legendMetric: { width: compactCircularLayout ? undefined : 88, align: 'right', color: '#10233f', fontWeight: 600, lineHeight: 20 }
                             }
                         }
                     },
@@ -3317,6 +4367,10 @@
                 };
             } else if (chartType === 'line') {
                 // Línea o Área para tendencias
+                const monthlyTrendLabelPattern = /^(Ene|Feb|Mar|Abr|May|Jun|Jul|Ago|Sep|Oct|Nov|Dic)\s+(\d{4})$/iu;
+                const monthlyTrendLabels = labels.map(label => String(label).trim().match(monthlyTrendLabelPattern));
+                const usesSingleYearMonthlyLabels = monthlyTrendLabels.every(Boolean)
+                    && new Set(monthlyTrendLabels.map(match => match[2])).size === 1;
                 const seriesConfig = {
                     name: chartTitles[currentChartType],
                     type: 'line',
@@ -3325,8 +4379,8 @@
                     symbol: 'circle',
                     symbolSize: 6,
                     showSymbol: labels.length <= 24,
-                    lineStyle: { width: 2.5, color: palette[0] },
-                    itemStyle: { color: palette[0] },
+                    lineStyle: { width: 2.5, color: cartesianSolidColor },
+                    itemStyle: { color: cartesianSolidColor },
                     emphasis: { focus: 'series', scale: true },
                     labelLayout: { hideOverlap: true },
                     label: {
@@ -3347,8 +4401,8 @@
                 if (isAreaChart) {
                     seriesConfig.areaStyle = { 
                         color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-                            { offset: 0, color: palette[0] + 'cc' }, 
-                            { offset: 1, color: palette[0] + '00' }
+                            { offset: 0, color: cartesianSolidColor + '5c' },
+                            { offset: 1, color: cartesianSolidColor + '05' }
                         ]) 
                     };
                 }
@@ -3367,7 +4421,19 @@
                         boundaryGap: false,
                         axisLine: { lineStyle: { color: '#94a3b8' } },
                         axisTick: { lineStyle: { color: '#94a3b8' } },
-                        axisLabel: { rotate: 45, interval: 'auto', fontFamily: chartFontFamily, fontSize: axisFontSize, fontWeight: 500, color: '#526278' }
+                        axisLabel: {
+                            rotate: usesSingleYearMonthlyLabels ? 0 : 45,
+                            interval: 'auto',
+                            margin: usesSingleYearMonthlyLabels ? 12 : 8,
+                            fontFamily: chartFontFamily,
+                            fontSize: axisFontSize,
+                            fontWeight: 500,
+                            color: '#526278',
+                            formatter: value => {
+                                if (!usesSingleYearMonthlyLabels) return value;
+                                return String(value).trim().match(monthlyTrendLabelPattern)?.[1] || value;
+                            }
+                        }
                     },
                     yAxis: {
                         type: 'value',
@@ -3385,38 +4451,50 @@
                     ? 13
                     : (labels.length <= 5 ? 13 : (labels.length <= 10 ? 12 : 11));
 
-                if (['municipios', 'distritoes'].includes(currentChartType)) {
-                    categoryAxisFontSize = labels.length <= 5 ? 13 : (labels.length <= 15 ? 12 : 11);
+                if (currentChartType === 'municipios') {
+                    categoryAxisFontSize = labels.length <= 5 ? 13 : (labels.length <= 10 ? 12 : 11);
+                } else if (currentChartType === 'distritoes') {
+                    categoryAxisFontSize = labels.length <= 5 ? 13 : districtAxisFontSize;
                 }
 
                 const denseVerticalBars = !isHorizontal && labels.length > 15;
+                const usesCompactDataLabels = denseVerticalBars || usesDenseCategoricalHorizontalBars;
                 const barLabelRich = {
                     value: {
                         ...labelRich.value,
-                        fontSize: denseVerticalBars ? 11 : (labels.length > 10 ? 12 : 13),
-                        lineHeight: denseVerticalBars ? 13 : (labels.length > 10 ? 15 : 16)
+                        fontSize: usesCompactDataLabels ? 11 : (labels.length > 10 ? 12 : 13),
+                        lineHeight: usesCompactDataLabels ? 13 : (labels.length > 10 ? 15 : 16)
                     },
                     percent: {
                         ...labelRich.percent,
-                        fontSize: denseVerticalBars ? 10 : (labels.length > 10 ? 11 : 13),
-                        lineHeight: denseVerticalBars ? 12 : (labels.length > 10 ? 14 : 16)
+                        fontSize: usesCompactDataLabels ? 10 : (labels.length > 10 ? 11 : 13),
+                        lineHeight: usesCompactDataLabels ? 12 : (labels.length > 10 ? 14 : 16)
                     },
                     normal: {
                         ...labelRich.normal,
-                        fontSize: denseVerticalBars ? 9 : 10,
-                        lineHeight: denseVerticalBars ? 11 : 13
+                        fontSize: usesCompactDataLabels ? 9 : 10,
+                        lineHeight: usesCompactDataLabels ? 11 : 13
                     }
                 };
                 const sparseVerticalInset = labels.length <= 2
                     ? '26%'
                     : (labels.length === 3 ? '12%' : (labels.length === 4 ? '8%' : null));
+                const sparseHorizontalInset = isHorizontal
+                    ? (labels.length <= 2
+                        ? '24%'
+                        : (labels.length === 3 ? '17%' : (labels.length === 4 ? '12%' : (labels.length === 5 ? '8%' : null))))
+                    : null;
+                const denseCategoricalTop = chartConfig.dataLabelMode === 'both' ? 68 : 42;
+                const denseCategoricalGrid = usesDenseCategoricalColumns
+                    ? { ...verticalBarGrid, top: Math.max(verticalBarGrid.top, denseCategoricalTop) }
+                    : verticalBarGrid;
                 const categoricalGrid = !isHorizontal && sparseVerticalInset
                     ? {
-                        ...verticalBarGrid,
+                        ...denseCategoricalGrid,
                         left: sparseVerticalInset,
                         right: sparseVerticalInset
                     }
-                    : verticalBarGrid;
+                    : denseCategoricalGrid;
                 
                 // Preparar tooltip especial para Edades con causas principales
                 let tooltipFormatter = null;
@@ -3462,9 +4540,11 @@
                     grid: isHorizontal
                         ? {
                             left: 18,
-                            right: chartConfig.dataLabelMode === 'none' ? 18 : 46,
-                            bottom: 22,
-                            top: 22,
+                            right: chartConfig.dataLabelMode === 'none'
+                                ? 18
+                                : (usesCategoricalHorizontalBars && chartConfig.dataLabelMode === 'both' ? 82 : 46),
+                            bottom: sparseHorizontalInset || 22,
+                            top: sparseHorizontalInset || 22,
                             containLabel: true
                         }
                         : categoricalGrid,
@@ -3485,9 +4565,11 @@
                             ? { ...horizontalCategoryAxisLabel, fontSize: Math.min(horizontalCategoryAxisLabel.fontSize, categoryAxisFontSize) }
                             : {
                                 ...verticalCategoryAxisLabel,
-                                fontSize: verticalLabelLineCount > 1
+                                fontSize: usesDenseCategoricalColumns
+                                    ? 10
+                                    : (verticalLabelLineCount > 1
                                     ? Math.min(verticalCategoryAxisLabel.fontSize, categoryAxisFontSize)
-                                    : categoryAxisFontSize
+                                    : categoryAxisFontSize)
                             }
                     },
                     series: [{
@@ -3495,20 +4577,29 @@
                         type: 'bar',
                         data: values,
                         barMaxWidth: isHorizontal
-                            ? (labels.length <= 5 ? 40 : (labels.length <= 10 ? 34 : (labels.length <= 15 ? 28 : 22)))
-                            : (labels.length <= 2 ? 96 : (labels.length <= 4 ? 108 : (labels.length <= 5 ? 112 : (labels.length <= 10 ? 82 : (labels.length <= 15 ? 62 : 42))))),
+                            ? (usesDenseCategoricalHorizontalBars
+                                ? 18
+                                : (labels.length <= 2 ? 46 : (labels.length <= 5 ? 38 : (labels.length <= 10 ? 34 : (labels.length <= 15 ? 28 : 22)))))
+                            : (usesDenseCategoricalColumns ? 24 : (labels.length <= 2 ? 96 : (labels.length <= 4 ? 108 : (labels.length <= 5 ? 112 : (labels.length <= 10 ? 82 : (labels.length <= 15 ? 62 : 42)))))),
                         barCategoryGap: isHorizontal
-                            ? (labels.length <= 5 ? '38%' : (labels.length <= 10 ? '32%' : (labels.length <= 15 ? '28%' : '24%')))
-                            : (labels.length <= 5 ? '45%' : (labels.length <= 10 ? '30%' : (labels.length <= 15 ? '22%' : '12%'))),
+                            ? (usesDenseCategoricalHorizontalBars
+                                ? '30%'
+                                : (labels.length <= 5 ? '38%' : (labels.length <= 10 ? '32%' : (labels.length <= 15 ? '28%' : '24%'))))
+                            : (usesDenseCategoricalColumns ? '28%' : (labels.length <= 5 ? '45%' : (labels.length <= 10 ? '30%' : (labels.length <= 15 ? '22%' : '12%')))),
                         itemStyle: {
-                            color: (params) => colors[params.dataIndex],
+                            color: (params) => getCategoricalBarColor(params.dataIndex),
                             borderRadius: isHorizontal ? [0, 3, 3, 0] : [3, 3, 0, 0]
                         },
                         emphasis: { focus: 'self', itemStyle: { opacity: .88 } },
                         label: {
                             show: chartConfig.dataLabelMode !== 'none',
                             position: isHorizontal ? 'right' : 'top',
-                            distance: isHorizontal ? 7 : 5,
+                            distance: isHorizontal ? 7 : (usesDenseCategoricalColumns ? 7 : 5),
+                            rotate: usesDenseCategoricalColumns ? 90 : 0,
+                            ...(usesDenseCategoricalColumns ? {
+                                align: 'left',
+                                verticalAlign: 'middle'
+                            } : {}),
                             fontSize: valueLabelFontSize,
                             fontFamily: chartFontFamily,
                             fontWeight: 600,
@@ -3521,6 +4612,12 @@
                                     return `{percent|${total > 0 ? ((params.value / total) * 100).toFixed(1) : '0.0'}%}`;
                                 }
                                 if (chartConfig.dataLabelMode === 'both') {
+                                    if (usesSimpleCategoricalBars) {
+                                        const percentage = total > 0
+                                            ? ((params.value / total) * 100).toFixed(1)
+                                            : '0.0';
+                                        return `{percent|${percentage}%} {normal|(${formatNumber(params.value)})}`;
+                                    }
                                     return `{value|${formatNumber(params.value)}}\n{normal|${total > 0 ? ((params.value / total) * 100).toFixed(1) : '0.0'}%}`;
                                 }
                                 return '';
@@ -3538,36 +4635,34 @@
                 ...(option.textStyle || {})
             };
 
-            // Aplicar opción y preservar animaciones: para pie/rosquilla
-            // hacemos resize ANTES de setOption para que echarts inicie
-            // con las dimensiones correctas y ejecute la animación inicial.
+            if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) {
+                option.animation = false;
+            }
+
+            // Esperar a que el navegador confirme la geometría del lienzo antes
+            // de aplicar cualquier tipo. Si setOption ocurre en el mismo ciclo que
+            // echarts.init, algunas barras pueden pintarse directamente al final.
             const chartInstance = currentEchartsInstance;
             function applyOptionAndFinish() {
                 if (!chartInstance || currentEchartsInstance !== chartInstance) return;
                 try {
-                    chartInstance.setOption(option, false);
+                    chartInstance.setOption(option, { notMerge: true, lazyUpdate: false });
                 } catch (e) {
                     console.warn('setOption failed', e);
                 }
             }
 
             try {
-                if (isPieLikeChart) {
-                    // Pequeño timeout para permitir que el DOM aplique estilos antes del resize
-                    setTimeout(() => {
+                const initialRenderDelay = isPieLikeChart ? 48 : 24;
+                setTimeout(() => {
+                    window.requestAnimationFrame(() => {
                         if (currentEchartsInstance !== chartInstance) return;
                         if (typeof chartInstance.resize === 'function') {
                             chartInstance.resize();
                         }
-                        applyOptionAndFinish();
-                    }, 60);
-                } else {
-                    // Para gráficas no circulares: también hacer resize antes de setOption para permitir animaciones
-                    if (typeof chartInstance.resize === 'function') {
-                        chartInstance.resize();
-                    }
-                    applyOptionAndFinish();
-                }
+                        window.requestAnimationFrame(applyOptionAndFinish);
+                    });
+                }, initialRenderDelay);
             } catch (e) {
                 console.warn('apply option failed', e);
                 applyOptionAndFinish();
@@ -3575,14 +4670,13 @@
             
             // Actualizar el detalle de causas principales si es Edades
             if (currentChartType === 'edades' && data.data_with_causes) {
-                updateCausasTable(data.data_with_causes, data.total || 0);
+                updateAgeCausesDetail(data.data_with_causes, data.total || 0);
             }
         }
         
-        function updateCausasTable(dataWithCauses, grandTotal = 0) {
+        function updateAgeCausesDetail(dataWithCauses, grandTotal = 0) {
             const container = document.getElementById('causasPrincipalesContainer');
             const list = document.getElementById('causasPrincipalesBody');
-            const summary = document.getElementById('statisticsCausesSummary');
             
             if (!container || !list) return;
 
@@ -3626,8 +4720,8 @@
                     .sort((a, b) => b.count - a.count);
                 const causes = sortedCauses.length
                     ? `<ol class="statistics-causes__ranking">${sortedCauses.map((entry, index) => `
-                        <li>
-                            <span class="statistics-causes__rank" aria-hidden="true">${index + 1}</span>
+                        <li data-rank="${index + 1}.ª causa">
+                            <span class="sr-only">Posición ${index + 1}: </span>
                             <span class="statistics-causes__name">${escapeHtml(entry.cause)}</span>
                             <strong class="statistics-causes__value">${formatCauseValueText(entry.count, item.total)}</strong>
                         </li>
@@ -3639,19 +4733,67 @@
                         <div class="statistics-causes__group">
                             <span>Grupo de edad</span>
                             <h4>${escapeHtml(item.range)}</h4>
-                            <p><strong>${formatTotal(item.total)}</strong> defunciones</p>
+                            <p><strong>${formatTotal(item.total)}</strong>${mode === 'percent' ? ' del total' : ' defunciones'}</p>
                         </div>
                         ${causes}
                     </article>
                 `;
             }).join('');
 
-            if (summary) {
-                summary.textContent = `${items.length} ${items.length === 1 ? 'grupo' : 'grupos'} · hasta 3 causas por grupo`;
-            }
-            
             const shouldShow = currentChartType === 'edades' && chartConfig.ageDetailMode === 'causes';
-            container.classList.toggle('hidden', !shouldShow);
+            setAgeCausesVisibility(container, shouldShow);
+        }
+
+        function setAgeCausesVisibility(container, shouldShow, { animate = true, preserveIntent = false } = {}) {
+            if (!container) return;
+
+            const wasHidden = container.classList.contains('hidden');
+            const previousIntent = container.dataset.visibilityIntent;
+            const reduceMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+            if (!preserveIntent) {
+                container.dataset.visibilityIntent = shouldShow ? 'visible' : 'hidden';
+            }
+            container.getAnimations?.().forEach(animation => animation.cancel());
+
+            if (shouldShow) {
+                container.classList.remove('hidden');
+                container.setAttribute('aria-hidden', 'false');
+
+                if (animate && wasHidden && previousIntent !== 'visible' && !reduceMotion && typeof container.animate === 'function') {
+                    container.animate([
+                        { opacity: 0, transform: 'translateY(6px)' },
+                        { opacity: 1, transform: 'translateY(0)' }
+                    ], {
+                        duration: 180,
+                        easing: 'cubic-bezier(.2, .8, .2, 1)'
+                    });
+                }
+                return;
+            }
+
+            container.setAttribute('aria-hidden', 'true');
+            if (wasHidden) return;
+
+            if (!animate || reduceMotion || typeof container.animate !== 'function') {
+                container.classList.add('hidden');
+                return;
+            }
+
+            const exitAnimation = container.animate([
+                { opacity: 1, transform: 'translateY(0)' },
+                { opacity: 0, transform: 'translateY(3px)' }
+            ], {
+                duration: 120,
+                easing: 'ease-in'
+            });
+
+            exitAnimation.finished
+                .then(() => {
+                    if (container.dataset.visibilityIntent === 'hidden') {
+                        container.classList.add('hidden');
+                    }
+                })
+                .catch(() => {});
         }
 
         function getOptimalChartType(metric) {
@@ -3660,7 +4802,7 @@
                 'municipios': 'bar',               // Barras verticales por defecto
                 'tendencias': 'line',              // Línea para tendencias
                 'edades': 'bar',                   // Barras verticales para edades
-                'genero': 'pie',                   // Pastel para género
+                'genero': 'pie',                   // Pastel para sexo
                 'causas': 'bar',                   // Barras verticales por defecto
                 'distritoes': 'bar',           // Barras verticales para distritoes
                 'comparativa': 'bar'               // Barras agrupadas para comparativa
@@ -3668,8 +4810,8 @@
             return typeMap[metric] || 'bar';
         }
 
-        function updateChart() {
-            loadChart(currentChartType);
+        function updateChart(options = {}) {
+            loadChart(currentChartType, options);
         }
 
         function resetActiveDataFilters() {
@@ -3752,11 +4894,13 @@
             renderChartLimitButtons(currentChartType);
             
             resetActiveDataFilters();
+            invalidateChartDataCache();
             updateActiveFiltersDisplay();
             if (!suppressUpdate) updateChart();
         }
 
         function showLoadingMessage() {
+            document.getElementById('statisticsChartPanel')?.setAttribute('aria-busy', 'true');
             const loadingMessage = document.getElementById('loadingMessage');
             const errorMessage = document.getElementById('errorMessage');
             if (loadingMessage) loadingMessage.style.display = 'flex';
@@ -3768,6 +4912,11 @@
             document.getElementById('statisticsPreviousComparison')?.classList.add('hidden');
             document.getElementById('statisticsChartContext')?.classList.add('hidden');
             document.getElementById('statisticsChartSource')?.classList.add('hidden');
+            setAgeCausesVisibility(
+                document.getElementById('causasPrincipalesContainer'),
+                false,
+                { animate: false, preserveIntent: true }
+            );
             setChartOutputActionsEnabled(false);
         }
 
@@ -3781,7 +4930,7 @@
                 ? comparativaLabels[activeFilters.tipoComparativa] || chartTitles[currentChartType]
                 : (chartTitles[currentChartType] || 'Gráfica');
 
-            if (currentChartType === 'municipios' && activeFilters.tipoMunicipio) {
+            if (['municipios', 'distritoes'].includes(currentChartType) && activeFilters.tipoMunicipio) {
                 const typeLabel = activeFilters.tipoMunicipio === 'residencia' ? 'residencia' : 'defunción';
                 title += ` (${typeLabel})`;
             }
@@ -3809,6 +4958,7 @@
             if (!enabled) {
                 downloadMenu?.classList.add('hidden');
                 downloadToggle?.setAttribute('aria-expanded', 'false');
+                downloadToggle?.setAttribute('aria-label', 'Abrir opciones de descarga');
             }
         }
 
@@ -3862,6 +5012,7 @@
         }
 
         function showUnavailableChartState(preserveContext = false) {
+            document.getElementById('statisticsChartPanel')?.setAttribute('aria-busy', 'false');
             const errorMessage = document.getElementById('errorMessage');
             const loadingMessage = document.getElementById('loadingMessage');
             if (errorMessage) errorMessage.style.display = 'flex';
@@ -3872,7 +5023,31 @@
             document.getElementById('statisticsPreviousComparison')?.classList.add('hidden');
             if (!preserveContext) document.getElementById('statisticsChartContext')?.classList.add('hidden');
             document.getElementById('statisticsChartSource')?.classList.add('hidden');
+            setAgeCausesVisibility(
+                document.getElementById('causasPrincipalesContainer'),
+                false,
+                { animate: false }
+            );
             setChartOutputActionsEnabled(false);
+        }
+
+        function showChartRefreshingState() {
+            const loadingMessage = document.getElementById('loadingMessage');
+            const errorMessage = document.getElementById('errorMessage');
+            const chartElement = document.getElementById('mainChart');
+            const panel = document.getElementById('statisticsChartPanel');
+            if (loadingMessage) loadingMessage.style.display = 'none';
+            if (errorMessage) errorMessage.style.display = 'none';
+            if (chartElement) chartElement.style.visibility = 'visible';
+            panel?.setAttribute('aria-busy', 'true');
+            const status = document.getElementById('statisticsPresentationStatus');
+            if (status) status.textContent = 'Actualizando gráfica.';
+        }
+
+        function finishChartRefreshingState(message = '') {
+            document.getElementById('statisticsChartPanel')?.setAttribute('aria-busy', 'false');
+            const status = document.getElementById('statisticsPresentationStatus');
+            if (status) status.textContent = message;
         }
     </script>
 

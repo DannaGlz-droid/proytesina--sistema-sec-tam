@@ -12,7 +12,7 @@ class StatisticsAnalysisService
     ];
 
     private const COMPARISON_TYPES = [
-        'residencia-defuncion', 'genero-causa', 'edad-causa', 'lugar-causa',
+        'residencia-defuncion', 'distrito-residencia-defuncion', 'genero-causa', 'edad-causa', 'lugar-causa',
     ];
 
     public function context(array $input): ?array
@@ -93,6 +93,9 @@ class StatisticsAnalysisService
         $municipality = $municipalityType === 'residencia'
             ? $this->relation('deaths.residence_municipality_id', 'municipalities', 'Municipio de residencia')
             : $this->relation('deaths.death_municipality_id', 'municipalities', 'Municipio de defunción');
+        $district = $municipalityType === 'residencia'
+            ? $this->relation('deaths.district_id', 'districts', 'Distrito de residencia')
+            : $this->relation('deaths.death_district_id', 'districts', 'Distrito de defunción');
 
         return match ($chartType) {
             'municipios' => [$municipality],
@@ -100,8 +103,12 @@ class StatisticsAnalysisService
             'edades' => [$this->age()],
             'genero' => [$this->value('deaths.sex', 'Sexo', true)],
             'causas' => [$this->relation('deaths.death_cause_id', 'death_causes', 'Causa de defunción')],
-            'distritoes' => [$this->relation('deaths.district_id', 'districts', 'Distrito de residencia')],
+            'distritoes' => [$district],
             'comparativa' => match ($comparisonType) {
+                'distrito-residencia-defuncion' => [
+                    $this->relation('deaths.district_id', 'districts', 'Distrito de residencia'),
+                    $this->relation('deaths.death_district_id', 'districts', 'Distrito de defunción'),
+                ],
                 'genero-causa' => [
                     $this->value('deaths.sex', 'Sexo', true),
                     $this->relation('deaths.death_cause_id', 'death_causes', 'Causa de defunción'),
@@ -182,11 +189,12 @@ class StatisticsAnalysisService
             'municipios' => 'Distribución por municipios',
             'tendencias' => 'Tendencia temporal',
             'edades' => 'Distribución por edades',
-            'genero' => 'Distribución por género',
+            'genero' => 'Distribución por sexo',
             'causas' => 'Causas de defunción',
             'distritoes' => 'Distribución por distritos',
             'comparativa' => match ($comparisonType) {
-                'genero-causa' => 'Género por causa de defunción',
+                'distrito-residencia-defuncion' => 'Distrito de residencia frente a distrito de defunción',
+                'genero-causa' => 'Sexo por causa de defunción',
                 'edad-causa' => 'Rango etario por causa de defunción',
                 'lugar-causa' => 'Lugar de defunción por causa',
                 default => 'Residencia frente a lugar de defunción',

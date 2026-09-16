@@ -46,7 +46,7 @@ class StatisticsController extends Controller
                 ->orderBy(DB::raw("MONTH(deaths.{$dateColumn})"))
                 ->get();
 
-            // 3) Género
+            // 3) Sexo
             // Sex column in this project is stored as 'sex'
             $generos = DB::table('deaths')
                 ->select('sex', DB::raw('COUNT(*) as total'))
@@ -427,7 +427,8 @@ class StatisticsController extends Controller
     {
         try {
             $filters = $request->all();
-            $usesDefaultPeriod = empty($filters['start_date']) && empty($filters['end_date']) &&
+            $usesAllTime = !empty($filters['all_time']);
+            $usesDefaultPeriod = !$usesAllTime && empty($filters['start_date']) && empty($filters['end_date']) &&
                 empty($filters['months']) && empty($filters['years']);
             
             // Si no hay filtros de fecha especificados, aplicar rango default (últimos 12 meses)
@@ -439,11 +440,15 @@ class StatisticsController extends Controller
             
             // Resolver columna de fecha
             $dateColumn = Schema::hasColumn('deaths', 'death_date') ? 'death_date' : 'created_at';
-            
-            // Determinar columna de municipio según parámetro
-            $munCol = !empty($filters['municipio_kind']) && $filters['municipio_kind'] === 'residence' 
-                ? 'residence_municipality_id' 
-                : 'death_municipality_id';
+
+            // Unificar los dos nombres internos del ámbito para que filtros,
+            // agrupación, tabla y exportación nunca interpreten alcances distintos.
+            $requestedMunicipalityType = $filters['municipio_type'] ?? null;
+            $usesResidenceScope = $requestedMunicipalityType === 'residencia'
+                || ($requestedMunicipalityType === null && ($filters['municipio_kind'] ?? null) === 'residence');
+            $filters['municipio_type'] = $usesResidenceScope ? 'residencia' : 'defuncion';
+            $filters['municipio_kind'] = $usesResidenceScope ? 'residence' : 'death';
+            $munCol = $usesResidenceScope ? 'residence_municipality_id' : 'death_municipality_id';
             
             $canonicalFilters = $this->deathFilters->normalize($filters, [
                 'municipality_column' => $munCol,
@@ -540,6 +545,7 @@ class StatisticsController extends Controller
                 'data_start' => $context->data_start ?? null,
                 'data_end' => $context->data_end ?? null,
                 'is_default' => $usesDefaultPeriod,
+                'is_all_time' => $usesAllTime,
             ];
             $payload['previous_period_comparison'] = $this->getPreviousPeriodComparison(
                 $canonicalFilters,
@@ -734,7 +740,13 @@ class StatisticsController extends Controller
         $municipios = $municipalitiesFull->map(function($m) use ($munCountsRaw) {
             $total = isset($munCountsRaw[$m->id]) ? (int)$munCountsRaw[$m->id] : 0;
             return ['id' => (int) $m->id, 'name' => $m->name ?? 'Sin dato', 'total' => $total];
-        })->filter(fn ($municipality) => $municipality['total'] > 0)->sortByDesc('total')->values();
+        })->filter(fn ($municipality) => $municipality['total'] > 0)->sort(function ($left, $right) {
+            $byTotal = $right['total'] <=> $left['total'];
+
+            return $byTotal !== 0
+                ? $byTotal
+                : strnatcasecmp((string) $left['name'], (string) $right['name']);
+        })->values();
 
         $availableCategories = $municipios->count();
         
@@ -750,6 +762,7 @@ class StatisticsController extends Controller
             'counts' => $municipios->pluck('total')->values()->all(),
             'displayed_total' => $displayedTotal,
             'available_categories' => $availableCategories,
+            'ranking_label' => 'municipios',
         ]);
     }
 
@@ -873,10 +886,10 @@ class StatisticsController extends Controller
         // Normalizar etiquetas
         $generos = $generos->map(function($g) {
             $label = $g->sex ?? 'Sin dato';
-            if (in_array(strtolower($label), ['m', 'masculino'])) $label = 'Hombre';
-            elseif (in_array(strtolower($label), ['f', 'femenino'])) $label = 'Mujer';
+            if (in_array(strtolower($label), ['m', 'masculino', 'hombre'])) $label = 'Masculino';
+            elseif (in_array(strtolower($label), ['f', 'femenino', 'mujer'])) $label = 'Femenino';
             return ['label' => $label, 'total' => (int)$g->total];
-        });
+        })->sortBy(fn ($item) => array_search($item['label'], ['Masculino', 'Femenino', 'Sin dato'], true))->values();
 
         return response()->json([
             'type' => 'genero',
@@ -904,6 +917,7 @@ class StatisticsController extends Controller
             'counts' => $causas->pluck('total')->map(fn($v) => (int)$v)->values()->all(),
             'displayed_total' => array_sum($causas->pluck('total')->all()),
             'available_categories' => $availableCategories,
+            'ranking_label' => 'causas',
         ]);
     }
 
@@ -913,8 +927,12 @@ class StatisticsController extends Controller
             return response()->json(['error' => 'No se pudo cargar la información de los distritos.'], 404);
         }
 
+        $districtColumn = ($filters['municipio_type'] ?? 'defuncion') === 'residencia'
+            ? 'district_id'
+            : 'death_district_id';
+
         $query = DB::table('deaths')
-            ->leftJoin('districts', 'districts.id', '=', 'deaths.district_id')
+            ->leftJoin('districts', 'districts.id', '=', "deaths.{$districtColumn}")
             ->select('districts.name as name', DB::raw('COUNT(deaths.id) as total'))
             ->groupBy('districts.name')
             ->orderByDesc('total');
@@ -929,6 +947,7 @@ class StatisticsController extends Controller
             'counts' => $districts->pluck('total')->map(fn($v) => (int)$v)->values()->all(),
             'displayed_total' => array_sum($districts->pluck('total')->all()),
             'available_categories' => $availableCategories,
+            'ranking_label' => 'distritos',
         ]);
     }
 
@@ -937,6 +956,8 @@ class StatisticsController extends Controller
         $comparativaType = $filters['comparativa_type'] ?? 'residencia-defuncion';
         
         switch ($comparativaType) {
+            case 'distrito-residencia-defuncion':
+                return $this->getChartComparativaDistritos($filters, $dateColumn, $applyFilters, $limit);
             case 'genero-causa':
                 return $this->getChartComparativaGeneroCausa($filters, $dateColumn, $applyFilters, $limit);
             case 'edad-causa':
@@ -947,6 +968,87 @@ class StatisticsController extends Controller
             default:
                 return $this->getChartComparativaResidenciaDefuncion($filters, $dateColumn, $munCol, $applyFilters, $limit);
         }
+    }
+
+    private function getChartComparativaDistritos($filters, $dateColumn, $applyFilters, $limit)
+    {
+        $dataQuery = DB::table('deaths')
+            ->join('districts as residence_districts', 'residence_districts.id', '=', 'deaths.district_id')
+            ->join('districts as death_districts', 'death_districts.id', '=', 'deaths.death_district_id')
+            ->select(
+                'residence_districts.id as residence_id',
+                'residence_districts.name as residence_name',
+                'death_districts.id as death_id',
+                'death_districts.name as death_name',
+                DB::raw('COUNT(deaths.id) as total')
+            )
+            ->groupBy(
+                'residence_districts.id',
+                'residence_districts.name',
+                'death_districts.id',
+                'death_districts.name'
+            );
+        $applyFilters($dataQuery);
+        $rows = $dataQuery->get();
+
+        $deathTotals = [];
+        $residenceTotals = [];
+        $matrix = [];
+        foreach ($rows as $row) {
+            $deathId = (int) $row->death_id;
+            $residenceId = (int) $row->residence_id;
+            $total = (int) $row->total;
+            $deathTotals[$deathId] = [
+                'name' => $row->death_name,
+                'total' => ($deathTotals[$deathId]['total'] ?? 0) + $total,
+            ];
+            $residenceTotals[$residenceId] = [
+                'name' => $row->residence_name,
+                'total' => ($residenceTotals[$residenceId]['total'] ?? 0) + $total,
+            ];
+            $matrix[$residenceId][$deathId] = $total;
+        }
+
+        uasort($deathTotals, fn ($left, $right) => $right['total'] <=> $left['total']);
+        uasort($residenceTotals, fn ($left, $right) => $right['total'] <=> $left['total']);
+        $availableCategories = count($deathTotals);
+        if ($limit) {
+            $deathTotals = array_slice($deathTotals, 0, $limit, true);
+        }
+
+        $deathIds = array_keys($deathTotals);
+        $labels = array_map(
+            fn ($district) => CatalogLabel::district($district['name']),
+            array_values($deathTotals)
+        );
+        $series = [];
+        foreach ($residenceTotals as $residenceId => $district) {
+            $series[] = [
+                'name' => CatalogLabel::district($district['name']),
+                'data' => array_map(
+                    fn ($deathId) => (int) ($matrix[$residenceId][$deathId] ?? 0),
+                    $deathIds
+                ),
+            ];
+        }
+
+        $displayedTotal = array_sum(array_map(
+            fn ($seriesItem) => array_sum($seriesItem['data']),
+            $series
+        ));
+
+        return response()->json([
+            'type' => 'comparativa',
+            'labels' => $labels,
+            'series' => $series,
+            'matrix' => true,
+            'x_axis_label' => 'Distrito de defunción',
+            'y_axis_label' => 'Distrito de residencia',
+            'displayed_total' => $displayedTotal,
+            'coverage_numerator' => $displayedTotal,
+            'available_categories' => $availableCategories,
+            'ranking_label' => 'distritos de defunción',
+        ]);
     }
 
     private function getChartComparativaResidenciaDefuncion($filters, $dateColumn, $munCol, $applyFilters, $limit)
@@ -1017,12 +1119,13 @@ class StatisticsController extends Controller
             'displayed_total' => $representedRecords,
             'coverage_numerator' => $representedRecords,
             'available_categories' => $availableCategories,
+            'ranking_label' => 'municipios',
         ]);
     }
 
     private function getChartComparativaGeneroCausa($filters, $dateColumn, $applyFilters, $limit)
     {
-        // Obtener causas agrupadas por género
+        // Obtener causas agrupadas por sexo
         $dataQ = DB::table('deaths')
             ->leftJoin('death_causes', 'death_causes.id', '=', 'deaths.death_cause_id')
             ->select('deaths.sex', 'death_causes.id as cause_id', 'death_causes.name as cause', DB::raw('COUNT(deaths.id) as total'))
@@ -1036,8 +1139,8 @@ class StatisticsController extends Controller
         foreach ($data as $row) {
             $cause = $row->cause ?? 'Sin dato';
             $sex = match (strtolower((string) ($row->sex ?? ''))) {
-                'm', 'masculino', 'hombre' => 'Hombres',
-                'f', 'femenino', 'mujer' => 'Mujeres',
+                'm', 'masculino', 'hombre' => 'Masculino',
+                'f', 'femenino', 'mujer' => 'Femenino',
                 default => 'Sin dato',
             };
             if (!isset($causes[$cause])) {
@@ -1060,7 +1163,7 @@ class StatisticsController extends Controller
         }
 
         $labels = array_map(fn ($cause) => CatalogLabel::cause($cause), array_keys($causes));
-        $orderedSexLabels = array_values(array_filter(['Hombres', 'Mujeres', 'Sin dato'], fn ($label) => isset($sexLabels[$label])));
+        $orderedSexLabels = array_values(array_filter(['Masculino', 'Femenino', 'Sin dato'], fn ($label) => isset($sexLabels[$label])));
         $series = array_map(function ($sex) use ($causes) {
             return [
                 'name' => $sex,
@@ -1076,6 +1179,7 @@ class StatisticsController extends Controller
             'displayed_total' => $displayedTotal,
             'coverage_numerator' => $displayedTotal,
             'available_categories' => $availableCategories,
+            'ranking_label' => 'causas',
         ]);
     }
 

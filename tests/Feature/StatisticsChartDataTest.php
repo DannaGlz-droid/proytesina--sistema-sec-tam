@@ -61,6 +61,7 @@ it('keeps the filtered total while reporting Top N coverage', function (): void 
         ->and($data['displayed_total'])->toBe(5)
         ->and($data['available_categories'])->toBe(3)
         ->and($data['displayed_categories'])->toBe(2)
+        ->and($data['ranking_label'])->toBe('causas')
         ->and($data['coverage_percentage'])->toBe(83.3)
         ->and($data['period']['start_date'])->toBe('2026-01-01')
         ->and($data['period']['end_date'])->toBe('2026-01-31');
@@ -75,10 +76,32 @@ it('uses consistent presentation labels without changing catalog values', functi
     $districts = statisticsChartResponse('jurisdicciones');
 
     expect($municipalities['labels'])->toContain('Otro')
+        ->and($municipalities['ranking_label'])->toBe('municipios')
         ->and($causes['labels'])->toContain('Otros accidentes')
+        ->and($causes['ranking_label'])->toBe('causas')
         ->and($districts['labels'])->toContain('I · Prueba')
+        ->and($districts['ranking_label'])->toBe('distritos')
         ->and($this->municipalityA->fresh()->name)->toBe('OTRO')
         ->and($this->causeA->fresh()->name)->toBe('OTROS ACCIDENTES');
+});
+
+it('orders municipalities by total and alphabetically when totals are tied', function (): void {
+    $this->municipalityA->update(['name' => 'Zeta']);
+    $this->municipalityB->update(['name' => 'Alfa']);
+
+    $ranked = statisticsChartResponse('municipios');
+
+    expect($ranked['labels'])->toBe(['Alfa', 'Zeta'])
+        ->and($ranked['counts'])->toBe([4, 2]);
+
+    Death::query()->where('gov_folio', 'STAT-3')->update([
+        'death_municipality_id' => $this->municipalityA->id,
+    ]);
+
+    $tied = statisticsChartResponse('municipios');
+
+    expect($tied['counts'])->toBe([3, 3])
+        ->and($tied['labels'])->toBe(['Alfa', 'Zeta']);
 });
 
 it('compares the analyzed total with an immediately preceding period of equal length', function (): void {
@@ -167,6 +190,7 @@ it('does not double the analyzed total in residence and death comparison', funct
     ]);
 
     expect($data['total'])->toBe(6)
+        ->and($data['ranking_label'])->toBe('municipios')
         ->and(array_column($data['series'], 'name'))->toBe([
             'Municipio de residencia',
             'Municipio de defunción',
@@ -185,9 +209,11 @@ it('returns real cause series for age and location comparisons', function (): vo
 
     expect($ageData['series'])->not->toBeEmpty()
         ->and($ageData['stacked'])->toBeTrue()
+        ->and($ageData['ranking_label'])->toBe('causas')
         ->and($ageData)->not->toHaveKey('residence_counts')
         ->and($locationData['series'])->not->toBeEmpty()
         ->and($locationData['stacked'])->toBeTrue()
+        ->and($locationData['ranking_label'])->toBe('lugares')
         ->and($locationData)->not->toHaveKey('residence_counts');
 });
 
@@ -243,11 +269,11 @@ it('filters chart data by an exact age range or age list', function (): void {
 
 it('accepts the supported filter combinations in every chart metric', function (): void {
     $cases = [
-        ['municipios', ['distritoes' => [$this->municipalityA->district_id], 'causas' => [$this->causeA->id], 'sex' => 'M']],
-        ['tendencias', ['municipios' => [$this->municipalityA->id], 'causas' => [$this->causeA->id], 'sex' => 'M', 'group_by' => 'month']],
-        ['edades', ['municipios' => [$this->municipalityA->id], 'distritoes' => [$this->municipalityA->district_id], 'causas' => [$this->causeA->id]]],
-        ['genero', ['municipios' => [$this->municipalityA->id], 'distritoes' => [$this->municipalityA->district_id], 'causas' => [$this->causeA->id]]],
-        ['causas', ['municipios' => [$this->municipalityA->id], 'distritoes' => [$this->municipalityA->district_id], 'sex' => 'M']],
+        ['municipios', ['death_district_ids' => [$this->municipalityA->district_id], 'causas' => [$this->causeA->id], 'sex' => 'M']],
+        ['tendencias', ['municipios' => [$this->municipalityA->id], 'municipio_kind' => 'residence', 'district_ids' => [$this->municipalityA->district_id], 'causas' => [$this->causeA->id], 'sex' => 'M', 'group_by' => 'month']],
+        ['edades', ['municipios' => [$this->municipalityA->id], 'death_district_ids' => [$this->municipalityA->district_id], 'causas' => [$this->causeA->id], 'sex' => 'M']],
+        ['genero', ['municipios' => [$this->municipalityA->id], 'death_district_ids' => [$this->municipalityA->district_id], 'causas' => [$this->causeA->id]]],
+        ['causas', ['municipios' => [$this->municipalityA->id], 'death_district_ids' => [$this->municipalityA->district_id], 'sex' => 'M']],
         ['distritoes', ['causas' => [$this->causeA->id], 'sex' => 'M']],
     ];
 
@@ -264,8 +290,49 @@ it('accepts the supported filter combinations in every chart metric', function (
     }
 });
 
+it('uses sexo consistently in chart and comparison labels', function (): void {
+    $sex = statisticsChartResponse('genero');
+    $comparison = statisticsChartResponse('comparativa', [
+        'comparativa_type' => 'genero-causa',
+    ]);
+
+    expect($sex['labels'])->toBe(['Masculino', 'Femenino'])
+        ->and(array_column($comparison['series'], 'name'))->toBe(['Masculino', 'Femenino']);
+});
+
+it('groups and validates districts using the selected geographic scope', function (): void {
+    $deathDistrict = District::create(['name' => 'II - DEFUNCIÓN']);
+    Death::query()->where('gov_folio', 'STAT-1')->update(['death_district_id' => $deathDistrict->id]);
+
+    $deathScope = statisticsChartResponse('distritoes', ['municipio_type' => 'defuncion']);
+    $residenceScope = statisticsChartResponse('distritoes', ['municipio_type' => 'residencia']);
+
+    expect($deathScope['labels'])->toHaveCount(2)
+        ->and($deathScope['labels'])->toContain('II · Defunción')
+        ->and($deathScope['quality']['required_fields'])->toBe(['Distrito de defunción'])
+        ->and($residenceScope['labels'])->toHaveCount(1)
+        ->and($residenceScope['quality']['required_fields'])->toBe(['Distrito de residencia']);
+});
+
+it('supports an explicit all-time period without applying the default range', function (): void {
+    $oldDeath = Death::query()->where('gov_folio', 'STAT-1')->firstOrFail()->replicate();
+    $oldDeath->gov_folio = 'STAT-HISTORICAL';
+    $oldDeath->death_date = '2020-01-01';
+    $oldDeath->save();
+
+    $data = app(StatisticsController::class)
+        ->getChartData(Request::create('/', 'GET', ['all_time' => '1']), 'causas')
+        ->getData(true);
+
+    expect($data['filtered_total'])->toBe(7)
+        ->and($data['period']['start_date'])->toBeNull()
+        ->and($data['period']['end_date'])->toBeNull()
+        ->and($data['period']['is_default'])->toBeFalse()
+        ->and($data['period']['is_all_time'])->toBeTrue();
+});
+
 it('returns valid data for every comparison mode', function (): void {
-    foreach (['residencia-defuncion', 'genero-causa', 'edad-causa', 'lugar-causa'] as $comparisonType) {
+    foreach (['residencia-defuncion', 'distrito-residencia-defuncion', 'genero-causa', 'edad-causa', 'lugar-causa'] as $comparisonType) {
         $data = statisticsChartResponse('comparativa', [
             'comparativa_type' => $comparisonType,
             'limit' => 5,
@@ -276,6 +343,43 @@ it('returns valid data for every comparison mode', function (): void {
             ->and($data['labels'])->not->toBeEmpty()
             ->and($data['series'])->not->toBeEmpty();
     }
+});
+
+it('returns a district residence and death matrix for the comparison heatmap', function (): void {
+    $deathDistrict = District::create(['name' => 'II - DEFUNCIÓN']);
+    Death::query()->whereIn('gov_folio', ['STAT-1', 'STAT-2'])->update([
+        'death_district_id' => $deathDistrict->id,
+    ]);
+
+    $data = statisticsChartResponse('comparativa', [
+        'comparativa_type' => 'distrito-residencia-defuncion',
+    ]);
+
+    expect($data['matrix'])->toBeTrue()
+        ->and($data['x_axis_label'])->toBe('Distrito de defunción')
+        ->and($data['y_axis_label'])->toBe('Distrito de residencia')
+        ->and($data['filtered_total'])->toBe(6)
+        ->and($data['labels'])->toContain('II · Defunción')
+        ->and($data['series'])->not->toBeEmpty()
+        ->and(array_sum(array_merge(...array_column($data['series'], 'data'))))->toBe(6)
+        ->and($data['quality']['required_fields'])->toBe([
+            'Distrito de residencia',
+            'Distrito de defunción',
+        ]);
+});
+
+it('ships the complete Tamaulipas municipality geometry for the choropleth map', function (): void {
+    $geoJson = json_decode(
+        file_get_contents(public_path('data/tamaulipas-municipios.geojson')),
+        true,
+        512,
+        JSON_THROW_ON_ERROR
+    );
+
+    expect($geoJson['type'])->toBe('FeatureCollection')
+        ->and($geoJson['features'])->toHaveCount(43)
+        ->and(array_column(array_column($geoJson['features'], 'properties'), 'name'))
+        ->toContain('Reynosa', 'Victoria', 'Nuevo Laredo', 'Río Bravo', 'Güémez', 'Gómez Farías');
 });
 
 it('groups trends by day month and year without changing the filtered total', function (): void {
@@ -351,9 +455,17 @@ it('defines the required fields for every statistical analysis', function (): vo
         ->and($service->context(['analysis_type' => 'edades'])['required_fields'])->toBe(['Edad'])
         ->and($service->context(['analysis_type' => 'genero'])['required_fields'])->toBe(['Sexo'])
         ->and($service->context(['analysis_type' => 'causas'])['required_fields'])->toBe(['Causa de defunción'])
-        ->and($service->context(['analysis_type' => 'distritoes'])['required_fields'])->toBe(['Distrito de residencia'])
+        ->and($service->context(['analysis_type' => 'distritoes'])['required_fields'])->toBe(['Distrito de defunción'])
+        ->and($service->context([
+            'analysis_type' => 'distritoes',
+            'municipio_type' => 'residencia',
+        ])['required_fields'])->toBe(['Distrito de residencia'])
         ->and($service->context([
             'analysis_type' => 'comparativa',
             'comparativa_type' => 'lugar-causa',
-        ])['required_fields'])->toBe(['Lugar de defunción', 'Causa de defunción']);
+        ])['required_fields'])->toBe(['Lugar de defunción', 'Causa de defunción'])
+        ->and($service->context([
+            'analysis_type' => 'comparativa',
+            'comparativa_type' => 'distrito-residencia-defuncion',
+        ])['required_fields'])->toBe(['Distrito de residencia', 'Distrito de defunción']);
 });
