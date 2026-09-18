@@ -483,6 +483,16 @@
             groupBy: 'month'
         };
 
+        const defaultColorPreferences = Object.freeze({
+            solid: 'maroon611132',
+            qualitative: 'maroon611132',
+            circular: 'maroon611132',
+            sequential: 'maroon611132',
+            comparison: 'maroon611132',
+            barMode: 'solid'
+        });
+        let colorPreferences = { ...defaultColorPreferences };
+
         // Preferencias deseadas: una vista puede adaptarlas sin sobrescribirlas.
         let preferredConfig = {
             type: defaultPresentationConfig.type,
@@ -499,6 +509,10 @@
         });
         let preferredLimitByVisualFamily = { ...defaultLimitPreferences };
         let preferredMunicipalityColumnLimit = defaultPresentationConfig.limit;
+        // Barras de Municipios hereda Columnas hasta que el usuario elige un límite propio.
+        let preferredMunicipalityBarLimit;
+        const defaultDistrictLimitPreferences = Object.freeze({ vertical: null, horizontal: null });
+        let preferredDistrictLimitByVisualFamily = { ...defaultDistrictLimitPreferences };
 
         async function ensureTamaulipasMap() {
             if (echarts.getMap(tamaulipasMapName)) return;
@@ -689,11 +703,11 @@
             aqua: ['#2F3D14', '#3D4E1B', '#6C7836', '#8B9852', '#A8C363', '#B8CC76', '#C2D67E', '#D6E4A5', '#DFE9B8', '#485C24'],
             autumn: ['#1A140D', '#3D3120', '#5C4624', '#83673F', '#A9875A', '#C4976C', '#DCAF85', '#EAC39C', '#F8D6B3', '#F7E1BE'],
             rose: ['#6B1114', '#9C191B', '#BD1F21', '#DD2C2F', '#E35053', '#E95D60', '#EC8385', '#F1A7A9', '#F4B5B8', '#F6CACC'],
-            spectrum: ['#0072B2', '#E69F00', '#009E73', '#CC79A7', '#D55E00', '#56A7C7', '#725A8E', '#8A6D1D', '#2F6F62', '#A64B3C'],
+            spectrum: ['#0072B2', '#E69F00', '#009E73', '#CC79A7', '#D55E00', '#56A7C7', '#725A8E', '#C35258', '#5B7FBA', '#A64B3C'],
             earth: ['#3D5A73', '#B36A3C', '#5F7A55', '#A58B4B', '#765A7A', '#2F7774', '#8B4A3E', '#6B705C', '#A06C78', '#4F6D7A'],
             goldenEarth: ['#2A0E47', '#431259', '#6A3FA0', '#805EBF', '#8F6FC9', '#9A99F2', '#B3BEFF', '#CCDCFF', '#D9E6FF', '#E6F2FF'],
             institutional: ['#001A3A', '#003A70', '#1965A0', '#0F558F', '#2D82BD', '#5CA5D0', '#8FC5E0', '#B7D7EA', '#D8E8F5', '#E2EFF6'],
-            maroon611132: ['#611132', '#BC955C', '#3D5A73', '#5C7A54', '#9C4A3C', '#725A7A', '#2F7470', '#A36B3F', '#53633F', '#8B5B68'],
+            maroon611132: ['#611132', '#BC955C', '#3D5A73', '#5C7A54', '#9C4A3C', '#725A7A', '#2F7470', '#D0873C', '#A26380', '#8B5B68'],
             grayscale: ['#1F2937', '#334155', '#475569', '#58677B', '#64748B', '#718096', '#7C8998', '#8793A1', '#929DAA', '#9DA7B2']
         };
 
@@ -743,6 +757,19 @@
         const primaryPaletteKeys = ['maroon611132', 'institutional', 'spectrum', 'grayscale'];
         const additionalPaletteKeys = ['aqua', 'autumn', 'rose', 'earth', 'goldenEarth'];
         const circularPaletteKeys = ['maroon611132', 'spectrum', 'earth'];
+        // Tres tonos extra solo para los 13 distritos; las demás métricas
+        // conservan sus paletas y la distribución de colores actual.
+        const districtCircularExtraColors = {
+            maroon611132: ['#2C9BA3', '#A3B94F', '#535FA6'],
+            spectrum: ['#597D35', '#8A633D', '#3C5F5C'],
+            earth: ['#D1873F', '#4B9A9A', '#A86A9D']
+        };
+        const getCircularPalette = (chartType, paletteKey) => {
+            const palette = colorPalettesCircular[paletteKey] || colorPalettesCircular.maroon611132;
+            return chartType === 'distritoes'
+                ? [...palette, ...(districtCircularExtraColors[paletteKey] || [])]
+                : palette;
+        };
         const sequentialPrimaryPaletteKeys = ['maroon611132', 'institutional', 'grayscale'];
         const sequentialAdditionalPaletteKeys = ['aqua', 'autumn', 'rose', 'earth', 'goldenEarth'];
 
@@ -850,7 +877,7 @@
         // Definir límites disponibles por tipo de gráfico
         const chartLimitsByType = {
             municipios: [5, 10, 15],
-            distritoes: [5, 10],
+            distritoes: [5],
             comparativa: [5, 10, 15],
             default: [5, 10, 15]
         };
@@ -859,6 +886,14 @@
         const minimumCategoriesOmittedByTop = 3;
         const maximumVerticalCategories = 15;
         const circularSummaryCategoryLimit = 5;
+        const getCircularSummaryCategoryLimit = (chartType, categoryCount = null) => {
+            if (chartType === 'municipios') return 9;
+            if (chartType === 'distritoes') return 13;
+            // Dos causas adicionales todavía se leen bien; con más categorías
+            // se recupera el resumen para no saturar el pastel o la dona.
+            if (chartType === 'causas' && (categoryCount === null || categoryCount <= 7)) return 7;
+            return circularSummaryCategoryLimit;
+        };
 
         document.addEventListener('DOMContentLoaded', async function() {
             try {
@@ -869,7 +904,7 @@
 
             // Cargar rangos de fecha default antes de inicializar
             await loadDefaultDateRange();
-            renderColorPalettePreview(chartConfig.colorPalette);
+            renderColorPalettePreview();
             renderChartTypeButtons('municipios');
             renderDataLabelButtons('municipios');
             renderChartLimitButtons('municipios');
@@ -1282,7 +1317,7 @@
                 // CONFIGURACIONES SON GLOBALES - se mantienen al cambiar de métrica
                 renderChartTypeButtons(currentChartType);
                 renderChartLimitButtons(currentChartType);
-                renderColorPalettePreview(chartConfig.colorPalette);
+                renderColorPalettePreview();
                 setPresentationAdaptationNote('chartTypeAdaptationNote');
                 if (previousLimit !== chartConfig.limit) {
                     // Conservar la composición anterior hasta recibir el alcance correcto.
@@ -1306,12 +1341,13 @@
                 setPreferredLimit(currentChartType, getVisualLimitFamily(currentChartType), chartConfig.limit);
                 // CONFIGURACIONES SON GLOBALES - se mantienen al cambiar de métrica
                 renderChartLimitButtons(currentChartType);
+                renderColorPalettePreview();
                 setPresentationAdaptationNote('chartLimitAdaptationNote');
                 updateChart({ preserveCurrentChart: true });
             });
 
             document.getElementById('statisticsShowAllAsBars')?.addEventListener('click', function() {
-                preferredLimitByVisualFamily.horizontal = null;
+                setPreferredLimit(currentChartType, 'horizontal', null);
                 setSelectValueAndTrigger('chartTypeSelector', 'barHorizontal');
             });
             document.getElementById('ageDetailMode').addEventListener('change', function() {
@@ -1369,8 +1405,7 @@
                 const spaceBelow = Math.max(0, window.innerHeight - triggerRect.bottom - viewportEdge);
                 const spaceAbove = Math.max(0, triggerRect.top - viewportEdge);
 
-                paletteMenu.style.removeProperty('max-height');
-                const desiredHeight = Math.min(paletteMenu.scrollHeight, maximumHeight);
+                const desiredHeight = Math.min(paletteMenu.scrollHeight + 2, maximumHeight);
                 const opensUp = spaceBelow < desiredHeight && spaceAbove > spaceBelow;
                 const availableHeight = Math.max(96, (opensUp ? spaceAbove : spaceBelow) - menuGap);
 
@@ -1405,7 +1440,10 @@
                     paletteToggle.focus();
                 });
 
-                document.addEventListener('scroll', positionPaletteMenu, true);
+                document.addEventListener('scroll', function(event) {
+                    if (paletteMenu.contains(event.target)) return;
+                    positionPaletteMenu();
+                }, true);
                 window.addEventListener('resize', positionPaletteMenu);
             }
 
@@ -1415,9 +1453,14 @@
                     if (!button) return;
                     const paletteName = button.dataset.palette;
                     if (!paletteName) return;
-                    const changed = chartConfig.colorPalette !== paletteName;
-                    chartConfig.colorPalette = paletteName;
-                    renderColorPalettePreview(paletteName);
+                    const isSimpleBar = ['bar', 'barHorizontal'].includes(chartConfig.type)
+                        && currentChartType !== 'comparativa';
+                    const previousContext = getActiveColorContext();
+                    if (isSimpleBar) colorPreferences.barMode = button.dataset.colorMode;
+                    const nextContext = getActiveColorContext();
+                    const changed = chartConfig.colorPalette !== paletteName || previousContext !== nextContext;
+                    colorPreferences[nextContext] = paletteName;
+                    renderColorPalettePreview();
                     closePaletteMenu();
                     paletteToggle?.focus();
                     if (changed) rerenderLatestChart();
@@ -2005,6 +2048,14 @@
             if (chartType === 'municipios' && family === 'vertical') {
                 return preferredMunicipalityColumnLimit;
             }
+            if (chartType === 'municipios' && family === 'horizontal') {
+                return preferredMunicipalityBarLimit === undefined
+                    ? preferredMunicipalityColumnLimit
+                    : preferredMunicipalityBarLimit;
+            }
+            if (chartType === 'distritoes' && family in preferredDistrictLimitByVisualFamily) {
+                return preferredDistrictLimitByVisualFamily[family];
+            }
 
             return preferredLimitByVisualFamily[family];
         }
@@ -2012,6 +2063,14 @@
         function setPreferredLimit(chartType, family, limit) {
             if (chartType === 'municipios' && family === 'vertical') {
                 preferredMunicipalityColumnLimit = limit;
+                return;
+            }
+            if (chartType === 'municipios' && family === 'horizontal') {
+                preferredMunicipalityBarLimit = limit;
+                return;
+            }
+            if (chartType === 'distritoes' && family in preferredDistrictLimitByVisualFamily) {
+                preferredDistrictLimitByVisualFamily[family] = limit;
                 return;
             }
 
@@ -2023,8 +2082,8 @@
             if (family === 'map') return [];
             const configured = chartLimitsByType[chartType] || chartLimitsByType.default;
             // En gráficas circulares el universo completo se resume internamente
-            // como cinco categorías principales + Resto; un Top 5 adicional sería
-            // visualmente idéntico y duplicaría controles sin aportar información.
+            // como las categorías principales + categorías restantes; no se ofrece un Top 5
+            // adicional porque el resumen ya mantiene legible el universo completo.
             const familyLimits = family === 'circular' ? [] : configured;
 
             if (categoryCount === null) return familyLimits;
@@ -2096,7 +2155,7 @@
             renderChartTypeButtons(chartType);
             renderDataLabelButtons(chartType);
             renderChartLimitButtons(chartType);
-            renderColorPalettePreview(chartConfig.colorPalette);
+            renderColorPalettePreview();
             renderAgeDetailCheckbox();
 
             setPresentationAdaptationNote(
@@ -2220,7 +2279,37 @@
             
         }
 
-        function renderColorPalettePreview(paletteName) {
+        function getVisibleBarCategoryCount() {
+            if (latestChartDataType === currentChartType && Array.isArray(latestChartData?.labels)) {
+                const counts = Array.isArray(latestChartData.counts) ? latestChartData.counts : [];
+                const visible = latestChartData.labels.filter((_, index) =>
+                    !counts.length || Number(counts[index] || 0) !== 0
+                ).length;
+                const available = Number(latestChartData.available_categories);
+                const estimatedTotal = Number.isFinite(available) ? Math.max(visible, available) : visible;
+                return chartConfig.limit === null
+                    ? estimatedTotal
+                    : Math.min(estimatedTotal, chartConfig.limit);
+            }
+            return chartConfig.limit;
+        }
+
+        function getActiveColorContext() {
+            const visualType = chartConfig.type === 'auto'
+                ? getOptimalChartType(currentChartType)
+                : chartConfig.type;
+            if (['pie', 'doughnut'].includes(visualType)) return 'circular';
+            if (['map', 'heatmap'].includes(visualType)) return 'sequential';
+            if (currentChartType === 'comparativa') return 'comparison';
+            if (['bar', 'barHorizontal'].includes(visualType)) {
+                const categoryCount = getVisibleBarCategoryCount();
+                if (colorPreferences.barMode === 'qualitative'
+                    && categoryCount > 1 && categoryCount <= 5) return 'qualitative';
+            }
+            return 'solid';
+        }
+
+        function renderColorPalettePreview() {
             const picker = document.getElementById('colorPalettePicker');
             if (!picker) return;
 
@@ -2230,13 +2319,11 @@
             const isSimpleCategoricalChart = ['bar', 'barHorizontal'].includes(chartConfig.type)
                 && currentChartType !== 'comparativa';
             const latestLabels = Array.isArray(latestChartData?.labels) ? latestChartData.labels : [];
-            const latestCounts = Array.isArray(latestChartData?.counts) ? latestChartData.counts : [];
-            const visibleCategoryCount = latestChartDataType === currentChartType
-                ? latestLabels.filter((_, index) => !latestCounts.length || Number(latestCounts[index] || 0) !== 0).length
-                : 0;
+            const visibleCategoryCount = getVisibleBarCategoryCount();
             const canPreviewSmallQualitativeBars = isSimpleCategoricalChart
-                && visibleCategoryCount > 1
-                && visibleCategoryCount <= 5;
+                && visibleCategoryCount > 1 && visibleCategoryCount <= 5;
+            const isQualitativeBars = canPreviewSmallQualitativeBars
+                && colorPreferences.barMode === 'qualitative';
             const previewPalettes = isCircularChart ? colorPalettesCircular : colorPalettes;
             const visiblePrimaryKeys = isCircularChart
                 ? circularPaletteKeys
@@ -2245,14 +2332,32 @@
                 ? []
                 : (isSequentialChart ? sequentialAdditionalPaletteKeys : additionalPaletteKeys);
             const availableKeys = [...visiblePrimaryKeys, ...visibleAdditionalKeys];
-            const resolvedPaletteName = availableKeys.includes(paletteName)
-                ? paletteName
+            const colorContext = getActiveColorContext();
+            const preferredPaletteName = colorPreferences[colorContext];
+            const resolvedPaletteName = availableKeys.includes(preferredPaletteName)
+                ? preferredPaletteName
                 : visiblePrimaryKeys[0];
-            if (chartConfig.colorPalette !== resolvedPaletteName) {
-                chartConfig.colorPalette = resolvedPaletteName;
-            }
-            const getPreviewColors = key => {
-                if (canPreviewSmallQualitativeBars && circularPaletteKeys.includes(key)) {
+            colorPreferences[colorContext] = resolvedPaletteName;
+            chartConfig.colorPalette = resolvedPaletteName;
+            const selectedBarMode = isQualitativeBars ? 'qualitative' : 'solid';
+            const getPreviewColors = (key, mode = null) => {
+                if (isCircularChart) {
+                    const palette = getCircularPalette(currentChartType, key);
+                    const categoryCount = latestChartDataType === currentChartType && latestLabels.length
+                        ? latestLabels.length
+                        : getCircularSummaryCategoryLimit(currentChartType);
+                    const previewCount = Math.min(
+                        categoryCount,
+                        getCircularSummaryCategoryLimit(currentChartType, categoryCount)
+                    );
+                    return Array.from({ length: previewCount }, (_, index) => {
+                        const paletteIndex = categoryCount > 1 && categoryCount <= 5
+                            ? Math.floor(index * palette.length / categoryCount)
+                            : index;
+                        return palette[paletteIndex % palette.length];
+                    });
+                }
+                if (isSimpleCategoricalChart && mode === 'qualitative') {
                     return (colorPalettesCircular[key] || []).slice(0, visibleCategoryCount);
                 }
                 if (!isCircularChart && !isSequentialChart && !isComparisonChart) {
@@ -2271,16 +2376,15 @@
                     return palette[paletteIndex];
                 });
             };
-            const getPreviewLabel = key => {
-                if (isCircularChart || isComparisonChart
-                    || (canPreviewSmallQualitativeBars && circularPaletteKeys.includes(key))) {
+            const getPreviewLabel = (key, mode = null) => {
+                if (isCircularChart || isComparisonChart || mode === 'qualitative') {
                     return circularColorPaletteLabels[key] || colorPaletteLabels[key] || key;
                 }
                 if (!isSequentialChart) return cartesianSolidColorLabels[key] || colorPaletteLabels[key] || key;
                 return colorPaletteLabels[key] || key;
             };
-            const selectedPalette = getPreviewColors(resolvedPaletteName);
-            const selectedLabel = getPreviewLabel(resolvedPaletteName);
+            const selectedPalette = getPreviewColors(resolvedPaletteName, selectedBarMode);
+            const selectedLabel = getPreviewLabel(resolvedPaletteName, selectedBarMode);
             const selection = document.getElementById('statisticsPaletteSelection');
             const label = document.getElementById('statisticsPaletteLabel');
 
@@ -2292,14 +2396,15 @@
             }
             if (label) label.textContent = selectedLabel;
 
-            const renderPaletteButton = key => {
-                const label = getPreviewLabel(key);
-                const swatches = getPreviewColors(key);
-                const selected = key === resolvedPaletteName;
+            const renderPaletteButton = ({ key, mode = null }) => {
+                const label = getPreviewLabel(key, mode);
+                const swatches = getPreviewColors(key, mode);
+                const selected = key === resolvedPaletteName
+                    && (!isSimpleCategoricalChart || mode === selectedBarMode);
                 const isSolid = swatches.length === 1;
 
                 return `
-                    <button type="button" class="palette-chip${isSolid ? ' palette-chip--solid' : ''}" data-palette="${key}" aria-pressed="${selected}" aria-label="Usar paleta ${label}">
+                    <button type="button" class="palette-chip${isSolid ? ' palette-chip--solid' : ''}" data-palette="${key}" ${mode ? `data-color-mode="${mode}"` : ''} aria-pressed="${selected}" aria-label="Usar ${isSolid ? 'color' : 'paleta'} ${label}">
                         <div class="palette-chip__swatches">
                             ${swatches.map(color => `<span style="background:${color};" title="${color}"></span>`).join('')}
                         </div>
@@ -2311,38 +2416,48 @@
                 `;
             };
 
-            const renderPaletteGroup = (title, keys, ariaLabel) => {
-                if (!keys.length) return '';
+            const renderPaletteGroup = (title, entries, ariaLabel) => {
+                if (!entries.length) return '';
 
                 return `
                     <section class="statistics-palette-section">
                         <p class="statistics-palette-section-title">${title}</p>
                         <div class="statistics-palette-options" role="group" aria-label="${ariaLabel}">
-                            ${keys.map(renderPaletteButton).join('')}
+                            ${entries.map(renderPaletteButton).join('')}
                         </div>
                     </section>
                 `;
             };
 
-            const multiColorKeys = availableKeys.filter(key => getPreviewColors(key).length > 1);
-            const solidColorKeys = availableKeys.filter(key => getPreviewColors(key).length === 1);
+            const entries = availableKeys.map(key => ({ key }));
+            const multiColorEntries = isSimpleCategoricalChart
+                ? (canPreviewSmallQualitativeBars
+                    ? circularPaletteKeys.map(key => ({ key, mode: 'qualitative' }))
+                    : [])
+                : entries.filter(entry => getPreviewColors(entry.key).length > 1);
+            const solidColorEntries = isSimpleCategoricalChart
+                ? availableKeys.map(key => ({ key, mode: 'solid' }))
+                : entries.filter(entry => getPreviewColors(entry.key).length === 1);
+            const isShortList = multiColorEntries.length + solidColorEntries.length <= 3;
+            picker.classList.toggle('is-short-list', isShortList);
+            picker.closest('.statistics-palette-menu')?.classList.toggle('is-short-list', isShortList);
 
             if (isSequentialChart) {
                 picker.innerHTML = renderPaletteGroup(
                     'Escalas de color',
-                    availableKeys,
+                    entries,
                     'Escalas de color disponibles'
                 );
             } else {
                 picker.innerHTML = [
                     renderPaletteGroup(
                         'Paletas de varios colores',
-                        multiColorKeys,
+                        multiColorEntries,
                         'Paletas de varios colores disponibles'
                     ),
                     renderPaletteGroup(
                         'Colores sólidos',
-                        solidColorKeys,
+                        solidColorEntries,
                         'Colores sólidos disponibles'
                     )
                 ].join('');
@@ -2373,10 +2488,13 @@
             };
             preferredLimitByVisualFamily = { ...defaultLimitPreferences };
             preferredMunicipalityColumnLimit = defaultPresentationConfig.limit;
+            preferredMunicipalityBarLimit = undefined;
+            preferredDistrictLimitByVisualFamily = { ...defaultDistrictLimitPreferences };
+            colorPreferences = { ...defaultColorPreferences };
             chartConfig.colorPalette = defaultPresentationConfig.colorPalette;
 
             applyPreferredPresentation(currentChartType);
-            renderColorPalettePreview(defaultPresentationConfig.colorPalette);
+            renderColorPalettePreview();
 
             const status = document.getElementById('statisticsPresentationStatus');
             if (status) status.textContent = 'Presentación restablecida a los valores predeterminados.';
@@ -2485,7 +2603,7 @@
             const currentValue = effectiveLimit === null ? 'all' : String(effectiveLimit);
             const isCircularSummary = visualFamily === 'circular'
                 && knownCategoryCount !== null
-                && availableCategoryCount > circularSummaryCategoryLimit;
+                && availableCategoryCount > getCircularSummaryCategoryLimit(chartType, availableCategoryCount);
 
             const options = [
                 ...(allowsAll ? [{
@@ -3009,7 +3127,7 @@
 
             if (cachedData) {
                 chartRequestController = null;
-                ++chartRequestSequence;
+                const requestId = ++chartRequestSequence;
                 latestChartData = cachedData;
                 latestChartDataType = chartType;
                 const responseCategoryCount = Number(cachedData.available_categories);
@@ -3019,7 +3137,7 @@
                     Number.isFinite(responseCategoryCount) ? responseCategoryCount : null
                 );
                 renderChartLimitButtons(chartType);
-                renderColorPalettePreview(chartConfig.colorPalette);
+                renderColorPalettePreview();
 
                 const cachedResponseAlreadyIncludesAll = requestedLimit !== null
                     && Number.isFinite(responseCategoryCount)
@@ -3030,7 +3148,7 @@
                     return;
                 }
                 if (chartConfig.type === 'map') await ensureTamaulipasMap();
-                if (chartType !== currentChartType) return;
+                if (requestId !== chartRequestSequence || chartType !== currentChartType) return;
                 renderChart(cloneChartData(cachedData));
                 scheduleChartPrefetches(chartType);
                 return;
@@ -3074,7 +3192,7 @@
                     Number.isFinite(responseCategoryCount) ? responseCategoryCount : null
                 );
                 renderChartLimitButtons(chartType);
-                renderColorPalettePreview(chartConfig.colorPalette);
+                renderColorPalettePreview();
 
                 // Si el universo conocido vuelve inválida la cantidad solicitada,
                 // repetir una sola vez con el límite adecuado antes de dibujar.
@@ -3509,7 +3627,9 @@
             
             // Usar paleta de alto contraste para gráficas circulares, paleta normal para barras/líneas
             const paletteSource = isPieLikeChart ? colorPalettesCircular : colorPalettes;
-            const palette = paletteSource[chartConfig.colorPalette];
+            const palette = isPieLikeChart
+                ? getCircularPalette(currentChartType, chartConfig.colorPalette)
+                : paletteSource[chartConfig.colorPalette];
             const cartesianSolidColor = cartesianSolidColors[chartConfig.colorPalette] || palette[0];
             const qualitativePalette = colorPalettesCircular[chartConfig.colorPalette]
                 || colorPalettesCircular.maroon611132;
@@ -3593,7 +3713,7 @@
             const usesDistinctSmallCategoryColors = usesSimpleCategoricalBars
                 && labels.length > 1
                 && labels.length <= 5
-                && circularPaletteKeys.includes(chartConfig.colorPalette);
+                && getActiveColorContext() === 'qualitative';
             const getCategoricalBarColor = (dataIndex) => {
                 if (!usesSimpleCategoricalBars) return colors[dataIndex];
                 if (usesDistinctSmallCategoryColors) {
@@ -4119,27 +4239,38 @@
                     Number(data.available_categories || 0) - Number(data.displayed_categories || labels.length)
                 );
 
-                // Pastel y Dona conservan como máximo siete categorías individuales;
-                // el resto sigue representado dentro de un único segmento neutral.
-                const circularDetailLimit = circularSummaryCategoryLimit;
-                const pieData = sourcePieData.slice(0, circularDetailLimit);
-                const groupedPieData = sourcePieData.slice(circularDetailLimit);
+                // Municipios conserva nueve categorías; Distritos muestra sus 13
+                // y Causas muestra completas hasta siete antes de resumir.
+                const availablePieCategories = Number(data.available_categories || sourcePieData.length);
+                const circularDetailLimit = getCircularSummaryCategoryLimit(currentChartType, availablePieCategories);
+                let pieData = sourcePieData.slice(0, circularDetailLimit);
+                // «Otro» es una categoría propia, no parte del agrupado visual.
+                // Si queda fuera del Top de municipios, reservarle un lugar.
+                if (currentChartType === 'municipios') {
+                    const otherMunicipality = sourcePieData.find(item =>
+                        String(item.name).trim().toLocaleLowerCase('es-MX') === 'otro'
+                        && Number(item.value || 0) > 0
+                    );
+                    if (otherMunicipality && !pieData.includes(otherMunicipality)) {
+                        pieData = [...pieData.slice(0, circularDetailLimit - 1), otherMunicipality];
+                    }
+                }
+                const groupedPieData = sourcePieData.filter(item => !pieData.includes(item));
                 const groupedCategories = omittedCategories + groupedPieData.length;
                 const groupedTotal = omittedTotal + groupedPieData.reduce(
                     (sum, item) => sum + Number(item.value || 0),
                     0
                 );
+                let remainderLabel = null;
                 if (groupedTotal > 0) {
-                    const groupedCategoryNoun = {
-                        municipios: 'municipios',
-                        distritoes: 'distritos',
-                        causas: 'causas',
-                        edades: 'rangos',
-                        genero: 'categorías'
-                    }[currentChartType] || 'categorías';
-                    const remainderLabel = groupedCategories > 0
-                        ? `Resto (${groupedCategories} ${groupedCategoryNoun})`
-                        : 'Resto';
+                    const groupedCategoryLabel = {
+                        municipios: 'Municipios',
+                        distritoes: 'Distritos',
+                        causas: 'Causas',
+                        edades: 'Rangos de edad',
+                        genero: 'Categorías'
+                    }[currentChartType] || 'Categorías';
+                    remainderLabel = `${groupedCategoryLabel} restantes${groupedCategories > 0 ? ` (${groupedCategories})` : ''}`;
                     pieData.push({ name: remainderLabel, value: groupedTotal, itemStyle: { color: '#cbd5e1' } });
                 }
                 // Filtrar slices con valor 0 para evitar mostrar muchos 0 alrededor del pastel
@@ -4158,23 +4289,37 @@
                 const crowdedCircularChart = circularSegmentCount > 6;
                 const veryCrowdedCircularChart = circularSegmentCount > 12;
                 const longestCircularLabel = Math.max(0, ...filteredPieData.map(item => String(item.name).length));
-                const circularLegendNeedsMoreRoom = currentChartType === 'causas' || longestCircularLabel > 22;
+                const longestCircularCategoryLabel = Math.max(0, ...filteredPieData
+                    .filter(item => item.name !== remainderLabel)
+                    .map(item => String(item.name).length));
+                const circularLegendNeedsMoreRoom = currentChartType === 'causas' || longestCircularCategoryLabel > 22;
                 const circularLegendShowsMetrics = chartConfig.dataLabelMode !== 'none';
                 const useCircularCallouts = !compactCircularLayout
                     && circularLegendShowsMetrics
                     && circularSegmentCount <= 6
                     && groupedTotal <= 0
                     && !circularLegendNeedsMoreRoom;
+                const circularLegendNameWidth = circularLegendNeedsMoreRoom
+                    ? 240
+                    : Math.min(190, Math.max(128, Math.ceil(longestCircularLabel * 7.2)));
+                const circularLegendMetricWidth = chartConfig.dataLabelMode === 'percent' ? 68 : 72;
+                const circularLegendCountWidth = Math.max(
+                    58,
+                    Math.ceil(Math.max(...filteredPieData.map(item => formatNumber(item.value).length)) * 7 + 18)
+                );
                 const sparseCircularRadiusCap = circularSegmentCount <= 2
                     ? 174
                     : (circularSegmentCount <= 4 ? 184 : 192);
+                // Las llamadas exteriores ocupan más altura que el propio círculo.
+                // Reservar aire arriba y abajo sin alterar las vistas con leyenda.
+                const calloutClearance = useCircularCallouts ? 12 : 0;
                 // El diámetro se expresa en px y tiene un tope estable. Si se usara un
                 // porcentaje, el círculo cambiaría al crecer el panel por notas o controles.
                 const calculatedDesktopOuterRadius = Math.max(
-                    148,
+                    useCircularCallouts ? 136 : 148,
                     Math.min(
-                        circularLegendNeedsMoreRoom ? Math.min(184, sparseCircularRadiusCap) : sparseCircularRadiusCap,
-                        Math.floor((circularHeight - 56) / 2),
+                        (circularLegendNeedsMoreRoom ? Math.min(184, sparseCircularRadiusCap) : sparseCircularRadiusCap) - calloutClearance,
+                        Math.floor((circularHeight - 56) / 2) - calloutClearance,
                         Math.floor(circularWidth * .22)
                     )
                 );
@@ -4188,10 +4333,17 @@
                     ? .32
                     : !circularLegendShowsMetrics
                     ? .43
-                    : .36;
+                    : crowdedCircularChart ? .39 : .36;
+                // Los cuatro grupos de edad concentran dos llamadas arriba; equilibrar
+                // su margen con la llamada inferior sin alterar el radio del círculo.
+                const desktopCenterY = useCircularCallouts
+                    && currentChartType === 'edades'
+                    && circularSegmentCount === 4
+                    ? '52%'
+                    : '50%';
                 const center = compactCircularLayout
                     ? ['50%', '39%']
-                    : [`${Math.round(desktopCenterRatio * 100)}%`, '50%'];
+                    : [`${Math.round(desktopCenterRatio * 100)}%`, desktopCenterY];
                 const radius = chartType === 'doughnut'
                     ? (compactCircularLayout
                         ? ['29%', '50%']
@@ -4199,26 +4351,25 @@
                     : (compactCircularLayout ? '50%' : desktopOuterRadius);
                 const circularTotal = filteredPieData.reduce((sum, item) => sum + Number(item.value || 0), 0);
                 const pieValueByName = new Map(filteredPieData.map(item => [String(item.name), Number(item.value || 0)]));
+                const circularPercentage = value => circularTotal > 0
+                    ? `${((Number(value || 0) / circularTotal) * 100).toFixed(1)}%`
+                    : '0.0%';
                 const formatCircularMetric = (name) => {
                     const value = pieValueByName.get(String(name)) || 0;
-                    const percentage = circularTotal > 0 ? `${((value / circularTotal) * 100).toFixed(1)}%` : '0.0%';
                     if (chartConfig.dataLabelMode === 'none') return '';
-                    if (chartConfig.dataLabelMode === 'percent') return percentage;
-                    if (chartConfig.dataLabelMode === 'both') return `${formatNumber(value)} · ${percentage}`;
-                    return formatNumber(value);
+                    if (chartConfig.dataLabelMode === 'percent') return `{legendMetric|${circularPercentage(value)}}`;
+                    if (chartConfig.dataLabelMode === 'both') {
+                        return `{legendPercent|${circularPercentage(value)}}{legendCount| (${formatNumber(value)})}`;
+                    }
+                    return `{legendMetric|${formatNumber(value)}}`;
                 };
                 const formatCircularCallout = (params) => {
-                    const percentage = filteredTotal > 0
-                        ? `${((Number(params.value || 0) / filteredTotal) * 100).toFixed(1)}%`
-                        : '0.0%';
-                    const metric = chartConfig.dataLabelMode === 'percent'
-                        ? percentage
-                        : chartConfig.dataLabelMode === 'both'
-                            ? `${formatNumber(params.value)} · ${percentage}`
-                            : formatNumber(params.value);
-                    return `{calloutName|${params.name}}\n{calloutMetric|${metric}}`;
+                    const percentage = circularPercentage(params.value);
+                    const metric = chartConfig.dataLabelMode === 'both'
+                        ? `{calloutPercent|${percentage}} {calloutCount|(${formatNumber(params.value)})}`
+                        : `{calloutMetric|${chartConfig.dataLabelMode === 'percent' ? percentage : formatNumber(params.value)}}`;
+                    return `{calloutName|${params.name}}\n${metric}`;
                 };
-
                 option = {
                     color: colors,
                     animation: true,
@@ -4237,22 +4388,28 @@
                         show: !useCircularCallouts,
                         type: compactCircularLayout || veryCrowdedCircularChart ? 'scroll' : 'plain',
                         orient: compactCircularLayout ? 'horizontal' : 'vertical',
+                        height: !compactCircularLayout && veryCrowdedCircularChart
+                            ? Math.max(220, circularHeight - 40)
+                            : undefined,
+                        pageIconColor: '#526278',
+                        pageIconInactiveColor: '#cbd5e1',
+                        pageTextStyle: { color: '#526278', fontFamily: 'Open Sans' },
                         left: compactCircularLayout
                             ? 18
                             : (circularLegendNeedsMoreRoom
                                 ? '50%'
-                                : (!circularLegendShowsMetrics ? '62%' : (crowdedCircularChart ? '54.5%' : '56%'))),
+                                : (!circularLegendShowsMetrics ? '62%' : (crowdedCircularChart ? '57%' : '56%'))),
                         right: compactCircularLayout ? 18 : 16,
                         top: compactCircularLayout ? 'auto' : 'middle',
                         bottom: compactCircularLayout ? 4 : 'auto',
                         itemWidth: 12,
                         itemHeight: 12,
-                        itemGap: compactCircularLayout ? 14 : 12,
+                        itemGap: compactCircularLayout ? 14 : (veryCrowdedCircularChart ? 7 : 12),
                         icon: 'roundRect',
                         formatter: name => {
                             const metric = !useCircularCallouts ? formatCircularMetric(name) : '';
-                            const nameStyle = String(name).startsWith('Resto (') ? 'legendRemainder' : 'legendName';
-                            return metric ? `{${nameStyle}|${name}}  {legendMetric|${metric}}` : `{${nameStyle}|${name}}`;
+                            const nameStyle = name === remainderLabel ? 'legendRemainder' : 'legendName';
+                            return metric ? `{${nameStyle}|${name}}  ${metric}` : `{${nameStyle}|${name}}`;
                         },
                         textStyle: {
                             fontFamily: 'Open Sans',
@@ -4260,19 +4417,21 @@
                             color: '#334155',
                             rich: {
                                 legendName: {
-                                    width: compactCircularLayout ? undefined : (circularLegendNeedsMoreRoom ? 250 : 190),
+                                    width: compactCircularLayout ? undefined : circularLegendNameWidth,
                                     color: '#334155',
                                     lineHeight: 20,
                                     overflow: 'break'
                                 },
                                 legendRemainder: {
-                                    width: compactCircularLayout ? undefined : (circularLegendNeedsMoreRoom ? 250 : 190),
+                                    width: compactCircularLayout ? undefined : circularLegendNameWidth,
                                     color: '#64748b',
                                     fontStyle: 'italic',
                                     lineHeight: 20,
                                     overflow: 'break'
                                 },
-                                legendMetric: { width: compactCircularLayout ? undefined : 88, align: 'right', color: '#10233f', fontWeight: 600, lineHeight: 20 }
+                                legendMetric: { width: compactCircularLayout ? undefined : circularLegendMetricWidth, align: 'right', color: '#10233f', fontWeight: 600, lineHeight: 20 },
+                                legendPercent: { width: compactCircularLayout ? undefined : 56, align: 'right', color: '#10233f', fontWeight: 600, lineHeight: 20 },
+                                legendCount: { width: compactCircularLayout ? undefined : circularLegendCountWidth, align: 'left', color: '#64748b', fontSize: 11, fontWeight: 500, lineHeight: 20 }
                             }
                         }
                     },
@@ -4318,6 +4477,20 @@
                                     color: '#64748b',
                                     fontSize: 11,
                                     lineHeight: 15
+                                },
+                                calloutPercent: {
+                                    fontFamily: chartFontFamily,
+                                    fontWeight: 600,
+                                    color: '#334155',
+                                    fontSize: 12,
+                                    lineHeight: 15
+                                },
+                                calloutCount: {
+                                    fontFamily: chartFontFamily,
+                                    fontWeight: 500,
+                                    color: '#64748b',
+                                    fontSize: 10,
+                                    lineHeight: 15
                                 }
                             },
                             formatter: formatCircularCallout
@@ -4332,38 +4505,7 @@
                         labelLayout: {
                             hideOverlap: true
                         }
-                    }],
-                    graphic: chartType === 'doughnut' ? [{
-                        type: 'group',
-                        x: Math.round(circularWidth * (compactCircularLayout ? .5 : desktopCenterRatio)),
-                        y: Math.round(circularHeight * (compactCircularLayout ? .39 : .5)),
-                        children: [
-                            {
-                                type: 'text',
-                                style: {
-                                    x: 0,
-                                    y: -5,
-                                    text: formatNumber(circularTotal),
-                                    textAlign: 'center',
-                                    textVerticalAlign: 'bottom',
-                                    fill: '#10233f',
-                                    font: '700 22px Open Sans'
-                                }
-                            },
-                            {
-                                type: 'text',
-                                style: {
-                                    x: 0,
-                                    y: 7,
-                                    text: 'Total',
-                                    textAlign: 'center',
-                                    textVerticalAlign: 'top',
-                                    fill: '#64748b',
-                                    font: '600 11px Open Sans'
-                                }
-                            }
-                        ]
-                    }] : []
+                    }]
                 };
             } else if (chartType === 'line') {
                 // Línea o Área para tendencias
