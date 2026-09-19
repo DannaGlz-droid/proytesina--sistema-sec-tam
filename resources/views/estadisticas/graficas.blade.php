@@ -35,7 +35,10 @@
                     <button type="button" class="chart-tab-btn" data-chart="distritoes" title="Distribución por distrito" role="tab" aria-selected="false" aria-controls="statisticsChartPanel" tabindex="-1">
                         <span>Distritos</span>
                     </button>
-                    <button type="button" class="chart-tab-btn" data-chart="comparativa" title="Residencia frente a lugar de defunción" role="tab" aria-selected="false" aria-controls="statisticsChartPanel" tabindex="-1">
+                    <button type="button" class="chart-tab-btn" data-chart="lugares" title="Distribución por lugar de defunción" role="tab" aria-selected="false" aria-controls="statisticsChartPanel" tabindex="-1">
+                        <span>Lugares</span>
+                    </button>
+                    <button type="button" class="chart-tab-btn" data-chart="comparativa" title="Comparar dimensiones" role="tab" aria-selected="false" aria-controls="statisticsChartPanel" tabindex="-1">
                         <span>Comparativa</span>
                     </button>
                 </nav>
@@ -75,8 +78,8 @@
                                 <x-filtros.seccion titulo="Fecha de defunción" :abierto="true" data-statistics-filter-section>
                                         <div class="statistics-filter-control">
                                             <label for="dateRange">Periodo</label>
-                                            <x-filtros.select id="dateRange" placeholder="Periodo predeterminado">
-                                                <option value="all">Periodo predeterminado</option>
+                                            <x-filtros.select id="dateRange" placeholder="Últimos 12 meses (predeterminado)">
+                                                <option value="all">Últimos 12 meses (predeterminado)</option>
                                                 <option value="full">Todas las fechas</option>
                                                 <option value="years">Por año</option>
                                                 <option value="months">Por meses</option>
@@ -200,16 +203,6 @@
                                                 <option value="year">Anual</option>
                                             </x-filtros.select>
                                         </div>
-                                        <div id="filterTipoComparativa" class="statistics-filter-control dynamic-filter" style="display: none;">
-                                            <label for="tipoComparativaFilter">Tipo de comparativa</label>
-                                            <x-filtros.select id="tipoComparativaFilter" placeholder="Residencia frente a lugar de defunción">
-                                                <option value="residencia-defuncion">Residencia frente a lugar de defunción</option>
-                                                <option value="distrito-residencia-defuncion">Distrito de residencia frente a distrito de defunción</option>
-                                                <option value="genero-causa">Sexo por causa</option>
-                                                <option value="edad-causa">Rango etario por causa</option>
-                                                <option value="lugar-causa">Lugar de defunción por causa</option>
-                                            </x-filtros.select>
-                                        </div>
                                 </x-filtros.seccion>
                     </x-filtros.panel>
 
@@ -293,16 +286,16 @@
                                 </fieldset>
 
                                 <fieldset id="statisticsAgeDetailGroup" class="statistics-display-group statistics-display-group--age-detail" style="display: none;">
-                                    <legend id="statisticsAgeDetailLegend">Información adicional</legend>
+                                    <legend id="statisticsAgeDetailLegend">Desglose adicional</legend>
                                     <select id="ageDetailMode" class="hidden" aria-hidden="true" tabindex="-1">
                                         <option value="summary" selected>Solo edades</option>
-                                        <option value="causes">Edades y causas</option>
+                                        <option value="causes">Principales causas por edad</option>
                                     </select>
                                     <label class="statistics-age-detail-option" for="includeAgeCauses">
                                         <input type="checkbox" id="includeAgeCauses" class="statistics-system-checkbox" aria-describedby="includeAgeCausesHelp">
                                         <span class="statistics-age-detail-option__copy">
-                                            <strong>Mostrar causas principales</strong>
-                                            <small id="includeAgeCausesHelp">Muestra debajo las tres causas con más registros de cada grupo.</small>
+                                            <strong>Mostrar principales causas por edad</strong>
+                                            <small id="includeAgeCausesHelp">Muestra las tres causas con más registros en cada grupo de edad.</small>
                                         </span>
                                     </label>
                                 </fieldset>
@@ -321,19 +314,28 @@
                                             <span>Total analizado</span>
                                             <span id="chartTotalValue">0</span>
                                         </div>
-                                        <span id="statisticsPreviousComparison" class="statistics-previous-comparison hidden" aria-live="polite">
-                                            <i id="statisticsPreviousComparisonIcon" class="fas fa-minus" aria-hidden="true"></i>
-                                            <span id="statisticsPreviousComparisonText"></span>
-                                        </span>
                                     </div>
-                                    <div id="statisticsChartContext" class="statistics-chart-context hidden" aria-live="polite">
-                                        <span id="statisticsChartPeriod"></span>
-                                        <span id="statisticsChartCoverage" class="hidden"></span>
-                                        <span id="statisticsChartQuality" class="statistics-chart-quality hidden">
-                                            <i class="fas fa-triangle-exclamation" aria-hidden="true"></i>
-                                            <span id="statisticsChartQualityText"></span>
-                                            <a id="statisticsReviewExcluded" href="#">Revisar</a>
-                                        </span>
+                                    <div class="statistics-chart-subheading">
+                                        <div id="statisticsComparisonControl" class="statistics-comparison-control hidden">
+                                            <label for="tipoComparativaFilter">Comparar</label>
+                                            <select id="tipoComparativaFilter" aria-label="Seleccionar comparativa">
+                                                <option value="residencia-defuncion">Municipio de residencia vs. municipio de defunción</option>
+                                                <option value="distrito-residencia-defuncion">Distrito de residencia vs. distrito de defunción</option>
+                                                <option value="genero-causa">Sexo por causa</option>
+                                                <option value="edad-causa">Rango etario por causa</option>
+                                                <option value="lugar-causa">Lugar de defunción por causa</option>
+                                                <option value="lugar-municipio">Lugar de defunción por municipio</option>
+                                            </select>
+                                        </div>
+                                        <div id="statisticsChartContext" class="statistics-chart-context hidden" aria-live="polite">
+                                            <span id="statisticsChartPeriod"></span>
+                                            <span id="statisticsChartCoverage" class="hidden"></span>
+                                            <span id="statisticsChartQuality" class="statistics-chart-quality hidden">
+                                                <i class="fas fa-triangle-exclamation" aria-hidden="true"></i>
+                                                <span id="statisticsChartQualityText"></span>
+                                                <a id="statisticsReviewExcluded" href="#">Revisar</a>
+                                            </span>
+                                        </div>
                                     </div>
                                 </div>
                                 <div class="statistics-download" id="downloadMenuWrapper">
@@ -355,7 +357,7 @@
                                             <input type="checkbox" id="includeChartContext" class="statistics-system-checkbox" checked>
                                             <span>
                                                 <strong>Incluir contexto</strong>
-                                                <small>Para PNG y PDF: título, periodo, total y comparación</small>
+                                                <small>Para PNG y PDF: título, periodo y total</small>
                                             </span>
                                         </label>
                                         <button type="button" class="download-option" data-export="png-transparent">
@@ -420,7 +422,7 @@
                                             <span id="statisticsChartSourceSummary">Origen de los registros</span>
                                         </span>
                                         <span class="statistics-chart-source__action">
-                                            <span id="statisticsChartSourceActionLabel">Ver desglose</span>
+                                            <span id="statisticsChartSourceActionLabel">Ver detalle del origen</span>
                                             <i class="fas fa-chevron-down" aria-hidden="true"></i>
                                         </span>
                                     </summary>
@@ -513,6 +515,8 @@
         let preferredMunicipalityBarLimit;
         const defaultDistrictLimitPreferences = Object.freeze({ vertical: null, horizontal: null });
         let preferredDistrictLimitByVisualFamily = { ...defaultDistrictLimitPreferences };
+        const defaultLocationLimitPreferences = Object.freeze({ vertical: null, horizontal: null });
+        let preferredLocationLimitByVisualFamily = { ...defaultLocationLimitPreferences };
 
         async function ensureTamaulipasMap() {
             if (echarts.getMap(tamaulipasMapName)) return;
@@ -780,6 +784,7 @@
             genero: 'bar',
             causas: 'bar',
             distritoes: 'bar',
+            lugares: 'bar',
             comparativa: 'bar'
         };
 
@@ -790,6 +795,7 @@
             genero: ['bar', 'barHorizontal', 'pie', 'doughnut'],
             causas: ['bar', 'barHorizontal', 'pie', 'doughnut'],
             distritoes: ['bar', 'barHorizontal', 'pie', 'doughnut'],
+            lugares: ['bar', 'barHorizontal', 'pie', 'doughnut'],
             comparativa: ['bar', 'heatmap']
         };
 
@@ -800,15 +806,17 @@
             genero: 'Distribución por sexo',
             causas: 'Causas de defunción',
             distritoes: 'Distribución por distritos',
+            lugares: 'Distribución por lugar de defunción',
             comparativa: 'Comparación entre residencia y defunción'
         };
 
         const comparativaLabels = {
-            'residencia-defuncion': 'Residencia frente a lugar de defunción',
-            'distrito-residencia-defuncion': 'Distrito de residencia frente a distrito de defunción',
+            'residencia-defuncion': 'Municipio de residencia vs. municipio de defunción',
+            'distrito-residencia-defuncion': 'Distrito de residencia vs. distrito de defunción',
             'genero-causa': 'Sexo por causa de defunción',
             'edad-causa': 'Rango etario por causa de defunción',
-            'lugar-causa': 'Lugar de defunción por causa'
+            'lugar-causa': 'Lugar de defunción por causa',
+            'lugar-municipio': 'Lugar de defunción por municipio'
         };
 
         const filtersForChart = {
@@ -817,19 +825,21 @@
             edades: ['dates', 'tipoMunicipio', 'municipios', 'causas', 'distritoes', 'sexo'],
             genero: ['dates', 'tipoMunicipio', 'municipios', 'causas', 'distritoes', 'edad'],
             causas: ['dates', 'tipoMunicipio', 'municipios', 'distritoes', 'sexo', 'edad'],
-            distritoes: ['dates', 'tipoMunicipio', 'causas', 'sexo', 'edad']
+            distritoes: ['dates', 'tipoMunicipio', 'causas', 'sexo', 'edad'],
+            lugares: ['dates', 'tipoMunicipio', 'municipios', 'causas', 'distritoes', 'sexo', 'edad']
         };
 
         const filtersForComparison = {
-            'residencia-defuncion': ['dates', 'tipoComparativa', 'causas', 'sexo', 'edad'],
-            'distrito-residencia-defuncion': ['dates', 'tipoComparativa', 'causas', 'sexo', 'edad'],
-            'genero-causa': ['dates', 'tipoComparativa', 'tipoMunicipio', 'municipios', 'distritoes', 'edad'],
-            'edad-causa': ['dates', 'tipoComparativa', 'tipoMunicipio', 'municipios', 'distritoes', 'sexo'],
-            'lugar-causa': ['dates', 'tipoComparativa', 'tipoMunicipio', 'municipios', 'distritoes', 'sexo', 'edad']
+            'residencia-defuncion': ['dates', 'causas', 'sexo', 'edad'],
+            'distrito-residencia-defuncion': ['dates', 'causas', 'sexo', 'edad'],
+            'genero-causa': ['dates', 'tipoMunicipio', 'municipios', 'distritoes', 'edad'],
+            'edad-causa': ['dates', 'tipoMunicipio', 'municipios', 'distritoes', 'sexo'],
+            'lugar-causa': ['dates', 'tipoMunicipio', 'municipios', 'distritoes', 'sexo', 'edad'],
+            'lugar-municipio': ['dates', 'tipoMunicipio', 'causas', 'distritoes', 'sexo', 'edad']
         };
 
         // Gráficas que deben mostrar el selector "Top"
-        const chartTypesWithTopSelector = ['municipios', 'causas', 'distritoes', 'comparativa'];
+        const chartTypesWithTopSelector = ['municipios', 'causas', 'distritoes', 'lugares', 'comparativa'];
 
         const chartTypeIcons = {
             bar: 'fa-chart-column',
@@ -878,6 +888,7 @@
         const chartLimitsByType = {
             municipios: [5, 10, 15],
             distritoes: [5],
+            lugares: [5],
             comparativa: [5, 10, 15],
             default: [5, 10, 15]
         };
@@ -889,6 +900,7 @@
         const getCircularSummaryCategoryLimit = (chartType, categoryCount = null) => {
             if (chartType === 'municipios') return 9;
             if (chartType === 'distritoes') return 13;
+            if (chartType === 'lugares') return 9;
             // Dos causas adicionales todavía se leen bien; con más categorías
             // se recupera el resumen para no saturar el pastel o la dona.
             if (chartType === 'causas' && (categoryCount === null || categoryCount <= 7)) return 7;
@@ -916,7 +928,9 @@
             const sourceActionLabel = document.getElementById('statisticsChartSourceActionLabel');
             const syncSourceActionLabel = () => {
                 if (sourceActionLabel) {
-                    sourceActionLabel.textContent = sourceDetails?.open ? 'Ocultar desglose' : 'Ver desglose';
+                    sourceActionLabel.textContent = sourceDetails?.open
+                        ? 'Ocultar detalle del origen'
+                        : 'Ver detalle del origen';
                 }
             };
             sourceDetails?.addEventListener('toggle', syncSourceActionLabel);
@@ -966,8 +980,7 @@
                 'causasFilter',
                 'distritoesFilter',
                 'sexoFilter',
-                'granularidadFilter',
-                'tipoComparativaFilter'
+                'granularidadFilter'
             ];
 
             filterSelectIds.forEach(id => {
@@ -1297,8 +1310,15 @@
             document.getElementById('edadFilter').addEventListener('input', markStatisticsFilterDraft);
             document.getElementById('granularidadFilter').addEventListener('change', markStatisticsFilterDraft);
             document.getElementById('tipoComparativaFilter').addEventListener('change', function() {
+                const filterPanel = document.getElementById('estadisticas-filtros');
+                if (filterPanel?.classList.contains('is-open')) {
+                    closeStatisticsFilters({ restore: true });
+                }
+                activeFilters.tipoComparativa = this.value || 'residencia-defuncion';
                 updateVisibleFilters(currentChartType);
-                markStatisticsFilterDraft();
+                document.getElementById('chartTitle').textContent = getCurrentChartTitle();
+                setChartOutputActionsEnabled(false);
+                loadChart(currentChartType, { preserveCurrentChart: true });
             });
             document.getElementById('tipoMunicipioFilter').addEventListener('change', function() {
                 updateGeographicFilterLabels(this.value);
@@ -1574,49 +1594,6 @@
             return document.getElementById('includeChartContext')?.checked !== false;
         }
 
-        function formatExportDate(value) {
-            if (!value) return '';
-            const date = new Date(`${String(value).slice(0, 10)}T12:00:00Z`);
-            if (Number.isNaN(date.getTime())) return '';
-            return new Intl.DateTimeFormat('es-MX', {
-                day: 'numeric',
-                month: 'short',
-                year: 'numeric',
-                timeZone: 'UTC'
-            }).format(date);
-        }
-
-        function getExportComparisonText(comparison) {
-            if (!comparison?.available) return '';
-
-            const period = comparison.period || {};
-            let periodText = '';
-            if (period.start_date && period.end_date) {
-                periodText = `${formatExportDate(period.start_date)} – ${formatExportDate(period.end_date)}`;
-            } else if (Array.isArray(period.years) && period.years.length) {
-                periodText = period.years.join(', ');
-                if (Array.isArray(period.months) && period.months.length) {
-                    periodText += ' (mismos meses seleccionados)';
-                }
-            }
-
-            if (comparison.direction === 'no_baseline') {
-                return `Sin registros en el periodo anterior${periodText ? ` (${periodText})` : ''}`;
-            }
-
-            const percentage = Math.abs(Number(comparison.percentage_change || 0)).toLocaleString('es-MX', {
-                minimumFractionDigits: 0,
-                maximumFractionDigits: 1
-            });
-            const marker = comparison.direction === 'increase'
-                ? '↑'
-                : (comparison.direction === 'decrease' ? '↓' : '—');
-            const difference = Number(comparison.difference || 0);
-            const signedDifference = `${difference > 0 ? '+' : ''}${difference.toLocaleString('es-MX')}`;
-
-            return `${marker} ${percentage}% frente a ${periodText || 'periodo anterior'} · Diferencia: ${signedDifference}`;
-        }
-
         function wrapCanvasText(context, value, maxWidth) {
             const words = String(value || '').trim().split(/\s+/).filter(Boolean);
             if (!words.length) return [];
@@ -1654,8 +1631,6 @@
                 : '';
 
             contextLines.push(`${periodText ? `${periodText} · ` : ''}Total analizado: ${total}`);
-            const comparisonText = getExportComparisonText(latestChartData?.previous_period_comparison);
-            if (comparisonText) contextLines.push(comparisonText);
             if (coverageElement && !coverageElement.classList.contains('hidden') && coverageElement.textContent.trim()) {
                 contextLines.push(coverageElement.textContent.trim());
             }
@@ -1978,8 +1953,11 @@
         }
 
         function updateVisibleFilters(chartType) {
-            const allFilters = ['filterTipoMunicipio', 'filterMunicipios', 'filterCausas', 'filterdistritoes', 'filterSexo', 'filterEdad', 'filterGranularidad', 'filterTipoComparativa'];
+            const allFilters = ['filterTipoMunicipio', 'filterMunicipios', 'filterCausas', 'filterdistritoes', 'filterSexo', 'filterEdad', 'filterGranularidad'];
             const availableFilters = getFiltersForChart(chartType);
+
+            document.getElementById('statisticsComparisonControl')
+                ?.classList.toggle('hidden', chartType !== 'comparativa');
 
             allFilters.forEach(filterId => {
                 const element = document.getElementById(filterId);
@@ -1992,7 +1970,6 @@
                     if (filterId === 'filterSexo' && availableFilters.includes('sexo')) show = true;
                     if (filterId === 'filterEdad' && availableFilters.includes('edad')) show = true;
                     if (filterId === 'filterGranularidad' && availableFilters.includes('granularidad')) show = true;
-                    if (filterId === 'filterTipoComparativa' && availableFilters.includes('tipoComparativa')) show = true;
                     element.style.display = show ? 'block' : 'none';
                 }
             });
@@ -2056,6 +2033,9 @@
             if (chartType === 'distritoes' && family in preferredDistrictLimitByVisualFamily) {
                 return preferredDistrictLimitByVisualFamily[family];
             }
+            if (chartType === 'lugares' && family in preferredLocationLimitByVisualFamily) {
+                return preferredLocationLimitByVisualFamily[family];
+            }
 
             return preferredLimitByVisualFamily[family];
         }
@@ -2071,6 +2051,10 @@
             }
             if (chartType === 'distritoes' && family in preferredDistrictLimitByVisualFamily) {
                 preferredDistrictLimitByVisualFamily[family] = limit;
+                return;
+            }
+            if (chartType === 'lugares' && family in preferredLocationLimitByVisualFamily) {
+                preferredLocationLimitByVisualFamily[family] = limit;
                 return;
             }
 
@@ -2490,6 +2474,7 @@
             preferredMunicipalityColumnLimit = defaultPresentationConfig.limit;
             preferredMunicipalityBarLimit = undefined;
             preferredDistrictLimitByVisualFamily = { ...defaultDistrictLimitPreferences };
+            preferredLocationLimitByVisualFamily = { ...defaultLocationLimitPreferences };
             colorPreferences = { ...defaultColorPreferences };
             chartConfig.colorPalette = defaultPresentationConfig.colorPalette;
 
@@ -3318,7 +3303,7 @@
                 excludedTotal > 0
                     ? 'No hay registros completos para construir esta gráfica.'
                     : 'No hay datos para los filtros seleccionados.',
-                excludedTotal > 0,
+                true,
                 Number(data?.filtered_total ?? data?.total ?? 0),
                 excludedTotal > 0
                     ? 'Revisa los registros no incluidos o ajusta los filtros aplicados.'
@@ -3397,80 +3382,6 @@
             footer.classList.remove('hidden');
         }
 
-        function updatePreviousPeriodComparison(data) {
-            const element = document.getElementById('statisticsPreviousComparison');
-            const icon = document.getElementById('statisticsPreviousComparisonIcon');
-            const text = document.getElementById('statisticsPreviousComparisonText');
-            if (!element || !icon || !text) return;
-
-            const comparison = data?.previous_period_comparison;
-            if (!comparison?.available) {
-                element.className = 'statistics-previous-comparison hidden';
-                element.removeAttribute('title');
-                text.textContent = '';
-                return;
-            }
-
-            const direction = comparison.direction || 'unchanged';
-            const percentage = Number(comparison.percentage_change);
-            const percentageText = Number.isFinite(percentage)
-                ? Math.abs(percentage).toLocaleString('es-MX', { minimumFractionDigits: 0, maximumFractionDigits: 1 })
-                : null;
-            const settings = {
-                increase: {
-                    icon: 'fas fa-arrow-up',
-                    label: `${percentageText}% vs. periodo anterior`
-                },
-                decrease: {
-                    icon: 'fas fa-arrow-down',
-                    label: `${percentageText}% vs. periodo anterior`
-                },
-                unchanged: {
-                    icon: 'fas fa-minus',
-                    label: 'Sin cambio vs. periodo anterior'
-                },
-                no_baseline: {
-                    icon: 'fas fa-minus',
-                    label: 'Sin registros en el periodo anterior'
-                }
-            };
-            const selected = settings[direction] || settings.unchanged;
-
-            const dateFormatter = new Intl.DateTimeFormat('es-MX', {
-                day: 'numeric',
-                month: 'short',
-                year: 'numeric',
-                timeZone: 'UTC'
-            });
-            const formatDate = value => {
-                const date = new Date(`${String(value).slice(0, 10)}T12:00:00Z`);
-                return Number.isNaN(date.getTime()) ? '' : dateFormatter.format(date);
-            };
-            const period = comparison.period || {};
-            let previousPeriodLabel = '';
-            if (period.start_date && period.end_date) {
-                previousPeriodLabel = `${formatDate(period.start_date)} – ${formatDate(period.end_date)}`;
-            } else if (Array.isArray(period.years) && period.years.length) {
-                previousPeriodLabel = period.years.join(', ');
-                if (Array.isArray(period.months) && period.months.length) {
-                    previousPeriodLabel += ' · mismos meses seleccionados';
-                }
-            }
-
-            const difference = Number(comparison.difference || 0);
-            const signedDifference = `${difference > 0 ? '+' : ''}${difference.toLocaleString('es-MX')}`;
-            const previousTotal = Number(comparison.previous_total || 0).toLocaleString('es-MX');
-
-            element.className = `statistics-previous-comparison is-${direction}`;
-            icon.className = selected.icon;
-            text.textContent = selected.label;
-            element.title = [
-                previousPeriodLabel ? `Periodo anterior: ${previousPeriodLabel}` : '',
-                `${previousTotal} registros analizados`,
-                `Diferencia: ${signedDifference}`
-            ].filter(Boolean).join(' · ');
-        }
-
         function updateChartContext(data) {
             const context = document.getElementById('statisticsChartContext');
             const periodElement = document.getElementById('statisticsChartPeriod');
@@ -3496,7 +3407,7 @@
             if (period.is_all_time) {
                 periodText = 'Todas las fechas';
             } else if (period.start_date && period.end_date) {
-                periodText = `${period.is_default ? 'Periodo predeterminado' : 'Periodo'}: ${formatDate(period.start_date)} – ${formatDate(period.end_date)}`;
+                periodText = `Periodo: ${formatDate(period.start_date)} – ${formatDate(period.end_date)}`;
             } else if (Array.isArray(period.years) && period.years.length) {
                 const years = period.years.map(Number).filter(Number.isFinite).sort((a, b) => a - b);
                 const months = Array.isArray(period.months) ? period.months.filter(Boolean) : [];
@@ -3516,7 +3427,7 @@
             periodElement.classList.toggle('hidden', !periodText);
             if (hasLimitedCoverage && Number(data.filtered_total || 0) > 0) {
                 const dimension = data.ranking_label || 'categorías';
-                coverageElement.textContent = `Top ${displayedCategories} de ${availableCategories} ${dimension} · cobertura ${coverage.toFixed(1)}%`;
+                coverageElement.textContent = `Mostrando ${displayedCategories} de ${availableCategories} ${dimension} · representan ${coverage.toFixed(1)}% del total`;
                 coverageElement.classList.remove('hidden');
             } else {
                 coverageElement.textContent = '';
@@ -3559,6 +3470,7 @@
                 genero: { left: 14, right: 14, top: 28, bottom: 18, containLabel: true },
                 causas: { left: 14, right: 14, top: 28, bottom: 18, containLabel: true },
                 distritoes: { left: 14, right: 14, top: 28, bottom: 18, containLabel: true },
+                lugares: { left: 14, right: 14, top: 28, bottom: 18, containLabel: true },
                 comparativa: { left: 18, right: 18, top: 34, bottom: 54, containLabel: true },
                 tendencias: { left: 18, right: 18, top: 34, bottom: 36, containLabel: true }
             };
@@ -3617,10 +3529,14 @@
             const badgeEl = document.getElementById('chartTotalValue');
             if (badgeEl) badgeEl.textContent = totalStr;
             document.getElementById('chartTotalBadge')?.classList.remove('hidden');
-            updatePreviousPeriodComparison(data);
             updateChartContext(data);
             updateChartSourceSummary(data.source_summary);
             updateStatisticsAnalysisActions(data);
+
+            if (filteredTotal <= 0) {
+                showNoChartData(data);
+                return;
+            }
 
             let labels = data.labels || [];
             let values = currentChartType === 'comparativa' ? null : (data.counts || []);
@@ -4266,6 +4182,7 @@
                     const groupedCategoryLabel = {
                         municipios: 'Municipios',
                         distritoes: 'Distritos',
+                        lugares: 'Lugares',
                         causas: 'Causas',
                         edades: 'Rangos de edad',
                         genero: 'Categorías'
@@ -4292,7 +4209,7 @@
                 const longestCircularCategoryLabel = Math.max(0, ...filteredPieData
                     .filter(item => item.name !== remainderLabel)
                     .map(item => String(item.name).length));
-                const circularLegendNeedsMoreRoom = currentChartType === 'causas' || longestCircularCategoryLabel > 22;
+                const circularLegendNeedsMoreRoom = ['causas', 'lugares'].includes(currentChartType) || longestCircularCategoryLabel > 22;
                 const circularLegendShowsMetrics = chartConfig.dataLabelMode !== 'none';
                 const useCircularCallouts = !compactCircularLayout
                     && circularLegendShowsMetrics
@@ -4947,6 +4864,7 @@
                 'genero': 'pie',                   // Pastel para sexo
                 'causas': 'bar',                   // Barras verticales por defecto
                 'distritoes': 'bar',           // Barras verticales para distritoes
+                'lugares': 'bar',                  // Barras verticales por defecto
                 'comparativa': 'bar'               // Barras agrupadas para comparativa
             };
             return typeMap[metric] || 'bar';
@@ -5051,7 +4969,6 @@
             if (chartEl) chartEl.style.visibility = 'hidden';
             document.getElementById('chartTitle').textContent = getCurrentChartTitle();
             document.getElementById('chartTotalBadge')?.classList.add('hidden');
-            document.getElementById('statisticsPreviousComparison')?.classList.add('hidden');
             document.getElementById('statisticsChartContext')?.classList.add('hidden');
             document.getElementById('statisticsChartSource')?.classList.add('hidden');
             setAgeCausesVisibility(
@@ -5162,7 +5079,6 @@
             const chartEl = document.getElementById('mainChart');
             if (chartEl) chartEl.style.visibility = 'hidden';
             document.getElementById('chartTitle').textContent = getCurrentChartTitle();
-            document.getElementById('statisticsPreviousComparison')?.classList.add('hidden');
             if (!preserveContext) document.getElementById('statisticsChartContext')?.classList.add('hidden');
             document.getElementById('statisticsChartSource')?.classList.add('hidden');
             setAgeCausesVisibility(

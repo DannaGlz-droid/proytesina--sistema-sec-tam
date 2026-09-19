@@ -82,7 +82,7 @@ class DeathController extends Controller
                         ->skip($start)
                         ->take($length)
                         ->get();
-        
+
         // Format data for DataTables. Include `id` so the client can build checkboxes for bulk operations.
         $data = $deaths->map(function ($death) {
             // Calcular edad total en días para ordenamiento numérico
@@ -149,10 +149,11 @@ class DeathController extends Controller
             'sexo' => ['nullable', 'string'],
             'edad' => ['nullable', 'string'],
             'causa' => ['nullable', 'string'],
-            'analysis_type' => ['nullable', 'in:municipios,tendencias,edades,genero,causas,distritoes,comparativa'],
-            'comparativa_type' => ['nullable', 'in:residencia-defuncion,genero-causa,edad-causa,lugar-causa'],
+            'analysis_type' => ['nullable', 'in:municipios,tendencias,edades,genero,causas,distritoes,lugares,comparativa'],
+            'comparativa_type' => ['nullable', 'in:residencia-defuncion,distrito-residencia-defuncion,genero-causa,edad-causa,lugar-causa,lugar-municipio'],
             'municipio_type' => ['nullable', 'in:defuncion,residencia'],
             'analysis_excluded' => ['nullable', 'boolean'],
+            'origin' => ['nullable', 'string', 'regex:/^(manual|import:\d+)$/'],
         ]);
 
     $perPage = isset($validated['per_page']) ? (int) $validated['per_page'] : 25;
@@ -175,8 +176,22 @@ class DeathController extends Controller
             });
         }
 
-        $this->deathFilters->apply($query, $this->deathFilters->normalize($request->all()));
+        $normalizedFilters = $this->deathFilters->normalize($request->all());
+        $selectedOrigin = $normalizedFilters['origin'];
+        $normalizedFilters['origin'] = null;
+        $this->deathFilters->apply($query, $normalizedFilters);
         $this->statisticsAnalysis->applyRequestedScope($query, $request->all());
+
+        $analysisContext = $this->statisticsAnalysis->context($request->all());
+        $analysisOriginOptions = $analysisContext ? $this->getAnalysisOriginOptions($query) : [];
+        $analysisTotal = collect($analysisOriginOptions)->sum('records');
+        $availableOriginValues = collect($analysisOriginOptions)->pluck('value')->all();
+        $selectedOriginValue = (string) ($request->input('origin') ?? '');
+        if (!in_array($selectedOriginValue, $availableOriginValues, true)) {
+            $selectedOrigin = null;
+            $selectedOriginValue = '';
+        }
+        $this->deathFilters->applyOrigin($query, $selectedOrigin);
 
         // Allowed sorts
         $allowedSorts = [
@@ -220,10 +235,20 @@ class DeathController extends Controller
             ->where('is_resolved', false)
             ->count();
 
-        $analysisContext = $this->statisticsAnalysis->context($request->all());
         $analysisFilterLabels = $analysisContext ? $this->deathFilters->describe($request->all()) : [];
 
-        return view('estadisticas.datos', compact('deaths', 'causes', 'districts', 'municipalities', 'unresolvedFailures', 'analysisContext', 'analysisFilterLabels'));
+        return view('estadisticas.datos', compact(
+            'deaths',
+            'causes',
+            'districts',
+            'municipalities',
+            'unresolvedFailures',
+            'analysisContext',
+            'analysisFilterLabels',
+            'analysisOriginOptions',
+            'analysisTotal',
+            'selectedOriginValue'
+        ));
     }
 
     /**
@@ -569,6 +594,46 @@ class DeathController extends Controller
                 }
             },
         ];
+    }
+
+    private function getAnalysisOriginOptions($query): array
+    {
+        $groups = (clone $query)
+            ->select('deaths.import_id', DB::raw('COUNT(*) as records'))
+            ->groupBy('deaths.import_id')
+            ->get();
+        $importNames = DB::table('imports')
+            ->whereIn('id', $groups->pluck('import_id')->filter()->unique()->values())
+            ->pluck('original_name', 'id');
+
+        return $groups
+            ->map(function ($group) use ($importNames): array {
+                $records = (int) $group->records;
+                if ($group->import_id === null) {
+                    return [
+                        'value' => 'manual',
+                        'label' => 'Captura manual',
+                        'records' => $records,
+                        'type' => 'manual',
+                    ];
+                }
+
+                $importId = (int) $group->import_id;
+
+                return [
+                    'value' => "import:{$importId}",
+                    'label' => $importNames->get($importId) ?: "Importación #{$importId}",
+                    'records' => $records,
+                    'type' => 'import',
+                ];
+            })
+            ->sortBy(fn (array $origin) => [
+                $origin['type'] === 'manual' ? 1 : 0,
+                -$origin['records'],
+                mb_strtolower($origin['label'], 'UTF-8'),
+            ])
+            ->values()
+            ->all();
     }
 
     private function displayValue($value): string

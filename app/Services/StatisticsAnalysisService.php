@@ -8,11 +8,12 @@ use Illuminate\Database\Query\Builder as QueryBuilder;
 class StatisticsAnalysisService
 {
     private const CHART_TYPES = [
-        'municipios', 'tendencias', 'edades', 'genero', 'causas', 'distritoes', 'comparativa',
+        'municipios', 'tendencias', 'edades', 'genero', 'causas', 'distritoes', 'lugares', 'comparativa',
     ];
 
     private const COMPARISON_TYPES = [
         'residencia-defuncion', 'distrito-residencia-defuncion', 'genero-causa', 'edad-causa', 'lugar-causa',
+        'lugar-municipio',
     ];
 
     public function context(array $input): ?array
@@ -104,6 +105,7 @@ class StatisticsAnalysisService
             'genero' => [$this->value('deaths.sex', 'Sexo', true)],
             'causas' => [$this->relation('deaths.death_cause_id', 'death_causes', 'Causa de defunción')],
             'distritoes' => [$district],
+            'lugares' => [$this->relation('deaths.death_location_id', 'death_locations', 'Lugar de defunción')],
             'comparativa' => match ($comparisonType) {
                 'distrito-residencia-defuncion' => [
                     $this->relation('deaths.district_id', 'districts', 'Distrito de residencia'),
@@ -120,6 +122,10 @@ class StatisticsAnalysisService
                 'lugar-causa' => [
                     $this->relation('deaths.death_location_id', 'death_locations', 'Lugar de defunción'),
                     $this->relation('deaths.death_cause_id', 'death_causes', 'Causa de defunción'),
+                ],
+                'lugar-municipio' => [
+                    $this->relation('deaths.death_location_id', 'death_locations', 'Lugar de defunción'),
+                    $this->relation('deaths.death_municipality_id', 'municipalities', 'Municipio de defunción'),
                 ],
                 default => [
                     $this->relation('deaths.residence_municipality_id', 'municipalities', 'Municipio de residencia'),
@@ -192,12 +198,14 @@ class StatisticsAnalysisService
             'genero' => 'Distribución por sexo',
             'causas' => 'Causas de defunción',
             'distritoes' => 'Distribución por distritos',
+            'lugares' => 'Distribución por lugar de defunción',
             'comparativa' => match ($comparisonType) {
-                'distrito-residencia-defuncion' => 'Distrito de residencia frente a distrito de defunción',
+                'distrito-residencia-defuncion' => 'Distrito de residencia vs. distrito de defunción',
                 'genero-causa' => 'Sexo por causa de defunción',
                 'edad-causa' => 'Rango etario por causa de defunción',
                 'lugar-causa' => 'Lugar de defunción por causa',
-                default => 'Residencia frente a lugar de defunción',
+                'lugar-municipio' => 'Lugar de defunción por municipio',
+                default => 'Municipio de residencia vs. municipio de defunción',
             },
         };
     }

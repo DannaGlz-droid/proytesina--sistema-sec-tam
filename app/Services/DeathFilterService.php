@@ -66,6 +66,7 @@ class DeathFilterService
             'cause_ids' => [],
             'sex' => null,
             'age' => null,
+            'origin' => null,
         ];
 
         $this->normalizeDates($filters, $input);
@@ -113,6 +114,7 @@ class DeathFilterService
         $sex = trim((string) ($input['sex'] ?? $input['sexo'] ?? ''));
         $filters['sex'] = $sex !== '' ? $this->normalizeSex($sex) : null;
         $filters['age'] = $this->normalizeAge($input['age'] ?? $input['edad'] ?? null);
+        $filters['origin'] = $this->normalizeOrigin($input['origin'] ?? null);
 
         return $filters;
     }
@@ -162,6 +164,21 @@ class DeathFilterService
             $query->whereIn('deaths.age', $age['values']);
         } elseif (($age['type'] ?? null) === 'exact') {
             $query->where('deaths.age', $age['value']);
+        }
+
+        $this->applyOrigin($query, $filters['origin']);
+
+        return $query;
+    }
+
+    public function applyOrigin(EloquentBuilder|QueryBuilder $query, ?array $origin): EloquentBuilder|QueryBuilder
+    {
+        if (($origin['type'] ?? null) === 'manual') {
+            $query->whereNull('deaths.import_id');
+        } elseif (($origin['type'] ?? null) === 'import') {
+            $query->where('deaths.import_id', $origin['id']);
+        } elseif (($origin['type'] ?? null) === 'invalid') {
+            $query->whereRaw('1 = 0');
         }
 
         return $query;
@@ -308,6 +325,22 @@ class DeathFilterService
         }
 
         return is_numeric($value) ? ['type' => 'exact', 'value' => (int) $value] : null;
+    }
+
+    private function normalizeOrigin(mixed $value): ?array
+    {
+        $value = trim((string) $value);
+        if ($value === '') {
+            return null;
+        }
+        if ($value === 'manual') {
+            return ['type' => 'manual'];
+        }
+        if (preg_match('/^import:(\d+)$/', $value, $matches)) {
+            return ['type' => 'import', 'id' => (int) $matches[1]];
+        }
+
+        return ['type' => 'invalid'];
     }
 
     private function whereIds(EloquentBuilder|QueryBuilder $query, string $column, array $ids): void

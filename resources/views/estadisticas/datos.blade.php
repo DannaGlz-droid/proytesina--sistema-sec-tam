@@ -29,7 +29,7 @@
 
         @if($analysisContext)
             @php
-                $analysisCount = $deaths->total();
+                $analysisCount = $analysisTotal;
                 $analysisCsvUrl = route('statistic.export').'?'.http_build_query(array_merge(request()->query(), ['format' => 'csv']));
                 $isExcludedReview = $analysisContext['excluded'];
             @endphp
@@ -57,12 +57,31 @@
                             @endforeach
                         </div>
                     @endif
+                    @if($analysisOriginOptions)
+                        <div class="statistics-analysis-context__origin">
+                            <label for="statistics-origin-filter">Origen</label>
+                            <div class="statistics-analysis-context__origin-control">
+                                <i class="fas fa-file-import" aria-hidden="true"></i>
+                                <select id="statistics-origin-filter" aria-label="Filtrar registros por origen">
+                                    <option value="" @selected($selectedOriginValue === '')>
+                                        Todos los orígenes ({{ number_format($analysisCount) }})
+                                    </option>
+                                    @foreach($analysisOriginOptions as $origin)
+                                        <option value="{{ $origin['value'] }}" @selected($selectedOriginValue === $origin['value'])>
+                                            {{ $origin['label'] }} ({{ number_format($origin['records']) }})
+                                        </option>
+                                    @endforeach
+                                </select>
+                                <i class="fas fa-chevron-down" aria-hidden="true"></i>
+                            </div>
+                        </div>
+                    @endif
                 </div>
                 <div class="statistics-analysis-context__actions">
                     <a href="{{ route('estadisticas.graficas') }}" class="statistics-analysis-context__secondary">
                         <i class="fas fa-arrow-left" aria-hidden="true"></i> Volver a gráficas
                     </a>
-                    <a href="{{ $analysisCsvUrl }}" class="statistics-analysis-context__primary">
+                    <a id="statistics-analysis-csv" href="{{ $analysisCsvUrl }}" class="statistics-analysis-context__primary">
                         <i class="fas fa-file-csv" aria-hidden="true"></i> Descargar CSV
                     </a>
                 </div>
@@ -787,6 +806,26 @@ document.addEventListener('DOMContentLoaded', function () {
             // Uncheck header select-all when page changes (to avoid stale state)
             try { $('#select-all-deaths').prop('checked', false).prop('indeterminate', false); } catch (e) {}
         }
+    });
+
+    const statisticsOriginFilter = document.getElementById('statistics-origin-filter');
+    statisticsOriginFilter?.addEventListener('change', function() {
+        if (this.value) filterData.origin = this.value;
+        else delete filterData.origin;
+
+        const params = buildDeathFilterQuery(filterData);
+        const nextUrl = params.toString()
+            ? `${window.location.pathname}?${params.toString()}`
+            : window.location.pathname;
+        window.history.replaceState({}, '', nextUrl);
+
+        const csvParams = new URLSearchParams(params);
+        csvParams.set('format', 'csv');
+        const csvAction = document.getElementById('statistics-analysis-csv');
+        if (csvAction) csvAction.href = `{{ route('statistic.export') }}?${csvParams.toString()}`;
+
+        clearVisibleDeathSelection();
+        window.deathsTable.ajax.reload();
     });
 
     // Ensure button state is correct after initialization

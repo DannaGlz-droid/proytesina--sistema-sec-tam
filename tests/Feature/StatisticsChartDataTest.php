@@ -67,6 +67,20 @@ it('keeps the filtered total while reporting Top N coverage', function (): void 
         ->and($data['period']['end_date'])->toBe('2026-01-31');
 });
 
+it('groups death locations by catalog entry and supports an optional Top N', function (): void {
+    $all = statisticsChartResponse('lugares');
+    $top = statisticsChartResponse('lugares', ['limit' => 1]);
+
+    expect($all['labels'])->toBe(['Hospital', 'Hogar'])
+        ->and($all['counts'])->toBe([4, 2])
+        ->and($all['available_categories'])->toBe(2)
+        ->and($all['ranking_label'])->toBe('lugares')
+        ->and($all['quality']['required_fields'])->toBe(['Lugar de defunción'])
+        ->and($top['labels'])->toBe(['Hospital'])
+        ->and($top['displayed_total'])->toBe(4)
+        ->and($top['filtered_total'])->toBe(6);
+});
+
 it('uses consistent presentation labels without changing catalog values', function (): void {
     $this->municipalityA->update(['name' => 'OTRO']);
     $this->causeA->update(['name' => 'OTROS ACCIDENTES']);
@@ -102,85 +116,6 @@ it('orders municipalities by total and alphabetically when totals are tied', fun
 
     expect($tied['counts'])->toBe([3, 3])
         ->and($tied['labels'])->toBe(['Alfa', 'Zeta']);
-});
-
-it('compares the analyzed total with an immediately preceding period of equal length', function (): void {
-    foreach (range(1, 3) as $index) {
-        $previousDeath = Death::query()->where('gov_folio', 'STAT-'.$index)->firstOrFail()->replicate();
-        $previousDeath->gov_folio = 'PREVIOUS-'.$index;
-        $previousDeath->death_date = '2025-12-'.str_pad((string) $index, 2, '0', STR_PAD_LEFT);
-        $previousDeath->save();
-    }
-
-    $data = statisticsChartResponse('causas');
-    $comparison = $data['previous_period_comparison'];
-
-    expect($comparison['available'])->toBeTrue()
-        ->and($comparison['current_total'])->toBe(6)
-        ->and($comparison['previous_total'])->toBe(3)
-        ->and($comparison['difference'])->toBe(3)
-        ->and($comparison['percentage_change'])->toBe(100)
-        ->and($comparison['direction'])->toBe('increase')
-        ->and($comparison['period']['start_date'])->toBe('2025-12-01')
-        ->and($comparison['period']['end_date'])->toBe('2025-12-31');
-});
-
-it('does not invent a percentage when the previous period has no records', function (): void {
-    $comparison = statisticsChartResponse('causas')['previous_period_comparison'];
-
-    expect($comparison['available'])->toBeTrue()
-        ->and($comparison['previous_total'])->toBe(0)
-        ->and($comparison['percentage_change'])->toBeNull()
-        ->and($comparison['direction'])->toBe('no_baseline');
-});
-
-it('reports decreases and unchanged totals against the previous period', function (
-    int $previousRecords,
-    int $expectedDifference,
-    int $expectedPercentage,
-    string $expectedDirection,
-): void {
-    foreach (range(1, $previousRecords) as $index) {
-        $source = (($index - 1) % 6) + 1;
-        $previousDeath = Death::query()->where('gov_folio', 'STAT-'.$source)->firstOrFail()->replicate();
-        $previousDeath->gov_folio = 'DIRECTION-PREVIOUS-'.$index;
-        $previousDeath->death_date = '2025-12-'.str_pad((string) $index, 2, '0', STR_PAD_LEFT);
-        $previousDeath->save();
-    }
-
-    $comparison = statisticsChartResponse('causas')['previous_period_comparison'];
-
-    expect($comparison['previous_total'])->toBe($previousRecords)
-        ->and($comparison['difference'])->toBe($expectedDifference)
-        ->and($comparison['percentage_change'])->toBe($expectedPercentage)
-        ->and($comparison['direction'])->toBe($expectedDirection);
-})->with([
-    'decrease' => [12, -6, -50, 'decrease'],
-    'unchanged' => [6, 0, 0, 'unchanged'],
-]);
-
-it('shifts year and month selections while retaining the other filters', function (): void {
-    foreach (range(1, 2) as $index) {
-        $previousDeath = Death::query()->where('gov_folio', 'STAT-'.$index)->firstOrFail()->replicate();
-        $previousDeath->gov_folio = 'YEAR-PREVIOUS-'.$index;
-        $previousDeath->death_date = '2025-01-'.str_pad((string) $index, 2, '0', STR_PAD_LEFT);
-        $previousDeath->save();
-    }
-
-    $request = Request::create('/', 'GET', [
-        'years' => ['2026'],
-        'months' => ['1'],
-        'causas' => [$this->causeA->id],
-    ]);
-    $data = app(StatisticsController::class)->getChartData($request, 'causas')->getData(true);
-    $comparison = $data['previous_period_comparison'];
-
-    expect($data['filtered_total'])->toBe(3)
-        ->and($comparison['previous_total'])->toBe(2)
-        ->and($comparison['difference'])->toBe(1)
-        ->and($comparison['percentage_change'])->toBe(50)
-        ->and($comparison['period']['years'])->toBe([2025])
-        ->and($comparison['period']['months'])->toBe([1]);
 });
 
 it('does not double the analyzed total in residence and death comparison', function (): void {
@@ -261,6 +196,35 @@ it('applies equivalent filters to tables charts and exports', function (): void 
         ->and($chartData['filtered_total'])->toBe(1);
 });
 
+it('offers and applies origin filters to chart records', function (): void {
+    $importId = DB::table('imports')->insertGetId([
+        'original_name' => 'reporte estatal.xlsx',
+        'status' => 'completed',
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
+    Death::query()->where('gov_folio', 'STAT-1')->update(['import_id' => $importId]);
+
+    $imported = app(DeathController::class)
+        ->dataTable(Request::create('/', 'POST', ['length' => 25, 'origin' => "import:{$importId}"]))
+        ->getData(true);
+    $manual = app(DeathController::class)
+        ->dataTable(Request::create('/', 'POST', ['length' => 25, 'origin' => 'manual']))
+        ->getData(true);
+    $controller = app(DeathController::class);
+    $originOptions = new ReflectionMethod($controller, 'getAnalysisOriginOptions');
+    $origins = collect($originOptions->invoke($controller, Death::query()))->keyBy('value');
+
+    expect($imported['recordsFiltered'])->toBe(1)
+        ->and($imported['data'][0]['gov_folio'])->toBe('STAT-1')
+        ->and($manual['recordsFiltered'])->toBe(5)
+        ->and((new DeathsExport(['origin' => "import:{$importId}"]))->query()->count())->toBe(1)
+        ->and($origins->sum('records'))->toBe(6)
+        ->and($origins["import:{$importId}"]['label'])->toBe('reporte estatal.xlsx')
+        ->and($origins["import:{$importId}"]['records'])->toBe(1)
+        ->and($origins['manual']['records'])->toBe(5);
+});
+
 it('filters chart data by an exact age range or age list', function (): void {
     expect(statisticsChartResponse('municipios', ['age' => '22'])['filtered_total'])->toBe(1)
         ->and(statisticsChartResponse('municipios', ['age' => '20-35'])['filtered_total'])->toBe(2)
@@ -275,6 +239,7 @@ it('accepts the supported filter combinations in every chart metric', function (
         ['genero', ['municipios' => [$this->municipalityA->id], 'death_district_ids' => [$this->municipalityA->district_id], 'causas' => [$this->causeA->id]]],
         ['causas', ['municipios' => [$this->municipalityA->id], 'death_district_ids' => [$this->municipalityA->district_id], 'sex' => 'M']],
         ['distritoes', ['causas' => [$this->causeA->id], 'sex' => 'M']],
+        ['lugares', ['municipios' => [$this->municipalityA->id], 'death_district_ids' => [$this->municipalityA->district_id], 'causas' => [$this->causeA->id], 'sex' => 'M']],
     ];
 
     foreach ($cases as [$type, $filters]) {
@@ -332,7 +297,7 @@ it('supports an explicit all-time period without applying the default range', fu
 });
 
 it('returns valid data for every comparison mode', function (): void {
-    foreach (['residencia-defuncion', 'distrito-residencia-defuncion', 'genero-causa', 'edad-causa', 'lugar-causa'] as $comparisonType) {
+    foreach (['residencia-defuncion', 'distrito-residencia-defuncion', 'genero-causa', 'edad-causa', 'lugar-causa', 'lugar-municipio'] as $comparisonType) {
         $data = statisticsChartResponse('comparativa', [
             'comparativa_type' => $comparisonType,
             'limit' => 5,
@@ -365,6 +330,25 @@ it('returns a district residence and death matrix for the comparison heatmap', f
         ->and($data['quality']['required_fields'])->toBe([
             'Distrito de residencia',
             'Distrito de defunción',
+        ]);
+});
+
+it('returns a death location and municipality matrix for the comparison heatmap', function (): void {
+    $data = statisticsChartResponse('comparativa', [
+        'comparativa_type' => 'lugar-municipio',
+        'limit' => 5,
+    ]);
+
+    expect($data['matrix'])->toBeTrue()
+        ->and($data['stacked'])->toBeTrue()
+        ->and($data['x_axis_label'])->toBe('Municipio de defunción')
+        ->and($data['y_axis_label'])->toBe('Lugar de defunción')
+        ->and($data['labels'])->toBe(['Municipio B', 'Municipio a'])
+        ->and(array_column($data['series'], 'name'))->toBe(['Hospital', 'Hogar'])
+        ->and(array_sum(array_merge(...array_column($data['series'], 'data'))))->toBe(6)
+        ->and($data['quality']['required_fields'])->toBe([
+            'Lugar de defunción',
+            'Municipio de defunción',
         ]);
 });
 
@@ -404,21 +388,14 @@ it('does not broaden results when a supplied catalog filter is invalid', functio
 it('excludes incomplete records from the analyzed total without creating a missing category', function (): void {
     Death::query()->where('gov_folio', 'STAT-1')->update(['death_municipality_id' => null]);
 
-    foreach ([1, 2] as $index) {
-        $previousDeath = Death::query()->where('gov_folio', 'STAT-'.$index)->firstOrFail()->replicate();
-        $previousDeath->gov_folio = 'QUALITY-PREVIOUS-'.$index;
-        $previousDeath->death_date = '2025-12-'.str_pad((string) $index, 2, '0', STR_PAD_LEFT);
-        $previousDeath->save();
-    }
-
     $data = statisticsChartResponse('municipios');
 
+    expect($data)->not->toHaveKey('previous_period_comparison');
     expect($data['matched_total'])->toBe(6)
         ->and($data['filtered_total'])->toBe(5)
         ->and($data['total'])->toBe(5)
         ->and($data['excluded_total'])->toBe(1)
         ->and($data['quality']['required_fields'])->toBe(['Municipio de defunción'])
-        ->and($data['previous_period_comparison']['previous_total'])->toBe(1)
         ->and($data['labels'])->not->toContain('Sin dato');
 });
 
@@ -456,6 +433,7 @@ it('defines the required fields for every statistical analysis', function (): vo
         ->and($service->context(['analysis_type' => 'genero'])['required_fields'])->toBe(['Sexo'])
         ->and($service->context(['analysis_type' => 'causas'])['required_fields'])->toBe(['Causa de defunción'])
         ->and($service->context(['analysis_type' => 'distritoes'])['required_fields'])->toBe(['Distrito de defunción'])
+        ->and($service->context(['analysis_type' => 'lugares'])['required_fields'])->toBe(['Lugar de defunción'])
         ->and($service->context([
             'analysis_type' => 'distritoes',
             'municipio_type' => 'residencia',
@@ -464,6 +442,10 @@ it('defines the required fields for every statistical analysis', function (): vo
             'analysis_type' => 'comparativa',
             'comparativa_type' => 'lugar-causa',
         ])['required_fields'])->toBe(['Lugar de defunción', 'Causa de defunción'])
+        ->and($service->context([
+            'analysis_type' => 'comparativa',
+            'comparativa_type' => 'lugar-municipio',
+        ])['required_fields'])->toBe(['Lugar de defunción', 'Municipio de defunción'])
         ->and($service->context([
             'analysis_type' => 'comparativa',
             'comparativa_type' => 'distrito-residencia-defuncion',

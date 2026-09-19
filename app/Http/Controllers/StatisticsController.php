@@ -496,6 +496,10 @@ class StatisticsController extends Controller
                 case 'distritoes':
                     $response = $this->getChartJurisdicciones($filters, $dateColumn, $applyFilters, $limit);
                     break;
+
+                case 'lugares':
+                    $response = $this->getChartLugares($filters, $dateColumn, $applyFilters, $limit);
+                    break;
                     
                 case 'comparativa':
                     $response = $this->getChartComparativa($filters, $dateColumn, $munCol, $applyFilters, $limit);
@@ -547,11 +551,6 @@ class StatisticsController extends Controller
                 'is_default' => $usesDefaultPeriod,
                 'is_all_time' => $usesAllTime,
             ];
-            $payload['previous_period_comparison'] = $this->getPreviousPeriodComparison(
-                $canonicalFilters,
-                $analysisContext,
-                $filteredTotal,
-            );
             $payload['source_summary'] = $this->getChartSourceSummary($applyFilters);
 
             unset($payload['coverage_numerator']);
@@ -566,99 +565,6 @@ class StatisticsController extends Controller
                 'debug' => $debug,
             ], 500);
         }
-    }
-
-    /**
-     * Compare the analyzed total with an immediately preceding equivalent period.
-     * Presentation options such as Top N never affect either total.
-     */
-    private function getPreviousPeriodComparison(
-        array $currentFilters,
-        ?array $analysisContext,
-        int $currentTotal,
-    ): array {
-        $previousFilters = $currentFilters;
-        $previousPeriod = [
-            'start_date' => null,
-            'end_date' => null,
-            'years' => [],
-            'months' => [],
-        ];
-
-        $startDate = $currentFilters['start_date'] ?? null;
-        $endDate = $currentFilters['end_date'] ?? null;
-        $years = collect($currentFilters['years'] ?? [])
-            ->map(fn ($year) => (int) $year)
-            ->unique()
-            ->sort()
-            ->values()
-            ->all();
-
-        if ($startDate && $endDate) {
-            $start = \Carbon\Carbon::parse($startDate)->startOfDay();
-            $end = \Carbon\Carbon::parse($endDate)->startOfDay();
-
-            if ($start->gt($end)) {
-                return ['available' => false, 'reason' => 'invalid_period'];
-            }
-
-            $durationInDays = (int) $start->diffInDays($end) + 1;
-            $previousEnd = $start->copy()->subDay();
-            $previousStart = $previousEnd->copy()->subDays($durationInDays - 1);
-
-            $previousFilters['start_date'] = $previousStart->toDateString();
-            $previousFilters['end_date'] = $previousEnd->toDateString();
-            $previousFilters['years'] = [];
-            $previousFilters['months'] = [];
-            $previousPeriod['start_date'] = $previousFilters['start_date'];
-            $previousPeriod['end_date'] = $previousFilters['end_date'];
-        } elseif ($startDate || $endDate) {
-            return ['available' => false, 'reason' => 'open_period'];
-        } elseif ($years !== []) {
-            $yearSpan = max($years) - min($years) + 1;
-            $previousYears = array_map(fn (int $year) => $year - $yearSpan, $years);
-
-            if (min($previousYears) < 1950) {
-                return ['available' => false, 'reason' => 'period_out_of_range'];
-            }
-
-            $previousFilters['start_date'] = null;
-            $previousFilters['end_date'] = null;
-            $previousFilters['years'] = $previousYears;
-            $previousPeriod['years'] = $previousYears;
-            $previousPeriod['months'] = array_values($currentFilters['months'] ?? []);
-        } else {
-            return ['available' => false, 'reason' => 'period_required'];
-        }
-
-        $previousQuery = DB::table('deaths');
-        $this->deathFilters->apply($previousQuery, $previousFilters);
-        if ($analysisContext) {
-            $this->statisticsAnalysis->applyEligible($previousQuery, $analysisContext);
-        }
-
-        $previousTotal = $previousQuery->count();
-        $difference = $currentTotal - $previousTotal;
-        $percentageChange = $previousTotal > 0
-            ? round(($difference / $previousTotal) * 100, 1)
-            : null;
-
-        $direction = match (true) {
-            $previousTotal === 0 => 'no_baseline',
-            $difference > 0 => 'increase',
-            $difference < 0 => 'decrease',
-            default => 'unchanged',
-        };
-
-        return [
-            'available' => true,
-            'current_total' => $currentTotal,
-            'previous_total' => $previousTotal,
-            'difference' => $difference,
-            'percentage_change' => $percentageChange,
-            'direction' => $direction,
-            'period' => $previousPeriod,
-        ];
     }
 
     /**
@@ -951,6 +857,33 @@ class StatisticsController extends Controller
         ]);
     }
 
+    private function getChartLugares($filters, $dateColumn, $applyFilters, $limit)
+    {
+        $query = DB::table('deaths')
+            ->join('death_locations', 'death_locations.id', '=', 'deaths.death_location_id')
+            ->select(
+                'death_locations.id as id',
+                'death_locations.name as name',
+                DB::raw('COUNT(deaths.id) as total')
+            )
+            ->groupBy('death_locations.id', 'death_locations.name')
+            ->orderByDesc('total')
+            ->orderBy('death_locations.name');
+        $applyFilters($query);
+        $locations = $query->get();
+        $availableCategories = $locations->count();
+        if ($limit) $locations = $locations->take($limit);
+
+        return response()->json([
+            'type' => 'lugares',
+            'labels' => $locations->pluck('name')->map(fn ($value) => CatalogLabel::location($value))->values()->all(),
+            'counts' => $locations->pluck('total')->map(fn ($value) => (int) $value)->values()->all(),
+            'displayed_total' => array_sum($locations->pluck('total')->all()),
+            'available_categories' => $availableCategories,
+            'ranking_label' => 'lugares',
+        ]);
+    }
+
     private function getChartComparativa($filters, $dateColumn, $munCol, $applyFilters, $limit)
     {
         $comparativaType = $filters['comparativa_type'] ?? 'residencia-defuncion';
@@ -964,6 +897,8 @@ class StatisticsController extends Controller
                 return $this->getChartComparativaEdadCausa($filters, $dateColumn, $applyFilters, $limit);
             case 'lugar-causa':
                 return $this->getChartComparativaLugarCausa($filters, $dateColumn, $applyFilters, $limit);
+            case 'lugar-municipio':
+                return $this->getChartComparativaLugarMunicipio($filters, $dateColumn, $applyFilters, $limit);
             case 'residencia-defuncion':
             default:
                 return $this->getChartComparativaResidenciaDefuncion($filters, $dateColumn, $munCol, $applyFilters, $limit);
@@ -1246,6 +1181,91 @@ class StatisticsController extends Controller
             'available_categories' => $availableCategories,
             'displayed_categories' => count($selectedCauses),
             'ranking_label' => 'causas',
+        ]);
+    }
+
+    private function getChartComparativaLugarMunicipio($filters, $dateColumn, $applyFilters, $limit)
+    {
+        $dataQuery = DB::table('deaths')
+            ->join('death_locations', 'death_locations.id', '=', 'deaths.death_location_id')
+            ->join('municipalities', 'municipalities.id', '=', 'deaths.death_municipality_id')
+            ->select(
+                'death_locations.id as location_id',
+                'death_locations.name as location_name',
+                'municipalities.id as municipality_id',
+                'municipalities.name as municipality_name',
+                DB::raw('COUNT(deaths.id) as total')
+            )
+            ->groupBy(
+                'death_locations.id',
+                'death_locations.name',
+                'municipalities.id',
+                'municipalities.name'
+            );
+        $applyFilters($dataQuery);
+        $rows = $dataQuery->get();
+
+        $municipalities = [];
+        $locations = [];
+        $matrix = [];
+        foreach ($rows as $row) {
+            $municipalityId = (int) $row->municipality_id;
+            $locationId = (int) $row->location_id;
+            $total = (int) $row->total;
+            $municipalities[$municipalityId] = [
+                'name' => $row->municipality_name,
+                'total' => ($municipalities[$municipalityId]['total'] ?? 0) + $total,
+            ];
+            $locations[$locationId] = [
+                'name' => $row->location_name,
+                'total' => ($locations[$locationId]['total'] ?? 0) + $total,
+            ];
+            $matrix[$locationId][$municipalityId] = $total;
+        }
+
+        $sortByTotalAndName = fn ($left, $right) => ($right['total'] <=> $left['total'])
+            ?: strcasecmp((string) $left['name'], (string) $right['name']);
+        uasort($municipalities, $sortByTotalAndName);
+        uasort($locations, $sortByTotalAndName);
+
+        $availableCategories = count($municipalities);
+        if ($limit) {
+            $municipalities = array_slice($municipalities, 0, $limit, true);
+        }
+
+        $municipalityIds = array_keys($municipalities);
+        $labels = array_map(
+            fn ($municipality) => CatalogLabel::municipality($municipality['name']),
+            array_values($municipalities)
+        );
+        $series = [];
+        foreach ($locations as $locationId => $location) {
+            $series[] = [
+                'name' => CatalogLabel::location($location['name']),
+                'data' => array_map(
+                    fn ($municipalityId) => (int) ($matrix[$locationId][$municipalityId] ?? 0),
+                    $municipalityIds
+                ),
+            ];
+        }
+
+        $displayedTotal = array_sum(array_map(
+            fn ($seriesItem) => array_sum($seriesItem['data']),
+            $series
+        ));
+
+        return response()->json([
+            'type' => 'comparativa',
+            'labels' => $labels,
+            'series' => $series,
+            'matrix' => true,
+            'stacked' => true,
+            'x_axis_label' => 'Municipio de defunción',
+            'y_axis_label' => 'Lugar de defunción',
+            'displayed_total' => $displayedTotal,
+            'coverage_numerator' => $displayedTotal,
+            'available_categories' => $availableCategories,
+            'ranking_label' => 'municipios de defunción',
         ]);
     }
 
