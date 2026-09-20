@@ -243,12 +243,15 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function initializeSelect(select, searchable) {
         if (!select || select.tomselect) return;
-        new TomSelect(select, {
+        const options = {
             valueField: 'value', labelField: 'text', searchField: searchable ? ['text'] : [],
-            create: false, maxItems: 1, maxOptions: 100, allowEmptyOption: false
-        });
-        select.tomselect.on('change', () => clearSelectError(select));
-        select.tomselect.on('blur', function () {
+            searchable, create: false, maxItems: 1, maxOptions: 100, allowEmptyOption: false
+        };
+        const instance = window.AppFilterSelect?.init(select, options) ?? new TomSelect(select, options);
+        instance.wrapper.classList.add('app-filter-select', 'app-filter-select--form');
+        instance.wrapper.classList.toggle('is-searchable', searchable);
+        instance.on('change', () => clearSelectError(select));
+        instance.on('blur', function () {
             const definition = requiredSelects.find(([field]) => field === select);
             if (definition) validateRequiredSelect(...definition);
         });

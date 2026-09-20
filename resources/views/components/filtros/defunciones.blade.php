@@ -123,6 +123,8 @@
                     </x-filtros.panel>
                 </div>
 
+            {{ $slot }}
+
             <div class="users-filter-search">
                 <i class="fas fa-search" aria-hidden="true"></i>
                 <input type="search" id="dt-search-deaths" placeholder="Buscar defunciones..." aria-label="Buscar defunciones" autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false" enterkeyhint="search" aria-busy="false">

@@ -11,7 +11,11 @@ function init(target, options = {}) {
     if (select.tomselect) return select.tomselect;
 
     const multiple = select.multiple;
-    const searchable = options.searchable ?? (multiple || select.options.length > 8);
+    const searchableAttribute = select.dataset.searchable;
+    const searchableFromMarkup = searchableAttribute === undefined
+        ? null
+        : searchableAttribute !== 'false';
+    const searchable = options.searchable ?? searchableFromMarkup ?? (multiple || select.options.length > 8);
     const customRender = options.render || {};
     const customPlugins = options.plugins;
 
@@ -38,7 +42,16 @@ function init(target, options = {}) {
 
     delete config.searchable;
 
-    return new window.TomSelect(select, config);
+    const instance = new window.TomSelect(select, config);
+    const variant = select.dataset.selectVariant?.trim();
+
+    instance.wrapper.classList.add('app-filter-select');
+    if (variant && /^[a-z0-9-]+$/i.test(variant)) {
+        instance.wrapper.classList.add(`app-filter-select--${variant}`);
+    }
+    instance.wrapper.classList.toggle('is-searchable', searchable);
+
+    return instance;
 }
 
 function initAll(root = document, optionsFactory = null) {

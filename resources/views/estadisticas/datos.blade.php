@@ -33,66 +33,89 @@
                 $analysisCsvUrl = route('statistic.export').'?'.http_build_query(array_merge(request()->query(), ['format' => 'csv']));
                 $isExcludedReview = $analysisContext['excluded'];
             @endphp
-            <section id="statisticsAnalysisContext" class="statistics-analysis-context {{ $isExcludedReview ? 'is-warning' : '' }}" aria-labelledby="statistics-analysis-title">
-                <div class="statistics-analysis-context__icon" aria-hidden="true">
-                    <i class="fas {{ $isExcludedReview ? 'fa-triangle-exclamation' : 'fa-chart-column' }}"></i>
-                </div>
-                <div class="statistics-analysis-context__body">
-                    <p id="statistics-analysis-title" class="statistics-analysis-context__title">
-                        @if($isExcludedReview)
-                            {{ number_format($analysisCount) }} {{ $analysisCount === 1 ? 'registro excluido' : 'registros excluidos' }} de “{{ $analysisContext['label'] }}”
-                        @else
-                            {{ number_format($analysisCount) }} {{ $analysisCount === 1 ? 'registro utilizado' : 'registros utilizados' }} en “{{ $analysisContext['label'] }}”
-                        @endif
-                    </p>
-                    <p class="statistics-analysis-context__description">
-                        {{ $isExcludedReview
-                            ? 'Estos registros no cuentan con todos los campos necesarios para formar parte de la gráfica.'
-                            : 'Esta tabla conserva el periodo y los filtros con los que se calculó la gráfica.' }}
-                    </p>
-                    @if($analysisFilterLabels)
-                        <div class="statistics-analysis-context__filters" aria-label="Filtros provenientes de la gráfica">
-                            @foreach($analysisFilterLabels as $filterLabel)
-                                <span>{{ $filterLabel }}</span>
-                            @endforeach
-                        </div>
-                    @endif
-                    @if($analysisOriginOptions)
-                        <div class="statistics-analysis-context__origin">
-                            <label for="statistics-origin-filter">Origen</label>
-                            <div class="statistics-analysis-context__origin-control">
-                                <i class="fas fa-file-import" aria-hidden="true"></i>
-                                <select id="statistics-origin-filter" aria-label="Filtrar registros por origen">
-                                    <option value="" @selected($selectedOriginValue === '')>
-                                        Todos los orígenes ({{ number_format($analysisCount) }})
-                                    </option>
-                                    @foreach($analysisOriginOptions as $origin)
-                                        <option value="{{ $origin['value'] }}" @selected($selectedOriginValue === $origin['value'])>
-                                            {{ $origin['label'] }} ({{ number_format($origin['records']) }})
-                                        </option>
-                                    @endforeach
-                                </select>
-                                <i class="fas fa-chevron-down" aria-hidden="true"></i>
-                            </div>
-                        </div>
-                    @endif
-                </div>
-                <div class="statistics-analysis-context__actions">
-                    <a href="{{ route('estadisticas.graficas') }}" class="statistics-analysis-context__secondary">
-                        <i class="fas fa-arrow-left" aria-hidden="true"></i> Volver a gráficas
-                    </a>
-                    <a id="statistics-analysis-csv" href="{{ $analysisCsvUrl }}" class="statistics-analysis-context__primary">
-                        <i class="fas fa-file-csv" aria-hidden="true"></i> Descargar CSV
-                    </a>
-                </div>
-            </section>
         @endif
 
         <div class="space-y-4">
             <div class="min-w-0">
                 <div class="app-table-card users-table-card statistics-table-card">
+                    @if($analysisContext)
+                        <section id="statisticsAnalysisContext" class="statistics-analysis-context {{ $isExcludedReview ? 'is-warning' : '' }}" aria-labelledby="statistics-analysis-title">
+                            <div class="statistics-analysis-context__icon" aria-hidden="true">
+                                <i class="fas {{ $isExcludedReview ? 'fa-triangle-exclamation' : 'fa-chart-column' }}"></i>
+                            </div>
+                            <div class="statistics-analysis-context__body">
+                                <div class="statistics-analysis-context__headline">
+                                    <p id="statistics-analysis-title" class="statistics-analysis-context__title">
+                                        @if($isExcludedReview)
+                                            {{ number_format($analysisCount) }} {{ $analysisCount === 1 ? 'registro excluido' : 'registros excluidos' }} de “{{ $analysisContext['label'] }}”
+                                        @else
+                                            {{ $analysisContext['label'] }}
+                                        @endif
+                                    </p>
+                                    @unless($isExcludedReview)
+                                        <span class="statistics-analysis-context__count">
+                                            {{ number_format($analysisCount) }} {{ $analysisCount === 1 ? 'registro' : 'registros' }}
+                                        </span>
+                                    @endunless
+                                </div>
+                                @if($isExcludedReview)
+                                    <p class="statistics-analysis-context__description">
+                                        Estos registros no cuentan con todos los campos necesarios para formar parte de la gráfica.
+                                    </p>
+                                @endif
+                                @if($analysisFilterLabels)
+                                    <div class="statistics-analysis-context__meta">
+                                        <div class="statistics-analysis-context__filters" aria-label="Filtros provenientes de la gráfica">
+                                            @foreach($analysisFilterLabels as $filterLabel)
+                                                @php($isPeriodLabel = str_starts_with($filterLabel, 'Periodo:'))
+                                                <span class="{{ $isPeriodLabel ? 'is-period' : '' }}">
+                                                    @if($isPeriodLabel)
+                                                        <i class="far fa-calendar" aria-hidden="true"></i>
+                                                        {{ trim(Illuminate\Support\Str::after($filterLabel, 'Periodo:')) }}
+                                                    @else
+                                                        {{ $filterLabel }}
+                                                    @endif
+                                                </span>
+                                            @endforeach
+                                        </div>
+                                    </div>
+                                @endif
+                            </div>
+                            <div class="statistics-analysis-context__actions">
+                                <a href="{{ route('estadisticas.graficas') }}" class="ui-button ui-button--secondary statistics-analysis-context__secondary">
+                                    <i class="fas fa-arrow-left" aria-hidden="true"></i> Volver a gráficas
+                                </a>
+                                <a id="statistics-analysis-csv" href="{{ $analysisCsvUrl }}" class="ui-button ui-button--secondary statistics-analysis-context__download">
+                                    <i class="fas fa-file-csv" aria-hidden="true"></i> Descargar CSV
+                                </a>
+                            </div>
+                        </section>
+                    @endif
                     <div class="app-table-toolbar flex flex-row flex-wrap items-center justify-between gap-3 p-4">
-                        <x-filtros.defunciones :districts="$districts" :municipalities="$municipalities" :causes="$causes" />
+                        <x-filtros.defunciones :districts="$districts" :municipalities="$municipalities" :causes="$causes">
+                            @if($analysisContext && $analysisOriginOptions)
+                                <div class="statistics-origin-filter">
+                                    <label for="statistics-origin-filter" class="sr-only">Origen de los registros</label>
+                                    <x-filtros.select
+                                        id="statistics-origin-filter"
+                                        class="statistics-origin-filter__select"
+                                        placeholder="Origen"
+                                        variant="compact"
+                                        :searchable="count($analysisOriginOptions) > 7"
+                                        :auto-init="false"
+                                    >
+                                        <option value="" data-records="{{ number_format($analysisCount) }}" data-short-label="Todos" @selected($selectedOriginValue === '')>
+                                            Todos los orígenes
+                                        </option>
+                                        @foreach($analysisOriginOptions as $origin)
+                                            <option value="{{ $origin['value'] }}" data-records="{{ number_format($origin['records']) }}" data-short-label="{{ $origin['label'] }}" @selected($selectedOriginValue === $origin['value'])>
+                                                {{ $origin['label'] }}
+                                            </option>
+                                        @endforeach
+                                    </x-filtros.select>
+                                </div>
+                            @endif
+                        </x-filtros.defunciones>
                         <div id="bulk-selection-bar-deaths" class="app-table-bulk-inline hidden items-center gap-3">
                             <div class="flex items-center gap-2">
                                 <span class="app-table-selection-marker"></span>
@@ -809,6 +832,55 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     const statisticsOriginFilter = document.getElementById('statistics-origin-filter');
+
+    function initializeStatisticsOriginSelect() {
+        if (!statisticsOriginFilter || statisticsOriginFilter.tomselect) return true;
+        if (!window.AppFilterSelect) return false;
+        const originIsSearchable = statisticsOriginFilter.options.length > 8;
+        const originMetadata = new Map(Array.from(statisticsOriginFilter.options).map((option) => [
+            option.value,
+            {
+                records: option.dataset.records || '',
+                shortLabel: option.dataset.shortLabel || option.text,
+            },
+        ]));
+
+        const instance = window.AppFilterSelect.init(statisticsOriginFilter, {
+            searchable: originIsSearchable,
+            plugins: originIsSearchable ? { dropdown_input: {} } : {},
+            allowEmptyOption: true,
+            maxOptions: 200,
+            render: {
+                item: (data, escape) => `
+                    <div class="statistics-origin-select__item">
+                        <i class="fas fa-file-import" aria-hidden="true"></i>
+                        <span>Origen:</span>
+                        <strong>${escape(originMetadata.get(String(data.value))?.shortLabel || data.text)}</strong>
+                        <b>${escape(originMetadata.get(String(data.value))?.records || '')}</b>
+                    </div>`,
+                option: (data, escape) => `
+                    <div class="statistics-origin-select__option">
+                        <span title="${escape(data.text)}">${escape(data.text)}</span>
+                        <strong>${escape(originMetadata.get(String(data.value))?.records || '')}</strong>
+                    </div>`,
+            },
+        });
+
+        instance?.wrapper.classList.add('statistics-origin-tom-select');
+        return Boolean(instance);
+    }
+
+    if (!initializeStatisticsOriginSelect()) {
+        window.addEventListener('app-filter-select:ready', initializeStatisticsOriginSelect, { once: true });
+        let originSelectAttempts = 0;
+        const originSelectTimer = window.setInterval(() => {
+            originSelectAttempts += 1;
+            if (initializeStatisticsOriginSelect() || originSelectAttempts >= 40) {
+                window.clearInterval(originSelectTimer);
+            }
+        }, 100);
+    }
+
     statisticsOriginFilter?.addEventListener('change', function() {
         if (this.value) filterData.origin = this.value;
         else delete filterData.origin;

@@ -16,9 +16,9 @@ class DeathFilterService
         $labels = [];
 
         if ($filters['start_date'] || $filters['end_date']) {
-            $start = $filters['start_date'] ? Carbon::parse($filters['start_date'])->format('d/m/Y') : 'inicio';
-            $end = $filters['end_date'] ? Carbon::parse($filters['end_date'])->format('d/m/Y') : 'actualidad';
-            $labels[] = "Periodo: {$start}–{$end}";
+            $start = $filters['start_date'] ? Carbon::parse($filters['start_date'])->locale('es')->translatedFormat('d M Y') : 'inicio';
+            $end = $filters['end_date'] ? Carbon::parse($filters['end_date'])->locale('es')->translatedFormat('d M Y') : 'actualidad';
+            $labels[] = "Periodo: {$start} – {$end}";
         } elseif ($filters['years'] !== []) {
             $labels[] = 'Año: '.implode(', ', $filters['years']);
         }

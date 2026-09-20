@@ -334,6 +334,7 @@ Estados:
 
 - Todos los selects visibles de una misma pantalla deben usar el mismo componente.
 - Usar Tom Select para consistencia visual entre navegadores.
+- Construir los selects con `x-filtros.select` e inicializarlos mediante `AppFilterSelect`; el componente aplica la clase global `app-filter-select`, sus estados compartidos y, cuando corresponda, una variante declarada como `compact`. No copiar estilos de Tom Select dentro de cada página ni limitar el componente a un contenedor concreto.
 - Habilitar búsqueda cuando haya más de 10 opciones o la lista pueda crecer.
 - Deshabilitar búsqueda cuando haya 10 opciones o menos y el catálogo sea estable; activarla aunque la lista sea corta si se prevé un crecimiento considerable.
 - Configuración de los formularios de usuario: Distrito con búsqueda; Cargo, Rol y Estado sin búsqueda.
@@ -408,6 +409,8 @@ Estados:
 4. Encabezado de tabla.
 5. Filas.
 6. Pie con rango mostrado y paginación.
+
+Cuando “Ver datos” se abre desde una gráfica, integrar el contexto como encabezado de la propia tarjeta de tabla, no como una tarjeta independiente entre el encabezado de página y el listado. Debe reutilizar superficie blanca, divisor neutral, icono sobre `--ui-surface-section` y botones compartidos `ui-button`; no usar una franja lateral decorativa ni tratarlo como alerta salvo en el modo de registros excluidos. El título muestra únicamente el nombre de la gráfica y comparte línea con la cantidad de registros en un tono secundario. El periodo queda debajo con menor contraste, icono de calendario y fechas de mes abreviado; no repetir que la tabla conserva esos criterios ni separar los datos principales mediante puntuación decorativa. `Origen` pertenece a la barra de herramientas junto a `Filtros` y reutiliza Tom Select como un único desplegable compacto con prefijo y selección truncable; no separar su etiqueta como si fuera un campo de formulario. Activa búsqueda al crecer la lista y su panel puede ser más ancho para mostrar cada nombre completo y una columna de cantidades. Las acciones de regreso y exportación permanecen en el encabezado contextual. Evitar altura vacía y superficies anidadas innecesarias.
 
 ### 7.2 Tabla
 
