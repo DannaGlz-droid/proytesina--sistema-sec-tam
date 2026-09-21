@@ -28,6 +28,7 @@ class DeathFilterService
         $this->appendCatalogLabel($labels, 'Distrito', 'districts', $filters['district_ids']);
         $this->appendCatalogLabel($labels, 'Distrito de defunción', 'districts', $filters['death_district_ids']);
         $this->appendCatalogLabel($labels, 'Causa', 'death_causes', $filters['cause_ids']);
+        $this->appendCatalogLabel($labels, 'Lugar de defunción', 'death_locations', $filters['death_location_ids']);
 
         if ($filters['sex']) {
             $labels[] = 'Sexo: '.match (mb_strtolower($filters['sex'])) {
@@ -44,6 +45,8 @@ class DeathFilterService
             $labels[] = 'Edad: '.$age['min'].'-'.$age['max'];
         } elseif (($age['type'] ?? null) === 'list') {
             $labels[] = 'Edad: '.implode(', ', $age['values']);
+        } elseif (($age['type'] ?? null) === 'minimum') {
+            $labels[] = 'Edad: '.$age['min'].' o más';
         }
 
         return $labels;
@@ -64,6 +67,7 @@ class DeathFilterService
             'district_ids' => [],
             'death_district_ids' => [],
             'cause_ids' => [],
+            'death_location_ids' => [],
             'sex' => null,
             'age' => null,
             'origin' => null,
@@ -110,6 +114,10 @@ class DeathFilterService
             'death_causes',
             $input['cause_ids'] ?? $input['cause_id'] ?? $input['causas'] ?? $input['causa'] ?? []
         );
+        $filters['death_location_ids'] = $this->resolveIds(
+            'death_locations',
+            $input['death_location_ids'] ?? $input['death_location_id'] ?? $input['lugares'] ?? $input['lugar'] ?? []
+        );
 
         $sex = trim((string) ($input['sex'] ?? $input['sexo'] ?? ''));
         $filters['sex'] = $sex !== '' ? $this->normalizeSex($sex) : null;
@@ -152,6 +160,7 @@ class DeathFilterService
         $this->whereIds($query, 'deaths.district_id', $filters['district_ids']);
         $this->whereIds($query, 'deaths.death_district_id', $filters['death_district_ids']);
         $this->whereIds($query, 'deaths.death_cause_id', $filters['cause_ids']);
+        $this->whereIds($query, 'deaths.death_location_id', $filters['death_location_ids']);
 
         if ($filters['sex']) {
             $query->whereRaw('LOWER(deaths.sex) = ?', [mb_strtolower($filters['sex'])]);
@@ -164,6 +173,8 @@ class DeathFilterService
             $query->whereIn('deaths.age', $age['values']);
         } elseif (($age['type'] ?? null) === 'exact') {
             $query->where('deaths.age', $age['value']);
+        } elseif (($age['type'] ?? null) === 'minimum') {
+            $query->where('deaths.age', '>=', $age['min']);
         }
 
         $this->applyOrigin($query, $filters['origin']);
@@ -316,6 +327,10 @@ class DeathFilterService
             $second = (int) $matches[2];
 
             return ['type' => 'range', 'min' => min($first, $second), 'max' => max($first, $second)];
+        }
+
+        if (preg_match('/^(\d+)\s*\+$/', $value, $matches)) {
+            return ['type' => 'minimum', 'min' => (int) $matches[1]];
         }
 
         if (str_contains($value, ',')) {

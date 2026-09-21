@@ -661,11 +661,19 @@ class StatisticsController extends Controller
         }
 
         $displayedTotal = (int) $municipios->sum('total');
+        $municipalityFilterKey = $municipioType === 'residencia'
+            ? 'residence_municipality_ids'
+            : 'death_municipality_ids';
 
         return response()->json([
             'type' => 'municipios',
             'labels' => $municipios->pluck('name')->map(fn ($v) => $v ? CatalogLabel::municipality($v) : 'Sin dato')->values()->all(),
             'counts' => $municipios->pluck('total')->values()->all(),
+            'drilldown' => $municipios->map(fn ($municipality) => [
+                'label' => CatalogLabel::municipality($municipality['name']),
+                'filter_key' => $municipalityFilterKey,
+                'filter_value' => $municipality['id'],
+            ])->values()->all(),
             'displayed_total' => $displayedTotal,
             'available_categories' => $availableCategories,
             'ranking_label' => 'municipios',
@@ -700,11 +708,17 @@ class StatisticsController extends Controller
             if ($groupBy === 'day') {
                 [$year, $month, $day] = array_map('intval', explode('-', $item->period));
                 $item->period_label = sprintf('%02d %s %d', $day, $monthsSpanish[$month], $year);
+                $item->period_start = $item->period;
+                $item->period_end = $item->period;
             } elseif ($groupBy === 'year') {
                 $item->period_label = (string) $item->period;
+                $item->period_start = $item->period.'-01-01';
+                $item->period_end = $item->period.'-12-31';
             } else {
                 [$year, $month] = array_map('intval', explode('-', $item->period));
                 $item->period_label = $monthsSpanish[$month].' '.$year;
+                $item->period_start = sprintf('%04d-%02d-01', $year, $month);
+                $item->period_end = date('Y-m-t', strtotime($item->period_start));
             }
         });
 
@@ -713,6 +727,15 @@ class StatisticsController extends Controller
             'group_by' => $groupBy,
             'labels' => $data->pluck('period_label')->values()->all(),
             'counts' => $data->pluck('total')->map(fn($v) => (int)$v)->values()->all(),
+            'drilldown' => $data->map(fn ($period) => [
+                'label' => $period->period_label,
+                'filter_params' => [
+                    'start_date' => $period->period_start,
+                    'end_date' => $period->period_end,
+                ],
+                'clear_params' => ['all_time', 'years', 'months'],
+                'show_percentage' => false,
+            ])->values()->all(),
             'displayed_total' => array_sum($data->pluck('total')->all()),
         ]);
     }
@@ -776,6 +799,17 @@ class StatisticsController extends Controller
             'type' => 'edades',
             'labels' => $edades->pluck('range')->values()->all(),
             'counts' => $edades->pluck('total')->values()->all(),
+            'drilldown' => $edades->map(fn ($age) => [
+                'label' => $age['range'],
+                'filter_key' => 'age',
+                'filter_value' => match ($age['range']) {
+                    '<5 años' => '0-4',
+                    '5-19 años' => '5-19',
+                    '20-64 años' => '20-64',
+                    '65+ años' => '65+',
+                    default => null,
+                },
+            ])->filter(fn ($item) => $item['filter_value'] !== null)->values()->all(),
             'displayed_total' => array_sum($edades->pluck('total')->all()),
             'data_with_causes' => $edades->toArray(),
         ]);
@@ -794,13 +828,22 @@ class StatisticsController extends Controller
             $label = $g->sex ?? 'Sin dato';
             if (in_array(strtolower($label), ['m', 'masculino', 'hombre'])) $label = 'Masculino';
             elseif (in_array(strtolower($label), ['f', 'femenino', 'mujer'])) $label = 'Femenino';
-            return ['label' => $label, 'total' => (int)$g->total];
+            return [
+                'label' => $label,
+                'total' => (int)$g->total,
+                'filter_value' => $label === 'Masculino' ? 'M' : ($label === 'Femenino' ? 'F' : null),
+            ];
         })->sortBy(fn ($item) => array_search($item['label'], ['Masculino', 'Femenino', 'Sin dato'], true))->values();
 
         return response()->json([
             'type' => 'genero',
             'labels' => $generos->pluck('label')->values()->all(),
             'counts' => $generos->pluck('total')->values()->all(),
+            'drilldown' => $generos->filter(fn ($gender) => $gender['filter_value'] !== null)->map(fn ($gender) => [
+                'label' => $gender['label'],
+                'filter_key' => 'sex',
+                'filter_value' => $gender['filter_value'],
+            ])->values()->all(),
             'displayed_total' => array_sum($generos->pluck('total')->all()),
         ]);
     }
@@ -809,8 +852,8 @@ class StatisticsController extends Controller
     {
         $query = DB::table('deaths')
             ->leftJoin('death_causes', 'death_causes.id', '=', 'deaths.death_cause_id')
-            ->select('death_causes.name as name', DB::raw('COUNT(deaths.id) as total'))
-            ->groupBy('death_causes.name')
+            ->select('death_causes.id as id', 'death_causes.name as name', DB::raw('COUNT(deaths.id) as total'))
+            ->groupBy('death_causes.id', 'death_causes.name')
             ->orderByDesc('total');
         $applyFilters($query);
         $causas = $query->get();
@@ -821,6 +864,11 @@ class StatisticsController extends Controller
             'type' => 'causas',
             'labels' => $causas->pluck('name')->map(fn($v) => $v ? CatalogLabel::cause($v) : 'Sin dato')->values()->all(),
             'counts' => $causas->pluck('total')->map(fn($v) => (int)$v)->values()->all(),
+            'drilldown' => $causas->map(fn ($cause) => [
+                'label' => CatalogLabel::cause($cause->name),
+                'filter_key' => 'cause_ids',
+                'filter_value' => (int) $cause->id,
+            ])->values()->all(),
             'displayed_total' => array_sum($causas->pluck('total')->all()),
             'available_categories' => $availableCategories,
             'ranking_label' => 'causas',
@@ -839,8 +887,8 @@ class StatisticsController extends Controller
 
         $query = DB::table('deaths')
             ->leftJoin('districts', 'districts.id', '=', "deaths.{$districtColumn}")
-            ->select('districts.name as name', DB::raw('COUNT(deaths.id) as total'))
-            ->groupBy('districts.name')
+            ->select('districts.id as id', 'districts.name as name', DB::raw('COUNT(deaths.id) as total'))
+            ->groupBy('districts.id', 'districts.name')
             ->orderByDesc('total');
         $applyFilters($query);
         $districts = $query->get();
@@ -851,6 +899,11 @@ class StatisticsController extends Controller
             'type' => 'jurisdicciones',
             'labels' => $districts->pluck('name')->map(fn($v) => $v ? CatalogLabel::district($v) : 'Sin dato')->values()->all(),
             'counts' => $districts->pluck('total')->map(fn($v) => (int)$v)->values()->all(),
+            'drilldown' => $districts->map(fn ($district) => [
+                'label' => CatalogLabel::district($district->name),
+                'filter_key' => $districtColumn === 'district_id' ? 'district_ids' : 'death_district_ids',
+                'filter_value' => (int) $district->id,
+            ])->values()->all(),
             'displayed_total' => array_sum($districts->pluck('total')->all()),
             'available_categories' => $availableCategories,
             'ranking_label' => 'distritos',
@@ -878,6 +931,11 @@ class StatisticsController extends Controller
             'type' => 'lugares',
             'labels' => $locations->pluck('name')->map(fn ($value) => CatalogLabel::location($value))->values()->all(),
             'counts' => $locations->pluck('total')->map(fn ($value) => (int) $value)->values()->all(),
+            'drilldown' => $locations->map(fn ($location) => [
+                'label' => CatalogLabel::location($location->name),
+                'filter_key' => 'death_location_ids',
+                'filter_value' => (int) $location->id,
+            ])->values()->all(),
             'displayed_total' => array_sum($locations->pluck('total')->all()),
             'available_categories' => $availableCategories,
             'ranking_label' => 'lugares',

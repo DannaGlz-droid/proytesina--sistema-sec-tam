@@ -228,7 +228,39 @@ it('offers and applies origin filters to chart records', function (): void {
 it('filters chart data by an exact age range or age list', function (): void {
     expect(statisticsChartResponse('municipios', ['age' => '22'])['filtered_total'])->toBe(1)
         ->and(statisticsChartResponse('municipios', ['age' => '20-35'])['filtered_total'])->toBe(2)
-        ->and(statisticsChartResponse('municipios', ['age' => '10,46'])['filtered_total'])->toBe(2);
+        ->and(statisticsChartResponse('municipios', ['age' => '10,46'])['filtered_total'])->toBe(2)
+        ->and(statisticsChartResponse('municipios', ['age' => '65+'])['filtered_total'])->toBe(1);
+});
+
+it('returns exact table filters for drilldown-enabled chart categories', function (): void {
+    $municipalities = statisticsChartResponse('municipios');
+    $causes = statisticsChartResponse('causas');
+    $locations = statisticsChartResponse('lugares');
+    $gender = statisticsChartResponse('genero');
+    $ages = statisticsChartResponse('edades');
+
+    expect($municipalities['drilldown'][0])->toMatchArray([
+        'filter_key' => 'death_municipality_ids',
+        'filter_value' => $this->municipalityB->id,
+    ])->and($causes['drilldown'][0])->toMatchArray([
+        'filter_key' => 'cause_ids',
+        'filter_value' => $this->causeA->id,
+    ])->and($locations['drilldown'][0])->toMatchArray([
+        'filter_key' => 'death_location_ids',
+        'filter_value' => $this->locationA->id,
+    ])->and($gender['drilldown'][0])->toMatchArray([
+        'label' => 'Masculino',
+        'filter_key' => 'sex',
+        'filter_value' => 'M',
+    ])->and(collect($ages['drilldown'])->pluck('filter_value'))->toContain('5-19', '20-64', '65+');
+
+    $service = app(DeathFilterService::class);
+    $locationQuery = Death::query();
+    $service->apply($locationQuery, $service->normalize([
+        'death_location_ids' => [$this->locationB->id],
+    ]));
+
+    expect($locationQuery->count())->toBe(2);
 });
 
 it('accepts the supported filter combinations in every chart metric', function (): void {
@@ -367,13 +399,27 @@ it('ships the complete Tamaulipas municipality geometry for the choropleth map',
 });
 
 it('groups trends by day month and year without changing the filtered total', function (): void {
+    $expectedRanges = [
+        'day' => ['2026-01-01', '2026-01-01'],
+        'month' => ['2026-01-01', '2026-01-31'],
+        'year' => ['2026-01-01', '2026-12-31'],
+    ];
+
     foreach (['day', 'month', 'year'] as $groupBy) {
         $data = statisticsChartResponse('tendencias', ['group_by' => $groupBy]);
 
         expect($data['group_by'])->toBe($groupBy)
             ->and($data['filtered_total'])->toBe(6)
             ->and(array_sum($data['counts']))->toBe(6)
-            ->and($data['labels'])->not->toBeEmpty();
+            ->and($data['labels'])->not->toBeEmpty()
+            ->and($data['drilldown'])->toHaveCount(count($data['labels']))
+            ->and($data['drilldown'][0]['label'])->toBe($data['labels'][0])
+            ->and($data['drilldown'][0]['filter_params'])->toBe([
+                'start_date' => $expectedRanges[$groupBy][0],
+                'end_date' => $expectedRanges[$groupBy][1],
+            ])
+            ->and($data['drilldown'][0]['clear_params'])->toBe(['all_time', 'years', 'months'])
+            ->and($data['drilldown'][0]['show_percentage'])->toBeFalse();
     }
 });
 

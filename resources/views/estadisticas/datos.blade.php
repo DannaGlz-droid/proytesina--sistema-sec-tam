@@ -53,7 +53,7 @@
                                         @endif
                                     </p>
                                     @unless($isExcludedReview)
-                                        <span class="statistics-analysis-context__count">
+                                        <span id="statistics-analysis-count" class="statistics-analysis-context__count">
                                             {{ number_format($analysisCount) }} {{ $analysisCount === 1 ? 'registro' : 'registros' }}
                                         </span>
                                     @endunless
@@ -720,8 +720,41 @@ document.addEventListener('DOMContentLoaded', function () {
     const deathsTableBody = document.querySelector('#deaths-table tbody');
     const deathsStatus = document.getElementById('statistics-table-status');
     const deathsSearchControl = document.getElementById('dt-search-deaths')?.closest('.users-filter-search');
+    const analysisRecordCount = document.getElementById('statistics-analysis-count');
     let deathsHasDrawn = false;
     let deathsRefreshTimer = null;
+    let settledAnalysisCountText = analysisRecordCount?.textContent.trim() || '';
+    let originRefreshSequence = 0;
+
+    function setAnalysisCountLoading() {
+        if (!analysisRecordCount) return;
+        analysisRecordCount.classList.add('is-updating');
+        analysisRecordCount.textContent = 'Actualizando…';
+    }
+
+    function settleAnalysisCount(total, originLabel = '') {
+        if (!analysisRecordCount) return;
+        if (total === null || total === undefined || total === '') {
+            analysisRecordCount.textContent = settledAnalysisCountText;
+            analysisRecordCount.classList.remove('is-updating');
+            return;
+        }
+        const numericTotal = Number(total);
+        if (!Number.isFinite(numericTotal)) {
+            analysisRecordCount.textContent = settledAnalysisCountText;
+            analysisRecordCount.classList.remove('is-updating');
+            return;
+        }
+
+        const formattedTotal = new Intl.NumberFormat('es-MX').format(numericTotal);
+        settledAnalysisCountText = `${formattedTotal} ${numericTotal === 1 ? 'registro' : 'registros'}`;
+        analysisRecordCount.textContent = settledAnalysisCountText;
+        analysisRecordCount.classList.remove('is-updating');
+
+        if (deathsStatus && originLabel) {
+            deathsStatus.textContent = `${settledAnalysisCountText} de ${originLabel}`;
+        }
+    }
 
     function setDeathsRefreshing(refreshing, message = '') {
         window.clearTimeout(deathsRefreshTimer);
@@ -772,6 +805,7 @@ document.addEventListener('DOMContentLoaded', function () {
             },
             error: function(xhr, error, thrown) {
                 console.error('DataTables AJAX error:', error, thrown);
+                settleAnalysisCount(null);
                 setDeathsRefreshing(false, 'No se pudieron cargar los datos');
                 deathsSearchControl?.classList.remove('is-searching');
                 document.getElementById('dt-search-deaths')?.setAttribute('aria-busy', 'false');
@@ -833,8 +867,23 @@ document.addEventListener('DOMContentLoaded', function () {
 
     const statisticsOriginFilter = document.getElementById('statistics-origin-filter');
 
+    function bindStatisticsOriginMenu(instance) {
+        if (!instance || instance.__statisticsToolbarMenuBound) return;
+
+        instance.__statisticsToolbarMenuBound = true;
+        instance.on('dropdown_open', () => {
+            document.dispatchEvent(new CustomEvent('statistics-toolbar-menu-open', {
+                detail: { source: 'origin' },
+            }));
+        });
+    }
+
     function initializeStatisticsOriginSelect() {
-        if (!statisticsOriginFilter || statisticsOriginFilter.tomselect) return true;
+        if (!statisticsOriginFilter) return false;
+        if (statisticsOriginFilter.tomselect) {
+            bindStatisticsOriginMenu(statisticsOriginFilter.tomselect);
+            return true;
+        }
         if (!window.AppFilterSelect) return false;
         const originIsSearchable = statisticsOriginFilter.options.length > 8;
         const originMetadata = new Map(Array.from(statisticsOriginFilter.options).map((option) => [
@@ -867,6 +916,7 @@ document.addEventListener('DOMContentLoaded', function () {
         });
 
         instance?.wrapper.classList.add('statistics-origin-tom-select');
+        bindStatisticsOriginMenu(instance);
         return Boolean(instance);
     }
 
@@ -881,7 +931,17 @@ document.addEventListener('DOMContentLoaded', function () {
         }, 100);
     }
 
+    document.addEventListener('statistics-toolbar-menu-open', event => {
+        if (event.detail?.source !== 'origin') {
+            statisticsOriginFilter?.tomselect?.close();
+        }
+    });
+
     statisticsOriginFilter?.addEventListener('change', function() {
+        const refreshSequence = ++originRefreshSequence;
+        const selectedOption = this.options[this.selectedIndex];
+        const selectedOriginLabel = selectedOption?.dataset.shortLabel || selectedOption?.text?.trim() || 'origen seleccionado';
+
         if (this.value) filterData.origin = this.value;
         else delete filterData.origin;
 
@@ -897,7 +957,11 @@ document.addEventListener('DOMContentLoaded', function () {
         if (csvAction) csvAction.href = `{{ route('statistic.export') }}?${csvParams.toString()}`;
 
         clearVisibleDeathSelection();
-        window.deathsTable.ajax.reload();
+        setAnalysisCountLoading();
+        window.deathsTable.ajax.reload(function(json) {
+            if (refreshSequence !== originRefreshSequence) return;
+            settleAnalysisCount(json?.recordsFiltered, selectedOriginLabel);
+        });
     });
 
     // Ensure button state is correct after initialization

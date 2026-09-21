@@ -155,6 +155,8 @@ document.addEventListener('DOMContentLoaded', function () {
     const form = document.getElementById('filters-form');
     const panel = document.getElementById('deathsFilterPanel');
     const toggle = document.getElementById('deathsFilterToggle');
+    const pageButton = document.getElementById('dt-per-page-deaths-button');
+    const pageMenu = document.getElementById('dt-per-page-deaths-menu');
     if (!form || !panel || !toggle) return;
 
     const getControl = (name) => form.querySelector(`[name="${name}"]`);
@@ -167,12 +169,36 @@ document.addEventListener('DOMContentLoaded', function () {
         toggle.setAttribute('aria-expanded', String(open));
     }
 
-    toggle.addEventListener('click', () => setPanel(panel.classList.contains('is-collapsed')));
+    function closePageMenu() {
+        pageMenu?.classList.add('hidden');
+        pageButton?.setAttribute('aria-expanded', 'false');
+    }
+
+    function announceToolbarMenu(source) {
+        document.dispatchEvent(new CustomEvent('statistics-toolbar-menu-open', {
+            detail: { source },
+        }));
+    }
+
+    document.addEventListener('statistics-toolbar-menu-open', event => {
+        if (event.detail?.source !== 'filters') setPanel(false);
+        if (event.detail?.source !== 'page-size') closePageMenu();
+    });
+
+    toggle.addEventListener('click', () => {
+        const open = panel.classList.contains('is-collapsed');
+        if (open) announceToolbarMenu('filters');
+        setPanel(open);
+    });
     document.getElementById('closeDeathsFilters')?.addEventListener('click', () => setPanel(false));
     document.addEventListener('click', event => {
         if (!event.target.closest('.users-filter-popover-wrap')) setPanel(false);
     });
-    document.addEventListener('keydown', event => { if (event.key === 'Escape') setPanel(false); });
+    document.addEventListener('keydown', event => {
+        if (event.key !== 'Escape') return;
+        setPanel(false);
+        closePageMenu();
+    });
 
     form.querySelectorAll('[data-filter-section]').forEach(section => {
         section.querySelector('[data-filter-section-toggle]')?.addEventListener('click', function () {
@@ -322,11 +348,11 @@ document.addEventListener('DOMContentLoaded', function () {
         form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
     });
 
-    const pageButton = document.getElementById('dt-per-page-deaths-button');
-    const pageMenu = document.getElementById('dt-per-page-deaths-menu');
     pageButton?.addEventListener('click', event => {
         event.stopPropagation();
-        const open = pageMenu.classList.toggle('hidden') === false;
+        const open = pageMenu.classList.contains('hidden');
+        if (open) announceToolbarMenu('page-size');
+        pageMenu.classList.toggle('hidden', !open);
         pageButton.setAttribute('aria-expanded', String(open));
     });
     pageMenu?.addEventListener('click', event => {
@@ -337,13 +363,11 @@ document.addEventListener('DOMContentLoaded', function () {
         document.getElementById('dt-per-page-deaths-label').textContent = value;
         pageMenu.querySelectorAll('.users-page-size-option').forEach(item => item.classList.toggle('is-active', item === option));
         document.getElementById('dt-per-page-deaths').dispatchEvent(new Event('change', { bubbles: true }));
-        pageMenu.classList.add('hidden');
-        pageButton.setAttribute('aria-expanded', 'false');
+        closePageMenu();
     });
     document.addEventListener('click', event => {
         if (!event.target.closest('.users-page-size-dropdown')) {
-            pageMenu?.classList.add('hidden');
-            pageButton?.setAttribute('aria-expanded', 'false');
+            closePageMenu();
         }
     });
 
