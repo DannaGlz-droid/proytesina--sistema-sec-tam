@@ -243,9 +243,9 @@
                                 <fieldset id="statisticsDataLabelGroup" class="statistics-display-group">
                                     <legend id="statisticsDataLabelLegend">Etiquetas de datos</legend>
                                     <select id="datalabelMode" class="hidden" aria-hidden="true" tabindex="-1">
-                                        <option value="value">Valor</option>
+                                        <option value="value">Cantidad</option>
                                         <option value="percent">Porcentaje</option>
-                                        <option value="both">Valor y porcentaje</option>
+                                        <option value="both">Cantidad y porcentaje</option>
                                         <option value="none">Sin etiquetas</option>
                                     </select>
                                     <div id="dataLabelButtons" class="statistics-visual-options" role="group" aria-labelledby="statisticsDataLabelLegend"></div>
@@ -307,79 +307,90 @@
                         <!-- Gráfica Principal -->
                         <section id="statisticsChartPanel" class="statistics-chart-panel" aria-labelledby="chartTitle" role="tabpanel">
                             <header class="statistics-chart-header">
-                                <div class="statistics-chart-heading">
-                                    <div class="statistics-chart-heading__main">
+                                <div class="statistics-chart-header__top">
+                                    <div class="statistics-chart-heading">
                                         <h2 id="chartTitle">Cargando...</h2>
-                                        <div id="chartTotalBadge" class="statistics-chart-total">
-                                            <span>Total analizado</span>
-                                            <span id="chartTotalValue">0</span>
+                                    </div>
+                                    <div class="statistics-download" id="downloadMenuWrapper">
+                                        <a id="statisticsViewData" class="statistics-view-data" href="#" aria-disabled="true">
+                                            <i class="fas fa-table-list" aria-hidden="true"></i>
+                                            Ver datos
+                                        </a>
+                                        <button type="button" id="statisticsCopyLink" class="statistics-copy-link" title="Copiar enlace de esta vista">
+                                            <i class="fas fa-link" aria-hidden="true"></i>
+                                            <span id="statisticsCopyLinkLabel" aria-live="polite">Copiar enlace</span>
+                                        </button>
+                                        <div class="statistics-download__group">
+                                            <button type="button" class="statistics-download__primary" id="descargarActual" aria-label="Descargar gráfica en PNG con fondo blanco">
+                                                <i class="fas fa-download" aria-hidden="true"></i>
+                                                Descargar gráfica
+                                            </button>
+                                            <button type="button" class="statistics-download__toggle" id="descargarOpciones" aria-label="Abrir opciones de descarga" aria-expanded="false" aria-controls="downloadMenu">
+                                                <i class="fas fa-chevron-down" aria-hidden="true"></i>
+                                            </button>
+                                        </div>
+                                        <div id="downloadMenu" class="statistics-download-menu hidden" role="group" aria-label="Opciones de descarga">
+                                            <label class="statistics-download-context-option">
+                                                <input type="checkbox" id="includeChartContext" class="statistics-system-checkbox" checked>
+                                                <span>
+                                                    <strong>Incluir contexto</strong>
+                                                    <small>Para PNG y PDF: título, periodo y total</small>
+                                                </span>
+                                            </label>
+                                            <button type="button" class="download-option" data-export="png-transparent">
+                                                <i class="fas fa-image" aria-hidden="true"></i>
+                                                PNG (transparente)
+                                            </button>
+                                            <button type="button" class="download-option" data-export="png-white">
+                                                <i class="fas fa-image" aria-hidden="true"></i>
+                                                PNG (fondo blanco)
+                                            </button>
+                                            <button type="button" class="download-option" data-export="pdf">
+                                                <i class="fas fa-file-pdf" aria-hidden="true"></i>
+                                                PDF
+                                            </button>
+                                            <button type="button" class="download-option" data-export="csv">
+                                                <i class="fas fa-file-csv" aria-hidden="true"></i>
+                                                Datos en CSV
+                                            </button>
                                         </div>
                                     </div>
-                                    <div class="statistics-chart-subheading">
-                                        <div id="statisticsComparisonControl" class="statistics-comparison-control hidden">
-                                            <label for="tipoComparativaFilter">Comparar</label>
-                                            <select id="tipoComparativaFilter" aria-label="Seleccionar comparativa">
-                                                <option value="residencia-defuncion">Municipio de residencia vs. municipio de defunción</option>
-                                                <option value="distrito-residencia-defuncion">Distrito de residencia vs. distrito de defunción</option>
-                                                <option value="genero-causa">Sexo por causa</option>
-                                                <option value="edad-causa">Rango etario por causa</option>
-                                                <option value="lugar-causa">Lugar de defunción por causa</option>
-                                                <option value="lugar-municipio">Lugar de defunción por municipio</option>
-                                            </select>
+                                </div>
+
+                                <div id="statisticsChartContextRow" class="statistics-chart-context-row">
+                                    <div id="statisticsComparisonControl" class="statistics-comparison-control hidden">
+                                        <label for="tipoComparativaFilter">Comparar dimensiones</label>
+                                        <select id="tipoComparativaFilter" aria-label="Seleccionar comparativa">
+                                            <option value="residencia-defuncion">Municipio de residencia vs. municipio de defunción</option>
+                                            <option value="distrito-residencia-defuncion">Distrito de residencia vs. distrito de defunción</option>
+                                            <option value="genero-causa">Sexo por causa</option>
+                                            <option value="edad-causa">Rango etario por causa</option>
+                                            <option value="lugar-causa">Lugar de defunción por causa</option>
+                                            <option value="lugar-municipio">Lugar de defunción por municipio</option>
+                                        </select>
+                                    </div>
+
+                                    <div id="statisticsChartContext" class="statistics-chart-context hidden" aria-live="polite">
+                                        <div id="chartTotalBadge" class="statistics-chart-context__item statistics-chart-total">
+                                            <span class="statistics-chart-context__label">Total analizado</span>
+                                            <strong id="chartTotalValue" class="statistics-chart-context__value">0</strong>
                                         </div>
-                                        <div id="statisticsChartContext" class="statistics-chart-context hidden" aria-live="polite">
-                                            <span id="statisticsChartPeriod"></span>
-                                            <span id="statisticsChartCoverage" class="hidden"></span>
-                                            <span id="statisticsChartQuality" class="statistics-chart-quality hidden">
+                                        <div id="statisticsChartPeriod" class="statistics-chart-context__item hidden">
+                                            <span class="statistics-chart-context__label">Periodo</span>
+                                            <span id="statisticsChartPeriodValue" class="statistics-chart-context__value"></span>
+                                        </div>
+                                        <div id="statisticsChartCoverage" class="statistics-chart-context__item statistics-chart-context__item--wide hidden">
+                                            <span class="statistics-chart-context__label">Alcance</span>
+                                            <span id="statisticsChartCoverageText" class="statistics-chart-context__value"></span>
+                                        </div>
+                                        <div id="statisticsChartQuality" class="statistics-chart-context__item statistics-chart-quality hidden">
+                                            <span class="statistics-chart-context__label">Calidad</span>
+                                            <span class="statistics-chart-context__value">
                                                 <i class="fas fa-triangle-exclamation" aria-hidden="true"></i>
                                                 <span id="statisticsChartQualityText"></span>
                                                 <a id="statisticsReviewExcluded" href="#">Revisar</a>
                                             </span>
                                         </div>
-                                    </div>
-                                </div>
-                                <div class="statistics-download" id="downloadMenuWrapper">
-                                    <a id="statisticsViewData" class="statistics-view-data" href="#" aria-disabled="true">
-                                        <i class="fas fa-table-list" aria-hidden="true"></i>
-                                        Ver datos
-                                    </a>
-                                    <button type="button" id="statisticsCopyLink" class="statistics-copy-link" title="Copiar enlace de esta vista">
-                                        <i class="fas fa-link" aria-hidden="true"></i>
-                                        <span id="statisticsCopyLinkLabel" aria-live="polite">Copiar enlace</span>
-                                    </button>
-                                    <div class="statistics-download__group">
-                                        <button type="button" class="statistics-download__primary" id="descargarActual" aria-label="Descargar gráfica en PNG con fondo blanco">
-                                            <i class="fas fa-download" aria-hidden="true"></i>
-                                            Descargar gráfica
-                                        </button>
-                                        <button type="button" class="statistics-download__toggle" id="descargarOpciones" aria-label="Abrir opciones de descarga" aria-expanded="false" aria-controls="downloadMenu">
-                                            <i class="fas fa-chevron-down" aria-hidden="true"></i>
-                                        </button>
-                                    </div>
-                                    <div id="downloadMenu" class="statistics-download-menu hidden" role="group" aria-label="Opciones de descarga">
-                                        <label class="statistics-download-context-option">
-                                            <input type="checkbox" id="includeChartContext" class="statistics-system-checkbox" checked>
-                                            <span>
-                                                <strong>Incluir contexto</strong>
-                                                <small>Para PNG y PDF: título, periodo y total</small>
-                                            </span>
-                                        </label>
-                                        <button type="button" class="download-option" data-export="png-transparent">
-                                            <i class="fas fa-image" aria-hidden="true"></i>
-                                            PNG (transparente)
-                                        </button>
-                                        <button type="button" class="download-option" data-export="png-white">
-                                            <i class="fas fa-image" aria-hidden="true"></i>
-                                            PNG (fondo blanco)
-                                        </button>
-                                        <button type="button" class="download-option" data-export="pdf">
-                                            <i class="fas fa-file-pdf" aria-hidden="true"></i>
-                                            PDF
-                                        </button>
-                                        <button type="button" class="download-option" data-export="csv">
-                                            <i class="fas fa-file-csv" aria-hidden="true"></i>
-                                            Datos en CSV
-                                        </button>
                                     </div>
                                 </div>
                             </header>
@@ -421,6 +432,27 @@
                                     <div>
                                         <h3 id="statistics-causes-title">Causas principales por grupo de edad</h3>
                                         <p>Las tres causas con más registros dentro de cada grupo.</p>
+                                    </div>
+                                    <div id="ageCausesDownloadWrapper" class="statistics-table-download">
+                                        <div class="statistics-download__group">
+                                            <button type="button" id="downloadAgeCausesTable" class="statistics-download__primary" aria-label="Descargar tabla en PNG con fondo blanco">
+                                                <i class="fas fa-download" aria-hidden="true"></i>
+                                                Descargar tabla
+                                            </button>
+                                            <button type="button" id="downloadAgeCausesOptions" class="statistics-download__toggle" aria-label="Abrir opciones de descarga de la tabla" aria-expanded="false" aria-controls="ageCausesDownloadMenu">
+                                                <i class="fas fa-chevron-down" aria-hidden="true"></i>
+                                            </button>
+                                        </div>
+                                        <div id="ageCausesDownloadMenu" class="statistics-download-menu hidden" role="group" aria-label="Opciones de descarga de la tabla">
+                                            <button type="button" class="download-option" data-table-export="png">
+                                                <i class="fas fa-image" aria-hidden="true"></i>
+                                                PNG (fondo blanco)
+                                            </button>
+                                            <button type="button" class="download-option" data-table-export="pdf">
+                                                <i class="fas fa-file-pdf" aria-hidden="true"></i>
+                                                PDF
+                                            </button>
+                                        </div>
                                     </div>
                                 </header>
                                 <div class="statistics-causes__list">
@@ -477,6 +509,7 @@
         let currentEchartsInstance = null;
         let latestChartData = null;
         let latestChartDataType = null;
+        let chartViewportResizeFrame = null;
         let activeChartDrilldown = null;
         let chartDrilldownHighlightFrame = null;
         let chartRequestController = null;
@@ -489,6 +522,7 @@
         const chartPrefetchRequests = new Map();
         const chartLoadingDelay = 160;
         const chartDataEndpoint = @json(route('api.chart.data'));
+        const chartContextPreferenceStorageKey = @json('statistics:downloads:include-context:v1:user:'.(auth()->id() ?? 'guest'));
         const tamaulipasMapName = 'tamaulipas-municipios';
         const tamaulipasMapUrl = @json(asset('data/tamaulipas-municipios.geojson').'?v='.filemtime(public_path('data/tamaulipas-municipios.geojson')));
         let tamaulipasMapPromise = null;
@@ -901,9 +935,9 @@
         };
 
         const dataLabelModeLabels = {
-            value: 'Valor',
+            value: 'Cantidad',
             percent: 'Porcentaje',
-            both: 'Valor y porcentaje',
+            both: 'Cantidad y porcentaje',
             none: 'Sin etiquetas'
         };
 
@@ -1149,6 +1183,7 @@
             renderChartTypeButtons('municipios');
             renderDataLabelButtons('municipios');
             renderChartLimitButtons('municipios');
+            initializeChartContextPreference();
             
             initializeEventListeners();
             if (sharedState) {
@@ -1523,12 +1558,17 @@
                     });
                 });
                 chartResizeObserver.observe(chartCanvas);
-            } else {
-                window.addEventListener('resize', () => {
+            }
+
+            window.addEventListener('resize', () => {
+                if (chartViewportResizeFrame) window.cancelAnimationFrame(chartViewportResizeFrame);
+                chartViewportResizeFrame = window.requestAnimationFrame(() => {
+                    applyChartViewportHeight();
                     currentEchartsInstance?.resize();
                     if (activeChartDrilldown) positionChartDrilldown(activeChartDrilldown);
+                    positionChartLimitIndicator({ immediate: true });
                 });
-            }
+            });
 
             document.getElementById('dateRange').addEventListener('change', function() {
                 onDateRangeChange();
@@ -1664,6 +1704,7 @@
                 if (!paletteMenu || !paletteToggle) return;
                 paletteMenu.classList.add('hidden');
                 paletteMenu.classList.remove('opens-up');
+                paletteMenu.classList.remove('is-scrollable');
                 paletteMenu.style.removeProperty('max-height');
                 paletteToggle.setAttribute('aria-expanded', 'false');
             };
@@ -1673,17 +1714,25 @@
 
                 const viewportEdge = 12;
                 const menuGap = 6;
-                const maximumHeight = 416;
                 const triggerRect = paletteToggle.getBoundingClientRect();
+                const metricNavRect = document.querySelector('.statistics-metric-nav')?.getBoundingClientRect();
+                const upperBoundary = Math.max(
+                    viewportEdge,
+                    metricNavRect ? metricNavRect.bottom + 8 : viewportEdge
+                );
                 const spaceBelow = Math.max(0, window.innerHeight - triggerRect.bottom - viewportEdge);
-                const spaceAbove = Math.max(0, triggerRect.top - viewportEdge);
+                const spaceAbove = Math.max(0, triggerRect.top - upperBoundary);
 
-                const desiredHeight = Math.min(paletteMenu.scrollHeight + 2, maximumHeight);
-                const opensUp = spaceBelow < desiredHeight && spaceAbove > spaceBelow;
+                const desiredHeight = paletteMenu.scrollHeight + 2;
+                const fitsBelow = spaceBelow >= desiredHeight + menuGap;
+                const fitsAbove = spaceAbove >= desiredHeight + menuGap;
+                const opensUp = !fitsBelow && (fitsAbove || spaceAbove > spaceBelow);
                 const availableHeight = Math.max(96, (opensUp ? spaceAbove : spaceBelow) - menuGap);
+                const resolvedHeight = Math.min(desiredHeight, availableHeight);
 
                 paletteMenu.classList.toggle('opens-up', opensUp);
-                paletteMenu.style.maxHeight = `${Math.min(desiredHeight, availableHeight)}px`;
+                paletteMenu.classList.toggle('is-scrollable', desiredHeight > resolvedHeight + 1);
+                paletteMenu.style.maxHeight = `${resolvedHeight}px`;
             };
 
             if (paletteToggle && paletteMenu) {
@@ -1796,7 +1845,7 @@
                     });
                 }
 
-                document.querySelectorAll('.download-option').forEach(option => {
+                downloadMenu.querySelectorAll('.download-option').forEach(option => {
                     option.addEventListener('click', async function() {
                         const exportType = this.dataset.export;
                         setDownloadMenuOpen(false);
@@ -1817,6 +1866,55 @@
                 document.addEventListener('keydown', function(event) {
                     if (event.key !== 'Escape' || downloadMenu.classList.contains('hidden')) return;
                     setDownloadMenuOpen(false, { restoreFocus: true });
+                });
+            }
+
+            const ageTableDownloadWrapper = document.getElementById('ageCausesDownloadWrapper');
+            const ageTableDownloadMenu = document.getElementById('ageCausesDownloadMenu');
+            const ageTableDownloadButton = document.getElementById('downloadAgeCausesTable');
+            const ageTableDownloadToggle = document.getElementById('downloadAgeCausesOptions');
+            const setAgeTableDownloadMenuOpen = (open, { restoreFocus = false } = {}) => {
+                if (!ageTableDownloadMenu || !ageTableDownloadToggle) return;
+                ageTableDownloadMenu.classList.toggle('hidden', !open);
+                ageTableDownloadToggle.setAttribute('aria-expanded', String(open));
+                ageTableDownloadToggle.setAttribute(
+                    'aria-label',
+                    open
+                        ? 'Cerrar opciones de descarga de la tabla'
+                        : 'Abrir opciones de descarga de la tabla'
+                );
+                if (restoreFocus) ageTableDownloadToggle.focus();
+            };
+
+            if (ageTableDownloadWrapper && ageTableDownloadMenu && ageTableDownloadButton && ageTableDownloadToggle) {
+                ageTableDownloadButton.addEventListener('click', async function(event) {
+                    event.stopPropagation();
+                    await exportAgeCausesTable('png');
+                });
+
+                ageTableDownloadToggle.addEventListener('click', function(event) {
+                    event.stopPropagation();
+                    const willOpen = ageTableDownloadMenu.classList.contains('hidden');
+                    setAgeTableDownloadMenuOpen(willOpen);
+                });
+
+                ageTableDownloadMenu.querySelectorAll('[data-table-export]').forEach(option => {
+                    option.addEventListener('click', async function() {
+                        const exportType = this.dataset.tableExport;
+                        setAgeTableDownloadMenuOpen(false);
+                        await exportAgeCausesTable(exportType);
+                    });
+                });
+
+                document.addEventListener('click', function(event) {
+                    if (!ageTableDownloadWrapper.contains(event.target)) {
+                        setAgeTableDownloadMenuOpen(false);
+                    }
+                });
+
+                document.addEventListener('keydown', function(event) {
+                    if (event.key !== 'Escape' || ageTableDownloadMenu.classList.contains('hidden')) return;
+                    setAgeTableDownloadMenuOpen(false, { restoreFocus: true });
                 });
             }
         }
@@ -1848,6 +1946,72 @@
             return document.getElementById('includeChartContext')?.checked !== false;
         }
 
+        function initializeChartContextPreference() {
+            const checkbox = document.getElementById('includeChartContext');
+            if (!checkbox) return;
+
+            try {
+                const storedPreference = window.localStorage.getItem(chartContextPreferenceStorageKey);
+                if (storedPreference === 'true' || storedPreference === 'false') {
+                    checkbox.checked = storedPreference === 'true';
+                }
+            } catch (error) {
+                // El valor inicial del HTML permanece activo si el navegador bloquea el almacenamiento.
+            }
+
+            checkbox.addEventListener('change', function() {
+                try {
+                    window.localStorage.setItem(
+                        chartContextPreferenceStorageKey,
+                        this.checked ? 'true' : 'false'
+                    );
+                } catch (error) {
+                    // La descarga sigue funcionando aunque la preferencia no pueda persistirse.
+                }
+            });
+        }
+
+        async function withChartExportDimensions(callback) {
+            const chartElement = document.getElementById('mainChart');
+            const chartWrapper = chartElement?.closest('.statistics-chart-canvas');
+            const chartInstance = currentEchartsInstance;
+            if (!chartElement || !chartWrapper || !chartInstance) return callback(null);
+
+            const originalWidth = chartInstance.getWidth();
+            const originalHeight = chartInstance.getHeight();
+            const exportHeight = Number(chartWrapper.dataset.exportHeight || originalHeight);
+            const exportWidth = Math.max(1, chartElement.clientWidth || originalWidth);
+            const needsResize = Math.abs(exportHeight - originalHeight) > 1
+                || Math.abs(exportWidth - originalWidth) > 1;
+
+            const waitForRender = () => new Promise(resolve => {
+                window.requestAnimationFrame(() => window.requestAnimationFrame(resolve));
+            });
+
+            try {
+                if (needsResize) {
+                    chartInstance.resize({
+                        width: exportWidth,
+                        height: exportHeight,
+                        silent: true,
+                        animation: { duration: 0 }
+                    });
+                    await waitForRender();
+                }
+                return await callback(exportHeight);
+            } finally {
+                if (needsResize && currentEchartsInstance === chartInstance) {
+                    chartInstance.resize({
+                        width: originalWidth,
+                        height: originalHeight,
+                        silent: true,
+                        animation: { duration: 0 }
+                    });
+                    if (activeChartDrilldown) positionChartDrilldown(activeChartDrilldown);
+                }
+            }
+        }
+
         function wrapCanvasText(context, value, maxWidth) {
             const words = String(value || '').trim().split(/\s+/).filter(Boolean);
             if (!words.length) return [];
@@ -1874,23 +2038,15 @@
             const padding = 22 * scale;
             const accentOffset = 11 * scale;
             const maxTextWidth = chartCanvas.width - (padding * 2) - accentOffset;
-            const title = document.getElementById('chartTitle')?.textContent?.trim() || 'Estadísticas';
+            const title = getExportChartTitle();
             const total = Number(latestChartData?.filtered_total ?? latestChartData?.total ?? 0).toLocaleString('es-MX');
-            const periodElement = document.getElementById('statisticsChartPeriod');
-            const coverageElement = document.getElementById('statisticsChartCoverage');
-            const qualityElement = document.getElementById('statisticsChartQualityText');
+            const periodElement = document.getElementById('statisticsChartPeriodValue');
             const contextLines = [];
             const periodText = periodElement && !periodElement.classList.contains('hidden')
                 ? periodElement.textContent.trim()
                 : '';
 
-            contextLines.push(`${periodText ? `${periodText} · ` : ''}Total analizado: ${total}`);
-            if (coverageElement && !coverageElement.classList.contains('hidden') && coverageElement.textContent.trim()) {
-                contextLines.push(coverageElement.textContent.trim());
-            }
-            if (qualityElement?.textContent?.trim()) {
-                contextLines.push(`Nota: ${qualityElement.textContent.trim()}`);
-            }
+            contextLines.push(`Total analizado: ${total}${periodText ? ` · Periodo: ${periodText}` : ''}`);
 
             const measureCanvas = document.createElement('canvas');
             const measureContext = measureCanvas.getContext('2d');
@@ -2016,7 +2172,11 @@
             return croppedCanvas;
         }
 
-        async function captureChartAsCanvas(transparent = false, includeContext = shouldIncludeChartContext()) {
+        async function captureChartAsCanvas(
+            transparent = false,
+            includeContext = shouldIncludeChartContext(),
+            exportChartHeight = null
+        ) {
             if (currentChartType === 'edades' && chartConfig.ageDetailMode === 'causes' && typeof html2canvas !== 'undefined') {
                 const element = document.getElementById('mainChart')?.closest('.statistics-chart-panel');
                 if (!element) return null;
@@ -2028,10 +2188,12 @@
                 const chartCanvas = element.querySelector('.statistics-chart-canvas');
                 const source = element.querySelector('.statistics-chart-source');
                 const elementRect = element.getBoundingClientRect();
-                const chartCanvasHeight = chartCanvas?.getBoundingClientRect().height || 0;
-                const captureHeight = source
+                const visibleChartCanvasHeight = chartCanvas?.getBoundingClientRect().height || 0;
+                const chartCanvasHeight = Number(exportChartHeight || visibleChartCanvasHeight);
+                const exportHeightDelta = Math.max(0, chartCanvasHeight - visibleChartCanvasHeight);
+                const captureHeight = (source
                     ? Math.max(1, source.getBoundingClientRect().top - elementRect.top)
-                    : elementRect.height;
+                    : elementRect.height) + exportHeightDelta;
 
                 const capturedCanvas = await html2canvas(element, {
                     scale: 2,
@@ -2043,8 +2205,12 @@
                     onclone: async clonedDocument => {
                         const panel = clonedDocument.getElementById('statisticsChartPanel');
                         const header = panel?.querySelector('.statistics-chart-header');
+                        const clonedTitle = panel?.querySelector('#chartTitle');
+                        const clonedCoverage = panel?.querySelector('#statisticsChartCoverage');
+                        const clonedQuality = panel?.querySelector('#statisticsChartQuality');
                         const clonedSource = panel?.querySelector('.statistics-chart-source');
                         const actions = panel?.querySelector('.statistics-download');
+                        const tableActions = panel?.querySelector('.statistics-table-download');
                         const drilldown = panel?.querySelector('.statistics-drilldown');
                         const clonedChartCanvas = panel?.querySelector('.statistics-chart-canvas');
                         const causesColumnHeaders = panel?.querySelectorAll('.statistics-causes__columns span') || [];
@@ -2064,9 +2230,13 @@
                         }
                         // Ocultar sin retirar del flujo evita que la copia cambie su geometría.
                         if (actions) actions.style.visibility = 'hidden';
+                        if (tableActions) tableActions.style.visibility = 'hidden';
                         if (drilldown) drilldown.style.display = 'none';
                         if (clonedSource) clonedSource.style.visibility = 'hidden';
                         if (header && !includeContext) header.style.display = 'none';
+                        if (includeContext && clonedTitle) clonedTitle.textContent = getExportChartTitle();
+                        if (clonedCoverage) clonedCoverage.style.display = 'none';
+                        if (clonedQuality) clonedQuality.style.display = 'none';
 
                         // html2canvas coloca la línea base de estos rótulos ligeramente más abajo
                         // que Chromium. La corrección es solo óptica y solo afecta al PNG/PDF.
@@ -2139,7 +2309,9 @@
             if (!currentEchartsInstance) return false;
 
             if (exportType === 'pdf') {
-                const canvas = await captureChartAsCanvas(false);
+                const canvas = await withChartExportDimensions(exportHeight =>
+                    captureChartAsCanvas(false, shouldIncludeChartContext(), exportHeight)
+                );
                 if (!canvas) return false;
 
                 const { jsPDF } = window.jspdf || {};
@@ -2160,7 +2332,9 @@
             }
 
             const transparent = exportType === 'png-transparent';
-            const canvas = await captureChartAsCanvas(transparent);
+            const canvas = await withChartExportDimensions(exportHeight =>
+                captureChartAsCanvas(transparent, shouldIncludeChartContext(), exportHeight)
+            );
             if (!canvas) return false;
 
             const link = document.createElement('a');
@@ -2168,6 +2342,94 @@
             link.download = getCurrentDownloadName('png');
             link.click();
             return true;
+        }
+
+        function getAgeCausesTableDownloadName(extension) {
+            return `estadisticas-edades-causas-${new Date().toISOString().split('T')[0]}.${extension}`;
+        }
+
+        async function captureAgeCausesTableAsCanvas() {
+            const section = document.getElementById('causasPrincipalesContainer');
+            if (!section || section.classList.contains('hidden') || typeof html2canvas === 'undefined') return null;
+
+            if (document.fonts?.ready) {
+                await document.fonts.ready;
+            }
+
+            const sectionRect = section.getBoundingClientRect();
+            const compactExportWidth = Math.min(sectionRect.width, 850);
+            return html2canvas(section, {
+                scale: 2,
+                useCORS: true,
+                backgroundColor: '#ffffff',
+                windowWidth: document.documentElement.clientWidth,
+                scrollX: window.scrollX,
+                scrollY: window.scrollY,
+                onclone: async clonedDocument => {
+                    const clonedSection = clonedDocument.getElementById('causasPrincipalesContainer');
+                    const clonedActions = clonedDocument.getElementById('ageCausesDownloadWrapper');
+                    const causesColumnHeaders = clonedSection?.querySelectorAll('.statistics-causes__columns span') || [];
+
+                    if (clonedSection && compactExportWidth) {
+                        const fixedWidth = `${compactExportWidth}px`;
+                        clonedSection.classList.add('statistics-causes--table-export');
+                        clonedSection.style.width = fixedWidth;
+                        clonedSection.style.minWidth = fixedWidth;
+                        clonedSection.style.maxWidth = fixedWidth;
+                        clonedSection.style.animation = 'none';
+                        clonedSection.style.transform = 'none';
+                        clonedSection.style.opacity = '1';
+                    }
+                    if (clonedActions) clonedActions.style.visibility = 'hidden';
+                    causesColumnHeaders.forEach(columnHeader => {
+                        columnHeader.style.position = 'relative';
+                        columnHeader.style.top = '-2px';
+                    });
+
+                    if (clonedDocument.fonts?.ready) {
+                        await clonedDocument.fonts.ready;
+                    }
+                }
+            });
+        }
+
+        async function exportAgeCausesTable(exportType = 'png') {
+            const wrapper = document.getElementById('ageCausesDownloadWrapper');
+            const controls = Array.from(wrapper?.querySelectorAll('button') || []);
+            controls.forEach(control => { control.disabled = true; });
+            wrapper?.setAttribute('aria-busy', 'true');
+
+            try {
+                const canvas = await captureAgeCausesTableAsCanvas();
+                if (!canvas) return false;
+
+                if (exportType === 'pdf') {
+                    const { jsPDF } = window.jspdf || {};
+                    if (!jsPDF) return false;
+
+                    const pdf = new jsPDF({ orientation: 'landscape', unit: 'pt', format: 'a4' });
+                    const pageWidth = pdf.internal.pageSize.getWidth();
+                    const pageHeight = pdf.internal.pageSize.getHeight();
+                    const ratio = Math.min((pageWidth - 40) / canvas.width, (pageHeight - 40) / canvas.height);
+                    const width = canvas.width * ratio;
+                    const height = canvas.height * ratio;
+                    const x = (pageWidth - width) / 2;
+                    const y = (pageHeight - height) / 2;
+
+                    pdf.addImage(canvas.toDataURL('image/png'), 'PNG', x, y, width, height);
+                    pdf.save(getAgeCausesTableDownloadName('pdf'));
+                    return true;
+                }
+
+                const link = document.createElement('a');
+                link.href = canvas.toDataURL('image/png');
+                link.download = getAgeCausesTableDownloadName('png');
+                link.click();
+                return true;
+            } finally {
+                controls.forEach(control => { control.disabled = false; });
+                wrapper?.removeAttribute('aria-busy');
+            }
         }
 
         window.exportStatisticsChart = exportCurrentChart;
@@ -2212,8 +2474,11 @@
             const allFilters = ['filterTipoMunicipio', 'filterMunicipios', 'filterCausas', 'filterdistritoes', 'filterSexo', 'filterEdad', 'filterGranularidad'];
             const availableFilters = getFiltersForChart(chartType);
 
+            const isComparison = chartType === 'comparativa';
             document.getElementById('statisticsComparisonControl')
-                ?.classList.toggle('hidden', chartType !== 'comparativa');
+                ?.classList.toggle('hidden', !isComparison);
+            document.getElementById('statisticsChartContextRow')
+                ?.classList.toggle('is-comparison', isComparison);
 
             allFilters.forEach(filterId => {
                 const element = document.getElementById(filterId);
@@ -2768,7 +3033,6 @@
                 map: 'Mapa por municipio',
                 heatmap: 'Mapa de calor comparativo'
             };
-
             container.className = `statistics-visual-options${isSingleType ? ' is-single' : ''}`;
 
             container.innerHTML = availableTypes.map(type => {
@@ -2792,10 +3056,10 @@
 
             const currentValue = select.value || chartConfig.dataLabelMode || 'value';
             let options = [
-                { value: 'value', label: 'Valor' },
-                { value: 'percent', label: 'Porcentaje' },
-                { value: 'both', label: 'Valor y %' },
-                { value: 'none', label: 'Sin etiquetas' }
+                { value: 'value', label: 'Cantidad', accessibleLabel: 'Mostrar cantidad' },
+                { value: 'percent', label: 'Porcentaje', accessibleLabel: 'Mostrar porcentaje' },
+                { value: 'both', label: 'Cantidad y %', accessibleLabel: 'Mostrar cantidad y porcentaje' },
+                { value: 'none', label: 'Sin etiquetas', accessibleLabel: 'No mostrar etiquetas de datos' }
             ];
 
             // Tendencias no dispone de un denominador categórico para porcentajes.
@@ -2810,7 +3074,7 @@
             container.innerHTML = options.map(option => {
                 const active = option.value === currentValue;
                 return `
-                    <button type="button" class="visual-option-btn visual-option-card ${isSingleOption ? 'is-compact-single' : ''} ${active ? 'active' : ''}" data-target="datalabelMode" data-value="${option.value}" aria-pressed="${active}">
+                    <button type="button" class="visual-option-btn visual-option-card ${isSingleOption ? 'is-compact-single' : ''} ${active ? 'active' : ''}" data-target="datalabelMode" data-value="${option.value}" aria-pressed="${active}" aria-label="${option.accessibleLabel}">
                         <i class="fas ${dataLabelIcons[option.value] || 'fa-circle'}" aria-hidden="true"></i>
                         <span class="visual-option-label">${option.label}</span>
                     </button>
@@ -2864,8 +3128,12 @@
             ];
 
             const isSingleOption = options.length === 1;
+            const indicatorWasReady = container.dataset.indicatorReady === 'true';
 
-            container.className = `statistics-visual-options${isSingleOption ? ' is-single' : ''}`;
+            container.className = `statistics-visual-options${isSingleOption ? ' is-single' : ''}${options.length >= 4 ? ' is-dense' : ''}`;
+            if (indicatorWasReady && !isSingleOption) {
+                container.classList.add('has-moving-indicator');
+            }
 
             container.innerHTML = options.map(option => {
                 const active = option.value === currentValue;
@@ -2877,6 +3145,10 @@
                 `;
             }).join('');
 
+            window.requestAnimationFrame(() => {
+                positionChartLimitIndicator({ immediate: !indicatorWasReady });
+            });
+
             const readabilityNote = document.getElementById('chartLimitReadabilityNote');
             const showAllAsBars = document.getElementById('statisticsShowAllAsBars');
             const hasManyCategories = knownCategoryCount !== null && availableCategoryCount > maximumVerticalCategories;
@@ -2887,9 +3159,7 @@
                 && chartType !== 'municipios';
             if (readabilityNote) {
                 let guidance = '';
-                if (visualFamily === 'comparison' && hasManyCategories) {
-                    guidance = `La comparativa muestra hasta ${effectiveLimit || maximumVerticalCategories} categorías. Consulta el universo completo en Ver datos.`;
-                } else if (canMoveToHorizontal) {
+                if (canMoveToHorizontal) {
                     guidance = `Columnas muestra hasta ${effectiveLimit || maximumVerticalCategories} categorías para evitar saturación.`;
                 }
                 readabilityNote.textContent = guidance;
@@ -2903,6 +3173,28 @@
             const showTopSelector = supportsTopSelector && options.length > 1;
             wrapper.style.display = showTopSelector ? '' : 'none';
             wrapper.parentElement?.classList.toggle('has-top-filter', showTopSelector);
+        }
+
+        function positionChartLimitIndicator({ immediate = false } = {}) {
+            const container = document.getElementById('chartLimitButtons');
+            const activeButton = container?.querySelector('.visual-option-btn.active');
+            if (!container || container.classList.contains('is-single') || !activeButton) {
+                container?.classList.remove('has-moving-indicator', 'is-positioning-indicator');
+                if (container) container.dataset.indicatorReady = 'false';
+                return;
+            }
+
+            if (immediate) container.classList.add('is-positioning-indicator');
+            container.style.setProperty('--limit-indicator-left', `${activeButton.offsetLeft}px`);
+            container.style.setProperty('--limit-indicator-width', `${activeButton.offsetWidth}px`);
+            container.classList.add('has-moving-indicator');
+            container.dataset.indicatorReady = 'true';
+
+            if (immediate) {
+                window.requestAnimationFrame(() => {
+                    container.classList.remove('is-positioning-indicator');
+                });
+            }
         }
 
         function parseStatisticsYears(value) {
@@ -4095,13 +4387,48 @@
             footer.classList.remove('hidden');
         }
 
+        function applyChartViewportHeight(chartWrapper = document.querySelector('.statistics-chart-canvas')) {
+            if (!chartWrapper) return 0;
+
+            const preferredHeight = Number(chartWrapper.dataset.preferredHeight || 0);
+            if (!preferredHeight) return chartWrapper.getBoundingClientRect().height || 0;
+
+            const minimumHeight = Number(chartWrapper.dataset.minimumHeight || 340);
+            const viewportBottomReserve = Number(chartWrapper.dataset.viewportBottomReserve || 0);
+            const preservesContentHeight = chartWrapper.dataset.preserveContentHeight === 'true';
+            let targetHeight = preferredHeight;
+
+            if (!preservesContentHeight && window.matchMedia('(min-width: 1024px)').matches) {
+                const documentTop = chartWrapper.getBoundingClientRect().top + window.scrollY;
+                const availableInInitialViewport = Math.floor(
+                    window.innerHeight - documentTop - 12 - viewportBottomReserve
+                );
+                if (availableInInitialViewport > 0) {
+                    targetHeight = Math.max(
+                        minimumHeight,
+                        Math.min(preferredHeight, availableInInitialViewport)
+                    );
+                }
+            }
+
+            const roundedHeight = Math.ceil(targetHeight);
+            chartWrapper.style.height = `${roundedHeight}px`;
+            chartWrapper.style.minHeight = `${roundedHeight}px`;
+            chartWrapper.style.flexBasis = `${roundedHeight}px`;
+            chartWrapper.style.flexGrow = '0';
+            chartWrapper.style.flexShrink = '0';
+            return roundedHeight;
+        }
+
         function updateChartContext(data) {
             const context = document.getElementById('statisticsChartContext');
             const periodElement = document.getElementById('statisticsChartPeriod');
+            const periodValue = document.getElementById('statisticsChartPeriodValue');
             const coverageElement = document.getElementById('statisticsChartCoverage');
+            const coverageText = document.getElementById('statisticsChartCoverageText');
             const qualityElement = document.getElementById('statisticsChartQuality');
             const qualityText = document.getElementById('statisticsChartQualityText');
-            if (!context || !periodElement || !coverageElement || !qualityElement || !qualityText) return;
+            if (!context || !periodElement || !periodValue || !coverageElement || !coverageText || !qualityElement || !qualityText) return;
 
             const period = data.period || {};
             const dateFormatter = new Intl.DateTimeFormat('es-MX', {
@@ -4120,15 +4447,15 @@
             if (period.is_all_time) {
                 periodText = 'Todas las fechas';
             } else if (period.start_date && period.end_date) {
-                periodText = `Periodo: ${formatDate(period.start_date)} – ${formatDate(period.end_date)}`;
+                periodText = `${formatDate(period.start_date)} – ${formatDate(period.end_date)}`;
             } else if (Array.isArray(period.years) && period.years.length) {
                 const years = period.years.map(Number).filter(Number.isFinite).sort((a, b) => a - b);
                 const months = Array.isArray(period.months) ? period.months.filter(Boolean) : [];
                 periodText = months.length
-                    ? `Periodo: ${months.length * years.length} ${months.length * years.length === 1 ? 'mes seleccionado' : 'meses seleccionados'}`
-                    : `Periodo: ${years.join(', ')}`;
+                    ? `${months.length * years.length} ${months.length * years.length === 1 ? 'mes seleccionado' : 'meses seleccionados'}`
+                    : years.join(', ');
             } else if (period.data_start && period.data_end) {
-                periodText = `Datos: ${formatDate(period.data_start)} – ${formatDate(period.data_end)}`;
+                periodText = `${formatDate(period.data_start)} – ${formatDate(period.data_end)}`;
             }
 
             const displayedCategories = Number(data.displayed_categories || 0);
@@ -4136,14 +4463,14 @@
             const coverage = Number(data.coverage_percentage || 0);
             const hasLimitedCoverage = availableCategories > displayedCategories || coverage < 99.95;
 
-            periodElement.textContent = periodText;
+            periodValue.textContent = periodText;
             periodElement.classList.toggle('hidden', !periodText);
             if (hasLimitedCoverage && Number(data.filtered_total || 0) > 0) {
                 const dimension = data.ranking_label || 'categorías';
-                coverageElement.textContent = `Mostrando ${displayedCategories} de ${availableCategories} ${dimension} · representan ${coverage.toFixed(1)}% del total`;
+                coverageText.textContent = `Mostrando ${displayedCategories} de ${availableCategories} ${dimension} · representan ${coverage.toFixed(1)}% del total`;
                 coverageElement.classList.remove('hidden');
             } else {
-                coverageElement.textContent = '';
+                coverageText.textContent = '';
                 coverageElement.classList.add('hidden');
             }
 
@@ -4159,7 +4486,9 @@
                 qualityElement.classList.add('hidden');
             }
 
-            context.classList.toggle('hidden', !periodText && coverageElement.classList.contains('hidden') && qualityElement.classList.contains('hidden'));
+            const totalElement = document.getElementById('chartTotalBadge');
+            const hasVisibleTotal = totalElement && !totalElement.classList.contains('hidden');
+            context.classList.toggle('hidden', !hasVisibleTotal && !periodText && coverageElement.classList.contains('hidden') && qualityElement.classList.contains('hidden'));
         }
 
         function renderChart(data) {
@@ -4336,6 +4665,7 @@
                 && currentChartType !== 'comparativa';
             const usesDenseCategoricalColumns = usesCategoricalColumns
                 && labels.length > maximumVerticalCategories;
+            const usesVerticalCategoryLabels = usesDenseCategoricalColumns;
             const usesDenseCategoricalHorizontalBars = usesCategoricalHorizontalBars
                 && labels.length > maximumVerticalCategories;
             const usesSimpleCategoricalBars = (usesCategoricalColumns || usesCategoricalHorizontalBars)
@@ -4411,16 +4741,39 @@
                     0,
                     ...labels.map(label => normalizeCategoryLabel(label).length * districtAxisFontSize * .54)
                 ) <= categorySlotWidth - 4;
+            const usesAngledDistrictLabels = usesCategoricalColumns
+                && currentChartType === 'distritoes'
+                && labels.length > 10
+                && !usesVerticalCategoryLabels;
+            const usesAngledMunicipalityLabels = usesCategoricalColumns
+                && currentChartType === 'municipios'
+                && Number(chartConfig.limit) === 15
+                && labels.length > 10
+                && !usesVerticalCategoryLabels;
+            const usesAngledPlaceLabels = usesCategoricalColumns
+                && currentChartType === 'lugares'
+                && labels.length >= maximumVerticalCategories
+                && !usesVerticalCategoryLabels;
+            const usesAngledCategoryLabels = usesAngledMunicipalityLabels
+                || usesAngledDistrictLabels
+                || usesAngledPlaceLabels;
+            const usesRotatedVerticalLabels = usesVerticalCategoryLabels || usesAngledCategoryLabels;
+            const formatPlaceColumnLabel = value => {
+                const text = normalizeCategoryLabel(value);
+                const aliases = {
+                    'servicios de salud imss bienestar': 'Serv. IMSS-Bienestar',
+                    'unidad medica privada': 'Unidad médica privada',
+                    'unidad médica privada': 'Unidad médica privada'
+                };
+                return aliases[text.toLocaleLowerCase('es-MX')] || text;
+            };
             const formatVerticalCategoryLabel = value => {
                 const text = getVerticalAxisCategoryLabel(value);
-                if (usesDenseCategoricalColumns) return text;
+                if (usesVerticalCategoryLabels) return text;
                 if (districtLabelsFitOnOneLine) return text;
-                if (currentChartType === 'distritoes' && labels.length > 10) {
-                    return wrapCategoryLabel(
-                        text,
-                        Math.max(charsPerAxisLine, Math.ceil(text.length / 2))
-                    );
-                }
+                if (usesAngledMunicipalityLabels) return text;
+                if (usesAngledDistrictLabels) return text;
+                if (usesAngledPlaceLabels) return formatPlaceColumnLabel(text);
 
                 // Conservar nombres breves completos, pero envolver los que no caben
                 // en su categoría para que ECharts no los oculte por solapamiento.
@@ -4444,16 +4797,18 @@
                 interval: !usesDenseCategoricalColumns && labels.length > 20
                     ? index => index % verticalAxisLabelStep === 0 || index === labels.length - 1
                     : 0,
-                rotate: usesDenseCategoricalColumns ? 90 : 0,
-                align: usesDenseCategoricalColumns ? 'right' : 'center',
-                verticalAlign: usesDenseCategoricalColumns ? 'middle' : 'top',
-                lineHeight: usesDenseCategoricalColumns ? 12 : 14,
-                fontSize: usesDenseCategoricalColumns ? 11 : (labels.length > 10 ? 11 : axisFontSize),
+                rotate: usesVerticalCategoryLabels
+                    ? 90
+                    : (usesAngledPlaceLabels ? 48 : ((usesAngledMunicipalityLabels || usesAngledDistrictLabels) ? 38 : 0)),
+                align: usesRotatedVerticalLabels ? 'right' : 'center',
+                verticalAlign: usesRotatedVerticalLabels ? 'middle' : 'top',
+                lineHeight: usesRotatedVerticalLabels ? 12 : 14,
+                fontSize: usesVerticalCategoryLabels ? 11 : (labels.length > 10 ? 11 : axisFontSize),
                 fontFamily: chartFontFamily,
                 fontWeight: 500,
                 color: '#404041',
-                margin: usesDenseCategoricalColumns ? 13 : 8,
-                hideOverlap: !usesDenseCategoricalColumns,
+                margin: usesVerticalCategoryLabels ? 13 : (usesAngledCategoryLabels ? 12 : 8),
+                hideOverlap: !usesRotatedVerticalLabels,
                 formatter: formatVerticalCategoryLabel
             };
 
@@ -4465,16 +4820,12 @@
                 fontFamily: chartFontFamily,
                 fontWeight: 500,
                 color: '#404041',
-                formatter: value => currentChartType === 'causas' && chartAvailableWidth >= 900
+                formatter: value => ['causas', 'lugares'].includes(currentChartType) && chartAvailableWidth >= 900
                     ? normalizeCategoryLabel(value)
                     : wrapCategoryLabel(value, 28)
             };
 
             if (chartWrapper) {
-                const presentationPanel = document.querySelector('.statistics-display-panel');
-                const chartPanel = document.getElementById('statisticsChartPanel');
-                const chartHeader = chartPanel?.querySelector('.statistics-chart-header');
-                const chartSource = document.getElementById('statisticsChartSource');
                 const baseHeight = Math.min(420, Math.max(350, window.innerHeight * 0.4));
                 let contentHeight = baseHeight;
 
@@ -4504,20 +4855,67 @@
                     contentHeight = Math.max(baseHeight, 400);
                 }
 
-                const chartChromeHeight = (chartHeader?.offsetHeight || 0)
-                    + (chartSource && !chartSource.classList.contains('hidden') ? chartSource.offsetHeight : 0);
-                const sidebarMatchedHeight = window.matchMedia('(min-width: 1280px)').matches
-                    ? Math.max(0, (presentationPanel?.offsetHeight || 0) - chartChromeHeight)
+                const angledDistrictHeightCompensation = resolvedChartType === 'bar'
+                    && usesAngledDistrictLabels
+                    ? 36
                     : 0;
-                const targetHeight = Math.ceil(
-                    resolvedChartType === 'barHorizontal'
-                        ? Math.max(contentHeight, sidebarMatchedHeight)
-                        : Math.min(680, Math.max(contentHeight, sidebarMatchedHeight))
-                );
+                const angledMunicipalityHeightCompensation = resolvedChartType === 'bar'
+                    && usesAngledMunicipalityLabels
+                    ? 36
+                    : 0;
+                const angledPlaceHeightCompensation = resolvedChartType === 'bar'
+                    && usesAngledPlaceLabels
+                    ? 68
+                    : 0;
+                const preferredHeight = resolvedChartType === 'barHorizontal'
+                    ? contentHeight
+                    : Math.min(
+                        680,
+                        contentHeight
+                            + angledMunicipalityHeightCompensation
+                            + angledDistrictHeightCompensation
+                            + angledPlaceHeightCompensation
+                    );
+                const minimumScreenHeight = resolvedChartType === 'map'
+                    ? 420
+                    : (resolvedChartType === 'heatmap'
+                        ? 400
+                        : (isPieLikeChart
+                            ? 380
+                            : (usesAngledCategoryLabels ? 350 : 340)));
+                const viewportBottomReserve = usesAngledPlaceLabels
+                    ? 20
+                    : ((usesAngledMunicipalityLabels || usesAngledDistrictLabels) ? 12 : 0);
+                let exportHeight = 460;
 
-                chartWrapper.style.height = `${targetHeight}px`;
-                chartWrapper.style.minHeight = `${targetHeight}px`;
-                chartWrapper.style.flexBasis = `${targetHeight}px`;
+                if (resolvedChartType === 'barHorizontal') {
+                    exportHeight = Math.max(460, contentHeight);
+                } else if (resolvedChartType === 'map') {
+                    exportHeight = 620;
+                } else if (resolvedChartType === 'heatmap') {
+                    exportHeight = Math.max(520, contentHeight);
+                } else if (isPieLikeChart) {
+                    exportHeight = 500;
+                } else if (usesAngledPlaceLabels) {
+                    exportHeight = 540;
+                } else if (usesAngledMunicipalityLabels || usesAngledDistrictLabels || usesDenseCategoricalColumns) {
+                    exportHeight = 500;
+                }
+
+                if (
+                    currentChartType === 'edades'
+                    && chartConfig.ageDetailMode === 'causes'
+                    && resolvedChartType === 'bar'
+                ) {
+                    exportHeight = 400;
+                }
+
+                chartWrapper.dataset.preferredHeight = String(Math.ceil(preferredHeight));
+                chartWrapper.dataset.minimumHeight = String(minimumScreenHeight);
+                chartWrapper.dataset.exportHeight = String(Math.ceil(exportHeight));
+                chartWrapper.dataset.viewportBottomReserve = String(viewportBottomReserve);
+                chartWrapper.dataset.preserveContentHeight = String(resolvedChartType === 'barHorizontal');
+                applyChartViewportHeight(chartWrapper);
             }
 
             // Inicializar ECharts cuando el lienzo ya tiene su altura definitiva.
@@ -5737,6 +6135,33 @@
             return title;
         }
 
+        function getExportChartTitle() {
+            const title = getCurrentChartTitle();
+            const limit = Number(chartConfig.limit);
+            const displayedCategories = Number(latestChartData?.displayed_categories || 0);
+            const availableCategories = Number(latestChartData?.available_categories || displayedCategories);
+            const isTruncatedTop = chartTypesWithTopSelector.includes(currentChartType)
+                && Number.isFinite(limit)
+                && limit > 0
+                && displayedCategories > 0
+                && availableCategories > displayedCategories;
+
+            if (!isTruncatedTop) return title;
+
+            const topCount = Math.min(limit, displayedCategories);
+            const municipalityKind = activeFilters.tipoMunicipio === 'residencia'
+                ? 'residencia'
+                : 'defunción';
+            const topTitles = {
+                municipios: `Top ${topCount} municipios de ${municipalityKind}`,
+                causas: `Top ${topCount} causas de defunción`,
+                distritoes: `Top ${topCount} distritos de ${municipalityKind}`,
+                lugares: `Top ${topCount} lugares de defunción`
+            };
+
+            return topTitles[currentChartType] || `Top ${topCount} · ${title}`;
+        }
+
         function hasAppliedChartFilters() {
             return !document.getElementById('filtrosActivos')?.classList.contains('hidden');
         }
@@ -5796,6 +6221,7 @@
             const totalValue = document.getElementById('chartTotalValue');
             if (totalValue) totalValue.textContent = Number(total).toLocaleString('es-MX');
             totalBadge?.classList.remove('hidden');
+            document.getElementById('statisticsChartContext')?.classList.remove('hidden');
         }
 
         function showErrorMessage(message, preserveContext = false) {
