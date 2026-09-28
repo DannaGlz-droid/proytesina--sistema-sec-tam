@@ -10,6 +10,35 @@ Route::get('/', function () {
         : redirect()->route('login');
 });
 
+// Superficie aislada para pruebas visuales. Solo existe cuando APP_ENV=testing y
+// evita que las capturas dependan del motor o de los registros de la base real.
+if (app()->environment('testing')) {
+    Route::get('__e2e/estadisticas/graficas', function () {
+        return view('estadisticas.graficas', [
+            'municipalities' => collect(),
+            'causes' => collect(),
+            'districts' => collect([
+                (object) ['id' => 1, 'display_name' => 'I · Victoria'],
+            ]),
+            'sexes' => collect([
+                (object) ['value' => 'F', 'label' => 'Femenino'],
+                (object) ['value' => 'M', 'label' => 'Masculino'],
+            ]),
+            'municipiosLabels' => [],
+            'municipiosCounts' => [],
+            'mesLabels' => [],
+            'mesCounts' => [],
+            'generoLabels' => [],
+            'generoCounts' => [],
+            'causaLabels' => [],
+            'causaCounts' => [],
+            'edadLabels' => [],
+            'edadCounts' => [],
+        ]);
+    })->middleware(['auth', 'role:Administrador,Coordinador'])
+        ->name('testing.estadisticas.graficas');
+}
+
 // CONTROLADORES  ---------------------------------------------------
 
 // ========== RUTAS PROTEGIDAS (REQUIEREN AUTENTICACIÓN) ==========

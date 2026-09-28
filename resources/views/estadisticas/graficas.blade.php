@@ -323,7 +323,7 @@
                                         <div class="statistics-download__group">
                                             <button type="button" class="statistics-download__primary" id="descargarActual" aria-label="Descargar gráfica en PNG con fondo blanco">
                                                 <i class="fas fa-download" aria-hidden="true"></i>
-                                                Descargar gráfica
+                                                <span>Descargar gráfica</span>
                                             </button>
                                             <button type="button" class="statistics-download__toggle" id="descargarOpciones" aria-label="Abrir opciones de descarga" aria-expanded="false" aria-controls="downloadMenu">
                                                 <i class="fas fa-chevron-down" aria-hidden="true"></i>
@@ -354,6 +354,7 @@
                                                 Datos en CSV
                                             </button>
                                         </div>
+                                        <span id="statisticsChartDownloadStatus" class="sr-only" role="status" aria-live="polite"></span>
                                     </div>
                                 </div>
 
@@ -395,7 +396,14 @@
                                 </div>
                             </header>
                             <div class="chart-wrapper statistics-chart-canvas">
-                                <div id="mainChart" style="width: 100%; height: 100%;"></div>
+                                <div
+                                    id="mainChart"
+                                    role="img"
+                                    aria-labelledby="chartTitle"
+                                    aria-describedby="statisticsChartSummary"
+                                    style="width: 100%; height: 100%;"
+                                ></div>
+                                <p id="statisticsChartSummary" class="sr-only">Cargando resumen de la gráfica.</p>
                                 <div id="statisticsDrilldown" class="statistics-drilldown hidden" role="region" aria-label="Detalle de la categoría seleccionada">
                                     <button type="button" id="statisticsDrilldownClose" class="statistics-drilldown__close" aria-label="Quitar selección">
                                         <i class="fas fa-xmark" aria-hidden="true"></i>
@@ -437,7 +445,7 @@
                                         <div class="statistics-download__group">
                                             <button type="button" id="downloadAgeCausesTable" class="statistics-download__primary" aria-label="Descargar tabla en PNG con fondo blanco">
                                                 <i class="fas fa-download" aria-hidden="true"></i>
-                                                Descargar tabla
+                                                <span>Descargar tabla</span>
                                             </button>
                                             <button type="button" id="downloadAgeCausesOptions" class="statistics-download__toggle" aria-label="Abrir opciones de descarga de la tabla" aria-expanded="false" aria-controls="ageCausesDownloadMenu">
                                                 <i class="fas fa-chevron-down" aria-hidden="true"></i>
@@ -453,6 +461,7 @@
                                                 PDF
                                             </button>
                                         </div>
+                                        <span id="statisticsTableDownloadStatus" class="sr-only" role="status" aria-live="polite"></span>
                                     </div>
                                 </header>
                                 <div class="statistics-causes__list">
@@ -471,20 +480,35 @@
                                     <i class="fas fa-file-import" aria-hidden="true"></i>
                                     <span id="statisticsChartSourceSummary">Origen de los registros</span>
                                 </span>
-                                <details id="statisticsChartSourceDetails" class="statistics-chart-source__details">
-                                    <summary>
-                                        <span class="statistics-chart-source__action">
-                                            <span id="statisticsChartSourceActionLabel">Ver detalle del origen</span>
-                                            <i class="fas fa-chevron-down" aria-hidden="true"></i>
-                                        </span>
-                                    </summary>
-                                    <div class="statistics-chart-source__popover">
-                                        <h3>Origen de los registros</h3>
-                                        <p>Registros que cumplen los filtros de datos aplicados.</p>
-                                        <ul id="statisticsChartSourceList"></ul>
-                                        <div id="statisticsChartSourceTotal" class="statistics-chart-source__total"></div>
-                                    </div>
-                                </details>
+                                <div class="statistics-chart-source__actions">
+                                    <details id="statisticsChartMethodologyDetails" class="statistics-chart-source__details statistics-chart-methodology">
+                                        <summary>
+                                            <span class="statistics-chart-source__action">
+                                                <span>Cómo se calculan estos datos</span>
+                                                <i class="fas fa-chevron-down" aria-hidden="true"></i>
+                                            </span>
+                                        </summary>
+                                        <div class="statistics-chart-source__popover statistics-chart-methodology__popover">
+                                            <h3>Cómo se calculan estos datos</h3>
+                                            <p>Definiciones aplicadas a la visualización actual.</p>
+                                            <dl id="statisticsChartMethodologyList" class="statistics-chart-methodology__list"></dl>
+                                        </div>
+                                    </details>
+                                    <details id="statisticsChartSourceDetails" class="statistics-chart-source__details">
+                                        <summary>
+                                            <span class="statistics-chart-source__action">
+                                                <span id="statisticsChartSourceActionLabel">Ver detalle del origen</span>
+                                                <i class="fas fa-chevron-down" aria-hidden="true"></i>
+                                            </span>
+                                        </summary>
+                                        <div class="statistics-chart-source__popover">
+                                            <h3>Origen de los registros</h3>
+                                            <p>Registros que cumplen los filtros de datos aplicados.</p>
+                                            <ul id="statisticsChartSourceList"></ul>
+                                            <div id="statisticsChartSourceTotal" class="statistics-chart-source__total"></div>
+                                        </div>
+                                    </details>
+                                </div>
                             </footer>
                             
                         </section>
@@ -517,12 +541,15 @@
         let chartLoadingTimer = null;
         let copyLinkStatusTimer = null;
         let chartPrefetchTimer = null;
+        let chartExportInProgress = false;
+        let tableExportInProgress = false;
         let chartDataCacheGeneration = 0;
         const chartDataCache = new Map();
         const chartPrefetchRequests = new Map();
         const chartLoadingDelay = 160;
         const chartDataEndpoint = @json(route('api.chart.data'));
         const chartContextPreferenceStorageKey = @json('statistics:downloads:include-context:v1:user:'.(auth()->id() ?? 'guest'));
+        const chartPresentationPreferenceStorageKey = @json('statistics:presentation:v1:user:'.(auth()->id() ?? 'guest'));
         const tamaulipasMapName = 'tamaulipas-municipios';
         const tamaulipasMapUrl = @json(asset('data/tamaulipas-municipios.geojson').'?v='.filemtime(public_path('data/tamaulipas-municipios.geojson')));
         let tamaulipasMapPromise = null;
@@ -574,6 +601,113 @@
         let preferredDistrictLimitByVisualFamily = { ...defaultDistrictLimitPreferences };
         const defaultLocationLimitPreferences = Object.freeze({ vertical: null, horizontal: null });
         let preferredLocationLimitByVisualFamily = { ...defaultLocationLimitPreferences };
+        let presentationPreferencesByMetric = {};
+
+        function initializePresentationPreferences() {
+            try {
+                const stored = window.localStorage.getItem(chartPresentationPreferenceStorageKey);
+                const parsed = stored ? JSON.parse(stored) : null;
+                presentationPreferencesByMetric = parsed && typeof parsed === 'object' && !Array.isArray(parsed)
+                    ? parsed
+                    : {};
+            } catch (error) {
+                presentationPreferencesByMetric = {};
+                console.warn('No se pudieron recuperar las preferencias de presentación.', error);
+            }
+        }
+
+        function resetPresentationPreferenceState() {
+            preferredConfig = {
+                type: defaultPresentationConfig.type,
+                dataLabelMode: defaultPresentationConfig.dataLabelMode,
+                limit: defaultPresentationConfig.limit,
+                ageDetailMode: defaultPresentationConfig.ageDetailMode
+            };
+            preferredLimitByVisualFamily = { ...defaultLimitPreferences };
+            preferredMunicipalityColumnLimit = defaultPresentationConfig.limit;
+            preferredMunicipalityBarLimit = undefined;
+            preferredDistrictLimitByVisualFamily = { ...defaultDistrictLimitPreferences };
+            preferredLocationLimitByVisualFamily = { ...defaultLocationLimitPreferences };
+            colorPreferences = { ...defaultColorPreferences };
+            chartConfig.colorPalette = defaultPresentationConfig.colorPalette;
+        }
+
+        function restorePresentationPreference(chartType) {
+            resetPresentationPreferenceState();
+            const stored = presentationPreferencesByMetric[chartType];
+            if (!stored || typeof stored !== 'object') return;
+
+            const validTypes = chartTypeOptions[chartType] || ['bar'];
+            const validDataLabels = ['value', 'percent', 'both', 'none'];
+            const validAgeDetails = ['summary', 'causes'];
+            if (validTypes.includes(stored.type)) preferredConfig.type = stored.type;
+            if (validDataLabels.includes(stored.dataLabelMode)) preferredConfig.dataLabelMode = stored.dataLabelMode;
+            if (validAgeDetails.includes(stored.ageDetailMode)) preferredConfig.ageDetailMode = stored.ageDetailMode;
+
+            if (stored.colors && typeof stored.colors === 'object') {
+                const knownPalettes = new Set([
+                    ...Object.keys(colorPalettes),
+                    ...Object.keys(colorPalettesCircular),
+                    ...Object.keys(cartesianSolidColors)
+                ]);
+                Object.keys(defaultColorPreferences).forEach(context => {
+                    const value = stored.colors[context];
+                    if (context === 'barMode') {
+                        if (['solid', 'qualitative'].includes(value)) colorPreferences.barMode = value;
+                    } else if (knownPalettes.has(value)) {
+                        colorPreferences[context] = value;
+                    }
+                });
+            }
+
+            const limits = stored.limits && typeof stored.limits === 'object' ? stored.limits : {};
+            ['vertical', 'horizontal', 'circular', 'comparison'].forEach(family => {
+                if (!Object.prototype.hasOwnProperty.call(limits, family)) return;
+                const value = limits[family];
+                if (value === null || [5, 10, 15].includes(Number(value))) {
+                    setPreferredLimit(chartType, family, value === null ? null : Number(value));
+                }
+            });
+        }
+
+        function saveCurrentPresentationPreference() {
+            const limits = {};
+            ['vertical', 'horizontal', 'circular', 'comparison'].forEach(family => {
+                limits[family] = getPreferredLimit(currentChartType, family);
+            });
+            presentationPreferencesByMetric[currentChartType] = {
+                type: preferredConfig.type,
+                dataLabelMode: preferredConfig.dataLabelMode,
+                ageDetailMode: preferredConfig.ageDetailMode,
+                limits,
+                colors: { ...colorPreferences }
+            };
+
+            try {
+                window.localStorage.setItem(
+                    chartPresentationPreferenceStorageKey,
+                    JSON.stringify(presentationPreferencesByMetric)
+                );
+            } catch (error) {
+                console.warn('No se pudieron guardar las preferencias de presentación.', error);
+            }
+        }
+
+        function clearCurrentPresentationPreference() {
+            delete presentationPreferencesByMetric[currentChartType];
+            try {
+                if (Object.keys(presentationPreferencesByMetric).length) {
+                    window.localStorage.setItem(
+                        chartPresentationPreferenceStorageKey,
+                        JSON.stringify(presentationPreferencesByMetric)
+                    );
+                } else {
+                    window.localStorage.removeItem(chartPresentationPreferenceStorageKey);
+                }
+            } catch (error) {
+                console.warn('No se pudieron restablecer las preferencias de presentación.', error);
+            }
+        }
 
         async function ensureTamaulipasMap() {
             if (echarts.getMap(tamaulipasMapName)) return;
@@ -1179,6 +1313,7 @@
 
             // Cargar rangos de fecha default antes de inicializar
             await loadDefaultDateRange();
+            initializePresentationPreferences();
             renderColorPalettePreview();
             renderChartTypeButtons('municipios');
             renderDataLabelButtons('municipios');
@@ -1188,12 +1323,13 @@
             initializeEventListeners();
             if (sharedState) {
                 restoreStatisticsShareState(sharedState);
-                selectChart(sharedState.metric);
+                selectChart(sharedState.metric, { useCurrentPresentation: true });
             } else {
                 selectChart('municipios');
             }
 
             const sourceDetails = document.getElementById('statisticsChartSourceDetails');
+            const methodologyDetails = document.getElementById('statisticsChartMethodologyDetails');
             const sourceActionLabel = document.getElementById('statisticsChartSourceActionLabel');
             const syncSourceActionLabel = () => {
                 if (sourceActionLabel) {
@@ -1202,15 +1338,29 @@
                         : 'Ver detalle del origen';
                 }
             };
-            sourceDetails?.addEventListener('toggle', syncSourceActionLabel);
+            sourceDetails?.addEventListener('toggle', () => {
+                if (sourceDetails.open && methodologyDetails?.open) methodologyDetails.open = false;
+                syncSourceActionLabel();
+            });
+            methodologyDetails?.addEventListener('toggle', () => {
+                if (methodologyDetails.open && sourceDetails?.open) sourceDetails.open = false;
+            });
             syncSourceActionLabel();
             document.addEventListener('click', function(event) {
                 if (sourceDetails?.open && !sourceDetails.contains(event.target)) {
                     sourceDetails.open = false;
                 }
+                if (methodologyDetails?.open && !methodologyDetails.contains(event.target)) {
+                    methodologyDetails.open = false;
+                }
             });
             document.addEventListener('keydown', function(event) {
                 if (event.key !== 'Escape') return;
+                if (methodologyDetails?.open) {
+                    methodologyDetails.open = false;
+                    methodologyDetails.querySelector('summary')?.focus();
+                    return;
+                }
                 if (sourceDetails?.open) {
                     sourceDetails.open = false;
                     sourceDetails.querySelector('summary')?.focus();
@@ -1624,14 +1774,14 @@
 
             document.getElementById('chartTypeSelector').addEventListener('change', function() {
                 chartConfig.type = this.value;
-                preferredConfig.type = this.value;  // Guardar preferencia global
+                preferredConfig.type = this.value;
                 const previousLimit = chartConfig.limit;
                 syncChartLimitForPresentation(currentChartType, this.value);
-                // CONFIGURACIONES SON GLOBALES - se mantienen al cambiar de métrica
                 renderChartTypeButtons(currentChartType);
                 renderChartLimitButtons(currentChartType);
                 renderColorPalettePreview();
                 setPresentationAdaptationNote('chartTypeAdaptationNote');
+                saveCurrentPresentationPreference();
                 if (previousLimit !== chartConfig.limit) {
                     // Conservar la composición anterior hasta recibir el alcance correcto.
                     // Evita mostrar brevemente, por ejemplo, Columnas con "Todos"
@@ -1642,20 +1792,20 @@
             });
             document.getElementById('datalabelMode').addEventListener('change', function() {
                 chartConfig.dataLabelMode = this.value;
-                preferredConfig.dataLabelMode = this.value;  // Guardar preferencia global
-                // CONFIGURACIONES SON GLOBALES - se mantienen al cambiar de métrica
+                preferredConfig.dataLabelMode = this.value;
                 renderDataLabelButtons(currentChartType);
                 setPresentationAdaptationNote('dataLabelAdaptationNote');
+                saveCurrentPresentationPreference();
                 rerenderLatestChart();
             });
             document.getElementById('chartLimit').addEventListener('change', function() {
                 chartConfig.limit = this.value === 'all' ? null : parseInt(this.value);
-                preferredConfig.limit = chartConfig.limit;  // Guardar preferencia global
+                preferredConfig.limit = chartConfig.limit;
                 setPreferredLimit(currentChartType, getVisualLimitFamily(currentChartType), chartConfig.limit);
-                // CONFIGURACIONES SON GLOBALES - se mantienen al cambiar de métrica
                 renderChartLimitButtons(currentChartType);
                 renderColorPalettePreview();
                 setPresentationAdaptationNote('chartLimitAdaptationNote');
+                saveCurrentPresentationPreference();
                 updateChart({ preserveCurrentChart: true });
             });
 
@@ -1667,6 +1817,7 @@
                 chartConfig.ageDetailMode = this.value;
                 preferredConfig.ageDetailMode = this.value;
                 renderAgeDetailCheckbox();
+                saveCurrentPresentationPreference();
                 rerenderLatestChart();
             });
 
@@ -1783,6 +1934,7 @@
                     const changed = chartConfig.colorPalette !== paletteName || previousContext !== nextContext;
                     colorPreferences[nextContext] = paletteName;
                     renderColorPalettePreview();
+                    saveCurrentPresentationPreference();
                     closePaletteMenu();
                     paletteToggle?.focus();
                     if (changed) rerenderLatestChart();
@@ -1923,23 +2075,88 @@
             return `estadisticas-${currentChartType}-${new Date().toISOString().split('T')[0]}.${extension}`;
         }
 
+        function setStatisticsDownloadBusy(kind, busy) {
+            const isChart = kind === 'chart';
+            const wrapper = document.getElementById(isChart ? 'downloadMenuWrapper' : 'ageCausesDownloadWrapper');
+            const primary = document.getElementById(isChart ? 'descargarActual' : 'downloadAgeCausesTable');
+            const toggle = document.getElementById(isChart ? 'descargarOpciones' : 'downloadAgeCausesOptions');
+            const menu = document.getElementById(isChart ? 'downloadMenu' : 'ageCausesDownloadMenu');
+            const status = document.getElementById(isChart ? 'statisticsChartDownloadStatus' : 'statisticsTableDownloadStatus');
+            if (!wrapper || !primary) return;
+            const controls = [primary, toggle, ...Array.from(menu?.querySelectorAll('button, input') || [])]
+                .filter(Boolean);
+
+            if (busy) {
+                primary.style.width = `${primary.getBoundingClientRect().width}px`;
+                wrapper.setAttribute('aria-busy', 'true');
+                menu?.classList.add('hidden');
+                toggle?.setAttribute('aria-expanded', 'false');
+                controls.forEach(control => { control.disabled = true; });
+                primary.classList.add('is-preparing');
+                const icon = primary.querySelector('i');
+                if (icon) icon.className = 'fas fa-spinner fa-spin';
+                const label = primary.querySelector('span');
+                if (label) label.textContent = 'Preparando…';
+                primary.setAttribute('aria-label', isChart ? 'Preparando descarga de la gráfica' : 'Preparando descarga de la tabla');
+                if (status) status.textContent = isChart
+                    ? 'Preparando descarga de la gráfica.'
+                    : 'Preparando descarga de la tabla.';
+                return;
+            }
+
+            wrapper.removeAttribute('aria-busy');
+            primary.classList.remove('is-preparing');
+            primary.style.removeProperty('width');
+            const icon = primary.querySelector('i');
+            if (icon) icon.className = 'fas fa-download';
+            const label = primary.querySelector('span');
+            if (label) label.textContent = isChart ? 'Descargar gráfica' : 'Descargar tabla';
+            primary.setAttribute(
+                'aria-label',
+                isChart ? 'Descargar gráfica en PNG con fondo blanco' : 'Descargar tabla en PNG con fondo blanco'
+            );
+
+            const outputAvailable = isChart
+                ? Boolean(currentEchartsInstance && latestChartDataType === currentChartType)
+                : true;
+            controls.forEach(control => { control.disabled = !outputAvailable; });
+        }
+
+        function announceStatisticsDownload(kind, message) {
+            const id = kind === 'chart' ? 'statisticsChartDownloadStatus' : 'statisticsTableDownloadStatus';
+            const status = document.getElementById(id);
+            if (status) status.textContent = message;
+        }
+
+        function notifyStatisticsDownloadError(kind, error) {
+            const subject = kind === 'chart' ? 'la gráfica' : 'la tabla';
+            const message = `No se pudo preparar la descarga de ${subject}. Inténtalo nuevamente.`;
+            console.error(message, error);
+            announceStatisticsDownload(kind, message);
+            if (window.AppToast?.error) {
+                window.AppToast.error(message, { duration: 5000 });
+            } else if (typeof window.showToast === 'function') {
+                window.showToast(message, 'error', 5000);
+            }
+        }
+
         function getChartBackgroundOption(transparent) {
             return transparent ? {} : { backgroundColor: '#ffffff' };
         }
 
-        function getChartDataUrl(transparent = false) {
-            if (!currentEchartsInstance) return null;
+        function getChartDataUrl(transparent = false, chartInstance = currentEchartsInstance) {
+            if (!chartInstance) return null;
 
             const backgroundOptions = getChartBackgroundOption(transparent);
-            const opt = currentEchartsInstance.getOption ? currentEchartsInstance.getOption() : null;
+            const opt = chartInstance.getOption ? chartInstance.getOption() : null;
             const series = opt && opt.series && opt.series[0] ? opt.series[0] : null;
             const isChartPie = series && (series.type === 'pie');
 
             if (isChartPie) {
-                return currentEchartsInstance.getDataURL({ type: 'png', pixelRatio: 2, ...backgroundOptions });
+                return chartInstance.getDataURL({ type: 'png', pixelRatio: 2, ...backgroundOptions });
             }
 
-            return currentEchartsInstance.getDataURL({ type: 'png', pixelRatio: 2, ...backgroundOptions });
+            return chartInstance.getDataURL({ type: 'png', pixelRatio: 2, ...backgroundOptions });
         }
 
         function shouldIncludeChartContext() {
@@ -1971,44 +2188,132 @@
             });
         }
 
-        async function withChartExportDimensions(callback) {
+        function getChartExportProfile(chartInstance, requestedHeight, purpose = 'png', categoryCountOverride = null) {
+            const option = chartInstance?.getOption?.() || {};
+            const series = Array.isArray(option.series) ? option.series : [];
+            const primarySeries = series[0] || {};
+            const xAxis = Array.isArray(option.xAxis) ? option.xAxis[0] : option.xAxis;
+            const yAxis = Array.isArray(option.yAxis) ? option.yAxis[0] : option.yAxis;
+            const labels = Array.isArray(latestChartData?.labels) ? latestChartData.labels : [];
+            const categoryCount = Number.isFinite(categoryCountOverride)
+                ? categoryCountOverride
+                : labels.length;
+            const isHorizontalBar = primarySeries.type === 'bar' && yAxis?.type === 'category';
+            const isVerticalBar = primarySeries.type === 'bar' && xAxis?.type === 'category';
+            let height = Number(requestedHeight || chartInstance?.getHeight?.() || 460);
+            let sparseGridInset = null;
+
+            if (purpose !== 'pdf') return { height, sparseGridInset };
+
+            if (primarySeries.type === 'line') {
+                height = Math.max(height, 580);
+            } else if (isHorizontalBar) {
+                height = Math.max(height, Math.min(700, Math.max(500, categoryCount * 34 + 96)));
+            } else if (isVerticalBar) {
+                if (categoryCount <= 2) {
+                    height = Math.max(height, 640);
+                    sparseGridInset = '17%';
+                } else if (categoryCount === 3) {
+                    height = Math.max(height, 610);
+                    sparseGridInset = '10%';
+                } else if (categoryCount <= 5) {
+                    height = Math.max(height, 590);
+                    sparseGridInset = '7%';
+                } else if (categoryCount <= 10) {
+                    height = Math.max(height, 540);
+                } else {
+                    height = Math.max(height, 520);
+                }
+            }
+
+            if (currentChartType === 'comparativa' && primarySeries.type === 'bar') {
+                height = Math.max(height, 560);
+            }
+
+            if (
+                currentChartType === 'edades'
+                && chartConfig.ageDetailMode === 'causes'
+                && primarySeries.type === 'bar'
+            ) {
+                height = Number(requestedHeight || 400);
+                sparseGridInset = null;
+            }
+
+            return { height, sparseGridInset };
+        }
+
+        async function withChartExportDimensions(callback, {
+            purpose = 'png',
+            optionTransform = null,
+            categoryCount = null,
+            requestedHeight = null
+        } = {}) {
             const chartElement = document.getElementById('mainChart');
             const chartWrapper = chartElement?.closest('.statistics-chart-canvas');
             const chartInstance = currentEchartsInstance;
             if (!chartElement || !chartWrapper || !chartInstance) return callback(null);
 
-            const originalWidth = chartInstance.getWidth();
-            const originalHeight = chartInstance.getHeight();
-            const exportHeight = Number(chartWrapper.dataset.exportHeight || originalHeight);
-            const exportWidth = Math.max(1, chartElement.clientWidth || originalWidth);
-            const needsResize = Math.abs(exportHeight - originalHeight) > 1
-                || Math.abs(exportWidth - originalWidth) > 1;
+            const baseExportHeight = Number(
+                requestedHeight || chartWrapper.dataset.exportHeight || chartInstance.getHeight()
+            );
+            const exportProfile = getChartExportProfile(
+                chartInstance,
+                baseExportHeight,
+                purpose,
+                categoryCount
+            );
+            const exportHeight = exportProfile.height;
+            const exportWidth = Math.max(1, chartElement.clientWidth || chartInstance.getWidth());
+            const exportElement = document.createElement('div');
+            exportElement.setAttribute('aria-hidden', 'true');
+            Object.assign(exportElement.style, {
+                position: 'fixed',
+                left: '-100000px',
+                top: '0',
+                width: `${exportWidth}px`,
+                height: `${exportHeight}px`,
+                opacity: '0',
+                pointerEvents: 'none'
+            });
+            document.body.appendChild(exportElement);
 
-            const waitForRender = () => new Promise(resolve => {
-                window.requestAnimationFrame(() => window.requestAnimationFrame(resolve));
+            const exportInstance = echarts.init(exportElement, null, {
+                renderer: 'canvas',
+                width: exportWidth,
+                height: exportHeight
             });
 
             try {
-                if (needsResize) {
-                    chartInstance.resize({
-                        width: exportWidth,
-                        height: exportHeight,
-                        silent: true,
-                        animation: { duration: 0 }
-                    });
-                    await waitForRender();
+                let exportOption = chartInstance.getOption();
+                if (typeof optionTransform === 'function') {
+                    exportOption = optionTransform(exportOption) || exportOption;
                 }
-                return await callback(exportHeight);
+                exportOption.animation = false;
+                if (Array.isArray(exportOption.series)) {
+                    exportOption.series.forEach(series => {
+                        series.animation = false;
+                        series.animationDuration = 0;
+                        series.animationDurationUpdate = 0;
+                    });
+                }
+                if (exportProfile.sparseGridInset) {
+                    const grids = Array.isArray(exportOption.grid)
+                        ? exportOption.grid
+                        : [exportOption.grid || {}];
+                    grids.forEach(grid => {
+                        grid.left = exportProfile.sparseGridInset;
+                        grid.right = exportProfile.sparseGridInset;
+                    });
+                    exportOption.grid = grids;
+                }
+                exportInstance.setOption(exportOption, { notMerge: true, lazyUpdate: false });
+                await new Promise(resolve => {
+                    window.requestAnimationFrame(() => window.requestAnimationFrame(resolve));
+                });
+                return await callback(exportHeight, exportInstance, exportElement);
             } finally {
-                if (needsResize && currentEchartsInstance === chartInstance) {
-                    chartInstance.resize({
-                        width: originalWidth,
-                        height: originalHeight,
-                        silent: true,
-                        animation: { duration: 0 }
-                    });
-                    if (activeChartDrilldown) positionChartDrilldown(activeChartDrilldown);
-                }
+                exportInstance.dispose();
+                exportElement.remove();
             }
         }
 
@@ -2102,8 +2407,13 @@
             return canvas;
         }
 
-        function cropFocusedChartCanvas(sourceCanvas, transparent = false) {
-            const renderedSeriesType = currentEchartsInstance?.getOption?.()?.series?.[0]?.type;
+        function cropFocusedChartCanvas(
+            sourceCanvas,
+            transparent = false,
+            chartInstance = currentEchartsInstance,
+            chartDisplayWidth = null
+        ) {
+            const renderedSeriesType = chartInstance?.getOption?.()?.series?.[0]?.type;
             const isMunicipalityMap = currentChartType === 'municipios' && renderedSeriesType === 'map';
             const isCircularChart = renderedSeriesType === 'pie';
             if (!isMunicipalityMap && !isCircularChart) return sourceCanvas;
@@ -2140,7 +2450,10 @@
             if (maximumX < minimumX || maximumY < minimumY) return sourceCanvas;
 
             const chartElement = document.getElementById('mainChart');
-            const renderedScale = Math.max(1, width / Math.max(1, chartElement?.clientWidth || width));
+            const renderedScale = Math.max(
+                1,
+                width / Math.max(1, chartDisplayWidth || chartElement?.clientWidth || width)
+            );
             const horizontalPadding = Math.round((isCircularChart ? 30 : 28) * renderedScale);
             const verticalPadding = Math.round((isCircularChart ? 24 : 18) * renderedScale);
             const cropX = Math.max(0, minimumX - horizontalPadding);
@@ -2175,11 +2488,17 @@
         async function captureChartAsCanvas(
             transparent = false,
             includeContext = shouldIncludeChartContext(),
-            exportChartHeight = null
+            exportChartHeight = null,
+            sourceChartInstance = currentEchartsInstance,
+            sourceChartElement = document.getElementById('mainChart')
         ) {
             if (currentChartType === 'edades' && chartConfig.ageDetailMode === 'causes' && typeof html2canvas !== 'undefined') {
                 const element = document.getElementById('mainChart')?.closest('.statistics-chart-panel');
                 if (!element) return null;
+
+                const exportChartDataUrl = sourceChartInstance !== currentEchartsInstance
+                    ? getChartDataUrl(transparent, sourceChartInstance)
+                    : null;
 
                 if (document.fonts?.ready) {
                     await document.fonts.ready;
@@ -2213,6 +2532,7 @@
                         const tableActions = panel?.querySelector('.statistics-table-download');
                         const drilldown = panel?.querySelector('.statistics-drilldown');
                         const clonedChartCanvas = panel?.querySelector('.statistics-chart-canvas');
+                        const clonedChart = panel?.querySelector('#mainChart');
                         const causesColumnHeaders = panel?.querySelectorAll('.statistics-causes__columns span') || [];
                         if (panel && elementRect.width) {
                             const fixedWidth = `${elementRect.width}px`;
@@ -2227,6 +2547,20 @@
                             clonedChartCanvas.style.flexBasis = fixedHeight;
                             clonedChartCanvas.style.flexGrow = '0';
                             clonedChartCanvas.style.flexShrink = '0';
+                        }
+                        if (clonedChart && exportChartDataUrl) {
+                            const exportImage = clonedDocument.createElement('img');
+                            exportImage.src = exportChartDataUrl;
+                            exportImage.alt = '';
+                            exportImage.style.display = 'block';
+                            exportImage.style.width = '100%';
+                            exportImage.style.height = '100%';
+                            clonedChart.replaceChildren(exportImage);
+                            try {
+                                await exportImage.decode();
+                            } catch (error) {
+                                // html2canvas intentará cargar el data URL durante la captura.
+                            }
                         }
                         // Ocultar sin retirar del flujo evita que la copia cambie su geometría.
                         if (actions) actions.style.visibility = 'hidden';
@@ -2281,7 +2615,7 @@
                 return croppedCanvas;
             }
 
-            const dataUrl = getChartDataUrl(transparent);
+            const dataUrl = getChartDataUrl(transparent, sourceChartInstance);
             if (!dataUrl) return null;
 
             const img = new Image();
@@ -2297,51 +2631,222 @@
                 ctx.drawImage(img, 0, 0);
             }
 
-            const chartElement = document.getElementById('mainChart');
-            const sourceScale = Math.max(1, canvas.width / Math.max(1, chartElement?.clientWidth || canvas.width));
-            const preparedCanvas = cropFocusedChartCanvas(canvas, transparent);
+            const chartElement = sourceChartElement || document.getElementById('mainChart');
+            const chartDisplayWidth = chartElement?.clientWidth || canvas.width;
+            const sourceScale = Math.max(1, canvas.width / Math.max(1, chartDisplayWidth));
+            const preparedCanvas = cropFocusedChartCanvas(
+                canvas,
+                transparent,
+                sourceChartInstance,
+                chartDisplayWidth
+            );
             return includeContext
                 ? composeChartWithContext(preparedCanvas, transparent, sourceScale)
                 : preparedCanvas;
         }
 
-        async function exportCurrentChart(exportType) {
-            if (!currentEchartsInstance) return false;
+        function getHorizontalPdfPagination(chartInstance, pageSize = 15) {
+            const option = chartInstance?.getOption?.() || {};
+            const xAxes = Array.isArray(option.xAxis) ? option.xAxis : [option.xAxis];
+            const yAxes = Array.isArray(option.yAxis) ? option.yAxis : [option.yAxis];
+            const categoryAxis = yAxes.find(axis => axis?.type === 'category');
+            const valueAxisIndex = xAxes.findIndex(axis => axis?.type === 'value');
+            const labels = Array.isArray(categoryAxis?.data) ? categoryAxis.data : [];
+            const primarySeries = Array.isArray(option.series) ? option.series[0] : null;
 
-            if (exportType === 'pdf') {
-                const canvas = await withChartExportDimensions(exportHeight =>
-                    captureChartAsCanvas(false, shouldIncludeChartContext(), exportHeight)
-                );
-                if (!canvas) return false;
-
-                const { jsPDF } = window.jspdf || {};
-                if (!jsPDF) return false;
-
-                const pdf = new jsPDF({ orientation: canvas.width >= canvas.height ? 'landscape' : 'portrait', unit: 'pt', format: 'a4' });
-                const pageWidth = pdf.internal.pageSize.getWidth();
-                const pageHeight = pdf.internal.pageSize.getHeight();
-                const ratio = Math.min((pageWidth - 40) / canvas.width, (pageHeight - 40) / canvas.height);
-                const width = canvas.width * ratio;
-                const height = canvas.height * ratio;
-                const x = (pageWidth - width) / 2;
-                const y = (pageHeight - height) / 2;
-
-                pdf.addImage(canvas.toDataURL('image/png'), 'PNG', x, y, width, height);
-                pdf.save(getCurrentDownloadName('pdf'));
-                return true;
+            if (primarySeries?.type !== 'bar' || valueAxisIndex < 0 || labels.length <= pageSize) {
+                return null;
             }
 
-            const transparent = exportType === 'png-transparent';
-            const canvas = await withChartExportDimensions(exportHeight =>
-                captureChartAsCanvas(transparent, shouldIncludeChartContext(), exportHeight)
-            );
-            if (!canvas) return false;
+            const renderedScale = chartInstance.getModel?.()
+                ?.getComponent?.('xAxis', valueAxisIndex)
+                ?.axis?.scale;
+            const renderedExtent = renderedScale?.getExtent?.();
+            const seriesList = Array.isArray(option.series) ? option.series : [];
+            const values = seriesList.flatMap(series => (
+                Array.isArray(series?.data)
+                    ? series.data.map(item => Number(item?.value ?? item ?? 0))
+                    : []
+            )).filter(Number.isFinite);
+            const dataMaximum = Math.max(0, ...values);
+            const axisMaximum = Number(renderedExtent?.[1]) > 0
+                ? Number(renderedExtent[1])
+                : dataMaximum;
+            const pages = [];
 
-            const link = document.createElement('a');
-            link.href = canvas.toDataURL('image/png');
-            link.download = getCurrentDownloadName('png');
-            link.click();
-            return true;
+            for (let start = 0; start < labels.length; start += pageSize) {
+                const end = Math.min(start + pageSize, labels.length);
+                pages.push({
+                    start,
+                    end,
+                    categoryCount: end - start,
+                    positionStart: start + 1,
+                    positionEnd: end,
+                    axisMaximum
+                });
+            }
+
+            return { pages };
+        }
+
+        function sliceHorizontalChartOption(option, page) {
+            const yAxes = Array.isArray(option.yAxis) ? option.yAxis : [option.yAxis || {}];
+            yAxes.forEach(axis => {
+                if (axis?.type === 'category' && Array.isArray(axis.data)) {
+                    axis.data = axis.data.slice(page.start, page.end);
+                }
+            });
+            option.yAxis = yAxes;
+
+            const xAxes = Array.isArray(option.xAxis) ? option.xAxis : [option.xAxis || {}];
+            xAxes.forEach(axis => {
+                if (axis?.type === 'value' && Number.isFinite(page.axisMaximum) && page.axisMaximum > 0) {
+                    axis.max = page.axisMaximum;
+                }
+            });
+            option.xAxis = xAxes;
+
+            if (Array.isArray(option.series)) {
+                option.series.forEach(series => {
+                    if (Array.isArray(series?.data)) {
+                        series.data = series.data.slice(page.start, page.end);
+                    }
+                });
+            }
+
+            return option;
+        }
+
+        function addChartCanvasToPdf(pdf, canvas, pageNumber = 1, pageCount = 1, pageMeta = null) {
+            const pageWidth = pdf.internal.pageSize.getWidth();
+            const pageHeight = pdf.internal.pageSize.getHeight();
+            const horizontalMargin = 20;
+            const verticalMargin = 20;
+            const footerSpace = pageCount > 1 ? 18 : 0;
+            const availableWidth = pageWidth - (horizontalMargin * 2);
+            const availableHeight = pageHeight - (verticalMargin * 2) - footerSpace;
+            const ratio = Math.min(availableWidth / canvas.width, availableHeight / canvas.height);
+            const width = canvas.width * ratio;
+            const height = canvas.height * ratio;
+            const x = (pageWidth - width) / 2;
+            const y = verticalMargin + ((availableHeight - height) / 2);
+
+            pdf.addImage(canvas.toDataURL('image/png'), 'PNG', x, y, width, height);
+
+            if (pageCount > 1) {
+                pdf.setFont('helvetica', 'normal');
+                pdf.setFontSize(8);
+                pdf.setTextColor(82, 98, 120);
+                if (pageMeta?.positionStart && pageMeta?.positionEnd) {
+                    pdf.text(
+                        `Posiciones ${pageMeta.positionStart}-${pageMeta.positionEnd}`,
+                        horizontalMargin,
+                        pageHeight - 12
+                    );
+                }
+                pdf.text(
+                    `Página ${pageNumber} de ${pageCount}`,
+                    pageWidth - horizontalMargin,
+                    pageHeight - 12,
+                    { align: 'right' }
+                );
+            }
+        }
+
+        async function exportCurrentChart(exportType) {
+            if (!currentEchartsInstance || chartExportInProgress) return false;
+
+            chartExportInProgress = true;
+            setStatisticsDownloadBusy('chart', true);
+            try {
+                if (exportType === 'pdf') {
+                    const horizontalPagination = getHorizontalPdfPagination(currentEchartsInstance);
+                    const canvases = [];
+
+                    if (horizontalPagination) {
+                        for (const page of horizontalPagination.pages) {
+                            const canvas = await withChartExportDimensions(
+                                (exportHeight, exportInstance, exportElement) => captureChartAsCanvas(
+                                    false,
+                                    shouldIncludeChartContext(),
+                                    exportHeight,
+                                    exportInstance,
+                                    exportElement
+                                ),
+                                {
+                                    purpose: 'pdf',
+                                    requestedHeight: 460,
+                                    categoryCount: page.categoryCount,
+                                    optionTransform: option => sliceHorizontalChartOption(
+                                        option,
+                                        page
+                                    )
+                                }
+                            );
+                            if (!canvas) throw new Error('No se pudo generar una página de la gráfica.');
+                            canvases.push(canvas);
+                        }
+                    } else {
+                        const canvas = await withChartExportDimensions(
+                            (exportHeight, exportInstance, exportElement) => captureChartAsCanvas(
+                                false,
+                                shouldIncludeChartContext(),
+                                exportHeight,
+                                exportInstance,
+                                exportElement
+                            ),
+                            { purpose: 'pdf' }
+                        );
+                        if (!canvas) throw new Error('No se pudo generar el lienzo de la gráfica.');
+                        canvases.push(canvas);
+                    }
+
+                    const { jsPDF } = window.jspdf || {};
+                    if (!jsPDF) throw new Error('El generador de PDF no está disponible.');
+
+                    const orientation = horizontalPagination
+                        ? 'landscape'
+                        : (canvases[0].width >= canvases[0].height ? 'landscape' : 'portrait');
+                    const pdf = new jsPDF({ orientation, unit: 'pt', format: 'a4' });
+                    canvases.forEach((canvas, index) => {
+                        if (index > 0) pdf.addPage('a4', orientation);
+                        addChartCanvasToPdf(
+                            pdf,
+                            canvas,
+                            index + 1,
+                            canvases.length,
+                            horizontalPagination?.pages?.[index] || null
+                        );
+                    });
+                    pdf.save(getCurrentDownloadName('pdf'));
+                } else {
+                    const transparent = exportType === 'png-transparent';
+                    const canvas = await withChartExportDimensions((exportHeight, exportInstance, exportElement) =>
+                        captureChartAsCanvas(
+                            transparent,
+                            shouldIncludeChartContext(),
+                            exportHeight,
+                            exportInstance,
+                            exportElement
+                        )
+                    );
+                    if (!canvas) throw new Error('No se pudo generar el lienzo de la gráfica.');
+
+                    const link = document.createElement('a');
+                    link.href = canvas.toDataURL('image/png');
+                    link.download = getCurrentDownloadName('png');
+                    link.click();
+                }
+
+                announceStatisticsDownload('chart', 'La descarga de la gráfica está lista.');
+                return true;
+            } catch (error) {
+                notifyStatisticsDownloadError('chart', error);
+                return false;
+            } finally {
+                chartExportInProgress = false;
+                setStatisticsDownloadBusy('chart', false);
+            }
         }
 
         function getAgeCausesTableDownloadName(extension) {
@@ -2394,18 +2899,17 @@
         }
 
         async function exportAgeCausesTable(exportType = 'png') {
-            const wrapper = document.getElementById('ageCausesDownloadWrapper');
-            const controls = Array.from(wrapper?.querySelectorAll('button') || []);
-            controls.forEach(control => { control.disabled = true; });
-            wrapper?.setAttribute('aria-busy', 'true');
+            if (tableExportInProgress) return false;
 
+            tableExportInProgress = true;
+            setStatisticsDownloadBusy('table', true);
             try {
                 const canvas = await captureAgeCausesTableAsCanvas();
-                if (!canvas) return false;
+                if (!canvas) throw new Error('No se pudo generar el lienzo de la tabla.');
 
                 if (exportType === 'pdf') {
                     const { jsPDF } = window.jspdf || {};
-                    if (!jsPDF) return false;
+                    if (!jsPDF) throw new Error('El generador de PDF no está disponible.');
 
                     const pdf = new jsPDF({ orientation: 'landscape', unit: 'pt', format: 'a4' });
                     const pageWidth = pdf.internal.pageSize.getWidth();
@@ -2418,6 +2922,7 @@
 
                     pdf.addImage(canvas.toDataURL('image/png'), 'PNG', x, y, width, height);
                     pdf.save(getAgeCausesTableDownloadName('pdf'));
+                    announceStatisticsDownload('table', 'La descarga de la tabla está lista.');
                     return true;
                 }
 
@@ -2425,16 +2930,20 @@
                 link.href = canvas.toDataURL('image/png');
                 link.download = getAgeCausesTableDownloadName('png');
                 link.click();
+                announceStatisticsDownload('table', 'La descarga de la tabla está lista.');
                 return true;
+            } catch (error) {
+                notifyStatisticsDownloadError('table', error);
+                return false;
             } finally {
-                controls.forEach(control => { control.disabled = false; });
-                wrapper?.removeAttribute('aria-busy');
+                tableExportInProgress = false;
+                setStatisticsDownloadBusy('table', false);
             }
         }
 
         window.exportStatisticsChart = exportCurrentChart;
 
-        function selectChart(chartType) {
+        function selectChart(chartType, { useCurrentPresentation = false } = {}) {
             const hasRenderedChart = Boolean(currentEchartsInstance);
             const filtersPanel = document.getElementById('estadisticas-filtros');
             if (filtersPanel?.classList.contains('is-open')) {
@@ -2444,6 +2953,7 @@
             currentChartType = chartType;
             latestChartData = null;
             latestChartDataType = null;
+            if (!useCurrentPresentation) restorePresentationPreference(chartType);
             
             // Actualizar botones de tab
             document.querySelectorAll('.chart-tab-btn').forEach(btn => {
@@ -2985,25 +3495,14 @@
         }
 
         function resetPresentation() {
-            preferredConfig = {
-                type: defaultPresentationConfig.type,
-                dataLabelMode: defaultPresentationConfig.dataLabelMode,
-                limit: defaultPresentationConfig.limit,
-                ageDetailMode: defaultPresentationConfig.ageDetailMode
-            };
-            preferredLimitByVisualFamily = { ...defaultLimitPreferences };
-            preferredMunicipalityColumnLimit = defaultPresentationConfig.limit;
-            preferredMunicipalityBarLimit = undefined;
-            preferredDistrictLimitByVisualFamily = { ...defaultDistrictLimitPreferences };
-            preferredLocationLimitByVisualFamily = { ...defaultLocationLimitPreferences };
-            colorPreferences = { ...defaultColorPreferences };
-            chartConfig.colorPalette = defaultPresentationConfig.colorPalette;
+            clearCurrentPresentationPreference();
+            resetPresentationPreferenceState();
 
             applyPreferredPresentation(currentChartType);
             renderColorPalettePreview();
 
             const status = document.getElementById('statisticsPresentationStatus');
-            if (status) status.textContent = 'Presentación restablecida a los valores predeterminados.';
+            if (status) status.textContent = 'Presentación de esta métrica restablecida a los valores predeterminados.';
 
             updateChart();
         }
@@ -4318,6 +4817,83 @@
             );
         }
 
+        function setChartAccessibleSummary(text) {
+            const summary = document.getElementById('statisticsChartSummary');
+            if (summary) summary.textContent = text;
+        }
+
+        function updateChartAccessibleSummary(data, labels = [], values = []) {
+            const formatNumber = value => Number(value || 0).toLocaleString('es-MX');
+            const normalizeLabel = value => String(value ?? '').replace(/\s+/g, ' ').trim();
+            const total = Number(data?.filtered_total ?? data?.total ?? 0);
+            const period = document.getElementById('statisticsChartPeriodValue')?.textContent?.trim();
+            const visibleLabels = Array.isArray(labels) ? labels.map(normalizeLabel).filter(Boolean) : [];
+            const availableCategories = Number(data?.available_categories);
+            const displayedCount = visibleLabels.length;
+            const parts = [
+                `Total analizado: ${formatNumber(total)}.`,
+                period ? `Periodo: ${period}.` : ''
+            ].filter(Boolean);
+
+            if (currentChartType === 'tendencias') {
+                const points = visibleLabels.map((label, index) => ({
+                    label,
+                    value: Number(values?.[index] || 0)
+                }));
+                if (points.length) {
+                    const first = points[0];
+                    const last = points[points.length - 1];
+                    const maximum = points.reduce((highest, point) => point.value > highest.value ? point : highest, points[0]);
+                    parts.push(`Serie temporal con ${points.length} periodos.`);
+                    parts.push(`Inicia en ${first.label} con ${formatNumber(first.value)} y termina en ${last.label} con ${formatNumber(last.value)}.`);
+                    parts.push(`El valor más alto es ${formatNumber(maximum.value)} en ${maximum.label}.`);
+                }
+            } else if (currentChartType === 'comparativa') {
+                const hasMunicipalityPair = Array.isArray(data?.residence_counts)
+                    && Array.isArray(data?.death_counts);
+                const series = hasMunicipalityPair
+                    ? [
+                        { name: 'Municipio de residencia', data: data?.residence_counts || [] },
+                        { name: 'Municipio de defunción', data: data?.death_counts || [] }
+                    ]
+                    : (Array.isArray(data?.series) ? data.series : []);
+                const categories = visibleLabels.map((label, index) => ({
+                    label,
+                    index,
+                    total: series.reduce((sum, item) => sum + Number(item?.data?.[index] || 0), 0)
+                })).sort((a, b) => b.total - a.total).slice(0, 3);
+
+                parts.push(`Comparativa de ${series.length} series en ${displayedCount} categorías.`);
+                if (categories.length) {
+                    const details = categories.map(category => {
+                        const seriesValues = series.map(item => `${normalizeLabel(item.name)}: ${formatNumber(item?.data?.[category.index])}`);
+                        return `${category.label}, ${seriesValues.join(' y ')}`;
+                    });
+                    parts.push(`Valores destacados: ${details.join('; ')}.`);
+                }
+            } else {
+                if (displayedCount) {
+                    const hasAvailableCount = Number.isFinite(availableCategories) && availableCategories > displayedCount;
+                    parts.push(hasAvailableCount
+                        ? `Se muestran ${displayedCount} de ${availableCategories} categorías.`
+                        : `Se muestran ${displayedCount} categorías.`);
+                }
+
+                const highlights = visibleLabels.map((label, index) => ({
+                    label,
+                    value: Number(values?.[index] || 0)
+                })).filter(item => Number.isFinite(item.value))
+                    .sort((a, b) => b.value - a.value)
+                    .slice(0, 3);
+                if (highlights.length) {
+                    parts.push(`Valores más altos: ${highlights.map(item => `${item.label}, ${formatNumber(item.value)}`).join('; ')}.`);
+                }
+            }
+
+            parts.push('La información completa está disponible en Ver datos.');
+            setChartAccessibleSummary(parts.join(' '));
+        }
+
         function downloadAnalysisCsv() {
             if (!latestChartData || latestChartDataType !== currentChartType) return;
             const params = buildStatisticsAnalysisParams(latestChartData, { csv: true });
@@ -4385,6 +4961,117 @@
 
             total.textContent = `${totalRecords.toLocaleString('es-MX')} ${totalRecords === 1 ? 'registro considerado' : 'registros considerados'}`;
             footer.classList.remove('hidden');
+        }
+
+        function updateChartMethodology(data) {
+            const details = document.getElementById('statisticsChartMethodologyDetails');
+            const list = document.getElementById('statisticsChartMethodologyList');
+            if (!details || !list) return;
+
+            details.open = false;
+            list.replaceChildren();
+
+            const total = Number(data?.filtered_total ?? data?.total ?? 0);
+            const matchedTotal = Number(data?.matched_total ?? total);
+            const excludedTotal = Number(data?.quality?.excluded_total ?? data?.excluded_total ?? Math.max(0, matchedTotal - total));
+            const displayedCategories = Number(data?.displayed_categories || 0);
+            const availableCategories = Number(data?.available_categories || displayedCategories);
+            const coverage = Number(data?.coverage_percentage || 0);
+            const rankingLabel = String(data?.ranking_label || 'categorías');
+            const labels = Array.isArray(data?.labels) ? data.labels.map(label => String(label || '').trim()) : [];
+            const counts = Array.isArray(data?.counts) ? data.counts : [];
+            const formatNumber = value => Number(value || 0).toLocaleString('es-MX');
+
+            const appendDefinition = (term, description) => {
+                const item = document.createElement('div');
+                const title = document.createElement('dt');
+                const copy = document.createElement('dd');
+                title.textContent = term;
+                copy.textContent = description;
+                item.append(title, copy);
+                list.append(item);
+            };
+
+            appendDefinition(
+                'Total analizado',
+                `${formatNumber(total)} ${total === 1 ? 'registro que cumple' : 'registros que cumplen'} los filtros y cuentan con la información necesaria para esta gráfica.`
+            );
+
+            if (currentChartType === 'comparativa') {
+                const comparisonDescriptions = {
+                    'residencia-defuncion': 'Compara el municipio donde residía la persona con el municipio donde ocurrió la defunción.',
+                    'distrito-residencia-defuncion': 'Compara el distrito de residencia con el distrito donde ocurrió la defunción.',
+                    'genero-causa': 'Cruza el sexo registrado con la causa de defunción.',
+                    'edad-causa': 'Cruza el grupo de edad con la causa de defunción.',
+                    'lugar-causa': 'Cruza el lugar donde ocurrió la defunción con su causa.',
+                    'lugar-municipio': 'Cruza el lugar de defunción con el municipio donde ocurrió.'
+                };
+                appendDefinition(
+                    'Dimensiones comparadas',
+                    comparisonDescriptions[activeFilters.tipoComparativa] || 'Cada serie representa una dimensión distinta del mismo conjunto de registros.'
+                );
+            } else if (['municipios', 'distritoes'].includes(currentChartType)) {
+                const isResidence = activeFilters.tipoMunicipio === 'residencia';
+                const geography = currentChartType === 'municipios' ? 'municipio' : 'distrito';
+                appendDefinition(
+                    isResidence ? `${geography[0].toUpperCase()}${geography.slice(1)} de residencia` : `${geography[0].toUpperCase()}${geography.slice(1)} de defunción`,
+                    isResidence
+                        ? `Lugar donde residía la persona; puede ser distinto del ${geography} donde ocurrió la defunción.`
+                        : `Lugar donde ocurrió la defunción; puede ser distinto del ${geography} donde residía la persona.`
+                );
+            } else if (metricSupportsFilter(currentChartType, 'tipoMunicipio')) {
+                appendDefinition(
+                    'Ámbito geográfico',
+                    activeFilters.tipoMunicipio === 'residencia'
+                        ? 'Los filtros de municipio y distrito se interpretan según la residencia de la persona.'
+                        : 'Los filtros de municipio y distrito se interpretan según el lugar donde ocurrió la defunción.'
+                );
+            }
+
+            if (labels.some(label => label.localeCompare('Otro', 'es', { sensitivity: 'base' }) === 0)) {
+                let otherDescription = 'Es una categoría definida en los datos de origen; no representa información faltante ni agrupa categorías omitidas por el límite de la gráfica.';
+
+                if (
+                    currentChartType === 'municipios'
+                    || (currentChartType === 'comparativa' && ['residencia-defuncion', 'lugar-municipio'].includes(activeFilters.tipoComparativa))
+                ) {
+                    otherDescription = 'Agrupa municipios ubicados fuera del estado de Tamaulipas. No representa información faltante ni municipios omitidos por el límite de la gráfica.';
+                } else if (
+                    currentChartType === 'distritoes'
+                    || (currentChartType === 'comparativa' && activeFilters.tipoComparativa === 'distrito-residencia-defuncion')
+                ) {
+                    otherDescription = 'Agrupa distritos que corresponden a ubicaciones fuera del estado de Tamaulipas. No representa información faltante ni distritos omitidos por el límite de la gráfica.';
+                }
+
+                appendDefinition(
+                    'Otro',
+                    otherDescription
+                );
+            }
+
+            let percentageDescription = total > 0
+                ? `Cada porcentaje divide la cantidad de una categoría entre ${formatNumber(total)} y la multiplica por 100.`
+                : 'Cada porcentaje divide la cantidad de una categoría entre el total analizado y la multiplica por 100.';
+            const exampleValue = Number(counts[0]);
+            if (total > 0 && Number.isFinite(exampleValue) && exampleValue >= 0 && labels[0]) {
+                const examplePercentage = ((exampleValue / total) * 100).toFixed(1);
+                percentageDescription += ` Por ejemplo, ${formatNumber(exampleValue)} ÷ ${formatNumber(total)} × 100 = ${examplePercentage}%.`;
+            }
+            appendDefinition('Porcentaje', percentageDescription);
+
+            if (availableCategories > displayedCategories || coverage < 99.95) {
+                appendDefinition(
+                    'Alcance',
+                    `Se muestran ${formatNumber(displayedCategories)} de ${formatNumber(availableCategories)} ${rankingLabel}. En conjunto representan ${coverage.toFixed(1)}% del total analizado.`
+                );
+            }
+
+            appendDefinition(
+                'Registros no incluidos',
+                excludedTotal > 0
+                    ? `${formatNumber(excludedTotal)} ${excludedTotal === 1 ? 'registro cumplió' : 'registros cumplieron'} los filtros de datos, pero no ${excludedTotal === 1 ? 'se incluyó' : 'se incluyeron'} porque faltaba información necesaria para este análisis.`
+                    : 'No se excluyeron registros por información incompleta en este análisis.'
+            );
         }
 
         function applyChartViewportHeight(chartWrapper = document.querySelector('.statistics-chart-canvas')) {
@@ -4574,6 +5261,7 @@
             document.getElementById('chartTotalBadge')?.classList.remove('hidden');
             updateChartContext(data);
             updateChartSourceSummary(data.source_summary);
+            updateChartMethodology(data);
             updateStatisticsAnalysisActions(data);
 
             if (filteredTotal <= 0) {
@@ -4658,6 +5346,8 @@
             } catch (e) {
                 console.warn('Filter zeros failed', e);
             }
+
+            updateChartAccessibleSummary(data, labels, values || data.counts || []);
 
             const normalizeCategoryLabel = (value) => String(value ?? '').replace(/\s+/g, ' ').trim();
             const usesCategoricalColumns = resolvedChartType === 'bar';
@@ -6105,6 +6795,7 @@
             if (errorMessage) errorMessage.style.display = 'none';
             const chartEl = document.getElementById('mainChart');
             if (chartEl) chartEl.style.visibility = 'hidden';
+            setChartAccessibleSummary('Cargando los datos de la gráfica.');
             document.getElementById('chartTitle').textContent = getCurrentChartTitle();
             document.getElementById('chartTotalBadge')?.classList.add('hidden');
             document.getElementById('statisticsChartContext')?.classList.add('hidden');
@@ -6171,15 +6862,19 @@
             const downloadButton = document.getElementById('descargarActual');
             const downloadToggle = document.getElementById('descargarOpciones');
             const downloadMenu = document.getElementById('downloadMenu');
+            const canDownload = enabled && !chartExportInProgress;
 
             if (!enabled && viewData) {
                 viewData.href = '#';
                 viewData.setAttribute('aria-disabled', 'true');
             }
             [downloadButton, downloadToggle].forEach(button => {
-                if (button) button.disabled = !enabled;
+                if (button) button.disabled = !canDownload;
             });
-            if (!enabled) {
+            downloadMenu?.querySelectorAll('button, input').forEach(control => {
+                control.disabled = !canDownload;
+            });
+            if (!canDownload) {
                 downloadMenu?.classList.add('hidden');
                 downloadToggle?.setAttribute('aria-expanded', 'false');
                 downloadToggle?.setAttribute('aria-label', 'Abrir opciones de descarga');
@@ -6222,6 +6917,7 @@
             if (totalValue) totalValue.textContent = Number(total).toLocaleString('es-MX');
             totalBadge?.classList.remove('hidden');
             document.getElementById('statisticsChartContext')?.classList.remove('hidden');
+            setChartAccessibleSummary(`${getCurrentChartTitle()}. ${message} ${description}`);
         }
 
         function showErrorMessage(message, preserveContext = false) {
@@ -6234,6 +6930,7 @@
             );
             showUnavailableChartState(preserveContext);
             document.getElementById('chartTotalBadge')?.classList.add('hidden');
+            setChartAccessibleSummary(`${getCurrentChartTitle()}. ${message}. Revisa tu conexión e inténtalo nuevamente.`);
         }
 
         function showUnavailableChartState(preserveContext = false) {

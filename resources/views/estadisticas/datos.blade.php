@@ -238,7 +238,7 @@
                     <button id="statistics-import-cancel" type="button" class="ui-button ui-button--secondary" data-import-close>Cancelar</button>
                     <button id="statistics-import-submit" type="button" class="ui-button ui-button--primary" disabled>
                         <span data-import-default>Importar datos</span>
-                        <span data-import-loading class="hidden items-center gap-2"><i class="fas fa-circle-notch fa-spin" aria-hidden="true"></i><span>Procesando…</span></span>
+                        <span data-import-loading class="hidden items-center gap-2"><i class="fas fa-spinner fa-spin" aria-hidden="true"></i><span>Procesando…</span></span>
                     </button>
                 </footer>
         </x-ui.dialog>
