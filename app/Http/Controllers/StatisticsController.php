@@ -7,6 +7,7 @@ use App\Models\District;
 use App\Services\DeathFilterService;
 use App\Services\StatisticsAnalysisService;
 use App\Support\CatalogLabel;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Cache;
@@ -449,6 +450,20 @@ class StatisticsController extends Controller
             $filters['municipio_type'] = $usesResidenceScope ? 'residencia' : 'defuncion';
             $filters['municipio_kind'] = $usesResidenceScope ? 'residence' : 'death';
             $munCol = $usesResidenceScope ? 'residence_municipality_id' : 'death_municipality_id';
+            $requestedMeasure = strtolower((string) ($filters['measure'] ?? 'count')) === 'rate' ? 'rate' : 'count';
+            $rateYear = $requestedMeasure === 'rate'
+                ? $this->resolveCompleteCalendarYear($filters)
+                : null;
+
+            if ($requestedMeasure === 'rate' && ($chartType !== 'municipios' || !$usesResidenceScope || $rateYear === null)) {
+                $filters['measure'] = 'count';
+                $measureNotice = $chartType !== 'municipios' || !$usesResidenceScope
+                    ? 'La tasa por población solo está disponible para municipios de residencia.'
+                    : 'La tasa por población requiere seleccionar un año calendario completo.';
+            } else {
+                $filters['measure'] = $requestedMeasure;
+                $measureNotice = null;
+            }
             
             $canonicalFilters = $this->deathFilters->normalize($filters, [
                 'municipality_column' => $munCol,
@@ -473,7 +488,7 @@ class StatisticsController extends Controller
             // Según el tipo de gráfica, ejecutar consultas específicas
             switch ($chartType) {
                 case 'municipios':
-                    $response = $this->getChartMunicipios($filters, $dateColumn, $munCol, $applyFilters, $limit);
+                    $response = $this->getChartMunicipios($filters, $dateColumn, $munCol, $applyFilters, $limit, $rateYear);
                     break;
                     
                 case 'tendencias':
@@ -552,6 +567,10 @@ class StatisticsController extends Controller
                 'is_all_time' => $usesAllTime,
             ];
             $payload['source_summary'] = $this->getChartSourceSummary($applyFilters);
+            $payload['measure'] = $payload['measure'] ?? 'count';
+            if ($measureNotice) {
+                $payload['measure_notice'] = $measureNotice;
+            }
 
             unset($payload['coverage_numerator']);
 
@@ -622,7 +641,7 @@ class StatisticsController extends Controller
         ];
     }
 
-    private function getChartMunicipios($filters, $dateColumn, $munCol, $applyFilters, $limit)
+    private function getChartMunicipios($filters, $dateColumn, $munCol, $applyFilters, $limit, ?int $rateYear = null)
     {
         // Determinar el tipo de municipio (defunción o residencia)
         $municipioType = $filters['municipio_type'] ?? 'defuncion';
@@ -643,10 +662,44 @@ class StatisticsController extends Controller
             $municipalitiesQ->whereIn('district_id', $distIds);
         }
         $municipalitiesFull = $municipalitiesQ->get();
-        $municipios = $municipalitiesFull->map(function($m) use ($munCountsRaw) {
+        $usesRate = ($filters['measure'] ?? 'count') === 'rate' && $rateYear !== null
+            && Schema::hasTable('population_sources') && Schema::hasTable('municipality_populations');
+        $populationSource = $usesRate
+            ? DB::table('population_sources')->where('active', true)->latest('id')->first()
+            : null;
+        $populationByMunicipality = $populationSource
+            ? DB::table('municipality_populations')
+                ->where('population_source_id', $populationSource->id)
+                ->where('year', $rateYear)
+                ->pluck('population', 'municipality_id')
+                ->map(fn ($population) => (int) $population)
+                ->all()
+            : [];
+        $usesRate = $usesRate && $populationSource !== null && count($populationByMunicipality) > 0;
+
+        $municipios = $municipalitiesFull->map(function($m) use ($munCountsRaw, $populationByMunicipality, $usesRate) {
             $total = isset($munCountsRaw[$m->id]) ? (int)$munCountsRaw[$m->id] : 0;
-            return ['id' => (int) $m->id, 'name' => $m->name ?? 'Sin dato', 'total' => $total];
-        })->filter(fn ($municipality) => $municipality['total'] > 0)->sort(function ($left, $right) {
+            $population = $populationByMunicipality[$m->id] ?? null;
+            $rate = $population && $population > 0 ? round(($total / $population) * 100000, 1) : null;
+            return [
+                'id' => (int) $m->id,
+                'name' => $m->name ?? 'Sin dato',
+                'total' => $total,
+                'population' => $population,
+                'rate' => $rate,
+            ];
+        })->filter(fn ($municipality) => $usesRate
+            ? $municipality['population'] !== null || $municipality['total'] > 0
+            : $municipality['total'] > 0
+        )->sort(function ($left, $right) use ($usesRate) {
+            if ($usesRate) {
+                if ($left['rate'] === null || $right['rate'] === null) {
+                    if ($left['rate'] === null && $right['rate'] !== null) return 1;
+                    if ($left['rate'] !== null && $right['rate'] === null) return -1;
+                }
+                $byRate = ($right['rate'] ?? -1) <=> ($left['rate'] ?? -1);
+                if ($byRate !== 0) return $byRate;
+            }
             $byTotal = $right['total'] <=> $left['total'];
 
             return $byTotal !== 0
@@ -655,6 +708,10 @@ class StatisticsController extends Controller
         })->values();
 
         $availableCategories = $municipios->count();
+        $populationCoverage = $usesRate ? [
+            'with_denominator' => $municipios->whereNotNull('population')->count(),
+            'territories' => $municipios->count(),
+        ] : null;
         
         if ($limit) {
             $municipios = $municipios->take($limit);
@@ -667,8 +724,24 @@ class StatisticsController extends Controller
 
         return response()->json([
             'type' => 'municipios',
+            'measure' => $usesRate ? 'rate' : 'count',
             'labels' => $municipios->pluck('name')->map(fn ($v) => $v ? CatalogLabel::municipality($v) : 'Sin dato')->values()->all(),
             'counts' => $municipios->pluck('total')->values()->all(),
+            'rates' => $usesRate ? $municipios->pluck('rate')->values()->all() : [],
+            'populations' => $usesRate ? $municipios->pluck('population')->values()->all() : [],
+            'denominator_year' => $usesRate ? $rateYear : null,
+            'population_source' => $usesRate ? [
+                'name' => $populationSource->name,
+                'version' => $populationSource->version,
+                'url' => $populationSource->source_url,
+                'published_at' => $populationSource->published_at,
+                'imported_at' => $populationSource->imported_at,
+            ] : null,
+            'population_coverage' => $usesRate ? [
+                ...$populationCoverage,
+                'displayed' => $municipios->count(),
+                'displayed_with_denominator' => $municipios->whereNotNull('population')->count(),
+            ] : null,
             'drilldown' => $municipios->map(fn ($municipality) => [
                 'label' => CatalogLabel::municipality($municipality['name']),
                 'filter_key' => $municipalityFilterKey,
@@ -677,7 +750,39 @@ class StatisticsController extends Controller
             'displayed_total' => $displayedTotal,
             'available_categories' => $availableCategories,
             'ranking_label' => 'municipios',
+            ...((($filters['measure'] ?? 'count') === 'rate' && !$usesRate) ? [
+                'measure_notice' => 'No hay población disponible para el año seleccionado; se muestran cantidades.',
+            ] : []),
         ]);
+    }
+
+    private function resolveCompleteCalendarYear(array $filters): ?int
+    {
+        if (!empty($filters['all_time']) || !empty($filters['months'])) {
+            return null;
+        }
+
+        $years = array_values(array_filter((array) ($filters['years'] ?? []), fn ($year) => preg_match('/^\d{4}$/', (string) $year)));
+        if (count($years) === 1 && empty($filters['start_date']) && empty($filters['end_date'])) {
+            return (int) $years[0];
+        }
+
+        if (empty($filters['start_date']) || empty($filters['end_date'])) {
+            return null;
+        }
+
+        try {
+            $start = Carbon::parse($filters['start_date'])->startOfDay();
+            $end = Carbon::parse($filters['end_date'])->startOfDay();
+        } catch (\Throwable) {
+            return null;
+        }
+
+        return $start->year === $end->year
+            && $start->isSameDay(Carbon::create($start->year, 1, 1))
+            && $end->isSameDay(Carbon::create($end->year, 12, 31))
+                ? $start->year
+                : null;
     }
 
     private function getChartTendencias($filters, $dateColumn, $applyFilters)

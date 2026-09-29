@@ -8,6 +8,8 @@ use App\Models\DeathCause;
 use App\Models\DeathLocation;
 use App\Models\District;
 use App\Models\Municipality;
+use App\Models\MunicipalityPopulation;
+use App\Models\PopulationSource;
 use App\Services\DeathFilterService;
 use App\Services\StatisticsAnalysisService;
 use Illuminate\Http\Request;
@@ -116,6 +118,129 @@ it('orders municipalities by total and alphabetically when totals are tied', fun
 
     expect($tied['counts'])->toBe([3, 3])
         ->and($tied['labels'])->toBe(['Alfa', 'Zeta']);
+});
+
+it('calculates residence municipality rates for a complete calendar year', function (): void {
+    $municipalityC = Municipality::create([
+        'name' => 'Municipio C',
+        'district_id' => $this->municipalityA->district_id,
+    ]);
+    $source = PopulationSource::create([
+        'name' => 'CONAPO',
+        'version' => 'Prueba 2026',
+        'published_at' => '2024-05-31',
+        'imported_at' => now(),
+        'active' => true,
+    ]);
+
+    foreach ([
+        [$this->municipalityA, 40000],
+        [$this->municipalityB, 10000],
+        [$municipalityC, 5000],
+    ] as [$municipality, $population]) {
+        MunicipalityPopulation::create([
+            'population_source_id' => $source->id,
+            'municipality_id' => $municipality->id,
+            'geographic_code' => str_pad((string) $municipality->id, 5, '0', STR_PAD_LEFT),
+            'year' => 2026,
+            'population' => $population,
+        ]);
+    }
+
+    $data = statisticsChartResponse('municipios', [
+        'start_date' => '2026-01-01',
+        'end_date' => '2026-12-31',
+        'municipio_type' => 'residencia',
+        'measure' => 'rate',
+    ]);
+
+    expect($data['measure'])->toBe('rate')
+        ->and($data['labels'])->toBe(['Municipio B', 'Municipio a', 'Municipio C'])
+        ->and($data['counts'])->toBe([2, 4, 0])
+        ->and($data['rates'])->toBe([20, 10, 0])
+        ->and($data['populations'])->toBe([10000, 40000, 5000])
+        ->and($data['denominator_year'])->toBe(2026)
+        ->and($data['total'])->toBe(6)
+        ->and($data['population_source']['name'])->toBe('CONAPO');
+});
+
+it('falls back to counts when a rate period is incomplete', function (): void {
+    $data = statisticsChartResponse('municipios', [
+        'municipio_type' => 'residencia',
+        'measure' => 'rate',
+    ]);
+
+    expect($data['measure'])->toBe('count')
+        ->and($data['measure_notice'])->toContain('año calendario completo')
+        ->and($data['rates'])->toBe([]);
+});
+
+it('distinguishes a zero rate from an unavailable denominator', function (): void {
+    $municipalityC = Municipality::create([
+        'name' => 'Municipio C',
+        'district_id' => $this->municipalityA->district_id,
+    ]);
+    $source = PopulationSource::create([
+        'name' => 'CONAPO',
+        'version' => 'Prueba de cobertura',
+        'imported_at' => now(),
+        'active' => true,
+    ]);
+    MunicipalityPopulation::create([
+        'population_source_id' => $source->id,
+        'municipality_id' => $municipalityC->id,
+        'geographic_code' => '28999',
+        'year' => 2026,
+        'population' => 5000,
+    ]);
+    MunicipalityPopulation::create([
+        'population_source_id' => $source->id,
+        'municipality_id' => $this->municipalityA->id,
+        'geographic_code' => '28998',
+        'year' => 2026,
+        'population' => 0,
+    ]);
+
+    $data = statisticsChartResponse('municipios', [
+        'start_date' => '2026-01-01',
+        'end_date' => '2026-12-31',
+        'municipio_type' => 'residencia',
+        'measure' => 'rate',
+    ]);
+
+    $byMunicipality = collect($data['labels'])->mapWithKeys(fn ($label, $index) => [
+        $label => [
+            'count' => $data['counts'][$index],
+            'population' => $data['populations'][$index],
+            'rate' => $data['rates'][$index],
+        ],
+    ]);
+
+    expect($byMunicipality['Municipio C'])->toBe([
+        'count' => 0,
+        'population' => 5000,
+        'rate' => 0,
+    ])->and($byMunicipality['Municipio a'])->toBe([
+        'count' => 4,
+        'population' => 0,
+        'rate' => null,
+    ])->and($byMunicipality['Municipio B'])->toBe([
+        'count' => 2,
+        'population' => null,
+        'rate' => null,
+    ]);
+});
+
+it('does not calculate population rates for death municipality scope', function (): void {
+    $data = statisticsChartResponse('municipios', [
+        'start_date' => '2026-01-01',
+        'end_date' => '2026-12-31',
+        'municipio_type' => 'defuncion',
+        'measure' => 'rate',
+    ]);
+
+    expect($data['measure'])->toBe('count')
+        ->and($data['measure_notice'])->toContain('municipios de residencia');
 });
 
 it('does not double the analyzed total in residence and death comparison', function (): void {

@@ -99,6 +99,19 @@ function chartPayload(type, searchParams) {
     const limit = Number.isFinite(parsedLimit) && parsedLimit > 0 ? parsedLimit : null;
 
     if (type === 'municipios') {
+        if (searchParams.get('measure') === 'rate' && searchParams.get('municipio_type') === 'residencia') {
+            const visible = limit ? MUNICIPALITIES.slice(0, limit) : MUNICIPALITIES;
+            const populations = visible.map((_, index) => 50000 + (index * 2500));
+            return {
+                ...rankedPayload('municipios', visible, 44, 'municipios', null, 'Municipio de residencia'),
+                measure: 'rate',
+                rates: visible.map((entry, index) => Number(((entry[1] / populations[index]) * 100000).toFixed(1))),
+                populations,
+                denominator_year: 2025,
+                population_source: { name: 'CONAPO', version: 'Proyecciones municipales 1990-2040' },
+                period: { ...PERIOD, start_date: '2025-01-01', end_date: '2025-12-31', is_default: false },
+            };
+        }
         return rankedPayload('municipios', MUNICIPALITIES, 44, 'municipios', limit, 'Municipio de defunción');
     }
     if (type === 'distritoes' || type === 'jurisdicciones') {

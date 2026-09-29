@@ -18,6 +18,7 @@ class Municipality extends Model
      */
     protected $fillable = [
         'name',
+        'inegi_code',
         'district_id'
     ];
 
@@ -48,5 +49,10 @@ class Municipality extends Model
     public function deathLocationDeaths()
     {
         return $this->hasMany(Death::class, 'death_municipality_id');
+    }
+
+    public function populations()
+    {
+        return $this->hasMany(MunicipalityPopulation::class);
     }
 }

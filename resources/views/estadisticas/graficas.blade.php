@@ -5,7 +5,7 @@
     @include('components.header-admin')
     @include('components.nav-estadisticas')
 
-    <main class="statistics-page">
+    <main class="statistics-page" data-active-metric="municipios">
         <div class="statistics-page__inner">
         <x-ui.page-header
             class="statistics-page-header"
@@ -136,7 +136,7 @@
                                             <label for="tipoMunicipioFilter">Ámbito geográfico</label>
                                             <x-filtros.select id="tipoMunicipioFilter" placeholder="Lugar de defunción">
                                                 <option value="defuncion">Lugar de defunción</option>
-                                                <option value="residencia">Residencia</option>
+                                                <option value="residencia">Lugar de residencia</option>
                                             </x-filtros.select>
                                         </div>
                                         <div id="filterMunicipios" class="statistics-filter-control dynamic-filter" style="display: none;">
@@ -239,6 +239,16 @@
                                     <p id="chartTypeAdaptationNote" class="statistics-presentation-note hidden" aria-live="polite"></p>
                                 </fieldset>
 
+                                <fieldset id="statisticsMeasureGroup" class="statistics-display-group" style="display: none;">
+                                    <legend id="statisticsMeasureLegend">Medida</legend>
+                                    <select id="statisticsMeasure" class="hidden" aria-hidden="true" tabindex="-1">
+                                        <option value="count">Cantidad</option>
+                                        <option value="rate">Tasa</option>
+                                    </select>
+                                    <div id="statisticsMeasureButtons" class="statistics-visual-options" role="group" aria-labelledby="statisticsMeasureLegend"></div>
+                                    <p id="statisticsMeasureNote" class="statistics-presentation-note">La tasa se expresa por 100 mil habitantes.</p>
+                                </fieldset>
+
                                 <!-- Etiquetas de datos -->
                                 <fieldset id="statisticsDataLabelGroup" class="statistics-display-group">
                                     <legend id="statisticsDataLabelLegend">Etiquetas de datos</legend>
@@ -310,13 +320,41 @@
                                 <div class="statistics-chart-header__top">
                                     <div class="statistics-chart-heading">
                                         <h2 id="chartTitle">Cargando...</h2>
+                                        <div id="statisticsHeadingControls" class="statistics-chart-heading__controls">
+                                            <div id="statisticsGeographicScopeControl" class="statistics-analysis-control hidden">
+                                                <label id="statisticsGeographicScopeLabel" class="sr-only" for="geographicScopeSelector">Analizar municipios por</label>
+                                                <select id="geographicScopeSelector" aria-labelledby="statisticsGeographicScopeLabel" title="Lugar de defunción">
+                                                    <option value="defuncion">Lugar de defunción</option>
+                                                    <option value="residencia">Lugar de residencia</option>
+                                                </select>
+                                            </div>
+                                            <div id="statisticsTrendGranularityControl" class="statistics-analysis-control hidden">
+                                                <label class="sr-only" for="trendGranularitySelector">Agrupar tendencia por</label>
+                                                <select id="trendGranularitySelector" aria-label="Agrupar tendencia por" title="Mes">
+                                                    <option value="day">Día</option>
+                                                    <option value="month">Mes</option>
+                                                    <option value="year">Año</option>
+                                                </select>
+                                            </div>
+                                            <div id="statisticsComparisonControl" class="statistics-comparison-control hidden">
+                                                <label class="sr-only" for="tipoComparativaFilter">Comparar dimensiones</label>
+                                                <select id="tipoComparativaFilter" aria-label="Seleccionar comparativa" title="Municipio de residencia vs. municipio de defunción">
+                                                    <option value="residencia-defuncion">Municipio de residencia vs. municipio de defunción</option>
+                                                    <option value="distrito-residencia-defuncion">Distrito de residencia vs. distrito de defunción</option>
+                                                    <option value="genero-causa">Sexo por causa</option>
+                                                    <option value="edad-causa">Rango etario por causa</option>
+                                                    <option value="lugar-causa">Lugar de defunción por causa</option>
+                                                    <option value="lugar-municipio">Lugar de defunción por municipio</option>
+                                                </select>
+                                            </div>
+                                        </div>
                                     </div>
                                     <div class="statistics-download" id="downloadMenuWrapper">
                                         <a id="statisticsViewData" class="statistics-view-data" href="#" aria-disabled="true">
                                             <i class="fas fa-table-list" aria-hidden="true"></i>
                                             Ver datos
                                         </a>
-                                        <button type="button" id="statisticsCopyLink" class="statistics-copy-link" title="Copiar enlace de esta vista">
+                                        <button type="button" id="statisticsCopyLink" class="statistics-copy-link hidden" title="Copiar enlace de esta vista" hidden>
                                             <i class="fas fa-link" aria-hidden="true"></i>
                                             <span id="statisticsCopyLinkLabel" aria-live="polite">Copiar enlace</span>
                                         </button>
@@ -359,18 +397,6 @@
                                 </div>
 
                                 <div id="statisticsChartContextRow" class="statistics-chart-context-row">
-                                    <div id="statisticsComparisonControl" class="statistics-comparison-control hidden">
-                                        <label for="tipoComparativaFilter">Comparar dimensiones</label>
-                                        <select id="tipoComparativaFilter" aria-label="Seleccionar comparativa">
-                                            <option value="residencia-defuncion">Municipio de residencia vs. municipio de defunción</option>
-                                            <option value="distrito-residencia-defuncion">Distrito de residencia vs. distrito de defunción</option>
-                                            <option value="genero-causa">Sexo por causa</option>
-                                            <option value="edad-causa">Rango etario por causa</option>
-                                            <option value="lugar-causa">Lugar de defunción por causa</option>
-                                            <option value="lugar-municipio">Lugar de defunción por municipio</option>
-                                        </select>
-                                    </div>
-
                                     <div id="statisticsChartContext" class="statistics-chart-context hidden" aria-live="polite">
                                         <div id="chartTotalBadge" class="statistics-chart-context__item statistics-chart-total">
                                             <span class="statistics-chart-context__label">Total analizado</span>
@@ -558,6 +584,7 @@
         let restoringFilterDraft = false;
         const defaultPresentationConfig = Object.freeze({
             type: 'bar',
+            measure: 'count',
             dataLabelMode: 'value',
             limit: 10,
             ageDetailMode: 'summary',
@@ -582,6 +609,7 @@
         // Preferencias deseadas: una vista puede adaptarlas sin sobrescribirlas.
         let preferredConfig = {
             type: defaultPresentationConfig.type,
+            measure: defaultPresentationConfig.measure,
             dataLabelMode: defaultPresentationConfig.dataLabelMode,
             limit: defaultPresentationConfig.limit,
             ageDetailMode: defaultPresentationConfig.ageDetailMode
@@ -619,6 +647,7 @@
         function resetPresentationPreferenceState() {
             preferredConfig = {
                 type: defaultPresentationConfig.type,
+                measure: defaultPresentationConfig.measure,
                 dataLabelMode: defaultPresentationConfig.dataLabelMode,
                 limit: defaultPresentationConfig.limit,
                 ageDetailMode: defaultPresentationConfig.ageDetailMode
@@ -638,6 +667,7 @@
             if (!stored || typeof stored !== 'object') return;
 
             const validTypes = chartTypeOptions[chartType] || ['bar'];
+            if (['count', 'rate'].includes(stored.measure)) preferredConfig.measure = stored.measure;
             const validDataLabels = ['value', 'percent', 'both', 'none'];
             const validAgeDetails = ['summary', 'causes'];
             if (validTypes.includes(stored.type)) preferredConfig.type = stored.type;
@@ -677,6 +707,7 @@
             });
             presentationPreferencesByMetric[currentChartType] = {
                 type: preferredConfig.type,
+                measure: preferredConfig.measure,
                 dataLabelMode: preferredConfig.dataLabelMode,
                 ageDetailMode: preferredConfig.ageDetailMode,
                 limits,
@@ -990,6 +1021,13 @@
             comparativa: ['bar', 'heatmap']
         };
 
+        function getAvailableChartTypes(chartType) {
+            if (chartType === 'municipios' && chartConfig.measure === 'rate') {
+                return ['bar', 'barHorizontal', 'map'];
+            }
+            return chartTypeOptions[chartType] || ['bar'];
+        }
+
         const chartTitles = {
             municipios: 'Distribución por municipios',
             tendencias: 'Tendencia temporal',
@@ -1143,6 +1181,7 @@
                 granularity: oneOf('granularity', ['day', 'month', 'year'], 'month'),
                 comparison: oneOf('comparison', Object.keys(comparativaLabels), 'residencia-defuncion'),
                 municipalityType: oneOf('scope', ['defuncion', 'residencia'], 'defuncion'),
+                measure: oneOf('measure', ['count', 'rate'], 'count'),
                 visual,
                 dataLabels: oneOf('labels', ['value', 'percent', 'both', 'none'], 'value'),
                 limit,
@@ -1189,6 +1228,7 @@
 
             currentChartType = state.metric;
             preferredConfig.type = state.visual;
+            preferredConfig.measure = state.measure;
             preferredConfig.dataLabelMode = state.metric === 'tendencias'
                 && ['percent', 'both'].includes(state.dataLabels)
                 ? 'value'
@@ -1196,6 +1236,7 @@
             preferredConfig.limit = state.limit;
             preferredConfig.ageDetailMode = state.ageDetail;
             chartConfig.type = state.visual;
+            chartConfig.measure = state.measure;
             chartConfig.dataLabelMode = preferredConfig.dataLabelMode;
             chartConfig.limit = state.limit;
             chartConfig.ageDetailMode = state.ageDetail;
@@ -1242,6 +1283,7 @@
             if (currentChartType === 'comparativa') params.set('comparison', activeFilters.tipoComparativa);
 
             params.set('visual', chartConfig.type);
+            params.set('measure', chartConfig.measure);
             params.set('labels', chartConfig.dataLabelMode);
             params.set('limit', chartConfig.limit === null ? 'all' : String(chartConfig.limit));
             if (currentChartType === 'edades') params.set('age_detail', chartConfig.ageDetailMode);
@@ -1512,7 +1554,11 @@
         function markStatisticsFilterDraft() {
             if (restoringFilterDraft) return;
             const panel = document.getElementById('estadisticas-filtros');
-            if (panel?.classList.contains('is-open')) panel.classList.add('has-draft-changes');
+            const isPersistentMunicipalityPanel = document.querySelector('.statistics-page')?.dataset.activeMetric === 'municipios'
+                && window.matchMedia('(min-width: 1024px)').matches;
+            if (panel?.classList.contains('is-open') || isPersistentMunicipalityPanel) {
+                panel?.classList.add('has-draft-changes');
+            }
         }
 
         function openStatisticsFilters() {
@@ -1610,6 +1656,82 @@
             }
         }
 
+        function syncGeographicScopeControl(scope = 'defuncion') {
+            const normalizedScope = scope === 'residencia' ? 'residencia' : 'defuncion';
+            const selector = document.getElementById('geographicScopeSelector');
+            if (selector && selector.value !== normalizedScope) selector.value = normalizedScope;
+            syncHeadingSelectorTitle(selector);
+        }
+
+        function syncHeadingSelectorTitle(selector) {
+            if (!selector) return;
+            selector.title = selector.options?.[selector.selectedIndex]?.text || '';
+        }
+
+        function applyGeographicScope(scope, { reload = false } = {}) {
+            const normalizedScope = scope === 'residencia' ? 'residencia' : 'defuncion';
+            const filterControl = document.getElementById('tipoMunicipioFilter');
+
+            if (filterControl?.tomselect) filterControl.tomselect.setValue(normalizedScope, true);
+            else if (filterControl) filterControl.value = normalizedScope;
+
+            activeFilters.tipoMunicipio = normalizedScope;
+            if (normalizedScope !== 'residencia' && chartConfig.measure === 'rate') {
+                chartConfig.measure = 'count';
+                preferredConfig.measure = 'count';
+            }
+            syncGeographicScopeControl(normalizedScope);
+            updateGeographicFilterLabels(normalizedScope);
+            updateMeasurePresentation();
+            updateActiveFiltersDisplay();
+
+            const title = document.getElementById('chartTitle');
+            if (title) title.textContent = getCurrentChartHeadingTitle();
+
+            if (!reload) return;
+
+            invalidateChartDataCache();
+            setChartOutputActionsEnabled(false);
+            const status = document.getElementById('statisticsPresentationStatus');
+            if (status) {
+                status.textContent = normalizedScope === 'residencia'
+                    ? 'Ahora se analizan los municipios por lugar de residencia.'
+                    : 'Ahora se analizan los municipios por lugar de defunción.';
+            }
+            loadChart(currentChartType, { preserveCurrentChart: true });
+        }
+
+        function syncTrendGranularityControl(granularity = 'month') {
+            const normalizedGranularity = ['day', 'month', 'year'].includes(granularity)
+                ? granularity
+                : 'month';
+            const selector = document.getElementById('trendGranularitySelector');
+            if (selector && selector.value !== normalizedGranularity) selector.value = normalizedGranularity;
+            syncHeadingSelectorTitle(selector);
+        }
+
+        function applyTrendGranularity(granularity, { reload = false } = {}) {
+            const normalizedGranularity = ['day', 'month', 'year'].includes(granularity)
+                ? granularity
+                : 'month';
+            const filterControl = document.getElementById('granularidadFilter');
+
+            if (filterControl?.tomselect) filterControl.tomselect.setValue(normalizedGranularity, true);
+            else if (filterControl) filterControl.value = normalizedGranularity;
+
+            activeFilters.granularidad = normalizedGranularity;
+            syncTrendGranularityControl(normalizedGranularity);
+
+            if (!reload) return;
+
+            invalidateChartDataCache();
+            setChartOutputActionsEnabled(false);
+            const labels = { day: 'día', month: 'mes', year: 'año' };
+            const status = document.getElementById('statisticsPresentationStatus');
+            if (status) status.textContent = `Ahora la tendencia se agrupa por ${labels[normalizedGranularity]}.`;
+            loadChart(currentChartType, { preserveCurrentChart: true });
+        }
+
         function initializeEventListeners() {
             // Inicializar Tom Select para multiselects
             initializeTomSelect();
@@ -1688,6 +1810,22 @@
                     const sectionToggle = section.querySelector('[data-filter-section-toggle]');
                     sectionToggle?.addEventListener('click', function() {
                         const willOpen = !section.classList.contains('is-open');
+                        const usesCompactMunicipalityConfiguration = currentChartType === 'municipios'
+                            && window.matchMedia('(min-width: 1024px)').matches;
+
+                        if (willOpen && usesCompactMunicipalityConfiguration) {
+                            section.closest('.statistics-municipality-filters__groups')
+                                ?.querySelectorAll('[data-statistics-filter-section].is-open')
+                                .forEach(openSection => {
+                                    if (openSection === section) return;
+                                    openSection.classList.remove('is-open');
+                                    const openToggle = openSection.querySelector('[data-filter-section-toggle]');
+                                    openToggle?.setAttribute('aria-expanded', 'false');
+                                    const openIcon = openToggle?.querySelector('i');
+                                    openIcon?.classList.remove('fa-chevron-down');
+                                    openIcon?.classList.add('fa-chevron-right');
+                                });
+                        }
                         section.classList.toggle('is-open', willOpen);
                         this.setAttribute('aria-expanded', String(willOpen));
                         const icon = this.querySelector('i');
@@ -1758,18 +1896,38 @@
                     closeStatisticsFilters({ restore: true });
                 }
                 activeFilters.tipoComparativa = this.value || 'residencia-defuncion';
+                syncHeadingSelectorTitle(this);
                 updateVisibleFilters(currentChartType);
-                document.getElementById('chartTitle').textContent = getCurrentChartTitle();
+                document.getElementById('chartTitle').textContent = getCurrentChartHeadingTitle();
                 setChartOutputActionsEnabled(false);
                 loadChart(currentChartType, { preserveCurrentChart: true });
             });
+            document.getElementById('geographicScopeSelector').addEventListener('change', function() {
+                const filterPanel = document.getElementById('estadisticas-filtros');
+                if (filterPanel?.classList.contains('is-open')) {
+                    closeStatisticsFilters({ restore: true });
+                }
+                applyGeographicScope(this.value, { reload: true });
+            });
+            document.getElementById('trendGranularitySelector').addEventListener('change', function() {
+                const filterPanel = document.getElementById('estadisticas-filtros');
+                if (filterPanel?.classList.contains('is-open')) {
+                    closeStatisticsFilters({ restore: true });
+                }
+                syncHeadingSelectorTitle(this);
+                applyTrendGranularity(this.value, { reload: true });
+            });
             document.getElementById('tipoMunicipioFilter').addEventListener('change', function() {
+                syncGeographicScopeControl(this.value);
                 updateGeographicFilterLabels(this.value);
                 if (metricUsesMunicipalityAndDistrict()) {
                     const selectedDistricts = [].concat(document.getElementById('distritoesFilter')?.tomselect?.getValue() || []);
                     updateMunicipiosOptions(selectedDistricts);
                 }
                 markStatisticsFilterDraft();
+            });
+            document.getElementById('granularidadFilter').addEventListener('change', function() {
+                syncTrendGranularityControl(this.value);
             });
 
             document.getElementById('chartTypeSelector').addEventListener('change', function() {
@@ -1797,6 +1955,18 @@
                 setPresentationAdaptationNote('dataLabelAdaptationNote');
                 saveCurrentPresentationPreference();
                 rerenderLatestChart();
+            });
+            document.getElementById('statisticsMeasure')?.addEventListener('change', function() {
+                chartConfig.measure = this.value === 'rate' ? 'rate' : 'count';
+                preferredConfig.measure = chartConfig.measure;
+                if (chartConfig.measure === 'rate' && !getAvailableChartTypes(currentChartType).includes(chartConfig.type)) {
+                    chartConfig.type = 'bar';
+                    preferredConfig.type = 'bar';
+                }
+                updateMeasurePresentation();
+                saveCurrentPresentationPreference();
+                invalidateChartDataCache();
+                updateChart({ preserveCurrentChart: true });
             });
             document.getElementById('chartLimit').addEventListener('change', function() {
                 chartConfig.limit = this.value === 'all' ? null : parseInt(this.value);
@@ -1836,6 +2006,13 @@
                 const button = event.target.closest('.visual-option-btn[data-target="datalabelMode"]');
                 if (!button || button.disabled) return;
                 setSelectValueAndTrigger('datalabelMode', button.dataset.value);
+                restorePresentationFocus(this, button.dataset.value);
+            });
+
+            document.getElementById('statisticsMeasureButtons')?.addEventListener('click', function(event) {
+                const button = event.target.closest('.visual-option-btn[data-target="statisticsMeasure"]');
+                if (!button || button.disabled) return;
+                setSelectValueAndTrigger('statisticsMeasure', button.dataset.value);
                 restorePresentationFocus(this, button.dataset.value);
             });
 
@@ -2072,7 +2249,10 @@
         }
 
         function getCurrentDownloadName(extension) {
-            return `estadisticas-${currentChartType}-${new Date().toISOString().split('T')[0]}.${extension}`;
+            const prefix = currentChartType === 'municipios' && chartConfig.measure === 'rate'
+                ? 'tasa-municipios-residencia'
+                : `estadisticas-${currentChartType}`;
+            return `${prefix}-${new Date().toISOString().split('T')[0]}.${extension}`;
         }
 
         function setStatisticsDownloadBusy(kind, busy) {
@@ -2242,6 +2422,31 @@
             return { height, sparseGridInset };
         }
 
+        function polishAgeDetailExportOption(option) {
+            if (currentChartType !== 'edades' || chartConfig.ageDetailMode !== 'causes') {
+                return option;
+            }
+
+            const scaleRadius = value => {
+                if (Number.isFinite(value)) return Math.round(value * 1.08);
+                if (typeof value !== 'string' || !value.trim().endsWith('%')) return value;
+
+                const percentage = Number.parseFloat(value);
+                return Number.isFinite(percentage)
+                    ? `${Math.min(58, Math.round(percentage * 1.08))}%`
+                    : value;
+            };
+
+            (Array.isArray(option.series) ? option.series : []).forEach(series => {
+                if (series?.type !== 'pie') return;
+                series.radius = Array.isArray(series.radius)
+                    ? series.radius.map(scaleRadius)
+                    : scaleRadius(series.radius);
+            });
+
+            return option;
+        }
+
         async function withChartExportDimensions(callback, {
             purpose = 'png',
             optionTransform = null,
@@ -2288,6 +2493,7 @@
                 if (typeof optionTransform === 'function') {
                     exportOption = optionTransform(exportOption) || exportOption;
                 }
+                exportOption = polishAgeDetailExportOption(exportOption);
                 exportOption.animation = false;
                 if (Array.isArray(exportOption.series)) {
                     exportOption.series.forEach(series => {
@@ -2524,7 +2730,12 @@
                     onclone: async clonedDocument => {
                         const panel = clonedDocument.getElementById('statisticsChartPanel');
                         const header = panel?.querySelector('.statistics-chart-header');
+                        const headerTop = panel?.querySelector('.statistics-chart-header__top');
+                        const heading = panel?.querySelector('.statistics-chart-heading');
                         const clonedTitle = panel?.querySelector('#chartTitle');
+                        const clonedContextRow = panel?.querySelector('#statisticsChartContextRow');
+                        const clonedTotal = panel?.querySelector('#chartTotalValue');
+                        const clonedPeriod = panel?.querySelector('#statisticsChartPeriodValue');
                         const clonedCoverage = panel?.querySelector('#statisticsChartCoverage');
                         const clonedQuality = panel?.querySelector('#statisticsChartQuality');
                         const clonedSource = panel?.querySelector('.statistics-chart-source');
@@ -2539,6 +2750,9 @@
                             panel.style.width = fixedWidth;
                             panel.style.minWidth = fixedWidth;
                             panel.style.maxWidth = fixedWidth;
+                            panel.style.border = '0';
+                            panel.style.borderRadius = '0';
+                            panel.style.boxShadow = 'none';
                         }
                         if (clonedChartCanvas && chartCanvasHeight) {
                             const fixedHeight = `${chartCanvasHeight}px`;
@@ -2563,12 +2777,44 @@
                             }
                         }
                         // Ocultar sin retirar del flujo evita que la copia cambie su geometría.
-                        if (actions) actions.style.visibility = 'hidden';
+                        if (actions) actions.style.display = 'none';
                         if (tableActions) tableActions.style.visibility = 'hidden';
                         if (drilldown) drilldown.style.display = 'none';
                         if (clonedSource) clonedSource.style.visibility = 'hidden';
                         if (header && !includeContext) header.style.display = 'none';
-                        if (includeContext && clonedTitle) clonedTitle.textContent = getExportChartTitle();
+                        if (includeContext && header && clonedTitle) {
+                            clonedTitle.textContent = getExportChartTitle();
+                            header.style.minHeight = '0';
+                            header.style.gap = '7px';
+                            header.style.padding = '22px 22px 16px';
+                            header.style.borderBottom = '1px solid #dbe3ec';
+                            if (headerTop) {
+                                headerTop.style.display = 'block';
+                            }
+                            if (heading) {
+                                heading.style.paddingLeft = '11px';
+                                heading.style.borderLeft = '3px solid #6f0f37';
+                            }
+                            clonedTitle.style.fontSize = '18px';
+                            clonedTitle.style.lineHeight = '24px';
+
+                            if (clonedContextRow) {
+                                const metadata = clonedDocument.createElement('p');
+                                const totalText = clonedTotal?.textContent?.trim() || '0';
+                                const periodText = clonedPeriod?.textContent?.trim() || '';
+                                metadata.textContent = `Total analizado: ${totalText}${periodText ? ` · Periodo: ${periodText}` : ''}`;
+                                metadata.style.margin = '0 0 0 14px';
+                                metadata.style.color = '#526278';
+                                metadata.style.fontFamily = '"Open Sans", Arial, sans-serif';
+                                metadata.style.fontSize = '11.5px';
+                                metadata.style.fontWeight = '500';
+                                metadata.style.lineHeight = '17px';
+                                clonedContextRow.replaceChildren(metadata);
+                                clonedContextRow.style.display = 'block';
+                                clonedContextRow.style.padding = '0';
+                                clonedContextRow.style.border = '0';
+                            }
+                        }
                         if (clonedCoverage) clonedCoverage.style.display = 'none';
                         if (clonedQuality) clonedQuality.style.display = 'none';
 
@@ -2853,7 +3099,7 @@
             return `estadisticas-edades-causas-${new Date().toISOString().split('T')[0]}.${extension}`;
         }
 
-        async function captureAgeCausesTableAsCanvas() {
+        async function captureAgeCausesTableAsCanvas(forPdf = false) {
             const section = document.getElementById('causasPrincipalesContainer');
             if (!section || section.classList.contains('hidden') || typeof html2canvas === 'undefined') return null;
 
@@ -2873,6 +3119,8 @@
                 onclone: async clonedDocument => {
                     const clonedSection = clonedDocument.getElementById('causasPrincipalesContainer');
                     const clonedActions = clonedDocument.getElementById('ageCausesDownloadWrapper');
+                    const clonedHeader = clonedSection?.querySelector('.statistics-causes__header');
+                    const clonedList = clonedSection?.querySelector('.statistics-causes__list');
                     const causesColumnHeaders = clonedSection?.querySelectorAll('.statistics-causes__columns span') || [];
 
                     if (clonedSection && compactExportWidth) {
@@ -2884,8 +3132,17 @@
                         clonedSection.style.animation = 'none';
                         clonedSection.style.transform = 'none';
                         clonedSection.style.opacity = '1';
+                        if (forPdf) {
+                            clonedSection.style.padding = '0';
+                            clonedSection.style.borderTop = '0';
+                        }
                     }
                     if (clonedActions) clonedActions.style.visibility = 'hidden';
+                    if (forPdf && clonedHeader) clonedHeader.style.display = 'none';
+                    if (forPdf && clonedList) {
+                        clonedList.style.width = '100%';
+                        clonedList.style.margin = '0';
+                    }
                     causesColumnHeaders.forEach(columnHeader => {
                         columnHeader.style.position = 'relative';
                         columnHeader.style.top = '-2px';
@@ -2898,14 +3155,62 @@
             });
         }
 
+        function composeAgeCausesTablePdfCanvas(tableCanvas) {
+            const displayWidth = Math.min(
+                document.getElementById('causasPrincipalesContainer')?.getBoundingClientRect().width || 850,
+                850
+            );
+            const scale = Math.max(1, tableCanvas.width / Math.max(1, displayWidth));
+            const padding = 22 * scale;
+            const accentOffset = 11 * scale;
+            const titleLineHeight = 24 * scale;
+            const bodyLineHeight = 17 * scale;
+            const headerHeight = Math.ceil(padding + titleLineHeight + (7 * scale) + bodyLineHeight + padding);
+            const total = Number(latestChartData?.filtered_total ?? latestChartData?.total ?? 0).toLocaleString('es-MX');
+            const periodElement = document.getElementById('statisticsChartPeriodValue');
+            const period = periodElement && !periodElement.classList.contains('hidden')
+                ? periodElement.textContent.trim()
+                : '';
+            const metadata = `Total analizado: ${total}${period ? ` · Periodo: ${period}` : ''}`;
+            const canvas = document.createElement('canvas');
+            canvas.width = tableCanvas.width;
+            canvas.height = headerHeight + tableCanvas.height;
+            const context = canvas.getContext('2d');
+            if (!context) return tableCanvas;
+
+            context.fillStyle = '#ffffff';
+            context.fillRect(0, 0, canvas.width, canvas.height);
+            context.fillStyle = '#6f0f37';
+            context.fillRect(padding, padding + (2 * scale), 3 * scale, titleLineHeight - (4 * scale));
+            context.fillStyle = '#10233f';
+            context.font = `600 ${18 * scale}px Lora, Georgia, serif`;
+            context.fillText('Causas principales por grupo de edad', padding + accentOffset, padding + (19 * scale));
+            context.fillStyle = '#526278';
+            context.font = `500 ${11.5 * scale}px "Open Sans", Arial, sans-serif`;
+            context.fillText(metadata, padding + accentOffset, padding + titleLineHeight + (14 * scale));
+            context.strokeStyle = '#dbe3ec';
+            context.lineWidth = Math.max(1, scale / 2);
+            context.beginPath();
+            context.moveTo(padding, headerHeight - (8 * scale));
+            context.lineTo(canvas.width - padding, headerHeight - (8 * scale));
+            context.stroke();
+            context.drawImage(tableCanvas, 0, headerHeight);
+
+            return canvas;
+        }
+
         async function exportAgeCausesTable(exportType = 'png') {
             if (tableExportInProgress) return false;
 
             tableExportInProgress = true;
             setStatisticsDownloadBusy('table', true);
             try {
-                const canvas = await captureAgeCausesTableAsCanvas();
-                if (!canvas) throw new Error('No se pudo generar el lienzo de la tabla.');
+                const tableCanvas = await captureAgeCausesTableAsCanvas(exportType === 'pdf');
+                if (!tableCanvas) throw new Error('No se pudo generar el lienzo de la tabla.');
+
+                const canvas = exportType === 'pdf'
+                    ? composeAgeCausesTablePdfCanvas(tableCanvas)
+                    : tableCanvas;
 
                 if (exportType === 'pdf') {
                     const { jsPDF } = window.jspdf || {};
@@ -2914,11 +3219,17 @@
                     const pdf = new jsPDF({ orientation: 'landscape', unit: 'pt', format: 'a4' });
                     const pageWidth = pdf.internal.pageSize.getWidth();
                     const pageHeight = pdf.internal.pageSize.getHeight();
-                    const ratio = Math.min((pageWidth - 40) / canvas.width, (pageHeight - 40) / canvas.height);
+                    const horizontalMargin = 20;
+                    const topMargin = 20;
+                    const bottomMargin = 20;
+                    const ratio = Math.min(
+                        (pageWidth - (horizontalMargin * 2)) / canvas.width,
+                        (pageHeight - topMargin - bottomMargin) / canvas.height
+                    );
                     const width = canvas.width * ratio;
                     const height = canvas.height * ratio;
                     const x = (pageWidth - width) / 2;
-                    const y = (pageHeight - height) / 2;
+                    const y = topMargin;
 
                     pdf.addImage(canvas.toDataURL('image/png'), 'PNG', x, y, width, height);
                     pdf.save(getAgeCausesTableDownloadName('pdf'));
@@ -2943,6 +3254,228 @@
 
         window.exportStatisticsChart = exportCurrentChart;
 
+        function setMunicipalityConfigurationView(view, { focus = false } = {}) {
+            const filtersBody = document.querySelector('#estadisticas-filtros .users-filter-panel-body');
+            const tabs = document.querySelectorAll('[data-municipality-config-tab]');
+            const filters = document.getElementById('municipalitySidebarFilters');
+            const presentation = document.getElementById('municipalitySidebarPresentation');
+            const footer = document.querySelector('#estadisticas-filtros > .users-filter-panel-footer');
+            const clearAction = document.getElementById('limpiarFiltros');
+            const resetAction = document.getElementById('statisticsPresentationReset');
+            const normalizedView = view === 'presentation' ? 'presentation' : 'filters';
+
+            if (!filtersBody || !filters || !presentation) return;
+
+            filtersBody.dataset.configurationView = normalizedView;
+            filters.hidden = normalizedView !== 'filters';
+            presentation.hidden = normalizedView !== 'presentation';
+            if (footer) footer.hidden = normalizedView !== 'filters';
+            if (clearAction) {
+                const shouldHide = normalizedView !== 'filters';
+                clearAction.hidden = shouldHide;
+                clearAction.classList.toggle('hidden', shouldHide);
+            }
+            if (resetAction) {
+                const shouldHide = normalizedView !== 'presentation';
+                resetAction.hidden = shouldHide;
+                resetAction.classList.toggle('hidden', shouldHide);
+            }
+
+            tabs.forEach(tab => {
+                const selected = tab.dataset.municipalityConfigTab === normalizedView;
+                tab.setAttribute('aria-selected', String(selected));
+                tab.tabIndex = selected ? 0 : -1;
+                if (selected && focus) tab.focus();
+            });
+        }
+
+        function syncMunicipalityExplorerLayout(chartType) {
+            const page = document.querySelector('.statistics-page');
+            const content = document.querySelector('.statistics-content');
+            const chartPanel = document.getElementById('statisticsChartPanel');
+            const chartHeader = chartPanel?.querySelector('.statistics-chart-header');
+            const displayPanel = document.querySelector('.statistics-display-panel');
+            const displayTitle = document.getElementById('statistics-display-title');
+            const presentationGroups = document.getElementById('statisticsPresentationGroups');
+            const presentationActions = displayPanel?.querySelector('.statistics-display-panel__actions');
+            const presentationReset = document.getElementById('statisticsPresentationReset');
+            const filtersBody = document.querySelector('#estadisticas-filtros .users-filter-panel-body');
+            const filtersPanel = document.getElementById('estadisticas-filtros');
+            const filtersTitle = document.getElementById('statistics-filters-title');
+            const isMunicipalities = chartType === 'municipios';
+            const usesExplorerLayout = isMunicipalities
+                && window.matchMedia('(min-width: 1024px)').matches;
+
+            if (!page || !content || !chartPanel || !displayPanel || !presentationGroups) return;
+
+            page.dataset.activeMetric = chartType;
+            if (usesExplorerLayout) {
+                chartHeader?.after(displayPanel);
+
+                let sidebarPresentation = document.getElementById('municipalitySidebarPresentation');
+                if (!sidebarPresentation && filtersBody) {
+                    sidebarPresentation = document.createElement('section');
+                    sidebarPresentation.id = 'municipalitySidebarPresentation';
+                    sidebarPresentation.className = 'statistics-municipality-config-block statistics-municipality-presentation';
+                    sidebarPresentation.innerHTML = `
+                        <div class="statistics-municipality-presentation__groups"></div>
+                    `;
+                    filtersBody.append(sidebarPresentation);
+                }
+                sidebarPresentation?.querySelector('.statistics-municipality-presentation__toolbar')?.remove();
+
+                let sidebarFilters = document.getElementById('municipalitySidebarFilters');
+                if (!sidebarFilters && filtersBody) {
+                    sidebarFilters = document.createElement('section');
+                    sidebarFilters.id = 'municipalitySidebarFilters';
+                    sidebarFilters.className = 'statistics-municipality-config-block statistics-municipality-filters';
+                    sidebarFilters.innerHTML = `
+                        <header class="statistics-municipality-filters__header">
+                            <div>
+                                <h3>Filtros de datos</h3>
+                                <p>Delimita los registros incluidos en la gráfica.</p>
+                            </div>
+                        </header>
+                        <div class="statistics-municipality-filters__groups"></div>
+                    `;
+                    filtersBody.insertBefore(sidebarFilters, sidebarPresentation || null);
+                }
+
+                let configurationTabs = document.getElementById('municipalityConfigurationTabs');
+                if (!configurationTabs && filtersBody) {
+                    configurationTabs = document.createElement('div');
+                    configurationTabs.id = 'municipalityConfigurationTabs';
+                    configurationTabs.className = 'statistics-municipality-config-tabs';
+                    configurationTabs.setAttribute('role', 'tablist');
+                    configurationTabs.setAttribute('aria-label', 'Secciones de configuración');
+                    configurationTabs.innerHTML = `
+                        <button type="button" role="tab" data-municipality-config-tab="filters" aria-controls="municipalitySidebarFilters">
+                            <i class="fas fa-sliders" aria-hidden="true"></i>
+                            <span>Datos</span>
+                        </button>
+                        <button type="button" role="tab" data-municipality-config-tab="presentation" aria-controls="municipalitySidebarPresentation">
+                            <i class="fas fa-palette" aria-hidden="true"></i>
+                            <span>Vista</span>
+                        </button>
+                    `;
+                    filtersBody.prepend(configurationTabs);
+
+                    const configTabs = Array.from(configurationTabs.querySelectorAll('[data-municipality-config-tab]'));
+                    configTabs.forEach((tab, index) => {
+                        tab.addEventListener('click', () => {
+                            setMunicipalityConfigurationView(tab.dataset.municipalityConfigTab);
+                        });
+                        tab.addEventListener('keydown', event => {
+                            if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
+                            event.preventDefault();
+                            let targetIndex = index;
+                            if (event.key === 'ArrowLeft') targetIndex = (index - 1 + configTabs.length) % configTabs.length;
+                            if (event.key === 'ArrowRight') targetIndex = (index + 1) % configTabs.length;
+                            if (event.key === 'Home') targetIndex = 0;
+                            if (event.key === 'End') targetIndex = configTabs.length - 1;
+                            setMunicipalityConfigurationView(configTabs[targetIndex].dataset.municipalityConfigTab, { focus: true });
+                        });
+                    });
+                }
+
+                const sidebarFilterGroups = sidebarFilters?.querySelector('.statistics-municipality-filters__groups');
+                Array.from(filtersBody.children)
+                    .filter(element => element.classList.contains('users-filter-section'))
+                    .forEach(section => sidebarFilterGroups?.append(section));
+
+                const sidebarGroups = sidebarPresentation?.querySelector('.statistics-municipality-presentation__groups');
+                let sidebarChartTypeGroup = document.getElementById('municipalityChartTypeMirrorGroup');
+                if (!sidebarChartTypeGroup && sidebarGroups) {
+                    sidebarChartTypeGroup = document.createElement('fieldset');
+                    sidebarChartTypeGroup.id = 'municipalityChartTypeMirrorGroup';
+                    sidebarChartTypeGroup.className = 'statistics-display-group statistics-municipality-chart-types';
+                    sidebarChartTypeGroup.innerHTML = `
+                        <legend id="municipalityChartTypeMirrorLegend">Tipo de gráfica</legend>
+                        <div id="municipalityChartTypeButtons" class="statistics-visual-options" role="group" aria-labelledby="municipalityChartTypeMirrorLegend"></div>
+                    `;
+                    sidebarGroups.prepend(sidebarChartTypeGroup);
+
+                    sidebarChartTypeGroup.querySelector('#municipalityChartTypeButtons')?.addEventListener('click', function(event) {
+                        const button = event.target.closest('.visual-option-btn[data-target="chartTypeSelector"]');
+                        if (!button || button.disabled) return;
+                        setSelectValueAndTrigger('chartTypeSelector', button.dataset.value);
+                        restorePresentationFocus(this, button.dataset.value);
+                    });
+                } else if (sidebarChartTypeGroup && sidebarGroups) {
+                    sidebarGroups.prepend(sidebarChartTypeGroup);
+                }
+                [
+                    document.getElementById('statisticsMeasureGroup'),
+                    document.getElementById('filterTop'),
+                    document.getElementById('statisticsDataLabelGroup'),
+                    displayPanel.querySelector('.statistics-display-group--palette'),
+                ].forEach(group => {
+                    if (group && sidebarGroups) sidebarGroups.append(group);
+                });
+                const filtersHeader = filtersPanel?.querySelector(':scope > .users-filter-panel-header');
+                if (presentationReset && filtersHeader) {
+                    presentationReset.textContent = 'Restablecer vista';
+                    presentationReset.classList.add('statistics-municipality-header-reset');
+                    filtersHeader.append(presentationReset);
+                }
+                renderChartTypeButtons(chartType);
+                setMunicipalityConfigurationView(filtersBody?.dataset.configurationView || 'filters');
+
+                displayTitle.textContent = 'Tipo de gráfica';
+                if (filtersTitle) filtersTitle.textContent = 'Configuración';
+                filtersPanel?.setAttribute('role', 'complementary');
+                filtersPanel?.setAttribute('aria-label', 'Filtros de municipios');
+                filtersPanel?.removeAttribute('aria-modal');
+                filterDraftSnapshot = captureStatisticsFilterState();
+            } else {
+                const sidebarFilters = document.getElementById('municipalitySidebarFilters');
+                document.querySelector('#estadisticas-filtros > .users-filter-panel-footer')?.removeAttribute('hidden');
+                sidebarFilters?.removeAttribute('hidden');
+                document.getElementById('municipalitySidebarPresentation')?.removeAttribute('hidden');
+                sidebarFilters?.querySelectorAll('.users-filter-section').forEach(section => {
+                    filtersBody?.insertBefore(section, document.getElementById('municipalitySidebarPresentation'));
+                });
+                sidebarFilters?.remove();
+                document.getElementById('municipalityConfigurationTabs')?.remove();
+
+                [
+                    document.getElementById('statisticsChartTypeGroup'),
+                    document.getElementById('statisticsMeasureGroup'),
+                    document.getElementById('statisticsDataLabelGroup'),
+                    document.getElementById('filterTop'),
+                    displayPanel.querySelector('.statistics-display-group--palette')
+                        || document.querySelector('#municipalitySidebarPresentation .statistics-display-group--palette'),
+                    document.getElementById('statisticsAgeDetailGroup'),
+                ].forEach(group => {
+                    if (group) presentationGroups.append(group);
+                });
+                if (presentationReset && presentationActions) {
+                    presentationReset.textContent = 'Restablecer';
+                    presentationReset.hidden = false;
+                    presentationReset.classList.remove('hidden', 'statistics-municipality-header-reset');
+                    presentationActions.prepend(presentationReset);
+                }
+                const clearAction = document.getElementById('limpiarFiltros');
+                if (clearAction) {
+                    clearAction.hidden = false;
+                    clearAction.classList.remove('hidden');
+                }
+                document.getElementById('municipalitySidebarPresentation')?.remove();
+
+                content.insertBefore(displayPanel, chartPanel);
+                displayTitle.textContent = 'Presentación';
+                if (filtersTitle) filtersTitle.textContent = 'Filtros';
+                filtersPanel?.setAttribute('role', 'dialog');
+                filtersPanel?.setAttribute('aria-modal', 'false');
+                filtersPanel?.removeAttribute('aria-label');
+            }
+
+            window.requestAnimationFrame(() => {
+                currentEchartsInstance?.resize();
+                positionChartLimitIndicator({ immediate: true });
+            });
+        }
+
         function selectChart(chartType, { useCurrentPresentation = false } = {}) {
             const hasRenderedChart = Boolean(currentEchartsInstance);
             const filtersPanel = document.getElementById('estadisticas-filtros');
@@ -2951,6 +3484,7 @@
             }
 
             currentChartType = chartType;
+            syncMunicipalityExplorerLayout(chartType);
             latestChartData = null;
             latestChartDataType = null;
             if (!useCurrentPresentation) restorePresentationPreference(chartType);
@@ -2985,22 +3519,39 @@
             const availableFilters = getFiltersForChart(chartType);
 
             const isComparison = chartType === 'comparativa';
+            const isGeographicAnalysis = ['municipios', 'distritoes'].includes(chartType);
+            const isTrendAnalysis = chartType === 'tendencias';
+            const geographicScopeLabel = document.getElementById('statisticsGeographicScopeLabel');
+            if (geographicScopeLabel) {
+                geographicScopeLabel.textContent = chartType === 'distritoes'
+                    ? 'Analizar distritos por'
+                    : 'Analizar municipios por';
+            }
+            document.getElementById('statisticsGeographicScopeControl')
+                ?.classList.toggle('hidden', !isGeographicAnalysis);
+            document.getElementById('statisticsTrendGranularityControl')
+                ?.classList.toggle('hidden', !isTrendAnalysis);
             document.getElementById('statisticsComparisonControl')
                 ?.classList.toggle('hidden', !isComparison);
             document.getElementById('statisticsChartContextRow')
-                ?.classList.toggle('is-comparison', isComparison);
+                ?.classList.toggle('is-comparison', isComparison || isGeographicAnalysis || isTrendAnalysis);
+            [
+                document.getElementById('geographicScopeSelector'),
+                document.getElementById('trendGranularitySelector'),
+                document.getElementById('tipoComparativaFilter'),
+            ].forEach(syncHeadingSelectorTitle);
 
             allFilters.forEach(filterId => {
                 const element = document.getElementById(filterId);
                 if (element) {
                     let show = false;
-                    if (filterId === 'filterTipoMunicipio' && availableFilters.includes('tipoMunicipio')) show = true;
+                    if (filterId === 'filterTipoMunicipio' && availableFilters.includes('tipoMunicipio') && !isGeographicAnalysis) show = true;
                     if (filterId === 'filterMunicipios' && availableFilters.includes('municipios')) show = true;
                     if (filterId === 'filterCausas' && availableFilters.includes('causas')) show = true;
                     if (filterId === 'filterdistritoes' && availableFilters.includes('distritoes')) show = true;
                     if (filterId === 'filterSexo' && availableFilters.includes('sexo')) show = true;
                     if (filterId === 'filterEdad' && availableFilters.includes('edad')) show = true;
-                    if (filterId === 'filterGranularidad' && availableFilters.includes('granularidad')) show = true;
+                    if (filterId === 'filterGranularidad' && availableFilters.includes('granularidad') && !isTrendAnalysis) show = true;
                     element.style.display = show ? 'block' : 'none';
                 }
             });
@@ -3013,7 +3564,7 @@
 
             const chartTypeGroup = document.getElementById('statisticsChartTypeGroup');
             if (chartTypeGroup) {
-                const hasChartTypeChoice = (chartTypeOptions[chartType] || []).length > 1;
+                const hasChartTypeChoice = getAvailableChartTypes(chartType).length > 1;
                 chartTypeGroup.style.display = hasChartTypeChoice ? '' : 'none';
                 chartTypeGroup.parentElement?.classList.toggle('no-chart-type-choice', !hasChartTypeChoice);
             }
@@ -3028,6 +3579,8 @@
             }
 
             updateGeographicFilterLabels(document.getElementById('tipoMunicipioFilter')?.value || activeFilters.tipoMunicipio);
+            syncGeographicScopeControl(document.getElementById('tipoMunicipioFilter')?.value || activeFilters.tipoMunicipio);
+            syncTrendGranularityControl(document.getElementById('granularidadFilter')?.value || activeFilters.granularidad);
 
         }
 
@@ -3148,7 +3701,8 @@
         }
 
         function applyPreferredPresentation(chartType) {
-            const validTypes = chartTypeOptions[chartType] || ['bar'];
+            chartConfig.measure = chartType === 'municipios' ? preferredConfig.measure : 'count';
+            const validTypes = getAvailableChartTypes(chartType);
             const effectiveType = validTypes.includes(preferredConfig.type)
                 ? preferredConfig.type
                 : chartTypeDefaults[chartType];
@@ -3172,6 +3726,7 @@
             renderChartLimitButtons(chartType);
             renderColorPalettePreview();
             renderAgeDetailCheckbox();
+            updateMeasurePresentation();
 
             setPresentationAdaptationNote(
                 'chartTypeAdaptationNote',
@@ -3222,10 +3777,54 @@
             renderDataLabelButtons(chartType);
         }
 
+        function updateMeasurePresentation() {
+            const group = document.getElementById('statisticsMeasureGroup');
+            const select = document.getElementById('statisticsMeasure');
+            const container = document.getElementById('statisticsMeasureButtons');
+            const note = document.getElementById('statisticsMeasureNote');
+            if (!group || !select || !container) return;
+
+            const isMunicipality = currentChartType === 'municipios';
+            const residenceScope = activeFilters.tipoMunicipio === 'residencia';
+            group.style.display = isMunicipality ? '' : 'none';
+            if (!isMunicipality) return;
+
+            if (!residenceScope && chartConfig.measure === 'rate') {
+                chartConfig.measure = 'count';
+                preferredConfig.measure = 'count';
+                const status = document.getElementById('statisticsPresentationStatus');
+                if (status) status.textContent = 'La tasa por población solo está disponible para municipios de residencia; se muestran cantidades.';
+            }
+            select.value = chartConfig.measure;
+            container.innerHTML = [
+                { value: 'count', label: 'Cantidad', icon: 'fa-hashtag', disabled: false },
+                { value: 'rate', label: 'Tasa', icon: 'fa-percent', disabled: !residenceScope }
+            ].map(option => {
+                const active = option.value === chartConfig.measure;
+                return `<button type="button" class="visual-option-btn visual-option-card ${active ? 'active' : ''}" data-target="statisticsMeasure" data-value="${option.value}" aria-pressed="${active}" ${option.disabled ? 'disabled' : ''}>
+                    <i class="fas ${option.icon}" aria-hidden="true"></i><span class="visual-option-label">${option.label}</span>
+                </button>`;
+            }).join('');
+            note.textContent = residenceScope
+                ? 'La tasa se expresa por 100 mil habitantes y requiere un año calendario completo.'
+                : 'La tasa por población solo está disponible para municipios de residencia.';
+
+            const labelOptions = document.querySelectorAll('#datalabelMode option');
+            labelOptions.forEach(option => {
+                const labels = chartConfig.measure === 'rate'
+                    ? { value: 'Tasa', percent: 'Cantidad', both: 'Tasa y cantidad', none: 'Sin etiquetas' }
+                    : { value: 'Cantidad', percent: 'Porcentaje', both: 'Cantidad y porcentaje', none: 'Sin etiquetas' };
+                option.textContent = labels[option.value];
+            });
+            updateChartTypeOptions(currentChartType, chartConfig.type);
+            renderChartTypeButtons(currentChartType);
+            renderDataLabelButtons(currentChartType);
+        }
+
         function updateChartTypeOptions(chartType, selectedValue = chartConfig.type) {
             const selector = document.getElementById('chartTypeSelector');
             if (!selector) return;
-            const availableTypes = chartTypeOptions[chartType] || ['bar'];
+            const availableTypes = getAvailableChartTypes(chartType);
             const currentValue = selectedValue;
             const allOptions = {
                 'bar': 'Columnas',
@@ -3509,10 +4108,11 @@
 
         function renderChartTypeButtons(chartType) {
             const container = document.getElementById('chartTypeButtons');
+            const municipalityContainer = document.getElementById('municipalityChartTypeButtons');
             const selector = document.getElementById('chartTypeSelector');
             if (!container || !selector) return;
 
-            const availableTypes = chartTypeOptions[chartType] || ['bar'];
+            const availableTypes = getAvailableChartTypes(chartType);
             const currentValue = selector.value || chartConfig.type || availableTypes[0];
             const isSingleType = availableTypes.length === 1;
             const labels = {
@@ -3532,17 +4132,24 @@
                 map: 'Mapa por municipio',
                 heatmap: 'Mapa de calor comparativo'
             };
-            container.className = `statistics-visual-options${isSingleType ? ' is-single' : ''}`;
-
-            container.innerHTML = availableTypes.map(type => {
+            const optionsMarkup = availableTypes.map(type => {
                 const active = type === currentValue;
                 return `
-                    <button type="button" class="visual-option-btn visual-option-card ${isSingleType ? 'is-compact-single' : ''} ${active ? 'active' : ''}" data-target="chartTypeSelector" data-value="${type}" aria-pressed="${active}" aria-label="${accessibleLabels[type] || type}">
+                    <button type="button" class="visual-option-btn visual-option-card ${isSingleType ? 'is-compact-single' : ''} ${active ? 'active' : ''}" data-target="chartTypeSelector" data-value="${type}" aria-pressed="${active}" aria-label="${accessibleLabels[type] || type}" title="${labels[type] || type}">
                         <i class="fas ${chartTypeIcons[type] || 'fa-chart-simple'}" aria-hidden="true"></i>
                         <span class="visual-option-label">${labels[type] || type}</span>
                     </button>
                 `;
             }).join('');
+
+            container.className = `statistics-visual-options${isSingleType ? ' is-single' : ''}`;
+            container.innerHTML = optionsMarkup;
+
+            if (municipalityContainer) {
+                municipalityContainer.className = `statistics-visual-options${isSingleType ? ' is-single' : ''}`;
+                municipalityContainer.innerHTML = optionsMarkup;
+                municipalityContainer.closest('.statistics-display-group').hidden = chartType !== 'municipios';
+            }
 
             const dataLabelGroup = document.getElementById('statisticsDataLabelGroup');
             if (dataLabelGroup) dataLabelGroup.hidden = currentValue === 'map';
@@ -3554,12 +4161,19 @@
             if (!container || !select) return;
 
             const currentValue = select.value || chartConfig.dataLabelMode || 'value';
-            let options = [
-                { value: 'value', label: 'Cantidad', accessibleLabel: 'Mostrar cantidad' },
-                { value: 'percent', label: 'Porcentaje', accessibleLabel: 'Mostrar porcentaje' },
-                { value: 'both', label: 'Cantidad y %', accessibleLabel: 'Mostrar cantidad y porcentaje' },
-                { value: 'none', label: 'Sin etiquetas', accessibleLabel: 'No mostrar etiquetas de datos' }
-            ];
+            let options = chartType === 'municipios' && chartConfig.measure === 'rate'
+                ? [
+                    { value: 'value', label: 'Tasa', accessibleLabel: 'Mostrar tasa' },
+                    { value: 'percent', label: 'Cantidad', accessibleLabel: 'Mostrar cantidad de defunciones' },
+                    { value: 'both', label: 'Tasa y cantidad', accessibleLabel: 'Mostrar tasa y cantidad' },
+                    { value: 'none', label: 'Ocultar', accessibleLabel: 'No mostrar etiquetas de datos' }
+                ]
+                : [
+                    { value: 'value', label: 'Cantidad', accessibleLabel: 'Mostrar cantidad' },
+                    { value: 'percent', label: 'Porcentaje', accessibleLabel: 'Mostrar porcentaje' },
+                    { value: 'both', label: 'Cantidad y %', accessibleLabel: 'Mostrar cantidad y porcentaje' },
+                    { value: 'none', label: chartType === 'municipios' ? 'Ocultar' : 'Sin etiquetas', accessibleLabel: 'No mostrar etiquetas de datos' }
+                ];
 
             // Tendencias no dispone de un denominador categórico para porcentajes.
             if (chartType === 'tendencias') {
@@ -3651,7 +4265,7 @@
             const readabilityNote = document.getElementById('chartLimitReadabilityNote');
             const showAllAsBars = document.getElementById('statisticsShowAllAsBars');
             const hasManyCategories = knownCategoryCount !== null && availableCategoryCount > maximumVerticalCategories;
-            const supportsHorizontal = (chartTypeOptions[chartType] || []).includes('barHorizontal');
+            const supportsHorizontal = getAvailableChartTypes(chartType).includes('barHorizontal');
             const canMoveToHorizontal = visualFamily === 'vertical'
                 && hasManyCategories
                 && supportsHorizontal
@@ -4056,6 +4670,7 @@
                 ...(chartTypesWithTopSelector.includes(chartType) && limit && { limit }),
                 ...(chartType === 'tendencias' && { group_by: activeFilters.granularidad }),
                 ...(chartType === 'comparativa' && { comparativa_type: activeFilters.tipoComparativa }),
+                ...(chartType === 'municipios' && { measure: chartConfig.measure }),
                 ...(['municipios', 'distritoes'].includes(chartType) && { municipio_type: activeFilters.tipoMunicipio })
             };
 
@@ -4162,6 +4777,7 @@
                 const requestId = ++chartRequestSequence;
                 latestChartData = cachedData;
                 latestChartDataType = chartType;
+                applyMeasureResponse(cachedData);
                 const responseCategoryCount = Number(cachedData.available_categories);
                 syncChartLimitForPresentation(
                     chartType,
@@ -4217,6 +4833,7 @@
 
                 latestChartData = data;
                 latestChartDataType = chartType;
+                applyMeasureResponse(data);
                 const responseCategoryCount = Number(data.available_categories);
                 syncChartLimitForPresentation(
                     chartType,
@@ -4265,6 +4882,18 @@
         function cloneChartData(data) {
             if (typeof structuredClone === 'function') return structuredClone(data);
             return JSON.parse(JSON.stringify(data));
+        }
+
+        function applyMeasureResponse(data) {
+            if (currentChartType !== 'municipios') return;
+            const actualMeasure = data?.measure === 'rate' ? 'rate' : 'count';
+            if (actualMeasure !== chartConfig.measure) {
+                chartConfig.measure = actualMeasure;
+                preferredConfig.measure = actualMeasure;
+                const status = document.getElementById('statisticsPresentationStatus');
+                if (status && data?.measure_notice) status.textContent = data.measure_notice;
+            }
+            updateMeasurePresentation();
         }
 
         async function rerenderLatestChart() {
@@ -4896,11 +5525,32 @@
 
         function downloadAnalysisCsv() {
             if (!latestChartData || latestChartDataType !== currentChartType) return;
+            if (latestChartData.measure === 'rate') {
+                const quote = value => `"${String(value ?? '').replace(/"/g, '""')}"`;
+                const rows = [['Municipio', 'Defunciones', 'Población', 'Tasa por 100 mil', 'Año del denominador']];
+                (latestChartData.labels || []).forEach((label, index) => rows.push([
+                    label,
+                    latestChartData.counts?.[index] ?? 0,
+                    latestChartData.populations?.[index] ?? 'No disponible',
+                    latestChartData.rates?.[index] ?? 'No disponible',
+                    latestChartData.denominator_year ?? ''
+                ]));
+                const csv = '\uFEFF' + rows.map(row => row.map(quote).join(',')).join('\r\n');
+                const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = getCurrentDownloadName('csv');
+                document.body.appendChild(link);
+                link.click();
+                link.remove();
+                URL.revokeObjectURL(url);
+                return;
+            }
             const params = buildStatisticsAnalysisParams(latestChartData, { csv: true });
             window.location.assign(`{{ route('statistic.export') }}?${params.toString()}`);
         }
 
-        function updateChartSourceSummary(sourceSummary) {
+        function updateChartSourceSummary(sourceSummary, populationSource = null, denominatorYear = null) {
             const footer = document.getElementById('statisticsChartSource');
             const details = document.getElementById('statisticsChartSourceDetails');
             const summary = document.getElementById('statisticsChartSourceSummary');
@@ -4925,22 +5575,32 @@
             summary.textContent = imports.length > 0
                 ? `Origen: ${importText}${manualRecords > 0 ? ` · ${manualText}` : ''}`
                 : 'Origen: captura manual';
+            if (populationSource) {
+                summary.textContent += ` · Población: ${populationSource.name || 'CONAPO'} (${denominatorYear})`;
+            }
 
             const dateFormatter = new Intl.DateTimeFormat('es-MX', {
                 day: 'numeric',
                 month: 'short',
                 year: 'numeric'
             });
-            const appendSource = (name, records, description) => {
+            const appendSource = (name, records, description, url = '') => {
                 const item = document.createElement('li');
                 const copy = document.createElement('span');
-                const title = document.createElement('strong');
+                const title = document.createElement(url ? 'a' : 'strong');
                 const meta = document.createElement('small');
                 const count = document.createElement('strong');
 
                 title.textContent = name;
+                if (url) {
+                    title.href = url;
+                    title.target = '_blank';
+                    title.rel = 'noopener noreferrer';
+                }
                 meta.textContent = description;
-                count.textContent = `${Number(records).toLocaleString('es-MX')} ${Number(records) === 1 ? 'registro' : 'registros'}`;
+                count.textContent = records === null
+                    ? 'Fuente poblacional'
+                    : `${Number(records).toLocaleString('es-MX')} ${Number(records) === 1 ? 'registro' : 'registros'}`;
                 copy.append(title, meta);
                 item.append(copy, count);
                 list.append(item);
@@ -4957,6 +5617,15 @@
 
             if (manualRecords > 0) {
                 appendSource('Captura manual', manualRecords, 'Registros agregados directamente en el sistema');
+            }
+
+            if (populationSource) {
+                appendSource(
+                    populationSource.name || 'CONAPO',
+                    null,
+                    `${populationSource.version || 'Población municipal'} · denominador ${denominatorYear}`,
+                    populationSource.url || ''
+                );
             }
 
             total.textContent = `${totalRecords.toLocaleString('es-MX')} ${totalRecords === 1 ? 'registro considerado' : 'registros considerados'}`;
@@ -5049,20 +5718,34 @@
                 );
             }
 
-            let percentageDescription = total > 0
-                ? `Cada porcentaje divide la cantidad de una categoría entre ${formatNumber(total)} y la multiplica por 100.`
-                : 'Cada porcentaje divide la cantidad de una categoría entre el total analizado y la multiplica por 100.';
-            const exampleValue = Number(counts[0]);
-            if (total > 0 && Number.isFinite(exampleValue) && exampleValue >= 0 && labels[0]) {
-                const examplePercentage = ((exampleValue / total) * 100).toFixed(1);
-                percentageDescription += ` Por ejemplo, ${formatNumber(exampleValue)} ÷ ${formatNumber(total)} × 100 = ${examplePercentage}%.`;
+            if (data.measure === 'rate') {
+                const populationCoverage = data.population_coverage || {};
+                appendDefinition(
+                    'Tasa por 100 mil habitantes',
+                    `Se divide la cantidad de defunciones del municipio entre su población a mitad de ${data.denominator_year} y se multiplica por 100,000. La población proviene de ${data.population_source?.name || 'CONAPO'}.`
+                );
+                appendDefinition(
+                    'Cobertura poblacional',
+                    `${formatNumber(populationCoverage.with_denominator || 0)} de ${formatNumber(populationCoverage.territories || availableCategories)} municipios cuentan con denominador válido; se muestran ${formatNumber(populationCoverage.displayed || displayedCategories)}.`
+                );
+            } else {
+                let percentageDescription = total > 0
+                    ? `Cada porcentaje divide la cantidad de una categoría entre ${formatNumber(total)} y la multiplica por 100.`
+                    : 'Cada porcentaje divide la cantidad de una categoría entre el total analizado y la multiplica por 100.';
+                const exampleValue = Number(counts[0]);
+                if (total > 0 && Number.isFinite(exampleValue) && exampleValue >= 0 && labels[0]) {
+                    const examplePercentage = ((exampleValue / total) * 100).toFixed(1);
+                    percentageDescription += ` Por ejemplo, ${formatNumber(exampleValue)} ÷ ${formatNumber(total)} × 100 = ${examplePercentage}%.`;
+                }
+                appendDefinition('Porcentaje', percentageDescription);
             }
-            appendDefinition('Porcentaje', percentageDescription);
 
             if (availableCategories > displayedCategories || coverage < 99.95) {
                 appendDefinition(
                     'Alcance',
-                    `Se muestran ${formatNumber(displayedCategories)} de ${formatNumber(availableCategories)} ${rankingLabel}. En conjunto representan ${coverage.toFixed(1)}% del total analizado.`
+                    data.measure === 'rate'
+                        ? `Se muestran ${formatNumber(displayedCategories)} de ${formatNumber(availableCategories)} ${rankingLabel}, ordenados por tasa.`
+                        : `Se muestran ${formatNumber(displayedCategories)} de ${formatNumber(availableCategories)} ${rankingLabel}. En conjunto representan ${coverage.toFixed(1)}% del total analizado.`
                 );
             }
 
@@ -5154,7 +5837,9 @@
             periodElement.classList.toggle('hidden', !periodText);
             if (hasLimitedCoverage && Number(data.filtered_total || 0) > 0) {
                 const dimension = data.ranking_label || 'categorías';
-                coverageText.textContent = `Mostrando ${displayedCategories} de ${availableCategories} ${dimension} · representan ${coverage.toFixed(1)}% del total`;
+                coverageText.textContent = data.measure === 'rate'
+                    ? `Mostrando ${displayedCategories} de ${availableCategories} ${dimension}`
+                    : `Mostrando ${displayedCategories} de ${availableCategories} ${dimension} · representan ${coverage.toFixed(1)}% del total`;
                 coverageElement.classList.remove('hidden');
             } else {
                 coverageText.textContent = '';
@@ -5251,7 +5936,7 @@
                 }
             }
 
-            document.getElementById('chartTitle').textContent = getCurrentChartTitle();
+            document.getElementById('chartTitle').textContent = getCurrentChartHeadingTitle();
             const filteredTotal = Number(data.filtered_total ?? data.total ?? 0);
             const totalStr = filteredTotal.toLocaleString('es-MX');
             const totalEl = document.getElementById('totalRecords');
@@ -5260,17 +5945,18 @@
             if (badgeEl) badgeEl.textContent = totalStr;
             document.getElementById('chartTotalBadge')?.classList.remove('hidden');
             updateChartContext(data);
-            updateChartSourceSummary(data.source_summary);
+            updateChartSourceSummary(data.source_summary, data.population_source, data.denominator_year);
             updateChartMethodology(data);
             updateStatisticsAnalysisActions(data);
 
-            if (filteredTotal <= 0) {
+            const isRateMode = currentChartType === 'municipios' && data.measure === 'rate';
+            if (filteredTotal <= 0 && !isRateMode) {
                 showNoChartData(data);
                 return;
             }
 
             let labels = data.labels || [];
-            let values = currentChartType === 'comparativa' ? null : (data.counts || []);
+            let values = currentChartType === 'comparativa' ? null : (isRateMode ? (data.rates || []) : (data.counts || []));
             
             // Usar paleta de alto contraste para gráficas circulares, paleta normal para barras/líneas
             const paletteSource = isPieLikeChart ? colorPalettesCircular : colorPalettes;
@@ -5304,7 +5990,7 @@
 
             // Filtrar entradas con valor 0 en gráficas de barras para evitar mostrar categorías sin datos
             try {
-                if ((chartType === 'bar' || chartType === 'barHorizontal')) {
+                if ((chartType === 'bar' || chartType === 'barHorizontal') && !isRateMode) {
                     if (currentChartType === 'comparativa' && data.residence_counts && data.death_counts) {
                         const fLabels = [];
                         const fRes = [];
@@ -5372,6 +6058,7 @@
                 return cartesianSolidColor;
             };
             const chartAvailableWidth = chartContainer?.clientWidth || chartWrapper?.clientWidth || 960;
+            const denseDataLabelLimit = chartAvailableWidth < 1050 ? 10 : maximumVerticalCategories;
             const plotWidth = Math.max(280, chartAvailableWidth * 0.88);
             const categorySlotWidth = plotWidth / Math.max(labels.length, 1);
             const charsPerAxisLine = Math.max(7, Math.min(22, Math.floor(categorySlotWidth / 8.5)));
@@ -5626,16 +6313,29 @@
                     }[normalized] || normalized;
                 };
                 const valuesByMunicipality = new Map();
+                const rateDetailsByMunicipality = new Map();
                 labels.forEach((label, index) => {
                     const key = normalizeMunicipalityKey(label);
                     valuesByMunicipality.set(key, (valuesByMunicipality.get(key) || 0) + Number(values[index] || 0));
+                    rateDetailsByMunicipality.set(key, {
+                        rate: data.rates?.[index],
+                        count: Number(data.counts?.[index] || 0),
+                        population: data.populations?.[index]
+                    });
                 });
                 const registeredMap = echarts.getMap(tamaulipasMapName);
                 const geoJson = registeredMap?.geoJSON || registeredMap?.geoJson;
-                const mapData = (geoJson?.features || []).map(feature => ({
-                    name: feature.properties?.name || '',
-                    value: valuesByMunicipality.get(normalizeMunicipalityKey(feature.properties?.name)) || 0
-                }));
+                const mapData = (geoJson?.features || []).map(feature => {
+                    const name = feature.properties?.name || '';
+                    const key = normalizeMunicipalityKey(name);
+                    const detail = rateDetailsByMunicipality.get(key);
+                    const unavailable = isRateMode && (!detail || detail.population === null || detail.population === undefined);
+                    return {
+                        name,
+                        value: unavailable ? null : (valuesByMunicipality.get(key) || 0),
+                        ...(unavailable ? { itemStyle: { areaColor: '#e5e7eb' } } : {})
+                    };
+                });
                 const maximumMapValue = Math.max(1, ...mapData.map(item => Number(item.value || 0)));
                 const tintMapColor = (hexColor, whiteWeight) => {
                     const match = String(hexColor || '').match(/^#([0-9a-f]{6})$/i);
@@ -5676,7 +6376,7 @@
                     ...positiveMapPieces
                 ];
 
-                if (!geoJson || filteredTotal <= 0) {
+                if (!geoJson || (filteredTotal <= 0 && !isRateMode)) {
                     showNoChartData(data);
                     return;
                 }
@@ -5690,6 +6390,13 @@
                         confine: true,
                         formatter: params => {
                             const value = Number(params.value || 0);
+                            if (isRateMode) {
+                                const detail = rateDetailsByMunicipality.get(normalizeMunicipalityKey(params.name));
+                                if (!detail || detail.population === null || detail.population === undefined) {
+                                    return `<strong>${params.name}</strong><br>Tasa no disponible<br>${formatNumber(detail?.count || 0)} defunciones`;
+                                }
+                                return `<strong>${params.name}</strong><br><strong>${Number(detail.rate).toFixed(1)}</strong> por 100 mil habitantes<br>${formatNumber(detail.count)} defunciones<br>Población ${data.denominator_year}: ${formatNumber(detail.population)}`;
+                            }
                             const percentage = filteredTotal > 0 ? ((value / filteredTotal) * 100).toFixed(1) : '0.0';
                             return `<strong>${params.name}</strong><br>${formatNumber(value)} registros · ${percentage}%`;
                         },
@@ -5710,7 +6417,7 @@
                             type: 'text',
                             x: 112,
                             style: {
-                                text: 'Registros',
+                                text: isRateMode ? 'Tasa por 100 mil' : 'Registros',
                                 fill: '#526278',
                                 font: `600 11px ${chartFontFamily}`,
                                 textAlign: 'center'
@@ -6394,6 +7101,29 @@
                         return html;
                     };
                 }
+                if (isRateMode) {
+                    tooltipFormatter = params => {
+                        const point = Array.isArray(params) ? params[0] : params;
+                        const index = point?.dataIndex ?? 0;
+                        const rate = data.rates?.[index];
+                        const count = Number(data.counts?.[index] || 0);
+                        const population = data.populations?.[index];
+                        const rateText = rate === null || rate === undefined ? 'No disponible' : `${Number(rate).toFixed(1)} por 100 mil habitantes`;
+                        const populationText = population === null || population === undefined
+                            ? 'Población no disponible'
+                            : `Población ${data.denominator_year}: ${formatNumber(population)}`;
+                        return `<strong>${labels[index] || point?.name || ''}</strong><br>${rateText}<br>${formatNumber(count)} defunciones<br>${populationText}`;
+                    };
+                } else if (usesDenseCategoricalColumns && chartConfig.dataLabelMode === 'both') {
+                    tooltipFormatter = params => {
+                        const point = Array.isArray(params) ? params[0] : params;
+                        const value = Number(point?.value || 0);
+                        const percentage = filteredTotal > 0
+                            ? ((value / filteredTotal) * 100).toFixed(1)
+                            : '0.0';
+                        return `<strong>${point?.name || ''}</strong><br>${formatNumber(value)} defunciones<br>${percentage}% del total`;
+                    };
+                }
                 
                 option = {
                     color: colors,
@@ -6427,6 +7157,9 @@
                         : categoricalGrid,
                     [isHorizontal ? 'xAxis' : 'yAxis']: {
                         type: 'value',
+                        name: isRateMode ? 'Tasa por 100 mil habitantes' : '',
+                        nameLocation: 'middle',
+                        nameGap: isHorizontal ? 42 : 52,
                         axisLine: { show: false },
                         axisTick: { show: false },
                         axisLabel: { fontFamily: chartFontFamily, fontSize: axisFontSize, fontWeight: 400, color: '#526278' },
@@ -6492,6 +7225,20 @@
                             color: '#404041',
                             rich: barLabelRich,
                             formatter: (params) => {
+                                if (isRateMode) {
+                                    const rate = data.rates?.[params.dataIndex];
+                                    const count = Number(data.counts?.[params.dataIndex] || 0);
+                                    if (rate === null || rate === undefined) return '{normal|N/D}';
+                                    if (chartConfig.dataLabelMode === 'value') return `{value|${Number(rate).toFixed(1)}}`;
+                                    if (chartConfig.dataLabelMode === 'percent') return `{value|${formatNumber(count)}}`;
+                                    if (chartConfig.dataLabelMode === 'both') return `{value|${Number(rate).toFixed(1)}}\n{normal|${formatNumber(count)} def.}`;
+                                    return '';
+                                }
+                                if (
+                                    usesDenseCategoricalColumns
+                                    && chartConfig.dataLabelMode === 'both'
+                                    && params.dataIndex >= denseDataLabelLimit
+                                ) return '';
                                 const total = filteredTotal;
                                 if (chartConfig.dataLabelMode === 'value') return `{value|${formatNumber(params.value)}}`;
                                 if (chartConfig.dataLabelMode === 'percent') {
@@ -6796,7 +7543,7 @@
             const chartEl = document.getElementById('mainChart');
             if (chartEl) chartEl.style.visibility = 'hidden';
             setChartAccessibleSummary('Cargando los datos de la gráfica.');
-            document.getElementById('chartTitle').textContent = getCurrentChartTitle();
+            document.getElementById('chartTitle').textContent = getCurrentChartHeadingTitle();
             document.getElementById('chartTotalBadge')?.classList.add('hidden');
             document.getElementById('statisticsChartContext')?.classList.add('hidden');
             document.getElementById('statisticsChartSource')?.classList.add('hidden');
@@ -6814,6 +7561,9 @@
         }
 
         function getCurrentChartTitle() {
+            if (currentChartType === 'municipios' && chartConfig.measure === 'rate') {
+                return 'Tasa de defunciones por municipio (residencia)';
+            }
             let title = currentChartType === 'comparativa'
                 ? comparativaLabels[activeFilters.tipoComparativa] || chartTitles[currentChartType]
                 : (chartTitles[currentChartType] || 'Gráfica');
@@ -6824,6 +7574,14 @@
             }
 
             return title;
+        }
+
+        function getCurrentChartHeadingTitle() {
+            if (currentChartType === 'municipios' && chartConfig.measure === 'rate') {
+                return 'Tasa de defunciones por municipio';
+            }
+            if (currentChartType === 'comparativa') return 'Comparativa';
+            return chartTitles[currentChartType] || 'Gráfica';
         }
 
         function getExportChartTitle() {
@@ -6844,7 +7602,9 @@
                 ? 'residencia'
                 : 'defunción';
             const topTitles = {
-                municipios: `Top ${topCount} municipios de ${municipalityKind}`,
+                municipios: chartConfig.measure === 'rate'
+                    ? `Top ${topCount} municipios por tasa de defunciones (residencia)`
+                    : `Top ${topCount} municipios de ${municipalityKind}`,
                 causas: `Top ${topCount} causas de defunción`,
                 distritoes: `Top ${topCount} distritos de ${municipalityKind}`,
                 lugares: `Top ${topCount} lugares de defunción`
@@ -6941,7 +7701,7 @@
             if (loadingMessage) loadingMessage.style.display = 'none';
             const chartEl = document.getElementById('mainChart');
             if (chartEl) chartEl.style.visibility = 'hidden';
-            document.getElementById('chartTitle').textContent = getCurrentChartTitle();
+            document.getElementById('chartTitle').textContent = getCurrentChartHeadingTitle();
             if (!preserveContext) document.getElementById('statisticsChartContext')?.classList.add('hidden');
             document.getElementById('statisticsChartSource')?.classList.add('hidden');
             setAgeCausesVisibility(
