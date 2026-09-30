@@ -8002,6 +8002,35 @@ html[data-ui-theme="tamaulipas-salud"] .app-document-surface {
   }
 }
 
+/* Canonical focus language for filters: neutral focus, institutional selection. */
+.users-filter-date:focus-within,
+.users-filter-search:focus-within,
+.users-filter-field select:focus,
+.users-filter-field input:focus,
+.users-filter-section-search input:focus,
+.statistics-data-page .statistics-filter-detail input:focus,
+.statistics-data-page .statistics-filter-date-grid input:focus,
+.statistics-import-history-page .imports-filter-date-grid input:focus {
+  border-color: var(--ui-focus, #475569) !important;
+  box-shadow: 0 0 0 2px var(--ui-focus-ring, rgb(71 85 105 / 18%)) !important;
+  outline: none !important;
+}
+
+.users-filter-toggle:focus-visible,
+.users-filter-clear:focus-visible,
+.users-filter-secondary:focus-visible,
+.users-filter-apply:focus-visible,
+.users-page-size-button:focus-visible {
+  outline: 2px solid var(--ui-focus, #475569) !important;
+  outline-offset: 2px !important;
+}
+
+.users-filter-toggle[aria-expanded="true"],
+.users-page-size-button[aria-expanded="true"] {
+  border-color: var(--ui-focus, #475569) !important;
+  box-shadow: 0 0 0 2px var(--ui-focus-ring, rgb(71 85 105 / 18%)) !important;
+}
+
 /* User registration page: final typography pass to match the compact users table. */
 .users-form-page .users-form-section-header h2,
 .users-form-page label:not(.inline-flex) {

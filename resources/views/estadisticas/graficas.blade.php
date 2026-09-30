@@ -156,13 +156,46 @@
                                                 @endforeach
                                             </x-filtros.select>
                                         </div>
+
+                                        <div id="filterMunicipalityLocations" class="statistics-location-fields dynamic-filter" style="display: none;">
+                                            <span class="statistics-location-fields__title">Distritos</span>
+                                            <div class="statistics-location-fields__districts">
+                                                <div class="statistics-filter-control">
+                                                    <label for="residenceDistrictsFilter">Residencia</label>
+                                                    <x-filtros.select id="residenceDistrictsFilter" placeholder="Selecciona" multiple>
+                                                        @foreach($districts as $district)
+                                                            <option value="{{ $district->id }}">{{ $district->display_name }}</option>
+                                                        @endforeach
+                                                    </x-filtros.select>
+                                                </div>
+                                                <div class="statistics-filter-control">
+                                                    <label for="deathDistrictsFilter">Defunci&oacute;n</label>
+                                                    <x-filtros.select id="deathDistrictsFilter" placeholder="Selecciona" multiple>
+                                                        @foreach($districts as $district)
+                                                            <option value="{{ $district->id }}">{{ $district->display_name }}</option>
+                                                        @endforeach
+                                                    </x-filtros.select>
+                                                </div>
+                                            </div>
+                                            @if($deathLocations->count() > 0)
+                                                <div class="statistics-filter-control statistics-location-fields__death-location">
+                                                    <label for="deathLocationsFilter">Lugar de defunci&oacute;n</label>
+                                                    <x-filtros.select id="deathLocationsFilter" placeholder="Selecciona lugares" multiple>
+                                                        @foreach($deathLocations as $location)
+                                                            <option value="{{ $location->id }}">{{ $location->display_name }}</option>
+                                                        @endforeach
+                                                    </x-filtros.select>
+                                                </div>
+                                            @endif
+                                        </div>
                                         @endif
                                 </x-filtros.seccion>
 
                                 <x-filtros.seccion id="statisticsDemographicFilterGroup" titulo="Datos demográficos" data-statistics-filter-section data-statistics-filter-group hidden>
+                                    <div class="statistics-demographic-fields">
                                         <div id="filterSexo" class="statistics-filter-control dynamic-filter" style="display: none;">
                                             <label for="sexoFilter">Sexo</label>
-                                            <x-filtros.select id="sexoFilter" placeholder="Todos">
+                                            <x-filtros.select id="sexoFilter" placeholder="Todos" :allow-empty-option="true">
                                                 <option value="">Todos</option>
                                                 @foreach($sexes as $sex)
                                                     <option value="{{ $sex->value }}">{{ $sex->label }}</option>
@@ -170,23 +203,38 @@
                                             </x-filtros.select>
                                         </div>
                                         <div id="filterEdad" class="statistics-filter-control dynamic-filter" style="display: none;">
-                                            <label for="edadFilter">Edad</label>
+                                            <div class="statistics-filter-label-row">
+                                                <label class="statistics-filter-control__label" for="edadFilter">Edad (a&ntilde;os)</label>
+                                                <span class="statistics-filter-help-popover">
+                                                    <button
+                                                        type="button"
+                                                        class="statistics-filter-help-trigger"
+                                                        aria-label="Cómo filtrar por edad"
+                                                        aria-describedby="edadFilterHelp"
+                                                    >
+                                                        <i class="fas fa-circle-question" aria-hidden="true"></i>
+                                                    </button>
+                                                    <span id="edadFilterHelp" class="statistics-filter-tooltip" role="tooltip">
+                                                        Escribe una edad (25), un rango (20-30) o varias separadas por comas (5,10,15).
+                                                    </span>
+                                                </span>
+                                            </div>
                                             <input
                                                 type="text"
                                                 id="edadFilter"
                                                 inputmode="numeric"
-                                                placeholder="Ej. 25, 20-30 o 5,10,15"
+                                                placeholder="Ej. 25 o 20-30"
                                                 aria-describedby="edadFilterHelp edadFilterError"
                                             >
-                                            <small id="edadFilterHelp" class="statistics-filter-help">Edad exacta, rango o valores separados por coma.</small>
                                             <small id="edadFilterError" class="statistics-filter-error hidden" role="alert"></small>
                                         </div>
+                                    </div>
                                 </x-filtros.seccion>
 
                                 <x-filtros.seccion id="statisticsCauseFilterGroup" titulo="Causa de defunción" data-statistics-filter-section data-statistics-filter-group hidden>
                                         <div id="filterCausas" class="statistics-filter-control dynamic-filter" style="display: none;">
                                             <label for="causasFilter">Causas</label>
-                                            <x-filtros.select id="causasFilter" placeholder="Selecciona causas" multiple>
+                                            <x-filtros.select id="causasFilter" placeholder="Selecciona causas" variant="drop-up" multiple>
                                                 @foreach($causes as $cause)
                                                     <option value="{{ $cause->id }}">{{ $cause->display_name }}</option>
                                                 @endforeach
@@ -773,6 +821,12 @@
             causasNames: [],
             distritoes: [],
             distritoesNames: [],
+            residenceDistricts: [],
+            residenceDistrictNames: [],
+            deathDistricts: [],
+            deathDistrictNames: [],
+            deathLocations: [],
+            deathLocationNames: [],
             sexo: null,
             edad: null,
             granularidad: 'month',
@@ -1176,6 +1230,9 @@
                 municipalities: list('municipality'),
                 causes: list('cause'),
                 districts: list('district'),
+                residenceDistricts: list('residence_district'),
+                deathDistricts: list('death_district'),
+                deathLocations: list('death_location'),
                 sex: params.get('sex') || '',
                 age: ageIsValid ? rawAge : '',
                 granularity: oneOf('granularity', ['day', 'month', 'year'], 'month'),
@@ -1220,6 +1277,9 @@
             const districts = validSelectValues('distritoesFilter', state.districts);
             setControlValue('distritoesFilter', districts);
             updateMunicipiosOptions(districts);
+            setControlValue('residenceDistrictsFilter', validSelectValues('residenceDistrictsFilter', state.residenceDistricts));
+            setControlValue('deathDistrictsFilter', validSelectValues('deathDistrictsFilter', state.deathDistricts));
+            setControlValue('deathLocationsFilter', validSelectValues('deathLocationsFilter', state.deathLocations));
             setControlValue('municipiosFilter', validSelectValues('municipiosFilter', state.municipalities));
             setControlValue('causasFilter', validSelectValues('causasFilter', state.causes));
             setControlValue('sexoFilter', state.sex);
@@ -1275,7 +1335,13 @@
 
             if (metricSupportsFilter(currentChartType, 'municipios')) appendMany('municipality', activeFilters.municipios);
             if (metricSupportsFilter(currentChartType, 'causas')) appendMany('cause', activeFilters.causas);
-            if (metricSupportsFilter(currentChartType, 'distritoes')) appendMany('district', activeFilters.distritoes);
+            if (currentChartType === 'municipios') {
+                appendMany('residence_district', activeFilters.residenceDistricts);
+                appendMany('death_district', activeFilters.deathDistricts);
+                appendMany('death_location', activeFilters.deathLocations);
+            } else if (metricSupportsFilter(currentChartType, 'distritoes')) {
+                appendMany('district', activeFilters.distritoes);
+            }
             if (metricSupportsFilter(currentChartType, 'sexo') && activeFilters.sexo) params.set('sex', activeFilters.sexo);
             if (metricSupportsFilter(currentChartType, 'edad') && activeFilters.edad) params.set('age', activeFilters.edad);
             if (metricSupportsFilter(currentChartType, 'tipoMunicipio')) params.set('scope', activeFilters.tipoMunicipio);
@@ -1453,6 +1519,9 @@
                 'municipiosFilter',
                 'causasFilter',
                 'distritoesFilter',
+                'residenceDistrictsFilter',
+                'deathDistrictsFilter',
+                'deathLocationsFilter',
                 'sexoFilter',
                 'granularidadFilter'
             ];
@@ -1464,6 +1533,8 @@
                     const isSearchable = isMultiple || element.options.length > 8;
                     window.AppFilterSelect.init(element, {
                         searchable: isSearchable,
+                        allowEmptyOption: id === 'sexoFilter',
+                        ...(id === 'sexoFilter' ? { placeholder: 'Todos' } : {}),
                         onChange: (value) => {
                             // Si cambió el distrito mientras se ve 'municipios', actualizar la lista disponible.
                             if (element.id === 'distritoesFilter' && metricUsesMunicipalityAndDistrict()) {
@@ -1514,6 +1585,102 @@
             }, {});
         }
 
+        function usesPersistentMunicipalityFilters() {
+            return document.querySelector('.statistics-page')?.dataset.activeMetric === 'municipios'
+                && window.matchMedia('(min-width: 1024px)').matches;
+        }
+
+        function statisticsFilterStatesMatch(firstState, secondState) {
+            if (!firstState || !secondState) return false;
+            return JSON.stringify(firstState) === JSON.stringify(secondState);
+        }
+
+        function getStatisticsSectionActiveFilterCount(section) {
+            if (!section || section.hidden) return 0;
+
+            const period = section.querySelector('#dateRange');
+            if (period) return period.value && period.value !== 'all' ? 1 : 0;
+
+            const defaultValues = {
+                tipoMunicipioFilter: 'defuncion',
+                granularidadFilter: 'month',
+                tipoComparativaFilter: 'residencia-defuncion',
+            };
+
+            return Array.from(section.querySelectorAll('input[id], select[id]')).reduce((count, control) => {
+                const wrapper = control.closest('.statistics-filter-control, .statistics-filter-date-grid');
+                if (wrapper?.hidden || wrapper?.style.display === 'none') return count;
+
+                if (control.type === 'checkbox') return count + (control.checked ? 1 : 0);
+
+                const value = control.multiple
+                    ? (control.tomselect ? [].concat(control.tomselect.getValue() || []) : Array.from(control.selectedOptions).map(option => option.value))
+                    : control.value;
+                const hasValue = Array.isArray(value)
+                    ? value.length > 0
+                    : String(value ?? '').trim() !== '' && String(value) !== String(defaultValues[control.id] ?? '');
+
+                return count + (hasValue ? 1 : 0);
+            }, 0);
+        }
+
+        function syncStatisticsFilterSectionSummaries() {
+            document.querySelectorAll('#municipalitySidebarFilters [data-statistics-filter-section]').forEach(section => {
+                const toggle = section.querySelector('[data-filter-section-toggle]');
+                if (!toggle) return;
+
+                const copy = toggle.querySelector(':scope > .statistics-filter-section-copy');
+                const title = toggle.querySelector('.statistics-filter-section-title')
+                    || toggle.querySelector(':scope > span:not(.statistics-filter-section-count):not(.statistics-filter-section-copy)');
+                if (copy && title) {
+                    toggle.insertBefore(title, copy);
+                    copy.remove();
+                }
+                title?.classList.add('statistics-filter-section-title');
+                toggle.querySelector('.statistics-filter-section-count')?.remove();
+                delete toggle.dataset.summary;
+                toggle.setAttribute('aria-label', title?.textContent?.trim() || 'Sección de filtros');
+            });
+        }
+
+        function setMunicipalityFilterSectionsFlat(enabled) {
+            document.querySelectorAll('#municipalitySidebarFilters [data-statistics-filter-section]').forEach(section => {
+                const toggle = section.querySelector('[data-filter-section-toggle]');
+                const icon = toggle?.querySelector('i');
+                section.classList.toggle('is-static-section', enabled);
+                if (!toggle) return;
+
+                if (enabled) {
+                    toggle.setAttribute('role', 'heading');
+                    toggle.setAttribute('aria-level', '3');
+                    toggle.setAttribute('tabindex', '-1');
+                    toggle.removeAttribute('aria-expanded');
+                    if (icon) icon.hidden = true;
+                    return;
+                }
+
+                toggle.removeAttribute('role');
+                toggle.removeAttribute('aria-level');
+                toggle.removeAttribute('tabindex');
+                toggle.setAttribute('aria-expanded', String(section.classList.contains('is-open')));
+                if (icon) icon.hidden = false;
+            });
+        }
+
+        function syncStatisticsFilterDraftUi() {
+            const panel = document.getElementById('estadisticas-filtros');
+            const apply = document.getElementById('statisticsFiltersApply');
+            const discard = document.getElementById('statisticsFiltersCancel');
+            if (!panel || !usesPersistentMunicipalityFilters()) return;
+
+            const hasChanges = Boolean(filterDraftSnapshot)
+                && !statisticsFilterStatesMatch(captureStatisticsFilterState(), filterDraftSnapshot);
+            panel.classList.toggle('has-draft-changes', hasChanges);
+            if (apply) apply.disabled = !hasChanges;
+            if (discard) discard.disabled = !hasChanges;
+            syncStatisticsFilterSectionSummaries();
+        }
+
         function restoreStatisticsFilterState(state) {
             if (!state) return;
             restoringFilterDraft = true;
@@ -1549,16 +1716,17 @@
             updateVisibleFilters(currentChartType);
             updateGeographicFilterLabels(document.getElementById('tipoMunicipioFilter')?.value || 'defuncion');
             restoringFilterDraft = false;
+            syncStatisticsFilterSectionSummaries();
         }
 
         function markStatisticsFilterDraft() {
             if (restoringFilterDraft) return;
             const panel = document.getElementById('estadisticas-filtros');
-            const isPersistentMunicipalityPanel = document.querySelector('.statistics-page')?.dataset.activeMetric === 'municipios'
-                && window.matchMedia('(min-width: 1024px)').matches;
+            const isPersistentMunicipalityPanel = usesPersistentMunicipalityFilters();
             if (panel?.classList.contains('is-open') || isPersistentMunicipalityPanel) {
                 panel?.classList.add('has-draft-changes');
             }
+            if (isPersistentMunicipalityPanel) syncStatisticsFilterDraftUi();
         }
 
         function openStatisticsFilters() {
@@ -1792,6 +1960,12 @@
                 });
 
                 filtersCancel?.addEventListener('click', function() {
+                    if (usesPersistentMunicipalityFilters()) {
+                        if (filterDraftSnapshot) restoreStatisticsFilterState(filterDraftSnapshot);
+                        filtersSidebar.classList.remove('has-draft-changes');
+                        syncStatisticsFilterDraftUi();
+                        return;
+                    }
                     closeStatisticsFilters({ restore: true });
                     filtersToggle.focus();
                 });
@@ -1801,14 +1975,20 @@
                     collectFilters();
                     invalidateChartDataCache();
                     filterDraftSnapshot = captureStatisticsFilterState();
-                    closeStatisticsFilters();
                     updateChart();
+                    if (usesPersistentMunicipalityFilters()) {
+                        filtersSidebar.classList.remove('has-draft-changes');
+                        syncStatisticsFilterDraftUi();
+                        return;
+                    }
+                    closeStatisticsFilters();
                     filtersToggle.focus();
                 });
 
                 filtersSidebar.querySelectorAll('[data-statistics-filter-section]').forEach(section => {
                     const sectionToggle = section.querySelector('[data-filter-section-toggle]');
                     sectionToggle?.addEventListener('click', function() {
+                        if (section.classList.contains('is-static-section')) return;
                         const willOpen = !section.classList.contains('is-open');
                         const usesCompactMunicipalityConfiguration = currentChartType === 'municipios'
                             && window.matchMedia('(min-width: 1024px)').matches;
@@ -1887,6 +2067,9 @@
             document.getElementById('customEndDate').addEventListener('change', markStatisticsFilterDraft);
             // Nota: Los eventos para municipiosFilter, causasFilter, distritoesFilter 
             // se manejan dentro de Tom Select (onChange), no aquí
+            ['residenceDistrictsFilter', 'deathDistrictsFilter', 'deathLocationsFilter'].forEach(id => {
+                document.getElementById(id)?.addEventListener('change', markStatisticsFilterDraft);
+            });
             document.getElementById('sexoFilter').addEventListener('change', markStatisticsFilterDraft);
             document.getElementById('edadFilter').addEventListener('input', markStatisticsFilterDraft);
             document.getElementById('granularidadFilter').addEventListener('change', markStatisticsFilterDraft);
@@ -3266,9 +3449,28 @@
 
             if (!filtersBody || !filters || !presentation) return;
 
+            const previousView = filtersBody.dataset.configurationView;
+            const activePanel = normalizedView === 'presentation' ? presentation : filters;
+            const shouldAnimate = previousView
+                && previousView !== normalizedView
+                && !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
             filtersBody.dataset.configurationView = normalizedView;
             filters.hidden = normalizedView !== 'filters';
             presentation.hidden = normalizedView !== 'presentation';
+            [filters, presentation].forEach(panel => {
+                panel.classList.remove('is-config-entering-forward', 'is-config-entering-backward');
+            });
+            if (shouldAnimate) {
+                void activePanel.offsetWidth;
+                const directionClass = normalizedView === 'presentation'
+                    ? 'is-config-entering-forward'
+                    : 'is-config-entering-backward';
+                activePanel.classList.add(directionClass);
+                activePanel.addEventListener('animationend', () => {
+                    activePanel.classList.remove(directionClass);
+                }, { once: true });
+            }
             if (footer) footer.hidden = normalizedView !== 'filters';
             if (clearAction) {
                 const shouldHide = normalizedView !== 'filters';
@@ -3383,6 +3585,9 @@
                     .filter(element => element.classList.contains('users-filter-section'))
                     .forEach(section => sidebarFilterGroups?.append(section));
 
+                const filtersCancel = document.getElementById('statisticsFiltersCancel');
+                if (filtersCancel) filtersCancel.textContent = 'Descartar cambios';
+
                 const sidebarGroups = sidebarPresentation?.querySelector('.statistics-municipality-presentation__groups');
                 let sidebarChartTypeGroup = document.getElementById('municipalityChartTypeMirrorGroup');
                 if (!sidebarChartTypeGroup && sidebarGroups) {
@@ -3412,6 +3617,7 @@
                 ].forEach(group => {
                     if (group && sidebarGroups) sidebarGroups.append(group);
                 });
+                setMunicipalityFilterSectionsFlat(true);
                 const filtersHeader = filtersPanel?.querySelector(':scope > .users-filter-panel-header');
                 if (presentationReset && filtersHeader) {
                     presentationReset.textContent = 'Restablecer vista';
@@ -3427,8 +3633,10 @@
                 filtersPanel?.setAttribute('aria-label', 'Filtros de municipios');
                 filtersPanel?.removeAttribute('aria-modal');
                 filterDraftSnapshot = captureStatisticsFilterState();
+                syncStatisticsFilterDraftUi();
             } else {
                 const sidebarFilters = document.getElementById('municipalitySidebarFilters');
+                setMunicipalityFilterSectionsFlat(false);
                 document.querySelector('#estadisticas-filtros > .users-filter-panel-footer')?.removeAttribute('hidden');
                 sidebarFilters?.removeAttribute('hidden');
                 document.getElementById('municipalitySidebarPresentation')?.removeAttribute('hidden');
@@ -3460,6 +3668,13 @@
                     clearAction.hidden = false;
                     clearAction.classList.remove('hidden');
                 }
+                const filtersCancel = document.getElementById('statisticsFiltersCancel');
+                const filtersApply = document.getElementById('statisticsFiltersApply');
+                if (filtersCancel) {
+                    filtersCancel.textContent = 'Cancelar';
+                    filtersCancel.disabled = false;
+                }
+                if (filtersApply) filtersApply.disabled = false;
                 document.getElementById('municipalitySidebarPresentation')?.remove();
 
                 content.insertBefore(displayPanel, chartPanel);
@@ -3515,7 +3730,7 @@
         }
 
         function updateVisibleFilters(chartType) {
-            const allFilters = ['filterTipoMunicipio', 'filterMunicipios', 'filterCausas', 'filterdistritoes', 'filterSexo', 'filterEdad', 'filterGranularidad'];
+            const allFilters = ['filterTipoMunicipio', 'filterMunicipios', 'filterCausas', 'filterdistritoes', 'filterMunicipalityLocations', 'filterSexo', 'filterEdad', 'filterGranularidad'];
             const availableFilters = getFiltersForChart(chartType);
 
             const isComparison = chartType === 'comparativa';
@@ -3548,7 +3763,8 @@
                     if (filterId === 'filterTipoMunicipio' && availableFilters.includes('tipoMunicipio') && !isGeographicAnalysis) show = true;
                     if (filterId === 'filterMunicipios' && availableFilters.includes('municipios')) show = true;
                     if (filterId === 'filterCausas' && availableFilters.includes('causas')) show = true;
-                    if (filterId === 'filterdistritoes' && availableFilters.includes('distritoes')) show = true;
+                    if (filterId === 'filterdistritoes' && availableFilters.includes('distritoes') && chartType !== 'municipios') show = true;
+                    if (filterId === 'filterMunicipalityLocations' && chartType === 'municipios') show = true;
                     if (filterId === 'filterSexo' && availableFilters.includes('sexo')) show = true;
                     if (filterId === 'filterEdad' && availableFilters.includes('edad')) show = true;
                     if (filterId === 'filterGranularidad' && availableFilters.includes('granularidad') && !isTrendAnalysis) show = true;
@@ -3581,6 +3797,7 @@
             updateGeographicFilterLabels(document.getElementById('tipoMunicipioFilter')?.value || activeFilters.tipoMunicipio);
             syncGeographicScopeControl(document.getElementById('tipoMunicipioFilter')?.value || activeFilters.tipoMunicipio);
             syncTrendGranularityControl(document.getElementById('granularidadFilter')?.value || activeFilters.granularidad);
+            syncStatisticsFilterSectionSummaries();
 
         }
 
@@ -4135,7 +4352,7 @@
             const optionsMarkup = availableTypes.map(type => {
                 const active = type === currentValue;
                 return `
-                    <button type="button" class="visual-option-btn visual-option-card ${isSingleType ? 'is-compact-single' : ''} ${active ? 'active' : ''}" data-target="chartTypeSelector" data-value="${type}" aria-pressed="${active}" aria-label="${accessibleLabels[type] || type}" title="${labels[type] || type}">
+                    <button type="button" class="visual-option-btn visual-option-card ${isSingleType ? 'is-compact-single' : ''} ${active ? 'active' : ''}" data-target="chartTypeSelector" data-value="${type}" data-tooltip="${labels[type] || type}" aria-pressed="${active}" aria-label="${accessibleLabels[type] || type}" title="${labels[type] || type}">
                         <i class="fas ${chartTypeIcons[type] || 'fa-chart-simple'}" aria-hidden="true"></i>
                         <span class="visual-option-label">${labels[type] || type}</span>
                     </button>
@@ -4459,6 +4676,12 @@
             activeFilters.causasNames = Array.from(document.getElementById('causasFilter').selectedOptions || []).map(o => o.text);
             activeFilters.distritoes = Array.from(document.getElementById('distritoesFilter').selectedOptions || []).map(o => o.value);
             activeFilters.distritoesNames = Array.from(document.getElementById('distritoesFilter').selectedOptions || []).map(o => o.text);
+            activeFilters.residenceDistricts = Array.from(document.getElementById('residenceDistrictsFilter')?.selectedOptions || []).map(o => o.value);
+            activeFilters.residenceDistrictNames = Array.from(document.getElementById('residenceDistrictsFilter')?.selectedOptions || []).map(o => o.text);
+            activeFilters.deathDistricts = Array.from(document.getElementById('deathDistrictsFilter')?.selectedOptions || []).map(o => o.value);
+            activeFilters.deathDistrictNames = Array.from(document.getElementById('deathDistrictsFilter')?.selectedOptions || []).map(o => o.text);
+            activeFilters.deathLocations = Array.from(document.getElementById('deathLocationsFilter')?.selectedOptions || []).map(o => o.value);
+            activeFilters.deathLocationNames = Array.from(document.getElementById('deathLocationsFilter')?.selectedOptions || []).map(o => o.text);
             activeFilters.sexo = document.getElementById('sexoFilter').value || null;
             activeFilters.edad = document.getElementById('edadFilter').value.trim() || null;
             activeFilters.granularidad = document.getElementById('granularidadFilter').value || 'month';
@@ -4564,6 +4787,33 @@
                 activeFilterCount++;
             }
 
+            if (currentChartType === 'municipios' && activeFilters.residenceDistricts.length > 0) {
+                container.innerHTML += `<span class="users-filter-chip statistics-filter-chip">
+                    Distrito de residencia: ${escapeFilterLabel(activeFilters.residenceDistrictNames.join(', '))}
+                    <button type="button" onclick="clearFilter('residenceDistricts')" aria-label="Quitar filtro de distritos de residencia">&times;</button>
+                </span>`;
+                hasActiveFilters = true;
+                activeFilterCount++;
+            }
+
+            if (currentChartType === 'municipios' && activeFilters.deathDistricts.length > 0) {
+                container.innerHTML += `<span class="users-filter-chip statistics-filter-chip">
+                    Distrito de defunci&oacute;n: ${escapeFilterLabel(activeFilters.deathDistrictNames.join(', '))}
+                    <button type="button" onclick="clearFilter('deathDistricts')" aria-label="Quitar filtro de distritos de defunci&oacute;n">&times;</button>
+                </span>`;
+                hasActiveFilters = true;
+                activeFilterCount++;
+            }
+
+            if (currentChartType === 'municipios' && activeFilters.deathLocations.length > 0) {
+                container.innerHTML += `<span class="users-filter-chip statistics-filter-chip">
+                    Lugar de defunci&oacute;n: ${escapeFilterLabel(activeFilters.deathLocationNames.join(', '))}
+                    <button type="button" onclick="clearFilter('deathLocations')" aria-label="Quitar filtro de lugares de defunci&oacute;n">&times;</button>
+                </span>`;
+                hasActiveFilters = true;
+                activeFilterCount++;
+            }
+
             // Mostrar sexo seleccionado
             if (metricSupportsFilter(currentChartType, 'sexo') && activeFilters.sexo) {
                 const sexoLabel = activeFilters.sexo === 'M' ? 'Masculino' : (activeFilters.sexo === 'F' ? 'Femenino' : activeFilters.sexo);
@@ -4631,6 +4881,15 @@
                 const el = document.getElementById('distritoesFilter');
                 el.value = '';
                 if (el.tomselect) el.tomselect.clear();
+            } else if (['residenceDistricts', 'deathDistricts', 'deathLocations'].includes(filterType)) {
+                const controlIds = {
+                    residenceDistricts: 'residenceDistrictsFilter',
+                    deathDistricts: 'deathDistrictsFilter',
+                    deathLocations: 'deathLocationsFilter',
+                };
+                const el = document.getElementById(controlIds[filterType]);
+                if (el?.tomselect) el.tomselect.clear();
+                else if (el) el.value = '';
             } else if (filterType === 'sexo') {
                 const el = document.getElementById('sexoFilter');
                 if (el.tomselect) el.tomselect.clear(true);
@@ -4657,7 +4916,10 @@
                 ...(activeFilters.selectedYears.length && { years: activeFilters.selectedYears }),
                 ...(metricSupportsFilter(chartType, 'municipios') && activeFilters.municipios.length && { municipios: activeFilters.municipios }),
                 ...(metricSupportsFilter(chartType, 'causas') && activeFilters.causas.length && { causas: activeFilters.causas }),
-                ...(metricSupportsFilter(chartType, 'distritoes') && activeFilters.distritoes.length && (
+                ...(chartType === 'municipios' && activeFilters.residenceDistricts.length && { district_ids: activeFilters.residenceDistricts }),
+                ...(chartType === 'municipios' && activeFilters.deathDistricts.length && { death_district_ids: activeFilters.deathDistricts }),
+                ...(chartType === 'municipios' && activeFilters.deathLocations.length && { death_location_ids: activeFilters.deathLocations }),
+                ...(chartType !== 'municipios' && metricSupportsFilter(chartType, 'distritoes') && activeFilters.distritoes.length && (
                     activeFilters.tipoMunicipio === 'residencia'
                         ? { district_ids: activeFilters.distritoes }
                         : { death_district_ids: activeFilters.distritoes }
@@ -4935,7 +5197,11 @@
                 );
             }
             if (metricSupportsFilter(currentChartType, 'causas')) appendMany('cause_ids', activeFilters.causas);
-            if (metricSupportsFilter(currentChartType, 'distritoes')) {
+            if (currentChartType === 'municipios') {
+                appendMany('district_ids', activeFilters.residenceDistricts);
+                appendMany('death_district_ids', activeFilters.deathDistricts);
+                appendMany('death_location_ids', activeFilters.deathLocations);
+            } else if (metricSupportsFilter(currentChartType, 'distritoes')) {
                 appendMany(
                     activeFilters.tipoMunicipio === 'residencia' ? 'district_ids' : 'death_district_ids',
                     activeFilters.distritoes
@@ -7462,6 +7728,12 @@
                 causasNames: [],
                 distritoes: [],
                 distritoesNames: [],
+                residenceDistricts: [],
+                residenceDistrictNames: [],
+                deathDistricts: [],
+                deathDistrictNames: [],
+                deathLocations: [],
+                deathLocationNames: [],
                 sexo: null,
                 edad: null,
                 granularidad: 'month',
@@ -7499,7 +7771,14 @@
             });
             
             // Limpiar multiselects y actualizar Tom Select
-            const multiSelectIds = ['municipiosFilter', 'causasFilter', 'distritoesFilter'];
+            const multiSelectIds = [
+                'municipiosFilter',
+                'causasFilter',
+                'distritoesFilter',
+                'residenceDistrictsFilter',
+                'deathDistrictsFilter',
+                'deathLocationsFilter'
+            ];
             multiSelectIds.forEach(id => {
                 const element = document.getElementById(id);
                 if (element) {

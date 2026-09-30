@@ -19,6 +19,11 @@ if (app()->environment('testing')) {
             'causes' => collect(),
             'districts' => collect([
                 (object) ['id' => 1, 'display_name' => 'I · Victoria'],
+                (object) ['id' => 2, 'display_name' => 'II · Tampico'],
+            ]),
+            'deathLocations' => collect([
+                (object) ['id' => 1, 'display_name' => 'Hogar'],
+                (object) ['id' => 2, 'display_name' => 'Vía pública'],
             ]),
             'sexes' => collect([
                 (object) ['value' => 'F', 'label' => 'Femenino'],

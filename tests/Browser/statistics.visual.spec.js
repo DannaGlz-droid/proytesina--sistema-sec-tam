@@ -43,8 +43,16 @@ test('Municipios y Distritos cambian su ámbito desde el encabezado', async ({ p
 
 test('Municipios de residencia cambia de cantidades a tasas por población', async ({ page }) => {
     await page.locator('#geographicScopeSelector').selectOption('residencia');
+    await page.emulateMedia({ reducedMotion: 'no-preference' });
+    await page.evaluate(() => {
+        window.__municipalityConfigAnimationStarted = false;
+        document.getElementById('municipalitySidebarPresentation')?.addEventListener('animationstart', () => {
+            window.__municipalityConfigAnimationStarted = true;
+        }, { once: true });
+    });
     await page.getByRole('tab', { name: 'Vista' }).click();
     await expect(page.locator('#statisticsMeasureGroup')).toBeVisible();
+    await expect.poll(() => page.evaluate(() => window.__municipalityConfigAnimationStarted)).toBe(true);
 
     const requestPromise = page.waitForRequest(request => {
         const url = new URL(request.url());
@@ -62,6 +70,71 @@ test('Municipios de residencia cambia de cantidades a tasas por población', asy
         const chart = window.echarts.getInstanceByDom(document.getElementById('mainChart'));
         return Number(chart?.getOption()?.series?.[0]?.data?.[0]);
     })).toBeCloseTo(338, 1);
+});
+
+test('Municipios compacta Sexo y Edad con foco neutral', async ({ page }) => {
+    await page.getByRole('tab', { name: 'Datos', exact: true }).click();
+
+    const demographicContent = page.locator('#statisticsDemographicFilterGroup > .users-filter-section-content');
+    const sexFilter = page.locator('#filterSexo');
+    const ageFilter = page.locator('#filterEdad');
+    const ageInput = page.locator('#edadFilter');
+    const ageHelpButton = page.getByRole('button', { name: 'Cómo filtrar por edad' });
+    const ageTooltip = page.getByRole('tooltip');
+
+    await expect(demographicContent).toBeVisible();
+    await expect(sexFilter).toBeVisible();
+    await expect(ageFilter).toBeVisible();
+
+    const [sexBox, ageBox] = await Promise.all([sexFilter.boundingBox(), ageFilter.boundingBox()]);
+    expect(Math.abs(sexBox.y - ageBox.y)).toBeLessThanOrEqual(1);
+    expect(ageBox.width).toBeGreaterThan(sexBox.width);
+
+    await ageInput.focus();
+    await expect(ageInput).toHaveCSS('border-color', 'rgb(71, 85, 105)');
+
+    await ageHelpButton.focus();
+    await expect(ageTooltip).toHaveCSS('visibility', 'visible');
+    await expect(ageTooltip).toContainText('varias separadas por comas');
+});
+
+test('Municipios separa los filtros de ubicación sin alargar el panel', async ({ page }) => {
+    await page.getByRole('tab', { name: 'Datos', exact: true }).click();
+
+    const locationFields = page.locator('#filterMunicipalityLocations');
+    await expect(locationFields).toBeVisible();
+    await expect(page.locator('#filterdistritoes')).toHaveCSS('display', 'none');
+    await expect(locationFields.getByText('Distritos', { exact: true })).toBeVisible();
+    await expect(page.locator('label[for="edadFilter"]')).toHaveText('Edad (años)');
+
+    const districtFields = locationFields.locator('.statistics-location-fields__districts .statistics-filter-control');
+    const [residenceBox, deathBox] = await Promise.all([
+        districtFields.nth(0).boundingBox(),
+        districtFields.nth(1).boundingBox(),
+    ]);
+    expect(Math.abs(residenceBox.width - deathBox.width)).toBeLessThanOrEqual(1);
+    expect(residenceBox.width).toBeGreaterThan(250);
+    expect(deathBox.y).toBeGreaterThan(residenceBox.y);
+
+    const selected = { residence: '2', death: '2', location: '2' };
+    await page.locator('#residenceDistrictsFilter').selectOption([selected.residence]);
+    await page.locator('#deathDistrictsFilter').selectOption([selected.death]);
+    await page.locator('#deathLocationsFilter').selectOption([selected.location]);
+
+    const requestPromise = page.waitForRequest(request => {
+        const url = new URL(request.url());
+        return url.pathname.endsWith('/api/chart/municipios')
+            && url.searchParams.get('district_ids[]') === selected.residence
+            && url.searchParams.get('death_district_ids[]') === selected.death
+            && url.searchParams.get('death_location_ids[]') === selected.location;
+    });
+    await page.locator('#statisticsFiltersApply').click();
+    await requestPromise;
+
+    await page.locator('#limpiarFiltros').click();
+    await expect(page.locator('#residenceDistrictsFilter')).toHaveValues([]);
+    await expect(page.locator('#deathDistrictsFilter')).toHaveValues([]);
+    await expect(page.locator('#deathLocationsFilter')).toHaveValues([]);
 });
 
 test('Tendencias cambia su agrupación desde el encabezado', async ({ page }) => {

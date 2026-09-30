@@ -3,6 +3,7 @@
     'variant' => 'default',
     'searchable' => null,
     'autoInit' => true,
+    'allowEmptyOption' => false,
 ])
 
 @php
@@ -17,6 +18,10 @@
 
     if (! is_null($searchable)) {
         $selectAttributes['data-searchable'] = $searchable ? 'true' : 'false';
+    }
+
+    if ($allowEmptyOption) {
+        $selectAttributes['data-allow-empty-option'] = 'true';
     }
 @endphp
 

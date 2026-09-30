@@ -317,7 +317,19 @@ Excepciones:
 - Label encima; no usar placeholder como sustituto de label.
 - Placeholder solo como ejemplo o formato: “Ej: usuario@ejemplo.com”.
 - Asterisco obligatorio en `--ui-danger`.
-- Ayuda persistente debajo del campo cuando el formato no sea evidente.
+- La ayuda puede ser contextual o persistente según su importancia; no elegir el formato únicamente para ahorrar espacio.
+
+#### Ayuda contextual en campos
+
+- Usar un icono de ayuda junto a la etiqueta únicamente cuando el campo acepte formatos que no sean evidentes, tenga una regla especial que deba conocerse antes de capturar, provoque errores frecuentes sin explicación o necesite ejemplos que no quepan adecuadamente en el placeholder.
+- La ayuda contextual es apropiada para instrucciones complementarias y breves. Por ejemplo, el filtro Edad puede explicar: “Escribe una edad (25), un rango (20-30) o varias separadas por comas (5,10,15)”.
+- Mantener el placeholder como pista corta. El tooltip amplía la instrucción, pero no debe repetir literalmente la etiqueta ni el placeholder.
+- Mostrar el tooltip al pasar el cursor y cuando el botón reciba foco con teclado. En dispositivos táctiles debe poder abrirse mediante pulsación y cerrarse al pulsar fuera.
+- Usar el icono oficial de Font Awesome `fa-circle-question`, sin color institucional, dentro de un botón con `aria-label`. Asociar el tooltip mediante `aria-describedby` y marcar su contenido con `role="tooltip"`.
+- El botón conserva un foco neutral visible mediante `--ui-focus` y `--ui-focus-ring`. El tooltip usa la superficie flotante, tipografía y elevación oficiales del sistema.
+- Si la instrucción es indispensable para completar correctamente el campo, tiene implicaciones legales o no puede resumirse en una frase breve, mostrar ayuda persistente debajo del campo en lugar de ocultarla en un tooltip.
+- No usar ayuda contextual en campos evidentes como Sexo, Estado o Periodo, para repetir información visible ni como sustituto de validaciones y mensajes de error.
+- Antes de agregar este patrón en una segunda pantalla, extraerlo a un componente compartido; las vistas no deben duplicar su markup, estilos ni comportamiento.
 
 Estados:
 

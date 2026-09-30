@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\DeathCause;
+use App\Models\DeathLocation;
 use App\Models\District;
 use App\Services\DeathFilterService;
 use App\Services\StatisticsAnalysisService;
@@ -166,12 +167,15 @@ class StatisticsController extends Controller
             ->get();
         $causes = DeathCause::allowedCatalog();
         $districts = Schema::hasTable('districts') ? District::statisticsCatalog() : collect();
+        $deathLocations = Schema::hasTable('death_locations')
+            ? DeathLocation::active()->orderBy('name')->get()
+            : collect();
         $sexes = collect([
             (object) ['value' => 'F', 'label' => 'Femenino'],
             (object) ['value' => 'M', 'label' => 'Masculino'],
         ]);
 
-        return compact('municipalities','causes','districts','sexes');
+        return compact('municipalities','causes','districts','deathLocations','sexes');
     }
 
     /**

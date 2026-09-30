@@ -16,8 +16,42 @@ function init(target, options = {}) {
         ? null
         : searchableAttribute !== 'false';
     const searchable = options.searchable ?? searchableFromMarkup ?? (multiple || select.options.length > 8);
+    const allowEmptyOption = options.allowEmptyOption
+        ?? select.dataset.allowEmptyOption === 'true';
     const customRender = options.render || {};
     const customPlugins = options.plugins;
+    const customOnBlur = options.onBlur;
+    const customOnChange = options.onChange;
+    const customOnDropdownClose = options.onDropdownClose;
+    const customOnInitialize = options.onInitialize;
+
+    const syncMultiSelectSummary = (instance) => {
+        if (!multiple || !instance?.control) return;
+
+        const collapsedLimit = 3;
+        const hiddenCount = Math.max(0, (instance.items?.length || 0) - collapsedLimit);
+        let summary = instance.control.querySelector('.app-filter-select__overflow-summary');
+
+        if (!summary) {
+            summary = document.createElement('span');
+            summary.className = 'app-filter-select__overflow-summary';
+            summary.setAttribute('aria-hidden', 'true');
+            instance.control.insertBefore(summary, instance.control_input || null);
+        }
+
+        summary.textContent = hiddenCount > 0 ? `+${hiddenCount} más` : '';
+        instance.wrapper.classList.toggle('has-overflow-items', hiddenCount > 0);
+    };
+
+    const resetClosedMultiSelectScroll = (instance) => {
+        if (!multiple || !instance?.control) return;
+        instance.control.scrollTop = 0;
+        window.requestAnimationFrame(() => {
+            window.requestAnimationFrame(() => {
+                instance.control.scrollTop = 0;
+            });
+        });
+    };
 
     const config = {
         valueField: 'value',
@@ -26,7 +60,7 @@ function init(target, options = {}) {
         maxOptions: 100,
         maxItems: multiple ? null : 1,
         create: false,
-        allowEmptyOption: false,
+        allowEmptyOption,
         placeholder: select.dataset.placeholder || (multiple ? 'Selecciona opciones' : 'Seleccionar'),
         hideSelected: false,
         closeAfterSelect: !multiple,
@@ -34,6 +68,22 @@ function init(target, options = {}) {
             remove_button: { title: 'Eliminar esta selección' },
         } : {}),
         ...options,
+        onBlur: function () {
+            resetClosedMultiSelectScroll(this);
+            customOnBlur?.call(this);
+        },
+        onChange: function (value) {
+            syncMultiSelectSummary(this);
+            customOnChange?.call(this, value);
+        },
+        onDropdownClose: function () {
+            resetClosedMultiSelectScroll(this);
+            customOnDropdownClose?.call(this);
+        },
+        onInitialize: function () {
+            syncMultiSelectSummary(this);
+            customOnInitialize?.call(this);
+        },
         render: {
             no_results: () => '<div class="no-results">Sin resultados</div>',
             ...customRender,
@@ -50,6 +100,13 @@ function init(target, options = {}) {
         instance.wrapper.classList.add(`app-filter-select--${variant}`);
     }
     instance.wrapper.classList.toggle('is-searchable', searchable);
+
+    if (multiple) {
+        const syncSummary = () => syncMultiSelectSummary(instance);
+        instance.on('item_add', syncSummary);
+        instance.on('item_remove', syncSummary);
+        instance.on('clear', syncSummary);
+    }
 
     return instance;
 }
