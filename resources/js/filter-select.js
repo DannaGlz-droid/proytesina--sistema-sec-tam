@@ -24,11 +24,25 @@ function init(target, options = {}) {
     const customOnChange = options.onChange;
     const customOnDropdownClose = options.onDropdownClose;
     const customOnInitialize = options.onInitialize;
+    const compactLabels = Object.fromEntries(
+        Array.from(select.options)
+            .filter((option) => option.dataset.compactLabel)
+            .map((option) => [option.value, option.dataset.compactLabel]),
+    );
+    const itemRenderer = (data, escape) => {
+        const fullLabel = String(data.text ?? '');
+        const visibleLabel = compactLabels[data.value] || fullLabel;
+
+        return `<div title="${escape(fullLabel)}" aria-label="${escape(fullLabel)}"><span class="app-filter-select__item-label">${escape(visibleLabel)}</span></div>`;
+    };
+    const requestedCollapsedLimit = options.collapsedLimit ?? select.dataset.collapsedLimit;
+    const collapsedLimit = Number.isFinite(Number(requestedCollapsedLimit))
+        ? Math.max(1, Math.trunc(Number(requestedCollapsedLimit)))
+        : 3;
 
     const syncMultiSelectSummary = (instance) => {
         if (!multiple || !instance?.control) return;
 
-        const collapsedLimit = 3;
         const hiddenCount = Math.max(0, (instance.items?.length || 0) - collapsedLimit);
         let summary = instance.control.querySelector('.app-filter-select__overflow-summary');
 
@@ -86,11 +100,13 @@ function init(target, options = {}) {
         },
         render: {
             no_results: () => '<div class="no-results">Sin resultados</div>',
+            item: itemRenderer,
             ...customRender,
         },
     };
 
     delete config.searchable;
+    delete config.collapsedLimit;
 
     const instance = new window.TomSelect(select, config);
     const variant = select.dataset.selectVariant?.trim();
@@ -98,6 +114,9 @@ function init(target, options = {}) {
     instance.wrapper.classList.add('app-filter-select');
     if (variant && /^[a-z0-9-]+$/i.test(variant)) {
         instance.wrapper.classList.add(`app-filter-select--${variant}`);
+    }
+    if (multiple && collapsedLimit !== 3) {
+        instance.wrapper.classList.add(`app-filter-select--collapse-${collapsedLimit}`);
     }
     instance.wrapper.classList.toggle('is-searchable', searchable);
 

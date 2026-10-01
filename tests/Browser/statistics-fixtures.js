@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs';
 import path from 'node:path';
 
 const PERIOD = {
-    start_date: '2024-12-29',
+    start_date: '2024-12-30',
     end_date: '2025-12-29',
     years: [],
     months: [],
@@ -238,7 +238,12 @@ export async function installStatisticsMocks(page) {
     await page.route('**/api/default-date-range', route => route.fulfill({
         status: 200,
         contentType: 'application/json',
-        body: JSON.stringify({ start_date: PERIOD.start_date, end_date: PERIOD.end_date }),
+        body: JSON.stringify({
+            start_date: PERIOD.start_date,
+            end_date: PERIOD.end_date,
+            data_start: PERIOD.data_start,
+            data_end: PERIOD.data_end,
+        }),
     }));
 
     await page.route('**/api/chart/**', route => {

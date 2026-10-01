@@ -39,14 +39,19 @@ class DeathFilterService
         }
 
         $age = $filters['age'];
+        $ageUnit = match ($age['unit'] ?? 'years') {
+            'days' => ' días',
+            'months' => ' meses',
+            default => ' años',
+        };
         if (($age['type'] ?? null) === 'exact') {
-            $labels[] = 'Edad: '.$age['value'];
+            $labels[] = 'Edad: '.$age['value'].$ageUnit;
         } elseif (($age['type'] ?? null) === 'range') {
-            $labels[] = 'Edad: '.$age['min'].'-'.$age['max'];
+            $labels[] = 'Edad: '.$age['min'].'-'.$age['max'].$ageUnit;
         } elseif (($age['type'] ?? null) === 'list') {
-            $labels[] = 'Edad: '.implode(', ', $age['values']);
+            $labels[] = 'Edad: '.implode(', ', $age['values']).$ageUnit;
         } elseif (($age['type'] ?? null) === 'minimum') {
-            $labels[] = 'Edad: '.$age['min'].' o más';
+            $labels[] = 'Edad: '.$age['min'].$ageUnit.' o más';
         }
 
         return $labels;
@@ -121,7 +126,10 @@ class DeathFilterService
 
         $sex = trim((string) ($input['sex'] ?? $input['sexo'] ?? ''));
         $filters['sex'] = $sex !== '' ? $this->normalizeSex($sex) : null;
-        $filters['age'] = $this->normalizeAge($input['age'] ?? $input['edad'] ?? null);
+        $filters['age'] = $this->normalizeAge(
+            $input['age'] ?? $input['edad'] ?? null,
+            $input['age_unit'] ?? $input['edad_unidad'] ?? 'years'
+        );
         $filters['origin'] = $this->normalizeOrigin($input['origin'] ?? null);
 
         return $filters;
@@ -166,16 +174,7 @@ class DeathFilterService
             $query->whereRaw('LOWER(deaths.sex) = ?', [mb_strtolower($filters['sex'])]);
         }
 
-        $age = $filters['age'];
-        if (($age['type'] ?? null) === 'range') {
-            $query->whereBetween('deaths.age', [$age['min'], $age['max']]);
-        } elseif (($age['type'] ?? null) === 'list') {
-            $query->whereIn('deaths.age', $age['values']);
-        } elseif (($age['type'] ?? null) === 'exact') {
-            $query->where('deaths.age', $age['value']);
-        } elseif (($age['type'] ?? null) === 'minimum') {
-            $query->where('deaths.age', '>=', $age['min']);
-        }
+        $this->applyAge($query, $filters['age']);
 
         $this->applyOrigin($query, $filters['origin']);
 
@@ -315,31 +314,87 @@ class DeathFilterService
         };
     }
 
-    private function normalizeAge(mixed $value): ?array
+    private function normalizeAge(mixed $value, mixed $unit = 'years'): ?array
     {
         $value = trim((string) $value);
         if ($value === '') {
             return null;
         }
 
-        if (preg_match('/^(-?\d+)\s*-\s*(-?\d+)$/', $value, $matches)) {
+        $unit = match (mb_strtolower(trim((string) $unit))) {
+            'days', 'day', 'dias', 'días' => 'days',
+            'months', 'month', 'meses', 'mes' => 'months',
+            default => 'years',
+        };
+        $maximum = match ($unit) {
+            'days' => 30,
+            'months' => 11,
+            default => 150,
+        };
+
+        $valid = static fn (int $age): bool => $age >= 0 && $age <= $maximum;
+
+        if (preg_match('/^(\d+)\s*-\s*(\d+)$/', $value, $matches)) {
             $first = (int) $matches[1];
             $second = (int) $matches[2];
 
-            return ['type' => 'range', 'min' => min($first, $second), 'max' => max($first, $second)];
+            if (! $valid($first) || ! $valid($second)) {
+                return null;
+            }
+
+            return ['type' => 'range', 'unit' => $unit, 'min' => min($first, $second), 'max' => max($first, $second)];
         }
 
         if (preg_match('/^(\d+)\s*\+$/', $value, $matches)) {
-            return ['type' => 'minimum', 'min' => (int) $matches[1]];
+            $minimum = (int) $matches[1];
+
+            return $valid($minimum) ? ['type' => 'minimum', 'unit' => $unit, 'min' => $minimum] : null;
         }
 
         if (str_contains($value, ',')) {
             $values = collect(explode(',', $value))->map(fn ($age) => trim($age))->filter(fn ($age) => is_numeric($age))->map(fn ($age) => (int) $age)->unique()->values()->all();
 
-            return $values === [] ? null : ['type' => 'list', 'values' => $values];
+            return $values === [] || collect($values)->contains(fn (int $age) => ! $valid($age))
+                ? null
+                : ['type' => 'list', 'unit' => $unit, 'values' => $values];
         }
 
-        return is_numeric($value) ? ['type' => 'exact', 'value' => (int) $value] : null;
+        if (! is_numeric($value) || ! $valid((int) $value)) {
+            return null;
+        }
+
+        return ['type' => 'exact', 'unit' => $unit, 'value' => (int) $value];
+    }
+
+    private function applyAge(EloquentBuilder|QueryBuilder $query, ?array $age): void
+    {
+        if (! $age) {
+            return;
+        }
+
+        $unit = $age['unit'] ?? 'years';
+        $column = match ($unit) {
+            'days' => 'deaths.age_days',
+            'months' => 'deaths.age_months',
+            default => DB::raw('COALESCE(deaths.age_years, deaths.age)'),
+        };
+
+        if ($unit === 'months') {
+            $query->whereRaw('COALESCE(deaths.age_years, 0) = 0');
+        } elseif ($unit === 'days') {
+            $query->whereRaw('COALESCE(deaths.age_years, 0) = 0')
+                ->whereRaw('COALESCE(deaths.age_months, 0) = 0');
+        }
+
+        if (($age['type'] ?? null) === 'range') {
+            $query->whereBetween($column, [$age['min'], $age['max']]);
+        } elseif (($age['type'] ?? null) === 'list') {
+            $query->whereIn($column, $age['values']);
+        } elseif (($age['type'] ?? null) === 'exact') {
+            $query->where($column, $age['value']);
+        } elseif (($age['type'] ?? null) === 'minimum') {
+            $query->where($column, '>=', $age['min']);
+        }
     }
 
     private function normalizeOrigin(mixed $value): ?array

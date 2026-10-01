@@ -396,20 +396,28 @@ class StatisticsController extends Controller
         $dateColumn = Schema::hasColumn('deaths', 'death_date') ? 'death_date' : 'created_at';
         
         // Obtener la fecha máxima de registro
+        $minDate = DB::table('deaths')->min($dateColumn);
         $maxDate = DB::table('deaths')->max($dateColumn);
         
         if (!$maxDate) {
             // Si no hay registros, usar hoy y 1 año atrás
             $endDate = now();
-            $startDate = now()->subYear();
+            $startDate = now()->subYear()->addDay();
+            $dataStartDate = $startDate->copy();
         } else {
             $endDate = \Carbon\Carbon::parse($maxDate);
-            $startDate = $endDate->copy()->subYear();
+            $startDate = $endDate->copy()->subYear()->addDay();
+            $dataStartDate = \Carbon\Carbon::parse($minDate ?: $maxDate);
+            if ($startDate->lt($dataStartDate)) {
+                $startDate = $dataStartDate->copy();
+            }
         }
         
         return [
             'start_date' => $startDate->format('Y-m-d'),
             'end_date' => $endDate->format('Y-m-d'),
+            'data_start' => $dataStartDate->format('Y-m-d'),
+            'data_end' => $endDate->format('Y-m-d'),
         ];
     }
 
@@ -432,6 +440,12 @@ class StatisticsController extends Controller
     {
         try {
             $filters = $request->all();
+            if ($dateFilterError = $this->validateChartDateFilters($filters)) {
+                return response()->json([
+                    'error' => 'Los filtros de fecha no son válidos.',
+                    'message' => $dateFilterError,
+                ], 422);
+            }
             $usesAllTime = !empty($filters['all_time']);
             $usesDefaultPeriod = !$usesAllTime && empty($filters['start_date']) && empty($filters['end_date']) &&
                 empty($filters['months']) && empty($filters['years']);
@@ -588,6 +602,81 @@ class StatisticsController extends Controller
                 'debug' => $debug,
             ], 500);
         }
+    }
+
+    private function validateChartDateFilters(array $filters): ?string
+    {
+        $dates = [];
+        foreach (['start_date', 'end_date'] as $key) {
+            if (!array_key_exists($key, $filters) || $filters[$key] === null || $filters[$key] === '') {
+                continue;
+            }
+
+            if (!is_string($filters[$key]) || !preg_match('/^\d{4}-\d{2}-\d{2}$/', $filters[$key])) {
+                return 'Usa fechas válidas con el formato AAAA-MM-DD.';
+            }
+
+            try {
+                $date = Carbon::createFromFormat('!Y-m-d', $filters[$key]);
+            } catch (\Throwable) {
+                return 'Usa fechas válidas con el formato AAAA-MM-DD.';
+            }
+
+            if (!$date || $date->format('Y-m-d') !== $filters[$key]) {
+                return 'Usa fechas válidas con el formato AAAA-MM-DD.';
+            }
+            $dates[$key] = $filters[$key];
+        }
+
+        if (isset($dates['start_date'], $dates['end_date']) && $dates['start_date'] > $dates['end_date']) {
+            return 'La fecha inicial debe ser anterior o igual a la fecha final.';
+        }
+
+        if (array_key_exists('years', $filters)) {
+            $parts = collect(is_array($filters['years']) ? $filters['years'] : [$filters['years']])
+                ->flatMap(fn ($value) => is_string($value) ? explode(',', $value) : [$value])
+                ->map(fn ($value) => trim((string) $value))
+                ->filter()
+                ->values();
+            $currentYear = now()->year;
+
+            if ($parts->isEmpty()) {
+                return 'Selecciona al menos un año válido.';
+            }
+
+            foreach ($parts as $part) {
+                if (preg_match('/^(\d{4})\s*-\s*(\d{4})$/', $part, $matches)) {
+                    $first = (int) $matches[1];
+                    $last = (int) $matches[2];
+                    if (min($first, $last) < 1950 || max($first, $last) > $currentYear) {
+                        return "Los años deben estar entre 1950 y {$currentYear}.";
+                    }
+                    continue;
+                }
+
+                if (!preg_match('/^\d{4}$/', $part)) {
+                    return 'Usa años de cuatro dígitos, separados por comas o como periodo.';
+                }
+                $year = (int) $part;
+                if ($year < 1950 || $year > $currentYear) {
+                    return "Los años deben estar entre 1950 y {$currentYear}.";
+                }
+            }
+        }
+
+        if (array_key_exists('months', $filters)) {
+            $months = collect(is_array($filters['months']) ? $filters['months'] : [$filters['months']])
+                ->flatMap(fn ($value) => is_string($value) ? explode(',', $value) : [$value])
+                ->map(fn ($value) => trim((string) $value))
+                ->filter()
+                ->values();
+
+            if ($months->isEmpty() || $months->contains(fn ($month) => !preg_match('/^(?:[1-9]|1[0-2])$/', $month))) {
+                return 'Selecciona meses válidos entre 1 y 12.';
+            }
+        }
+
+        return null;
     }
 
     /**

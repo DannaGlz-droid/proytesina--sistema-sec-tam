@@ -66,6 +66,7 @@ select.app-filter-select {
 
 .ts-wrapper.app-filter-select.multi .ts-control .item {
   display: inline-flex !important;
+  min-width: 0;
   max-width: 100%;
   align-items: center;
   gap: .25rem;
@@ -78,6 +79,17 @@ select.app-filter-select {
   font-size: .7rem;
   font-weight: 500;
   line-height: 1.2;
+}
+
+.ts-wrapper.app-filter-select.multi .ts-control .item .app-filter-select__item-label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ts-wrapper.app-filter-select.multi .ts-control .item .remove {
+  flex: 0 0 auto;
 }
 
 .ts-wrapper.app-filter-select.multi .app-filter-select__overflow-summary {
@@ -102,8 +114,32 @@ select.app-filter-select {
   display: none !important;
 }
 
+.ts-wrapper.app-filter-select.multi.app-filter-select--collapse-1.has-overflow-items:not(.focus):not(.dropdown-active) .ts-control > .item:nth-child(n + 2) {
+  display: none !important;
+}
+
+.ts-wrapper.app-filter-select.multi.app-filter-select--collapse-1.has-overflow-items:not(.focus):not(.dropdown-active) .ts-control > .item:first-child {
+  flex: 0 1 auto;
+}
+
+.ts-wrapper.app-filter-select.multi.app-filter-select--collapse-1.has-overflow-items:not(.focus):not(.dropdown-active) .ts-control {
+  height: 2.15rem;
+  min-height: 2.15rem !important;
+  max-height: 2.15rem;
+  flex-wrap: nowrap;
+  overflow: hidden;
+}
+
 .ts-wrapper.app-filter-select.multi.has-overflow-items:not(.focus):not(.dropdown-active) .app-filter-select__overflow-summary {
   display: inline-flex;
+  flex: 0 0 auto;
+}
+
+.ts-wrapper.app-filter-select.multi.app-filter-select--collapse-1.has-overflow-items:not(.focus):not(.dropdown-active) .ts-control > input {
+  width: 0 !important;
+  min-width: 0 !important;
+  flex: 0 0 0 !important;
+  padding: 0 !important;
 }
 
 .ts-wrapper.app-filter-select.single .ts-control .item {

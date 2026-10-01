@@ -55,6 +55,36 @@ function statisticsChartResponse(string $type, array $filters = []): array
     return app(StatisticsController::class)->getChartData($request, $type)->getData(true);
 }
 
+it('reports the default period and the complete available date coverage', function (): void {
+    Death::query()->where('gov_folio', 'STAT-1')->update(['death_date' => '2023-05-10']);
+
+    $range = app(StatisticsController::class)->getDefaultDateRangeApi()->getData(true);
+
+    expect($range)->toBe([
+        'start_date' => '2025-01-07',
+        'end_date' => '2026-01-06',
+        'data_start' => '2023-05-10',
+        'data_end' => '2026-01-06',
+    ]);
+});
+
+it('rejects malformed date filters instead of broadening the query', function (): void {
+    $invalidFilters = [
+        ['years' => ['2099']],
+        ['months' => ['13']],
+        ['start_date' => '2026-02-30', 'end_date' => '2026-03-01'],
+        ['start_date' => '2026-02-01', 'end_date' => '2026-01-01'],
+    ];
+
+    foreach ($invalidFilters as $filters) {
+        $response = app(StatisticsController::class)
+            ->getChartData(Request::create('/', 'GET', $filters), 'causas');
+
+        expect($response->getStatusCode())->toBe(422)
+            ->and($response->getData(true)['error'])->toBe('Los filtros de fecha no son válidos.');
+    }
+});
+
 it('keeps the filtered total while reporting Top N coverage', function (): void {
     $data = statisticsChartResponse('causas', ['limit' => 2]);
 
@@ -355,6 +385,30 @@ it('filters chart data by an exact age range or age list', function (): void {
         ->and(statisticsChartResponse('municipios', ['age' => '20-35'])['filtered_total'])->toBe(2)
         ->and(statisticsChartResponse('municipios', ['age' => '10,46'])['filtered_total'])->toBe(2)
         ->and(statisticsChartResponse('municipios', ['age' => '65+'])['filtered_total'])->toBe(1);
+});
+
+it('distinguishes ages recorded in days months and years', function (): void {
+    $base = [
+        'name' => 'Edad precisa',
+        'first_last_name' => 'Prueba',
+        'sex' => 'F',
+        'death_date' => '2026-01-20',
+        'residence_municipality_id' => $this->municipalityA->id,
+        'district_id' => $this->municipalityA->district_id,
+        'death_municipality_id' => $this->municipalityA->id,
+        'death_district_id' => $this->municipalityA->district_id,
+        'death_location_id' => $this->locationA->id,
+        'death_cause_id' => $this->causeA->id,
+    ];
+
+    Death::create([...$base, 'gov_folio' => 'AGE-DAY-1', 'age' => 0, 'age_years' => 0, 'age_months' => 0, 'age_days' => 1]);
+    Death::create([...$base, 'gov_folio' => 'AGE-MONTH-1', 'age' => 0, 'age_years' => 0, 'age_months' => 1, 'age_days' => null]);
+    Death::create([...$base, 'gov_folio' => 'AGE-YEAR-1', 'age' => 1, 'age_years' => 1, 'age_months' => null, 'age_days' => null]);
+
+    expect(statisticsChartResponse('municipios', ['age' => '1', 'age_unit' => 'days'])['filtered_total'])->toBe(1)
+        ->and(statisticsChartResponse('municipios', ['age' => '1', 'age_unit' => 'months'])['filtered_total'])->toBe(1)
+        ->and(statisticsChartResponse('municipios', ['age' => '1', 'age_unit' => 'years'])['filtered_total'])->toBe(1)
+        ->and(statisticsChartResponse('municipios', ['age' => '1'])['filtered_total'])->toBe(1);
 });
 
 it('returns exact table filters for drilldown-enabled chart categories', function (): void {

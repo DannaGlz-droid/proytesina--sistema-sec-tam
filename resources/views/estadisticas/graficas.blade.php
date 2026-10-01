@@ -52,11 +52,6 @@
                         count-id="statisticsFilterCount"
                         class="statistics-filter-toggle"
                     />
-                    <div id="filtrosActivos" class="statistics-active-filters hidden">
-                        <div id="filtrosActivosList" class="statistics-active-filters__list users-filter-chips" aria-live="polite">
-                            <!-- Los chips se generan dinámicamente con JavaScript -->
-                        </div>
-                    </div>
                 </div>
                 <!-- Layout: Filtros + Gráfica -->
                 <div class="statistics-layout">
@@ -76,6 +71,7 @@
                         apply-class="statistics-filter-action statistics-filter-action--primary"
                     >
                                 <x-filtros.seccion titulo="Fecha de defunción" :abierto="true" data-statistics-filter-section>
+                                    <div class="statistics-date-filter">
                                         <div class="statistics-filter-control">
                                             <label for="dateRange">Periodo</label>
                                             <x-filtros.select id="dateRange" placeholder="Últimos 12 meses (predeterminado)">
@@ -88,47 +84,82 @@
                                             </x-filtros.select>
                                         </div>
 
-                                        <div class="statistics-filter-control" id="yearSelector" style="display: none;">
-                                            <label for="year">Año o periodo</label>
-                                            @php $currentYear = now()->year; @endphp
-                                            <input type="text" id="year" placeholder="Ej. 2026 o 2024-2026" title="Escribe años separados por coma o un periodo" aria-describedby="yearFilterError">
-                                            <small id="yearFilterError" class="statistics-filter-error hidden" role="alert"></small>
-                                        </div>
+                                        <div id="dateFilterDetail" class="statistics-date-detail" data-mode="all" style="display: none;">
+                                            <div class="statistics-filter-control" id="yearSelector" style="display: none;">
+                                                <div class="statistics-filter-label-row">
+                                                    <label id="yearFilterLabel" class="statistics-filter-control__label" for="year">Año o periodo</label>
+                                                    <span id="yearFilterHelpPopover" class="statistics-filter-help-popover">
+                                                        <button
+                                                            type="button"
+                                                            class="statistics-filter-help-trigger"
+                                                            aria-label="Cómo escribir el año o periodo"
+                                                            aria-describedby="yearFilterHelp"
+                                                        >
+                                                            <i class="fas fa-circle-question" aria-hidden="true"></i>
+                                                        </button>
+                                                        <span id="yearFilterHelp" class="statistics-filter-tooltip" role="tooltip">
+                                                            Escribe un año, un periodo o varios años separados por comas. Solo se aceptan años con datos disponibles.
+                                                        </span>
+                                                    </span>
+                                                </div>
+                                                <input type="text" id="year" placeholder="Ej. 2024-2026" title="Escribe años con datos disponibles, separados por coma o como periodo" aria-describedby="yearFilterHelp yearFilterError">
+                                                <small id="yearFilterError" class="statistics-filter-error hidden" role="alert"></small>
+                                            </div>
 
-                                        <div class="statistics-filter-control" id="monthSelector" style="display: none;">
-                                            <span class="statistics-filter-control__label">Meses</span>
-                                            <div class="months-container">
-                                                @php
-                                                    $months = [
-                                                        '01' => 'Ene','02' => 'Feb','03' => 'Mar','04' => 'Abr','05' => 'May','06' => 'Jun',
-                                                        '07' => 'Jul','08' => 'Ago','09' => 'Sep','10' => 'Oct','11' => 'Nov','12' => 'Dic'
-                                                    ];
-                                                @endphp
-                                                @foreach($months as $mval => $mlabel)
-                                                    <div>
-                                                        <input type="checkbox" id="month-{{ $mval }}" name="selectedMonths[]" class="month-checkbox" value="{{ $mval }}">
-                                                        <label for="month-{{ $mval }}" class="month-label">{{ $mlabel }}</label>
+                                            <div class="statistics-filter-control" id="monthSelector" style="display: none;">
+                                                <span class="statistics-filter-control__label">Meses</span>
+                                                <div class="statistics-month-picker">
+                                                    <button type="button" id="monthPickerToggle" class="statistics-month-picker__trigger" aria-expanded="false" aria-controls="monthPickerPopover">
+                                                        <span id="monthPickerSummary">Selecciona meses</span>
+                                                        <i class="fa-solid fa-chevron-down" aria-hidden="true"></i>
+                                                    </button>
+                                                    <div id="monthPickerPopover" class="statistics-month-picker__popover" hidden>
+                                                        <div class="months-container">
+                                                            @php
+                                                                $months = [
+                                                                    '01' => 'Ene','02' => 'Feb','03' => 'Mar','04' => 'Abr','05' => 'May','06' => 'Jun',
+                                                                    '07' => 'Jul','08' => 'Ago','09' => 'Sep','10' => 'Oct','11' => 'Nov','12' => 'Dic'
+                                                                ];
+                                                            @endphp
+                                                            @foreach($months as $mval => $mlabel)
+                                                                <div>
+                                                                    <input type="checkbox" id="month-{{ $mval }}" name="selectedMonths[]" class="month-checkbox" value="{{ $mval }}">
+                                                                    <label for="month-{{ $mval }}" class="month-label">{{ $mlabel }}</label>
+                                                                </div>
+                                                            @endforeach
+                                                        </div>
+                                                        <div class="statistics-month-picker__actions">
+                                                            <button type="button" id="selectAllMonths">Todos</button>
+                                                            <button type="button" id="clearMonths">Limpiar</button>
+                                                            <button type="button" id="closeMonthPicker" class="statistics-month-picker__done">Listo</button>
+                                                        </div>
                                                     </div>
-                                                @endforeach
+                                                </div>
+                                            </div>
+
+                                            <div class="statistics-filter-control" id="quarterSelector" style="display: none;">
+                                                <label for="quarter">Trimestre</label>
+                                                <x-filtros.select id="quarter" placeholder="Elige">
+                                                    <option value="">Elige</option>
+                                                    <option value="1">Q1 (Ene–Mar)</option>
+                                                    <option value="2">Q2 (Abr–Jun)</option>
+                                                    <option value="3">Q3 (Jul–Sep)</option>
+                                                    <option value="4">Q4 (Oct–Dic)</option>
+                                                </x-filtros.select>
+                                            </div>
+
+                                            <div id="customDateSelector" class="statistics-filter-date-grid" style="display: none;">
+                                                <label>Desde<input type="date" id="customStartDate" aria-describedby="customDateFilterError"></label>
+                                                <label>Hasta<input type="date" id="customEndDate" aria-describedby="customDateFilterError"></label>
+                                                <small id="customDateFilterError" class="statistics-filter-error statistics-filter-date-grid__error hidden" role="alert"></small>
                                             </div>
                                         </div>
-
-                                        <div class="statistics-filter-control" id="quarterSelector" style="display: none;">
-                                            <label for="quarter">Trimestre</label>
-                                            <x-filtros.select id="quarter" placeholder="Seleccionar trimestre">
-                                                <option value="">Seleccionar trimestre</option>
-                                                <option value="1">Q1 (Ene–Mar)</option>
-                                                <option value="2">Q2 (Abr–Jun)</option>
-                                                <option value="3">Q3 (Jul–Sep)</option>
-                                                <option value="4">Q4 (Oct–Dic)</option>
-                                            </x-filtros.select>
+                                        <div id="statisticsDateCoverageNotice" class="statistics-date-coverage-notice" role="alert" hidden>
+                                            <i class="fas fa-triangle-exclamation" aria-hidden="true"></i>
+                                            <span>No se pudieron comprobar las fechas disponibles. Puedes seguir usando las gráficas, pero los límites del periodo podrían no estar actualizados.</span>
+                                            <button type="button" id="statisticsDateCoverageRetry">Reintentar</button>
                                         </div>
-
-                                        <div id="customDateSelector" class="statistics-filter-date-grid" style="display: none;">
-                                            <label>Desde<input type="date" id="customStartDate" aria-describedby="customDateFilterError"></label>
-                                            <label>Hasta<input type="date" id="customEndDate" aria-describedby="customDateFilterError"></label>
-                                            <small id="customDateFilterError" class="statistics-filter-error statistics-filter-date-grid__error hidden" role="alert"></small>
-                                        </div>
+                                    </div>
                                 </x-filtros.seccion>
 
                                 <x-filtros.seccion id="statisticsLocationFilterGroup" titulo="Ubicación" data-statistics-filter-section data-statistics-filter-group hidden>
@@ -141,7 +172,7 @@
                                         </div>
                                         <div id="filterMunicipios" class="statistics-filter-control dynamic-filter" style="display: none;">
                                             <label id="municipiosFilterLabel" for="municipiosFilter">Municipios de defunción</label>
-                                            <x-filtros.select id="municipiosFilter" placeholder="Selecciona municipios" multiple>
+                                            <x-filtros.select id="municipiosFilter" placeholder="Selecciona municipios" data-collapsed-limit="1" multiple>
                                                 @foreach($municipalities as $mun)
                                                     <option value="{{ $mun->id }}">{{ \App\Support\CatalogLabel::municipality($mun->name) }}</option>
                                                 @endforeach
@@ -150,7 +181,7 @@
                                         @if($districts->count() > 0)
                                         <div id="filterdistritoes" class="statistics-filter-control dynamic-filter" style="display: none;">
                                             <label id="distritoesFilterLabel" for="distritoesFilter">Distritos de defunción</label>
-                                            <x-filtros.select id="distritoesFilter" placeholder="Selecciona distritos" multiple>
+                                            <x-filtros.select id="distritoesFilter" placeholder="Selecciona distritos" data-collapsed-limit="1" multiple>
                                                 @foreach($districts as $district)
                                                     <option value="{{ $district->id }}">{{ $district->display_name }}</option>
                                                 @endforeach
@@ -158,19 +189,18 @@
                                         </div>
 
                                         <div id="filterMunicipalityLocations" class="statistics-location-fields dynamic-filter" style="display: none;">
-                                            <span class="statistics-location-fields__title">Distritos</span>
                                             <div class="statistics-location-fields__districts">
-                                                <div class="statistics-filter-control">
-                                                    <label for="residenceDistrictsFilter">Residencia</label>
-                                                    <x-filtros.select id="residenceDistrictsFilter" placeholder="Selecciona" multiple>
+                                                <div id="residenceDistrictEditor" class="statistics-filter-control statistics-district-editor">
+                                                    <label for="residenceDistrictsFilter">Distritos de residencia</label>
+                                                    <x-filtros.select id="residenceDistrictsFilter" placeholder="Selecciona distritos" data-collapsed-limit="1" multiple>
                                                         @foreach($districts as $district)
                                                             <option value="{{ $district->id }}">{{ $district->display_name }}</option>
                                                         @endforeach
                                                     </x-filtros.select>
                                                 </div>
-                                                <div class="statistics-filter-control">
-                                                    <label for="deathDistrictsFilter">Defunci&oacute;n</label>
-                                                    <x-filtros.select id="deathDistrictsFilter" placeholder="Selecciona" multiple>
+                                                <div id="deathDistrictEditor" class="statistics-filter-control statistics-district-editor">
+                                                    <label for="deathDistrictsFilter">Distritos de defunci&oacute;n</label>
+                                                    <x-filtros.select id="deathDistrictsFilter" placeholder="Selecciona distritos" data-collapsed-limit="1" multiple>
                                                         @foreach($districts as $district)
                                                             <option value="{{ $district->id }}">{{ $district->display_name }}</option>
                                                         @endforeach
@@ -180,7 +210,7 @@
                                             @if($deathLocations->count() > 0)
                                                 <div class="statistics-filter-control statistics-location-fields__death-location">
                                                     <label for="deathLocationsFilter">Lugar de defunci&oacute;n</label>
-                                                    <x-filtros.select id="deathLocationsFilter" placeholder="Selecciona lugares" multiple>
+                                                    <x-filtros.select id="deathLocationsFilter" placeholder="Selecciona lugares" data-collapsed-limit="1" multiple>
                                                         @foreach($deathLocations as $location)
                                                             <option value="{{ $location->id }}">{{ $location->display_name }}</option>
                                                         @endforeach
@@ -198,13 +228,13 @@
                                             <x-filtros.select id="sexoFilter" placeholder="Todos" :allow-empty-option="true">
                                                 <option value="">Todos</option>
                                                 @foreach($sexes as $sex)
-                                                    <option value="{{ $sex->value }}">{{ $sex->label }}</option>
+                                                    <option value="{{ $sex->value }}" data-compact-label="{{ $sex->value }}">{{ $sex->label }}</option>
                                                 @endforeach
                                             </x-filtros.select>
                                         </div>
                                         <div id="filterEdad" class="statistics-filter-control dynamic-filter" style="display: none;">
                                             <div class="statistics-filter-label-row">
-                                                <label class="statistics-filter-control__label" for="edadFilter">Edad (a&ntilde;os)</label>
+                                                <label class="statistics-filter-control__label" for="edadFilter">Edad</label>
                                                 <span class="statistics-filter-help-popover">
                                                     <button
                                                         type="button"
@@ -215,17 +245,28 @@
                                                         <i class="fas fa-circle-question" aria-hidden="true"></i>
                                                     </button>
                                                     <span id="edadFilterHelp" class="statistics-filter-tooltip" role="tooltip">
-                                                        Escribe una edad (25), un rango (20-30) o varias separadas por comas (5,10,15).
+                                                        Escribe una edad (25), un rango (20-30), varias separadas por comas (5,10,15) o una edad m&iacute;nima (65+). Elige la unidad a la derecha.
                                                     </span>
                                                 </span>
                                             </div>
-                                            <input
-                                                type="text"
-                                                id="edadFilter"
-                                                inputmode="numeric"
-                                                placeholder="Ej. 25 o 20-30"
-                                                aria-describedby="edadFilterHelp edadFilterError"
-                                            >
+                                            <div class="statistics-age-composite">
+                                                <input
+                                                    type="text"
+                                                    id="edadFilter"
+                                                    inputmode="numeric"
+                                                    placeholder="Ej. 25, 20-30"
+                                                    pattern="[0-9, +\-]*"
+                                                    aria-describedby="edadFilterHelp edadFilterError"
+                                                >
+                                                <span class="statistics-age-unit-control">
+                                                    <label class="sr-only" for="edadUnidadFilter">Unidad de edad</label>
+                                                    <x-filtros.select id="edadUnidadFilter" aria-label="Unidad de edad" :searchable="false">
+                                                        <option value="years">a&ntilde;os</option>
+                                                        <option value="months">meses</option>
+                                                        <option value="days">d&iacute;as</option>
+                                                    </x-filtros.select>
+                                                </span>
+                                            </div>
                                             <small id="edadFilterError" class="statistics-filter-error hidden" role="alert"></small>
                                         </div>
                                     </div>
@@ -234,7 +275,7 @@
                                 <x-filtros.seccion id="statisticsCauseFilterGroup" titulo="Causa de defunción" data-statistics-filter-section data-statistics-filter-group hidden>
                                         <div id="filterCausas" class="statistics-filter-control dynamic-filter" style="display: none;">
                                             <label for="causasFilter">Causas</label>
-                                            <x-filtros.select id="causasFilter" placeholder="Selecciona causas" variant="drop-up" multiple>
+                                            <x-filtros.select id="causasFilter" placeholder="Selecciona causas" variant="drop-up" data-collapsed-limit="1" multiple>
                                                 @foreach($causes as $cause)
                                                     <option value="{{ $cause->id }}">{{ $cause->display_name }}</option>
                                                 @endforeach
@@ -468,6 +509,46 @@
                                         </div>
                                     </div>
                                 </div>
+
+                                <div id="filtrosActivos" class="statistics-active-filters" data-filter-count="0">
+                                    <span class="statistics-active-filters__label">Filtros aplicados</span>
+                                    <div class="statistics-active-filters__desktop">
+                                        <div id="filtrosActivosList" class="statistics-active-filters__list users-filter-chips" aria-live="polite">
+                                            <span class="statistics-active-filters__empty">Sin filtros adicionales</span>
+                                        </div>
+                                        <button
+                                            type="button"
+                                            id="statisticsActiveFiltersMore"
+                                            class="statistics-active-filters__more hidden"
+                                            aria-expanded="false"
+                                            aria-controls="statisticsActiveFiltersPopover"
+                                        ></button>
+                                    </div>
+                                    <button
+                                        type="button"
+                                        id="statisticsActiveFiltersMobile"
+                                        class="statistics-active-filters__mobile"
+                                        aria-expanded="false"
+                                        aria-controls="statisticsActiveFiltersPopover"
+                                        disabled
+                                    >
+                                        <span id="statisticsActiveFiltersMobileText">Sin filtros adicionales</span>
+                                        <span class="statistics-active-filters__mobile-action">Ver detalle</span>
+                                    </button>
+                                    <div id="statisticsActiveFiltersPopover" class="statistics-active-filters-popover hidden" role="region" aria-label="Detalle de filtros aplicados">
+                                        <div class="statistics-active-filters-popover__header">
+                                            <div>
+                                                <strong>Filtros aplicados</strong>
+                                                <span id="statisticsActiveFiltersPopoverCount">0 filtros</span>
+                                            </div>
+                                            <button type="button" id="statisticsActiveFiltersClose" class="statistics-active-filters-popover__close" aria-label="Cerrar detalle de filtros">
+                                                <i class="fas fa-xmark" aria-hidden="true"></i>
+                                            </button>
+                                        </div>
+                                        <div id="statisticsActiveFiltersAll" class="statistics-active-filters-popover__list users-filter-chips"></div>
+                                        <button type="button" id="statisticsActiveFiltersClearAll" class="statistics-active-filters-popover__clear">Quitar todos</button>
+                                    </div>
+                                </div>
                             </header>
                             <div class="chart-wrapper statistics-chart-canvas">
                                 <div
@@ -627,7 +708,9 @@
         const tamaulipasMapName = 'tamaulipas-municipios';
         const tamaulipasMapUrl = @json(asset('data/tamaulipas-municipios.geojson').'?v='.filemtime(public_path('data/tamaulipas-municipios.geojson')));
         let tamaulipasMapPromise = null;
-        let defaultDateRange = { startDate: '', endDate: '' };
+        let defaultDateRange = { startDate: '', endDate: '', dataStartDate: '', dataEndDate: '' };
+        let activeDateYearMode = 'all';
+        let dateYearDrafts = { years: '', months: '', quarter: '' };
         let filterDraftSnapshot = null;
         let restoringFilterDraft = false;
         const defaultPresentationConfig = Object.freeze({
@@ -829,6 +912,7 @@
             deathLocationNames: [],
             sexo: null,
             edad: null,
+            edadUnidad: 'years',
             granularidad: 'month',
             tipoComparativa: 'residencia-defuncion',
             tipoMunicipio: 'defuncion'
@@ -1202,8 +1286,13 @@
             const list = key => params.getAll(key).map(String).filter(Boolean);
             const datePattern = /^\d{4}-\d{2}-\d{2}$/;
             const rawAge = String(params.get('age') || '').trim();
-            const ageIsValid = !rawAge || /^\d{1,3}(?:\s*-\s*\d{1,3})?$/.test(rawAge)
-                || /^\d{1,3}(?:\s*,\s*\d{1,3})+$/.test(rawAge);
+            const rawAgeUnit = oneOf('age_unit', ['years', 'months', 'days'], 'years');
+            const ageMaximum = rawAgeUnit === 'days' ? 30 : (rawAgeUnit === 'months' ? 11 : 150);
+            const ageHasValidFormat = !rawAge || /^\d{1,3}(?:\s*-\s*\d{1,3})?$/.test(rawAge)
+                || /^\d{1,3}(?:\s*,\s*\d{1,3})+$/.test(rawAge)
+                || /^\d{1,3}\s*\+$/.test(rawAge);
+            const ageIsValid = ageHasValidFormat
+                && (rawAge.match(/\d+/g) || []).every(value => Number(value) <= ageMaximum);
             const visualTypes = chartTypeOptions[metric] || [];
             const visual = oneOf('visual', visualTypes, chartTypeDefaults[metric]);
             const limitValue = params.get('limit');
@@ -1235,6 +1324,7 @@
                 deathLocations: list('death_location'),
                 sex: params.get('sex') || '',
                 age: ageIsValid ? rawAge : '',
+                ageUnit: rawAgeUnit,
                 granularity: oneOf('granularity', ['day', 'month', 'year'], 'month'),
                 comparison: oneOf('comparison', Object.keys(comparativaLabels), 'residencia-defuncion'),
                 municipalityType: oneOf('scope', ['defuncion', 'residencia'], 'defuncion'),
@@ -1262,6 +1352,11 @@
                 return values.filter(value => valid.has(String(value)));
             };
 
+            dateYearDrafts = { years: '', months: '', quarter: '' };
+            activeDateYearMode = state.dateRange;
+            if (Object.prototype.hasOwnProperty.call(dateYearDrafts, state.dateRange)) {
+                dateYearDrafts[state.dateRange] = state.years;
+            }
             setControlValue('dateRange', state.dateRange);
             setControlValue('year', state.years);
             setControlValue('quarter', state.quarter);
@@ -1270,7 +1365,7 @@
             document.querySelectorAll('.month-checkbox').forEach(checkbox => {
                 checkbox.checked = state.months.includes(String(Number(checkbox.value)));
             });
-            onDateRangeChange();
+            onDateRangeChange({ skipYearDraftSync: true });
 
             setControlValue('tipoMunicipioFilter', state.municipalityType);
             setControlValue('tipoComparativaFilter', state.comparison);
@@ -1284,6 +1379,7 @@
             setControlValue('causasFilter', validSelectValues('causasFilter', state.causes));
             setControlValue('sexoFilter', state.sex);
             setControlValue('edadFilter', state.age);
+            setControlValue('edadUnidadFilter', state.ageUnit);
             setControlValue('granularidadFilter', state.granularity);
 
             currentChartType = state.metric;
@@ -1343,7 +1439,10 @@
                 appendMany('district', activeFilters.distritoes);
             }
             if (metricSupportsFilter(currentChartType, 'sexo') && activeFilters.sexo) params.set('sex', activeFilters.sexo);
-            if (metricSupportsFilter(currentChartType, 'edad') && activeFilters.edad) params.set('age', activeFilters.edad);
+            if (metricSupportsFilter(currentChartType, 'edad') && activeFilters.edad) {
+                params.set('age', activeFilters.edad);
+                params.set('age_unit', activeFilters.edadUnidad || 'years');
+            }
             if (metricSupportsFilter(currentChartType, 'tipoMunicipio')) params.set('scope', activeFilters.tipoMunicipio);
             if (currentChartType === 'tendencias') params.set('granularity', activeFilters.granularidad);
             if (currentChartType === 'comparativa') params.set('comparison', activeFilters.tipoComparativa);
@@ -1420,6 +1519,7 @@
             const sharedState = readStatisticsShareState();
 
             // Cargar rangos de fecha default antes de inicializar
+            document.getElementById('statisticsDateCoverageRetry')?.addEventListener('click', loadDefaultDateRange);
             await loadDefaultDateRange();
             initializePresentationPreferences();
             renderColorPalettePreview();
@@ -1489,13 +1589,24 @@
 
         // Función para cargar los rangos de fecha default
         async function loadDefaultDateRange() {
+            const notice = document.getElementById('statisticsDateCoverageNotice');
+            const retryButton = document.getElementById('statisticsDateCoverageRetry');
+            const previousRange = { ...defaultDateRange };
+
+            if (retryButton) {
+                retryButton.disabled = true;
+                retryButton.textContent = 'Comprobando…';
+            }
+
             try {
                 const response = await fetch('{{ route("api.default-date-range") }}');
                 if (!response.ok) throw new Error(`HTTP ${response.status}`);
                 const data = await response.json();
                 defaultDateRange = {
                     startDate: data.start_date || '',
-                    endDate: data.end_date || ''
+                    endDate: data.end_date || '',
+                    dataStartDate: data.data_start || '',
+                    dataEndDate: data.data_end || data.end_date || ''
                 };
                 
                 // Actualizar los inputs de fecha
@@ -1503,12 +1614,116 @@
                 const endDateInput = document.getElementById('customEndDate');
                 
                 if (startDateInput && endDateInput) {
-                    startDateInput.value = defaultDateRange.startDate;
-                    endDateInput.value = defaultDateRange.endDate;
+                    if (!startDateInput.value || startDateInput.value === previousRange.startDate) {
+                        startDateInput.value = defaultDateRange.startDate;
+                    }
+                    if (!endDateInput.value || endDateInput.value === previousRange.endDate) {
+                        endDateInput.value = defaultDateRange.endDate;
+                    }
                 }
+                syncCustomDateBounds();
+                syncStatisticsYearGuidance();
+                if (notice) notice.hidden = true;
+                return true;
             } catch (error) {
                 console.error('Error loading default date range:', error);
+                if (notice) notice.hidden = false;
+                return false;
+            } finally {
+                if (retryButton) {
+                    retryButton.disabled = false;
+                    retryButton.textContent = 'Reintentar';
+                }
             }
+        }
+
+        function getStatisticsAvailableYearBounds() {
+            const currentYear = new Date().getFullYear();
+            const first = Number(String(defaultDateRange.dataStartDate || '').slice(0, 4));
+            const last = Number(String(defaultDateRange.dataEndDate || '').slice(0, 4));
+
+            return {
+                first: Number.isInteger(first) && first > 0 ? first : 1950,
+                last: Number.isInteger(last) && last > 0 ? last : currentYear,
+            };
+        }
+
+        function getStatisticsYearCoverageText() {
+            const { first, last } = getStatisticsAvailableYearBounds();
+            return first === last
+                ? `El año disponible es ${first}.`
+                : `Los años disponibles van de ${first} a ${last}.`;
+        }
+
+        function syncStatisticsYearGuidance() {
+            const mode = document.getElementById('dateRange')?.value;
+            const yearInput = document.getElementById('year');
+            const tooltip = document.getElementById('yearFilterHelp');
+            if (!yearInput) return;
+
+            const { first, last } = getStatisticsAvailableYearBounds();
+            const isQuarter = mode === 'quarter';
+            yearInput.placeholder = isQuarter
+                ? `Ej. ${last}`
+                : (first === last ? `Ej. ${last}` : `Ej. ${first}-${last}`);
+            yearInput.title = `Escribe años con datos disponibles. ${getStatisticsYearCoverageText()}`;
+
+            if (tooltip) {
+                tooltip.textContent = `Escribe un año, un periodo o varios años separados por comas. ${getStatisticsYearCoverageText()}`;
+            }
+        }
+
+        function formatStatisticsDate(value) {
+            if (!value) return '';
+            const parts = value.split('-').map(Number);
+            if (parts.length !== 3 || parts.some(part => !Number.isFinite(part))) return value;
+
+            return new Intl.DateTimeFormat('es-MX', {
+                day: 'numeric',
+                month: 'short',
+                year: 'numeric'
+            }).format(new Date(parts[0], parts[1] - 1, parts[2])).replace(/\./g, '');
+        }
+
+        function syncCustomDateBounds() {
+            const start = document.getElementById('customStartDate');
+            const end = document.getElementById('customEndDate');
+            if (!start || !end) return;
+
+            start.min = defaultDateRange.dataStartDate || '';
+            start.max = end.value || defaultDateRange.endDate || '';
+            end.min = start.value || defaultDateRange.dataStartDate || '';
+            end.max = defaultDateRange.endDate || '';
+        }
+
+        function syncMonthPickerSummary() {
+            const selected = Array.from(document.querySelectorAll('.month-checkbox:checked'));
+            const summary = document.getElementById('monthPickerSummary');
+            if (!summary) return;
+
+            if (selected.length === 0) {
+                summary.textContent = 'Selecciona meses';
+                return;
+            }
+            if (selected.length === 12) {
+                summary.textContent = 'Todos los meses';
+                return;
+            }
+
+            const labels = selected.map(input => document.querySelector(`label[for="${input.id}"]`)?.textContent.trim() || input.value);
+            summary.textContent = labels.length <= 2
+                ? labels.join(', ')
+                : `${labels.slice(0, 2).join(', ')} +${labels.length - 2}`;
+        }
+
+        function setMonthPickerOpen(open, { focusTrigger = false } = {}) {
+            const trigger = document.getElementById('monthPickerToggle');
+            const popover = document.getElementById('monthPickerPopover');
+            if (!trigger || !popover) return;
+
+            trigger.setAttribute('aria-expanded', String(open));
+            popover.hidden = !open;
+            if (!open && focusTrigger) trigger.focus();
         }
 
         function initializeTomSelect() {
@@ -1523,28 +1738,39 @@
                 'deathDistrictsFilter',
                 'deathLocationsFilter',
                 'sexoFilter',
+                'edadUnidadFilter',
                 'granularidadFilter'
             ];
 
             filterSelectIds.forEach(id => {
                 const element = document.getElementById(id);
-                if (element && !element.tomselect && window.AppFilterSelect) {
-                    const isMultiple = element.multiple;
-                    const isSearchable = isMultiple || element.options.length > 8;
-                    window.AppFilterSelect.init(element, {
+                if (!element || !window.AppFilterSelect) return;
+
+                let instance = element.tomselect;
+                if (!instance) {
+                    const isSearchable = element.multiple || element.options.length > 8;
+                    instance = window.AppFilterSelect.init(element, {
                         searchable: isSearchable,
                         allowEmptyOption: id === 'sexoFilter',
                         ...(id === 'sexoFilter' ? { placeholder: 'Todos' } : {}),
-                        onChange: (value) => {
-                            // Si cambió el distrito mientras se ve 'municipios', actualizar la lista disponible.
-                            if (element.id === 'distritoesFilter' && metricUsesMunicipalityAndDistrict()) {
-                                const selected = Array.isArray(value) ? value.map(String) : (value ? [String(value)] : []);
-                                updateMunicipiosOptions(selected);
-                            }
-                            markStatisticsFilterDraft();
-                        }
                     });
                 }
+
+                if (instance && !instance.statisticsPopupCoordinationBound) {
+                    instance.on('dropdown_open', () => setMonthPickerOpen(false));
+                    instance.statisticsPopupCoordinationBound = true;
+                }
+
+                if (!instance || instance.statisticsFiltersBound) return;
+                instance.on('change', (value) => {
+                    // Si cambió el distrito mientras se ve 'municipios', actualizar la lista disponible.
+                    if (element.id === 'distritoesFilter' && metricUsesMunicipalityAndDistrict()) {
+                        const selected = Array.isArray(value) ? value.map(String) : (value ? [String(value)] : []);
+                        updateMunicipiosOptions(selected);
+                    }
+                    markStatisticsFilterDraft();
+                });
+                instance.statisticsFiltersBound = true;
             });
         }
 
@@ -1575,9 +1801,7 @@
                 if (control.type === 'checkbox') {
                     state[control.id] = control.checked;
                 } else if (control.multiple) {
-                    state[control.id] = control.tomselect
-                        ? [].concat(control.tomselect.getValue() || [])
-                        : Array.from(control.selectedOptions).map(option => option.value);
+                    state[control.id] = Array.from(control.selectedOptions).map(option => option.value);
                 } else {
                     state[control.id] = control.value;
                 }
@@ -1605,6 +1829,7 @@
                 tipoMunicipioFilter: 'defuncion',
                 granularidadFilter: 'month',
                 tipoComparativaFilter: 'residencia-defuncion',
+                edadUnidadFilter: 'years',
             };
 
             return Array.from(section.querySelectorAll('input[id], select[id]')).reduce((count, control) => {
@@ -1614,7 +1839,7 @@
                 if (control.type === 'checkbox') return count + (control.checked ? 1 : 0);
 
                 const value = control.multiple
-                    ? (control.tomselect ? [].concat(control.tomselect.getValue() || []) : Array.from(control.selectedOptions).map(option => option.value))
+                    ? Array.from(control.selectedOptions).map(option => option.value)
                     : control.value;
                 const hasValue = Array.isArray(value)
                     ? value.length > 0
@@ -1712,7 +1937,12 @@
             if (metricUsesMunicipalityAndDistrict()) updateMunicipiosOptions([].concat(state.distritoesFilter || []));
             restoreControl('municipiosFilter', state.municipiosFilter || []);
 
-            onDateRangeChange();
+            dateYearDrafts = { years: '', months: '', quarter: '' };
+            activeDateYearMode = state.dateRange || 'all';
+            if (Object.prototype.hasOwnProperty.call(dateYearDrafts, activeDateYearMode)) {
+                dateYearDrafts[activeDateYearMode] = state.year || '';
+            }
+            onDateRangeChange({ skipYearDraftSync: true });
             updateVisibleFilters(currentChartType);
             updateGeographicFilterLabels(document.getElementById('tipoMunicipioFilter')?.value || 'defuncion');
             restoringFilterDraft = false;
@@ -1726,7 +1956,13 @@
             if (panel?.classList.contains('is-open') || isPersistentMunicipalityPanel) {
                 panel?.classList.add('has-draft-changes');
             }
-            if (isPersistentMunicipalityPanel) syncStatisticsFilterDraftUi();
+            if (isPersistentMunicipalityPanel) {
+                const apply = document.getElementById('statisticsFiltersApply');
+                const discard = document.getElementById('statisticsFiltersCancel');
+                if (apply) apply.disabled = false;
+                if (discard) discard.disabled = false;
+                syncStatisticsFilterSectionSummaries();
+            }
         }
 
         function openStatisticsFilters() {
@@ -1904,6 +2140,49 @@
             // Inicializar Tom Select para multiselects
             initializeTomSelect();
 
+            const activeFiltersSection = document.getElementById('filtrosActivos');
+            const activeFiltersPopover = document.getElementById('statisticsActiveFiltersPopover');
+            activeFiltersSection?.addEventListener('click', function(event) {
+                const clearButton = event.target.closest('[data-clear-filter]');
+                if (clearButton) {
+                    const filterType = clearButton.dataset.clearFilter;
+                    if (filterType === 'date') clearDateFilter();
+                    else clearFilter(filterType);
+                    if (!activeFiltersPopover?.classList.contains('hidden')) {
+                        document.getElementById('statisticsActiveFiltersClose')?.focus();
+                    }
+                    return;
+                }
+
+                if (event.target.closest('#statisticsActiveFiltersMore, #statisticsActiveFiltersMobile')) {
+                    const isOpen = !activeFiltersPopover?.classList.contains('hidden');
+                    setActiveFiltersPopoverOpen(!isOpen);
+                    return;
+                }
+
+                if (event.target.closest('#statisticsActiveFiltersClose')) {
+                    setActiveFiltersPopoverOpen(false, { returnFocus: true });
+                    return;
+                }
+
+                if (event.target.closest('#statisticsActiveFiltersClearAll')) {
+                    setActiveFiltersPopoverOpen(false);
+                    clearFilters();
+                }
+            });
+
+            document.addEventListener('click', function(event) {
+                if (!activeFiltersPopover || activeFiltersPopover.classList.contains('hidden')) return;
+                if (activeFiltersSection?.contains(event.target)) return;
+                setActiveFiltersPopoverOpen(false);
+            });
+
+            document.addEventListener('keydown', function(event) {
+                if (event.key !== 'Escape' || activeFiltersPopover?.classList.contains('hidden')) return;
+                event.preventDefault();
+                setActiveFiltersPopoverOpen(false, { returnFocus: true });
+            });
+
             const chartTabs = Array.from(document.querySelectorAll('.chart-tab-btn'));
             chartTabs.forEach((btn, index) => {
                 const warmChartData = () => {
@@ -2045,7 +2324,14 @@
             
             // Event listeners para campos de fecha
             const yearInput = document.getElementById('year');
-            if (yearInput) yearInput.addEventListener('change', markStatisticsFilterDraft);
+            if (yearInput) {
+                yearInput.addEventListener('input', () => {
+                    if (Object.prototype.hasOwnProperty.call(dateYearDrafts, activeDateYearMode)) {
+                        dateYearDrafts[activeDateYearMode] = yearInput.value;
+                    }
+                });
+                yearInput.addEventListener('change', markStatisticsFilterDraft);
+            }
             
             // Event listener para mes específico (select simple)
             const monthSelect = document.getElementById('month');
@@ -2059,19 +2345,78 @@
             // Manejar checkboxes de meses
             document.querySelectorAll('.month-checkbox').forEach(checkbox => {
                 checkbox.addEventListener('change', function() {
+                    syncMonthPickerSummary();
                     markStatisticsFilterDraft();
                 });
             });
-            
-            document.getElementById('customStartDate').addEventListener('change', markStatisticsFilterDraft);
-            document.getElementById('customEndDate').addEventListener('change', markStatisticsFilterDraft);
-            // Nota: Los eventos para municipiosFilter, causasFilter, distritoesFilter 
-            // se manejan dentro de Tom Select (onChange), no aquí
-            ['residenceDistrictsFilter', 'deathDistrictsFilter', 'deathLocationsFilter'].forEach(id => {
-                document.getElementById(id)?.addEventListener('change', markStatisticsFilterDraft);
+
+            const monthPicker = document.querySelector('.statistics-month-picker');
+            const monthPickerToggle = document.getElementById('monthPickerToggle');
+            monthPickerToggle?.addEventListener('click', function() {
+                const willOpen = this.getAttribute('aria-expanded') !== 'true';
+                if (willOpen) {
+                    document.querySelectorAll('#estadisticas-filtros select').forEach(select => {
+                        select.tomselect?.close();
+                    });
+                }
+                setMonthPickerOpen(willOpen);
+            });
+            document.getElementById('selectAllMonths')?.addEventListener('click', function() {
+                document.querySelectorAll('.month-checkbox').forEach(checkbox => {
+                    checkbox.checked = true;
+                });
+                syncMonthPickerSummary();
+                markStatisticsFilterDraft();
+            });
+            document.getElementById('clearMonths')?.addEventListener('click', function() {
+                document.querySelectorAll('.month-checkbox').forEach(checkbox => {
+                    checkbox.checked = false;
+                });
+                syncMonthPickerSummary();
+                markStatisticsFilterDraft();
+            });
+            document.getElementById('closeMonthPicker')?.addEventListener('click', function() {
+                setMonthPickerOpen(false, { focusTrigger: true });
+            });
+            document.addEventListener('click', function(event) {
+                if (monthPicker?.contains(event.target)) return;
+                setMonthPickerOpen(false);
+            });
+            monthPicker?.addEventListener('keydown', function(event) {
+                if (event.key !== 'Escape') return;
+                event.stopPropagation();
+                setMonthPickerOpen(false, { focusTrigger: true });
+            });
+
+            document.getElementById('customStartDate').addEventListener('change', function() {
+                syncCustomDateBounds();
+                markStatisticsFilterDraft();
+            });
+            document.getElementById('customEndDate').addEventListener('change', function() {
+                syncCustomDateBounds();
+                markStatisticsFilterDraft();
+            });
+            // Escuchar también el select nativo: Tom Select dispara este evento y así
+            // el estado pendiente no depende del orden en que se inicialicen los componentes.
+            [
+                'municipiosFilter',
+                'causasFilter',
+                'distritoesFilter',
+                'residenceDistrictsFilter',
+                'deathDistrictsFilter',
+                'deathLocationsFilter',
+            ].forEach(id => {
+                document.getElementById(id)?.addEventListener('change', () => {
+                    markStatisticsFilterDraft();
+                });
             });
             document.getElementById('sexoFilter').addEventListener('change', markStatisticsFilterDraft);
-            document.getElementById('edadFilter').addEventListener('input', markStatisticsFilterDraft);
+            document.getElementById('edadFilter').addEventListener('input', function() {
+                const sanitizedValue = this.value.replace(/[^0-9,\-+\s]/g, '');
+                if (sanitizedValue !== this.value) this.value = sanitizedValue;
+                markStatisticsFilterDraft();
+            });
+            document.getElementById('edadUnidadFilter').addEventListener('change', markStatisticsFilterDraft);
             document.getElementById('granularidadFilter').addEventListener('change', markStatisticsFilterDraft);
             document.getElementById('tipoComparativaFilter').addEventListener('change', function() {
                 const filterPanel = document.getElementById('estadisticas-filtros');
@@ -4074,40 +4419,80 @@
             renderChartLimitButtons(chartType);
         }
 
-        function onDateRangeChange() {
+        function onDateRangeChange({ skipYearDraftSync = false } = {}) {
             const value = document.getElementById('dateRange').value;
+            const detail = document.getElementById('dateFilterDetail');
+            const yearLabel = document.getElementById('yearFilterLabel');
+            const yearHelp = document.getElementById('yearFilterHelpPopover');
+            const yearInput = document.getElementById('year');
             const yearSelector = document.getElementById('yearSelector');
             const monthSimpleSelector = document.getElementById('monthSimpleSelector');
             const monthSelector = document.getElementById('monthSelector');
             const quarterSelector = document.getElementById('quarterSelector');
             const customDateSelector = document.getElementById('customDateSelector');
-            
+            const usesYearInput = mode => Object.prototype.hasOwnProperty.call(dateYearDrafts, mode);
+
+            if (yearInput) {
+                if (!skipYearDraftSync && usesYearInput(activeDateYearMode) && activeDateYearMode !== value) {
+                    dateYearDrafts[activeDateYearMode] = yearInput.value.trim();
+                }
+
+                if (usesYearInput(value)) {
+                    let nextYearValue = dateYearDrafts[value] || '';
+                    if (value === 'quarter' && !nextYearValue) {
+                        nextYearValue = String(getStatisticsAvailableYearBounds().last);
+                        dateYearDrafts.quarter = nextYearValue;
+                    }
+                    yearInput.value = nextYearValue;
+                } else {
+                    yearInput.value = '';
+                }
+                activeDateYearMode = value;
+            }
+
+            if (detail) {
+                detail.dataset.mode = value;
+                detail.style.display = ['all', 'full'].includes(value) ? 'none' : 'grid';
+            }
+            setMonthPickerOpen(false);
+
             // Ocultar todo
             [yearSelector, monthSimpleSelector, monthSelector, quarterSelector, customDateSelector].forEach(el => {
                 if (el) el.style.display = 'none';
             });
-            
+
+            if (yearLabel && yearInput) {
+                const isQuarter = value === 'quarter';
+                yearLabel.textContent = isQuarter ? 'Año' : 'Año o periodo';
+                yearInput.setAttribute('aria-describedby', isQuarter ? 'yearFilterError' : 'yearFilterHelp yearFilterError');
+                if (yearHelp) yearHelp.hidden = isQuarter;
+
+            }
+
+            syncStatisticsYearGuidance();
+
             // Mostrar según la opción seleccionada
             switch(value) {
-                    case 'years':
-                        if (yearSelector) yearSelector.style.display = 'block';
-                        break;
+                case 'years':
+                    if (yearSelector) yearSelector.style.display = 'grid';
+                    break;
                 case 'months':
-                    if (yearSelector) yearSelector.style.display = 'block';
-                    if (monthSelector) monthSelector.style.display = 'block';
+                    if (yearSelector) yearSelector.style.display = 'grid';
+                    if (monthSelector) monthSelector.style.display = 'grid';
                     break;
                 case 'quarter':
-                    if (yearSelector) yearSelector.style.display = 'block';
-                    if (quarterSelector) quarterSelector.style.display = 'block';
+                    if (yearSelector) yearSelector.style.display = 'grid';
+                    if (quarterSelector) quarterSelector.style.display = 'grid';
                     break;
                 case 'custom':
                     if (customDateSelector) customDateSelector.style.display = 'grid';
+                    syncCustomDateBounds();
                     break;
                 default:
-                    // all - no mostrar nada extra
                     break;
             }
-            
+
+            syncMonthPickerSummary();
         }
 
         function getVisibleBarCategoryCount() {
@@ -4528,7 +4913,7 @@
         }
 
         function parseStatisticsYears(value) {
-            const currentYear = new Date().getFullYear();
+            const { first: firstAvailableYear, last: lastAvailableYear } = getStatisticsAvailableYearBounds();
             const parts = String(value || '').split(',').map(part => part.trim()).filter(Boolean);
             const years = [];
 
@@ -4539,14 +4924,14 @@
                     const last = Number(range[2]);
                     const start = Math.min(first, last);
                     const end = Math.max(first, last);
-                    if (start < 1950 || end > currentYear) return { valid: false, years: [] };
+                    if (start < firstAvailableYear || end > lastAvailableYear) return { valid: false, years: [] };
                     for (let year = start; year <= end; year++) years.push(year);
                     continue;
                 }
 
                 if (!/^\d{4}$/.test(part)) return { valid: false, years: [] };
                 const year = Number(part);
-                if (year < 1950 || year > currentYear) return { valid: false, years: [] };
+                if (year < firstAvailableYear || year > lastAvailableYear) return { valid: false, years: [] };
                 years.push(year);
             }
 
@@ -4578,7 +4963,7 @@
             if (['years', 'months'].includes(dateRange)) {
                 const parsed = parseStatisticsYears(yearValue);
                 if (!parsed.valid) {
-                    setStatisticsFilterError('year', 'yearFilterError', 'Escribe un año, una lista o un periodo válido entre 1950 y el año actual.');
+                    setStatisticsFilterError('year', 'yearFilterError', `Escribe un año, una lista o un periodo válido. ${getStatisticsYearCoverageText()}`);
                     document.getElementById('year').focus();
                     return false;
                 }
@@ -4590,7 +4975,9 @@
             }
 
             if (dateRange === 'quarter') {
-                const parsed = yearValue.trim() ? parseStatisticsYears(yearValue) : { valid: true, years: [new Date().getFullYear()] };
+                const parsed = yearValue.trim()
+                    ? parseStatisticsYears(yearValue)
+                    : { valid: true, years: [getStatisticsAvailableYearBounds().last] };
                 if (!parsed.valid || parsed.years.length !== 1) {
                     setStatisticsFilterError('year', 'yearFilterError', 'Para un trimestre selecciona un solo año válido.');
                     document.getElementById('year').focus();
@@ -4606,25 +4993,56 @@
             if (dateRange === 'custom') {
                 const start = document.getElementById('customStartDate').value;
                 const end = document.getElementById('customEndDate').value;
-                if (!start || !end || start > end) {
+                if (!start || !end) {
                     setStatisticsFilterError(
                         ['customStartDate', 'customEndDate'],
                         'customDateFilterError',
-                        !start || !end ? 'Selecciona ambas fechas.' : 'La fecha inicial debe ser anterior o igual a la fecha final.'
+                        'Selecciona ambas fechas.'
                     );
                     document.getElementById(!start ? 'customStartDate' : 'customEndDate').focus();
+                    return false;
+                }
+                if (start > end) {
+                    setStatisticsFilterError(
+                        ['customStartDate', 'customEndDate'],
+                        'customDateFilterError',
+                        'La fecha inicial debe ser anterior o igual a la fecha final.'
+                    );
+                    document.getElementById('customStartDate').focus();
+                    return false;
+                }
+                if (defaultDateRange.dataStartDate && (start < defaultDateRange.dataStartDate || end < defaultDateRange.dataStartDate)) {
+                    setStatisticsFilterError(
+                        ['customStartDate', 'customEndDate'],
+                        'customDateFilterError',
+                        `La fecha no puede ser anterior al ${formatStatisticsDate(defaultDateRange.dataStartDate)}.`
+                    );
+                    document.getElementById(start < defaultDateRange.dataStartDate ? 'customStartDate' : 'customEndDate').focus();
+                    return false;
+                }
+                if (defaultDateRange.endDate && (start > defaultDateRange.endDate || end > defaultDateRange.endDate)) {
+                    setStatisticsFilterError(
+                        ['customStartDate', 'customEndDate'],
+                        'customDateFilterError',
+                        `La fecha no puede ser posterior al ${formatStatisticsDate(defaultDateRange.endDate)}.`
+                    );
+                    document.getElementById(start > defaultDateRange.endDate ? 'customStartDate' : 'customEndDate').focus();
                     return false;
                 }
             }
 
             if (metricSupportsFilter(currentChartType, 'edad')) {
                 const ageValue = document.getElementById('edadFilter').value.trim();
+                const ageUnit = document.getElementById('edadUnidadFilter').value;
                 if (ageValue) {
                     const validFormat = /^\d{1,3}(?:\s*-\s*\d{1,3})?$/.test(ageValue)
-                        || /^\d{1,3}(?:\s*,\s*\d{1,3})+$/.test(ageValue);
+                        || /^\d{1,3}(?:\s*,\s*\d{1,3})+$/.test(ageValue)
+                        || /^\d{1,3}\s*\+$/.test(ageValue);
                     const ages = ageValue.match(/\d+/g)?.map(Number) || [];
-                    if (!validFormat || ages.some(age => age < 0 || age > 130)) {
-                        setStatisticsFilterError('edadFilter', 'edadFilterError', 'Usa edades entre 0 y 130: exacta, rango o lista separada por comas.');
+                    const maximum = ageUnit === 'days' ? 30 : (ageUnit === 'months' ? 11 : 150);
+                    const unitLabel = ageUnit === 'days' ? 'días' : (ageUnit === 'months' ? 'meses' : 'años');
+                    if (!validFormat || ages.some(age => age < 0 || age > maximum)) {
+                        setStatisticsFilterError('edadFilter', 'edadFilterError', `Usa valores de 0 a ${maximum} ${unitLabel}: exacto, rango, lista o m&iacute;nimo con +.`);
                         document.getElementById('edadFilter').focus();
                         return false;
                     }
@@ -4637,7 +5055,7 @@
         function collectFilters() {
             const dateRange = document.getElementById('dateRange').value;
             let startDate = null, endDate = null;
-            const currentYear = new Date().getFullYear();
+            const latestAvailableYear = getStatisticsAvailableYearBounds().last;
 
             // Estos valores dependen del modo de fecha actual. Reiniciarlos evita
             // enviar meses/años de una selección anterior al cambiar de modo.
@@ -4651,7 +5069,7 @@
                 activeFilters.selectedMonths = checkedMonths.map(Number).sort((a, b) => a - b);
                 activeFilters.selectedYears = parseStatisticsYears(document.getElementById('year').value).years;
             } else if (dateRange === 'quarter') {
-                const year = parseStatisticsYears(document.getElementById('year').value).years[0] || currentYear;
+                const year = parseStatisticsYears(document.getElementById('year').value).years[0] || latestAvailableYear;
                 const quarter = document.getElementById('quarter').value;
                 if (quarter) {
                     const startMonth = (parseInt(quarter) - 1) * 3 + 1;
@@ -4684,6 +5102,7 @@
             activeFilters.deathLocationNames = Array.from(document.getElementById('deathLocationsFilter')?.selectedOptions || []).map(o => o.text);
             activeFilters.sexo = document.getElementById('sexoFilter').value || null;
             activeFilters.edad = document.getElementById('edadFilter').value.trim() || null;
+            activeFilters.edadUnidad = document.getElementById('edadUnidadFilter').value || 'years';
             activeFilters.granularidad = document.getElementById('granularidadFilter').value || 'month';
             activeFilters.tipoComparativa = document.getElementById('tipoComparativaFilter').value || 'residencia-defuncion';
             activeFilters.tipoMunicipio = document.getElementById('tipoMunicipioFilter').value || 'defuncion';
@@ -4725,124 +5144,176 @@
             return null;
         }
 
-        function updateActiveFiltersDisplay() {
-            const container = document.getElementById('filtrosActivosList');
-            const section = document.getElementById('filtrosActivos');
-            const countBadge = document.getElementById('statisticsFilterCount');
-            container.innerHTML = '';
-            const escapeFilterLabel = value => String(value ?? '')
+        function escapeFilterLabel(value) {
+            return String(value ?? '')
                 .replace(/&/g, '&amp;')
                 .replace(/</g, '&lt;')
                 .replace(/>/g, '&gt;')
                 .replace(/"/g, '&quot;')
                 .replace(/'/g, '&#039;');
-            
-            let hasActiveFilters = false;
-            let activeFilterCount = 0;
+        }
 
-            // Mostrar rango de fechas
+        function getActiveFilterDescriptors() {
+            const filters = [];
+            const addFilter = (type, label, value, removeLabel, shortValue = value) => {
+                if (!value) return;
+                filters.push({ type, label, value, shortValue, removeLabel });
+            };
             const dateText = getDateFilterText();
-            if (dateText) {
-                container.innerHTML += `<span class="users-filter-chip statistics-filter-chip">
-                    Fecha: ${escapeFilterLabel(dateText)}
-                    <button type="button" onclick="clearDateFilter()" aria-label="Quitar filtro de fecha">&times;</button>
-                </span>`;
-                hasActiveFilters = true;
-                activeFilterCount++;
-            }
 
-            // Mostrar municipios seleccionados
+            addFilter('date', 'Fecha', dateText, 'Quitar filtro de fecha');
+
             if (metricSupportsFilter(currentChartType, 'municipios') && activeFilters.municipios.length > 0) {
-                const municipiosText = activeFilters.municipiosNames.join(', ');
-                const municipiosLabel = `${activeFilters.municipios.length === 1 ? 'Municipio' : 'Municipios'} de ${activeFilters.tipoMunicipio === 'residencia' ? 'residencia' : 'defunción'}`;
-                container.innerHTML += `<span class="users-filter-chip statistics-filter-chip">
-                    ${municipiosLabel}: ${escapeFilterLabel(municipiosText)}
-                    <button type="button" onclick="clearFilter('municipios')" aria-label="Quitar filtro de municipios">&times;</button>
-                </span>`;
-                hasActiveFilters = true;
-                activeFilterCount++;
+                addFilter(
+                    'municipios',
+                    `${activeFilters.municipios.length === 1 ? 'Municipio' : 'Municipios'} de ${activeFilters.tipoMunicipio === 'residencia' ? 'residencia' : 'defunción'}`,
+                    activeFilters.municipiosNames.join(', '),
+                    'Quitar filtro de municipios',
+                    activeFilters.municipios.length === 1 ? activeFilters.municipiosNames[0] : `${activeFilters.municipios.length} seleccionados`
+                );
             }
 
-            // Mostrar causas seleccionadas
             if (metricSupportsFilter(currentChartType, 'causas') && activeFilters.causas.length > 0) {
-                const causasText = activeFilters.causasNames.join(', ');
-                const causasLabel = activeFilters.causas.length === 1 ? 'Causa' : 'Causas';
-                container.innerHTML += `<span class="users-filter-chip statistics-filter-chip">
-                    ${causasLabel}: ${escapeFilterLabel(causasText)}
-                    <button type="button" onclick="clearFilter('causas')" aria-label="Quitar filtro de causas">&times;</button>
-                </span>`;
-                hasActiveFilters = true;
-                activeFilterCount++;
+                addFilter(
+                    'causas',
+                    activeFilters.causas.length === 1 ? 'Causa' : 'Causas',
+                    activeFilters.causasNames.join(', '),
+                    'Quitar filtro de causas',
+                    activeFilters.causas.length === 1 ? activeFilters.causasNames[0] : `${activeFilters.causas.length} seleccionadas`
+                );
             }
 
-            // Mostrar distritoes seleccionadas
             if (metricSupportsFilter(currentChartType, 'distritoes') && activeFilters.distritoes.length > 0) {
-                const distritoesText = activeFilters.distritoesNames.join(', ');
-                const distritosLabel = `${activeFilters.distritoes.length === 1 ? 'Distrito' : 'Distritos'} de ${activeFilters.tipoMunicipio === 'residencia' ? 'residencia' : 'defunción'}`;
-                container.innerHTML += `<span class="users-filter-chip statistics-filter-chip">
-                    ${distritosLabel}: ${escapeFilterLabel(distritoesText)}
-                    <button type="button" onclick="clearFilter('distritoes')" aria-label="Quitar filtro de distritos">&times;</button>
-                </span>`;
-                hasActiveFilters = true;
-                activeFilterCount++;
+                addFilter(
+                    'distritoes',
+                    `${activeFilters.distritoes.length === 1 ? 'Distrito' : 'Distritos'} de ${activeFilters.tipoMunicipio === 'residencia' ? 'residencia' : 'defunción'}`,
+                    activeFilters.distritoesNames.join(', '),
+                    'Quitar filtro de distritos',
+                    activeFilters.distritoes.length === 1 ? activeFilters.distritoesNames[0] : `${activeFilters.distritoes.length} seleccionados`
+                );
             }
 
             if (currentChartType === 'municipios' && activeFilters.residenceDistricts.length > 0) {
-                container.innerHTML += `<span class="users-filter-chip statistics-filter-chip">
-                    Distrito de residencia: ${escapeFilterLabel(activeFilters.residenceDistrictNames.join(', '))}
-                    <button type="button" onclick="clearFilter('residenceDistricts')" aria-label="Quitar filtro de distritos de residencia">&times;</button>
-                </span>`;
-                hasActiveFilters = true;
-                activeFilterCount++;
+                addFilter('residenceDistricts', 'Distrito de residencia', activeFilters.residenceDistrictNames.join(', '), 'Quitar filtro de distritos de residencia', activeFilters.residenceDistricts.length === 1 ? activeFilters.residenceDistrictNames[0] : `${activeFilters.residenceDistricts.length} seleccionados`);
             }
-
             if (currentChartType === 'municipios' && activeFilters.deathDistricts.length > 0) {
-                container.innerHTML += `<span class="users-filter-chip statistics-filter-chip">
-                    Distrito de defunci&oacute;n: ${escapeFilterLabel(activeFilters.deathDistrictNames.join(', '))}
-                    <button type="button" onclick="clearFilter('deathDistricts')" aria-label="Quitar filtro de distritos de defunci&oacute;n">&times;</button>
-                </span>`;
-                hasActiveFilters = true;
-                activeFilterCount++;
+                addFilter('deathDistricts', 'Distrito de defunción', activeFilters.deathDistrictNames.join(', '), 'Quitar filtro de distritos de defunción', activeFilters.deathDistricts.length === 1 ? activeFilters.deathDistrictNames[0] : `${activeFilters.deathDistricts.length} seleccionados`);
             }
-
             if (currentChartType === 'municipios' && activeFilters.deathLocations.length > 0) {
-                container.innerHTML += `<span class="users-filter-chip statistics-filter-chip">
-                    Lugar de defunci&oacute;n: ${escapeFilterLabel(activeFilters.deathLocationNames.join(', '))}
-                    <button type="button" onclick="clearFilter('deathLocations')" aria-label="Quitar filtro de lugares de defunci&oacute;n">&times;</button>
-                </span>`;
-                hasActiveFilters = true;
-                activeFilterCount++;
+                addFilter('deathLocations', 'Lugar de defunción', activeFilters.deathLocationNames.join(', '), 'Quitar filtro de lugares de defunción', activeFilters.deathLocations.length === 1 ? activeFilters.deathLocationNames[0] : `${activeFilters.deathLocations.length} seleccionados`);
             }
 
-            // Mostrar sexo seleccionado
             if (metricSupportsFilter(currentChartType, 'sexo') && activeFilters.sexo) {
                 const sexoLabel = activeFilters.sexo === 'M' ? 'Masculino' : (activeFilters.sexo === 'F' ? 'Femenino' : activeFilters.sexo);
-                container.innerHTML += `<span class="users-filter-chip statistics-filter-chip">
-                    Sexo: ${escapeFilterLabel(sexoLabel)}
-                    <button type="button" onclick="clearFilter('sexo')" aria-label="Quitar filtro de sexo">&times;</button>
-                </span>`;
-                hasActiveFilters = true;
-                activeFilterCount++;
+                addFilter('sexo', 'Sexo', sexoLabel, 'Quitar filtro de sexo');
             }
 
             if (metricSupportsFilter(currentChartType, 'edad') && activeFilters.edad) {
-                container.innerHTML += `<span class="users-filter-chip statistics-filter-chip">
-                    Edad: ${escapeFilterLabel(activeFilters.edad)}
-                    <button type="button" onclick="clearFilter('edad')" aria-label="Quitar filtro de edad">&times;</button>
-                </span>`;
-                hasActiveFilters = true;
-                activeFilterCount++;
+                const ageUnitLabel = { years: 'años', months: 'meses', days: 'días' }[activeFilters.edadUnidad] || 'años';
+                addFilter('edad', 'Edad', `${activeFilters.edad} ${ageUnitLabel}`, 'Quitar filtro de edad');
             }
 
-            // Mostrar sección si hay filtros activos
-            section.classList.toggle('hidden', !hasActiveFilters);
+            return filters;
+        }
+
+        function renderActiveFilterChip(filter, { detailed = false } = {}) {
+            const fullText = `${filter.label}: ${filter.value}`;
+            const displayedValue = detailed ? filter.value : filter.shortValue;
+            return `<span class="users-filter-chip statistics-filter-chip${detailed ? ' statistics-filter-chip--detailed' : ''}" title="${escapeFilterLabel(fullText)}">
+                <span class="statistics-filter-chip__text"><strong>${escapeFilterLabel(filter.label)}:</strong> ${escapeFilterLabel(displayedValue)}</span>
+                <button type="button" data-clear-filter="${escapeFilterLabel(filter.type)}" aria-label="${escapeFilterLabel(filter.removeLabel)}">&times;</button>
+            </span>`;
+        }
+
+        function setActiveFiltersPopoverOpen(open, { returnFocus = false } = {}) {
+            const popover = document.getElementById('statisticsActiveFiltersPopover');
+            const toggles = [
+                document.getElementById('statisticsActiveFiltersMore'),
+                document.getElementById('statisticsActiveFiltersMobile'),
+            ].filter(Boolean);
+            if (!popover) return;
+
+            const canOpen = Number(document.getElementById('filtrosActivos')?.dataset.filterCount || 0) > 0;
+            const shouldOpen = Boolean(open && canOpen);
+            popover.classList.toggle('hidden', !shouldOpen);
+            toggles.forEach(toggle => toggle.setAttribute('aria-expanded', String(shouldOpen)));
+            if (shouldOpen) {
+                popover.querySelector('button')?.focus();
+            } else if (returnFocus) {
+                const visibleToggle = toggles.find(toggle => !toggle.classList.contains('hidden') && !toggle.disabled);
+                visibleToggle?.focus();
+            }
+        }
+
+        function updateActiveFiltersDisplay() {
+            const container = document.getElementById('filtrosActivosList');
+            const fullList = document.getElementById('statisticsActiveFiltersAll');
+            const section = document.getElementById('filtrosActivos');
+            const moreButton = document.getElementById('statisticsActiveFiltersMore');
+            const mobileButton = document.getElementById('statisticsActiveFiltersMobile');
+            const mobileText = document.getElementById('statisticsActiveFiltersMobileText');
+            const popoverCount = document.getElementById('statisticsActiveFiltersPopoverCount');
+            const clearAll = document.getElementById('statisticsActiveFiltersClearAll');
+            const countBadge = document.getElementById('statisticsFilterCount');
+            if (!container || !section) return;
+
+            const filters = getActiveFilterDescriptors();
+            const activeFilterCount = filters.length;
+            const visibleFilters = filters.slice(0, 3);
+            const hiddenFilterCount = Math.max(0, activeFilterCount - visibleFilters.length);
+            section.dataset.filterCount = String(activeFilterCount);
+            section.classList.toggle('has-filters', activeFilterCount > 0);
+
+            container.innerHTML = activeFilterCount
+                ? visibleFilters.map(filter => renderActiveFilterChip(filter)).join('')
+                : '<span class="statistics-active-filters__empty">Sin filtros adicionales</span>';
+            if (fullList) fullList.innerHTML = filters.map(filter => renderActiveFilterChip(filter, { detailed: true })).join('');
+
+            if (moreButton) {
+                moreButton.textContent = hiddenFilterCount > 0 ? `+${hiddenFilterCount} más` : 'Ver detalle';
+                moreButton.classList.toggle('hidden', activeFilterCount === 0);
+                moreButton.setAttribute('aria-label', hiddenFilterCount > 0
+                    ? `Ver ${hiddenFilterCount} filtros aplicados más`
+                    : 'Ver detalle de los filtros aplicados');
+            }
+            if (mobileButton && mobileText) {
+                mobileButton.disabled = activeFilterCount === 0;
+                mobileText.textContent = activeFilterCount === 0
+                    ? 'Sin filtros adicionales'
+                    : `${activeFilterCount} ${activeFilterCount === 1 ? 'filtro aplicado' : 'filtros aplicados'}`;
+            }
+            if (popoverCount) popoverCount.textContent = `${activeFilterCount} ${activeFilterCount === 1 ? 'filtro' : 'filtros'}`;
+            if (clearAll) clearAll.disabled = activeFilterCount === 0;
+            if (activeFilterCount === 0) setActiveFiltersPopoverOpen(false);
+
             if (countBadge) {
                 countBadge.textContent = String(activeFilterCount);
                 countBadge.classList.toggle('hidden', activeFilterCount === 0);
             }
         }
 
+        function restoreAppliedFilterStateBeforeRemoval() {
+            if (!filterDraftSnapshot) return;
+            const currentState = captureStatisticsFilterState();
+            if (!statisticsFilterStatesMatch(currentState, filterDraftSnapshot)) {
+                restoreStatisticsFilterState(filterDraftSnapshot);
+            }
+        }
+
+        function finishAppliedFilterRemoval() {
+            collectFilters();
+            if (usesPersistentMunicipalityFilters()) {
+                filterDraftSnapshot = captureStatisticsFilterState();
+                document.getElementById('estadisticas-filtros')?.classList.remove('has-draft-changes');
+                syncStatisticsFilterDraftUi();
+            }
+            invalidateChartDataCache();
+            updateActiveFiltersDisplay();
+            updateChart();
+        }
+
         function clearDateFilter() {
+            restoreAppliedFilterStateBeforeRemoval();
             const dateRangeControl = document.getElementById('dateRange');
             if (dateRangeControl.tomselect) dateRangeControl.tomselect.setValue('all', true);
             else dateRangeControl.value = 'all';
@@ -4851,6 +5322,8 @@
                 if (el) el.style.display = 'none';
             });
             // Limpiar input de año
+            dateYearDrafts = { years: '', months: '', quarter: '' };
+            activeDateYearMode = 'all';
             document.getElementById('year').value = '';
             const quarterControl = document.getElementById('quarter');
             if (quarterControl.tomselect) quarterControl.tomselect.clear(true);
@@ -4861,14 +5334,14 @@
             document.querySelectorAll('.month-checkbox').forEach(checkbox => {
                 checkbox.checked = false;
             });
+            onDateRangeChange({ skipYearDraftSync: true });
             activeFilters.selectedMonths = [];
             activeFilters.selectedYears = [];
-            collectFilters();
-            invalidateChartDataCache();
-            updateChart();
+            finishAppliedFilterRemoval();
         }
 
         function clearFilter(filterType) {
+            restoreAppliedFilterStateBeforeRemoval();
             if (filterType === 'municipios') {
                 const el = document.getElementById('municipiosFilter');
                 el.value = '';
@@ -4896,15 +5369,13 @@
                 else el.value = '';
             } else if (filterType === 'edad') {
                 document.getElementById('edadFilter').value = '';
+                document.getElementById('edadUnidadFilter').value = 'years';
             } else if (filterType === 'tipoMunicipio') {
                 const el = document.getElementById('tipoMunicipioFilter');
                 if (el.tomselect) el.tomselect.setValue('defuncion', true);
                 else el.value = 'defuncion';
             }
-            collectFilters();
-            invalidateChartDataCache();
-            updateActiveFiltersDisplay();
-            updateChart();
+            finishAppliedFilterRemoval();
         }
 
         function buildChartDataParams(chartType, limit = chartConfig.limit) {
@@ -4928,7 +5399,10 @@
                     municipio_kind: activeFilters.tipoMunicipio === 'residencia' ? 'residence' : 'death'
                 }),
                 ...(metricSupportsFilter(chartType, 'sexo') && activeFilters.sexo && { sex: activeFilters.sexo }),
-                ...(metricSupportsFilter(chartType, 'edad') && activeFilters.edad && { age: activeFilters.edad }),
+                ...(metricSupportsFilter(chartType, 'edad') && activeFilters.edad && {
+                    age: activeFilters.edad,
+                    age_unit: activeFilters.edadUnidad || 'years'
+                }),
                 ...(chartTypesWithTopSelector.includes(chartType) && limit && { limit }),
                 ...(chartType === 'tendencias' && { group_by: activeFilters.granularidad }),
                 ...(chartType === 'comparativa' && { comparativa_type: activeFilters.tipoComparativa }),
@@ -5208,7 +5682,10 @@
                 );
             }
             if (metricSupportsFilter(currentChartType, 'sexo') && activeFilters.sexo) params.set('sex', activeFilters.sexo);
-            if (metricSupportsFilter(currentChartType, 'edad') && activeFilters.edad) params.set('age', activeFilters.edad);
+            if (metricSupportsFilter(currentChartType, 'edad') && activeFilters.edad) {
+                params.set('age', activeFilters.edad);
+                params.set('age_unit', activeFilters.edadUnidad || 'years');
+            }
 
             params.set('analysis_type', currentChartType);
             if (currentChartType === 'comparativa') params.set('comparativa_type', activeFilters.tipoComparativa);
@@ -5695,20 +6172,61 @@
             }
         }
 
+        function getSelectedDateCoverageIntervals() {
+            const mode = activeFilters.dateRange;
+            const years = (activeFilters.selectedYears || []).map(Number).filter(Number.isInteger);
+            const months = (activeFilters.selectedMonths || []).map(Number).filter(month => month >= 1 && month <= 12);
+            const monthInterval = (year, month) => {
+                const paddedMonth = String(month).padStart(2, '0');
+                const lastDay = new Date(Date.UTC(year, month, 0)).getUTCDate();
+                return [`${year}-${paddedMonth}-01`, `${year}-${paddedMonth}-${String(lastDay).padStart(2, '0')}`];
+            };
+
+            if (['custom', 'quarter'].includes(mode) && activeFilters.startDate && activeFilters.endDate) {
+                return [[activeFilters.startDate, activeFilters.endDate]];
+            }
+            if (mode === 'years') {
+                return years.map(year => [`${year}-01-01`, `${year}-12-31`]);
+            }
+            if (mode === 'months') {
+                return years.flatMap(year => months.map(month => monthInterval(year, month)));
+            }
+
+            return [];
+        }
+
+        function isSelectedDateFilterOutsideCoverage() {
+            const coverageStart = defaultDateRange.dataStartDate;
+            const coverageEnd = defaultDateRange.dataEndDate;
+            if (!coverageStart || !coverageEnd) return false;
+
+            const intervals = getSelectedDateCoverageIntervals();
+            return intervals.length > 0
+                && intervals.every(([start, end]) => end < coverageStart || start > coverageEnd);
+        }
+
         function showNoChartData(data) {
             const excludedTotal = Number(data?.quality?.excluded_total || 0);
             const filteredResults = hasAppliedChartFilters();
+            const outsideCoverage = excludedTotal <= 0 && isSelectedDateFilterOutsideCoverage();
+            const coverageDescription = defaultDateRange.dataStartDate && defaultDateRange.dataEndDate
+                ? `La cobertura disponible va del ${formatStatisticsDate(defaultDateRange.dataStartDate)} al ${formatStatisticsDate(defaultDateRange.dataEndDate)}. Elige otro periodo o limpia los filtros.`
+                : 'Elige otro periodo o limpia los filtros aplicados.';
             showEmptyMessage(
                 excludedTotal > 0
                     ? 'No hay registros completos para construir esta gráfica.'
-                    : 'No hay datos para los filtros seleccionados.',
+                    : (outsideCoverage
+                        ? 'No hay datos disponibles para este periodo.'
+                        : 'No se encontraron registros con los filtros seleccionados.'),
                 true,
                 Number(data?.filtered_total ?? data?.total ?? 0),
                 excludedTotal > 0
                     ? 'Revisa los registros no incluidos o ajusta los filtros aplicados.'
-                    : (filteredResults
+                    : (outsideCoverage
+                        ? coverageDescription
+                        : (filteredResults
                         ? 'Prueba con otros criterios o limpia los filtros aplicados.'
-                        : 'No hay registros disponibles para esta visualización.')
+                        : 'No hay registros disponibles para esta visualización.'))
             );
         }
 
@@ -7736,6 +8254,7 @@
                 deathLocationNames: [],
                 sexo: null,
                 edad: null,
+                edadUnidad: 'years',
                 granularidad: 'month',
                 tipoComparativa: 'residencia-defuncion',
                 tipoMunicipio: 'defuncion'
@@ -7750,6 +8269,8 @@
                 else el.value = value;
             };
             
+            dateYearDrafts = { years: '', months: '', quarter: '' };
+            activeDateYearMode = 'all';
             safeSetValue('dateRange', 'all');
             safeSetValue('year', '');
             safeSetValue('month', '');
@@ -7758,6 +8279,7 @@
             safeSetValue('customEndDate', defaultDateRange.endDate);
             safeSetValue('sexoFilter', '');
             safeSetValue('edadFilter', '');
+            safeSetValue('edadUnidadFilter', 'years');
             safeSetValue('granularidadFilter', 'month');
             safeSetValue('tipoComparativaFilter', 'residencia-defuncion');
             safeSetValue('tipoMunicipioFilter', 'defuncion');
@@ -7802,6 +8324,7 @@
             selectors.forEach(selector => {
                 if (selector) selector.style.display = 'none';
             });
+            onDateRangeChange({ skipYearDraftSync: true });
 
             renderChartTypeButtons(currentChartType);
             renderDataLabelButtons(currentChartType);
@@ -7810,6 +8333,11 @@
             resetActiveDataFilters();
             invalidateChartDataCache();
             updateActiveFiltersDisplay();
+            if (usesPersistentMunicipalityFilters()) {
+                filterDraftSnapshot = captureStatisticsFilterState();
+                document.getElementById('estadisticas-filtros')?.classList.remove('has-draft-changes');
+                syncStatisticsFilterDraftUi();
+            }
             if (!suppressUpdate) updateChart();
         }
 
@@ -7893,7 +8421,7 @@
         }
 
         function hasAppliedChartFilters() {
-            return !document.getElementById('filtrosActivos')?.classList.contains('hidden');
+            return Number(document.getElementById('filtrosActivos')?.dataset.filterCount || 0) > 0;
         }
 
         function setChartOutputActionsEnabled(enabled) {
