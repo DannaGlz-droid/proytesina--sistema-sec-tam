@@ -267,6 +267,7 @@
                                                     </x-filtros.select>
                                                 </span>
                                             </div>
+                                            <small id="edadFilterValuePreview" class="statistics-age-value-preview hidden" aria-live="polite"></small>
                                             <small id="edadFilterError" class="statistics-filter-error hidden" role="alert"></small>
                                         </div>
                                     </div>
@@ -311,6 +312,60 @@
                                 </div>
                             </header>
                             <div id="statisticsPresentationGroups" class="statistics-display-groups">
+                                <fieldset id="statisticsGeographicScopeControl" class="statistics-display-group statistics-geographic-scope-group hidden">
+                                    <legend id="statisticsGeographicScopeLabel">Agrupar municipios por</legend>
+                                    <select id="geographicScopeSelector" class="sr-only" aria-labelledby="statisticsGeographicScopeLabel" title="Lugar de defunción">
+                                        <option value="defuncion">Lugar de defunción</option>
+                                        <option value="residencia">Lugar de residencia</option>
+                                    </select>
+                                    <div class="statistics-segmented-control" role="radiogroup" aria-labelledby="statisticsGeographicScopeLabel" data-selector-target="geographicScopeSelector">
+                                        <button type="button" role="radio" data-value="defuncion" title="Lugar de defunción">Defunción</button>
+                                        <button type="button" role="radio" data-value="residencia" title="Lugar de residencia">Residencia</button>
+                                    </div>
+                                </fieldset>
+
+                                <fieldset id="statisticsTrendGranularityControl" class="statistics-display-group statistics-analysis-display-group hidden">
+                                    <legend id="statisticsTrendGranularityLabel">Agrupar tendencia por</legend>
+                                    <select id="trendGranularitySelector" class="sr-only" aria-labelledby="statisticsTrendGranularityLabel" title="Mes">
+                                        <option value="day">Día</option>
+                                        <option value="month">Mes</option>
+                                        <option value="year">Año</option>
+                                    </select>
+                                    <div class="statistics-segmented-control" role="radiogroup" aria-labelledby="statisticsTrendGranularityLabel" data-selector-target="trendGranularitySelector">
+                                        <button type="button" role="radio" data-value="day" title="Agrupar por día">Día</button>
+                                        <button type="button" role="radio" data-value="month" title="Agrupar por mes">Mes</button>
+                                        <button type="button" role="radio" data-value="year" title="Agrupar por año">Año</button>
+                                    </div>
+                                </fieldset>
+
+                                <fieldset id="statisticsComparisonControl" class="statistics-display-group statistics-analysis-display-group statistics-comparison-display-group hidden">
+                                    <legend id="statisticsComparisonLabel">Tipo de comparación</legend>
+                                    <select id="tipoComparativaFilter" class="sr-only" aria-labelledby="statisticsComparisonLabel" title="Municipio de residencia vs. municipio de defunción">
+                                        <option value="residencia-defuncion">Municipio de residencia vs. municipio de defunción</option>
+                                        <option value="distrito-residencia-defuncion">Distrito de residencia vs. distrito de defunción</option>
+                                        <option value="genero-causa">Sexo por causa</option>
+                                        <option value="edad-causa">Rango etario por causa</option>
+                                        <option value="lugar-causa">Lugar de defunción por causa</option>
+                                        <option value="lugar-municipio">Lugar de defunción por municipio</option>
+                                    </select>
+                                    <div class="statistics-heading-menu">
+                                        <button type="button" id="statisticsComparisonTrigger" class="statistics-heading-menu__trigger" aria-haspopup="listbox" aria-expanded="false" aria-controls="statisticsComparisonMenu">
+                                            <span id="statisticsComparisonTriggerText">Municipio: residencia vs. defunción</span>
+                                            <i class="fas fa-chevron-down" aria-hidden="true"></i>
+                                        </button>
+                                        <div id="statisticsComparisonMenu" class="statistics-heading-menu__popover hidden" role="listbox" aria-labelledby="statisticsComparisonLabel">
+                                            <span class="statistics-heading-menu__group">Residencia vs. defunción</span>
+                                            <button type="button" role="option" data-value="residencia-defuncion" data-short-label="Municipio: residencia vs. defunción">Municipio de residencia vs. municipio de defunción</button>
+                                            <button type="button" role="option" data-value="distrito-residencia-defuncion" data-short-label="Distrito: residencia vs. defunción">Distrito de residencia vs. distrito de defunción</button>
+                                            <span class="statistics-heading-menu__group">Cruces de variables</span>
+                                            <button type="button" role="option" data-value="genero-causa">Sexo por causa</button>
+                                            <button type="button" role="option" data-value="edad-causa">Rango etario por causa</button>
+                                            <button type="button" role="option" data-value="lugar-causa">Lugar de defunción por causa</button>
+                                            <button type="button" role="option" data-value="lugar-municipio">Lugar de defunción por municipio</button>
+                                        </div>
+                                    </div>
+                                </fieldset>
+
                                 <!-- Tipo de Gráfica -->
                                 <fieldset id="statisticsChartTypeGroup" class="statistics-display-group">
                                     <legend id="statisticsChartTypeLegend">Tipo de gráfica</legend>
@@ -409,34 +464,6 @@
                                 <div class="statistics-chart-header__top">
                                     <div class="statistics-chart-heading">
                                         <h2 id="chartTitle">Cargando...</h2>
-                                        <div id="statisticsHeadingControls" class="statistics-chart-heading__controls">
-                                            <div id="statisticsGeographicScopeControl" class="statistics-analysis-control hidden">
-                                                <label id="statisticsGeographicScopeLabel" class="sr-only" for="geographicScopeSelector">Analizar municipios por</label>
-                                                <select id="geographicScopeSelector" aria-labelledby="statisticsGeographicScopeLabel" title="Lugar de defunción">
-                                                    <option value="defuncion">Lugar de defunción</option>
-                                                    <option value="residencia">Lugar de residencia</option>
-                                                </select>
-                                            </div>
-                                            <div id="statisticsTrendGranularityControl" class="statistics-analysis-control hidden">
-                                                <label class="sr-only" for="trendGranularitySelector">Agrupar tendencia por</label>
-                                                <select id="trendGranularitySelector" aria-label="Agrupar tendencia por" title="Mes">
-                                                    <option value="day">Día</option>
-                                                    <option value="month">Mes</option>
-                                                    <option value="year">Año</option>
-                                                </select>
-                                            </div>
-                                            <div id="statisticsComparisonControl" class="statistics-comparison-control hidden">
-                                                <label class="sr-only" for="tipoComparativaFilter">Comparar dimensiones</label>
-                                                <select id="tipoComparativaFilter" aria-label="Seleccionar comparativa" title="Municipio de residencia vs. municipio de defunción">
-                                                    <option value="residencia-defuncion">Municipio de residencia vs. municipio de defunción</option>
-                                                    <option value="distrito-residencia-defuncion">Distrito de residencia vs. distrito de defunción</option>
-                                                    <option value="genero-causa">Sexo por causa</option>
-                                                    <option value="edad-causa">Rango etario por causa</option>
-                                                    <option value="lugar-causa">Lugar de defunción por causa</option>
-                                                    <option value="lugar-municipio">Lugar de defunción por municipio</option>
-                                                </select>
-                                            </div>
-                                        </div>
                                     </div>
                                     <div class="statistics-download" id="downloadMenuWrapper">
                                         <a id="statisticsViewData" class="statistics-view-data" href="#" aria-disabled="true">
@@ -485,22 +512,24 @@
                                     </div>
                                 </div>
 
+                                <div class="statistics-chart-info-line">
                                 <div id="statisticsChartContextRow" class="statistics-chart-context-row">
                                     <div id="statisticsChartContext" class="statistics-chart-context hidden" aria-live="polite">
                                         <div id="chartTotalBadge" class="statistics-chart-context__item statistics-chart-total">
-                                            <span class="statistics-chart-context__label">Total analizado</span>
+                                            <span class="sr-only">Total analizado:</span>
                                             <strong id="chartTotalValue" class="statistics-chart-context__value">0</strong>
+                                            <span class="statistics-chart-context__suffix">defunciones</span>
                                         </div>
                                         <div id="statisticsChartPeriod" class="statistics-chart-context__item hidden">
-                                            <span class="statistics-chart-context__label">Periodo</span>
+                                            <span class="sr-only">Periodo:</span>
                                             <span id="statisticsChartPeriodValue" class="statistics-chart-context__value"></span>
                                         </div>
                                         <div id="statisticsChartCoverage" class="statistics-chart-context__item statistics-chart-context__item--wide hidden">
-                                            <span class="statistics-chart-context__label">Alcance</span>
+                                            <span class="sr-only">Alcance:</span>
                                             <span id="statisticsChartCoverageText" class="statistics-chart-context__value"></span>
                                         </div>
                                         <div id="statisticsChartQuality" class="statistics-chart-context__item statistics-chart-quality hidden">
-                                            <span class="statistics-chart-context__label">Calidad</span>
+                                            <span class="sr-only">Calidad:</span>
                                             <span class="statistics-chart-context__value">
                                                 <i class="fas fa-triangle-exclamation" aria-hidden="true"></i>
                                                 <span id="statisticsChartQualityText"></span>
@@ -511,7 +540,7 @@
                                 </div>
 
                                 <div id="filtrosActivos" class="statistics-active-filters" data-filter-count="0">
-                                    <span class="statistics-active-filters__label">Filtros aplicados</span>
+                                    <span class="statistics-active-filters__label">Filtros:</span>
                                     <div class="statistics-active-filters__desktop">
                                         <div id="filtrosActivosList" class="statistics-active-filters__list users-filter-chips" aria-live="polite">
                                             <span class="statistics-active-filters__empty">Sin filtros adicionales</span>
@@ -522,7 +551,10 @@
                                             class="statistics-active-filters__more hidden"
                                             aria-expanded="false"
                                             aria-controls="statisticsActiveFiltersPopover"
-                                        ></button>
+                                        >
+                                            <span class="statistics-active-filters__more-label">Ver filtros</span>
+                                            <i class="fas fa-chevron-down" aria-hidden="true"></i>
+                                        </button>
                                     </div>
                                     <button
                                         type="button"
@@ -548,6 +580,7 @@
                                         <div id="statisticsActiveFiltersAll" class="statistics-active-filters-popover__list users-filter-chips"></div>
                                         <button type="button" id="statisticsActiveFiltersClearAll" class="statistics-active-filters-popover__clear">Quitar todos</button>
                                     </div>
+                                </div>
                                 </div>
                             </header>
                             <div class="chart-wrapper statistics-chart-canvas">
@@ -689,6 +722,8 @@
         let latestChartData = null;
         let latestChartDataType = null;
         let chartViewportResizeFrame = null;
+        let municipalityConfigurationHeight = 0;
+        let municipalityConfigurationHeightFrame = null;
         let activeChartDrilldown = null;
         let chartDrilldownHighlightFrame = null;
         let chartRequestController = null;
@@ -2069,7 +2104,43 @@
 
         function syncHeadingSelectorTitle(selector) {
             if (!selector) return;
-            selector.title = selector.options?.[selector.selectedIndex]?.text || '';
+            const selectedOption = selector.options?.[selector.selectedIndex];
+            selector.title = selectedOption?.text || '';
+
+            document.querySelectorAll(`[data-selector-target="${selector.id}"] [data-value]`).forEach(button => {
+                const selected = button.dataset.value === selector.value;
+                button.classList.toggle('is-active', selected);
+                button.setAttribute('aria-checked', String(selected));
+                button.tabIndex = selected ? 0 : -1;
+            });
+
+            if (selector.id === 'tipoComparativaFilter') {
+                const menu = document.getElementById('statisticsComparisonMenu');
+                const selectedMenuOption = menu?.querySelector(`[data-value="${selector.value}"]`);
+                const triggerText = document.getElementById('statisticsComparisonTriggerText');
+                if (triggerText) {
+                    triggerText.textContent = selectedMenuOption?.dataset.shortLabel
+                        || selectedMenuOption?.textContent?.trim()
+                        || selectedOption?.text
+                        || 'Elegir comparación';
+                }
+                menu?.querySelectorAll('[role="option"]').forEach(option => {
+                    option.setAttribute('aria-selected', String(option.dataset.value === selector.value));
+                });
+            }
+        }
+
+        function setStatisticsComparisonMenuOpen(open, { focusSelected = false } = {}) {
+            const trigger = document.getElementById('statisticsComparisonTrigger');
+            const menu = document.getElementById('statisticsComparisonMenu');
+            if (!trigger || !menu) return;
+
+            const shouldOpen = Boolean(open);
+            trigger.setAttribute('aria-expanded', String(shouldOpen));
+            menu.classList.toggle('hidden', !shouldOpen);
+            if (shouldOpen && focusSelected) {
+                (menu.querySelector('[aria-selected="true"]') || menu.querySelector('[role="option"]'))?.focus();
+            }
         }
 
         function applyGeographicScope(scope, { reload = false } = {}) {
@@ -2125,6 +2196,8 @@
 
             activeFilters.granularidad = normalizedGranularity;
             syncTrendGranularityControl(normalizedGranularity);
+            const title = document.getElementById('chartTitle');
+            if (title) title.textContent = getCurrentChartHeadingTitle();
 
             if (!reload) return;
 
@@ -2154,9 +2227,10 @@
                     return;
                 }
 
-                if (event.target.closest('#statisticsActiveFiltersMore, #statisticsActiveFiltersMobile')) {
+                const activeFiltersToggle = event.target.closest('#statisticsActiveFiltersMore, #statisticsActiveFiltersMobile');
+                if (activeFiltersToggle) {
                     const isOpen = !activeFiltersPopover?.classList.contains('hidden');
-                    setActiveFiltersPopoverOpen(!isOpen);
+                    setActiveFiltersPopoverOpen(!isOpen, { anchor: activeFiltersToggle });
                     return;
                 }
 
@@ -2172,15 +2246,26 @@
             });
 
             document.addEventListener('click', function(event) {
-                if (!activeFiltersPopover || activeFiltersPopover.classList.contains('hidden')) return;
-                if (activeFiltersSection?.contains(event.target)) return;
-                setActiveFiltersPopoverOpen(false);
+                if (activeFiltersPopover && !activeFiltersPopover.classList.contains('hidden') && !activeFiltersSection?.contains(event.target)) {
+                    setActiveFiltersPopoverOpen(false);
+                }
+
+                const comparisonMenu = document.getElementById('statisticsComparisonMenu');
+                if (
+                    comparisonMenu
+                    && !comparisonMenu.classList.contains('hidden')
+                    && !event.target.closest('.statistics-heading-menu')
+                ) {
+                    setStatisticsComparisonMenuOpen(false);
+                }
             });
 
             document.addEventListener('keydown', function(event) {
-                if (event.key !== 'Escape' || activeFiltersPopover?.classList.contains('hidden')) return;
-                event.preventDefault();
-                setActiveFiltersPopoverOpen(false, { returnFocus: true });
+                if (event.key !== 'Escape') return;
+                if (activeFiltersPopover && !activeFiltersPopover.classList.contains('hidden')) {
+                    event.preventDefault();
+                    setActiveFiltersPopoverOpen(false, { returnFocus: true });
+                }
             });
 
             const chartTabs = Array.from(document.querySelectorAll('.chart-tab-btn'));
@@ -2307,13 +2392,32 @@
                 chartResizeObserver.observe(chartCanvas);
             }
 
+            const municipalityConfiguration = document.getElementById('estadisticas-filtros');
+            if (municipalityConfiguration && typeof ResizeObserver !== 'undefined') {
+                const municipalityConfigurationObserver = new ResizeObserver(() => {
+                    scheduleMunicipalityConfigurationHeightSync();
+                });
+                municipalityConfigurationObserver.observe(municipalityConfiguration);
+            }
+
+            const activeFiltersDesktop = document.querySelector('.statistics-active-filters__desktop');
+            if (activeFiltersDesktop && typeof ResizeObserver !== 'undefined') {
+                const activeFiltersResizeObserver = new ResizeObserver(() => {
+                    scheduleActiveFilterChipLayout();
+                });
+                activeFiltersResizeObserver.observe(activeFiltersDesktop);
+            }
+
             window.addEventListener('resize', () => {
                 if (chartViewportResizeFrame) window.cancelAnimationFrame(chartViewportResizeFrame);
                 chartViewportResizeFrame = window.requestAnimationFrame(() => {
+                    scheduleMunicipalityConfigurationHeightSync();
                     applyChartViewportHeight();
                     currentEchartsInstance?.resize();
                     if (activeChartDrilldown) positionChartDrilldown(activeChartDrilldown);
                     positionChartLimitIndicator({ immediate: true });
+                    scheduleActiveFilterChipLayout();
+                    positionActiveFiltersPopover();
                 });
             });
 
@@ -2411,13 +2515,71 @@
                 });
             });
             document.getElementById('sexoFilter').addEventListener('change', markStatisticsFilterDraft);
-            document.getElementById('edadFilter').addEventListener('input', function() {
+            const ageFilterInput = document.getElementById('edadFilter');
+            ageFilterInput.addEventListener('input', function() {
                 const sanitizedValue = this.value.replace(/[^0-9,\-+\s]/g, '');
                 if (sanitizedValue !== this.value) this.value = sanitizedValue;
+                syncStatisticsAgeValuePreview(document.activeElement === this);
                 markStatisticsFilterDraft();
             });
+            ageFilterInput.addEventListener('focus', () => syncStatisticsAgeValuePreview(true));
+            ageFilterInput.addEventListener('blur', () => syncStatisticsAgeValuePreview(false));
             document.getElementById('edadUnidadFilter').addEventListener('change', markStatisticsFilterDraft);
             document.getElementById('granularidadFilter').addEventListener('change', markStatisticsFilterDraft);
+
+            const headingControls = document.querySelector('.statistics-page');
+            headingControls?.addEventListener('click', function(event) {
+                const segmentedButton = event.target.closest('.statistics-segmented-control [data-value]');
+                if (segmentedButton) {
+                    const selectorId = segmentedButton.closest('[data-selector-target]')?.dataset.selectorTarget;
+                    const selector = selectorId ? document.getElementById(selectorId) : null;
+                    if (selector && selector.value !== segmentedButton.dataset.value) {
+                        selector.value = segmentedButton.dataset.value;
+                        selector.dispatchEvent(new Event('change', { bubbles: true }));
+                    }
+                    return;
+                }
+
+                if (event.target.closest('#statisticsComparisonTrigger')) {
+                    const trigger = document.getElementById('statisticsComparisonTrigger');
+                    setStatisticsComparisonMenuOpen(trigger?.getAttribute('aria-expanded') !== 'true', { focusSelected: true });
+                    return;
+                }
+
+                const comparisonOption = event.target.closest('#statisticsComparisonMenu [data-value]');
+                if (comparisonOption) {
+                    const selector = document.getElementById('tipoComparativaFilter');
+                    if (selector) {
+                        selector.value = comparisonOption.dataset.value;
+                        selector.dispatchEvent(new Event('change', { bubbles: true }));
+                    }
+                    setStatisticsComparisonMenuOpen(false);
+                }
+            });
+
+            headingControls?.addEventListener('keydown', function(event) {
+                const segmentedButton = event.target.closest('.statistics-segmented-control [data-value]');
+                if (segmentedButton && ['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) {
+                    event.preventDefault();
+                    const buttons = Array.from(segmentedButton.closest('.statistics-segmented-control').querySelectorAll('[data-value]'));
+                    const currentIndex = buttons.indexOf(segmentedButton);
+                    const targetIndex = event.key === 'Home'
+                        ? 0
+                        : (event.key === 'End'
+                            ? buttons.length - 1
+                            : (currentIndex + (event.key === 'ArrowRight' ? 1 : -1) + buttons.length) % buttons.length);
+                    buttons[targetIndex]?.click();
+                    buttons[targetIndex]?.focus();
+                    return;
+                }
+
+                if (event.key === 'Escape' && !document.getElementById('statisticsComparisonMenu')?.classList.contains('hidden')) {
+                    event.preventDefault();
+                    setStatisticsComparisonMenuOpen(false);
+                    document.getElementById('statisticsComparisonTrigger')?.focus();
+                }
+            });
+
             document.getElementById('tipoComparativaFilter').addEventListener('change', function() {
                 const filterPanel = document.getElementById('estadisticas-filtros');
                 if (filterPanel?.classList.contains('is-open')) {
@@ -2425,6 +2587,7 @@
                 }
                 activeFilters.tipoComparativa = this.value || 'residencia-defuncion';
                 syncHeadingSelectorTitle(this);
+                setStatisticsComparisonMenuOpen(false);
                 updateVisibleFilters(currentChartType);
                 document.getElementById('chartTitle').textContent = getCurrentChartHeadingTitle();
                 setChartOutputActionsEnabled(false);
@@ -3782,6 +3945,38 @@
 
         window.exportStatisticsChart = exportCurrentChart;
 
+        function syncMunicipalityConfigurationHeight() {
+            const page = document.querySelector('.statistics-page');
+            const layout = page?.querySelector('.statistics-layout');
+            const configuration = document.getElementById('estadisticas-filtros');
+            const hasMunicipalityConfiguration = document.getElementById('municipalityConfigurationTabs');
+            const usesDesktopMunicipalityLayout = currentChartType === 'municipios'
+                && window.matchMedia('(min-width: 1024px)').matches;
+
+            if (!layout || !configuration || !hasMunicipalityConfiguration || !usesDesktopMunicipalityLayout) return;
+
+            const measuredHeight = Math.ceil(configuration.getBoundingClientRect().height);
+            if (!Number.isFinite(measuredHeight) || measuredHeight <= 0) return;
+
+            municipalityConfigurationHeight = Math.max(municipalityConfigurationHeight, measuredHeight);
+            layout.style.setProperty(
+                '--statistics-municipality-balanced-height',
+                `${municipalityConfigurationHeight}px`
+            );
+            applyChartViewportHeight();
+            currentEchartsInstance?.resize();
+        }
+
+        function scheduleMunicipalityConfigurationHeightSync() {
+            if (municipalityConfigurationHeightFrame) {
+                window.cancelAnimationFrame(municipalityConfigurationHeightFrame);
+            }
+            municipalityConfigurationHeightFrame = window.requestAnimationFrame(() => {
+                municipalityConfigurationHeightFrame = null;
+                syncMunicipalityConfigurationHeight();
+            });
+        }
+
         function setMunicipalityConfigurationView(view, { focus = false } = {}) {
             const filtersBody = document.querySelector('#estadisticas-filtros .users-filter-panel-body');
             const tabs = document.querySelectorAll('[data-municipality-config-tab]');
@@ -3799,6 +3994,8 @@
             const shouldAnimate = previousView
                 && previousView !== normalizedView
                 && !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+            if (previousView) syncMunicipalityConfigurationHeight();
 
             filtersBody.dataset.configurationView = normalizedView;
             filters.hidden = normalizedView !== 'filters';
@@ -3834,6 +4031,7 @@
                 tab.tabIndex = selected ? 0 : -1;
                 if (selected && focus) tab.focus();
             });
+            scheduleMunicipalityConfigurationHeightSync();
         }
 
         function syncMunicipalityExplorerLayout(chartType) {
@@ -3955,6 +4153,7 @@
                     sidebarGroups.prepend(sidebarChartTypeGroup);
                 }
                 [
+                    document.getElementById('statisticsGeographicScopeControl'),
                     document.getElementById('statisticsMeasureGroup'),
                     document.getElementById('filterTop'),
                     document.getElementById('statisticsDataLabelGroup'),
@@ -3992,6 +4191,9 @@
                 document.getElementById('municipalityConfigurationTabs')?.remove();
 
                 [
+                    document.getElementById('statisticsGeographicScopeControl'),
+                    document.getElementById('statisticsTrendGranularityControl'),
+                    document.getElementById('statisticsComparisonControl'),
                     document.getElementById('statisticsChartTypeGroup'),
                     document.getElementById('statisticsMeasureGroup'),
                     document.getElementById('statisticsDataLabelGroup'),
@@ -4084,8 +4286,8 @@
             const geographicScopeLabel = document.getElementById('statisticsGeographicScopeLabel');
             if (geographicScopeLabel) {
                 geographicScopeLabel.textContent = chartType === 'distritoes'
-                    ? 'Analizar distritos por'
-                    : 'Analizar municipios por';
+                    ? 'Agrupar distritos por'
+                    : 'Agrupar municipios por';
             }
             document.getElementById('statisticsGeographicScopeControl')
                 ?.classList.toggle('hidden', !isGeographicAnalysis);
@@ -5153,11 +5355,29 @@
                 .replace(/'/g, '&#039;');
         }
 
+        function syncStatisticsAgeValuePreview(show) {
+            const input = document.getElementById('edadFilter');
+            const preview = document.getElementById('edadFilterValuePreview');
+            if (!input || !preview) return;
+            const shouldShow = Boolean(show && input.value && input.scrollWidth > input.clientWidth + 1);
+            preview.textContent = shouldShow ? input.value : '';
+            preview.classList.toggle('hidden', !shouldShow);
+            input.setAttribute('aria-label', input.value ? `Edad: ${input.value}` : 'Edad');
+        }
+
+        function formatStatisticsAgeFilterValue(value) {
+            return String(value || '')
+                .split(',')
+                .map(item => item.trim())
+                .filter(Boolean)
+                .join(', ');
+        }
+
         function getActiveFilterDescriptors() {
             const filters = [];
-            const addFilter = (type, label, value, removeLabel, shortValue = value) => {
+            const addFilter = (type, label, value, removeLabel, shortValue = value, previewValues = null) => {
                 if (!value) return;
-                filters.push({ type, label, value, shortValue, removeLabel });
+                filters.push({ type, label, value, shortValue, previewValues, removeLabel });
             };
             const dateText = getDateFilterText();
 
@@ -5169,7 +5389,8 @@
                     `${activeFilters.municipios.length === 1 ? 'Municipio' : 'Municipios'} de ${activeFilters.tipoMunicipio === 'residencia' ? 'residencia' : 'defunción'}`,
                     activeFilters.municipiosNames.join(', '),
                     'Quitar filtro de municipios',
-                    activeFilters.municipios.length === 1 ? activeFilters.municipiosNames[0] : `${activeFilters.municipios.length} seleccionados`
+                    activeFilters.municipios.length === 1 ? activeFilters.municipiosNames[0] : `${activeFilters.municipios.length} seleccionados`,
+                    activeFilters.municipiosNames
                 );
             }
 
@@ -5179,7 +5400,8 @@
                     activeFilters.causas.length === 1 ? 'Causa' : 'Causas',
                     activeFilters.causasNames.join(', '),
                     'Quitar filtro de causas',
-                    activeFilters.causas.length === 1 ? activeFilters.causasNames[0] : `${activeFilters.causas.length} seleccionadas`
+                    activeFilters.causas.length === 1 ? activeFilters.causasNames[0] : `${activeFilters.causas.length} seleccionadas`,
+                    activeFilters.causasNames
                 );
             }
 
@@ -5189,18 +5411,19 @@
                     `${activeFilters.distritoes.length === 1 ? 'Distrito' : 'Distritos'} de ${activeFilters.tipoMunicipio === 'residencia' ? 'residencia' : 'defunción'}`,
                     activeFilters.distritoesNames.join(', '),
                     'Quitar filtro de distritos',
-                    activeFilters.distritoes.length === 1 ? activeFilters.distritoesNames[0] : `${activeFilters.distritoes.length} seleccionados`
+                    activeFilters.distritoes.length === 1 ? activeFilters.distritoesNames[0] : `${activeFilters.distritoes.length} seleccionados`,
+                    activeFilters.distritoesNames
                 );
             }
 
             if (currentChartType === 'municipios' && activeFilters.residenceDistricts.length > 0) {
-                addFilter('residenceDistricts', 'Distrito de residencia', activeFilters.residenceDistrictNames.join(', '), 'Quitar filtro de distritos de residencia', activeFilters.residenceDistricts.length === 1 ? activeFilters.residenceDistrictNames[0] : `${activeFilters.residenceDistricts.length} seleccionados`);
+                addFilter('residenceDistricts', 'Distrito de residencia', activeFilters.residenceDistrictNames.join(', '), 'Quitar filtro de distritos de residencia', activeFilters.residenceDistricts.length === 1 ? activeFilters.residenceDistrictNames[0] : `${activeFilters.residenceDistricts.length} seleccionados`, activeFilters.residenceDistrictNames);
             }
             if (currentChartType === 'municipios' && activeFilters.deathDistricts.length > 0) {
-                addFilter('deathDistricts', 'Distrito de defunción', activeFilters.deathDistrictNames.join(', '), 'Quitar filtro de distritos de defunción', activeFilters.deathDistricts.length === 1 ? activeFilters.deathDistrictNames[0] : `${activeFilters.deathDistricts.length} seleccionados`);
+                addFilter('deathDistricts', 'Distrito de defunción', activeFilters.deathDistrictNames.join(', '), 'Quitar filtro de distritos de defunción', activeFilters.deathDistricts.length === 1 ? activeFilters.deathDistrictNames[0] : `${activeFilters.deathDistricts.length} seleccionados`, activeFilters.deathDistrictNames);
             }
             if (currentChartType === 'municipios' && activeFilters.deathLocations.length > 0) {
-                addFilter('deathLocations', 'Lugar de defunción', activeFilters.deathLocationNames.join(', '), 'Quitar filtro de lugares de defunción', activeFilters.deathLocations.length === 1 ? activeFilters.deathLocationNames[0] : `${activeFilters.deathLocations.length} seleccionados`);
+                addFilter('deathLocations', 'Lugar de defunción', activeFilters.deathLocationNames.join(', '), 'Quitar filtro de lugares de defunción', activeFilters.deathLocations.length === 1 ? activeFilters.deathLocationNames[0] : `${activeFilters.deathLocations.length} seleccionados`, activeFilters.deathLocationNames);
             }
 
             if (metricSupportsFilter(currentChartType, 'sexo') && activeFilters.sexo) {
@@ -5210,22 +5433,114 @@
 
             if (metricSupportsFilter(currentChartType, 'edad') && activeFilters.edad) {
                 const ageUnitLabel = { years: 'años', months: 'meses', days: 'días' }[activeFilters.edadUnidad] || 'años';
-                addFilter('edad', 'Edad', `${activeFilters.edad} ${ageUnitLabel}`, 'Quitar filtro de edad');
+                const ageValue = formatStatisticsAgeFilterValue(activeFilters.edad);
+                addFilter('edad', 'Edad', `${ageValue} ${ageUnitLabel}`, 'Quitar filtro de edad');
             }
 
             return filters;
         }
 
         function renderActiveFilterChip(filter, { detailed = false } = {}) {
-            const fullText = `${filter.label}: ${filter.value}`;
             const displayedValue = detailed ? filter.value : filter.shortValue;
-            return `<span class="users-filter-chip statistics-filter-chip${detailed ? ' statistics-filter-chip--detailed' : ''}" title="${escapeFilterLabel(fullText)}">
-                <span class="statistics-filter-chip__text"><strong>${escapeFilterLabel(filter.label)}:</strong> ${escapeFilterLabel(displayedValue)}</span>
-                <button type="button" data-clear-filter="${escapeFilterLabel(filter.type)}" aria-label="${escapeFilterLabel(filter.removeLabel)}">&times;</button>
+            const previewValues = !detailed && Array.isArray(filter.previewValues) && filter.previewValues.length > 1
+                ? filter.previewValues
+                : null;
+            const previewAttribute = previewValues
+                ? ` data-preview-values="${escapeFilterLabel(JSON.stringify(previewValues))}"`
+                : '';
+            const valueMarkup = previewValues
+                ? `<span class="statistics-filter-chip__value">${escapeFilterLabel(previewValues.join(', '))}</span>`
+                : `<span class="statistics-filter-chip__value">${escapeFilterLabel(displayedValue)}</span>`;
+            return `<span class="users-filter-chip statistics-filter-chip${detailed ? ' statistics-filter-chip--detailed' : ''}"${previewAttribute}>
+                <span class="statistics-filter-chip__text"><strong>${escapeFilterLabel(filter.label)}:</strong> ${valueMarkup}</span>
+                <button type="button" data-clear-filter="${escapeFilterLabel(filter.type)}" aria-label="${escapeFilterLabel(filter.removeLabel)}"><i class="fas fa-xmark" aria-hidden="true"></i></button>
             </span>`;
         }
 
-        function setActiveFiltersPopoverOpen(open, { returnFocus = false } = {}) {
+        function formatActiveFilterValuePreview(values, visibleCount) {
+            const shownValues = values.slice(0, visibleCount).join(', ');
+            const hiddenCount = values.length - visibleCount;
+            return hiddenCount > 0 ? `${shownValues} y ${hiddenCount} más` : shownValues;
+        }
+
+        function fitActiveFilterValuePreviews(container) {
+            const canvas = fitActiveFilterValuePreviews.canvas
+                || (fitActiveFilterValuePreviews.canvas = document.createElement('canvas'));
+            const context = canvas.getContext('2d');
+            if (!context) return;
+
+            container.querySelectorAll('.statistics-filter-chip[data-preview-values]').forEach(chip => {
+                const valueElement = chip.querySelector('.statistics-filter-chip__value');
+                const labelElement = chip.querySelector('.statistics-filter-chip__text strong');
+                const removeButton = chip.querySelector('[data-clear-filter]');
+                if (!valueElement || !labelElement || !removeButton) return;
+
+                let values;
+                try {
+                    values = JSON.parse(chip.dataset.previewValues || '[]');
+                } catch (_) {
+                    values = [];
+                }
+                if (values.length < 2) return;
+
+                const chipStyle = getComputedStyle(chip);
+                const valueStyle = getComputedStyle(valueElement);
+                const maxWidth = Number.parseFloat(chipStyle.maxWidth);
+                if (!Number.isFinite(maxWidth)) return;
+
+                context.font = `${valueStyle.fontWeight} ${valueStyle.fontSize} ${valueStyle.fontFamily}`;
+                const horizontalPadding = Number.parseFloat(chipStyle.paddingLeft)
+                    + Number.parseFloat(chipStyle.paddingRight);
+                const gap = Number.parseFloat(chipStyle.columnGap || chipStyle.gap) || 0;
+                const availableWidth = Math.max(
+                    56,
+                    maxWidth - horizontalPadding - labelElement.offsetWidth - removeButton.offsetWidth - (gap * 2)
+                );
+
+                let visibleCount = values.length;
+                while (visibleCount > 1) {
+                    const candidate = formatActiveFilterValuePreview(values, visibleCount);
+                    if (context.measureText(candidate).width <= availableWidth) break;
+                    visibleCount -= 1;
+                }
+                valueElement.textContent = formatActiveFilterValuePreview(values, visibleCount);
+            });
+        }
+
+        function setActiveFiltersMoreLabel(button, totalCount = 0) {
+            const label = button?.querySelector('.statistics-active-filters__more-label');
+            if (!label) return;
+            label.textContent = totalCount > 0 ? `Ver todos (${totalCount})` : 'Ver filtros';
+        }
+
+        function positionActiveFiltersPopover(anchor = null) {
+            const section = document.getElementById('filtrosActivos');
+            const popover = document.getElementById('statisticsActiveFiltersPopover');
+            if (!section || !popover || popover.classList.contains('hidden')) return;
+
+            if (window.matchMedia('(max-width: 639px)').matches) {
+                popover.style.removeProperty('--statistics-active-filters-popover-left');
+                popover.style.removeProperty('left');
+                popover.style.removeProperty('right');
+                return;
+            }
+
+            const resolvedAnchor = anchor && !anchor.classList.contains('hidden')
+                ? anchor
+                : document.getElementById('statisticsActiveFiltersMore');
+            if (!resolvedAnchor) return;
+
+            const sectionRect = section.getBoundingClientRect();
+            const anchorRect = resolvedAnchor.getBoundingClientRect();
+            const maximumLeft = Math.max(0, sectionRect.width - popover.offsetWidth);
+            const preferredLeft = anchorRect.left - sectionRect.left;
+            const left = Math.min(Math.max(0, preferredLeft), maximumLeft);
+            popover.style.setProperty('--statistics-active-filters-popover-left', `${Math.round(left)}px`);
+            popover.style.left = `${Math.round(left)}px`;
+            popover.style.right = 'auto';
+        }
+
+        function setActiveFiltersPopoverOpen(open, { returnFocus = false, anchor = null } = {}) {
             const popover = document.getElementById('statisticsActiveFiltersPopover');
             const toggles = [
                 document.getElementById('statisticsActiveFiltersMore'),
@@ -5238,11 +5553,68 @@
             popover.classList.toggle('hidden', !shouldOpen);
             toggles.forEach(toggle => toggle.setAttribute('aria-expanded', String(shouldOpen)));
             if (shouldOpen) {
+                positionActiveFiltersPopover(anchor);
                 popover.querySelector('button')?.focus();
             } else if (returnFocus) {
                 const visibleToggle = toggles.find(toggle => !toggle.classList.contains('hidden') && !toggle.disabled);
                 visibleToggle?.focus();
             }
+        }
+
+        function layoutActiveFilterChips() {
+            const container = document.getElementById('filtrosActivosList');
+            const moreButton = document.getElementById('statisticsActiveFiltersMore');
+            if (!container || !moreButton || window.matchMedia('(max-width: 639px)').matches) return;
+
+            const chips = Array.from(container.querySelectorAll('.statistics-filter-chip'));
+            if (!chips.length) {
+                moreButton.classList.add('hidden');
+                return;
+            }
+
+            chips.forEach(chip => { chip.hidden = false; });
+            fitActiveFilterValuePreviews(container);
+            moreButton.classList.remove('hidden');
+            setActiveFiltersMoreLabel(moreButton, chips.length);
+
+            const gap = Number.parseFloat(getComputedStyle(container).columnGap || getComputedStyle(container).gap) || 0;
+            const countVisibleChips = () => {
+                const availableWidth = Math.max(0, container.clientWidth);
+                let usedWidth = 0;
+                let visibleCount = 0;
+                for (const chip of chips) {
+                    const nextWidth = chip.offsetWidth + (visibleCount > 0 ? gap : 0);
+                    if (usedWidth + nextWidth > availableWidth + .5) break;
+                    usedWidth += nextWidth;
+                    visibleCount += 1;
+                }
+                return visibleCount;
+            };
+
+            let visibleCount = 0;
+            let hiddenCount = 0;
+            let previousHiddenCount = -1;
+            for (let pass = 0; pass < 3; pass += 1) {
+                visibleCount = countVisibleChips();
+                hiddenCount = chips.length - visibleCount;
+                setActiveFiltersMoreLabel(moreButton, chips.length);
+                if (hiddenCount === previousHiddenCount) break;
+                previousHiddenCount = hiddenCount;
+            }
+
+            chips.forEach((chip, index) => { chip.hidden = index >= visibleCount; });
+            moreButton.setAttribute('aria-label', `Ver todos los filtros aplicados (${chips.length})`);
+            positionActiveFiltersPopover(moreButton);
+        }
+
+        function scheduleActiveFilterChipLayout() {
+            if (scheduleActiveFilterChipLayout.frame) {
+                window.cancelAnimationFrame(scheduleActiveFilterChipLayout.frame);
+            }
+            scheduleActiveFilterChipLayout.frame = window.requestAnimationFrame(() => {
+                scheduleActiveFilterChipLayout.frame = null;
+                layoutActiveFilterChips();
+            });
         }
 
         function updateActiveFiltersDisplay() {
@@ -5259,22 +5631,18 @@
 
             const filters = getActiveFilterDescriptors();
             const activeFilterCount = filters.length;
-            const visibleFilters = filters.slice(0, 3);
-            const hiddenFilterCount = Math.max(0, activeFilterCount - visibleFilters.length);
             section.dataset.filterCount = String(activeFilterCount);
             section.classList.toggle('has-filters', activeFilterCount > 0);
 
             container.innerHTML = activeFilterCount
-                ? visibleFilters.map(filter => renderActiveFilterChip(filter)).join('')
+                ? filters.map(filter => renderActiveFilterChip(filter)).join('')
                 : '<span class="statistics-active-filters__empty">Sin filtros adicionales</span>';
             if (fullList) fullList.innerHTML = filters.map(filter => renderActiveFilterChip(filter, { detailed: true })).join('');
 
             if (moreButton) {
-                moreButton.textContent = hiddenFilterCount > 0 ? `+${hiddenFilterCount} más` : 'Ver detalle';
+                setActiveFiltersMoreLabel(moreButton, activeFilterCount);
                 moreButton.classList.toggle('hidden', activeFilterCount === 0);
-                moreButton.setAttribute('aria-label', hiddenFilterCount > 0
-                    ? `Ver ${hiddenFilterCount} filtros aplicados más`
-                    : 'Ver detalle de los filtros aplicados');
+                moreButton.setAttribute('aria-label', `Ver todos los filtros aplicados (${activeFilterCount})`);
             }
             if (mobileButton && mobileText) {
                 mobileButton.disabled = activeFilterCount === 0;
@@ -5290,6 +5658,7 @@
                 countBadge.textContent = String(activeFilterCount);
                 countBadge.classList.toggle('hidden', activeFilterCount === 0);
             }
+            scheduleActiveFilterChipLayout();
         }
 
         function restoreAppliedFilterStateBeforeRemoval() {
@@ -6550,6 +6919,8 @@
             const minimumHeight = Number(chartWrapper.dataset.minimumHeight || 340);
             const viewportBottomReserve = Number(chartWrapper.dataset.viewportBottomReserve || 0);
             const preservesContentHeight = chartWrapper.dataset.preserveContentHeight === 'true';
+            const balancesMunicipalitySidebar = currentChartType === 'municipios'
+                && window.matchMedia('(min-width: 1024px)').matches;
             let targetHeight = preferredHeight;
 
             if (!preservesContentHeight && window.matchMedia('(min-width: 1024px)').matches) {
@@ -6569,7 +6940,7 @@
             chartWrapper.style.height = `${roundedHeight}px`;
             chartWrapper.style.minHeight = `${roundedHeight}px`;
             chartWrapper.style.flexBasis = `${roundedHeight}px`;
-            chartWrapper.style.flexGrow = '0';
+            chartWrapper.style.flexGrow = balancesMunicipalitySidebar ? '1' : '0';
             chartWrapper.style.flexShrink = '0';
             return roundedHeight;
         }
@@ -7509,7 +7880,7 @@
                 const circularLegendNeedsMoreRoom = ['causas', 'lugares'].includes(currentChartType) || longestCircularCategoryLabel > 22;
                 // Las leyendas largas necesitan espacio propio junto al circulo y la tarjeta.
                 // En anchos intermedios, poner la leyenda debajo evita solapamientos.
-                const compactCircularLayout = circularWidth < 760
+                const compactCircularLayout = circularWidth < 880
                     || (circularLegendNeedsMoreRoom && circularWidth < 1140);
                 const circularLegendShowsMetrics = chartConfig.dataLabelMode !== 'none';
                 const useCircularCallouts = !compactCircularLayout
@@ -7545,13 +7916,25 @@
                     ? Math.round(calculatedDesktopOuterRadius * .95)
                     : calculatedDesktopOuterRadius;
                 const desktopInnerRadius = Math.round(desktopOuterRadius * .58);
-                const desktopCenterRatio = useCircularCallouts
+                const preferredDesktopCenterRatio = useCircularCallouts
                     ? .5
                     : circularLegendNeedsMoreRoom
                     ? .39
                     : !circularLegendShowsMetrics
                     ? .43
                     : crowdedCircularChart ? .39 : .36;
+                const desktopLegendStartRatio = circularLegendNeedsMoreRoom
+                    ? .57
+                    : (!circularLegendShowsMetrics ? .62 : (crowdedCircularChart ? .57 : .56));
+                // Mantener una separaciÃ³n visual estable entre el cÃ­rculo y la leyenda.
+                // En anchos intermedios es preferible desplazar el cÃ­rculo suavemente
+                // hacia la izquierda antes que reducirlo o permitir un solapamiento.
+                const circularLegendClearance = 36;
+                const maximumDesktopCenterRatio = desktopLegendStartRatio
+                    - ((desktopOuterRadius + circularLegendClearance) / Math.max(circularWidth, 1));
+                const desktopCenterRatio = useCircularCallouts
+                    ? preferredDesktopCenterRatio
+                    : Math.max(.3, Math.min(preferredDesktopCenterRatio, maximumDesktopCenterRatio));
                 // Los cuatro grupos de edad concentran dos llamadas arriba; equilibrar
                 // su margen con la llamada inferior sin alterar el radio del círculo.
                 const desktopCenterY = useCircularCallouts
@@ -7614,9 +7997,7 @@
                         pageTextStyle: { color: '#526278', fontFamily: 'Open Sans' },
                         left: compactCircularLayout
                             ? 18
-                            : (circularLegendNeedsMoreRoom
-                                ? '57%'
-                                : (!circularLegendShowsMetrics ? '62%' : (crowdedCircularChart ? '57%' : '56%'))),
+                            : `${Math.round(desktopLegendStartRatio * 100)}%`,
                         right: compactCircularLayout ? 18 : 16,
                         top: compactCircularLayout ? 'auto' : 'middle',
                         bottom: compactCircularLayout ? 4 : 'auto',
@@ -8387,7 +8768,18 @@
             if (currentChartType === 'municipios' && chartConfig.measure === 'rate') {
                 return 'Tasa de defunciones por municipio';
             }
-            if (currentChartType === 'comparativa') return 'Comparativa';
+            if (currentChartType === 'comparativa') {
+                return comparativaLabels[activeFilters.tipoComparativa] || 'Comparativa';
+            }
+            if (currentChartType === 'tendencias') {
+                const granularityLabels = { day: 'diaria', month: 'mensual', year: 'anual' };
+                return `Tendencia ${granularityLabels[activeFilters.granularidad] || 'mensual'}`;
+            }
+            if (['municipios', 'distritoes'].includes(currentChartType)) {
+                const unit = currentChartType === 'municipios' ? 'municipios' : 'distritos';
+                const scope = activeFilters.tipoMunicipio === 'residencia' ? 'residencia' : 'defunción';
+                return `Distribución por ${unit} de ${scope}`;
+            }
             return chartTitles[currentChartType] || 'Gráfica';
         }
 
