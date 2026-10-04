@@ -5,7 +5,7 @@
     @include('components.header-admin')
     @include('components.nav-estadisticas')
 
-    <main class="statistics-page" data-active-metric="municipios">
+    <main class="statistics-page is-layout-pending" data-active-metric="municipios">
         <div class="statistics-page__inner">
         <x-ui.page-header
             class="statistics-page-header"
@@ -61,6 +61,8 @@
                         id="estadisticas-filtros"
                         title-id="statistics-filters-title"
                         clear-id="limpiarFiltros"
+                        clear-label="Restablecer filtros"
+                        clear-class="statistics-context-reset"
                         cancel-id="statisticsFiltersCancel"
                         apply-id="statisticsFiltersApply"
                         :open="true"
@@ -304,7 +306,10 @@
                                 <div class="statistics-display-panel__title-row">
                                     <h2 id="statistics-display-title">Presentación</h2>
                                     <div class="statistics-display-panel__actions">
-                                        <button type="button" id="statisticsPresentationReset" class="statistics-presentation-reset">Restablecer</button>
+                                        <button type="button" id="statisticsPresentationReset" class="statistics-presentation-reset statistics-context-reset">
+                                            <i class="fas fa-undo" aria-hidden="true"></i>
+                                            <span>Restablecer vista</span>
+                                        </button>
                                         <button type="button" id="statisticsPresentationCollapse" class="statistics-presentation-collapse" aria-expanded="true" aria-controls="statisticsPresentationGroups" aria-label="Contraer opciones de presentación">
                                             <i class="fas fa-chevron-up" aria-hidden="true"></i>
                                         </button>
@@ -888,6 +893,7 @@
             } catch (error) {
                 console.warn('No se pudieron guardar las preferencias de presentación.', error);
             }
+            syncMunicipalityResetActions();
         }
 
         function clearCurrentPresentationPreference() {
@@ -904,6 +910,7 @@
             } catch (error) {
                 console.warn('No se pudieron restablecer las preferencias de presentación.', error);
             }
+            syncMunicipalityResetActions();
         }
 
         async function ensureTamaulipasMap() {
@@ -1221,6 +1228,14 @@
             'lugar-municipio': 'Lugar de defunción por municipio'
         };
 
+        /*
+         * Regla de continuidad del análisis:
+         * Los controles de Vista (ámbito geográfico, granularidad y comparación)
+         * cambian cómo se agrupan los mismos registros; no deben limpiar los filtros
+         * de Datos. Cada gráfica aplica únicamente los filtros compatibles que se
+         * declaran aquí y conserva los demás para cuando el usuario vuelva a una
+         * visualización que sí los admite.
+         */
         const filtersForChart = {
             municipios: ['dates', 'tipoMunicipio', 'causas', 'distritoes', 'sexo', 'edad'],
             tendencias: ['dates', 'tipoMunicipio', 'municipios', 'causas', 'distritoes', 'sexo', 'edad', 'granularidad'],
@@ -1552,6 +1567,11 @@
             }
 
             const sharedState = readStatisticsShareState();
+
+            // Montar la composición definitiva antes de esperar peticiones para
+            // que nunca se alcancen a ver Filtros y Presentación por separado.
+            syncMunicipalityExplorerLayout(sharedState?.metric || 'municipios');
+            document.querySelector('.statistics-page')?.classList.remove('is-layout-pending');
 
             // Cargar rangos de fecha default antes de inicializar
             document.getElementById('statisticsDateCoverageRetry')?.addEventListener('click', loadDefaultDateRange);
@@ -1939,6 +1959,7 @@
             if (apply) apply.disabled = !hasChanges;
             if (discard) discard.disabled = !hasChanges;
             syncStatisticsFilterSectionSummaries();
+            syncMunicipalityResetActions();
         }
 
         function restoreStatisticsFilterState(state) {
@@ -1997,6 +2018,7 @@
                 if (apply) apply.disabled = false;
                 if (discard) discard.disabled = false;
                 syncStatisticsFilterSectionSummaries();
+                syncMunicipalityResetActions();
             }
         }
 
@@ -2820,6 +2842,7 @@
                 this.querySelector('i')?.classList.toggle('fa-chevron-up', !collapsed);
             });
 
+            setStatisticsResetActionContent(document.getElementById('limpiarFiltros'), 'Restablecer filtros');
             document.getElementById('limpiarFiltros').addEventListener('click', function() {
                 clearFilters(true);
                 markStatisticsFilterDraft();
@@ -3977,6 +4000,41 @@
             });
         }
 
+        function setStatisticsResetActionContent(action, label) {
+            if (!action) return;
+            action.innerHTML = `
+                <i class="fas fa-undo" aria-hidden="true"></i>
+                <span>${label}</span>
+            `;
+            action.setAttribute('aria-label', label);
+        }
+
+        function syncMunicipalityResetActions() {
+            if (!usesPersistentMunicipalityFilters()) return;
+
+            const panel = document.getElementById('estadisticas-filtros');
+            const clearAction = document.getElementById('limpiarFiltros');
+            const resetAction = document.getElementById('statisticsPresentationReset');
+            const currentState = captureStatisticsFilterState();
+            const hasDraftChanges = Boolean(filterDraftSnapshot)
+                && !statisticsFilterStatesMatch(currentState, filterDraftSnapshot);
+            const hasAppliedFilters = getActiveFilterDescriptors().length > 0;
+
+            if (clearAction) {
+                clearAction.disabled = !hasDraftChanges && !hasAppliedFilters;
+                clearAction.setAttribute('aria-disabled', String(clearAction.disabled));
+            }
+            if (resetAction) {
+                resetAction.disabled = !Object.prototype.hasOwnProperty.call(
+                    presentationPreferencesByMetric,
+                    currentChartType
+                );
+                resetAction.setAttribute('aria-disabled', String(resetAction.disabled));
+            }
+
+            panel?.classList.toggle('has-resettable-filters', hasDraftChanges || hasAppliedFilters);
+        }
+
         function setMunicipalityConfigurationView(view, { focus = false } = {}) {
             const filtersBody = document.querySelector('#estadisticas-filtros .users-filter-panel-body');
             const tabs = document.querySelectorAll('[data-municipality-config-tab]');
@@ -4016,11 +4074,13 @@
             if (footer) footer.hidden = normalizedView !== 'filters';
             if (clearAction) {
                 const shouldHide = normalizedView !== 'filters';
+                setStatisticsResetActionContent(clearAction, 'Restablecer filtros');
                 clearAction.hidden = shouldHide;
                 clearAction.classList.toggle('hidden', shouldHide);
             }
             if (resetAction) {
                 const shouldHide = normalizedView !== 'presentation';
+                setStatisticsResetActionContent(resetAction, 'Restablecer vista');
                 resetAction.hidden = shouldHide;
                 resetAction.classList.toggle('hidden', shouldHide);
             }
@@ -4031,6 +4091,7 @@
                 tab.tabIndex = selected ? 0 : -1;
                 if (selected && focus) tab.focus();
             });
+            syncMunicipalityResetActions();
             scheduleMunicipalityConfigurationHeightSync();
         }
 
@@ -4164,7 +4225,7 @@
                 setMunicipalityFilterSectionsFlat(true);
                 const filtersHeader = filtersPanel?.querySelector(':scope > .users-filter-panel-header');
                 if (presentationReset && filtersHeader) {
-                    presentationReset.textContent = 'Restablecer vista';
+                    setStatisticsResetActionContent(presentationReset, 'Restablecer vista');
                     presentationReset.classList.add('statistics-municipality-header-reset');
                     filtersHeader.append(presentationReset);
                 }
@@ -4205,7 +4266,7 @@
                     if (group) presentationGroups.append(group);
                 });
                 if (presentationReset && presentationActions) {
-                    presentationReset.textContent = 'Restablecer';
+                    setStatisticsResetActionContent(presentationReset, 'Restablecer vista');
                     presentationReset.hidden = false;
                     presentationReset.classList.remove('hidden', 'statistics-municipality-header-reset');
                     presentationActions.prepend(presentationReset);
@@ -5658,6 +5719,7 @@
                 countBadge.textContent = String(activeFilterCount);
                 countBadge.classList.toggle('hidden', activeFilterCount === 0);
             }
+            syncMunicipalityResetActions();
             scheduleActiveFilterChipLayout();
         }
 
@@ -7213,7 +7275,6 @@
                 return cartesianSolidColor;
             };
             const chartAvailableWidth = chartContainer?.clientWidth || chartWrapper?.clientWidth || 960;
-            const denseDataLabelLimit = chartAvailableWidth < 1050 ? 10 : maximumVerticalCategories;
             const plotWidth = Math.max(280, chartAvailableWidth * 0.88);
             const categorySlotWidth = plotWidth / Math.max(labels.length, 1);
             const charsPerAxisLine = Math.max(7, Math.min(22, Math.floor(categorySlotWidth / 8.5)));
@@ -8399,11 +8460,6 @@
                                     if (chartConfig.dataLabelMode === 'both') return `{value|${Number(rate).toFixed(1)}}\n{normal|${formatNumber(count)} def.}`;
                                     return '';
                                 }
-                                if (
-                                    usesDenseCategoricalColumns
-                                    && chartConfig.dataLabelMode === 'both'
-                                    && params.dataIndex >= denseDataLabelLimit
-                                ) return '';
                                 const total = filteredTotal;
                                 if (chartConfig.dataLabelMode === 'value') return `{value|${formatNumber(params.value)}}`;
                                 if (chartConfig.dataLabelMode === 'percent') {
