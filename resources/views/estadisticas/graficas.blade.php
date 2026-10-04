@@ -61,7 +61,7 @@
                         id="estadisticas-filtros"
                         title-id="statistics-filters-title"
                         clear-id="limpiarFiltros"
-                        clear-label="Restablecer filtros"
+                        clear-label="Limpiar"
                         clear-class="statistics-context-reset"
                         cancel-id="statisticsFiltersCancel"
                         apply-id="statisticsFiltersApply"
@@ -306,10 +306,7 @@
                                 <div class="statistics-display-panel__title-row">
                                     <h2 id="statistics-display-title">Presentación</h2>
                                     <div class="statistics-display-panel__actions">
-                                        <button type="button" id="statisticsPresentationReset" class="statistics-presentation-reset statistics-context-reset">
-                                            <i class="fas fa-undo" aria-hidden="true"></i>
-                                            <span>Restablecer vista</span>
-                                        </button>
+                                        <button type="button" id="statisticsPresentationReset" class="users-filter-clear statistics-presentation-reset statistics-context-reset" aria-label="Restablecer configuración de la vista" title="Restablecer configuración de la vista">Restablecer</button>
                                         <button type="button" id="statisticsPresentationCollapse" class="statistics-presentation-collapse" aria-expanded="true" aria-controls="statisticsPresentationGroups" aria-label="Contraer opciones de presentación">
                                             <i class="fas fa-chevron-up" aria-hidden="true"></i>
                                         </button>
@@ -2842,7 +2839,7 @@
                 this.querySelector('i')?.classList.toggle('fa-chevron-up', !collapsed);
             });
 
-            setStatisticsResetActionContent(document.getElementById('limpiarFiltros'), 'Restablecer filtros');
+            setStatisticsResetActionContent(document.getElementById('limpiarFiltros'), 'Limpiar', 'Limpiar filtros');
             document.getElementById('limpiarFiltros').addEventListener('click', function() {
                 clearFilters(true);
                 markStatisticsFilterDraft();
@@ -4000,39 +3997,24 @@
             });
         }
 
-        function setStatisticsResetActionContent(action, label) {
+        function setStatisticsResetActionContent(action, label, accessibleLabel = label) {
             if (!action) return;
-            action.innerHTML = `
-                <i class="fas fa-undo" aria-hidden="true"></i>
-                <span>${label}</span>
-            `;
-            action.setAttribute('aria-label', label);
+            action.textContent = label;
+            action.setAttribute('aria-label', accessibleLabel);
+            action.setAttribute('title', accessibleLabel);
         }
 
         function syncMunicipalityResetActions() {
             if (!usesPersistentMunicipalityFilters()) return;
 
-            const panel = document.getElementById('estadisticas-filtros');
             const clearAction = document.getElementById('limpiarFiltros');
             const resetAction = document.getElementById('statisticsPresentationReset');
-            const currentState = captureStatisticsFilterState();
-            const hasDraftChanges = Boolean(filterDraftSnapshot)
-                && !statisticsFilterStatesMatch(currentState, filterDraftSnapshot);
-            const hasAppliedFilters = getActiveFilterDescriptors().length > 0;
 
-            if (clearAction) {
-                clearAction.disabled = !hasDraftChanges && !hasAppliedFilters;
-                clearAction.setAttribute('aria-disabled', String(clearAction.disabled));
-            }
-            if (resetAction) {
-                resetAction.disabled = !Object.prototype.hasOwnProperty.call(
-                    presentationPreferencesByMetric,
-                    currentChartType
-                );
-                resetAction.setAttribute('aria-disabled', String(resetAction.disabled));
-            }
-
-            panel?.classList.toggle('has-resettable-filters', hasDraftChanges || hasAppliedFilters);
+            [clearAction, resetAction].forEach(action => {
+                if (!action) return;
+                action.disabled = false;
+                action.removeAttribute('aria-disabled');
+            });
         }
 
         function setMunicipalityConfigurationView(view, { focus = false } = {}) {
@@ -4063,7 +4045,7 @@
             });
             if (shouldAnimate) {
                 void activePanel.offsetWidth;
-                const directionClass = normalizedView === 'presentation'
+                const directionClass = normalizedView === 'filters'
                     ? 'is-config-entering-forward'
                     : 'is-config-entering-backward';
                 activePanel.classList.add(directionClass);
@@ -4074,13 +4056,13 @@
             if (footer) footer.hidden = normalizedView !== 'filters';
             if (clearAction) {
                 const shouldHide = normalizedView !== 'filters';
-                setStatisticsResetActionContent(clearAction, 'Restablecer filtros');
+                setStatisticsResetActionContent(clearAction, 'Limpiar', 'Limpiar filtros');
                 clearAction.hidden = shouldHide;
                 clearAction.classList.toggle('hidden', shouldHide);
             }
             if (resetAction) {
                 const shouldHide = normalizedView !== 'presentation';
-                setStatisticsResetActionContent(resetAction, 'Restablecer vista');
+                setStatisticsResetActionContent(resetAction, 'Restablecer', 'Restablecer configuración de la vista');
                 resetAction.hidden = shouldHide;
                 resetAction.classList.toggle('hidden', shouldHide);
             }
@@ -4155,13 +4137,11 @@
                     configurationTabs.setAttribute('role', 'tablist');
                     configurationTabs.setAttribute('aria-label', 'Secciones de configuración');
                     configurationTabs.innerHTML = `
-                        <button type="button" role="tab" data-municipality-config-tab="filters" aria-controls="municipalitySidebarFilters">
-                            <i class="fas fa-sliders" aria-hidden="true"></i>
-                            <span>Datos</span>
-                        </button>
                         <button type="button" role="tab" data-municipality-config-tab="presentation" aria-controls="municipalitySidebarPresentation">
-                            <i class="fas fa-palette" aria-hidden="true"></i>
                             <span>Vista</span>
+                        </button>
+                        <button type="button" role="tab" data-municipality-config-tab="filters" aria-controls="municipalitySidebarFilters">
+                            <span>Filtros</span>
                         </button>
                     `;
                     filtersBody.prepend(configurationTabs);
@@ -4225,12 +4205,12 @@
                 setMunicipalityFilterSectionsFlat(true);
                 const filtersHeader = filtersPanel?.querySelector(':scope > .users-filter-panel-header');
                 if (presentationReset && filtersHeader) {
-                    setStatisticsResetActionContent(presentationReset, 'Restablecer vista');
+                    setStatisticsResetActionContent(presentationReset, 'Restablecer', 'Restablecer configuración de la vista');
                     presentationReset.classList.add('statistics-municipality-header-reset');
                     filtersHeader.append(presentationReset);
                 }
                 renderChartTypeButtons(chartType);
-                setMunicipalityConfigurationView(filtersBody?.dataset.configurationView || 'filters');
+                setMunicipalityConfigurationView(filtersBody?.dataset.configurationView || 'presentation');
 
                 displayTitle.textContent = 'Tipo de gráfica';
                 if (filtersTitle) filtersTitle.textContent = 'Configuración';
@@ -4266,7 +4246,7 @@
                     if (group) presentationGroups.append(group);
                 });
                 if (presentationReset && presentationActions) {
-                    setStatisticsResetActionContent(presentationReset, 'Restablecer vista');
+                    setStatisticsResetActionContent(presentationReset, 'Restablecer', 'Restablecer configuración de la vista');
                     presentationReset.hidden = false;
                     presentationReset.classList.remove('hidden', 'statistics-municipality-header-reset');
                     presentationActions.prepend(presentationReset);

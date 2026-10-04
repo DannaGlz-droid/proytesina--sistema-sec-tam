@@ -506,6 +506,14 @@
   text-underline-offset: .18rem;
 }
 
+.statistics-page #estadisticas-filtros .users-filter-clear:disabled,
+.statistics-page #estadisticas-filtros .users-filter-clear:disabled:hover {
+  color: var(--ui-text-muted, #8a97a8);
+  cursor: default;
+  opacity: .58;
+  text-decoration: none;
+}
+
 .statistics-page #estadisticas-filtros .users-filter-apply {
   min-height: 2.08rem;
   padding-inline: .9rem;
@@ -1467,32 +1475,26 @@
 
 .statistics-context-reset {
   display: inline-flex;
-  min-height: 2rem;
+  min-height: auto;
   align-items: center;
   justify-content: center;
-  gap: .38rem;
-  padding: .3rem .48rem;
+  padding: .25rem 0;
   border: 0;
-  border-radius: .38rem;
+  border-radius: 5px;
   background: transparent;
-  color: var(--ui-text-secondary, #526278);
+  color: var(--brand-primary, #611132);
   font-family: "Open Sans", Arial, sans-serif;
-  font-size: .72rem;
-  font-weight: 600;
-  line-height: 1.2;
+  font-size: .82rem;
+  font-weight: 500;
   text-decoration: none;
-  transition: background-color 150ms ease, color 150ms ease, opacity 150ms ease;
-}
-
-.statistics-context-reset > i {
-  flex: 0 0 auto;
-  font-size: .68rem;
+  transition: color 150ms ease, opacity 150ms ease;
 }
 
 .statistics-context-reset:not(:disabled):hover {
-  background: var(--ui-surface-soft, #e9edf2);
-  color: var(--ui-text, #10233f);
-  text-decoration: none;
+  background: transparent;
+  color: var(--brand-primary-hover, #4a0e26);
+  text-decoration: underline;
+  text-underline-offset: .18rem;
 }
 
 .statistics-context-reset:disabled {
@@ -2022,6 +2024,11 @@
   --statistics-filter-hover: #f4f4f5;
   --statistics-filter-pressed: #e4e4e7;
   --statistics-filter-focus: #52525b;
+  --statistics-filter-accent: var(--brand-primary, #611132);
+  --statistics-filter-accent-hover: var(--brand-primary-hover, #4a0e26);
+  --statistics-filter-accent-soft: var(--brand-primary-soft, #f8f1f4);
+  --statistics-filter-accent-border: color-mix(in srgb, var(--brand-primary, #611132) 28%, #d4d4d8);
+  --statistics-filter-accent-hover-soft: color-mix(in srgb, var(--brand-primary, #611132) 10%, #fff);
   position: relative;
   display: grid;
   grid-template-columns: max-content minmax(0, 1fr);
@@ -2226,14 +2233,16 @@
   align-items: center;
   gap: .34rem;
   padding: .18rem .25rem .18rem .52rem;
-  border: 1px solid var(--statistics-filter-border, #d4d4d8);
+  border: 1px solid #dec5cf;
+  border-color: var(--statistics-filter-accent-border, #dec5cf);
   border-radius: .45rem;
-  background: var(--statistics-filter-surface-soft, #fafafa);
+  background: var(--statistics-filter-accent-soft, #f8f1f4);
   color: var(--statistics-filter-text, #52525b);
   font-size: .72rem;
   font-weight: 600;
   line-height: 1;
   box-shadow: none;
+  transition: background-color 150ms ease, border-color 150ms ease;
 }
 
 .statistics-page .statistics-active-filters .statistics-filter-chip {
@@ -2263,7 +2272,7 @@
 }
 
 .statistics-page .statistics-active-filters .statistics-filter-chip__text strong {
-  color: var(--statistics-filter-ink, #27272a);
+  color: var(--statistics-filter-accent, #611132);
   font-weight: 700;
 }
 
@@ -2289,6 +2298,10 @@
   font-weight: 650;
 }
 
+.statistics-page .statistics-active-filters .statistics-filter-chip--detailed button {
+  color: var(--statistics-filter-muted, #71717a);
+}
+
 .statistics-page .statistics-active-filters .statistics-filter-chip--detailed .statistics-filter-chip__text {
   white-space: normal;
 }
@@ -2309,7 +2322,7 @@
   border: 0;
   border-radius: 4px;
   background: transparent;
-  color: var(--statistics-filter-muted, #71717a);
+  color: var(--statistics-filter-accent, #611132);
   font-size: .62rem;
   line-height: 1;
   cursor: pointer;
@@ -2317,8 +2330,8 @@
 }
 
 .statistics-page .statistics-active-filters .statistics-filter-chip:hover {
-  border-color: var(--statistics-filter-border, #d4d4d8);
-  background: var(--statistics-filter-surface-soft, #fafafa);
+  border-color: color-mix(in srgb, var(--brand-primary, #611132) 42%, #d4d4d8);
+  background: var(--statistics-filter-accent-hover-soft, #f5e9ee);
 }
 
 .statistics-page .statistics-active-filters .statistics-filter-chip--detailed:hover {
@@ -2326,9 +2339,14 @@
   background: var(--statistics-filter-surface, #fff);
 }
 
-.statistics-page .statistics-active-filters .statistics-filter-chip button:hover {
+.statistics-page .statistics-active-filters .statistics-filter-chip--detailed button:hover {
   background: var(--statistics-filter-pressed, #e4e4e7);
   color: var(--statistics-filter-ink, #27272a);
+}
+
+.statistics-page .statistics-active-filters .statistics-filter-chip button:hover {
+  background: color-mix(in srgb, var(--brand-primary, #611132) 12%, transparent);
+  color: var(--statistics-filter-accent-hover, #4a0e26);
 }
 
 .statistics-page .statistics-active-filters .statistics-filter-chip button:active {
@@ -4767,7 +4785,6 @@
     min-height: 2.15rem;
     align-items: center;
     justify-content: center;
-    gap: .42rem;
     padding: .35rem .55rem;
     border: 1px solid transparent;
     border-radius: .38rem;
@@ -4942,11 +4959,6 @@
     font-weight: 600;
   }
 
-  .statistics-page[data-active-metric="municipios"] #estadisticas-filtros > .users-filter-panel-header .users-filter-clear {
-    font-size: .7rem;
-    font-weight: 600;
-  }
-
   .statistics-page[data-active-metric="municipios"] #estadisticas-filtros > .users-filter-panel-body {
     padding: 0;
     border-top: 0;
@@ -4966,7 +4978,6 @@
   .statistics-page[data-active-metric="municipios"] .statistics-municipality-config-tabs button {
     position: relative;
     min-height: 2.7rem;
-    gap: .42rem;
     padding: .45rem .65rem;
     border: 0;
     border-radius: 0;
@@ -5004,30 +5015,12 @@
     background: var(--table-accent, #475569);
   }
 
-  .statistics-page[data-active-metric="municipios"] .statistics-municipality-config-tabs button[aria-selected="true"] i {
-    color: var(--table-accent, #475569);
-  }
-
   .statistics-page[data-active-metric="municipios"] .statistics-municipality-config-block {
     overflow: visible;
     border: 0;
     border-radius: 0;
     background: var(--ui-surface, #fff);
     box-shadow: none;
-  }
-
-  .statistics-page[data-active-metric="municipios"] #estadisticas-filtros > .users-filter-panel-header .statistics-municipality-header-reset {
-    min-height: 2rem;
-    padding: .3rem .48rem;
-    color: var(--ui-text-secondary, #526278);
-    font-size: .72rem;
-    font-weight: 600;
-  }
-
-  .statistics-page[data-active-metric="municipios"] #estadisticas-filtros > .users-filter-panel-header .statistics-context-reset:not(:disabled):hover {
-    background: var(--ui-surface-soft, #e9edf2);
-    color: var(--ui-text, #10233f);
-    text-decoration: none;
   }
 
   .statistics-page[data-active-metric="municipios"] #estadisticas-filtros > .users-filter-panel-header > [hidden] {
@@ -5159,21 +5152,22 @@
   }
 
   .statistics-page[data-active-metric="municipios"] #estadisticas-filtros > .users-filter-panel-footer .users-filter-secondary {
-    min-height: 2rem;
-    padding: .3rem .1rem;
-    border: 0;
-    background: transparent;
-    color: var(--ui-text-secondary, #526278);
-    box-shadow: none;
-    font-weight: 500;
+    min-height: 2.08rem;
+    padding: 0 .9rem;
+    border: 1px solid #dbe2ea;
+    border-radius: .44rem;
+    background: #fff;
+    color: #334155;
+    box-shadow: 0 1px 2px rgb(15 23 42 / 4%);
+    font-weight: 600;
+    transition: background-color 140ms ease, border-color 140ms ease, color 140ms ease;
   }
 
   .statistics-page[data-active-metric="municipios"] #estadisticas-filtros > .users-filter-panel-footer .users-filter-secondary:not(:disabled):hover {
-    border: 0;
-    background: transparent;
-    color: var(--brand-primary-hover, #4a0e26);
-    text-decoration: underline;
-    text-underline-offset: .18rem;
+    border-color: #d5dde7;
+    background: #eef2f7;
+    color: #0f172a;
+    text-decoration: none;
   }
 
   .statistics-page[data-active-metric="municipios"] #estadisticas-filtros > .users-filter-panel-footer button:disabled {
@@ -5182,9 +5176,10 @@
   }
 
   .statistics-page[data-active-metric="municipios"] #estadisticas-filtros > .users-filter-panel-footer .users-filter-secondary:disabled {
-    border: 0;
-    background: transparent;
-    color: var(--ui-text-secondary, #526278);
+    border-color: #dbe2ea;
+    background: #fff;
+    color: #334155;
+    box-shadow: none;
   }
 
   .statistics-page[data-active-metric="municipios"] #estadisticas-filtros > .users-filter-panel-footer .users-filter-apply:disabled {

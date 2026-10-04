@@ -72,6 +72,7 @@ test('los controles de Vista conservan los filtros de Datos compatibles', async 
     const ageInput = page.locator('#edadFilter');
     const age = '20-30';
 
+    await page.getByRole('tab', { name: 'Filtros', exact: true }).click();
     await ageInput.fill(age);
     await sexSelect.evaluate(select => {
         if (select.tomselect) select.tomselect.setValue('M');
@@ -141,6 +142,7 @@ test('los controles de Vista conservan los filtros de Datos compatibles', async 
 
 test('Municipios de residencia cambia de cantidades a tasas por población', async ({ page }) => {
     await page.emulateMedia({ reducedMotion: 'no-preference' });
+    await page.getByRole('tab', { name: 'Filtros', exact: true }).click();
     await page.evaluate(() => {
         window.__municipalityConfigAnimationStarted = false;
         document.getElementById('municipalitySidebarPresentation')?.addEventListener('animationstart', () => {
@@ -178,7 +180,7 @@ test('Municipios de residencia cambia de cantidades a tasas por población', asy
 });
 
 test('Municipios compacta Sexo y Edad con foco neutral', async ({ page }) => {
-    await page.getByRole('tab', { name: 'Datos', exact: true }).click();
+    await page.getByRole('tab', { name: 'Filtros', exact: true }).click();
 
     const demographicContent = page.locator('#statisticsDemographicFilterGroup > .users-filter-section-content');
     const sexFilter = page.locator('#filterSexo');
@@ -252,29 +254,58 @@ test('Municipios compacta Sexo y Edad con foco neutral', async ({ page }) => {
     expect(tooltipBox.x).toBeGreaterThanOrEqual(panelBox.x);
 });
 
-test('Municipios unifica las acciones para restablecer Datos y Vista', async ({ page }) => {
+test('Municipios distingue Limpiar filtros de Restablecer vista', async ({ page }) => {
     const filtersReset = page.locator('#limpiarFiltros');
     const viewReset = page.locator('#statisticsPresentationReset');
+    const configurationTabs = page.locator('#municipalityConfigurationTabs');
+    const getAppearance = locator => locator.evaluate(element => {
+        const style = getComputedStyle(element);
+        return {
+            backgroundColor: style.backgroundColor,
+            color: style.color,
+            fontFamily: style.fontFamily,
+            fontSize: style.fontSize,
+            fontWeight: style.fontWeight,
+            paddingBlock: `${style.paddingTop} ${style.paddingBottom}`,
+            textDecorationLine: style.textDecorationLine,
+        };
+    });
 
-    await expect(filtersReset).toBeVisible();
-    await expect(filtersReset).toHaveText('Restablecer filtros');
-    await expect(filtersReset.locator('i.fa-undo')).toHaveCount(1);
-    await expect(filtersReset).toBeDisabled();
-
-    await page.getByRole('tab', { name: 'Vista' }).click();
+    await expect(configurationTabs.locator('i')).toHaveCount(0);
+    await expect(configurationTabs.getByRole('tab').first()).toHaveText('Vista');
+    await expect(configurationTabs.getByRole('tab', { name: 'Vista' })).toHaveAttribute('aria-selected', 'true');
     await expect(viewReset).toBeVisible();
-    await expect(viewReset).toHaveText('Restablecer vista');
-    await expect(viewReset.locator('i.fa-undo')).toHaveCount(1);
-    await expect(viewReset).toBeDisabled();
+    await expect(viewReset).toHaveText('Restablecer');
+    await expect(viewReset).toHaveAttribute('aria-label', 'Restablecer configuración de la vista');
+    await expect(viewReset).toHaveAttribute('title', 'Restablecer configuración de la vista');
+    await expect(viewReset.locator('i')).toHaveCount(0);
+    await expect(viewReset).toBeEnabled();
 
     await page.locator('#municipalityChartTypeButtons').getByRole('button', { name: 'Pastel' }).click();
     await expect(viewReset).toBeEnabled();
+    const viewAppearance = await getAppearance(viewReset);
+    await viewReset.hover();
+    const viewHoverAppearance = await getAppearance(viewReset);
     await viewReset.click();
-    await expect(viewReset).toBeDisabled();
+    await expect(viewReset).toBeEnabled();
 
-    await page.getByRole('tab', { name: 'Datos', exact: true }).click();
+    await page.getByRole('tab', { name: 'Filtros', exact: true }).click();
+    await expect(filtersReset).toBeVisible();
+    await expect(filtersReset).toHaveText('Limpiar');
+    await expect(filtersReset).toHaveAttribute('aria-label', 'Limpiar filtros');
+    await expect(filtersReset).toHaveAttribute('title', 'Limpiar filtros');
+    await expect(filtersReset.locator('i')).toHaveCount(0);
+    await expect(filtersReset).toBeEnabled();
     await page.locator('#sexoFilter').selectOption('M');
     await expect(filtersReset).toBeEnabled();
+    const filtersAppearance = await getAppearance(filtersReset);
+    await filtersReset.hover();
+    const filtersHoverAppearance = await getAppearance(filtersReset);
+
+    expect(filtersAppearance).toEqual(viewAppearance);
+    expect(filtersHoverAppearance).toEqual(viewHoverAppearance);
+    expect(filtersAppearance.color).toBe('rgb(97, 17, 50)');
+    expect(filtersHoverAppearance.textDecorationLine).toBe('underline');
 });
 
 test('Municipios equilibra graficas compactas sin comprimir barras extensas', async ({ page }) => {
@@ -282,7 +313,7 @@ test('Municipios equilibra graficas compactas sin comprimir barras extensas', as
     const chartPanel = page.locator('#statisticsChartPanel');
     const chartHeight = async () => (await chartPanel.boundingBox()).height;
 
-    await page.getByRole('tab', { name: 'Datos', exact: true }).click();
+    await page.getByRole('tab', { name: 'Filtros', exact: true }).click();
     const dataViewHeight = await chartHeight();
 
     await page.getByRole('tab', { name: 'Vista' }).click();
@@ -309,7 +340,7 @@ test('Municipios equilibra graficas compactas sin comprimir barras extensas', as
     expect(chartBox.height).toBeGreaterThan(configurationBox.height);
 });
 
-test('Municipios conserva la misma altura entre Datos y Vista para cada grafica', async ({ page }) => {
+test('Municipios conserva la misma altura entre Filtros y Vista para cada grafica', async ({ page }) => {
     await page.setViewportSize({ width: 1536, height: 900 });
 
     const chartPanel = page.locator('#statisticsChartPanel');
@@ -320,7 +351,7 @@ test('Municipios conserva la misma altura entre Datos y Vista para cada grafica'
         const chart = window.echarts.getInstanceByDom(document.getElementById('mainChart'));
         return chart?.getModel()?.getSeriesByIndex(0)?.getData()?.count?.() || 0;
     });
-    const dataTab = page.getByRole('tab', { name: 'Datos', exact: true });
+    const dataTab = page.getByRole('tab', { name: 'Filtros', exact: true });
     const viewTab = page.getByRole('tab', { name: 'Vista' });
 
     const cases = [
@@ -448,6 +479,10 @@ test('los filtros aplicados permanecen junto a la gráfica sin saltos ni borrado
         .toContainText('10, 20, 30, 40, 50, 60, 70, 90 años');
     await expect(page.locator('#filtrosActivosList .statistics-filter-chip[title]')).toHaveCount(0);
     await expect(page.locator('#filtrosActivosList .statistics-filter-chip button i.fa-xmark')).toHaveCount(7);
+    await expect(page.locator('#filtrosActivosList .statistics-filter-chip').first())
+        .toHaveCSS('background-color', 'rgb(248, 241, 244)');
+    await expect(page.locator('#filtrosActivosList .statistics-filter-chip strong').first())
+        .toHaveCSS('color', 'rgb(97, 17, 50)');
     expect(Math.abs((await chartCanvas.boundingBox()).y - emptyCanvasBox.y)).toBeLessThanOrEqual(1);
     const appliedStripBox = await strip.boundingBox();
     expect(Math.abs(appliedStripBox.y - emptyStripBox.y)).toBeLessThanOrEqual(1);
@@ -475,12 +510,17 @@ test('los filtros aplicados permanecen junto a la gráfica sin saltos ni borrado
     await expect(page.locator('#statisticsActiveFiltersMore')).toHaveAttribute('aria-expanded', 'true');
     expect(await page.locator('#statisticsActiveFiltersMore i').evaluate(icon => getComputedStyle(icon).transform)).not.toBe('none');
     await expect(page.locator('#statisticsActiveFiltersAll .statistics-filter-chip')).toHaveCount(7);
+    await expect(page.locator('#statisticsActiveFiltersAll .statistics-filter-chip').first())
+        .toHaveCSS('background-color', 'rgb(255, 255, 255)');
+    await expect(page.locator('#statisticsActiveFiltersAll .statistics-filter-chip strong').first())
+        .toHaveCSS('color', 'rgb(39, 39, 42)');
     await expect(popover).toContainText('Exposición a fuego y humo');
     await expect(popover).toHaveScreenshot('filtros-aplicados-panel.png');
     await page.keyboard.press('Escape');
     await expect(popover).toBeHidden();
     await expect(page.locator('#statisticsActiveFiltersMore')).toHaveAttribute('aria-expanded', 'false');
 
+    await page.getByRole('tab', { name: 'Filtros', exact: true }).click();
     await page.locator('#edadFilter').fill('99');
     await page.evaluate(() => markStatisticsFilterDraft());
     await page.locator('#statisticsActiveFiltersMore').click();
@@ -651,7 +691,7 @@ test('Fecha informa cuando no puede comprobar la cobertura y permite reintentar'
 });
 
 test('Municipios muestra los filtros de ubicación de forma clara y compacta', async ({ page }) => {
-    await page.getByRole('tab', { name: 'Datos', exact: true }).click();
+    await page.getByRole('tab', { name: 'Filtros', exact: true }).click();
 
     const locationFields = page.locator('#filterMunicipalityLocations');
     await expect(locationFields).toBeVisible();
