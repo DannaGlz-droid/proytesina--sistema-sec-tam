@@ -801,6 +801,9 @@ class StatisticsController extends Controller
         })->values();
 
         $availableCategories = $municipios->count();
+        $positiveCategories = $usesRate
+            ? $municipios->where('total', '>', 0)->whereNotNull('rate')->count()
+            : $availableCategories;
         $populationCoverage = $usesRate ? [
             'with_denominator' => $municipios->whereNotNull('population')->count(),
             'territories' => $municipios->count(),
@@ -842,6 +845,7 @@ class StatisticsController extends Controller
             ])->values()->all(),
             'displayed_total' => $displayedTotal,
             'available_categories' => $availableCategories,
+            'positive_categories' => $usesRate ? $positiveCategories : null,
             'ranking_label' => 'municipios',
             ...((($filters['measure'] ?? 'count') === 'rate' && !$usesRate) ? [
                 'measure_notice' => 'No hay población disponible para el año seleccionado; se muestran cantidades.',

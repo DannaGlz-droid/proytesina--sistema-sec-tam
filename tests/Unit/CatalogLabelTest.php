@@ -5,6 +5,10 @@ use App\Support\CatalogLabel;
 it('formats catalog labels without changing their stored values', function () {
     expect(CatalogLabel::municipality('OTRO'))->toBe('Otro')
         ->and(CatalogLabel::municipality('NUEVO LAREDO'))->toBe('Nuevo Laredo')
+        ->and(CatalogLabel::municipality('SAN NICOLAS'))->toBe('San Nicolás')
+        ->and(CatalogLabel::municipality('VILLAGRAN'))->toBe('Villagrán')
+        ->and(CatalogLabel::municipality('GOMEZ FARIAS'))->toBe('Gómez Farías')
+        ->and(CatalogLabel::municipality('GUSTAVO DIAZ ORDAZ'))->toBe('Gustavo Díaz Ordaz')
         ->and(CatalogLabel::district('IV - REYNOSA'))->toBe('IV · Reynosa')
         ->and(CatalogLabel::cause('OTROS ACCIDENTES'))->toBe('Otros accidentes')
         ->and(CatalogLabel::cause('VEHICULO DE MOTOR RESIDENCIA'))->toBe('Vehículo de motor residencia')

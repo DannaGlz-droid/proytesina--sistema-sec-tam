@@ -189,6 +189,7 @@ it('calculates residence municipality rates for a complete calendar year', funct
         ->and($data['counts'])->toBe([2, 4, 0])
         ->and($data['rates'])->toBe([20, 10, 0])
         ->and($data['populations'])->toBe([10000, 40000, 5000])
+        ->and($data['positive_categories'])->toBe(2)
         ->and($data['denominator_year'])->toBe(2026)
         ->and($data['total'])->toBe(6)
         ->and($data['population_source']['name'])->toBe('CONAPO');

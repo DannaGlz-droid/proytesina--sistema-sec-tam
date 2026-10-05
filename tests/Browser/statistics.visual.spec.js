@@ -11,6 +11,7 @@ test('Municipios y Distritos cambian su ámbito desde Vista', async ({ page }) =
     const scopeSelector = page.locator('#geographicScopeSelector');
 
     await page.getByRole('tab', { name: 'Vista' }).click();
+    await expect(page.locator('#chartTotalBadge')).toContainText('798 defunciones');
     await expect(scopeControl).toBeVisible();
     await expect(page.locator('#statisticsCopyLink')).toBeHidden();
     await expect(page.locator('#statisticsViewData')).toBeVisible();
@@ -187,7 +188,7 @@ test('Municipios de residencia cambia de cantidades a tasas por población', asy
     await rateButton.click();
     await requestPromise;
 
-    await expect(page.locator('#chartTitle')).toHaveText('Tasa de defunciones por municipio');
+    await expect(page.locator('#chartTitle')).toHaveText('Tasa de defunciones por municipio de residencia');
     await expect(page.locator('#chartTypeButtons').getByRole('button', { name: 'Pastel' })).toHaveCount(0);
     await expect(page.locator('#chartTypeButtons').getByRole('button', { name: 'Dona' })).toHaveCount(0);
     await expect(page.locator('#statisticsChartSourceSummary')).toContainText('Población: CONAPO (2025)');
@@ -195,6 +196,94 @@ test('Municipios de residencia cambia de cantidades a tasas por población', asy
         const chart = window.echarts.getInstanceByDom(document.getElementById('mainChart'));
         return Number(chart?.getOption()?.series?.[0]?.data?.[0]);
     })).toBeCloseTo(338, 1);
+    await expect.poll(async () => page.evaluate(() => {
+        const chart = window.echarts.getInstanceByDom(document.getElementById('mainChart'));
+        return chart?.getOption()?.yAxis?.[0]?.name;
+    })).toBe('Tasa por 100 mil habitantes');
+
+    await page.locator('#municipalityChartTypeButtons').getByRole('button', { name: 'Barras' }).click();
+    await expect.poll(async () => page.evaluate(() => {
+        const chart = window.echarts.getInstanceByDom(document.getElementById('mainChart'));
+        return chart?.getOption()?.xAxis?.[0]?.name;
+    })).toBe('Tasa por 100 mil habitantes');
+    await expect(page.locator('#statisticsGeographicScopeControl').getByRole('radio', { name: 'Residencia' })).toBeChecked();
+    await expect(rateButton).toHaveAttribute('aria-pressed', 'true');
+    await expect(page.locator('#chartLimitButtons').getByRole('button', { name: '10' })).toHaveAttribute('aria-pressed', 'true');
+
+    const sparseRateRequest = page.waitForRequest(request => {
+        const url = new URL(request.url());
+        return url.pathname.endsWith('/api/chart/municipios')
+            && url.searchParams.get('measure') === 'rate'
+            && url.searchParams.get('limit') === '5';
+    });
+    await page.locator('#chartLimitButtons').getByRole('button', { name: 'Top 5', exact: true }).click();
+    await sparseRateRequest;
+    await expect.poll(async () => page.evaluate(() => {
+        const chart = window.echarts.getInstanceByDom(document.getElementById('mainChart'));
+        return chart?.getOption()?.yAxis?.[0]?.data;
+    })).toEqual(['Tampico', 'Madero']);
+    await expect(page.locator('#statisticsChartCoverageText')).toHaveText('Mostrando 2 municipios');
+
+    await page.locator('#municipalityChartTypeButtons').getByRole('button', { name: 'Columnas' }).click();
+    await expect.poll(async () => page.evaluate(() => {
+        const chart = window.echarts.getInstanceByDom(document.getElementById('mainChart'));
+        return chart?.getOption()?.xAxis?.[0]?.data;
+    })).toEqual(['Tampico', 'Madero']);
+    await expect.poll(async () => page.evaluate(() => {
+        const chart = window.echarts.getInstanceByDom(document.getElementById('mainChart'));
+        const grid = chart?.getOption()?.grid?.[0];
+        return [grid?.left, grid?.right];
+    })).toEqual(['26%', '26%']);
+
+    await page.getByRole('tab', { name: 'Filtros', exact: true }).click();
+    await page.locator('#edadFilter').fill('18');
+    const singleRateRequest = page.waitForRequest(request => {
+        const url = new URL(request.url());
+        return url.pathname.endsWith('/api/chart/municipios')
+            && url.searchParams.get('measure') === 'rate'
+            && url.searchParams.get('age') === '18';
+    });
+    await page.locator('#statisticsFiltersApply').click();
+    await singleRateRequest;
+    await expect.poll(async () => page.evaluate(() => {
+        const chart = window.echarts.getInstanceByDom(document.getElementById('mainChart'));
+        const option = chart?.getOption();
+        const value = Number(option?.series?.[0]?.data?.[0] || 0);
+        const extent = chart?.getModel()?.getComponent('yAxis', 0)?.axis?.scale?.getExtent?.();
+        return option?.series?.[0]?.data?.length === 1
+            && Number(extent?.[1] || 0) > value;
+    })).toBe(true);
+
+    await page.getByRole('tab', { name: 'Vista' }).click();
+    await page.locator('#municipalityChartTypeButtons').getByRole('button', { name: 'Barras' }).click();
+    await expect.poll(async () => page.evaluate(() => {
+        const chart = window.echarts.getInstanceByDom(document.getElementById('mainChart'));
+        const option = chart?.getOption();
+        const value = Number(option?.series?.[0]?.data?.[0] || 0);
+        const extent = chart?.getModel()?.getComponent('xAxis', 0)?.axis?.scale?.getExtent?.();
+        return option?.series?.[0]?.data?.length === 1
+            && Number(extent?.[1] || 0) > value;
+    })).toBe(true);
+
+    await page.getByRole('tab', { name: 'Filtros', exact: true }).click();
+    const clearedRequest = page.waitForRequest(request => {
+        const url = new URL(request.url());
+        return url.pathname.endsWith('/api/chart/municipios')
+            && url.searchParams.get('municipio_type') === 'residencia'
+            && url.searchParams.get('measure') === 'count'
+            && !url.searchParams.has('years[]')
+            && !url.searchParams.has('age');
+    });
+    await page.locator('#limpiarFiltros').click();
+    await clearedRequest;
+
+    await expect(page.locator('#edadFilter')).toHaveValue('');
+    await expect(page.locator('#filtrosActivos')).toContainText('Sin filtros adicionales');
+    await expect(page.locator('#chartTitle')).toHaveText('Distribución por municipios de residencia');
+    await expect.poll(async () => (await chartState(page)).labels.length).toBeGreaterThan(1);
+    await page.getByRole('tab', { name: 'Vista' }).click();
+    await expect(page.locator('#statisticsGeographicScopeControl').getByRole('radio', { name: 'Residencia' })).toBeChecked();
+    await expect(page.locator('#statisticsMeasureButtons').getByRole('button', { name: 'Cantidad' })).toHaveAttribute('aria-pressed', 'true');
 });
 
 test('Municipios compacta Sexo y Edad con foco neutral', async ({ page }) => {

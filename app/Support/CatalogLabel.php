@@ -2,6 +2,8 @@
 
 namespace App\Support;
 
+use Illuminate\Support\Str;
+
 final class CatalogLabel
 {
     private const ACRONYMS = [
@@ -22,9 +24,30 @@ final class CatalogLabel
         'OTROS ACCIDENTES' => 'Otros accidentes',
     ];
 
+    private const MUNICIPALITIES = [
+        'GOMEZ FARIAS' => 'Gómez Farías',
+        'GONZALEZ' => 'González',
+        'GUEMEZ' => 'Güémez',
+        'GUSTAVO DIAZ ORDAZ' => 'Gustavo Díaz Ordaz',
+        'JIMENEZ' => 'Jiménez',
+        'MENDEZ' => 'Méndez',
+        'RIO BRAVO' => 'Río Bravo',
+        'SAN NICOLAS' => 'San Nicolás',
+        'VILLAGRAN' => 'Villagrán',
+        'XICOTENCATL' => 'Xicoténcatl',
+    ];
+
     public static function municipality(?string $value): string
     {
-        return self::properName($value);
+        $value = self::clean($value);
+
+        if ($value === '') {
+            return '';
+        }
+
+        $key = mb_strtoupper(Str::ascii($value), 'UTF-8');
+
+        return self::MUNICIPALITIES[$key] ?? self::properName($value);
     }
 
     public static function district(?string $value): string

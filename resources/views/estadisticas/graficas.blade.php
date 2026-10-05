@@ -520,7 +520,7 @@
                                         <div id="chartTotalBadge" class="statistics-chart-context__item statistics-chart-total">
                                             <span class="sr-only">Total analizado:</span>
                                             <strong id="chartTotalValue" class="statistics-chart-context__value">0</strong>
-                                            <span class="statistics-chart-context__suffix">defunciones</span>
+                                            <span id="chartTotalSuffix" class="statistics-chart-context__suffix">defunciones</span>
                                         </div>
                                         <div id="statisticsChartPeriod" class="statistics-chart-context__item hidden">
                                             <span class="sr-only">Periodo:</span>
@@ -2880,8 +2880,7 @@
 
             setStatisticsResetActionContent(document.getElementById('limpiarFiltros'), 'Limpiar', 'Limpiar filtros');
             document.getElementById('limpiarFiltros').addEventListener('click', function() {
-                clearFilters(true);
-                markStatisticsFilterDraft();
+                clearFilters();
             });
 
             const downloadMenuWrapper = document.getElementById('downloadMenuWrapper');
@@ -7180,13 +7179,19 @@
             const availableCategories = Number(data.available_categories || displayedCategories);
             const coverage = Number(data.coverage_percentage || 0);
             const hasLimitedCoverage = availableCategories > displayedCategories || coverage < 99.95;
+            const forceCategorySummary = data.force_category_summary === true;
 
             periodValue.textContent = periodText;
             periodElement.classList.toggle('hidden', !periodText);
-            if (hasLimitedCoverage && Number(data.filtered_total || 0) > 0) {
+            if ((hasLimitedCoverage || forceCategorySummary) && Number(data.filtered_total || 0) > 0) {
                 const dimension = data.ranking_label || 'categorías';
+                const displayedDimension = displayedCategories === 1 && dimension === 'municipios'
+                    ? 'municipio'
+                    : dimension;
                 coverageText.textContent = data.measure === 'rate'
-                    ? `Mostrando ${displayedCategories} de ${availableCategories} ${dimension}`
+                    ? (availableCategories > displayedCategories
+                        ? `Mostrando ${displayedCategories} de ${availableCategories} ${dimension}`
+                        : `Mostrando ${displayedCategories} ${displayedDimension}`)
                     : `Mostrando ${displayedCategories} de ${availableCategories} ${dimension} · representan ${coverage.toFixed(1)}% del total`;
                 coverageElement.classList.remove('hidden');
             } else {
@@ -7241,6 +7246,10 @@
             // Obtener grid para el chart type actual
             const verticalBarGrid = verticalBarGrids[currentChartType] || { left: 14, right: 14, top: 28, bottom: 18, containLabel: true };
             const formatNumber = (num) => Number(num || 0).toLocaleString('es-MX');
+            const formatDeathCount = (value) => {
+                const count = Number(value || 0);
+                return `${formatNumber(count)} ${count === 1 ? 'defunción' : 'defunciones'}`;
+            };
             const labelRich = {
                 value: { fontFamily: chartFontFamily, fontWeight: 600, color: '#1f2937', fontSize: 13, lineHeight: 16 },
                 percent: { fontFamily: chartFontFamily, fontWeight: 600, color: '#1f2937', fontSize: 13, lineHeight: 16 },
@@ -7291,6 +7300,8 @@
             if (totalEl) totalEl.textContent = totalStr;
             const badgeEl = document.getElementById('chartTotalValue');
             if (badgeEl) badgeEl.textContent = totalStr;
+            const badgeSuffix = document.getElementById('chartTotalSuffix');
+            if (badgeSuffix) badgeSuffix.textContent = filteredTotal === 1 ? 'defunción' : 'defunciones';
             document.getElementById('chartTotalBadge')?.classList.remove('hidden');
             updateChartContext(data);
             updateChartSourceSummary(data.source_summary, data.population_source, data.denominator_year);
@@ -7305,6 +7316,8 @@
 
             let labels = data.labels || [];
             let values = currentChartType === 'comparativa' ? null : (isRateMode ? (data.rates || []) : (data.counts || []));
+            let displayedRateCounts = Array.isArray(data.counts) ? [...data.counts] : [];
+            let displayedRatePopulations = Array.isArray(data.populations) ? [...data.populations] : [];
             
             // Usar paleta de alto contraste para gráficas circulares, paleta normal para barras/líneas
             const paletteSource = isPieLikeChart ? colorPalettesCircular : colorPalettes;
@@ -7338,7 +7351,21 @@
 
             // Filtrar entradas con valor 0 en gráficas de barras para evitar mostrar categorías sin datos
             try {
-                if ((chartType === 'bar' || chartType === 'barHorizontal') && !isRateMode) {
+                if ((chartType === 'bar' || chartType === 'barHorizontal') && isRateMode) {
+                    const visibleIndexes = labels.reduce((indexes, _label, index) => {
+                        const count = Number(data.counts?.[index] || 0);
+                        const rate = data.rates?.[index];
+                        if (count > 0 && rate !== null && rate !== undefined && Number.isFinite(Number(rate))) {
+                            indexes.push(index);
+                        }
+                        return indexes;
+                    }, []);
+
+                    labels = visibleIndexes.map(index => labels[index]);
+                    values = visibleIndexes.map(index => data.rates[index]);
+                    displayedRateCounts = visibleIndexes.map(index => data.counts[index]);
+                    displayedRatePopulations = visibleIndexes.map(index => data.populations?.[index] ?? null);
+                } else if ((chartType === 'bar' || chartType === 'barHorizontal') && !isRateMode) {
                     if (currentChartType === 'comparativa' && data.residence_counts && data.death_counts) {
                         const fLabels = [];
                         const fRes = [];
@@ -7381,7 +7408,37 @@
                 console.warn('Filter zeros failed', e);
             }
 
-            updateChartAccessibleSummary(data, labels, values || data.counts || []);
+            let chartPresentationData = data;
+            if ((chartType === 'bar' || chartType === 'barHorizontal') && isRateMode) {
+                const positiveCategories = Math.max(
+                    labels.length,
+                    Number(data.positive_categories ?? labels.length)
+                );
+                chartPresentationData = {
+                    ...data,
+                    labels,
+                    counts: displayedRateCounts,
+                    rates: values,
+                    populations: displayedRatePopulations,
+                    displayed_categories: labels.length,
+                    available_categories: positiveCategories,
+                    force_category_summary: true,
+                    population_coverage: data.population_coverage ? {
+                        ...data.population_coverage,
+                        displayed: labels.length,
+                        displayed_with_denominator: labels.length,
+                    } : data.population_coverage,
+                };
+                updateChartContext(chartPresentationData);
+                updateChartMethodology(chartPresentationData);
+
+                if (labels.length === 0) {
+                    showNoChartData(chartPresentationData);
+                    return;
+                }
+            }
+
+            updateChartAccessibleSummary(chartPresentationData, labels, values || displayedRateCounts || []);
 
             const normalizeCategoryLabel = (value) => String(value ?? '').replace(/\s+/g, ' ').trim();
             const usesCategoricalColumns = resolvedChartType === 'bar';
@@ -7739,9 +7796,9 @@
                             if (isRateMode) {
                                 const detail = rateDetailsByMunicipality.get(normalizeMunicipalityKey(params.name));
                                 if (!detail || detail.population === null || detail.population === undefined) {
-                                    return `<strong>${params.name}</strong><br>Tasa no disponible<br>${formatNumber(detail?.count || 0)} defunciones`;
+                                    return `<strong>${params.name}</strong><br>Tasa no disponible<br>${formatDeathCount(detail?.count || 0)}`;
                                 }
-                                return `<strong>${params.name}</strong><br><strong>${Number(detail.rate).toFixed(1)}</strong> por 100 mil habitantes<br>${formatNumber(detail.count)} defunciones<br>Población ${data.denominator_year}: ${formatNumber(detail.population)}`;
+                                return `<strong>${params.name}</strong><br><strong>${Number(detail.rate).toFixed(1)}</strong> por 100 mil habitantes<br>${formatDeathCount(detail.count)}<br>Población ${data.denominator_year}: ${formatNumber(detail.population)}`;
                             }
                             const percentage = filteredTotal > 0 ? ((value / filteredTotal) * 100).toFixed(1) : '0.0';
                             return `<strong>${params.name}</strong><br>${formatNumber(value)} registros · ${percentage}%`;
@@ -8461,14 +8518,14 @@
                     tooltipFormatter = params => {
                         const point = Array.isArray(params) ? params[0] : params;
                         const index = point?.dataIndex ?? 0;
-                        const rate = data.rates?.[index];
-                        const count = Number(data.counts?.[index] || 0);
-                        const population = data.populations?.[index];
+                        const rate = values?.[index];
+                        const count = Number(displayedRateCounts?.[index] || 0);
+                        const population = displayedRatePopulations?.[index];
                         const rateText = rate === null || rate === undefined ? 'No disponible' : `${Number(rate).toFixed(1)} por 100 mil habitantes`;
                         const populationText = population === null || population === undefined
                             ? 'Población no disponible'
                             : `Población ${data.denominator_year}: ${formatNumber(population)}`;
-                        return `<strong>${labels[index] || point?.name || ''}</strong><br>${rateText}<br>${formatNumber(count)} defunciones<br>${populationText}`;
+                        return `<strong>${labels[index] || point?.name || ''}</strong><br>${rateText}<br>${formatDeathCount(count)}<br>${populationText}`;
                     };
                 } else if (usesDenseCategoricalColumns && chartConfig.dataLabelMode === 'both') {
                     tooltipFormatter = params => {
@@ -8510,12 +8567,28 @@
                             top: sparseHorizontalInset || 22,
                             containLabel: true
                         }
-                        : categoricalGrid,
+                        : (isRateMode && !sparseVerticalInset
+                            ? { ...categoricalGrid, left: 56 }
+                            : categoricalGrid),
                     [isHorizontal ? 'xAxis' : 'yAxis']: {
                         type: 'value',
                         name: isRateMode ? 'Tasa por 100 mil habitantes' : '',
                         nameLocation: 'middle',
                         nameGap: isHorizontal ? 42 : 52,
+                        ...(isRateMode && labels.length === 1 ? {
+                            max: axisExtent => {
+                                const maximum = Number(axisExtent?.max || 0);
+                                if (maximum <= 0) return 1;
+
+                                const paddedMaximum = maximum * 1.18;
+                                const magnitude = 10 ** Math.floor(Math.log10(paddedMaximum));
+                                const normalizedMaximum = paddedMaximum / magnitude;
+                                const niceStep = [1, 1.2, 1.5, 2, 2.5, 3, 4, 5, 6, 8, 10]
+                                    .find(step => step >= normalizedMaximum) || 10;
+
+                                return Number((niceStep * magnitude).toPrecision(12));
+                            }
+                        } : {}),
                         axisLine: { show: false },
                         axisTick: { show: false },
                         axisLabel: { fontFamily: chartFontFamily, fontSize: axisFontSize, fontWeight: 400, color: '#526278' },
@@ -8582,8 +8655,8 @@
                             rich: barLabelRich,
                             formatter: (params) => {
                                 if (isRateMode) {
-                                    const rate = data.rates?.[params.dataIndex];
-                                    const count = Number(data.counts?.[params.dataIndex] || 0);
+                                    const rate = values?.[params.dataIndex];
+                                    const count = Number(displayedRateCounts?.[params.dataIndex] || 0);
                                     if (rate === null || rate === undefined) return '{normal|N/D}';
                                     if (chartConfig.dataLabelMode === 'value') return `{value|${Number(rate).toFixed(1)}}`;
                                     if (chartConfig.dataLabelMode === 'percent') return `{value|${formatNumber(count)}}`;
@@ -8828,12 +8901,17 @@
             });
         }
 
-        function clearFilters(suppressUpdate = false) {
+        function clearFilters() {
             const safeSetValue = (id, value) => {
                 const el = document.getElementById(id);
                 if (!el) return;
                 if (el.tomselect) el.tomselect.setValue(value, true);
                 else el.value = value;
+            };
+            const presentationState = {
+                granularidad: activeFilters.granularidad,
+                tipoComparativa: activeFilters.tipoComparativa,
+                tipoMunicipio: activeFilters.tipoMunicipio
             };
             
             dateYearDrafts = { years: '', months: '', quarter: '' };
@@ -8847,9 +8925,6 @@
             safeSetValue('sexoFilter', '');
             safeSetValue('edadFilter', '');
             safeSetValue('edadUnidadFilter', 'years');
-            safeSetValue('granularidadFilter', 'month');
-            safeSetValue('tipoComparativaFilter', 'residencia-defuncion');
-            safeSetValue('tipoMunicipioFilter', 'defuncion');
             // NO resetear chartLimit aquí - preservar configuración de visualización por métrica
             // safeSetValue('chartLimit', 'all');
             // chartConfig.limit = null;
@@ -8893,11 +8968,12 @@
             });
             onDateRangeChange({ skipYearDraftSync: true });
 
+            resetActiveDataFilters();
+            Object.assign(activeFilters, presentationState);
+            updateMeasurePresentation();
             renderChartTypeButtons(currentChartType);
             renderDataLabelButtons(currentChartType);
             renderChartLimitButtons(currentChartType);
-            
-            resetActiveDataFilters();
             invalidateChartDataCache();
             updateActiveFiltersDisplay();
             if (usesPersistentMunicipalityFilters()) {
@@ -8905,7 +8981,7 @@
                 document.getElementById('estadisticas-filtros')?.classList.remove('has-draft-changes');
                 syncStatisticsFilterDraftUi();
             }
-            if (!suppressUpdate) updateChart();
+            updateChart();
         }
 
         function showLoadingMessage() {
@@ -8936,7 +9012,7 @@
 
         function getCurrentChartTitle() {
             if (currentChartType === 'municipios' && chartConfig.measure === 'rate') {
-                return 'Tasa de defunciones por municipio (residencia)';
+                return 'Tasa de defunciones por municipio de residencia';
             }
             let title = currentChartType === 'comparativa'
                 ? comparativaLabels[activeFilters.tipoComparativa] || chartTitles[currentChartType]
@@ -8952,7 +9028,7 @@
 
         function getCurrentChartHeadingTitle() {
             if (currentChartType === 'municipios' && chartConfig.measure === 'rate') {
-                return 'Tasa de defunciones por municipio';
+                return 'Tasa de defunciones por municipio de residencia';
             }
             if (currentChartType === 'comparativa') {
                 return comparativaLabels[activeFilters.tipoComparativa] || 'Comparativa';
@@ -8972,8 +9048,20 @@
         function getExportChartTitle() {
             const title = getCurrentChartTitle();
             const limit = Number(chartConfig.limit);
-            const displayedCategories = Number(latestChartData?.displayed_categories || 0);
-            const availableCategories = Number(latestChartData?.available_categories || displayedCategories);
+            const resolvedType = chartConfig.type === 'auto'
+                ? getOptimalChartType(currentChartType)
+                : chartConfig.type;
+            const usesRateCartesian = currentChartType === 'municipios'
+                && latestChartData?.measure === 'rate'
+                && ['bar', 'barHorizontal'].includes(resolvedType);
+            const rawDisplayedCategories = Number(latestChartData?.displayed_categories || 0);
+            const positiveCategories = Number(latestChartData?.positive_categories ?? rawDisplayedCategories);
+            const displayedCategories = usesRateCartesian
+                ? Math.min(rawDisplayedCategories, positiveCategories)
+                : rawDisplayedCategories;
+            const availableCategories = usesRateCartesian
+                ? positiveCategories
+                : Number(latestChartData?.available_categories || displayedCategories);
             const isTruncatedTop = chartTypesWithTopSelector.includes(currentChartType)
                 && Number.isFinite(limit)
                 && limit > 0
