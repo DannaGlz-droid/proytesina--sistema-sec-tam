@@ -565,6 +565,8 @@ Cuando “Ver datos” se abre desde una gráfica, integrar el contexto como enc
 - Menús y dropdowns deben cerrar con Escape y clic exterior.
 - El foco regresa al control que abrió el panel.
 - Usar panel inline o popover para filtros; modal solo cuando la decisión bloquea el flujo.
+- Todo menú, dropdown o popover flotante que anime su entrada debe animar también su salida. Usar opacidad y un desplazamiento vertical máximo de 4 px: entrada de 150–160 ms con desaceleración y salida de 120 ms ligeramente más rápida. No usar escala, rebote ni movimientos laterales.
+- El estado oculto se aplica después de finalizar la salida, no al iniciar el cierre. Con `prefers-reduced-motion`, eliminar el desplazamiento y reducir ambas transiciones al mínimo técnico.
 - Confirmar acciones destructivas y navegación con cambios sin guardar.
 - No usar `window.alert()` para errores de negocio.
 

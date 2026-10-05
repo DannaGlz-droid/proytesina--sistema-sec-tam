@@ -100,7 +100,7 @@
                                                             <i class="fas fa-circle-question" aria-hidden="true"></i>
                                                         </button>
                                                         <span id="yearFilterHelp" class="statistics-filter-tooltip" role="tooltip">
-                                                            Escribe un año, un periodo o varios años separados por comas. Solo se aceptan años con datos disponibles.
+                                                            Escribe un año, un rango o varios años separados por comas.
                                                         </span>
                                                     </span>
                                                 </div>
@@ -247,7 +247,7 @@
                                                         <i class="fas fa-circle-question" aria-hidden="true"></i>
                                                     </button>
                                                     <span id="edadFilterHelp" class="statistics-filter-tooltip" role="tooltip">
-                                                        Escribe una edad (25), un rango (20-30), varias separadas por comas (5,10,15) o una edad m&iacute;nima (65+). Elige la unidad a la derecha.
+                                                        <strong>Formatos admitidos:</strong> 25, 20-30, 5,10,15 o 65+. Elige la unidad a la derecha.
                                                     </span>
                                                 </span>
                                             </div>
@@ -432,7 +432,7 @@
                                     <div class="statistics-palette-popover">
                                         <button type="button" id="statisticsPaletteToggle" class="statistics-palette-toggle" aria-expanded="false" aria-controls="statisticsPaletteMenu" aria-haspopup="dialog">
                                             <span id="statisticsPaletteSelection" class="statistics-palette-selection" aria-hidden="true"></span>
-                                            <span id="statisticsPaletteLabel" class="statistics-palette-label">Granate profundo</span>
+                                            <span id="statisticsPaletteLabel" class="statistics-palette-label">Guinda profundo</span>
                                             <i class="fas fa-chevron-down" aria-hidden="true"></i>
                                         </button>
                                         <div id="statisticsPaletteMenu" class="statistics-palette-menu hidden" role="dialog" aria-labelledby="statisticsPaletteLegend">
@@ -472,10 +472,6 @@
                                             <i class="fas fa-table-list" aria-hidden="true"></i>
                                             Ver datos
                                         </a>
-                                        <button type="button" id="statisticsCopyLink" class="statistics-copy-link hidden" title="Copiar enlace de esta vista" hidden>
-                                            <i class="fas fa-link" aria-hidden="true"></i>
-                                            <span id="statisticsCopyLinkLabel" aria-live="polite">Copiar enlace</span>
-                                        </button>
                                         <div class="statistics-download__group">
                                             <button type="button" class="statistics-download__primary" id="descargarActual" aria-label="Descargar gráfica en PNG con fondo blanco">
                                                 <i class="fas fa-download" aria-hidden="true"></i>
@@ -508,6 +504,10 @@
                                             <button type="button" class="download-option" data-export="csv">
                                                 <i class="fas fa-file-csv" aria-hidden="true"></i>
                                                 Datos en CSV
+                                            </button>
+                                            <button type="button" id="statisticsCopyLink" class="download-option statistics-download-menu__share" data-action="copy-link">
+                                                <i class="fas fa-link" aria-hidden="true"></i>
+                                                <span id="statisticsCopyLinkLabel" aria-live="polite">Copiar enlace de esta vista</span>
                                             </button>
                                         </div>
                                         <span id="statisticsChartDownloadStatus" class="sr-only" role="status" aria-live="polite"></span>
@@ -1101,7 +1101,7 @@
         };
 
         // Paletas de alto contraste para gráficas circulares. La variante institucional
-        // es cualitativa: conserva el granate como ancla y usa matices distinguibles.
+        // es cualitativa: conserva el guinda como ancla y usa matices distinguibles.
         const colorPalettesCircular = {
             aqua: ['#2F3D14', '#3D4E1B', '#6C7836', '#8B9852', '#A8C363', '#B8CC76', '#C2D67E', '#D6E4A5', '#DFE9B8', '#485C24'],
             autumn: ['#1A140D', '#3D3120', '#5C4624', '#83673F', '#A9875A', '#C4976C', '#DCAF85', '#EAC39C', '#F8D6B3', '#F7E1BE'],
@@ -1121,14 +1121,14 @@
             spectrum: 'Azul, ámbar y verde',
             earth: 'Azul, tierra y verde',
             goldenEarth: 'Violeta gradual',
-            maroon611132: 'Granate gradual',
+            maroon611132: 'Guinda gradual',
             institutional: 'Azul gradual',
             grayscale: 'Gris gradual'
         };
 
         const circularColorPaletteLabels = {
             ...colorPaletteLabels,
-            maroon611132: 'Granate, oro y azul',
+            maroon611132: 'Guinda, oro y azul',
             spectrum: 'Azul, ámbar y verde',
             earth: 'Azul, tierra y verde'
         };
@@ -1146,7 +1146,7 @@
         };
 
         const cartesianSolidColorLabels = {
-            maroon611132: 'Granate profundo',
+            maroon611132: 'Guinda profundo',
             institutional: 'Azul institucional',
             spectrum: 'Azul petróleo',
             grayscale: 'Gris pizarra',
@@ -1155,6 +1155,18 @@
             rose: 'Rojo carmín',
             earth: 'Naranja quemado',
             goldenEarth: 'Violeta intenso'
+        };
+
+        const cartesianSolidColorShortLabels = {
+            maroon611132: 'Guinda',
+            institutional: 'Azul',
+            spectrum: 'Petróleo',
+            grayscale: 'Pizarra',
+            aqua: 'Oliva',
+            autumn: 'Tierra',
+            rose: 'Carmín',
+            earth: 'Naranja',
+            goldenEarth: 'Violeta'
         };
 
         const primaryPaletteKeys = ['maroon611132', 'institutional', 'spectrum', 'grayscale'];
@@ -1511,8 +1523,12 @@
 
         async function writeTextToClipboard(value) {
             if (navigator.clipboard && window.isSecureContext) {
-                await navigator.clipboard.writeText(value);
-                return;
+                try {
+                    await navigator.clipboard.writeText(value);
+                    return;
+                } catch (error) {
+                    console.warn('El portapapeles moderno no está disponible; se usará el método alternativo.', error);
+                }
             }
 
             const textarea = document.createElement('textarea');
@@ -1533,7 +1549,7 @@
             const label = document.getElementById('statisticsCopyLinkLabel');
             if (!button || !icon || !label) return;
             const states = {
-                idle: ['fa-link', 'Copiar enlace'],
+                idle: ['fa-link', 'Copiar enlace de esta vista'],
                 success: ['fa-check', 'Enlace copiado'],
                 error: ['fa-triangle-exclamation', 'No se pudo copiar']
             };
@@ -1721,7 +1737,7 @@
             yearInput.title = `Escribe años con datos disponibles. ${getStatisticsYearCoverageText()}`;
 
             if (tooltip) {
-                tooltip.textContent = `Escribe un año, un periodo o varios años separados por comas. ${getStatisticsYearCoverageText()}`;
+                tooltip.textContent = 'Escribe un año, un rango o varios años separados por comas.';
             }
         }
 
@@ -2641,9 +2657,10 @@
             });
 
             document.getElementById('chartTypeSelector').addEventListener('change', function() {
+                const previousLimit = chartConfig.limit;
+                preserveCompatibleLimitForVisual(currentChartType, this.value, previousLimit);
                 chartConfig.type = this.value;
                 preferredConfig.type = this.value;
-                const previousLimit = chartConfig.limit;
                 syncChartLimitForPresentation(currentChartType, this.value);
                 renderChartTypeButtons(currentChartType);
                 renderChartLimitButtons(currentChartType);
@@ -2737,14 +2754,30 @@
             const paletteToggle = document.getElementById('statisticsPaletteToggle');
             const paletteMenu = document.getElementById('statisticsPaletteMenu');
             const palettePopover = paletteToggle?.closest('.statistics-palette-popover');
+            const paletteCloseDuration = window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 120;
+            let paletteCloseTimer = null;
 
             const closePaletteMenu = () => {
-                if (!paletteMenu || !paletteToggle) return;
-                paletteMenu.classList.add('hidden');
-                paletteMenu.classList.remove('opens-up');
-                paletteMenu.classList.remove('is-scrollable');
-                paletteMenu.style.removeProperty('max-height');
+                if (!paletteMenu || !paletteToggle
+                    || paletteMenu.classList.contains('hidden')
+                    || paletteMenu.classList.contains('is-closing')) return;
+
                 paletteToggle.setAttribute('aria-expanded', 'false');
+                paletteMenu.classList.add('is-closing');
+
+                const finishClose = () => {
+                    paletteMenu.classList.add('hidden');
+                    paletteMenu.classList.remove('is-closing', 'opens-up', 'is-scrollable');
+                    paletteMenu.style.removeProperty('max-height');
+                    paletteCloseTimer = null;
+                };
+
+                if (paletteCloseDuration === 0) {
+                    finishClose();
+                    return;
+                }
+
+                paletteCloseTimer = window.setTimeout(finishClose, paletteCloseDuration);
             };
 
             const positionPaletteMenu = () => {
@@ -2775,12 +2808,18 @@
 
             if (paletteToggle && paletteMenu) {
                 paletteToggle.addEventListener('click', function() {
-                    const willOpen = paletteMenu.classList.contains('hidden');
+                    const willOpen = paletteMenu.classList.contains('hidden')
+                        || paletteMenu.classList.contains('is-closing');
                     if (!willOpen) {
                         closePaletteMenu();
                         return;
                     }
 
+                    if (paletteCloseTimer !== null) {
+                        window.clearTimeout(paletteCloseTimer);
+                        paletteCloseTimer = null;
+                    }
+                    paletteMenu.classList.remove('is-closing');
                     paletteMenu.classList.remove('hidden');
                     this.setAttribute('aria-expanded', 'true');
                     window.requestAnimationFrame(() => {
@@ -2862,7 +2901,6 @@
             document.getElementById('statisticsViewData')?.addEventListener('click', function(event) {
                 if (this.getAttribute('aria-disabled') === 'true') event.preventDefault();
             });
-            document.getElementById('statisticsCopyLink')?.addEventListener('click', copyStatisticsShareUrl);
             document.getElementById('statisticsChartStateAction')?.addEventListener('click', function() {
                 if (this.dataset.action === 'clear') {
                     clearFilters();
@@ -2887,6 +2925,10 @@
 
                 downloadMenu.querySelectorAll('.download-option').forEach(option => {
                     option.addEventListener('click', async function() {
+                        if (this.dataset.action === 'copy-link') {
+                            await copyStatisticsShareUrl();
+                            return;
+                        }
                         const exportType = this.dataset.export;
                         setDownloadMenuOpen(false);
                         if (exportType === 'csv') {
@@ -3970,15 +4012,44 @@
             const layout = page?.querySelector('.statistics-layout');
             const configuration = document.getElementById('estadisticas-filtros');
             const hasMunicipalityConfiguration = document.getElementById('municipalityConfigurationTabs');
+            const filtersBody = configuration?.querySelector('.users-filter-panel-body');
+            const filters = document.getElementById('municipalitySidebarFilters');
+            const presentation = document.getElementById('municipalitySidebarPresentation');
+            const footer = configuration?.querySelector(':scope > .users-filter-panel-footer');
             const usesDesktopMunicipalityLayout = currentChartType === 'municipios'
                 && window.matchMedia('(min-width: 1024px)').matches;
 
-            if (!layout || !configuration || !hasMunicipalityConfiguration || !usesDesktopMunicipalityLayout) return;
+            if (!layout || !configuration || !hasMunicipalityConfiguration || !filtersBody
+                || !filters || !presentation || !usesDesktopMunicipalityLayout) return;
 
-            const measuredHeight = Math.ceil(configuration.getBoundingClientRect().height);
+            const previousView = filtersBody.dataset.configurationView || 'presentation';
+            const previousVisibility = configuration.style.visibility;
+            const previousFiltersHidden = filters.hidden;
+            const previousPresentationHidden = presentation.hidden;
+            const previousFooterHidden = footer?.hidden;
+
+            // Medir ambas pestañas sin pintarlas. Esto evita que la gráfica cambie
+            // de altura al pasar de Vista a Filtros o viceversa.
+            layout.style.removeProperty('--statistics-municipality-balanced-height');
+            configuration.style.visibility = 'hidden';
+            const measureView = view => {
+                filtersBody.dataset.configurationView = view;
+                filters.hidden = view !== 'filters';
+                presentation.hidden = view !== 'presentation';
+                if (footer) footer.hidden = view !== 'filters';
+                return Math.ceil(configuration.getBoundingClientRect().height);
+            };
+            const measuredHeight = Math.max(measureView('presentation'), measureView('filters'));
+
+            filtersBody.dataset.configurationView = previousView;
+            filters.hidden = previousFiltersHidden;
+            presentation.hidden = previousPresentationHidden;
+            if (footer) footer.hidden = previousFooterHidden;
+            configuration.style.visibility = previousVisibility;
+
             if (!Number.isFinite(measuredHeight) || measuredHeight <= 0) return;
 
-            municipalityConfigurationHeight = Math.max(municipalityConfigurationHeight, measuredHeight);
+            municipalityConfigurationHeight = measuredHeight;
             layout.style.setProperty(
                 '--statistics-municipality-balanced-height',
                 `${municipalityConfigurationHeight}px`
@@ -4198,7 +4269,8 @@
                     document.getElementById('statisticsMeasureGroup'),
                     document.getElementById('filterTop'),
                     document.getElementById('statisticsDataLabelGroup'),
-                    displayPanel.querySelector('.statistics-display-group--palette'),
+                    displayPanel.querySelector('.statistics-display-group--palette')
+                        || sidebarPresentation?.querySelector('.statistics-display-group--palette'),
                 ].forEach(group => {
                     if (group && sidebarGroups) sidebarGroups.append(group);
                 });
@@ -4505,6 +4577,28 @@
             return previousLimit !== effectiveLimit;
         }
 
+        function preserveCompatibleLimitForVisual(
+            chartType,
+            visualType,
+            limit,
+            categoryCount = getKnownCategoryCount(chartType)
+        ) {
+            if (!chartTypesWithTopSelector.includes(chartType)) return false;
+
+            const family = getVisualLimitFamily(chartType, visualType);
+            const isCompatible = limit === null
+                ? canShowAllCategories(chartType, visualType, categoryCount)
+                : getAvailableChartLimits(chartType, visualType, categoryCount).includes(limit);
+
+            if (!isCompatible) return false;
+
+            // Al cambiar solo la representacion, el alcance elegido por la persona
+            // se conserva. Una preferencia anterior de la vista destino no debe
+            // convertir, por ejemplo, "Todos" en "Top 5" sin que se solicite.
+            setPreferredLimit(chartType, family, limit);
+            return true;
+        }
+
         function applyPreferredPresentation(chartType) {
             chartConfig.measure = chartType === 'municipios' ? preferredConfig.measure : 'count';
             const validTypes = getAvailableChartTypes(chartType);
@@ -4591,28 +4685,39 @@
 
             const isMunicipality = currentChartType === 'municipios';
             const residenceScope = activeFilters.tipoMunicipio === 'residencia';
+            const rateYear = getSelectedRateCalendarYear();
+            const rateAvailable = residenceScope && rateYear !== null;
             group.style.display = isMunicipality ? '' : 'none';
             if (!isMunicipality) return;
 
-            if (!residenceScope && chartConfig.measure === 'rate') {
+            if (!rateAvailable && chartConfig.measure === 'rate') {
                 chartConfig.measure = 'count';
                 preferredConfig.measure = 'count';
                 const status = document.getElementById('statisticsPresentationStatus');
-                if (status) status.textContent = 'La tasa por población solo está disponible para municipios de residencia; se muestran cantidades.';
+                if (status) status.textContent = residenceScope
+                    ? 'La tasa requiere un año calendario completo; se muestran cantidades.'
+                    : 'La tasa por población solo está disponible para municipios de residencia; se muestran cantidades.';
             }
             select.value = chartConfig.measure;
             container.innerHTML = [
                 { value: 'count', label: 'Cantidad', icon: 'fa-hashtag', disabled: false },
-                { value: 'rate', label: 'Tasa', icon: 'fa-percent', disabled: !residenceScope }
+                { value: 'rate', label: 'Tasa', icon: 'fa-percent', disabled: !rateAvailable }
             ].map(option => {
                 const active = option.value === chartConfig.measure;
-                return `<button type="button" class="visual-option-btn visual-option-card ${active ? 'active' : ''}" data-target="statisticsMeasure" data-value="${option.value}" aria-pressed="${active}" ${option.disabled ? 'disabled' : ''}>
+                const unavailableReason = option.value === 'rate' && option.disabled
+                    ? (residenceScope
+                        ? 'Selecciona un año calendario completo en Filtros para habilitar la tasa.'
+                        : 'Selecciona municipios de residencia para habilitar la tasa.')
+                    : '';
+                return `<button type="button" class="visual-option-btn visual-option-card ${active ? 'active' : ''}" data-target="statisticsMeasure" data-value="${option.value}" aria-pressed="${active}" ${option.disabled ? 'disabled' : ''} ${unavailableReason ? `title="${unavailableReason}" aria-label="Tasa. ${unavailableReason}"` : ''}>
                     <i class="fas ${option.icon}" aria-hidden="true"></i><span class="visual-option-label">${option.label}</span>
                 </button>`;
             }).join('');
-            note.textContent = residenceScope
-                ? 'La tasa se expresa por 100 mil habitantes y requiere un año calendario completo.'
-                : 'La tasa por población solo está disponible para municipios de residencia.';
+            note.textContent = !residenceScope
+                ? 'La tasa por población solo está disponible para municipios de residencia.'
+                : (rateYear === null
+                    ? 'Para usar Tasa, en Filtros selecciona Periodo: Por año y elige un solo año.'
+                    : `La tasa se expresa por 100 mil habitantes con la población de ${rateYear}.`);
 
             const labelOptions = document.querySelectorAll('#datalabelMode option');
             labelOptions.forEach(option => {
@@ -4624,6 +4729,20 @@
             updateChartTypeOptions(currentChartType, chartConfig.type);
             renderChartTypeButtons(currentChartType);
             renderDataLabelButtons(currentChartType);
+        }
+
+        function getSelectedRateCalendarYear(filters = activeFilters) {
+            const years = (filters.selectedYears || [])
+                .map(Number)
+                .filter(Number.isInteger);
+            if (filters.dateRange === 'years' && years.length === 1) return years[0];
+
+            if (!filters.startDate || !filters.endDate) return null;
+            const startMatch = String(filters.startDate).match(/^(\d{4})-01-01$/);
+            const endMatch = String(filters.endDate).match(/^(\d{4})-12-31$/);
+            return startMatch && endMatch && startMatch[1] === endMatch[1]
+                ? Number(startMatch[1])
+                : null;
         }
 
         function updateChartTypeOptions(chartType, selectedValue = chartConfig.type) {
@@ -4763,7 +4882,7 @@
             if (['bar', 'barHorizontal'].includes(visualType)) {
                 const categoryCount = getVisibleBarCategoryCount();
                 if (colorPreferences.barMode === 'qualitative'
-                    && categoryCount > 1 && categoryCount <= 5) return 'qualitative';
+                    && categoryCount > 1) return 'qualitative';
             }
             return 'solid';
         }
@@ -4779,9 +4898,9 @@
                 && currentChartType !== 'comparativa';
             const latestLabels = Array.isArray(latestChartData?.labels) ? latestChartData.labels : [];
             const visibleCategoryCount = getVisibleBarCategoryCount();
-            const canPreviewSmallQualitativeBars = isSimpleCategoricalChart
-                && visibleCategoryCount > 1 && visibleCategoryCount <= 5;
-            const isQualitativeBars = canPreviewSmallQualitativeBars
+            const canPreviewQualitativeBars = isSimpleCategoricalChart
+                && visibleCategoryCount > 1;
+            const isQualitativeBars = canPreviewQualitativeBars
                 && colorPreferences.barMode === 'qualitative';
             const previewPalettes = isCircularChart ? colorPalettesCircular : colorPalettes;
             const visiblePrimaryKeys = isCircularChart
@@ -4861,27 +4980,30 @@
                 const selected = key === resolvedPaletteName
                     && (!isSimpleCategoricalChart || mode === selectedBarMode);
                 const isSolid = swatches.length === 1;
+                const visibleLabel = isSolid
+                    ? (cartesianSolidColorShortLabels[key] || label)
+                    : label;
 
                 return `
-                    <button type="button" class="palette-chip${isSolid ? ' palette-chip--solid' : ''}" data-palette="${key}" ${mode ? `data-color-mode="${mode}"` : ''} aria-pressed="${selected}" aria-label="Usar ${isSolid ? 'color' : 'paleta'} ${label}">
+                    <button type="button" class="palette-chip${isSolid ? ' palette-chip--solid' : ''}" data-palette="${key}" ${mode ? `data-color-mode="${mode}"` : ''} aria-pressed="${selected}" aria-label="Usar ${isSolid ? 'color' : 'paleta'} ${label}" title="${label}">
                         <div class="palette-chip__swatches">
                             ${swatches.map(color => `<span style="background:${color};" title="${color}"></span>`).join('')}
                         </div>
                         <div class="palette-chip__meta">
-                            <span class="palette-chip__label">${label}</span>
+                            <span class="palette-chip__label">${visibleLabel}</span>
                             <i class="fas fa-check palette-chip__check ${selected ? '' : 'hidden'}" aria-hidden="true"></i>
                         </div>
                     </button>
                 `;
             };
 
-            const renderPaletteGroup = (title, entries, ariaLabel) => {
+            const renderPaletteGroup = (title, entries, ariaLabel, variant = '') => {
                 if (!entries.length) return '';
 
                 return `
-                    <section class="statistics-palette-section">
+                    <section class="statistics-palette-section${variant ? ` statistics-palette-section--${variant}` : ''}">
                         <p class="statistics-palette-section-title">${title}</p>
-                        <div class="statistics-palette-options" role="group" aria-label="${ariaLabel}">
+                        <div class="statistics-palette-options${variant ? ` statistics-palette-options--${variant}` : ''}" role="group" aria-label="${ariaLabel}">
                             ${entries.map(renderPaletteButton).join('')}
                         </div>
                     </section>
@@ -4890,7 +5012,7 @@
 
             const entries = availableKeys.map(key => ({ key }));
             const multiColorEntries = isSimpleCategoricalChart
-                ? (canPreviewSmallQualitativeBars
+                ? (canPreviewQualitativeBars
                     ? circularPaletteKeys.map(key => ({ key, mode: 'qualitative' }))
                     : [])
                 : entries.filter(entry => getPreviewColors(entry.key).length > 1);
@@ -4910,14 +5032,15 @@
             } else {
                 picker.innerHTML = [
                     renderPaletteGroup(
-                        'Paletas de varios colores',
+                        'Paletas',
                         multiColorEntries,
-                        'Paletas de varios colores disponibles'
+                        'Paletas disponibles'
                     ),
                     renderPaletteGroup(
-                        'Colores sólidos',
+                        'Colores',
                         solidColorEntries,
-                        'Colores sólidos disponibles'
+                        'Colores disponibles',
+                        'solid'
                     )
                 ].join('');
             }
@@ -6304,13 +6427,41 @@
             const percentage = total > 0 ? ((count / total) * 100).toFixed(1) : '0.0';
             const formattedCount = count.toLocaleString('es-MX');
             const countDescription = `${formattedCount} ${count === 1 ? 'registro' : 'registros'}`;
+            const municipalityRankIndex = currentChartType === 'municipios'
+                ? data.drilldown.findIndex(candidate => String(candidate?.label || '').trim() === String(item?.label || '').trim())
+                : -1;
+            const municipalityTotal = Number(data?.available_categories || 0);
+            const municipalityRank = municipalityRankIndex >= 0 && municipalityTotal > 0
+                ? `posición ${municipalityRankIndex + 1} de ${municipalityTotal}`
+                : '';
+            const isMunicipalityRate = currentChartType === 'municipios' && data?.measure === 'rate';
+            const municipalityCount = municipalityRankIndex >= 0
+                ? Number(data?.counts?.[municipalityRankIndex] || 0)
+                : 0;
 
             label.textContent = item.label;
-            meta.textContent = item.show_percentage === false
-                ? countDescription
-                : `${countDescription} · ${percentage}% del total`;
+            if (isMunicipalityRate) {
+                const municipalityRate = municipalityRankIndex >= 0
+                    ? data?.rates?.[municipalityRankIndex]
+                    : rawValue;
+                const rateDescription = municipalityRate === null || municipalityRate === undefined
+                    ? 'Tasa no disponible'
+                    : `${Number(municipalityRate).toFixed(1)} por 100 mil habitantes`;
+                const deathDescription = `${municipalityCount.toLocaleString('es-MX')} ${municipalityCount === 1 ? 'defunción' : 'defunciones'}`;
+                meta.textContent = [deathDescription, rateDescription, municipalityRank].filter(Boolean).join(' · ');
+            } else {
+                const baseDescription = item.show_percentage === false
+                    ? countDescription
+                    : `${countDescription} · ${percentage}% del total`;
+                meta.textContent = [baseDescription, municipalityRank].filter(Boolean).join(' · ');
+            }
             link.href = buildStatisticsDrilldownUrl(data, item);
-            if (linkLabel) linkLabel.textContent = `Ver ${countDescription}`;
+            if (linkLabel) {
+                const detailCountDescription = isMunicipalityRate
+                    ? `${municipalityCount.toLocaleString('es-MX')} ${municipalityCount === 1 ? 'registro' : 'registros'}`
+                    : countDescription;
+                linkLabel.textContent = `Ver ${detailCountDescription}`;
+            }
             if (marker) marker.style.backgroundColor = typeof eventParams.color === 'string'
                 ? eventParams.color
                 : '#526278';
@@ -7243,13 +7394,12 @@
                 && labels.length > maximumVerticalCategories;
             const usesSimpleCategoricalBars = (usesCategoricalColumns || usesCategoricalHorizontalBars)
                 && currentChartType !== 'comparativa';
-            const usesDistinctSmallCategoryColors = usesSimpleCategoricalBars
+            const usesDistinctCategoryColors = usesSimpleCategoricalBars
                 && labels.length > 1
-                && labels.length <= 5
                 && getActiveColorContext() === 'qualitative';
             const getCategoricalBarColor = (dataIndex) => {
                 if (!usesSimpleCategoricalBars) return colors[dataIndex];
-                if (usesDistinctSmallCategoryColors) {
+                if (usesDistinctCategoryColors) {
                     return qualitativePalette[dataIndex % qualitativePalette.length];
                 }
                 return cartesianSolidColor;

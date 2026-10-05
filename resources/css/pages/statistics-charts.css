@@ -1319,6 +1319,11 @@
   gap: .35rem;
 }
 
+.statistics-palette-options--solid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: .3rem;
+}
+
 .statistics-palette-grid.is-short-list .statistics-palette-options {
   grid-template-columns: minmax(0, 1fr);
 }
@@ -1400,6 +1405,42 @@
 
 .statistics-page .palette-chip__check.hidden {
   display: none;
+}
+
+/* Los colores sólidos se leen mejor como muestras compactas; las paletas
+   múltiples conservan la franja completa para comparar su combinación. */
+.statistics-page .palette-chip--solid {
+  position: relative;
+  grid-template-columns: 1.2rem minmax(0, 1fr);
+  align-items: center;
+  gap: .35rem;
+  min-height: 2.2rem;
+  padding: .28rem .36rem;
+}
+
+.statistics-page .palette-chip--solid .palette-chip__swatches {
+  width: 1.2rem;
+  height: 1.2rem;
+  border-color: rgb(15 35 63 / 16%);
+  border-radius: 50%;
+}
+
+.statistics-page .palette-chip--solid .palette-chip__meta {
+  gap: .25rem;
+}
+
+.statistics-page .palette-chip--solid .palette-chip__check {
+  position: absolute;
+  top: 50%;
+  left: .96rem;
+  color: #fff;
+  font-size: .52rem;
+  text-shadow: 0 1px 2px rgb(15 35 63 / 80%);
+  transform: translate(-50%, -50%);
+}
+
+.statistics-page .palette-chip--solid .palette-chip__label {
+  font-size: .7rem !important;
 }
 
 .statistics-page .statistics-palette-grid.is-short-list .palette-chip {
@@ -1713,7 +1754,8 @@
   right: auto;
   left: 0;
   box-sizing: border-box;
-  width: min(20rem, calc(100vw - 2rem));
+  width: 100%;
+  max-width: calc(100vw - 2rem);
   overflow-y: hidden;
   overscroll-behavior: contain;
   scrollbar-width: thin;
@@ -1727,7 +1769,7 @@
 }
 
 .statistics-palette-menu.is-short-list {
-  width: min(17.5rem, calc(100vw - 2rem));
+  width: 100%;
 }
 
 .statistics-palette-menu.is-scrollable {
@@ -1762,11 +1804,30 @@
   to { opacity: 1; transform: translateY(0); }
 }
 
+@keyframes statistics-palette-menu-out {
+  from { opacity: 1; transform: translateY(0); }
+  to { opacity: 0; transform: translateY(-3px); }
+}
+
+@keyframes statistics-palette-menu-out-up {
+  from { opacity: 1; transform: translateY(0); }
+  to { opacity: 0; transform: translateY(3px); }
+}
+
 .statistics-palette-menu.opens-up {
   top: auto;
   bottom: calc(100% + .35rem);
   transform-origin: bottom left;
   animation-name: statistics-palette-menu-in-up;
+}
+
+.statistics-palette-menu.is-closing {
+  pointer-events: none;
+  animation: statistics-palette-menu-out 120ms ease-in forwards;
+}
+
+.statistics-palette-menu.opens-up.is-closing {
+  animation-name: statistics-palette-menu-out-up;
 }
 
 .statistics-palette-menu.hidden {
@@ -2993,8 +3054,7 @@
   gap: .4rem;
 }
 
-.statistics-view-data,
-.statistics-copy-link {
+.statistics-view-data {
   display: inline-flex;
   min-height: 34px;
   align-items: center;
@@ -3011,32 +3071,13 @@
   transition: border-color 150ms ease, background-color 150ms ease, transform 120ms ease;
 }
 
-.statistics-copy-link {
-  font-family: inherit;
-  cursor: pointer;
-}
-
-.statistics-view-data:hover,
-.statistics-copy-link:hover {
+.statistics-view-data:hover {
   border-color: #94a3b8;
   background: var(--ui-surface-soft, #f8fafc);
 }
 
-.statistics-view-data:active,
-.statistics-copy-link:active { transform: translateY(1px); }
+.statistics-view-data:active { transform: translateY(1px); }
 .statistics-view-data[aria-disabled="true"] { opacity: .55; pointer-events: none; }
-
-.statistics-copy-link.is-success {
-  border-color: #86a58f;
-  background: #f2f7f3;
-  color: #285b38;
-}
-
-.statistics-copy-link.is-error {
-  border-color: #d6a08e;
-  background: #fff7f3;
-  color: #8a321e;
-}
 
 .statistics-drilldown {
   position: absolute;
@@ -3326,6 +3367,20 @@
 
 .statistics-download-menu .download-option + .download-option {
   border-top: 1px solid var(--ui-border-soft, #e5e7eb);
+}
+
+.statistics-download-menu .download-option.statistics-download-menu__share {
+  border-top-color: var(--ui-border, #cbd5e1);
+}
+
+.statistics-download-menu .statistics-download-menu__share.is-success {
+  background: #f2f7f3;
+  color: #285b38;
+}
+
+.statistics-download-menu .statistics-download-menu__share.is-error {
+  background: #fff7f3;
+  color: #8a321e;
 }
 
 .statistics-download-menu .download-option i {
@@ -4014,10 +4069,8 @@
   .statistics-chart-quality { grid-column: 1 / -1; }
   .statistics-download__primary { width: 36px; padding: 0; font-size: 0; }
   .statistics-download__primary i { font-size: .75rem; }
-  .statistics-view-data,
-  .statistics-copy-link { width: 36px; padding: 0; font-size: 0; }
-  .statistics-view-data i,
-  .statistics-copy-link i { font-size: .75rem; }
+  .statistics-view-data { width: 36px; padding: 0; font-size: 0; }
+  .statistics-view-data i { font-size: .75rem; }
   .statistics-drilldown { width: min(16.5rem, calc(100% - 1rem)); }
   .statistics-chart-canvas { height: auto; min-height: 24rem; flex-basis: 24rem; padding: .35rem; }
   .statistics-chart-state { inset: .35rem; }
@@ -5475,6 +5528,8 @@
 
   .statistics-page[data-active-metric="municipios"] #estadisticas-filtros.statistics-filter-popover {
     align-self: start;
+    height: fit-content;
+    min-height: 0;
   }
 
   .statistics-page[data-active-metric="municipios"] .statistics-content {

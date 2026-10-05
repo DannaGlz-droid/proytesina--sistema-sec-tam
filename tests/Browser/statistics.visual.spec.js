@@ -141,17 +141,8 @@ test('los controles de Vista conservan los filtros de Datos compatibles', async 
 });
 
 test('Municipios de residencia cambia de cantidades a tasas por población', async ({ page }) => {
-    await page.emulateMedia({ reducedMotion: 'no-preference' });
-    await page.getByRole('tab', { name: 'Filtros', exact: true }).click();
-    await page.evaluate(() => {
-        window.__municipalityConfigAnimationStarted = false;
-        document.getElementById('municipalitySidebarPresentation')?.addEventListener('animationstart', () => {
-            window.__municipalityConfigAnimationStarted = true;
-        }, { once: true });
-    });
     await page.getByRole('tab', { name: 'Vista' }).click();
     await expect(page.locator('#statisticsMeasureGroup')).toBeVisible();
-    await expect.poll(() => page.evaluate(() => window.__municipalityConfigAnimationStarted)).toBe(true);
 
     const residenceRequest = page.waitForRequest(request => {
         const url = new URL(request.url());
@@ -161,12 +152,39 @@ test('Municipios de residencia cambia de cantidades a tasas por población', asy
     await page.locator('#statisticsGeographicScopeControl').getByRole('radio', { name: 'Residencia' }).click();
     await residenceRequest;
 
+    const rateButton = page.locator('#statisticsMeasureButtons').getByRole('button', { name: /Tasa/ });
+    await expect(rateButton).toBeDisabled();
+    await expect(page.locator('#statisticsMeasureNote')).toContainText('Periodo: Por año');
+
+    await page.getByRole('tab', { name: 'Filtros', exact: true }).click();
+    await page.locator('#dateRange').selectOption('years');
+    await page.locator('#year').fill('2025');
+    const yearRequest = page.waitForRequest(request => {
+        const url = new URL(request.url());
+        return url.pathname.endsWith('/api/chart/municipios')
+            && url.searchParams.get('years[]') === '2025';
+    });
+    await page.locator('#statisticsFiltersApply').click();
+    await yearRequest;
+
+    const filterConfigurationHeight = Math.round((await page.locator('#estadisticas-filtros').boundingBox()).height);
+    const filterChartHeight = Math.round((await page.locator('#statisticsChartPanel').boundingBox()).height);
+    await page.getByRole('tab', { name: 'Vista' }).click();
+    await expect.poll(async () => Math.round(
+        (await page.locator('#estadisticas-filtros').boundingBox()).height
+    )).toBeLessThan(filterConfigurationHeight - 40);
+    await expect.poll(async () => Math.round(
+        (await page.locator('#statisticsChartPanel').boundingBox()).height
+    )).toBe(filterChartHeight);
+    await expect(rateButton).toBeEnabled();
+
     const requestPromise = page.waitForRequest(request => {
         const url = new URL(request.url());
         return url.pathname.endsWith('/api/chart/municipios')
-            && url.searchParams.get('measure') === 'rate';
+            && url.searchParams.get('measure') === 'rate'
+            && url.searchParams.get('years[]') === '2025';
     });
-    await page.locator('#statisticsMeasureButtons').getByRole('button', { name: 'Tasa', exact: true }).click();
+    await rateButton.click();
     await requestPromise;
 
     await expect(page.locator('#chartTitle')).toHaveText('Tasa de defunciones por municipio');
@@ -245,7 +263,7 @@ test('Municipios compacta Sexo y Edad con foco neutral', async ({ page }) => {
 
     await ageHelpButton.focus();
     await expect(ageTooltip).toHaveCSS('visibility', 'visible');
-    await expect(ageTooltip).toContainText('varias separadas por comas');
+    await expect(ageTooltip).toContainText('Formatos admitidos:');
 
     const [panelBox, tooltipBox] = await Promise.all([
         page.locator('#estadisticas-filtros').boundingBox(),
@@ -377,8 +395,138 @@ test('Municipios conserva la misma altura entre Filtros y Vista para cada grafic
         const viewCanvasHeight = await canvasHeight();
         await dataTab.click();
 
-        await expect.poll(panelHeight).toBe(viewPanelHeight);
-        await expect.poll(canvasHeight).toBe(viewCanvasHeight);
+        await expect.poll(panelHeight, {
+            message: `El panel cambió de altura en ${chartCase.type} con límite ${chartCase.limit || 'predeterminado'}`,
+        }).toBe(viewPanelHeight);
+        await expect.poll(canvasHeight, {
+            message: `El lienzo cambió de altura en ${chartCase.type} con límite ${chartCase.limit || 'predeterminado'}`,
+        }).toBe(viewCanvasHeight);
+    }
+});
+
+test('la matriz de graficas conserva geometria y etiquetas consistentes', async ({ page }) => {
+    test.setTimeout(90_000);
+    await page.setViewportSize({ width: 1536, height: 900 });
+
+    const metrics = [
+        { tab: 'Municipios', key: 'municipios', types: ['bar', 'barHorizontal', 'pie', 'doughnut', 'map'] },
+        { tab: 'Tendencias', key: 'tendencias', types: ['line', 'area'] },
+        { tab: 'Edades', key: 'edades', types: ['bar', 'barHorizontal', 'pie', 'doughnut'] },
+        { tab: 'Sexo', key: 'genero', types: ['bar', 'barHorizontal', 'pie', 'doughnut'] },
+        { tab: 'Causas', key: 'causas', types: ['bar', 'barHorizontal', 'pie', 'doughnut'] },
+        { tab: 'Distritos', key: 'distritoes', types: ['bar', 'barHorizontal', 'pie', 'doughnut'] },
+        { tab: 'Lugares', key: 'lugares', types: ['bar', 'barHorizontal', 'pie', 'doughnut'] },
+        { tab: 'Comparativa', key: 'comparativa', types: ['bar', 'heatmap'] },
+    ];
+
+    const auditChart = () => page.evaluate(() => {
+        const chartElement = document.getElementById('mainChart');
+        const wrapper = chartElement?.closest('.statistics-chart-canvas');
+        const panel = document.getElementById('statisticsChartPanel');
+        const chart = window.echarts?.getInstanceByDom(chartElement);
+        const option = chart?.getOption?.();
+        const chartBox = chartElement?.getBoundingClientRect();
+        const wrapperBox = wrapper?.getBoundingClientRect();
+        const panelBox = panel?.getBoundingClientRect();
+        const series = option?.series || [];
+        const finiteValues = series.flatMap(item => item.data || [])
+            .map(item => {
+                const rawValue = typeof item === 'object' && item !== null && !Array.isArray(item)
+                    ? item.value
+                    : item;
+                return Number(Array.isArray(rawValue) ? rawValue.at(-1) : rawValue);
+            })
+            .filter(value => !Number.isNaN(value));
+        const inconsistentSeries = [];
+
+        series.forEach((item, seriesIndex) => {
+            if (!item.label?.show || typeof item.label?.formatter !== 'function') return;
+            const rows = (item.data || []).map((datum, dataIndex) => {
+                const value = typeof datum === 'object' && datum !== null ? datum.value : datum;
+                const categoryAxis = (option.xAxis || []).find(axis => axis.type === 'category')
+                    || (option.yAxis || []).find(axis => axis.type === 'category');
+                const name = categoryAxis?.data?.[dataIndex] || datum?.name || '';
+                try {
+                    return String(item.label.formatter({ value, dataIndex, seriesIndex, name, percent: 0 }))
+                        .split('\n').length;
+                } catch (_) {
+                    return null;
+                }
+            }).filter(Number.isFinite);
+            if (rows.length > 1 && Math.min(...rows) !== Math.max(...rows)) {
+                inconsistentSeries.push({ seriesIndex, rows });
+            }
+        });
+
+        return {
+            initialized: Boolean(chart && option),
+            chartWidth: Math.round(chartBox?.width || 0),
+            chartHeight: Math.round(chartBox?.height || 0),
+            withinWrapper: Boolean(chartBox && wrapperBox
+                && chartBox.left >= wrapperBox.left - 1
+                && chartBox.right <= wrapperBox.right + 1
+                && chartBox.top >= wrapperBox.top - 1
+                && chartBox.bottom <= wrapperBox.bottom + 1),
+            withinPanel: Boolean(wrapperBox && panelBox
+                && wrapperBox.left >= panelBox.left - 1
+                && wrapperBox.right <= panelBox.right + 1),
+            horizontalOverflow: Math.max(0, (panel?.scrollWidth || 0) - (panel?.clientWidth || 0)),
+            finiteValues: finiteValues.length,
+            seriesTypes: series.map(item => item.type),
+            inconsistentSeries,
+        };
+    });
+
+    for (const metric of metrics) {
+        await page.getByRole('tab', { name: metric.tab, exact: true }).click();
+        await expect.poll(() => page.evaluate(() => currentChartType), {
+            message: `No se activó la métrica ${metric.key}`,
+        }).toBe(metric.key);
+
+        for (const type of metric.types) {
+            const control = page.locator(`[data-target="chartTypeSelector"][data-value="${type}"]:visible`).first();
+            await expect(control, `Falta el tipo ${type} en ${metric.key}`).toBeVisible();
+            await control.click();
+            await expect.poll(() => page.evaluate(() => chartConfig.type), {
+                message: `No se activó ${metric.key}/${type}`,
+            }).toBe(type);
+            const expectedSeriesType = {
+                barHorizontal: 'bar',
+                doughnut: 'pie',
+                area: 'line',
+            }[type] || type;
+            await expect.poll(async () => {
+                const audit = await auditChart();
+                return audit.initialized && audit.seriesTypes.includes(expectedSeriesType);
+            }, {
+                message: `${metric.key}/${type} no terminó de renderizar`,
+            }).toBe(true);
+
+            const audit = await auditChart();
+            expect(audit.initialized, `${metric.key}/${type} no inicializó ECharts`).toBe(true);
+            expect(audit.chartWidth, `${metric.key}/${type} quedó demasiado angosta`).toBeGreaterThan(500);
+            expect(audit.chartHeight, `${metric.key}/${type} quedó demasiado baja`).toBeGreaterThanOrEqual(340);
+            expect(audit.withinWrapper, `${metric.key}/${type} salió del lienzo`).toBe(true);
+            expect(audit.withinPanel, `${metric.key}/${type} salió del panel`).toBe(true);
+            expect(audit.horizontalOverflow, `${metric.key}/${type} produjo desplazamiento horizontal`).toBeLessThanOrEqual(1);
+            expect(audit.finiteValues, `${metric.key}/${type} no contiene valores numéricos`).toBeGreaterThan(0);
+            expect(audit.inconsistentSeries, `${metric.key}/${type} mezcló etiquetas de distinta altura`).toEqual([]);
+        }
+    }
+
+    await page.getByRole('tab', { name: 'Municipios', exact: true }).click();
+    await page.getByRole('tab', { name: 'Vista' }).click();
+    for (const type of ['bar', 'barHorizontal']) {
+        await page.locator(`[data-target="chartTypeSelector"][data-value="${type}"]:visible`).first().click();
+        for (const limit of ['5', '10', '15', 'all']) {
+            await page.locator(`#chartLimitButtons [data-value="${limit}"]`).click();
+            for (const labels of ['value', 'percent', 'both', 'none']) {
+                await page.locator(`#dataLabelButtons [data-value="${labels}"]`).click();
+                const audit = await auditChart();
+                expect(audit.horizontalOverflow, `${type}/${limit}/${labels} desbordó el panel`).toBeLessThanOrEqual(1);
+                expect(audit.inconsistentSeries, `${type}/${limit}/${labels} mezcló filas de etiquetas`).toEqual([]);
+            }
+        }
     }
 });
 
@@ -553,6 +701,7 @@ test('Fecha muestra contexto y mantiene compactos meses y trimestres', async ({ 
         }
     }, mode);
 
+    await page.getByRole('tab', { name: 'Filtros', exact: true }).click();
     await expect(page.locator('#dateFilterDetail')).toBeHidden();
     await expect(page.locator('#dateRange option')).toHaveCount(6);
 
@@ -564,7 +713,7 @@ test('Fecha muestra contexto y mantiene compactos meses y trimestres', async ({ 
     await expect(yearHelpButton).toBeVisible();
     await yearHelpButton.focus();
     await expect(yearTooltip).toBeVisible();
-    await expect(yearTooltip).toContainText('Los años disponibles van de 2024 a 2025');
+    await expect(yearTooltip).toContainText('Escribe un año, un rango o varios años separados por comas.');
     await expect(page.locator('#year')).toHaveAttribute('placeholder', 'Ej. 2024-2025');
 
     const [filterPanelBox, yearTooltipBox] = await Promise.all([
@@ -680,6 +829,7 @@ test('Fecha informa cuando no puede comprobar la cobertura y permite reintentar'
     });
 
     await page.reload();
+    await page.getByRole('tab', { name: 'Filtros', exact: true }).click();
     const notice = page.locator('#statisticsDateCoverageNotice');
     await expect(notice).toBeVisible();
     await expect(notice).toContainText('No se pudieron comprobar las fechas disponibles');
@@ -799,6 +949,76 @@ test('Top 5, 10 y 15 conservan etiquetas legibles', async ({ page }) => {
     await limits.locator('[data-value="10"]').click();
     await expect.poll(async () => (await chartState(page)).labels.length).toBe(10);
     expect((await chartState(page)).rotation).toBe(0);
+});
+
+test('cambiar de representacion conserva el alcance compatible en todas las metricas', async ({ page }) => {
+    test.setTimeout(90_000);
+    await page.getByRole('tab', { name: 'Vista' }).click();
+
+    // Deja una preferencia anterior de Top 5 en Barras para reproducir el caso
+    // donde al volver desde Columnas se reemplazaba "Todos" sin solicitarlo.
+    await page.locator('#municipalityChartTypeButtons [data-value="barHorizontal"]').click();
+    await page.locator('#chartLimitButtons [data-value="5"]').click();
+    await expect.poll(async () => (await chartState(page)).labels.length).toBe(5);
+
+    await page.locator('#municipalityChartTypeButtons [data-value="bar"]').click();
+    await page.locator('#chartLimitButtons [data-value="all"]').click();
+    await expect.poll(async () => (await chartState(page)).labels.length).toBe(44);
+
+    await page.locator('#municipalityChartTypeButtons [data-value="barHorizontal"]').click();
+    await expect(page.locator('#chartLimit')).toHaveValue('all');
+    await expect.poll(async () => (await chartState(page)).labels.length).toBe(44);
+
+    await page.locator('#chartLimitButtons [data-value="15"]').click();
+    await page.locator('#municipalityChartTypeButtons [data-value="bar"]').click();
+    await expect(page.locator('#chartLimit')).toHaveValue('15');
+    await expect.poll(async () => (await chartState(page)).labels.length).toBe(15);
+
+    // La misma regla se comparte con las demas metricas que ofrecen alcance.
+    for (const metric of [
+        { tab: 'Causas', limit: 'all', expected: 7 },
+        { tab: 'Distritos', limit: 'all', expected: 12 },
+        { tab: 'Lugares', limit: 'all', expected: 15 },
+    ]) {
+        await page.getByRole('tab', { name: metric.tab, exact: true }).click();
+        await page.locator('[data-target="chartTypeSelector"][data-value="bar"]:visible').first().click();
+        const limitButton = page.locator(`#chartLimitButtons [data-value="${metric.limit}"]`);
+        if (await limitButton.isVisible()) await limitButton.click();
+        else await expect(page.locator('#chartLimit')).toHaveValue(metric.limit);
+        await page.locator('[data-target="chartTypeSelector"][data-value="barHorizontal"]:visible').first().click();
+        await expect(page.locator('#chartLimit')).toHaveValue(metric.limit);
+        await expect.poll(async () => (await chartState(page)).labels.length).toBe(metric.expected);
+    }
+});
+
+test('cambiar el limite conserva la paleta elegida', async ({ page }) => {
+    await page.getByRole('tab', { name: 'Vista' }).click();
+    await page.locator('#statisticsPaletteToggle').click();
+    await page.locator('#colorPalettePicker [data-palette="maroon611132"][data-color-mode="qualitative"]').click();
+
+    for (const limit of ['5', '10', '15', 'all']) {
+        await page.locator(`#chartLimitButtons [data-value="${limit}"]`).click();
+        await expect(page.locator('#statisticsPaletteLabel')).toHaveText('Guinda, oro y azul');
+        await expect.poll(() => page.evaluate(() => ({
+            context: getActiveColorContext(),
+            mode: colorPreferences.barMode,
+            palette: chartConfig.colorPalette,
+        }))).toEqual({
+            context: 'qualitative',
+            mode: 'qualitative',
+            palette: 'maroon611132',
+        });
+
+        await expect.poll(() => page.evaluate(() => {
+            const chart = window.echarts.getInstanceByDom(document.getElementById('mainChart'));
+            const data = chart?.getModel()?.getSeriesByIndex(0)?.getData();
+            if (!data) return 0;
+            const colors = Array.from({ length: data.count() }, (_, index) => (
+                data.getItemVisual(index, 'style')?.fill
+            )).filter(Boolean);
+            return new Set(colors).size;
+        })).toBeGreaterThan(1);
+    }
 });
 
 test('Cantidad y porcentaje no corta las etiquetas en columnas extensas', async ({ page }) => {
