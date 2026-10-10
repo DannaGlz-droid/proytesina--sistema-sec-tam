@@ -7,10 +7,11 @@ use App\Services\DeathFilterService;
 use App\Services\StatisticsAnalysisService;
 use Illuminate\Database\Eloquent\Builder;
 use Maatwebsite\Excel\Concerns\FromQuery;
+use Maatwebsite\Excel\Concerns\WithCustomCsvSettings;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
 
-class DeathsExport implements FromQuery, WithHeadings, WithMapping
+class DeathsExport implements FromQuery, WithHeadings, WithMapping, WithCustomCsvSettings
 {
     public function __construct(private readonly array $filters = []) {}
 
@@ -48,6 +49,14 @@ class DeathsExport implements FromQuery, WithHeadings, WithMapping
             'Fecha de defunción',
             'Lugar de defunción',
             'Causa de defunción',
+        ];
+    }
+
+    public function getCsvSettings(): array
+    {
+        return [
+            'use_bom' => true,
+            'output_encoding' => 'UTF-8',
         ];
     }
 

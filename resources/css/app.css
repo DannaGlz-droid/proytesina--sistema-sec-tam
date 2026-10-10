@@ -11168,7 +11168,7 @@ body .app-standard-filter-toggle.users-filter-toggle {
   min-height: 2.05rem !important;
   align-items: center;
   justify-content: center;
-  gap: .65rem;
+  gap: .45rem !important;
   border: 1px solid #dbe2ea !important;
   border-radius: .55rem !important;
   background: #f8fafc !important;

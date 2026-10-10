@@ -155,9 +155,12 @@ class DeathController extends Controller
             'quarter' => ['nullable', 'in:1,2,3,4'],
             'startDate' => ['nullable', 'date'],
             'endDate' => ['nullable', 'date'],
+            'distrito' => ['nullable', 'string'],
+            'distritoDefuncion' => ['nullable', 'string'],
             'jurisdiccion' => ['nullable', 'string'],
             'municipio' => ['nullable', 'string'],
             'municipioDefuncion' => ['nullable', 'string'],
+            'lugar' => ['nullable', 'integer', 'exists:death_locations,id'],
             'sexo' => ['nullable', 'string'],
             'edad' => ['nullable', 'string'],
             'causa' => ['nullable', 'string'],
@@ -241,6 +244,7 @@ class DeathController extends Controller
         $causes = DeathCause::allowedCatalog();
         $districts = District::statisticsCatalog();
         $municipalities = Municipality::all();
+        $deathLocations = DeathLocation::active()->orderBy('name')->get();
 
         // Get count of unresolved import failures
         $unresolvedFailures = DB::table('import_failures')
@@ -248,15 +252,18 @@ class DeathController extends Controller
             ->count();
 
         $analysisFilterLabels = $analysisContext ? $this->deathFilters->describe($request->all()) : [];
+        $analysisFilterChips = $analysisContext ? $this->deathFilters->chips($request->all()) : [];
 
         return view('estadisticas.datos', compact(
             'deaths',
             'causes',
             'districts',
             'municipalities',
+            'deathLocations',
             'unresolvedFailures',
             'analysisContext',
             'analysisFilterLabels',
+            'analysisFilterChips',
             'analysisOriginOptions',
             'analysisTotal',
             'selectedOriginValue'

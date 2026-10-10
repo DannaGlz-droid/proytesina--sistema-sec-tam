@@ -70,19 +70,17 @@
                                         Estos registros no cuentan con todos los campos necesarios para formar parte de la gráfica.
                                     </p>
                                 @endif
-                                @if($analysisFilterLabels)
+                                @if(collect($analysisFilterLabels)->contains(fn ($label) => str_starts_with($label, 'Periodo:') || str_starts_with($label, 'Año:')))
                                     <div class="statistics-analysis-context__meta">
-                                        <div class="statistics-analysis-context__filters" aria-label="Filtros provenientes de la gráfica">
+                                        <div class="statistics-analysis-context__filters" aria-label="Periodo de la gráfica">
                                             @foreach($analysisFilterLabels as $filterLabel)
-                                                @php($isPeriodLabel = str_starts_with($filterLabel, 'Periodo:'))
-                                                <span class="{{ $isPeriodLabel ? 'is-period' : '' }}">
-                                                    @if($isPeriodLabel)
+                                                @php($isPeriodLabel = str_starts_with($filterLabel, 'Periodo:') || str_starts_with($filterLabel, 'Año:'))
+                                                @if($isPeriodLabel)
+                                                    <span class="is-period">
                                                         <i class="far fa-calendar" aria-hidden="true"></i>
-                                                        {{ trim(Illuminate\Support\Str::after($filterLabel, 'Periodo:')) }}
-                                                    @else
-                                                        {{ $filterLabel }}
-                                                    @endif
-                                                </span>
+                                                        {{ trim(Illuminate\Support\Str::after($filterLabel, ':')) }}
+                                                    </span>
+                                                @endif
                                             @endforeach
                                         </div>
                                     </div>
@@ -99,7 +97,7 @@
                         </section>
                     @endif
                     <div class="app-table-toolbar flex flex-row flex-wrap items-center justify-between gap-3 p-4">
-                        <x-filtros.defunciones :districts="$districts" :municipalities="$municipalities" :causes="$causes">
+                        <x-filtros.defunciones :districts="$districts" :municipalities="$municipalities" :causes="$causes" :death-locations="$deathLocations" :inherited-filter-chips="$analysisFilterChips ?? []">
                             @if($analysisContext && $analysisOriginOptions)
                                 <div class="statistics-origin-filter">
                                     <label for="statistics-origin-filter" class="sr-only">Origen de los registros</label>
@@ -683,18 +681,7 @@ document.addEventListener('DOMContentLoaded', function () {
         return params;
     }
 
-    function applyDeathFiltersWithoutReload() {
-        const nextFilters = readDeathFiltersFromForm();
-        const tableFilterKeys = [
-            'dateRange', 'year', 'month', 'selectedMonths', 'quarter', 'startDate', 'endDate',
-            'distrito', 'jurisdiccion', 'municipio', 'municipioDefuncion', 'sexo', 'edad', 'causa'
-        ];
-
-        // Remove only filters owned by this panel. Parameters inherited from the
-        // chart describe the analysis scope and must survive table refinements.
-        tableFilterKeys.forEach(key => delete filterData[key]);
-        Object.assign(filterData, nextFilters);
-
+    function refreshDeathResultsFromFilterData() {
         const params = buildDeathFilterQuery(filterData);
         const nextUrl = params.toString()
             ? `${window.location.pathname}?${params.toString()}`
@@ -708,7 +695,101 @@ document.addEventListener('DOMContentLoaded', function () {
 
         clearVisibleDeathSelection();
         setAnalysisCountLoading();
-        window.deathsTable.ajax.reload();
+        window.deathsTable?.ajax.reload();
+    }
+
+    function removeFiltersFromAnalysisReturn(returnKeys) {
+        if (!filterData.return_to || !returnKeys.length) return;
+
+        const returnUrl = new URL(filterData.return_to, window.location.origin);
+        [...new Set(returnKeys)].forEach(key => returnUrl.searchParams.delete(key));
+        filterData.return_to = `${returnUrl.pathname}${returnUrl.search}`;
+
+        const returnAction = document.querySelector('.statistics-analysis-context__secondary');
+        if (returnAction) returnAction.href = filterData.return_to;
+    }
+
+    const statisticsDataFilterCatalogIds = {
+        districts: @json(collect($districts ?? [])->mapWithKeys(fn ($district) => [(string) $district->name => (string) $district->id])->all()),
+        municipalities: @json(collect($municipalities ?? [])->mapWithKeys(fn ($municipality) => [(string) $municipality->name => (string) $municipality->id])->all()),
+    };
+
+    function deathFilterValues(data, key) {
+        const value = data[key];
+        if (value === null || value === undefined || value === '') return [];
+        return (Array.isArray(value) ? value : [value])
+            .map(item => String(item).trim())
+            .filter(Boolean);
+    }
+
+    function resolveDeathFilterCatalogIds(data, canonicalKey, aliasKey, catalog) {
+        const canonicalValues = deathFilterValues(data, canonicalKey);
+        if (canonicalValues.length) return canonicalValues;
+
+        return deathFilterValues(data, aliasKey)
+            .map(value => /^\d+$/.test(value) ? value : (catalog[value] || ''))
+            .filter(Boolean);
+    }
+
+    function replaceAnalysisReturnValues(returnUrl, key, values) {
+        returnUrl.searchParams.delete(key);
+        [...new Set(values)].forEach(value => returnUrl.searchParams.append(key, value));
+    }
+
+    function syncAnalysisReturnFromDataFilters() {
+        if (!filterData.return_to) return;
+
+        const returnUrl = new URL(filterData.return_to, window.location.origin);
+        const metric = returnUrl.searchParams.get('metric') || filterData.analysis_type || '';
+        const residenceDistricts = resolveDeathFilterCatalogIds(
+            filterData,
+            'district_ids',
+            'distrito',
+            statisticsDataFilterCatalogIds.districts
+        );
+        const deathDistricts = resolveDeathFilterCatalogIds(
+            filterData,
+            'death_district_ids',
+            'distritoDefuncion',
+            statisticsDataFilterCatalogIds.districts
+        );
+        const deathLocations = deathFilterValues(filterData, 'death_location_ids').length
+            ? deathFilterValues(filterData, 'death_location_ids')
+            : deathFilterValues(filterData, 'lugar');
+
+        if (metric === 'municipios') {
+            replaceAnalysisReturnValues(returnUrl, 'residence_district', residenceDistricts);
+            replaceAnalysisReturnValues(returnUrl, 'death_district', deathDistricts);
+            replaceAnalysisReturnValues(returnUrl, 'death_location', deathLocations);
+        }
+
+        filterData.return_to = `${returnUrl.pathname}${returnUrl.search}`;
+        const returnAction = document.querySelector('.statistics-analysis-context__secondary');
+        if (returnAction) returnAction.href = filterData.return_to;
+    }
+
+    document.addEventListener('statistics-analysis-filter-clear', event => {
+        const fields = Array.isArray(event.detail?.fields) ? event.detail.fields : [];
+        const returnKeys = Array.isArray(event.detail?.return_keys) ? event.detail.return_keys : [];
+        fields.forEach(key => delete filterData[key]);
+        removeFiltersFromAnalysisReturn(returnKeys);
+
+        if (event.detail?.reload !== false) refreshDeathResultsFromFilterData();
+    });
+
+    function applyDeathFiltersWithoutReload() {
+        const nextFilters = readDeathFiltersFromForm();
+        const tableFilterKeys = [
+            'dateRange', 'year', 'month', 'selectedMonths', 'quarter', 'startDate', 'endDate',
+            'distrito', 'distritoDefuncion', 'jurisdiccion', 'municipio', 'municipioDefuncion', 'lugar', 'sexo', 'edad', 'causa'
+        ];
+
+        // Remove only filters owned by this panel. Parameters inherited from the
+        // chart describe the analysis scope and must survive table refinements.
+        tableFilterKeys.forEach(key => delete filterData[key]);
+        Object.assign(filterData, nextFilters);
+        syncAnalysisReturnFromDataFilters();
+        refreshDeathResultsFromFilterData();
     }
 
     // Setup CSRF token for AJAX requests

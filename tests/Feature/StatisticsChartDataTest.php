@@ -14,6 +14,8 @@ use App\Services\DeathFilterService;
 use App\Services\StatisticsAnalysisService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Maatwebsite\Excel\Excel as ExcelFormat;
+use Maatwebsite\Excel\Facades\Excel;
 
 beforeEach(function (): void {
     $district = District::create(['name' => 'I - PRUEBA']);
@@ -350,6 +352,54 @@ it('applies equivalent filters to tables charts and exports', function (): void 
         ->and($exportQuery->count())->toBe(1)
         ->and($tableData['recordsFiltered'])->toBe(1)
         ->and($chartData['filtered_total'])->toBe(1);
+});
+
+it('filters table data by death district and death location', function (): void {
+    $otherDistrict = District::create(['name' => 'II - OTRA']);
+    Death::query()->where('gov_folio', 'STAT-6')->update([
+        'death_district_id' => $otherDistrict->id,
+    ]);
+
+    $byDistrict = app(DeathController::class)
+        ->dataTable(Request::create('/', 'POST', [
+            'length' => 25,
+            'distritoDefuncion' => $otherDistrict->name,
+        ]))
+        ->getData(true);
+    $byLocation = app(DeathController::class)
+        ->dataTable(Request::create('/', 'POST', [
+            'length' => 25,
+            'lugar' => $this->locationB->id,
+        ]))
+        ->getData(true);
+    $combined = app(DeathController::class)
+        ->dataTable(Request::create('/', 'POST', [
+            'length' => 25,
+            'distritoDefuncion' => $otherDistrict->name,
+            'lugar' => $this->locationB->id,
+        ]))
+        ->getData(true);
+    $chips = collect(app(DeathFilterService::class)->chips([
+        'death_district_ids' => [$otherDistrict->id],
+        'death_location_ids' => [$this->locationB->id],
+    ]))->keyBy('key');
+
+    expect($byDistrict['recordsFiltered'])->toBe(1)
+        ->and($byDistrict['data'][0]['gov_folio'])->toBe('STAT-6')
+        ->and($byLocation['recordsFiltered'])->toBe(2)
+        ->and($combined['recordsFiltered'])->toBe(1)
+        ->and($combined['data'][0]['gov_folio'])->toBe('STAT-6')
+        ->and($chips['death_district']['label'])->toBe('Distrito de defunción: II · Otra')
+        ->and($chips['death_location']['label'])->toBe('Lugar de defunción: Hogar')
+        ->and($chips['death_district']['fields'])->toContain('death_district_ids')
+        ->and($chips['death_location']['return_keys'])->toContain('death_location');
+});
+
+it('exports CSV data as UTF-8 with a byte order mark', function (): void {
+    $csv = Excel::raw(new DeathsExport(), ExcelFormat::CSV);
+
+    expect(str_starts_with($csv, "\xEF\xBB\xBF"))->toBeTrue()
+        ->and($csv)->toContain('defunción');
 });
 
 it('offers and applies origin filters to chart records', function (): void {

@@ -1,4 +1,4 @@
-@props(['districts' => null, 'municipalities' => null, 'causes' => null])
+@props(['districts' => null, 'municipalities' => null, 'causes' => null, 'deathLocations' => null, 'inheritedFilterChips' => []])
 
 @php
     $dateRangeValue = request('dateRange', 'all');
@@ -76,9 +76,9 @@
                                 </div>
                             </div>
 
-                            <div class="users-filter-section {{ request('distrito') || request('municipio') || request('municipioDefuncion') ? 'is-open' : '' }}" data-filter-section>
+                            <div class="users-filter-section {{ request('distrito') || request('distritoDefuncion') || request('municipio') || request('municipioDefuncion') || request('lugar') ? 'is-open' : '' }}" data-filter-section>
                                 <button type="button" class="users-filter-section-toggle" data-filter-section-toggle>
-                                    <i class="fas {{ request('distrito') || request('municipio') || request('municipioDefuncion') ? 'fa-chevron-down' : 'fa-chevron-right' }}" aria-hidden="true"></i><span>Ubicación</span>
+                                    <i class="fas {{ request('distrito') || request('distritoDefuncion') || request('municipio') || request('municipioDefuncion') || request('lugar') ? 'fa-chevron-down' : 'fa-chevron-right' }}" aria-hidden="true"></i><span>Ubicación</span>
                                 </button>
                                 <div class="users-filter-section-content">
                                     <div class="statistics-filter-fields">
@@ -91,8 +91,16 @@
                                             <x-filtros.select id="municipio" name="municipio" placeholder="Todos"><option value="">Todos</option>@foreach($municipalities ?? [] as $municipality)<option value="{{ $municipality->name }}" @selected(request('municipio') === $municipality->name)>{{ $municipality->display_name }}</option>@endforeach</x-filtros.select>
                                         </div>
                                         <div class="statistics-filter-field">
+                                            <label for="distritoDefuncion">Distrito de defunción</label>
+                                            <x-filtros.select id="distritoDefuncion" name="distritoDefuncion" placeholder="Todos"><option value="">Todos</option>@foreach($districts ?? [] as $district)<option value="{{ $district->name }}" @selected(request('distritoDefuncion') === $district->name)>{{ $district->display_name }}</option>@endforeach</x-filtros.select>
+                                        </div>
+                                        <div class="statistics-filter-field">
                                             <label for="municipioDefuncion">Municipio de defunción</label>
                                             <x-filtros.select id="municipioDefuncion" name="municipioDefuncion" placeholder="Todos"><option value="">Todos</option>@foreach($municipalities ?? [] as $municipality)<option value="{{ $municipality->name }}" @selected(request('municipioDefuncion') === $municipality->name)>{{ $municipality->display_name }}</option>@endforeach</x-filtros.select>
+                                        </div>
+                                        <div class="statistics-filter-field">
+                                            <label for="lugar">Lugar de defunción</label>
+                                            <x-filtros.select id="lugar" name="lugar" placeholder="Todos"><option value="">Todos</option>@foreach($deathLocations ?? [] as $location)<option value="{{ $location->id }}" @selected((string) request('lugar') === (string) $location->id)>{{ $location->display_name }}</option>@endforeach</x-filtros.select>
                                         </div>
                                     </div>
                                 </div>
@@ -163,6 +171,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const selectedText = (control) => control?.options?.[control.selectedIndex]?.text?.trim() || '';
     const escapeText = (value) => String(value ?? '').replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[char]));
     const monthNames = { '01':'Ene', '02':'Feb', '03':'Mar', '04':'Abr', '05':'May', '06':'Jun', '07':'Jul', '08':'Ago', '09':'Sep', '10':'Oct', '11':'Nov', '12':'Dic' };
+    const inheritedFilterChips = @json(array_values($inheritedFilterChips));
 
     function setPanel(open) {
         panel.classList.toggle('is-collapsed', !open);
@@ -262,10 +271,14 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function updateChips() {
-        const chips = [];
-        const addSelect = (name, prefix, defaults = ['']) => {
+        const chips = inheritedFilterChips
+            .map((chip, inheritedIndex) => ({ ...chip, inheritedIndex }))
+            .filter(chip => chip.active !== false);
+        const inheritedKeys = new Set(chips.map(chip => chip.key));
+        const addSelect = (name, prefix, key, defaults = ['']) => {
+            if (inheritedKeys.has(key)) return;
             const control = getControl(name);
-            if (control && !defaults.includes(String(control.value))) chips.push({ label: `${prefix}: ${selectedText(control)}`, fields: [name] });
+            if (control && !defaults.includes(String(control.value))) chips.push({ key, label: `${prefix}: ${selectedText(control)}`, fields: [name] });
         };
         const dateMode = getControl('dateRange')?.value || 'all';
         const yearValue = getControl('year')?.value?.trim() || '';
@@ -299,16 +312,23 @@ document.addEventListener('DOMContentLoaded', function () {
                 fields: ['dateRange','year','month','selectedMonths[]','quarter','startDate','endDate']
             });
         }
-        addSelect('distrito', 'Distrito');
-        addSelect('municipio', 'Municipio res.');
-        addSelect('municipioDefuncion', 'Municipio def.');
-        addSelect('sexo', 'Sexo');
-        addSelect('causa', 'Causa');
-        if (getControl('edad')?.value) chips.push({ label: `Edad: ${getControl('edad').value}`, fields: ['edad'] });
+        addSelect('distrito', 'Distrito de residencia', 'residence_district');
+        addSelect('municipio', 'Municipio de residencia', 'residence_municipality');
+        addSelect('distritoDefuncion', 'Distrito de defunción', 'death_district');
+        addSelect('municipioDefuncion', 'Municipio de defunción', 'death_municipality');
+        addSelect('lugar', 'Lugar de defunción', 'death_location');
+        addSelect('sexo', 'Sexo', 'sex');
+        addSelect('causa', 'Causa', 'cause');
+        if (!inheritedKeys.has('age') && getControl('edad')?.value) chips.push({ key: 'age', label: `Edad: ${getControl('edad').value}`, fields: ['edad'] });
 
         const container = document.getElementById('deathsFilterChips');
         const count = document.getElementById('deathsFilterCount');
-        container.innerHTML = chips.map(chip => `<span class="users-filter-chip">${escapeText(chip.label)}<button type="button" data-clear-filter="${chip.fields.join(',')}" aria-label="Quitar ${escapeText(chip.label)}"><i class="fas fa-times" aria-hidden="true"></i></button></span>`).join('');
+        container.innerHTML = chips.map(chip => {
+            const clearAttribute = Number.isInteger(chip.inheritedIndex)
+                ? `data-clear-inherited-filter="${chip.inheritedIndex}"`
+                : `data-clear-filter="${chip.fields.join(',')}"`;
+            return `<span class="users-filter-chip"><span>${escapeText(chip.label)}</span><button type="button" ${clearAttribute} aria-label="Quitar ${escapeText(chip.label)}"><i class="fas fa-times" aria-hidden="true"></i></button></span>`;
+        }).join('');
         count.textContent = chips.length;
         count.classList.toggle('hidden', chips.length === 0);
         syncOptions();
@@ -329,12 +349,32 @@ document.addEventListener('DOMContentLoaded', function () {
         form.reset();
         form.querySelectorAll('select[data-filter-select]').forEach(select => select.tomselect?.clear(true));
         setFilterValue('dateRange', 'all');
+        const inheritedFields = inheritedFilterChips.flatMap(chip => chip.active === false ? [] : (chip.fields || []));
+        const inheritedReturnKeys = inheritedFilterChips.flatMap(chip => chip.active === false ? [] : (chip.return_keys || []));
+        inheritedFilterChips.forEach(chip => { chip.active = false; });
+        if (inheritedFields.length) {
+            document.dispatchEvent(new CustomEvent('statistics-analysis-filter-clear', {
+                detail: { fields: inheritedFields, return_keys: inheritedReturnKeys, reload: false },
+            }));
+        }
         updateChips();
         form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
         setPanel(false);
     });
 
     document.getElementById('deathsFilterChips')?.addEventListener('click', function (event) {
+        const inheritedButton = event.target.closest('[data-clear-inherited-filter]');
+        if (inheritedButton) {
+            const chip = inheritedFilterChips[Number(inheritedButton.dataset.clearInheritedFilter)];
+            if (!chip || chip.active === false) return;
+            chip.active = false;
+            updateChips();
+            document.dispatchEvent(new CustomEvent('statistics-analysis-filter-clear', {
+                detail: { fields: chip.fields || [], return_keys: chip.return_keys || [], reload: true },
+            }));
+            return;
+        }
+
         const button = event.target.closest('[data-clear-filter]');
         if (!button) return;
         button.dataset.clearFilter.split(',').forEach(name => {

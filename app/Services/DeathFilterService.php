@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Support\CatalogLabel;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder as EloquentBuilder;
 use Illuminate\Database\Query\Builder as QueryBuilder;
@@ -10,6 +11,47 @@ use Illuminate\Support\Facades\DB;
 
 class DeathFilterService
 {
+    public function chips(array $input): array
+    {
+        $filters = $this->normalize($input);
+        $chips = [];
+
+        $this->appendCatalogChip($chips, 'residence_municipality', 'Municipio de residencia', 'municipalities', $filters['residence_municipality_ids'], ['residence_municipality_ids', 'municipio'], ['municipality'], CatalogLabel::municipality(...));
+        $this->appendCatalogChip($chips, 'death_municipality', 'Municipio de defunción', 'municipalities', $filters['death_municipality_ids'], ['death_municipality_ids', 'municipioDefuncion'], ['municipality'], CatalogLabel::municipality(...));
+        $this->appendCatalogChip($chips, 'residence_district', 'Distrito de residencia', 'districts', $filters['district_ids'], ['district_ids', 'distrito', 'jurisdiccion'], ['residence_district', 'district'], CatalogLabel::district(...));
+        $this->appendCatalogChip($chips, 'death_district', 'Distrito de defunción', 'districts', $filters['death_district_ids'], ['death_district_ids', 'distritoDefuncion'], ['death_district', 'district'], CatalogLabel::district(...));
+        $this->appendCatalogChip($chips, 'cause', 'Causa', 'death_causes', $filters['cause_ids'], ['cause_ids', 'causa'], ['cause'], CatalogLabel::cause(...));
+        $this->appendCatalogChip($chips, 'death_location', 'Lugar de defunción', 'death_locations', $filters['death_location_ids'], ['death_location_ids', 'lugar'], ['death_location'], CatalogLabel::location(...));
+
+        if ($filters['sex']) {
+            $sexLabel = match (mb_strtolower($filters['sex'])) {
+                'm' => 'Masculino',
+                'f' => 'Femenino',
+                default => $filters['sex'],
+            };
+            $chips[] = [
+                'key' => 'sex',
+                'label' => 'Sexo: '.$sexLabel,
+                'fields' => ['sex', 'sexo'],
+                'return_keys' => ['sex'],
+            ];
+        }
+
+        if ($filters['age']) {
+            $ageLabel = $this->ageLabel($filters['age']);
+            if ($ageLabel !== null) {
+                $chips[] = [
+                    'key' => 'age',
+                    'label' => $ageLabel,
+                    'fields' => ['age', 'edad', 'age_unit', 'edad_unidad'],
+                    'return_keys' => ['age', 'age_unit'],
+                ];
+            }
+        }
+
+        return $chips;
+    }
+
     public function describe(array $input): array
     {
         $filters = $this->normalize($input);
@@ -431,5 +473,47 @@ class DeathFilterService
         if ($names !== []) {
             $labels[] = $prefix.': '.implode(', ', $names);
         }
+    }
+
+    private function appendCatalogChip(array &$chips, string $key, string $prefix, string $table, array $ids, array $fields, array $returnKeys, callable $formatter): void
+    {
+        $validIds = array_values(array_filter($ids, fn ($id) => $id > 0));
+        if ($validIds === []) {
+            return;
+        }
+
+        $names = DB::table($table)
+            ->whereIn('id', $validIds)
+            ->pluck('name')
+            ->filter()
+            ->map($formatter)
+            ->values()
+            ->all();
+
+        if ($names !== []) {
+            $chips[] = [
+                'key' => $key,
+                'label' => $prefix.': '.implode(', ', $names),
+                'fields' => $fields,
+                'return_keys' => $returnKeys,
+            ];
+        }
+    }
+
+    private function ageLabel(array $age): ?string
+    {
+        $unit = match ($age['unit'] ?? 'years') {
+            'days' => ' días',
+            'months' => ' meses',
+            default => ' años',
+        };
+
+        return match ($age['type'] ?? null) {
+            'exact' => 'Edad: '.$age['value'].$unit,
+            'range' => 'Edad: '.$age['min'].'-'.$age['max'].$unit,
+            'list' => 'Edad: '.implode(', ', $age['values']).$unit,
+            'minimum' => 'Edad: '.$age['min'].$unit.' o más',
+            default => null,
+        };
     }
 }

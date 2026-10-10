@@ -70,6 +70,40 @@ test('la recarga monta Configuración antes de esperar los datos iniciales', asy
     await page.locator('#mainChart canvas').waitFor();
 });
 
+test('Ver datos conserva los filtros al construir Volver a gráficas', async ({ page }) => {
+    await page.getByRole('tab', { name: 'Filtros', exact: true }).click();
+    const setMultiSelect = async (selector, values) => {
+        await page.locator(selector).evaluate((select, selectedValues) => {
+            if (select.tomselect) {
+                select.tomselect.setValue(selectedValues);
+                return;
+            }
+            Array.from(select.options).forEach(option => {
+                option.selected = selectedValues.includes(option.value);
+            });
+            select.dispatchEvent(new Event('change', { bubbles: true }));
+        }, values);
+    };
+    await setMultiSelect('#deathDistrictsFilter', ['2']);
+    await setMultiSelect('#deathLocationsFilter', ['1']);
+
+    const appliedRequest = page.waitForRequest(request => {
+        const url = new URL(request.url());
+        return url.pathname.endsWith('/api/chart/municipios')
+            && url.searchParams.getAll('death_district_ids[]').includes('2')
+            && url.searchParams.getAll('death_location_ids[]').includes('1');
+    });
+    await page.locator('#statisticsFiltersApply').click();
+    await appliedRequest;
+
+    const viewDataUrl = new URL(await page.locator('#statisticsViewData').getAttribute('href'), page.url());
+    const returnUrl = new URL(viewDataUrl.searchParams.get('return_to'), page.url());
+
+    expect(returnUrl.searchParams.get('metric')).toBe('municipios');
+    expect(returnUrl.searchParams.getAll('death_district')).toEqual(['2']);
+    expect(returnUrl.searchParams.getAll('death_location')).toEqual(['1']);
+});
+
 test('los controles de Vista conservan los filtros de Datos compatibles', async ({ page }) => {
     const sexSelect = page.locator('#sexoFilter');
     const ageInput = page.locator('#edadFilter');

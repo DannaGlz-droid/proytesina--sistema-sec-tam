@@ -3091,6 +3091,46 @@
             return chartInstance.getDataURL({ type: 'png', pixelRatio: 2, ...backgroundOptions });
         }
 
+        function sanitizeChartExportInteraction(option) {
+            const hideAxisPointer = pointer => ({
+                ...(pointer || {}),
+                show: false,
+                status: 'hide',
+                value: null,
+                seriesDataIndices: [],
+            });
+            const hideTooltip = tooltip => ({
+                ...(tooltip || {}),
+                show: false,
+                triggerOn: 'none',
+                alwaysShowContent: false,
+                axisPointer: hideAxisPointer(tooltip?.axisPointer),
+            });
+
+            if (Array.isArray(option.tooltip)) {
+                option.tooltip = option.tooltip.map(hideTooltip);
+            } else {
+                option.tooltip = hideTooltip(option.tooltip);
+            }
+
+            if (Array.isArray(option.axisPointer)) {
+                option.axisPointer = option.axisPointer.map(hideAxisPointer);
+            } else if (option.axisPointer) {
+                option.axisPointer = hideAxisPointer(option.axisPointer);
+            }
+
+            ['xAxis', 'yAxis', 'radiusAxis', 'angleAxis', 'singleAxis', 'parallelAxis'].forEach(axisKey => {
+                if (!option[axisKey]) return;
+                const axes = Array.isArray(option[axisKey]) ? option[axisKey] : [option[axisKey]];
+                axes.forEach(axis => {
+                    if (axis) axis.axisPointer = hideAxisPointer(axis.axisPointer);
+                });
+                option[axisKey] = Array.isArray(option[axisKey]) ? axes : axes[0];
+            });
+
+            return option;
+        }
+
         function shouldIncludeChartContext() {
             return document.getElementById('includeChartContext')?.checked !== false;
         }
@@ -3241,7 +3281,7 @@
             });
 
             try {
-                let exportOption = chartInstance.getOption();
+                let exportOption = sanitizeChartExportInteraction(chartInstance.getOption());
                 if (typeof optionTransform === 'function') {
                     exportOption = optionTransform(exportOption) || exportOption;
                 }
@@ -6231,7 +6271,8 @@
             if (['municipios', 'distritoes'].includes(currentChartType)) {
                 params.set('municipio_type', activeFilters.tipoMunicipio);
             }
-            params.set('return_to', `${window.location.pathname}${window.location.search}`);
+            const returnUrl = new URL(buildStatisticsShareUrl());
+            params.set('return_to', `${returnUrl.pathname}${returnUrl.search}`);
             if (excluded) params.set('analysis_excluded', '1');
             if (csv) params.set('format', 'csv');
 
