@@ -15,6 +15,8 @@ test('Municipios y Distritos cambian su ámbito desde Vista', async ({ page }) =
     await expect(scopeControl).toBeVisible();
     await expect(page.locator('#statisticsCopyLink')).toBeHidden();
     await expect(page.locator('#statisticsViewData')).toBeVisible();
+    const viewDataUrl = new URL(await page.locator('#statisticsViewData').getAttribute('href'));
+    expect(viewDataUrl.searchParams.get('return_to')).toContain('/estadisticas/graficas');
     await expect(page.locator('#descargarActual')).toBeVisible();
     await expect(page.locator('#statisticsChartQuality')).toBeHidden();
     await expect(page.locator('#chartTitle')).toHaveText('Distribución por municipios de defunción');
@@ -284,6 +286,49 @@ test('Municipios de residencia cambia de cantidades a tasas por población', asy
     await page.getByRole('tab', { name: 'Vista' }).click();
     await expect(page.locator('#statisticsGeographicScopeControl').getByRole('radio', { name: 'Residencia' })).toBeChecked();
     await expect(page.locator('#statisticsMeasureButtons').getByRole('button', { name: 'Cantidad' })).toHaveAttribute('aria-pressed', 'true');
+});
+
+test('Restablecer Vista vuelve a defunción y conserva los filtros aplicados', async ({ page }) => {
+    await page.getByRole('tab', { name: 'Filtros', exact: true }).click();
+    await page.locator('#dateRange').selectOption('years');
+    await page.locator('#year').fill('2025');
+    const yearRequest = page.waitForRequest(request => {
+        const url = new URL(request.url());
+        return url.pathname.endsWith('/api/chart/municipios')
+            && url.searchParams.get('years[]') === '2025';
+    });
+    await page.locator('#statisticsFiltersApply').click();
+    await yearRequest;
+
+    await page.getByRole('tab', { name: 'Vista' }).click();
+    const residenceRequest = page.waitForRequest(request => {
+        const url = new URL(request.url());
+        return url.pathname.endsWith('/api/chart/municipios')
+            && url.searchParams.get('municipio_type') === 'residencia';
+    });
+    await page.locator('#statisticsGeographicScopeControl').getByRole('radio', { name: 'Residencia' }).click();
+    await residenceRequest;
+    await page.locator('#statisticsMeasureButtons').getByRole('button', { name: 'Tasa' }).click();
+    await page.locator('#municipalityChartTypeButtons').getByRole('button', { name: 'Barras' }).click();
+    await page.locator('#chartLimitButtons').getByRole('button', { name: 'Top 5', exact: true }).click();
+
+    const resetRequest = page.waitForRequest(request => {
+        const url = new URL(request.url());
+        return url.pathname.endsWith('/api/chart/municipios')
+            && url.searchParams.get('municipio_type') === 'defuncion'
+            && url.searchParams.get('measure') === 'count'
+            && url.searchParams.get('years[]') === '2025'
+            && url.searchParams.get('limit') === '10';
+    });
+    await page.locator('#statisticsPresentationReset').click();
+    await resetRequest;
+
+    await expect(page.locator('#filtrosActivos')).toContainText('Fecha: 2025');
+    await expect(page.locator('#statisticsGeographicScopeControl').getByRole('radio', { name: 'Defunción' })).toBeChecked();
+    await expect(page.locator('#statisticsMeasureButtons').getByRole('button', { name: 'Cantidad' })).toHaveAttribute('aria-pressed', 'true');
+    await expect(page.locator('#municipalityChartTypeButtons').getByRole('button', { name: 'Columnas' })).toHaveAttribute('aria-pressed', 'true');
+    await expect(page.locator('#chartLimitButtons').getByRole('button', { name: '10' })).toHaveAttribute('aria-pressed', 'true');
+    await expect(page.locator('#chartTitle')).toHaveText('Distribución por municipios de defunción');
 });
 
 test('Municipios compacta Sexo y Edad con foco neutral', async ({ page }) => {

@@ -2,12 +2,13 @@
     <form id="filters-imports-form" class="users-filter-form" novalidate>
         <div class="users-filter-topbar">
             <div class="users-filter-popover-wrap">
-                <x-filtros.boton id="importsFilterToggle" controls="importsFilterPanel" count-id="importsFilterCount" />
+                <x-filtros.boton id="importsFilterToggle" controls="importsFilterPanel" count-id="importsFilterCount" class="app-standard-filter-toggle" />
                 <x-filtros.panel
                     id="importsFilterPanel"
                     clear-id="limpiarFiltrosImportaciones"
                     cancel-id="closeImportsFilters"
                     apply-id="aplicarFiltrosImportaciones"
+                    class="app-standard-filter-panel"
                 >
                         <x-filtros.seccion titulo="Fecha de carga" :abierto="true">
                             <div class="imports-filter-fields">

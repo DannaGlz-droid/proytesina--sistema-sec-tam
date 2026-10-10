@@ -47,15 +47,17 @@
                             :count="$activeFilterCount"
                             count-id="reports-filter-count"
                             count-class="reports-filter-count"
-                            class="reports-filter-toggle"
+                            class="app-standard-filter-toggle"
                         />
 
                         <x-filtros.panel
                             id="reports-filter-panel"
                             title-id="reports-filter-title"
                             :clear-href="route('reportes.index', array_filter(['tipo' => request('tipo', 'todos'), 'q' => request('q'), 'order_by' => request('order_by'), 'per_page' => request('per_page')]))"
+                            cancel-id="reports-filter-cancel"
+                            apply-type="submit"
                             :open="true"
-                            class="reports-filter-panel hidden"
+                            class="reports-filter-panel app-standard-filter-panel hidden"
                             header-class="reports-filter-panel-header"
                             body-class="reports-filter-panel-body"
                         >
@@ -83,16 +85,16 @@
                                     'status' => ['label' => 'Estado', 'value' => request('status', ''), 'options' => ['' => 'Todos', 'pendiente' => 'Pendiente', 'aprobado' => 'Aprobado', 'rechazado' => 'Rechazado']],
                                     'date_filter' => ['label' => 'Periodo', 'value' => request('date_filter', ''), 'options' => ['' => 'Todas las fechas', 'hoy' => 'Hoy', 'semana' => 'Esta semana', 'mes' => 'Este mes', '3meses' => 'Últimos 3 meses', 'anio' => 'Este año']],
                                 ] as $target => $filter)
-                                    <div class="reports-filter-section {{ $filter['value'] !== '' ? 'is-open' : '' }}" data-reports-filter-section>
-                                        <button type="button" class="reports-filter-section-toggle" data-reports-filter-section-toggle>
+                                    <div class="users-filter-section reports-filter-section {{ $filter['value'] !== '' ? 'is-open' : '' }}" data-reports-filter-section>
+                                        <button type="button" class="users-filter-section-toggle reports-filter-section-toggle" data-reports-filter-section-toggle>
                                             <i class="fas {{ $filter['value'] !== '' ? 'fa-chevron-down' : 'fa-chevron-right' }}" aria-hidden="true"></i>
                                             <span>{{ $filter['label'] }}</span>
                                         </button>
-                                        <div class="reports-filter-section-content">
-                                            <div class="reports-filter-options">
+                                        <div class="users-filter-section-content reports-filter-section-content">
+                                            <div class="users-filter-options reports-filter-options">
                                                 @foreach($filter['options'] as $value => $label)
-                                                    <button type="button" class="reports-filter-option" data-reports-filter-target="{{ $target }}" data-reports-filter-value="{{ $value }}">
-                                                        <span class="reports-filter-check"><i class="fas fa-check" aria-hidden="true"></i></span>
+                                                    <button type="button" class="users-filter-option reports-filter-option" data-reports-filter-target="{{ $target }}" data-reports-filter-value="{{ $value }}">
+                                                        <span class="users-filter-check reports-filter-check"><i class="fas fa-check" aria-hidden="true"></i></span>
                                                         <span>{{ $label }}</span>
                                                     </button>
                                                 @endforeach
@@ -101,12 +103,12 @@
                                     </div>
                                 @endforeach
 
-                                <div class="reports-filter-section {{ request()->filled('district_id') ? 'is-open' : '' }}" data-reports-filter-section>
-                                    <button type="button" class="reports-filter-section-toggle" data-reports-filter-section-toggle>
+                                <div class="users-filter-section reports-filter-section {{ request()->filled('district_id') ? 'is-open' : '' }}" data-reports-filter-section>
+                                    <button type="button" class="users-filter-section-toggle reports-filter-section-toggle" data-reports-filter-section-toggle>
                                         <i class="fas {{ request()->filled('district_id') ? 'fa-chevron-down' : 'fa-chevron-right' }}" aria-hidden="true"></i>
                                         <span>Distrito</span>
                                     </button>
-                                    <div class="reports-filter-section-content district-filter-field">
+                                    <div class="users-filter-section-content reports-filter-section-content district-filter-field">
                                         <select id="district_id" name="district_id" class="reports-district-tomselect tomselect-select" data-placeholder="Todos">
                                             <option value="">Todos</option>
                                             @foreach($districts as $district)
@@ -116,28 +118,22 @@
                                     </div>
                                 </div>
 
-                                <div class="reports-filter-section {{ request('order_by', 'updated_at:desc') !== 'updated_at:desc' ? 'is-open' : '' }}" data-reports-filter-section>
-                                    <button type="button" class="reports-filter-section-toggle" data-reports-filter-section-toggle>
+                                <div class="users-filter-section reports-filter-section {{ request('order_by', 'updated_at:desc') !== 'updated_at:desc' ? 'is-open' : '' }}" data-reports-filter-section>
+                                    <button type="button" class="users-filter-section-toggle reports-filter-section-toggle" data-reports-filter-section-toggle>
                                         <i class="fas {{ request('order_by', 'updated_at:desc') !== 'updated_at:desc' ? 'fa-chevron-down' : 'fa-chevron-right' }}" aria-hidden="true"></i>
                                         <span>Orden</span>
                                     </button>
-                                    <div class="reports-filter-section-content">
-                                        <div class="reports-filter-options">
+                                    <div class="users-filter-section-content reports-filter-section-content">
+                                        <div class="users-filter-options reports-filter-options">
                                             @foreach(['updated_at:desc' => 'Última actualización', 'created_at:desc' => 'Creación, recientes', 'created_at:asc' => 'Creación, antiguos', 'titulo:asc' => 'Título, A-Z', 'titulo:desc' => 'Título, Z-A', 'usuario:asc' => 'Usuario, A-Z', 'usuario:desc' => 'Usuario, Z-A'] as $value => $label)
-                                                <button type="button" class="reports-filter-option" data-reports-filter-target="order_by" data-reports-filter-value="{{ $value }}">
-                                                    <span class="reports-filter-check"><i class="fas fa-check" aria-hidden="true"></i></span>
+                                                <button type="button" class="users-filter-option reports-filter-option" data-reports-filter-target="order_by" data-reports-filter-value="{{ $value }}">
+                                                    <span class="users-filter-check reports-filter-check"><i class="fas fa-check" aria-hidden="true"></i></span>
                                                     <span>{{ $label }}</span>
                                                 </button>
                                             @endforeach
                                         </div>
                                     </div>
                                 </div>
-                            <x-slot:footer>
-                                <div class="reports-filter-panel-footer">
-                                    <button type="button" id="reports-filter-cancel" class="reports-button reports-button--secondary">Cancelar</button>
-                                    <button type="submit" class="reports-button reports-button--primary">Aplicar filtros</button>
-                                </div>
-                            </x-slot:footer>
                         </x-filtros.panel>
                     </div>
 

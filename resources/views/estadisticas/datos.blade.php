@@ -32,6 +32,13 @@
                 $analysisCount = $analysisTotal;
                 $analysisCsvUrl = route('statistic.export').'?'.http_build_query(array_merge(request()->query(), ['format' => 'csv']));
                 $isExcludedReview = $analysisContext['excluded'];
+                $statisticsGraphsPath = parse_url(route('estadisticas.graficas'), PHP_URL_PATH);
+                $requestedReturnTo = request('return_to');
+                $analysisReturnUrl = is_string($requestedReturnTo)
+                    && str_starts_with($requestedReturnTo, $statisticsGraphsPath)
+                    && ! str_starts_with($requestedReturnTo, '//')
+                        ? $requestedReturnTo
+                        : route('estadisticas.graficas');
             @endphp
         @endif
 
@@ -82,7 +89,7 @@
                                 @endif
                             </div>
                             <div class="statistics-analysis-context__actions">
-                                <a href="{{ route('estadisticas.graficas') }}" class="ui-button ui-button--secondary statistics-analysis-context__secondary">
+                                <a href="{{ $analysisReturnUrl }}" class="ui-button ui-button--secondary statistics-analysis-context__secondary">
                                     <i class="fas fa-arrow-left" aria-hidden="true"></i> Volver a gráficas
                                 </a>
                                 <a id="statistics-analysis-csv" href="{{ $analysisCsvUrl }}" class="ui-button ui-button--secondary statistics-analysis-context__download">
@@ -678,8 +685,14 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function applyDeathFiltersWithoutReload() {
         const nextFilters = readDeathFiltersFromForm();
+        const tableFilterKeys = [
+            'dateRange', 'year', 'month', 'selectedMonths', 'quarter', 'startDate', 'endDate',
+            'distrito', 'jurisdiccion', 'municipio', 'municipioDefuncion', 'sexo', 'edad', 'causa'
+        ];
 
-        Object.keys(filterData).forEach(key => delete filterData[key]);
+        // Remove only filters owned by this panel. Parameters inherited from the
+        // chart describe the analysis scope and must survive table refinements.
+        tableFilterKeys.forEach(key => delete filterData[key]);
         Object.assign(filterData, nextFilters);
 
         const params = buildDeathFilterQuery(filterData);
@@ -687,9 +700,14 @@ document.addEventListener('DOMContentLoaded', function () {
             ? `${window.location.pathname}?${params.toString()}`
             : window.location.pathname;
         window.history.pushState({}, '', nextUrl);
-        document.getElementById('statisticsAnalysisContext')?.remove();
+
+        const csvParams = new URLSearchParams(params);
+        csvParams.set('format', 'csv');
+        const csvAction = document.getElementById('statistics-analysis-csv');
+        if (csvAction) csvAction.href = `{{ route('statistic.export') }}?${csvParams.toString()}`;
 
         clearVisibleDeathSelection();
+        setAnalysisCountLoading();
         window.deathsTable.ajax.reload();
     }
 
@@ -856,6 +874,8 @@ document.addEventListener('DOMContentLoaded', function () {
             }
             deathsHasDrawn = true;
             setDeathsRefreshing(false, 'Tabla actualizada');
+            syncStatisticsOriginOptions(settings.json?.originOptions, settings.json?.originTotal);
+            settleAnalysisCount(tableInfo.recordsDisplay);
             updateCustomInfoDeaths(this.api());
             updateCustomPaginationDeaths(this.api());
             // Ensure bulk-delete visibility is refreshed after each draw
@@ -878,6 +898,8 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
+    let originMetadata = new Map();
+
     function initializeStatisticsOriginSelect() {
         if (!statisticsOriginFilter) return false;
         if (statisticsOriginFilter.tomselect) {
@@ -886,7 +908,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
         if (!window.AppFilterSelect) return false;
         const originIsSearchable = statisticsOriginFilter.options.length > 8;
-        const originMetadata = new Map(Array.from(statisticsOriginFilter.options).map((option) => [
+        originMetadata = new Map(Array.from(statisticsOriginFilter.options).map((option) => [
             option.value,
             {
                 records: option.dataset.records || '',
@@ -918,6 +940,62 @@ document.addEventListener('DOMContentLoaded', function () {
         instance?.wrapper.classList.add('statistics-origin-tom-select');
         bindStatisticsOriginMenu(instance);
         return Boolean(instance);
+    }
+
+    function syncStatisticsOriginOptions(options, total) {
+        if (!statisticsOriginFilter || !Array.isArray(options)) return;
+
+        const formatter = new Intl.NumberFormat('es-MX');
+        const nextMetadata = new Map();
+        const normalizedOptions = options.map(origin => {
+            const value = String(origin.value || '');
+            const records = Number(origin.records || 0);
+            const label = String(origin.label || 'Origen');
+            const metadata = {
+                records: formatter.format(records),
+                shortLabel: label,
+                text: label,
+            };
+            nextMetadata.set(value, metadata);
+            return { value, text: label, ...metadata };
+        });
+
+        // Keep known origins visible with zero so a temporary combination of
+        // filters does not make options jump in and out of the control.
+        originMetadata.forEach((metadata, value) => {
+            if (!value || nextMetadata.has(value)) return;
+            const zeroMetadata = { ...metadata, records: '0' };
+            nextMetadata.set(value, zeroMetadata);
+            normalizedOptions.push({ value, text: metadata.text || metadata.shortLabel, ...zeroMetadata });
+        });
+
+        const totalRecords = Number.isFinite(Number(total)) ? Number(total) : 0;
+        const allMetadata = {
+            records: formatter.format(totalRecords),
+            shortLabel: 'Todos',
+            text: 'Todos los orígenes',
+        };
+        nextMetadata.set('', allMetadata);
+        originMetadata = nextMetadata;
+
+        const instance = statisticsOriginFilter.tomselect;
+        if (!instance) {
+            Array.from(statisticsOriginFilter.options).forEach(option => {
+                const metadata = originMetadata.get(option.value);
+                if (metadata) option.dataset.records = metadata.records;
+            });
+            return;
+        }
+
+        const selectedValue = String(instance.getValue() || '');
+        instance.clearOptions();
+        instance.addOption([
+            { value: '', text: allMetadata.text, ...allMetadata },
+            ...normalizedOptions,
+        ]);
+        instance.refreshOptions(false);
+        instance.setValue(originMetadata.has(selectedValue) ? selectedValue : '', true);
+        instance.refreshItems();
     }
 
     if (!initializeStatisticsOriginSelect()) {

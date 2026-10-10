@@ -20,9 +20,9 @@
     <form id="filtersForm" method="GET" action="{{ route('user.user-gestion') }}" class="users-filter-form">
         <div class="users-filter-topbar">
             <div class="users-filter-popover-wrap">
-                <x-filtros.boton id="usersFilterToggle" controls="usersFilterPanel" count-id="usersFilterCount" />
+                <x-filtros.boton id="usersFilterToggle" controls="usersFilterPanel" count-id="usersFilterCount" class="app-standard-filter-toggle" />
 
-                <x-filtros.panel id="usersFilterPanel" clear-id="clearUsersFilters" cancel-id="closeUsersFilters" apply-id="aplicarFiltros" apply-type="submit">
+                <x-filtros.panel id="usersFilterPanel" clear-id="clearUsersFilters" cancel-id="closeUsersFilters" apply-id="aplicarFiltros" apply-type="submit" class="app-standard-filter-panel">
                     <x-slot:beforeBody>
                     <div class="users-filter-native-controls" aria-hidden="true">
                         <select name="date_range" id="dateRange" tabindex="-1">

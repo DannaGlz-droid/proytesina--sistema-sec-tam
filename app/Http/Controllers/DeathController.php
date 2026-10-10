@@ -61,8 +61,18 @@ class DeathController extends Controller
             });
         }
         
-        $this->deathFilters->apply($query, $this->deathFilters->normalize($request->all()));
+        $normalizedFilters = $this->deathFilters->normalize($request->all());
+        $selectedOrigin = $normalizedFilters['origin'];
+        $normalizedFilters['origin'] = null;
+        $this->deathFilters->apply($query, $normalizedFilters);
         $this->statisticsAnalysis->applyRequestedScope($query, $request->all());
+
+        // Keep the origin facet in sync with every table refinement. Its counts
+        // include all origins under the current filters, before selecting one.
+        $analysisContext = $this->statisticsAnalysis->context($request->all());
+        $originOptions = $analysisContext ? $this->getAnalysisOriginOptions($query) : [];
+        $originTotal = collect($originOptions)->sum('records');
+        $this->deathFilters->applyOrigin($query, $selectedOrigin);
         
         // Get total count
         $recordsTotal = Death::count();
@@ -123,6 +133,8 @@ class DeathController extends Controller
             'draw' => $draw,
             'recordsTotal' => $recordsTotal,
             'recordsFiltered' => $recordsFiltered,
+            'originOptions' => $originOptions,
+            'originTotal' => $originTotal,
             'data' => $data,
         ]);
     }

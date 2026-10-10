@@ -11,9 +11,9 @@
     <form id="filters-form" method="GET" action="{{ route('statistic.data') }}" class="users-filter-form">
         <div class="users-filter-topbar">
                 <div class="users-filter-popover-wrap">
-                    <x-filtros.boton id="deathsFilterToggle" controls="deathsFilterPanel" count-id="deathsFilterCount" />
+                    <x-filtros.boton id="deathsFilterToggle" controls="deathsFilterPanel" count-id="deathsFilterCount" class="app-standard-filter-toggle" />
 
-                    <x-filtros.panel id="deathsFilterPanel" clear-id="limpiarFiltros" cancel-id="closeDeathsFilters" apply-type="submit">
+                    <x-filtros.panel id="deathsFilterPanel" clear-id="limpiarFiltros" cancel-id="closeDeathsFilters" apply-type="submit" class="app-standard-filter-panel">
                         <x-slot:beforeBody>
                         <div class="users-filter-native-controls" aria-hidden="true">
                             <select name="sexo" id="sexo" tabindex="-1">

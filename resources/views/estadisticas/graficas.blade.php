@@ -5064,6 +5064,9 @@
             clearCurrentPresentationPreference();
             resetPresentationPreferenceState();
 
+            if (['municipios', 'distritoes'].includes(currentChartType)) {
+                applyGeographicScope('defuncion');
+            }
             applyPreferredPresentation(currentChartType);
             renderColorPalettePreview();
 
@@ -6228,6 +6231,7 @@
             if (['municipios', 'distritoes'].includes(currentChartType)) {
                 params.set('municipio_type', activeFilters.tipoMunicipio);
             }
+            params.set('return_to', `${window.location.pathname}${window.location.search}`);
             if (excluded) params.set('analysis_excluded', '1');
             if (csv) params.set('format', 'csv');
 

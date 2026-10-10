@@ -367,6 +367,15 @@ it('offers and applies origin filters to chart records', function (): void {
     $manual = app(DeathController::class)
         ->dataTable(Request::create('/', 'POST', ['length' => 25, 'origin' => 'manual']))
         ->getData(true);
+    $filteredFacet = app(DeathController::class)
+        ->dataTable(Request::create('/', 'POST', [
+            'length' => 25,
+            'analysis_type' => 'municipios',
+            'municipio_type' => 'defuncion',
+            'municipioDefuncion' => 'Municipio A',
+            'origin' => "import:{$importId}",
+        ]))
+        ->getData(true);
     $controller = app(DeathController::class);
     $originOptions = new ReflectionMethod($controller, 'getAnalysisOriginOptions');
     $origins = collect($originOptions->invoke($controller, Death::query()))->keyBy('value');
@@ -374,6 +383,9 @@ it('offers and applies origin filters to chart records', function (): void {
     expect($imported['recordsFiltered'])->toBe(1)
         ->and($imported['data'][0]['gov_folio'])->toBe('STAT-1')
         ->and($manual['recordsFiltered'])->toBe(5)
+        ->and($filteredFacet['recordsFiltered'])->toBe(1)
+        ->and($filteredFacet['originTotal'])->toBe(2)
+        ->and(collect($filteredFacet['originOptions'])->sum('records'))->toBe(2)
         ->and((new DeathsExport(['origin' => "import:{$importId}"]))->query()->count())->toBe(1)
         ->and($origins->sum('records'))->toBe(6)
         ->and($origins["import:{$importId}"]['label'])->toBe('reporte estatal.xlsx')
