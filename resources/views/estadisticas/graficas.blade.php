@@ -315,7 +315,7 @@
                             </header>
                             <div id="statisticsPresentationGroups" class="statistics-display-groups">
                                 <fieldset id="statisticsGeographicScopeControl" class="statistics-display-group statistics-geographic-scope-group hidden">
-                                    <legend id="statisticsGeographicScopeLabel">Agrupar municipios por</legend>
+                                    <legend id="statisticsGeographicScopeLabel">Municipio de</legend>
                                     <select id="geographicScopeSelector" class="sr-only" aria-labelledby="statisticsGeographicScopeLabel" title="Lugar de defunción">
                                         <option value="defuncion">Lugar de defunción</option>
                                         <option value="residencia">Lugar de residencia</option>
@@ -327,7 +327,7 @@
                                 </fieldset>
 
                                 <fieldset id="statisticsTrendGranularityControl" class="statistics-display-group statistics-analysis-display-group hidden">
-                                    <legend id="statisticsTrendGranularityLabel">Agrupar tendencia por</legend>
+                                    <legend id="statisticsTrendGranularityLabel">Agrupar por</legend>
                                     <select id="trendGranularitySelector" class="sr-only" aria-labelledby="statisticsTrendGranularityLabel" title="Mes">
                                         <option value="day">Día</option>
                                         <option value="month">Mes</option>
@@ -395,9 +395,9 @@
                                     <p id="statisticsMeasureNote" class="statistics-presentation-note">La tasa se expresa por 100 mil habitantes.</p>
                                 </fieldset>
 
-                                <!-- Etiquetas de datos -->
+                                <!-- Etiquetas -->
                                 <fieldset id="statisticsDataLabelGroup" class="statistics-display-group">
-                                    <legend id="statisticsDataLabelLegend">Etiquetas de datos</legend>
+                                    <legend id="statisticsDataLabelLegend">Mostrar en etiquetas</legend>
                                     <select id="datalabelMode" class="hidden" aria-hidden="true" tabindex="-1">
                                         <option value="value">Cantidad</option>
                                         <option value="percent">Porcentaje</option>
@@ -412,7 +412,7 @@
                                 <fieldset id="filterTop" class="statistics-display-group" style="display: none;">
                                     <legend id="statisticsChartLimitLegend">Mostrar</legend>
                                     <select id="chartLimit" class="hidden" aria-hidden="true" tabindex="-1">
-                                        <option value="all">Todas</option>
+                                        <option value="all">Todos</option>
                                         <option value="5">Top 5</option>
                                         <option value="10" selected>Top 10</option>
                                         <option value="15">Top 15</option>
@@ -428,7 +428,7 @@
 
                                 <!-- Paleta -->
                                 <fieldset class="statistics-display-group statistics-display-group--palette">
-                                    <legend id="statisticsPaletteLegend">Paleta de colores</legend>
+                                    <legend id="statisticsPaletteLegend">Colores</legend>
                                     <div class="statistics-palette-popover">
                                         <button type="button" id="statisticsPaletteToggle" class="statistics-palette-toggle" aria-expanded="false" aria-controls="statisticsPaletteMenu" aria-haspopup="dialog">
                                             <span id="statisticsPaletteSelection" class="statistics-palette-selection" aria-hidden="true"></span>
@@ -603,7 +603,8 @@
                                             <span id="statisticsDrilldownMarker" class="statistics-drilldown__marker" aria-hidden="true"></span>
                                             <strong id="statisticsDrilldownLabel"></strong>
                                         </div>
-                                        <span id="statisticsDrilldownMeta"></span>
+                                        <span id="statisticsDrilldownMeta" class="statistics-drilldown__meta"></span>
+                                        <span id="statisticsDrilldownRank" class="statistics-drilldown__rank hidden"></span>
                                     </div>
                                     <a id="statisticsDrilldownLink" class="statistics-drilldown__link" href="#">
                                         <i class="fas fa-table-list" aria-hidden="true"></i>
@@ -1649,7 +1650,8 @@
                 if (!activeChartDrilldown) return;
 
                 const chartCanvas = document.querySelector('.statistics-chart-canvas');
-                if (chartCanvas?.contains(event.target)) return;
+                const drilldown = document.getElementById('statisticsDrilldown');
+                if (chartCanvas?.contains(event.target) || drilldown?.contains(event.target)) return;
 
                 clearChartDrilldown();
             });
@@ -4292,20 +4294,17 @@
                         <legend id="municipalityChartTypeMirrorLegend">Tipo de gráfica</legend>
                         <div id="municipalityChartTypeButtons" class="statistics-visual-options" role="group" aria-labelledby="municipalityChartTypeMirrorLegend"></div>
                     `;
-                    sidebarGroups.prepend(sidebarChartTypeGroup);
-
                     sidebarChartTypeGroup.querySelector('#municipalityChartTypeButtons')?.addEventListener('click', function(event) {
                         const button = event.target.closest('.visual-option-btn[data-target="chartTypeSelector"]');
                         if (!button || button.disabled) return;
                         setSelectValueAndTrigger('chartTypeSelector', button.dataset.value);
                         restorePresentationFocus(this, button.dataset.value);
                     });
-                } else if (sidebarChartTypeGroup && sidebarGroups) {
-                    sidebarGroups.prepend(sidebarChartTypeGroup);
                 }
                 [
                     document.getElementById('statisticsGeographicScopeControl'),
                     document.getElementById('statisticsMeasureGroup'),
+                    sidebarChartTypeGroup,
                     document.getElementById('filterTop'),
                     document.getElementById('statisticsDataLabelGroup'),
                     displayPanel.querySelector('.statistics-display-group--palette')
@@ -4346,13 +4345,13 @@
                     document.getElementById('statisticsGeographicScopeControl'),
                     document.getElementById('statisticsTrendGranularityControl'),
                     document.getElementById('statisticsComparisonControl'),
-                    document.getElementById('statisticsChartTypeGroup'),
+                    document.getElementById('statisticsAgeDetailGroup'),
                     document.getElementById('statisticsMeasureGroup'),
-                    document.getElementById('statisticsDataLabelGroup'),
+                    document.getElementById('statisticsChartTypeGroup'),
                     document.getElementById('filterTop'),
+                    document.getElementById('statisticsDataLabelGroup'),
                     displayPanel.querySelector('.statistics-display-group--palette')
                         || document.querySelector('#municipalitySidebarPresentation .statistics-display-group--palette'),
-                    document.getElementById('statisticsAgeDetailGroup'),
                 ].forEach(group => {
                     if (group) presentationGroups.append(group);
                 });
@@ -4438,8 +4437,8 @@
             const geographicScopeLabel = document.getElementById('statisticsGeographicScopeLabel');
             if (geographicScopeLabel) {
                 geographicScopeLabel.textContent = chartType === 'distritoes'
-                    ? 'Agrupar distritos por'
-                    : 'Agrupar municipios por';
+                    ? 'Distrito de'
+                    : 'Municipio de';
             }
             document.getElementById('statisticsGeographicScopeControl')
                 ?.classList.toggle('hidden', !isGeographicAnalysis);
@@ -4674,13 +4673,6 @@
                 'dataLabelAdaptationNote',
                 chartType !== 'tendencias' && effectiveDataLabel !== preferredConfig.dataLabelMode
                     ? `Esta vista usa ${dataLabelModeLabels[effectiveDataLabel]}; se conserva ${dataLabelModeLabels[preferredConfig.dataLabelMode]}.`
-                    : ''
-            );
-            setPresentationAdaptationNote(
-                'chartLimitAdaptationNote',
-                chartTypesWithTopSelector.includes(chartType)
-                    && effectiveLimit !== getPreferredLimit(chartType, getVisualLimitFamily(chartType, effectiveType))
-                    ? `${chartLimitLabels[effectiveLimit] || 'Todas'} aplicado para esta visualización.`
                     : ''
             );
         }
@@ -5176,13 +5168,13 @@
                     { value: 'value', label: 'Tasa', accessibleLabel: 'Mostrar tasa' },
                     { value: 'percent', label: 'Cantidad', accessibleLabel: 'Mostrar cantidad de defunciones' },
                     { value: 'both', label: 'Tasa y cantidad', accessibleLabel: 'Mostrar tasa y cantidad' },
-                    { value: 'none', label: 'Ocultar', accessibleLabel: 'No mostrar etiquetas de datos' }
+                    { value: 'none', label: 'Sin etiquetas', accessibleLabel: 'No mostrar etiquetas de datos' }
                 ]
                 : [
                     { value: 'value', label: 'Cantidad', accessibleLabel: 'Mostrar cantidad' },
                     { value: 'percent', label: 'Porcentaje', accessibleLabel: 'Mostrar porcentaje' },
                     { value: 'both', label: 'Cantidad y %', accessibleLabel: 'Mostrar cantidad y porcentaje' },
-                    { value: 'none', label: chartType === 'municipios' ? 'Ocultar' : 'Sin etiquetas', accessibleLabel: 'No mostrar etiquetas de datos' }
+                    { value: 'none', label: 'Sin etiquetas', accessibleLabel: 'No mostrar etiquetas de datos' }
                 ];
 
             // Tendencias no dispone de un denominador categórico para porcentajes.
@@ -5296,6 +5288,17 @@
             const showTopSelector = supportsTopSelector && options.length > 1;
             wrapper.style.display = showTopSelector ? '' : 'none';
             wrapper.parentElement?.classList.toggle('has-top-filter', showTopSelector);
+
+            const preferredLimit = getPreferredLimit(chartType, visualFamily);
+            const limitWasAdapted = supportsTopSelector && effectiveLimit !== preferredLimit;
+            setPresentationAdaptationNote(
+                'chartLimitAdaptationNote',
+                limitWasAdapted
+                    ? effectiveLimit === null
+                        ? 'Se muestran todos los resultados disponibles en esta visualización.'
+                        : `Se muestran los ${effectiveLimit} resultados principales en esta visualización.`
+                    : ''
+            );
         }
 
         function positionChartLimitIndicator({ immediate = false } = {}) {
@@ -5657,7 +5660,10 @@
             const valueMarkup = previewValues
                 ? `<span class="statistics-filter-chip__value">${escapeFilterLabel(previewValues.join(', '))}</span>`
                 : `<span class="statistics-filter-chip__value">${escapeFilterLabel(displayedValue)}</span>`;
-            return `<span class="users-filter-chip statistics-filter-chip${detailed ? ' statistics-filter-chip--detailed' : ''}"${previewAttribute}>
+            const fullLabelAttribute = detailed
+                ? ''
+                : ` data-full-label="${escapeFilterLabel(`${filter.label}: ${filter.value}`)}"`;
+            return `<span class="users-filter-chip statistics-filter-chip${detailed ? ' statistics-filter-chip--detailed' : ''}"${previewAttribute}${fullLabelAttribute}>
                 <span class="statistics-filter-chip__text"><strong>${escapeFilterLabel(filter.label)}:</strong> ${valueMarkup}</span>
                 <button type="button" data-clear-filter="${escapeFilterLabel(filter.type)}" aria-label="${escapeFilterLabel(filter.removeLabel)}"><i class="fas fa-xmark" aria-hidden="true"></i></button>
             </span>`;
@@ -5713,10 +5719,22 @@
             });
         }
 
-        function setActiveFiltersMoreLabel(button, totalCount = 0) {
+        function updateActiveFilterChipTitles(container) {
+            container.querySelectorAll('.statistics-filter-chip[data-full-label]').forEach(chip => {
+                const text = chip.querySelector('.statistics-filter-chip__text');
+                const value = chip.querySelector('.statistics-filter-chip__value');
+                const hasSummarizedValues = Boolean(chip.dataset.previewValues)
+                    && value?.textContent !== JSON.parse(chip.dataset.previewValues || '[]').join(', ');
+                const isClipped = !chip.hidden && Boolean(text) && text.scrollWidth > text.clientWidth + 1;
+                if (isClipped || hasSummarizedValues) chip.title = chip.dataset.fullLabel || '';
+                else chip.removeAttribute('title');
+            });
+        }
+
+        function setActiveFiltersMoreLabel(button, hiddenCount = 0) {
             const label = button?.querySelector('.statistics-active-filters__more-label');
             if (!label) return;
-            label.textContent = totalCount > 0 ? `Ver todos (${totalCount})` : 'Ver filtros';
+            label.textContent = hiddenCount > 0 ? `Ver ${hiddenCount} más` : 'Ver filtros';
         }
 
         function positionActiveFiltersPopover(anchor = null) {
@@ -5775,13 +5793,14 @@
             const chips = Array.from(container.querySelectorAll('.statistics-filter-chip'));
             if (!chips.length) {
                 moreButton.classList.add('hidden');
+                moreButton.dataset.hiddenFilterCount = '0';
                 return;
             }
 
             chips.forEach(chip => { chip.hidden = false; });
             fitActiveFilterValuePreviews(container);
-            moreButton.classList.remove('hidden');
-            setActiveFiltersMoreLabel(moreButton, chips.length);
+            moreButton.classList.add('hidden');
+            moreButton.dataset.hiddenFilterCount = '0';
 
             const gap = Number.parseFloat(getComputedStyle(container).columnGap || getComputedStyle(container).gap) || 0;
             const countVisibleChips = () => {
@@ -5797,19 +5816,32 @@
                 return visibleCount;
             };
 
-            let visibleCount = 0;
-            let hiddenCount = 0;
+            let visibleCount = countVisibleChips();
+            if (visibleCount === chips.length) {
+                updateActiveFilterChipTitles(container);
+                setActiveFiltersPopoverOpen(false);
+                return;
+            }
+
+            moreButton.classList.remove('hidden');
+            let hiddenCount = chips.length - visibleCount;
+            setActiveFiltersMoreLabel(moreButton, hiddenCount);
             let previousHiddenCount = -1;
-            for (let pass = 0; pass < 3; pass += 1) {
+            for (let pass = 0; pass < 4; pass += 1) {
                 visibleCount = countVisibleChips();
                 hiddenCount = chips.length - visibleCount;
-                setActiveFiltersMoreLabel(moreButton, chips.length);
+                setActiveFiltersMoreLabel(moreButton, hiddenCount);
                 if (hiddenCount === previousHiddenCount) break;
                 previousHiddenCount = hiddenCount;
             }
 
             chips.forEach((chip, index) => { chip.hidden = index >= visibleCount; });
-            moreButton.setAttribute('aria-label', `Ver todos los filtros aplicados (${chips.length})`);
+            moreButton.dataset.hiddenFilterCount = String(hiddenCount);
+            moreButton.setAttribute(
+                'aria-label',
+                `Ver ${hiddenCount} ${hiddenCount === 1 ? 'filtro adicional' : 'filtros adicionales'}; ${chips.length} aplicados en total`
+            );
+            updateActiveFilterChipTitles(container);
             positionActiveFiltersPopover(moreButton);
         }
 
@@ -5846,9 +5878,10 @@
             if (fullList) fullList.innerHTML = filters.map(filter => renderActiveFilterChip(filter, { detailed: true })).join('');
 
             if (moreButton) {
-                setActiveFiltersMoreLabel(moreButton, activeFilterCount);
-                moreButton.classList.toggle('hidden', activeFilterCount === 0);
-                moreButton.setAttribute('aria-label', `Ver todos los filtros aplicados (${activeFilterCount})`);
+                setActiveFiltersMoreLabel(moreButton, 0);
+                moreButton.classList.add('hidden');
+                moreButton.dataset.hiddenFilterCount = '0';
+                moreButton.setAttribute('aria-label', 'Ver filtros adicionales');
             }
             if (mobileButton && mobileText) {
                 mobileButton.disabled = activeFilterCount === 0;
@@ -5941,7 +5974,10 @@
                 else if (el) el.value = '';
             } else if (filterType === 'sexo') {
                 const el = document.getElementById('sexoFilter');
-                if (el.tomselect) el.tomselect.clear(true);
+                // En Sexo, el valor vacío es una opción real que representa "Todos".
+                // clear() deja el control sin elemento seleccionado y Tom Select termina
+                // mostrando un valor vacío; seleccionar '' conserva la etiqueta correcta.
+                if (el.tomselect) el.tomselect.setValue('', true);
                 else el.value = '';
             } else if (filterType === 'edad') {
                 document.getElementById('edadFilter').value = '';
@@ -6356,57 +6392,26 @@
             const wrapper = chartContainer?.closest('.statistics-chart-canvas');
             if (!panel || !chartContainer || !wrapper || panel.classList.contains('hidden')) return;
 
-            const pointX = chartContainer.offsetLeft + (chartContainer.clientWidth * selection.xRatio);
-            const pointY = chartContainer.offsetTop + (chartContainer.clientHeight * selection.yRatio);
-            const gap = 12;
-            const edge = 8;
+            const gap = 10;
+            const edge = 10;
             const panelWidth = panel.offsetWidth;
             const panelHeight = panel.offsetHeight;
+            const pointX = chartContainer.offsetLeft + (chartContainer.clientWidth * selection.xRatio);
+            const pointY = chartContainer.offsetTop + (chartContainer.clientHeight * selection.yRatio);
+            const isCircularSelection = selection.preferredPlacement === 'circular'
+                || selection.preferredPlacement === 'doughnut';
             let left;
             let top;
             let anchorSide;
-            const isCircularSelection = selection.preferredPlacement === 'circular'
-                || selection.preferredPlacement === 'doughnut';
 
             if (isCircularSelection) {
-                const centerX = chartContainer.offsetLeft + (chartContainer.clientWidth * selection.centerXRatio);
-                const centerY = chartContainer.offsetTop + (chartContainer.clientHeight * selection.centerYRatio);
-                const radius = chartContainer.clientWidth * selection.radiusRatio;
-                const fixedLeft = centerX - radius - panelWidth - 18;
-                const fixedTop = centerY - (panelHeight / 2);
-                const belowCircle = centerY + radius + gap;
-                const aboveCircle = centerY - radius - panelHeight - gap;
-
-                if (fixedLeft >= edge) {
-                    left = fixedLeft;
-                    top = fixedTop;
-                } else if (belowCircle + panelHeight <= wrapper.clientHeight - edge) {
-                    left = centerX - (panelWidth / 2);
-                    top = belowCircle;
-                } else if (aboveCircle >= edge) {
-                    left = centerX - (panelWidth / 2);
-                    top = aboveCircle;
-                } else {
-                    left = edge;
-                    top = fixedTop;
-                }
-
+                left = edge;
+                top = edge;
                 anchorSide = 'none';
-                panel.dataset.layout = 'circular';
-                left = Math.max(edge, Math.min(left, wrapper.clientWidth - panelWidth - edge));
-                top = Math.max(edge, Math.min(top, wrapper.clientHeight - panelHeight - edge));
-            }
-
-            if (!anchorSide && selection.preferredPlacement === 'above') {
-                left = Math.max(edge, Math.min(
-                    pointX - (panelWidth / 2),
-                    wrapper.clientWidth - panelWidth - edge
-                ));
+            } else if (selection.preferredPlacement === 'above') {
+                left = pointX - (panelWidth / 2);
                 top = pointY - panelHeight - gap;
-
-                if (top >= edge) {
-                    anchorSide = 'bottom';
-                }
+                if (top >= edge) anchorSide = 'bottom';
             }
 
             if (!anchorSide) {
@@ -6418,19 +6423,21 @@
                     left = pointX - panelWidth - gap;
                     anchorSide = 'right';
                 }
-                left = Math.max(edge, Math.min(left, wrapper.clientWidth - panelWidth - edge));
-                top = Math.max(edge, Math.min(top, wrapper.clientHeight - panelHeight - edge));
             }
+
+            if (isCircularSelection) anchorSide = 'none';
+            left = Math.max(edge, Math.min(left, wrapper.clientWidth - panelWidth - edge));
+            top = Math.max(edge, Math.min(top, wrapper.clientHeight - panelHeight - edge));
 
             panel.style.left = `${Math.round(left)}px`;
             panel.style.top = `${Math.round(top)}px`;
             panel.style.removeProperty('--drilldown-arrow-x');
             panel.style.removeProperty('--drilldown-arrow-y');
-            if (anchorSide === 'bottom' || anchorSide === 'top') {
-                const arrowX = Math.max(16, Math.min(pointX - left, panelWidth - 16));
+            if (anchorSide === 'bottom') {
+                const arrowX = Math.max(14, Math.min(pointX - left, panelWidth - 14));
                 panel.style.setProperty('--drilldown-arrow-x', `${Math.round(arrowX)}px`);
             } else if (anchorSide === 'left' || anchorSide === 'right') {
-                const arrowY = Math.max(16, Math.min(pointY - top, panelHeight - 16));
+                const arrowY = Math.max(14, Math.min(pointY - top, panelHeight - 14));
                 panel.style.setProperty('--drilldown-arrow-y', `${Math.round(arrowY)}px`);
             }
             panel.dataset.anchorSide = anchorSide;
@@ -6458,10 +6465,11 @@
             const panel = document.getElementById('statisticsDrilldown');
             const label = document.getElementById('statisticsDrilldownLabel');
             const meta = document.getElementById('statisticsDrilldownMeta');
+            const rank = document.getElementById('statisticsDrilldownRank');
             const marker = document.getElementById('statisticsDrilldownMarker');
             const link = document.getElementById('statisticsDrilldownLink');
             const linkLabel = link?.querySelector('span');
-            if (!panel || !label || !meta || !link) return;
+            if (!panel || !label || !meta || !rank || !link) return;
 
             const rawValue = Array.isArray(eventParams?.value)
                 ? eventParams.value[eventParams.value.length - 1]
@@ -6476,7 +6484,7 @@
                 : -1;
             const municipalityTotal = Number(data?.available_categories || 0);
             const municipalityRank = municipalityRankIndex >= 0 && municipalityTotal > 0
-                ? `posición ${municipalityRankIndex + 1} de ${municipalityTotal}`
+                ? `Posición ${municipalityRankIndex + 1} de ${municipalityTotal}`
                 : '';
             const isMunicipalityRate = currentChartType === 'municipios' && data?.measure === 'rate';
             const municipalityCount = municipalityRankIndex >= 0
@@ -6492,13 +6500,15 @@
                     ? 'Tasa no disponible'
                     : `${Number(municipalityRate).toFixed(1)} por 100 mil habitantes`;
                 const deathDescription = `${municipalityCount.toLocaleString('es-MX')} ${municipalityCount === 1 ? 'defunción' : 'defunciones'}`;
-                meta.textContent = [deathDescription, rateDescription, municipalityRank].filter(Boolean).join(' · ');
+                meta.textContent = [deathDescription, rateDescription].filter(Boolean).join(' · ');
             } else {
                 const baseDescription = item.show_percentage === false
                     ? countDescription
                     : `${countDescription} · ${percentage}% del total`;
-                meta.textContent = [baseDescription, municipalityRank].filter(Boolean).join(' · ');
+                meta.textContent = baseDescription;
             }
+            rank.textContent = municipalityRank;
+            rank.classList.toggle('hidden', !municipalityRank);
             link.href = buildStatisticsDrilldownUrl(data, item);
             if (linkLabel) {
                 const detailCountDescription = isMunicipalityRate
@@ -6574,11 +6584,33 @@
 
                         const renderedOption = currentEchartsInstance.getOption?.() || {};
                         const renderedLegend = renderedOption.legend?.[0] || {};
+                        const renderedSeriesData = renderedOption.series?.[eventParams.seriesIndex]?.data;
+                        const explicitLegendItems = Array.isArray(renderedLegend.data)
+                            ? renderedLegend.data.length
+                            : 0;
+                        const legendItems = explicitLegendItems > 0
+                            ? explicitLegendItems
+                            : (Array.isArray(renderedSeriesData) ? renderedSeriesData.length : 0);
+                        const legendItemGap = Number(renderedLegend.itemGap ?? 12);
+                        const legendLineHeight = Number(
+                            renderedLegend.textStyle?.rich?.legendName?.lineHeight ?? 20
+                        );
+                        const legendHeight = legendItems > 0
+                            ? (legendItems * legendLineHeight) + ((legendItems - 1) * legendItemGap)
+                            : 0;
+                        const legendLeftValue = renderedLegend.left;
+                        const legendLeft = typeof legendLeftValue === 'string' && legendLeftValue.endsWith('%')
+                            ? (parseFloat(legendLeftValue) / 100) * chartContainer.clientWidth
+                            : Number(legendLeftValue);
                         circularGeometry = {
                             centerX,
                             centerY,
                             radius,
                             innerRadius,
+                            legendLeft: Number.isFinite(legendLeft)
+                                ? legendLeft
+                                : centerX + radius + 18,
+                            legendBottom: centerY + (legendHeight / 2),
                             legendOnRight: renderedLegend.show !== false
                                 && renderedLegend.orient === 'vertical'
                         };
@@ -6608,15 +6640,21 @@
                 innerRadiusRatio: circularGeometry && chartContainer?.clientWidth
                     ? circularGeometry.innerRadius / chartContainer.clientWidth
                     : 0,
+                legendLeftRatio: circularGeometry && chartContainer?.clientWidth
+                    ? circularGeometry.legendLeft / chartContainer.clientWidth
+                    : .72,
+                legendBottomRatio: circularGeometry && chartContainer?.clientHeight
+                    ? circularGeometry.legendBottom / chartContainer.clientHeight
+                    : .72,
                 legendOnRight: Boolean(circularGeometry?.legendOnRight)
             };
 
+            activeChartDrilldown = selection;
             panel.style.visibility = 'hidden';
             panel.dataset.layout = preferredPlacement === 'doughnut' || preferredPlacement === 'circular'
                 ? 'circular'
                 : 'cartesian';
             panel.classList.remove('hidden');
-            activeChartDrilldown = selection;
             positionChartDrilldown(selection);
 
             if (currentEchartsInstance) {
@@ -8176,8 +8214,7 @@
                 const compactCircularLayout = circularWidth < 880
                     || (circularLegendNeedsMoreRoom && circularWidth < 1140);
                 const circularLegendShowsMetrics = chartConfig.dataLabelMode !== 'none';
-                const useCircularCallouts = !compactCircularLayout
-                    && circularLegendShowsMetrics
+                const useCircularCallouts = circularLegendShowsMetrics
                     && circularSegmentCount <= 6
                     && groupedTotal <= 0
                     && !circularLegendNeedsMoreRoom;
@@ -8248,6 +8285,60 @@
                 const circularPercentage = value => circularTotal > 0
                     ? `${((Number(value || 0) / circularTotal) * 100).toFixed(1)}%`
                     : '0.0%';
+                const drilldownByLabel = new Map((data.drilldown || []).map(item => [String(item.label), item]));
+                const groupedDrilldownItems = groupedPieData
+                    .map(item => drilldownByLabel.get(String(item.name)))
+                    .filter(Boolean);
+                const canOpenGroupedRecords = omittedCategories === 0
+                    && groupedDrilldownItems.length === groupedPieData.length
+                    && groupedDrilldownItems.length > 0;
+                const circularLegendItems = filteredPieData.map((entry, index) => {
+                    const count = Number(entry.value || 0);
+                    const percentage = circularTotal > 0 ? ((count / circularTotal) * 100).toFixed(1) : '0.0';
+                    const grouped = entry.name === remainderLabel;
+                    const drilldownItem = grouped
+                        ? {
+                            label: entry.name,
+                            grouped_count: groupedCategories,
+                            grouped_items: canOpenGroupedRecords ? groupedDrilldownItems : []
+                        }
+                        : drilldownByLabel.get(String(entry.name));
+                    const municipalityRankIndex = currentChartType === 'municipios' && !grouped
+                        ? (data.drilldown || []).findIndex(item => String(item.label) === String(entry.name))
+                        : -1;
+                    const groupedDescription = {
+                        municipios: groupedCategories === 1 ? 'municipio agrupado' : 'municipios agrupados',
+                        distritoes: groupedCategories === 1 ? 'distrito agrupado' : 'distritos agrupados',
+                        lugares: groupedCategories === 1 ? 'lugar agrupado' : 'lugares agrupados',
+                        causas: groupedCategories === 1 ? 'causa agrupada' : 'causas agrupadas',
+                        edades: groupedCategories === 1 ? 'rango de edad agrupado' : 'rangos de edad agrupados',
+                        genero: groupedCategories === 1 ? 'categoría agrupada' : 'categorías agrupadas'
+                    }[currentChartType] || (groupedCategories === 1 ? 'categoría agrupada' : 'categorías agrupadas');
+                    const position = grouped
+                        ? `${groupedCategories.toLocaleString('es-MX')} ${groupedDescription}`
+                        : (municipalityRankIndex >= 0 && Number(data.available_categories || 0) > 0
+                            ? `Posición ${municipalityRankIndex + 1} de ${Number(data.available_categories)}`
+                            : '');
+                    let metric = '';
+                    if (chartConfig.dataLabelMode === 'percent') metric = `${percentage}%`;
+                    if (chartConfig.dataLabelMode === 'value') metric = formatNumber(count);
+                    if (chartConfig.dataLabelMode === 'both') metric = `${percentage}% (${formatNumber(count)})`;
+
+                    return {
+                        label: entry.name,
+                        count,
+                        percentage,
+                        metric,
+                        grouped,
+                        color: entry.itemStyle?.color || colors[index % colors.length] || '#526278',
+                        detail: `${formatNumber(count)} ${count === 1 ? 'registro' : 'registros'} · ${percentage}% del total`,
+                        position,
+                        item: drilldownItem,
+                        url: grouped
+                            ? '#'
+                            : buildStatisticsDrilldownUrl(data, drilldownItem)
+                    };
+                });
                 const formatCircularMetric = (name) => {
                     const value = pieValueByName.get(String(name)) || 0;
                     if (chartConfig.dataLabelMode === 'none') return '';

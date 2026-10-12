@@ -6,6 +6,49 @@ test.beforeEach(async ({ page }) => {
     await openStatistics(page);
 });
 
+test('Vista mantiene la jerarquia de analisis antes de presentacion', async ({ page }) => {
+    await page.getByRole('tab', { name: 'Vista' }).click();
+
+    await expect(page.locator('#statisticsGeographicScopeLabel')).toHaveText('Municipio de');
+    await expect(page.locator('#statisticsDataLabelLegend')).toHaveText('Mostrar en etiquetas');
+    await expect(page.locator('#statisticsPaletteLegend')).toHaveText('Colores');
+    await expect(page.locator('#dataLabelButtons [data-value="none"]')).toHaveText('Sin etiquetas');
+
+    const municipalityGroups = await page
+        .locator('#municipalitySidebarPresentation .statistics-municipality-presentation__groups > .statistics-display-group')
+        .evaluateAll(groups => groups.map(group => group.id || (
+            group.classList.contains('statistics-display-group--palette') ? 'palette' : ''
+        )));
+
+    expect(municipalityGroups).toEqual([
+        'statisticsGeographicScopeControl',
+        'statisticsMeasureGroup',
+        'municipalityChartTypeMirrorGroup',
+        'filterTop',
+        'statisticsDataLabelGroup',
+        'palette',
+    ]);
+
+    await page.getByRole('tab', { name: 'Tendencias' }).click();
+    const generalGroups = await page
+        .locator('#statisticsPresentationGroups > .statistics-display-group')
+        .evaluateAll(groups => groups.map(group => group.id || (
+            group.classList.contains('statistics-display-group--palette') ? 'palette' : ''
+        )));
+
+    expect(generalGroups).toEqual([
+        'statisticsGeographicScopeControl',
+        'statisticsTrendGranularityControl',
+        'statisticsComparisonControl',
+        'statisticsAgeDetailGroup',
+        'statisticsMeasureGroup',
+        'statisticsChartTypeGroup',
+        'filterTop',
+        'statisticsDataLabelGroup',
+        'palette',
+    ]);
+});
+
 test('Municipios y Distritos cambian su ámbito desde Vista', async ({ page }) => {
     const scopeControl = page.locator('#statisticsGeographicScopeControl');
     const scopeSelector = page.locator('#geographicScopeSelector');
@@ -38,7 +81,7 @@ test('Municipios y Distritos cambian su ámbito desde Vista', async ({ page }) =
 
     await page.getByRole('tab', { name: 'Distritos' }).click();
     await expect(scopeControl).toBeVisible();
-    await expect(page.locator('#statisticsGeographicScopeLabel')).toHaveText('Agrupar distritos por');
+    await expect(page.locator('#statisticsGeographicScopeLabel')).toHaveText('Distrito de');
     await expect(page.locator('#chartTitle')).toHaveText('Distribución por distritos de residencia');
     await expect(scopeSelector).toHaveValue('residencia');
     await expect(page.locator('#filterTipoMunicipio')).toHaveCSS('display', 'none');
@@ -698,35 +741,60 @@ test('la matriz de graficas conserva geometria y etiquetas consistentes', async 
     }
 });
 
-test('las graficas circulares conservan espacio antes de la leyenda', async ({ page }) => {
+test('las graficas circulares muestran un detalle compacto en la esquina del lienzo', async ({ page }) => {
     await page.setViewportSize({ width: 1536, height: 900 });
     await page.getByRole('tab', { name: 'Vista' }).click();
 
-    const circularGeometry = async () => page.evaluate(() => {
+    const expectFixedPlacement = async () => {
+        const drilldown = page.locator('#statisticsDrilldown');
+        await expect(drilldown).toBeVisible();
+        await expect(drilldown).toHaveAttribute('data-anchor-side', 'none');
+        const placement = await page.evaluate(() => {
+            const panel = document.getElementById('statisticsDrilldown')?.getBoundingClientRect();
+            const canvas = document.querySelector('.statistics-chart-canvas')?.getBoundingClientRect();
+            if (!panel || !canvas) return null;
+            return {
+                left: Math.round(panel.left - canvas.left),
+                top: Math.round(panel.top - canvas.top),
+                insideCanvas: panel.left >= canvas.left && panel.top >= canvas.top
+                    && panel.right <= canvas.right && panel.bottom <= canvas.bottom,
+            };
+        });
+        expect(placement).toEqual({
+            left: 10,
+            top: 10,
+            insideCanvas: true,
+        });
+    };
+
+    const firstSegmentPoint = async () => page.evaluate(() => {
         const chart = window.echarts.getInstanceByDom(document.getElementById('mainChart'));
         const seriesModel = chart?.getModel()?.getSeriesByIndex(0);
         const layout = seriesModel?.getData()?.getItemLayout(0);
-        const legendModel = chart?.getModel()?.getComponent('legend');
-        const legendView = legendModel ? chart?.getViewOfComponentModel?.(legendModel) : null;
-        const legendBounds = legendView?.group?.getBoundingRect?.();
-        const legendPoint = legendBounds
-            ? legendView.group.transformCoordToGlobal(legendBounds.x, legendBounds.y)
-            : null;
-        const legendStart = Number(legendPoint?.[0]);
+        const chartBounds = document.getElementById('mainChart')?.getBoundingClientRect();
+        if (!layout || !chartBounds) return null;
+
+        const angle = (Number(layout.startAngle) + Number(layout.endAngle)) / 2;
+        const radius = (Number(layout.r0 || 0) + Number(layout.r || 0)) / 2;
 
         return {
             radius: Number(layout?.r || 0),
-            gap: !Number.isFinite(legendStart)
-                ? null
-                : legendStart - (Number(layout?.cx || 0) + Number(layout?.r || 0)),
+            x: chartBounds.left + Number(layout.cx) + (Math.cos(angle) * radius),
+            y: chartBounds.top + Number(layout.cy) + (Math.sin(angle) * radius),
+            nativeLegendVisible: chart?.getOption()?.legend?.[0]?.show !== false,
         };
     });
 
     for (const type of ['pie', 'doughnut']) {
         await page.locator(`#municipalityChartTypeButtons [data-value="${type}"]`).click();
-        await expect.poll(async () => (await circularGeometry()).radius).toBeGreaterThan(0);
-        const geometry = await circularGeometry();
-        expect(geometry.gap).toBeGreaterThanOrEqual(32);
+        await expect.poll(async () => (await firstSegmentPoint())?.radius || 0).toBeGreaterThan(0);
+        const point = await firstSegmentPoint();
+        expect(point?.nativeLegendVisible).toBe(true);
+        await page.mouse.click(point.x, point.y);
+
+        await expectFixedPlacement();
+        await page.locator('#statisticsDrilldownClose').click();
+        await expect(page.locator('#statisticsDrilldown')).toBeHidden();
     }
 });
 
@@ -744,6 +812,16 @@ test('los filtros aplicados permanecen junto a la gráfica sin saltos ni borrado
     const emptyStripBox = await strip.boundingBox();
     expect(emptyStripBox.y).toBeGreaterThanOrEqual(contextBox.y + contextBox.height - 1);
     expect(Math.abs(emptyStripBox.x - contextBox.x)).toBeLessThanOrEqual(1);
+
+    await page.evaluate(() => {
+        Object.assign(activeFilters, {
+            deathDistricts: ['4'],
+            deathDistrictNames: ['IV · Reynosa'],
+        });
+        updateActiveFiltersDisplay();
+    });
+    await expect(page.locator('#filtrosActivosList .statistics-filter-chip:visible')).toHaveCount(1);
+    await expect(page.locator('#statisticsActiveFiltersMore')).toBeHidden();
 
     await page.evaluate(() => {
         const setControlValue = (id, value) => {
@@ -783,8 +861,10 @@ test('los filtros aplicados permanecen junto a la gráfica sin saltos ni borrado
     await expect(strip).toHaveAttribute('data-filter-count', '7');
     const visibleFilterChips = page.locator('#filtrosActivosList .statistics-filter-chip:visible');
     await expect.poll(() => visibleFilterChips.count()).toBeGreaterThan(0);
-    const filterOverflowText = (await page.locator('#statisticsActiveFiltersMore').textContent())?.trim() || '';
-    expect(filterOverflowText).toContain('Ver todos (7)');
+    const moreFiltersButton = page.locator('#statisticsActiveFiltersMore');
+    await expect(moreFiltersButton).toBeVisible();
+    const initialVisibleCount = await visibleFilterChips.count();
+    await expect(moreFiltersButton).toContainText(`Ver ${7 - initialVisibleCount} más`);
     await expect(page.locator('#filtrosActivosList .statistics-filter-chip:has([data-clear-filter="causas"])'))
         .not.toContainText('seleccionadas');
     await expect(page.locator('#filtrosActivosList .statistics-filter-chip:has([data-clear-filter="causas"])'))
@@ -793,7 +873,7 @@ test('los filtros aplicados permanecen junto a la gráfica sin saltos ni borrado
         .not.toContainText('seleccionados');
     await expect(page.locator('#filtrosActivosList .statistics-filter-chip:has([data-clear-filter="edad"])'))
         .toContainText('10, 20, 30, 40, 50, 60, 70, 90 años');
-    await expect(page.locator('#filtrosActivosList .statistics-filter-chip[title]')).toHaveCount(0);
+    await expect(page.locator('#filtrosActivosList .statistics-filter-chip[title]')).not.toHaveCount(0);
     await expect(page.locator('#filtrosActivosList .statistics-filter-chip button i.fa-xmark')).toHaveCount(7);
     await expect(page.locator('#filtrosActivosList .statistics-filter-chip').first())
         .toHaveCSS('background-color', 'rgb(248, 241, 244)');
@@ -807,9 +887,10 @@ test('los filtros aplicados permanecen junto a la gráfica sin saltos ni borrado
 
     for (const width of [1536, 1280]) {
         await page.setViewportSize({ width, height: 900 });
-        await expect(page.locator('#statisticsActiveFiltersMore')).toContainText('Ver todos (7)');
         const visibleChips = page.locator('#filtrosActivosList .statistics-filter-chip:visible');
         await expect.poll(() => visibleChips.count()).toBeGreaterThan(0);
+        const visibleCount = await visibleChips.count();
+        await expect(page.locator('#statisticsActiveFiltersMore')).toContainText(`Ver ${7 - visibleCount} más`);
         const chipBoxes = await visibleChips.evaluateAll(chips => chips.map(chip => {
             const box = chip.getBoundingClientRect();
             return { top: box.top, bottom: box.bottom, right: box.right };
@@ -842,6 +923,8 @@ test('los filtros aplicados permanecen junto a la gráfica sin saltos ni borrado
     await page.locator('#statisticsActiveFiltersMore').click();
     await page.locator('#statisticsActiveFiltersAll [data-clear-filter="sexo"]').click();
     await expect(page.locator('#edadFilter')).toHaveValue('10,20,30,40,50,60,70,90');
+    await expect(page.locator('#sexoFilter')).toHaveValue('');
+    await expect(page.locator('#sexoFilter option:checked')).toHaveText('Todos');
     expect(await page.evaluate(() => activeFilters.edad)).toBe('10,20,30,40,50,60,70,90');
 
     await page.keyboard.press('Escape');
@@ -849,10 +932,8 @@ test('los filtros aplicados permanecen junto a la gráfica sin saltos ni borrado
         chips.slice(1).forEach(chip => chip.remove());
         layoutActiveFilterChips();
     });
-    await page.locator('#statisticsActiveFiltersMore').click();
-    const singleFilterMoreBox = await page.locator('#statisticsActiveFiltersMore').boundingBox();
-    const singleFilterPopoverBox = await popover.boundingBox();
-    expect(Math.abs(singleFilterPopoverBox.x - singleFilterMoreBox.x)).toBeLessThanOrEqual(2);
+    await expect(page.locator('#statisticsActiveFiltersMore')).toBeHidden();
+    await expect(popover).toBeHidden();
 
     await page.setViewportSize({ width: 600, height: 900 });
     await expect(page.locator('.statistics-active-filters__desktop')).toBeHidden();
@@ -1084,6 +1165,7 @@ test('Tendencias cambia su agrupación desde Vista', async ({ page }) => {
     const granularityControl = page.locator('#statisticsTrendGranularityControl');
     const granularitySelector = page.locator('#trendGranularitySelector');
     await expect(granularityControl).toBeVisible();
+    await expect(page.locator('#statisticsTrendGranularityLabel')).toHaveText('Agrupar por');
     await expect(page.locator('#filterGranularidad')).toHaveCSS('display', 'none');
     await expect(granularitySelector).toHaveValue('month');
     await expect(page.locator('#chartTitle')).toHaveText('Tendencia mensual');

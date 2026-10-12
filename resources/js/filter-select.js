@@ -24,6 +24,7 @@ function init(target, options = {}) {
     const customOnChange = options.onChange;
     const customOnDropdownClose = options.onDropdownClose;
     const customOnInitialize = options.onInitialize;
+    const customOnItemAdd = options.onItemAdd;
     const compactLabels = Object.fromEntries(
         Array.from(select.options)
             .filter((option) => option.dataset.compactLabel)
@@ -76,7 +77,9 @@ function init(target, options = {}) {
         create: false,
         allowEmptyOption,
         placeholder: select.dataset.placeholder || (multiple ? 'Selecciona opciones' : 'Seleccionar'),
-        hideSelected: false,
+        // En selecciones múltiples, los elementos elegidos ya están visibles
+        // como chips y no deben volver a ofrecerse como resultados duplicados.
+        hideSelected: multiple,
         closeAfterSelect: !multiple,
         plugins: customPlugins ?? (multiple ? {
             remove_button: { title: 'Eliminar esta selección' },
@@ -89,6 +92,15 @@ function init(target, options = {}) {
         onChange: function (value) {
             syncMultiSelectSummary(this);
             customOnChange?.call(this, value);
+        },
+        onItemAdd: function (value, item) {
+            if (multiple) {
+                // Tom Select conserva la consulta en algunos flujos con Enter.
+                // Vaciarla deja el control listo para buscar la siguiente opción.
+                this.setTextboxValue('');
+                this.refreshOptions(false);
+            }
+            customOnItemAdd?.call(this, value, item);
         },
         onDropdownClose: function () {
             resetClosedMultiSelectScroll(this);
