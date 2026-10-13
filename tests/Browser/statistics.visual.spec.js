@@ -6,7 +6,7 @@ test.beforeEach(async ({ page }) => {
     await openStatistics(page);
 });
 
-test('Vista mantiene la jerarquia de analisis antes de presentacion', async ({ page }) => {
+test('todas las metricas comparten la configuracion lateral de Municipios', async ({ page }) => {
     await page.getByRole('tab', { name: 'Vista' }).click();
 
     await expect(page.locator('#statisticsGeographicScopeLabel')).toHaveText('Municipio de');
@@ -14,39 +14,85 @@ test('Vista mantiene la jerarquia de analisis antes de presentacion', async ({ p
     await expect(page.locator('#statisticsPaletteLegend')).toHaveText('Colores');
     await expect(page.locator('#dataLabelButtons [data-value="none"]')).toHaveText('Sin etiquetas');
 
-    const municipalityGroups = await page
+    const presentationGroups = await page
         .locator('#municipalitySidebarPresentation .statistics-municipality-presentation__groups > .statistics-display-group')
         .evaluateAll(groups => groups.map(group => group.id || (
             group.classList.contains('statistics-display-group--palette') ? 'palette' : ''
         )));
 
-    expect(municipalityGroups).toEqual([
+    expect(presentationGroups).toEqual([
         'statisticsGeographicScopeControl',
+        'statisticsTrendGranularityControl',
+        'statisticsComparisonControl',
         'statisticsMeasureGroup',
         'municipalityChartTypeMirrorGroup',
         'filterTop',
         'statisticsDataLabelGroup',
-        'palette',
-    ]);
-
-    await page.getByRole('tab', { name: 'Tendencias' }).click();
-    const generalGroups = await page
-        .locator('#statisticsPresentationGroups > .statistics-display-group')
-        .evaluateAll(groups => groups.map(group => group.id || (
-            group.classList.contains('statistics-display-group--palette') ? 'palette' : ''
-        )));
-
-    expect(generalGroups).toEqual([
-        'statisticsGeographicScopeControl',
-        'statisticsTrendGranularityControl',
-        'statisticsComparisonControl',
         'statisticsAgeDetailGroup',
-        'statisticsMeasureGroup',
-        'statisticsChartTypeGroup',
-        'filterTop',
-        'statisticsDataLabelGroup',
         'palette',
     ]);
+
+    const metricCases = [
+        { tab: 'Tendencias', control: '#statisticsTrendGranularityControl', chartTypes: 2 },
+        { tab: 'Edades', control: '#statisticsAgeDetailGroup', chartTypes: 4 },
+        { tab: 'Sexo', chartTypes: 4 },
+        { tab: 'Causas', chartTypes: 4 },
+        { tab: 'Distritos', control: '#statisticsGeographicScopeControl', chartTypes: 4 },
+        { tab: 'Lugares', chartTypes: 4 },
+        { tab: 'Comparativa', control: '#statisticsComparisonControl', chartTypes: 2 },
+    ];
+
+    for (const metricCase of metricCases) {
+        await page.getByRole('tab', { name: metricCase.tab, exact: true }).click();
+        await expect(page.locator('#municipalityConfigurationTabs')).toBeVisible();
+        await expect(page.locator('#municipalitySidebarPresentation')).toBeVisible();
+        await expect(page.locator('#municipalityChartTypeButtons .visual-option-btn'))
+            .toHaveCount(metricCase.chartTypes);
+        if (metricCase.control) await expect(page.locator(metricCase.control)).toBeVisible();
+    }
+});
+
+test('Tendencias conserva una altura natural sin espacio vacio bajo el pie', async ({ page }) => {
+    await page.setViewportSize({ width: 1536, height: 900 });
+    await page.getByRole('tab', { name: 'Tendencias', exact: true }).click();
+    await page.getByRole('tab', { name: 'Vista', exact: true }).click();
+
+    const verticalGap = await page.evaluate(() => {
+        const panel = document.getElementById('statisticsChartPanel')?.getBoundingClientRect();
+        const source = document.getElementById('statisticsChartSource')?.getBoundingClientRect();
+        if (!panel || !source) return null;
+        return Math.round(panel.bottom - source.bottom);
+    });
+
+    expect(verticalGap).not.toBeNull();
+    expect(verticalGap).toBeLessThanOrEqual(2);
+});
+
+test('las metricas conservan un lienzo base consistente', async ({ page }) => {
+    await page.setViewportSize({ width: 1920, height: 1080 });
+    await page.getByRole('tab', { name: 'Vista', exact: true }).click();
+
+    const canvasHeight = async () => Math.round(
+        (await page.locator('.statistics-chart-canvas').boundingBox()).height
+    );
+    const heights = {};
+
+    await page.getByRole('tab', { name: 'Municipios', exact: true }).click();
+    await page.locator('#municipalityChartTypeButtons [data-value="bar"]').click();
+    await page.locator('#chartLimitButtons [data-value="5"]').click();
+    await expect.poll(async () => (await chartState(page)).labels.length).toBe(5);
+    heights.municipios = await canvasHeight();
+
+    await page.getByRole('tab', { name: 'Edades', exact: true }).click();
+    await page.locator('#municipalityChartTypeButtons [data-value="bar"]').click();
+    await expect.poll(async () => (await chartState(page)).labels.length).toBe(4);
+    heights.edades = await canvasHeight();
+
+    await page.getByRole('tab', { name: 'Tendencias', exact: true }).click();
+    await expect.poll(async () => (await chartState(page)).labels.length).toBe(12);
+    heights.tendencias = await canvasHeight();
+
+    expect(Math.max(...Object.values(heights)) - Math.min(...Object.values(heights))).toBeLessThanOrEqual(1);
 });
 
 test('Municipios y Distritos cambian su ámbito desde Vista', async ({ page }) => {
@@ -798,6 +844,170 @@ test('las graficas circulares muestran un detalle compacto en la esquina del lie
     }
 });
 
+test('Edades reutiliza la composicion circular de Municipios', async ({ page }) => {
+    await page.setViewportSize({ width: 1536, height: 900 });
+    await page.getByRole('tab', { name: 'Vista', exact: true }).click();
+
+    const circularGeometry = async () => page.evaluate(() => {
+        const chart = window.echarts.getInstanceByDom(document.getElementById('mainChart'));
+        const option = chart?.getOption?.();
+        const seriesModel = chart?.getModel()?.getSeriesByIndex(0);
+        const layout = seriesModel?.getData()?.getItemLayout(0);
+        return {
+            legendVisible: option?.legend?.[0]?.show !== false,
+            labelsVisible: option?.series?.[0]?.label?.show === true,
+            centerX: Math.round(Number(layout?.cx || 0)),
+            radius: Math.round(Number(layout?.r || 0)),
+        };
+    });
+
+    await page.locator('#municipalityChartTypeButtons [data-value="pie"]').click();
+    await expect.poll(async () => (await circularGeometry()).radius).toBeGreaterThan(0);
+    const municipality = await circularGeometry();
+
+    await page.getByRole('tab', { name: 'Edades', exact: true }).click();
+    await page.locator('[data-target="chartTypeSelector"][data-value="pie"]:visible').first().click();
+    await expect.poll(async () => (await circularGeometry()).radius).toBeGreaterThan(0);
+    const ages = await circularGeometry();
+
+    expect(ages.legendVisible).toBe(true);
+    expect(ages.labelsVisible).toBe(false);
+    expect(Math.abs(ages.centerX - municipality.centerX)).toBeLessThanOrEqual(2);
+    expect(Math.abs(ages.radius - municipality.radius)).toBeLessThanOrEqual(2);
+    await expect(page.locator('#statisticsChartPanel')).toHaveScreenshot('edades-circular-composicion.png');
+
+    await page.getByRole('tab', { name: 'Municipios', exact: true }).click();
+    await page.locator('#municipalityChartTypeButtons [data-value="doughnut"]').click();
+    await expect.poll(async () => (await circularGeometry()).radius).toBeGreaterThan(0);
+    const municipalityDoughnut = await circularGeometry();
+
+    await page.getByRole('tab', { name: 'Edades', exact: true }).click();
+    await page.locator('[data-target="chartTypeSelector"][data-value="doughnut"]:visible').first().click();
+    await expect.poll(async () => (await circularGeometry()).radius).toBeGreaterThan(0);
+    const agesDoughnut = await circularGeometry();
+
+    expect(agesDoughnut.legendVisible).toBe(true);
+    expect(agesDoughnut.labelsVisible).toBe(false);
+    expect(Math.abs(agesDoughnut.centerX - municipalityDoughnut.centerX)).toBeLessThanOrEqual(2);
+    expect(Math.abs(agesDoughnut.radius - municipalityDoughnut.radius)).toBeLessThanOrEqual(2);
+    await expect(page.locator('#statisticsChartPanel')).toHaveScreenshot('edades-dona-composicion.png');
+});
+
+test('la tabla compacta Edades y al cerrarse restaura su geometria circular', async ({ page }) => {
+    await page.setViewportSize({ width: 1536, height: 900 });
+    await page.getByRole('tab', { name: 'Edades', exact: true }).click();
+    await page.locator('[data-target="chartTypeSelector"][data-value="pie"]:visible').first().click();
+
+    const geometry = async () => page.evaluate(() => {
+        const chartElement = document.getElementById('mainChart');
+        const chart = window.echarts.getInstanceByDom(chartElement);
+        const layout = chart?.getModel()?.getSeriesByIndex(0)?.getData()?.getItemLayout(0);
+        return {
+            viewportHeight: Math.round(chartElement?.closest('.statistics-chart-canvas')?.getBoundingClientRect().height || 0),
+            centerX: Math.round(Number(layout?.cx || 0)),
+            centerY: Math.round(Number(layout?.cy || 0)),
+            radius: Math.round(Number(layout?.r || 0)),
+        };
+    });
+
+    await expect.poll(async () => (await geometry()).radius).toBeGreaterThan(0);
+    const before = await geometry();
+
+    await page.getByLabel('Mostrar principales causas por grupo de edad').check();
+    await expect(page.locator('#causasPrincipalesContainer')).toBeVisible();
+    await expect.poll(async () => (await geometry()).viewportHeight).toBeLessThan(before.viewportHeight);
+    await expect.poll(async () => (await geometry()).radius).toBeLessThan(before.radius);
+    const withTable = await geometry();
+
+    await page.getByLabel('Mostrar principales causas por grupo de edad').uncheck();
+    await expect(page.locator('#causasPrincipalesContainer')).toBeHidden();
+    await expect.poll(async () => (await geometry()).viewportHeight).toBe(before.viewportHeight);
+    await expect.poll(async () => (await geometry()).radius).toBe(before.radius);
+    const after = await geometry();
+
+    expect(withTable.viewportHeight).toBeLessThan(before.viewportHeight);
+    expect(withTable.radius).toBeLessThan(before.radius);
+    expect(Math.abs(withTable.centerX - before.centerX)).toBeLessThanOrEqual(2);
+
+    expect(after.viewportHeight).toBe(before.viewportHeight);
+    expect(Math.abs(after.centerX - before.centerX)).toBeLessThanOrEqual(2);
+    expect(Math.abs(after.centerY - before.centerY)).toBeLessThanOrEqual(2);
+    expect(Math.abs(after.radius - before.radius)).toBeLessThanOrEqual(2);
+
+    await page.setViewportSize({ width: 1536, height: 768 });
+    await page.getByLabel('Mostrar principales causas por grupo de edad').check();
+    await expect(page.locator('#causasPrincipalesContainer')).toBeVisible();
+    await expect.poll(async () => (await geometry()).viewportHeight).toBeLessThanOrEqual(369);
+    expect((await geometry()).viewportHeight).toBeGreaterThanOrEqual(350);
+});
+
+test('Tendencias y Edades reutilizan el detalle seleccionado de Municipios', async ({ page }) => {
+    const clickCartesianItem = async dataIndex => {
+        const point = await page.evaluate(index => {
+            const chart = window.echarts.getInstanceByDom(document.getElementById('mainChart'));
+            const bounds = document.getElementById('mainChart')?.getBoundingClientRect();
+            if (!chart || !bounds) return null;
+
+            const option = chart.getOption?.();
+            if (!option) return null;
+            const label = option.xAxis?.[0]?.data?.[index];
+            const renderedValue = option.series?.[0]?.data?.[index];
+            const value = typeof renderedValue === 'object' ? renderedValue?.value : renderedValue;
+            const x = chart.convertToPixel({ xAxisIndex: 0 }, label);
+            const valueY = chart.convertToPixel({ yAxisIndex: 0 }, value);
+            const zeroY = chart.convertToPixel({ yAxisIndex: 0 }, 0);
+            const y = option.series?.[0]?.type === 'bar'
+                ? valueY + ((zeroY - valueY) / 2)
+                : valueY;
+            return Number.isFinite(x) && Number.isFinite(y)
+                ? { x: bounds.left + x, y: bounds.top + y }
+                : null;
+        }, dataIndex);
+
+        expect(point).not.toBeNull();
+        await page.mouse.click(point.x, point.y);
+    };
+
+    await page.getByRole('tab', { name: 'Tendencias' }).click();
+    await expect.poll(async () => (await chartState(page)).labels.length).toBe(12);
+    await clickCartesianItem(5);
+    await expect(page.locator('#statisticsDrilldown')).toBeVisible();
+    await expect(page.locator('#statisticsDrilldownLabel')).toHaveText('Jun');
+    await expect(page.locator('#statisticsDrilldownRank')).toHaveText('Periodo 6 de 12');
+    await expect(page.locator('#statisticsDrilldownLink')).toContainText('Ver 57 registros');
+
+    await page.getByRole('tab', { name: 'Edades' }).click();
+    await expect.poll(async () => (await chartState(page)).labels.length).toBe(4);
+    await clickCartesianItem(2);
+    await expect(page.locator('#statisticsDrilldown')).toBeVisible();
+    await expect(page.locator('#statisticsDrilldownLabel')).toHaveText('20-64 años');
+    await expect(page.locator('#statisticsDrilldownRank')).toHaveText('Grupo 3 de 4');
+    await expect(page.locator('#statisticsDrilldownLink')).toContainText('Ver 528 registros');
+
+    await page.locator('#municipalityChartTypeButtons [data-value="doughnut"]').click();
+    await expect.poll(async () => page.evaluate(() => {
+        const chart = window.echarts.getInstanceByDom(document.getElementById('mainChart'));
+        const layout = chart?.getModel()?.getSeriesByIndex(0)?.getData()?.getItemLayout(2);
+        return Number(layout?.r || 0);
+    })).toBeGreaterThan(0);
+    const segment = await page.evaluate(() => {
+        const chart = window.echarts.getInstanceByDom(document.getElementById('mainChart'));
+        const layout = chart?.getModel()?.getSeriesByIndex(0)?.getData()?.getItemLayout(2);
+        const bounds = document.getElementById('mainChart')?.getBoundingClientRect();
+        if (!layout || !bounds) return null;
+        const angle = (Number(layout.startAngle) + Number(layout.endAngle)) / 2;
+        const radius = (Number(layout.r0 || 0) + Number(layout.r || 0)) / 2;
+        return {
+            x: bounds.left + Number(layout.cx) + (Math.cos(angle) * radius),
+            y: bounds.top + Number(layout.cy) + (Math.sin(angle) * radius),
+        };
+    });
+
+    expect(segment).not.toBeNull();
+    await page.mouse.click(segment.x, segment.y);
+    await expect(page.locator('#statisticsDrilldown')).toHaveAttribute('data-anchor-side', 'none');
+});
+
 test('los filtros aplicados permanecen junto a la gráfica sin saltos ni borradores accidentales', async ({ page }) => {
     const strip = page.locator('#filtrosActivos');
     const chartHeader = page.locator('#statisticsChartPanel .statistics-chart-header');
@@ -1315,7 +1525,7 @@ test('distritos y lugares acomodan catálogos largos', async ({ page }) => {
 
 test('edades muestra y exporta la tabla de causas por separado', async ({ page }) => {
     await page.getByRole('tab', { name: 'Edades' }).click();
-    await page.getByLabel('Mostrar principales causas por edad').check();
+    await page.getByLabel('Mostrar principales causas por grupo de edad').check();
 
     const detail = page.locator('#causasPrincipalesContainer');
     await expect(detail).toBeVisible();
@@ -1337,7 +1547,7 @@ test('edades muestra y exporta la tabla de causas por separado', async ({ page }
     const pdfFile = await readFile(await pdfDownload.path());
     expect(pdfFile.subarray(0, 4).toString()).toBe('%PDF');
 
-    await page.locator('#chartTypeButtons').getByRole('button', { name: 'Dona' }).click();
+    await page.locator('[data-target="chartTypeSelector"][data-value="doughnut"]:visible').click();
     await expect.poll(async () => page.evaluate(() => (
         currentEchartsInstance?.getOption?.()?.series?.[0]?.type || null
     ))).toBe('pie');
@@ -1375,6 +1585,73 @@ test('la preferencia de contexto persiste y cambia únicamente el archivo export
     expect(withDimensions.width).toBe(withoutDimensions.width);
     expect(withDimensions.height).toBeGreaterThan(withoutDimensions.height);
     await expect.poll(async () => chartState(page)).toEqual(chartBefore);
+});
+
+test('Sexo usa leyenda lateral estable en pastel y dona', async ({ page }) => {
+    await page.setViewportSize({ width: 1536, height: 900 });
+    await page.getByRole('tab', { name: 'Sexo', exact: true }).click();
+    await page.getByRole('tab', { name: 'Vista', exact: true }).click();
+    await page.locator('#dataLabelButtons [data-value="both"]').click();
+
+    const circularLayout = async () => page.evaluate(() => {
+        const chart = window.echarts?.getInstanceByDom(document.getElementById('mainChart'));
+        const option = chart?.getOption?.();
+        const series = option?.series?.[0] || {};
+        const legend = option?.legend?.[0] || {};
+        return {
+            categories: Array.isArray(series.data) ? series.data.length : 0,
+            center: series.center,
+            radius: series.radius,
+            outsideLabels: Boolean(series.label?.show),
+            legendVisible: Boolean(legend.show),
+            legendOrientation: legend.orient,
+            legendLeft: legend.left,
+        };
+    });
+
+    for (const type of ['pie', 'doughnut']) {
+        await page.locator(`#municipalityChartTypeButtons [data-value="${type}"]`).click();
+        await expect.poll(async () => (await circularLayout()).categories).toBe(2);
+
+        const layout = await circularLayout();
+        expect(layout.outsideLabels).toBe(false);
+        expect(layout.legendVisible).toBe(true);
+        expect(layout.legendOrientation).toBe('vertical');
+        expect(Number.parseFloat(layout.center[0])).toBeLessThan(50);
+        expect(Number.parseFloat(layout.legendLeft)).toBeGreaterThan(50);
+        expect(type === 'doughnut' ? Array.isArray(layout.radius) : !Array.isArray(layout.radius)).toBe(true);
+    }
+
+});
+
+test('el selector de paletas de Sexo evita el recorte del panel lateral', async ({ page }) => {
+    await page.setViewportSize({ width: 1536, height: 900 });
+    await page.getByRole('tab', { name: 'Sexo', exact: true }).click();
+    await page.getByRole('tab', { name: 'Vista', exact: true }).click();
+    await page.locator('#municipalityChartTypeButtons [data-value="doughnut"]').click();
+    await page.locator('#statisticsPaletteToggle').click();
+
+    const geometry = await page.evaluate(() => {
+        const menu = document.getElementById('statisticsPaletteMenu');
+        const trigger = document.getElementById('statisticsPaletteToggle');
+        const panel = document.getElementById('estadisticas-filtros');
+        const menuRect = menu?.getBoundingClientRect();
+        const triggerRect = trigger?.getBoundingClientRect();
+        const panelRect = panel?.getBoundingClientRect();
+        return {
+            opensUp: menu?.classList.contains('opens-up'),
+            menuTop: Math.round(menuRect?.top || 0),
+            menuBottom: Math.round(menuRect?.bottom || 0),
+            triggerTop: Math.round(triggerRect?.top || 0),
+            panelTop: Math.round(panelRect?.top || 0),
+            panelBottom: Math.round(panelRect?.bottom || 0),
+        };
+    });
+
+    expect(geometry.opensUp).toBe(true);
+    expect(geometry.menuBottom).toBeLessThanOrEqual(geometry.triggerTop - 5);
+    expect(geometry.menuTop).toBeGreaterThanOrEqual(geometry.panelTop);
+    expect(geometry.menuBottom).toBeLessThanOrEqual(geometry.panelBottom);
 });
 
 test('comparativa conserva sus dos series y una presentación legible', async ({ page }) => {

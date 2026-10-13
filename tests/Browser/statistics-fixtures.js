@@ -140,6 +140,15 @@ function chartPayload(type, searchParams) {
             omitted_total: 0,
             ranking_label: 'grupos de edad',
             quality: { excluded_total: 0, required_fields: ['Edad'] },
+            drilldown: AGE_DATA.map(item => ({
+                label: item.range,
+                filter_key: 'age',
+                filter_value: item.range === '<5 años'
+                    ? '0-4'
+                    : (item.range === '5-19 años'
+                        ? '5-19'
+                        : (item.range === '20-64 años' ? '20-64' : '65+')),
+            })),
         };
     }
     if (type === 'genero') {
@@ -150,12 +159,22 @@ function chartPayload(type, searchParams) {
         };
     }
     if (type === 'tendencias') {
+        const labels = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
         return {
             ...basePayload(), type: 'tendencias',
-            labels: ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'],
+            labels,
             counts: [68, 62, 70, 66, 67, 57, 64, 60, 67, 69, 67, 81],
             displayed_total: 798, displayed_categories: 12, available_categories: 12,
             coverage_percentage: 100, omitted_total: 0, group_by: 'month', ranking_label: 'periodos',
+            drilldown: labels.map((label, index) => ({
+                label,
+                filter_params: {
+                    start_date: `2025-${String(index + 1).padStart(2, '0')}-01`,
+                    end_date: `2025-${String(index + 1).padStart(2, '0')}-28`,
+                },
+                clear_params: ['all_time', 'years', 'months'],
+                show_percentage: false,
+            })),
         };
     }
     if (type === 'causas') {

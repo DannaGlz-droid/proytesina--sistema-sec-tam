@@ -5,7 +5,7 @@
     @include('components.header-admin')
     @include('components.nav-estadisticas')
 
-    <main class="statistics-page is-layout-pending" data-active-metric="municipios">
+    <main class="statistics-page is-layout-pending" data-active-metric="municipios" data-explorer-layout="true">
         <div class="statistics-page__inner">
         <x-ui.page-header
             class="statistics-page-header"
@@ -442,15 +442,15 @@
                                 </fieldset>
 
                                 <fieldset id="statisticsAgeDetailGroup" class="statistics-display-group statistics-display-group--age-detail" style="display: none;">
-                                    <legend id="statisticsAgeDetailLegend">Desglose adicional</legend>
+                                    <legend id="statisticsAgeDetailLegend">Detalle de causas</legend>
                                     <select id="ageDetailMode" class="hidden" aria-hidden="true" tabindex="-1">
                                         <option value="summary" selected>Solo edades</option>
-                                        <option value="causes">Principales causas por edad</option>
+                                        <option value="causes">Principales causas por grupo de edad</option>
                                     </select>
                                     <label class="statistics-age-detail-option" for="includeAgeCauses">
                                         <input type="checkbox" id="includeAgeCauses" class="statistics-system-checkbox" aria-describedby="includeAgeCausesHelp">
                                         <span class="statistics-age-detail-option__copy">
-                                            <strong>Mostrar principales causas por edad</strong>
+                                            <strong>Mostrar principales causas por grupo de edad</strong>
                                             <small id="includeAgeCausesHelp">Muestra las tres causas con más registros en cada grupo de edad.</small>
                                         </span>
                                     </label>
@@ -727,6 +727,7 @@
         let chartViewportResizeFrame = null;
         let municipalityConfigurationHeight = 0;
         let municipalityConfigurationHeightFrame = null;
+        let ageChartViewportHeight = 0;
         let activeChartDrilldown = null;
         let chartDrilldownHighlightFrame = null;
         let chartRequestController = null;
@@ -1880,7 +1881,7 @@
         }
 
         function usesPersistentMunicipalityFilters() {
-            return document.querySelector('.statistics-page')?.dataset.activeMetric === 'municipios'
+            return document.querySelector('.statistics-page')?.dataset.explorerLayout === 'true'
                 && window.matchMedia('(min-width: 1024px)').matches;
         }
 
@@ -2713,6 +2714,13 @@
                 setSelectValueAndTrigger('chartTypeSelector', 'barHorizontal');
             });
             document.getElementById('ageDetailMode').addEventListener('change', function() {
+                if (
+                    currentChartType === 'edades'
+                    && chartConfig.ageDetailMode !== 'causes'
+                    && this.value === 'causes'
+                ) {
+                    rememberAgeChartViewportHeight();
+                }
                 chartConfig.ageDetailMode = this.value;
                 preferredConfig.ageDetailMode = this.value;
                 renderAgeDetailCheckbox();
@@ -2789,11 +2797,29 @@
                 const menuGap = 6;
                 const triggerRect = paletteToggle.getBoundingClientRect();
                 const metricNavRect = document.querySelector('.statistics-metric-nav')?.getBoundingClientRect();
-                const upperBoundary = Math.max(
+                let upperBoundary = Math.max(
                     viewportEdge,
                     metricNavRect ? metricNavRect.bottom + 8 : viewportEdge
                 );
-                const spaceBelow = Math.max(0, window.innerHeight - triggerRect.bottom - viewportEdge);
+                let lowerBoundary = window.innerHeight - viewportEdge;
+
+                // La configuración lateral recorta su contenido para conservar los
+                // radios de la tarjeta. Considerar esos límites evita que un menú
+                // corto (por ejemplo, las paletas de Sexo) abra hacia abajo y quede
+                // oculto por el borde del panel aunque haya espacio en la ventana.
+                let clippingAncestor = paletteMenu.parentElement;
+                while (clippingAncestor && clippingAncestor !== document.body) {
+                    const ancestorStyle = window.getComputedStyle(clippingAncestor);
+                    const overflowY = ancestorStyle.overflowY || ancestorStyle.overflow;
+                    if (['auto', 'scroll', 'hidden', 'clip'].includes(overflowY)) {
+                        const ancestorRect = clippingAncestor.getBoundingClientRect();
+                        upperBoundary = Math.max(upperBoundary, ancestorRect.top);
+                        lowerBoundary = Math.min(lowerBoundary, ancestorRect.bottom);
+                    }
+                    clippingAncestor = clippingAncestor.parentElement;
+                }
+
+                const spaceBelow = Math.max(0, lowerBoundary - triggerRect.bottom);
                 const spaceAbove = Math.max(0, triggerRect.top - upperBoundary);
 
                 const desiredHeight = paletteMenu.scrollHeight + 2;
@@ -4057,11 +4083,22 @@
             const filters = document.getElementById('municipalitySidebarFilters');
             const presentation = document.getElementById('municipalitySidebarPresentation');
             const footer = configuration?.querySelector(':scope > .users-filter-panel-footer');
-            const usesDesktopMunicipalityLayout = currentChartType === 'municipios'
-                && window.matchMedia('(min-width: 1024px)').matches;
+            const usesDesktopExplorerLayout = window.matchMedia('(min-width: 1024px)').matches;
 
             if (!layout || !configuration || !hasMunicipalityConfiguration || !filtersBody
-                || !filters || !presentation || !usesDesktopMunicipalityLayout) return;
+                || !filters || !presentation || !usesDesktopExplorerLayout) return;
+
+            // Municipios es la referencia visual. Al cambiar de métrica se conserva
+            // su altura ya medida en lugar de sustituirla por un panel lateral menor.
+            if (currentChartType !== 'municipios' && municipalityConfigurationHeight > 0) {
+                layout.style.setProperty(
+                    '--statistics-municipality-balanced-height',
+                    `${municipalityConfigurationHeight}px`
+                );
+                applyChartViewportHeight();
+                currentEchartsInstance?.resize();
+                return;
+            }
 
             const previousView = filtersBody.dataset.configurationView || 'presentation';
             const previousVisibility = configuration.style.visibility;
@@ -4069,8 +4106,9 @@
             const previousPresentationHidden = presentation.hidden;
             const previousFooterHidden = footer?.hidden;
 
-            // Medir ambas pestañas sin pintarlas. Esto evita que la gráfica cambie
-            // de altura al pasar de Vista a Filtros o viceversa.
+            // Todas las métricas usan como referencia la vista lateral más alta.
+            // Así el lienzo de Edades o Tendencias conserva la presencia visual de
+            // Municipios y no cambia de tamaño al alternar entre Vista y Filtros.
             layout.style.removeProperty('--statistics-municipality-balanced-height');
             configuration.style.visibility = 'hidden';
             const measureView = view => {
@@ -4202,9 +4240,7 @@
             const filtersBody = document.querySelector('#estadisticas-filtros .users-filter-panel-body');
             const filtersPanel = document.getElementById('estadisticas-filtros');
             const filtersTitle = document.getElementById('statistics-filters-title');
-            const isMunicipalities = chartType === 'municipios';
-            const usesExplorerLayout = isMunicipalities
-                && window.matchMedia('(min-width: 1024px)').matches;
+            const usesExplorerLayout = window.matchMedia('(min-width: 1024px)').matches;
 
             if (!page || !content || !chartPanel || !displayPanel || !presentationGroups) return;
 
@@ -4303,10 +4339,13 @@
                 }
                 [
                     document.getElementById('statisticsGeographicScopeControl'),
+                    document.getElementById('statisticsTrendGranularityControl'),
+                    document.getElementById('statisticsComparisonControl'),
                     document.getElementById('statisticsMeasureGroup'),
                     sidebarChartTypeGroup,
                     document.getElementById('filterTop'),
                     document.getElementById('statisticsDataLabelGroup'),
+                    document.getElementById('statisticsAgeDetailGroup'),
                     displayPanel.querySelector('.statistics-display-group--palette')
                         || sidebarPresentation?.querySelector('.statistics-display-group--palette'),
                 ].forEach(group => {
@@ -4325,7 +4364,7 @@
                 displayTitle.textContent = 'Tipo de gráfica';
                 if (filtersTitle) filtersTitle.textContent = 'Configuración';
                 filtersPanel?.setAttribute('role', 'complementary');
-                filtersPanel?.setAttribute('aria-label', 'Filtros de municipios');
+                filtersPanel?.setAttribute('aria-label', 'Configuración de la gráfica');
                 filtersPanel?.removeAttribute('aria-modal');
                 filterDraftSnapshot = captureStatisticsFilterState();
                 syncStatisticsFilterDraftUi();
@@ -5150,7 +5189,7 @@
             if (municipalityContainer) {
                 municipalityContainer.className = `statistics-visual-options${isSingleType ? ' is-single' : ''}`;
                 municipalityContainer.innerHTML = optionsMarkup;
-                municipalityContainer.closest('.statistics-display-group').hidden = chartType !== 'municipios';
+                municipalityContainer.closest('.statistics-display-group').hidden = false;
             }
 
             const dataLabelGroup = document.getElementById('statisticsDataLabelGroup');
@@ -6479,12 +6518,17 @@
             const percentage = total > 0 ? ((count / total) * 100).toFixed(1) : '0.0';
             const formattedCount = count.toLocaleString('es-MX');
             const countDescription = `${formattedCount} ${count === 1 ? 'registro' : 'registros'}`;
-            const municipalityRankIndex = currentChartType === 'municipios'
-                ? data.drilldown.findIndex(candidate => String(candidate?.label || '').trim() === String(item?.label || '').trim())
-                : -1;
-            const municipalityTotal = Number(data?.available_categories || 0);
-            const municipalityRank = municipalityRankIndex >= 0 && municipalityTotal > 0
-                ? `Posición ${municipalityRankIndex + 1} de ${municipalityTotal}`
+            const drilldownIndex = data.drilldown.findIndex(candidate =>
+                String(candidate?.label || '').trim() === String(item?.label || '').trim()
+            );
+            const drilldownTotal = Number(data?.available_categories || data.drilldown.length || 0);
+            const municipalityRankIndex = currentChartType === 'municipios' ? drilldownIndex : -1;
+            const detailPosition = drilldownIndex >= 0 && drilldownTotal > 0
+                ? (currentChartType === 'tendencias'
+                    ? `Periodo ${drilldownIndex + 1} de ${drilldownTotal}`
+                    : (currentChartType === 'edades'
+                        ? `Grupo ${drilldownIndex + 1} de ${drilldownTotal}`
+                        : `Posición ${drilldownIndex + 1} de ${drilldownTotal}`))
                 : '';
             const isMunicipalityRate = currentChartType === 'municipios' && data?.measure === 'rate';
             const municipalityCount = municipalityRankIndex >= 0
@@ -6507,8 +6551,8 @@
                     : `${countDescription} · ${percentage}% del total`;
                 meta.textContent = baseDescription;
             }
-            rank.textContent = municipalityRank;
-            rank.classList.toggle('hidden', !municipalityRank);
+            rank.textContent = detailPosition;
+            rank.classList.toggle('hidden', !detailPosition);
             link.href = buildStatisticsDrilldownUrl(data, item);
             if (linkLabel) {
                 const detailCountDescription = isMunicipalityRate
@@ -7194,11 +7238,21 @@
             const minimumHeight = Number(chartWrapper.dataset.minimumHeight || 340);
             const viewportBottomReserve = Number(chartWrapper.dataset.viewportBottomReserve || 0);
             const preservesContentHeight = chartWrapper.dataset.preserveContentHeight === 'true';
-            const balancesMunicipalitySidebar = currentChartType === 'municipios'
+            const usesRememberedAgeViewport = currentChartType === 'edades'
+                && ageChartViewportHeight > 0
                 && window.matchMedia('(min-width: 1024px)').matches;
             let targetHeight = preferredHeight;
 
-            if (!preservesContentHeight && window.matchMedia('(min-width: 1024px)').matches) {
+            // Sin tabla, Edades conserva la escala amplia de Municipios. Con la tabla,
+            // reduce el lienzo de forma deliberada para que gráfica y detalle puedan
+            // leerse juntos; al cerrarla recupera exactamente su altura anterior.
+            if (usesRememberedAgeViewport) {
+                targetHeight = chartConfig.ageDetailMode === 'causes'
+                    ? getAgeDetailCompactChartHeight(ageChartViewportHeight)
+                    : ageChartViewportHeight;
+            }
+
+            if (!usesRememberedAgeViewport && !preservesContentHeight && window.matchMedia('(min-width: 1024px)').matches) {
                 const documentTop = chartWrapper.getBoundingClientRect().top + window.scrollY;
                 const availableInInitialViewport = Math.floor(
                     window.innerHeight - documentTop - 12 - viewportBottomReserve
@@ -7215,9 +7269,23 @@
             chartWrapper.style.height = `${roundedHeight}px`;
             chartWrapper.style.minHeight = `${roundedHeight}px`;
             chartWrapper.style.flexBasis = `${roundedHeight}px`;
-            chartWrapper.style.flexGrow = balancesMunicipalitySidebar ? '1' : '0';
+            chartWrapper.style.flexGrow = window.matchMedia('(min-width: 1024px)').matches && !usesRememberedAgeViewport ? '1' : '0';
             chartWrapper.style.flexShrink = '0';
             return roundedHeight;
+        }
+
+        function getAgeDetailCompactChartHeight(fullHeight = ageChartViewportHeight) {
+            const availableViewportHeight = Math.floor(window.innerHeight * .48);
+            const responsiveCompactHeight = Math.max(350, Math.min(420, availableViewportHeight));
+            return Math.min(Number(fullHeight || responsiveCompactHeight), responsiveCompactHeight);
+        }
+
+        function rememberAgeChartViewportHeight() {
+            if (currentChartType !== 'edades' || !window.matchMedia('(min-width: 1024px)').matches) return;
+
+            const chartWrapper = document.querySelector('.statistics-chart-canvas');
+            const currentHeight = Math.round(chartWrapper?.getBoundingClientRect().height || 0);
+            if (currentHeight > 0) ageChartViewportHeight = currentHeight;
         }
 
         function updateChartContext(data) {
@@ -8200,7 +8268,12 @@
                 chartContainer.style.margin = '0';
 
                 const circularWidth = chartWrapper?.clientWidth || 960;
-                const circularHeight = chartWrapper?.clientHeight || 400;
+                const rememberedAgeCircularHeight = currentChartType === 'edades' && ageChartViewportHeight > 0
+                    ? (chartConfig.ageDetailMode === 'causes'
+                        ? getAgeDetailCompactChartHeight(ageChartViewportHeight)
+                        : ageChartViewportHeight)
+                    : 0;
+                const circularHeight = rememberedAgeCircularHeight || chartWrapper?.clientHeight || 400;
                 const circularSegmentCount = filteredPieData.length;
                 const crowdedCircularChart = circularSegmentCount > 6;
                 const veryCrowdedCircularChart = circularSegmentCount > 12;
@@ -8209,6 +8282,10 @@
                     .filter(item => item.name !== remainderLabel)
                     .map(item => String(item.name).length));
                 const circularLegendNeedsMoreRoom = ['causas', 'lugares'].includes(currentChartType) || longestCircularCategoryLabel > 22;
+                // Edades y Sexo tienen pocas categorías: usar la misma composición
+                // estable de Municipios evita llamadas externas y mantiene alineadas
+                // las métricas en una leyenda lateral para pastel y dona.
+                const usesMunicipalityCircularComposition = ['edades', 'genero'].includes(currentChartType);
                 // Las leyendas largas necesitan espacio propio junto al circulo y la tarjeta.
                 // En anchos intermedios, poner la leyenda debajo evita solapamientos.
                 const compactCircularLayout = circularWidth < 880
@@ -8217,7 +8294,8 @@
                 const useCircularCallouts = circularLegendShowsMetrics
                     && circularSegmentCount <= 6
                     && groupedTotal <= 0
-                    && !circularLegendNeedsMoreRoom;
+                    && !circularLegendNeedsMoreRoom
+                    && !usesMunicipalityCircularComposition;
                 const circularLegendNameWidth = circularLegendNeedsMoreRoom
                     ? 240
                     : Math.min(190, Math.max(128, Math.ceil(longestCircularLabel * 7.2)));
@@ -8226,7 +8304,9 @@
                     58,
                     Math.ceil(Math.max(...filteredPieData.map(item => formatNumber(item.value).length)) * 7 + 18)
                 );
-                const sparseCircularRadiusCap = circularSegmentCount <= 2
+                const sparseCircularRadiusCap = usesMunicipalityCircularComposition
+                    ? 192
+                    : circularSegmentCount <= 2
                     ? 174
                     : (circularSegmentCount <= 4 ? 184 : 192);
                 // Las llamadas exteriores ocupan más altura que el propio círculo.
@@ -8246,22 +8326,29 @@
                     ? Math.round(calculatedDesktopOuterRadius * .95)
                     : calculatedDesktopOuterRadius;
                 const desktopInnerRadius = Math.round(desktopOuterRadius * .58);
-                const preferredDesktopCenterRatio = useCircularCallouts
+                const preferredDesktopCenterRatio = usesMunicipalityCircularComposition
+                    ? .39
+                    : useCircularCallouts
                     ? .5
                     : circularLegendNeedsMoreRoom
                     ? .39
                     : !circularLegendShowsMetrics
                     ? .43
                     : crowdedCircularChart ? .39 : .36;
-                const desktopLegendStartRatio = circularLegendNeedsMoreRoom
+                const desktopLegendStartRatio = usesMunicipalityCircularComposition
+                    ? .57
+                    : circularLegendNeedsMoreRoom
                     ? .57
                     : (!circularLegendShowsMetrics ? .62 : (crowdedCircularChart ? .57 : .56));
                 // Mantener una separaciÃ³n visual estable entre el cÃ­rculo y la leyenda.
                 // En anchos intermedios es preferible desplazar el cÃ­rculo suavemente
                 // hacia la izquierda antes que reducirlo o permitir un solapamiento.
                 const circularLegendClearance = 36;
+                const circularCenterClearanceRadius = usesMunicipalityCircularComposition
+                    ? sparseCircularRadiusCap
+                    : desktopOuterRadius;
                 const maximumDesktopCenterRatio = desktopLegendStartRatio
-                    - ((desktopOuterRadius + circularLegendClearance) / Math.max(circularWidth, 1));
+                    - ((circularCenterClearanceRadius + circularLegendClearance) / Math.max(circularWidth, 1));
                 const desktopCenterRatio = useCircularCallouts
                     ? preferredDesktopCenterRatio
                     : Math.max(.3, Math.min(preferredDesktopCenterRatio, maximumDesktopCenterRatio));
@@ -8513,7 +8600,19 @@
                     showSymbol: labels.length <= 24,
                     lineStyle: { width: 2.5, color: cartesianSolidColor },
                     itemStyle: { color: cartesianSolidColor },
-                    emphasis: { focus: 'series', scale: true },
+                    emphasis: {
+                        focus: 'self',
+                        blurScope: 'coordinateSystem',
+                        scale: true,
+                        scaleSize: 4,
+                        itemStyle: { borderColor: '#ffffff', borderWidth: 2 }
+                    },
+                    blur: {
+                        itemStyle: { opacity: .3 },
+                        label: { opacity: .38 },
+                        lineStyle: { opacity: .28 },
+                        areaStyle: { opacity: .16 }
+                    },
                     labelLayout: { hideOverlap: true },
                     label: {
                         show: chartConfig.dataLabelMode !== 'none',
@@ -8950,6 +9049,9 @@
             container.getAnimations?.().forEach(animation => animation.cancel());
 
             if (shouldShow) {
+                if (wasHidden && ageChartViewportHeight <= 0) {
+                    rememberAgeChartViewportHeight();
+                }
                 container.classList.remove('hidden');
                 container.setAttribute('aria-hidden', 'false');
 
