@@ -63,11 +63,34 @@ it('reports the default period and the complete available date coverage', functi
     $range = app(StatisticsController::class)->getDefaultDateRangeApi()->getData(true);
 
     expect($range)->toBe([
-        'start_date' => '2025-01-07',
+        'start_date' => '2025-02-01',
         'end_date' => '2026-01-06',
         'data_start' => '2023-05-10',
         'data_end' => '2026-01-06',
     ]);
+});
+
+it('uses twelve calendar months and completes empty months in the default trend', function (): void {
+    $data = app(StatisticsController::class)
+        ->getChartData(Request::create('/', 'GET'), 'tendencias')
+        ->getData(true);
+
+    expect($data['period']['start_date'])->toBe('2025-02-01')
+        ->and($data['period']['end_date'])->toBe('2026-01-06')
+        ->and($data['period']['is_default'])->toBeTrue()
+        ->and($data['labels'])->toHaveCount(12)
+        ->and($data['labels'][0])->toBe('Feb 2025')
+        ->and($data['labels'][11])->toBe('Ene 2026')
+        ->and($data['counts'])->toBe([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 6])
+        ->and(array_sum($data['counts']))->toBe($data['filtered_total'])
+        ->and($data['drilldown'][0]['filter_params'])->toBe([
+            'start_date' => '2025-02-01',
+            'end_date' => '2025-02-28',
+        ])
+        ->and($data['drilldown'][11]['filter_params'])->toBe([
+            'start_date' => '2026-01-01',
+            'end_date' => '2026-01-06',
+        ]);
 });
 
 it('rejects malformed date filters instead of broadening the query', function (): void {
@@ -395,6 +418,28 @@ it('filters table data by death district and death location', function (): void 
         ->and($chips['death_location']['return_keys'])->toContain('death_location');
 });
 
+it('filters trend chart data by death location', function (): void {
+    $data = statisticsChartResponse('tendencias', [
+        'death_location_ids' => [$this->locationB->id],
+        'all_time' => 1,
+    ]);
+
+    expect($data['filtered_total'])->toBe(2)
+        ->and(array_sum($data['counts']))->toBe(2);
+});
+
+it('filters the supported distribution charts by death location', function (): void {
+    foreach (['edades', 'genero', 'causas'] as $chartType) {
+        $data = statisticsChartResponse($chartType, [
+            'death_location_ids' => [$this->locationB->id],
+            'all_time' => 1,
+        ]);
+
+        expect($data['filtered_total'])->toBe(2)
+            ->and(array_sum($data['counts']))->toBe(2);
+    }
+});
+
 it('exports CSV data as UTF-8 with a byte order mark', function (): void {
     $csv = Excel::raw(new DeathsExport(), ExcelFormat::CSV);
 
@@ -644,7 +689,7 @@ it('groups trends by day month and year without changing the filtered total', fu
     $expectedRanges = [
         'day' => ['2026-01-01', '2026-01-01'],
         'month' => ['2026-01-01', '2026-01-31'],
-        'year' => ['2026-01-01', '2026-12-31'],
+        'year' => ['2026-01-01', '2026-01-31'],
     ];
 
     foreach (['day', 'month', 'year'] as $groupBy) {

@@ -166,10 +166,10 @@
 
                                 <x-filtros.seccion id="statisticsLocationFilterGroup" titulo="Ubicación" data-statistics-filter-section data-statistics-filter-group hidden>
                                         <div id="filterTipoMunicipio" class="statistics-filter-control dynamic-filter" style="display: none;">
-                                            <label for="tipoMunicipioFilter">Ámbito geográfico</label>
-                                            <x-filtros.select id="tipoMunicipioFilter" placeholder="Lugar de defunción">
-                                                <option value="defuncion">Lugar de defunción</option>
-                                                <option value="residencia">Lugar de residencia</option>
+                                            <label for="tipoMunicipioFilter">Filtrar por ubicación de</label>
+                                            <x-filtros.select id="tipoMunicipioFilter" placeholder="Defunción">
+                                                <option value="defuncion">Defunción</option>
+                                                <option value="residencia">Residencia</option>
                                             </x-filtros.select>
                                         </div>
                                         <div id="filterMunicipios" class="statistics-filter-control dynamic-filter" style="display: none;">
@@ -209,17 +209,17 @@
                                                     </x-filtros.select>
                                                 </div>
                                             </div>
-                                            @if($deathLocations->count() > 0)
-                                                <div class="statistics-filter-control statistics-location-fields__death-location">
-                                                    <label for="deathLocationsFilter">Lugar de defunci&oacute;n</label>
-                                                    <x-filtros.select id="deathLocationsFilter" placeholder="Selecciona lugares" data-collapsed-limit="1" multiple>
-                                                        @foreach($deathLocations as $location)
-                                                            <option value="{{ $location->id }}">{{ $location->display_name }}</option>
-                                                        @endforeach
-                                                    </x-filtros.select>
-                                                </div>
-                                            @endif
                                         </div>
+                                        @endif
+                                        @if($deathLocations->count() > 0)
+                                            <div id="filterDeathLocations" class="statistics-filter-control statistics-location-fields__death-location dynamic-filter" style="display: none;">
+                                                <label for="deathLocationsFilter">Lugares de defunci&oacute;n</label>
+                                                <x-filtros.select id="deathLocationsFilter" placeholder="Selecciona lugares de defunción" data-collapsed-limit="1" multiple>
+                                                    @foreach($deathLocations as $location)
+                                                        <option value="{{ $location->id }}">{{ $location->display_name }}</option>
+                                                    @endforeach
+                                                </x-filtros.select>
+                                            </div>
                                         @endif
                                 </x-filtros.seccion>
 
@@ -306,7 +306,7 @@
                                 <div class="statistics-display-panel__title-row">
                                     <h2 id="statistics-display-title">Presentación</h2>
                                     <div class="statistics-display-panel__actions">
-                                        <button type="button" id="statisticsPresentationReset" class="users-filter-clear statistics-presentation-reset statistics-context-reset" aria-label="Restablecer configuración de la vista" title="Restablecer configuración de la vista">Restablecer</button>
+                                        <button type="button" id="statisticsPresentationReset" class="users-filter-clear statistics-presentation-reset statistics-context-reset" aria-label="Restablecer configuración de la gráfica" title="Restablecer configuración de la gráfica">Restablecer</button>
                                         <button type="button" id="statisticsPresentationCollapse" class="statistics-presentation-collapse" aria-expanded="true" aria-controls="statisticsPresentationGroups" aria-label="Contraer opciones de presentación">
                                             <i class="fas fa-chevron-up" aria-hidden="true"></i>
                                         </button>
@@ -315,7 +315,7 @@
                             </header>
                             <div id="statisticsPresentationGroups" class="statistics-display-groups">
                                 <fieldset id="statisticsGeographicScopeControl" class="statistics-display-group statistics-geographic-scope-group hidden">
-                                    <legend id="statisticsGeographicScopeLabel">Municipio de</legend>
+                                    <legend id="statisticsGeographicScopeLabel">Mostrar municipios de</legend>
                                     <select id="geographicScopeSelector" class="sr-only" aria-labelledby="statisticsGeographicScopeLabel" title="Lugar de defunción">
                                         <option value="defuncion">Lugar de defunción</option>
                                         <option value="residencia">Lugar de residencia</option>
@@ -451,7 +451,7 @@
                                         <input type="checkbox" id="includeAgeCauses" class="statistics-system-checkbox" aria-describedby="includeAgeCausesHelp">
                                         <span class="statistics-age-detail-option__copy">
                                             <strong>Mostrar principales causas por grupo de edad</strong>
-                                            <small id="includeAgeCausesHelp">Muestra las tres causas con más registros en cada grupo de edad.</small>
+                                            <small id="includeAgeCausesHelp">Muestra hasta tres causas con más registros en cada grupo de edad.</small>
                                         </span>
                                     </label>
                                 </fieldset>
@@ -630,7 +630,7 @@
                                 <header class="statistics-causes__header">
                                     <div>
                                         <h3 id="statistics-causes-title">Causas principales por grupo de edad</h3>
-                                        <p>Las tres causas con más registros dentro de cada grupo.</p>
+                                        <p>Hasta tres causas con más registros dentro de cada grupo.</p>
                                     </div>
                                     <div id="ageCausesDownloadWrapper" class="statistics-table-download">
                                         <div class="statistics-download__group">
@@ -1241,7 +1241,7 @@
 
         /*
          * Regla de continuidad del análisis:
-         * Los controles de Vista (ámbito geográfico, granularidad y comparación)
+         * Los controles de Gráfica (ámbito geográfico, granularidad y comparación)
          * cambian cómo se agrupan los mismos registros; no deben limpiar los filtros
          * de Datos. Cada gráfica aplica únicamente los filtros compatibles que se
          * declaran aquí y conserva los demás para cuando el usuario vuelva a una
@@ -1249,10 +1249,10 @@
          */
         const filtersForChart = {
             municipios: ['dates', 'tipoMunicipio', 'causas', 'distritoes', 'sexo', 'edad'],
-            tendencias: ['dates', 'tipoMunicipio', 'municipios', 'causas', 'distritoes', 'sexo', 'edad', 'granularidad'],
-            edades: ['dates', 'tipoMunicipio', 'municipios', 'causas', 'distritoes', 'sexo'],
-            genero: ['dates', 'tipoMunicipio', 'municipios', 'causas', 'distritoes', 'edad'],
-            causas: ['dates', 'tipoMunicipio', 'municipios', 'distritoes', 'sexo', 'edad'],
+            tendencias: ['dates', 'tipoMunicipio', 'municipios', 'causas', 'distritoes', 'deathLocations', 'sexo', 'edad', 'granularidad'],
+            edades: ['dates', 'tipoMunicipio', 'municipios', 'causas', 'distritoes', 'deathLocations', 'sexo'],
+            genero: ['dates', 'tipoMunicipio', 'municipios', 'causas', 'distritoes', 'deathLocations', 'edad'],
+            causas: ['dates', 'tipoMunicipio', 'municipios', 'distritoes', 'deathLocations', 'sexo', 'edad'],
             distritoes: ['dates', 'tipoMunicipio', 'causas', 'sexo', 'edad'],
             lugares: ['dates', 'tipoMunicipio', 'municipios', 'causas', 'distritoes', 'sexo', 'edad']
         };
@@ -1444,6 +1444,7 @@
             setControlValue('granularidadFilter', state.granularity);
 
             currentChartType = state.metric;
+            syncDistrictFiltersForCurrentMetric();
             preferredConfig.type = state.visual;
             preferredConfig.measure = state.measure;
             preferredConfig.dataLabelMode = state.metric === 'tendencias'
@@ -1493,11 +1494,18 @@
             if (metricSupportsFilter(currentChartType, 'municipios')) appendMany('municipality', activeFilters.municipios);
             if (metricSupportsFilter(currentChartType, 'causas')) appendMany('cause', activeFilters.causas);
             if (currentChartType === 'municipios') {
-                appendMany('residence_district', activeFilters.residenceDistricts);
-                appendMany('death_district', activeFilters.deathDistricts);
-                appendMany('death_location', activeFilters.deathLocations);
+                if (activeFilters.tipoMunicipio === 'residencia') {
+                    appendMany('residence_district', activeFilters.residenceDistricts);
+                } else {
+                    appendMany('death_district', activeFilters.deathDistricts);
+                    appendMany('death_location', activeFilters.deathLocations);
+                }
             } else if (metricSupportsFilter(currentChartType, 'distritoes')) {
                 appendMany('district', activeFilters.distritoes);
+            }
+            if (metricSupportsFilter(currentChartType, 'deathLocations')
+                && activeFilters.tipoMunicipio === 'defuncion') {
+                appendMany('death_location', activeFilters.deathLocations);
             }
             if (metricSupportsFilter(currentChartType, 'sexo') && activeFilters.sexo) params.set('sex', activeFilters.sexo);
             if (metricSupportsFilter(currentChartType, 'edad') && activeFilters.edad) {
@@ -1834,6 +1842,11 @@
 
                 if (!instance || instance.statisticsFiltersBound) return;
                 instance.on('change', (value) => {
+                    if (element.id === 'distritoesFilter') {
+                        syncDistrictFilterControls('generic');
+                    } else if (element.id === getScopedDistrictFilterId()) {
+                        syncDistrictFilterControls('scoped');
+                    }
                     // Si cambió el distrito mientras se ve 'municipios', actualizar la lista disponible.
                     if (element.id === 'distritoesFilter' && metricUsesMunicipalityAndDistrict()) {
                         const selected = Array.isArray(value) ? value.map(String) : (value ? [String(value)] : []);
@@ -2006,6 +2019,7 @@
             });
 
             restoreControl('distritoesFilter', state.distritoesFilter || []);
+            syncDistrictFiltersForCurrentMetric();
             if (metricUsesMunicipalityAndDistrict()) updateMunicipiosOptions([].concat(state.distritoesFilter || []));
             restoreControl('municipiosFilter', state.municipiosFilter || []);
 
@@ -2113,6 +2127,95 @@
                 && metricSupportsFilter(currentChartType, 'distritoes');
         }
 
+        function getDistrictFilterControlState(controlId) {
+            const control = document.getElementById(controlId);
+            if (!control) return { values: [], names: [] };
+
+            const options = Array.from(control.selectedOptions || []);
+            return {
+                values: options.map(option => String(option.value)),
+                names: options.map(option => option.text),
+            };
+        }
+
+        function setDistrictFilterControlValues(controlId, values = []) {
+            const control = document.getElementById(controlId);
+            if (!control) return;
+
+            const validValues = new Set(Array.from(control.options).map(option => String(option.value)));
+            const normalizedValues = [].concat(values || [])
+                .map(String)
+                .filter(value => validValues.has(value));
+
+            if (control.tomselect) {
+                control.tomselect.setValue(normalizedValues, true);
+                return;
+            }
+
+            const selectedValues = new Set(normalizedValues);
+            Array.from(control.options).forEach(option => {
+                option.selected = selectedValues.has(String(option.value));
+            });
+        }
+
+        function getScopedDistrictFilterId(scope = 'defuncion') {
+            return scope === 'residencia' ? 'residenceDistrictsFilter' : 'deathDistrictsFilter';
+        }
+
+        function syncDistrictFilterControls(source = 'scoped', scope = null) {
+            const normalizedScope = (scope || document.getElementById('tipoMunicipioFilter')?.value) === 'residencia'
+                ? 'residencia'
+                : 'defuncion';
+            const scopedControlId = getScopedDistrictFilterId(normalizedScope);
+            const sourceControlId = source === 'generic' ? 'distritoesFilter' : scopedControlId;
+            const targetControlId = source === 'generic' ? scopedControlId : 'distritoesFilter';
+            const sourceState = getDistrictFilterControlState(sourceControlId);
+
+            setDistrictFilterControlValues(targetControlId, sourceState.values);
+            return sourceState;
+        }
+
+        function syncDistrictFiltersForCurrentMetric() {
+            if (currentChartType === 'municipios') {
+                syncDistrictFilterControls('scoped');
+            } else if (metricSupportsFilter(currentChartType, 'distritoes')) {
+                syncDistrictFilterControls('generic');
+            }
+        }
+
+        function syncActiveDistrictFiltersFromControls() {
+            const generic = getDistrictFilterControlState('distritoesFilter');
+            const residence = getDistrictFilterControlState('residenceDistrictsFilter');
+            const death = getDistrictFilterControlState('deathDistrictsFilter');
+
+            activeFilters.distritoes = generic.values;
+            activeFilters.distritoesNames = generic.names;
+            activeFilters.residenceDistricts = residence.values;
+            activeFilters.residenceDistrictNames = residence.names;
+            activeFilters.deathDistricts = death.values;
+            activeFilters.deathDistrictNames = death.names;
+        }
+
+        function updateMunicipalityLocationScopeFields(chartType = currentChartType, scope = null) {
+            const normalizedScope = (scope || document.getElementById('tipoMunicipioFilter')?.value) === 'residencia'
+                ? 'residencia'
+                : 'defuncion';
+            const isMunicipalityChart = chartType === 'municipios';
+            const residenceEditor = document.getElementById('residenceDistrictEditor');
+            const deathEditor = document.getElementById('deathDistrictEditor');
+            const deathLocation = document.getElementById('filterDeathLocations');
+
+            if (residenceEditor) {
+                residenceEditor.style.display = isMunicipalityChart && normalizedScope === 'residencia' ? '' : 'none';
+            }
+            if (deathEditor) {
+                deathEditor.style.display = isMunicipalityChart && normalizedScope === 'defuncion' ? '' : 'none';
+            }
+            if (isMunicipalityChart && deathLocation) {
+                deathLocation.style.display = normalizedScope === 'defuncion' ? 'block' : 'none';
+            }
+        }
+
         function updateGeographicFilterLabels(scope = 'defuncion') {
             const isResidence = scope === 'residencia';
             const municipalityLabel = document.getElementById('municipiosFilterLabel');
@@ -2189,12 +2292,15 @@
             else if (filterControl) filterControl.value = normalizedScope;
 
             activeFilters.tipoMunicipio = normalizedScope;
+            syncDistrictFilterControls('scoped', normalizedScope);
+            syncActiveDistrictFiltersFromControls();
             if (normalizedScope !== 'residencia' && chartConfig.measure === 'rate') {
                 chartConfig.measure = 'count';
                 preferredConfig.measure = 'count';
             }
             syncGeographicScopeControl(normalizedScope);
             updateGeographicFilterLabels(normalizedScope);
+            updateMunicipalityLocationScopeFields(currentChartType, normalizedScope);
             updateMeasurePresentation();
             updateActiveFiltersDisplay();
 
@@ -2549,6 +2655,11 @@
                 'deathLocationsFilter',
             ].forEach(id => {
                 document.getElementById(id)?.addEventListener('change', () => {
+                    if (id === 'distritoesFilter') {
+                        syncDistrictFilterControls('generic');
+                    } else if (id === getScopedDistrictFilterId()) {
+                        syncDistrictFilterControls('scoped');
+                    }
                     markStatisticsFilterDraft();
                 });
             });
@@ -2647,13 +2758,34 @@
                 applyTrendGranularity(this.value, { reload: true });
             });
             document.getElementById('tipoMunicipioFilter').addEventListener('change', function() {
+                const scrollLeft = window.scrollX;
+                const scrollTop = window.scrollY;
+                const chartPanel = document.getElementById('statisticsChartPanel');
+
+                if (metricSupportsFilter(currentChartType, 'deathLocations') && chartPanel) {
+                    const currentHeight = chartPanel.getBoundingClientRect().height;
+                    const lockedHeight = Math.max(currentHeight, Number(chartPanel.dataset.geographicScopeHeight || 0));
+                    chartPanel.dataset.geographicScopeHeight = String(lockedHeight);
+                    chartPanel.dataset.geographicScopeMetric = currentChartType;
+                    chartPanel.style.minHeight = `${lockedHeight}px`;
+                }
+
                 syncGeographicScopeControl(this.value);
                 updateGeographicFilterLabels(this.value);
+                syncDistrictFilterControls('scoped', this.value);
+                updateVisibleFilters(currentChartType);
                 if (metricUsesMunicipalityAndDistrict()) {
                     const selectedDistricts = [].concat(document.getElementById('distritoesFilter')?.tomselect?.getValue() || []);
                     updateMunicipiosOptions(selectedDistricts);
                 }
                 markStatisticsFilterDraft();
+
+                const restoreViewport = () => window.scrollTo({ left: scrollLeft, top: scrollTop, behavior: 'auto' });
+                restoreViewport();
+                requestAnimationFrame(() => {
+                    restoreViewport();
+                    requestAnimationFrame(restoreViewport);
+                });
             });
             document.getElementById('granularidadFilter').addEventListener('change', function() {
                 syncTrendGranularityControl(this.value);
@@ -2802,6 +2934,14 @@
                     metricNavRect ? metricNavRect.bottom + 8 : viewportEdge
                 );
                 let lowerBoundary = window.innerHeight - viewportEdge;
+                const configurationPanelRect = paletteMenu
+                    .closest('#estadisticas-filtros')
+                    ?.getBoundingClientRect();
+
+                if (configurationPanelRect) {
+                    upperBoundary = Math.max(upperBoundary, configurationPanelRect.top);
+                    lowerBoundary = Math.min(lowerBoundary, configurationPanelRect.bottom);
+                }
 
                 // La configuración lateral recorta su contenido para conservar los
                 // radios de la tarjeta. Considerar esos límites evita que un menú
@@ -3511,16 +3651,44 @@
             return croppedCanvas;
         }
 
+        function composeChartAndAgeCausesCanvases(chartCanvas, tableCanvas, transparent = false) {
+            const canvas = document.createElement('canvas');
+            const width = Math.max(chartCanvas.width, tableCanvas.width);
+            const scale = Math.max(1, width / Math.max(1, document.getElementById('mainChart')?.clientWidth || width));
+            const gap = Math.round(16 * scale);
+            canvas.width = width;
+            canvas.height = chartCanvas.height + gap + tableCanvas.height;
+
+            const context = canvas.getContext('2d');
+            if (!context) throw new Error('No se pudo unir la gráfica con el detalle de causas.');
+
+            if (!transparent) {
+                context.fillStyle = '#ffffff';
+                context.fillRect(0, 0, canvas.width, canvas.height);
+            }
+
+            context.drawImage(chartCanvas, Math.round((width - chartCanvas.width) / 2), 0);
+            context.drawImage(
+                tableCanvas,
+                Math.round((width - tableCanvas.width) / 2),
+                chartCanvas.height + gap
+            );
+
+            return canvas;
+        }
+
         async function captureChartAsCanvas(
             transparent = false,
             includeContext = shouldIncludeChartContext(),
             exportChartHeight = null,
             sourceChartInstance = currentEchartsInstance,
-            sourceChartElement = document.getElementById('mainChart')
+            sourceChartElement = document.getElementById('mainChart'),
+            includeAgeCauses = true
         ) {
-            if (currentChartType === 'edades' && chartConfig.ageDetailMode === 'causes' && typeof html2canvas !== 'undefined') {
-                const element = document.getElementById('mainChart')?.closest('.statistics-chart-panel');
-                if (!element) return null;
+            if (includeAgeCauses && currentChartType === 'edades' && chartConfig.ageDetailMode === 'causes' && typeof html2canvas !== 'undefined') {
+                try {
+                    const element = document.getElementById('mainChart')?.closest('.statistics-chart-panel');
+                    if (!element) throw new Error('No se encontró el panel de la gráfica.');
 
                 const exportChartDataUrl = sourceChartInstance !== currentEchartsInstance
                     ? getChartDataUrl(transparent, sourceChartInstance)
@@ -3678,7 +3846,28 @@
                     capturedCanvas.width,
                     croppedHeight
                 );
-                return croppedCanvas;
+                    return croppedCanvas;
+                } catch (error) {
+                    // Edge puede fallar al rasterizar el panel completo. En ese caso se
+                    // capturan ambas partes por separado y se unen, sin omitir la tabla.
+                    console.warn('No se pudo capturar el panel completo; se compondrá la descarga por secciones.', error);
+                    const chartCanvas = await captureChartAsCanvas(
+                        transparent,
+                        includeContext,
+                        exportChartHeight,
+                        sourceChartInstance,
+                        sourceChartElement,
+                        false
+                    );
+                    const tableCanvas = await captureAgeCausesTableAsCanvas(
+                        false,
+                        document.getElementById('causasPrincipalesContainer')?.getBoundingClientRect().width || null
+                    );
+                    if (!chartCanvas || !tableCanvas) {
+                        throw new Error('No se pudo incluir la tabla de causas en la descarga.', { cause: error });
+                    }
+                    return composeChartAndAgeCausesCanvases(chartCanvas, tableCanvas, transparent);
+                }
             }
 
             const dataUrl = getChartDataUrl(transparent, sourceChartInstance);
@@ -3919,7 +4108,7 @@
             return `estadisticas-edades-causas-${new Date().toISOString().split('T')[0]}.${extension}`;
         }
 
-        async function captureAgeCausesTableAsCanvas(forPdf = false) {
+        async function captureAgeCausesTableAsCanvas(forPdf = false, requestedWidth = null) {
             const section = document.getElementById('causasPrincipalesContainer');
             if (!section || section.classList.contains('hidden') || typeof html2canvas === 'undefined') return null;
 
@@ -3928,7 +4117,7 @@
             }
 
             const sectionRect = section.getBoundingClientRect();
-            const compactExportWidth = Math.min(sectionRect.width, 850);
+            const compactExportWidth = Math.min(sectionRect.width, Number(requestedWidth || 850));
             return html2canvas(section, {
                 scale: 2,
                 useCORS: true,
@@ -4108,7 +4297,7 @@
 
             // Todas las métricas usan como referencia la vista lateral más alta.
             // Así el lienzo de Edades o Tendencias conserva la presencia visual de
-            // Municipios y no cambia de tamaño al alternar entre Vista y Filtros.
+            // Municipios y no cambia de tamaño al alternar entre Gráfica y Filtros.
             layout.style.removeProperty('--statistics-municipality-balanced-height');
             configuration.style.visibility = 'hidden';
             const measureView = view => {
@@ -4212,7 +4401,7 @@
             }
             if (resetAction) {
                 const shouldHide = normalizedView !== 'presentation';
-                setStatisticsResetActionContent(resetAction, 'Restablecer', 'Restablecer configuración de la vista');
+                setStatisticsResetActionContent(resetAction, 'Restablecer', 'Restablecer configuración de la gráfica');
                 resetAction.hidden = shouldHide;
                 resetAction.classList.toggle('hidden', shouldHide);
             }
@@ -4286,7 +4475,7 @@
                     configurationTabs.setAttribute('aria-label', 'Secciones de configuración');
                     configurationTabs.innerHTML = `
                         <button type="button" role="tab" data-municipality-config-tab="presentation" aria-controls="municipalitySidebarPresentation">
-                            <span>Vista</span>
+                            <span>Gráfica</span>
                         </button>
                         <button type="button" role="tab" data-municipality-config-tab="filters" aria-controls="municipalitySidebarFilters">
                             <span>Filtros</span>
@@ -4354,7 +4543,7 @@
                 setMunicipalityFilterSectionsFlat(true);
                 const filtersHeader = filtersPanel?.querySelector(':scope > .users-filter-panel-header');
                 if (presentationReset && filtersHeader) {
-                    setStatisticsResetActionContent(presentationReset, 'Restablecer', 'Restablecer configuración de la vista');
+                    setStatisticsResetActionContent(presentationReset, 'Restablecer', 'Restablecer configuración de la gráfica');
                     presentationReset.classList.add('statistics-municipality-header-reset');
                     filtersHeader.append(presentationReset);
                 }
@@ -4395,7 +4584,7 @@
                     if (group) presentationGroups.append(group);
                 });
                 if (presentationReset && presentationActions) {
-                    setStatisticsResetActionContent(presentationReset, 'Restablecer', 'Restablecer configuración de la vista');
+                    setStatisticsResetActionContent(presentationReset, 'Restablecer', 'Restablecer configuración de la gráfica');
                     presentationReset.hidden = false;
                     presentationReset.classList.remove('hidden', 'statistics-municipality-header-reset');
                     presentationActions.prepend(presentationReset);
@@ -4467,8 +4656,16 @@
         }
 
         function updateVisibleFilters(chartType) {
-            const allFilters = ['filterTipoMunicipio', 'filterMunicipios', 'filterCausas', 'filterdistritoes', 'filterMunicipalityLocations', 'filterSexo', 'filterEdad', 'filterGranularidad'];
+            const allFilters = ['filterTipoMunicipio', 'filterMunicipios', 'filterCausas', 'filterdistritoes', 'filterMunicipalityLocations', 'filterDeathLocations', 'filterSexo', 'filterEdad', 'filterGranularidad'];
             const availableFilters = getFiltersForChart(chartType);
+            const chartPanel = document.getElementById('statisticsChartPanel');
+
+            if (chartPanel?.dataset.geographicScopeHeight
+                && chartPanel.dataset.geographicScopeMetric !== chartType) {
+                chartPanel.style.removeProperty('min-height');
+                delete chartPanel.dataset.geographicScopeHeight;
+                delete chartPanel.dataset.geographicScopeMetric;
+            }
 
             const isComparison = chartType === 'comparativa';
             const isGeographicAnalysis = ['municipios', 'distritoes'].includes(chartType);
@@ -4476,8 +4673,8 @@
             const geographicScopeLabel = document.getElementById('statisticsGeographicScopeLabel');
             if (geographicScopeLabel) {
                 geographicScopeLabel.textContent = chartType === 'distritoes'
-                    ? 'Distrito de'
-                    : 'Municipio de';
+                    ? 'Mostrar distritos de'
+                    : 'Mostrar municipios de';
             }
             document.getElementById('statisticsGeographicScopeControl')
                 ?.classList.toggle('hidden', !isGeographicAnalysis);
@@ -4502,12 +4699,37 @@
                     if (filterId === 'filterCausas' && availableFilters.includes('causas')) show = true;
                     if (filterId === 'filterdistritoes' && availableFilters.includes('distritoes') && chartType !== 'municipios') show = true;
                     if (filterId === 'filterMunicipalityLocations' && chartType === 'municipios') show = true;
+                    if (filterId === 'filterDeathLocations') {
+                        show = (chartType === 'municipios'
+                                && (document.getElementById('tipoMunicipioFilter')?.value || activeFilters.tipoMunicipio) === 'defuncion')
+                            || (availableFilters.includes('deathLocations')
+                                && (document.getElementById('tipoMunicipioFilter')?.value || activeFilters.tipoMunicipio) === 'defuncion');
+                    }
                     if (filterId === 'filterSexo' && availableFilters.includes('sexo')) show = true;
                     if (filterId === 'filterEdad' && availableFilters.includes('edad')) show = true;
                     if (filterId === 'filterGranularidad' && availableFilters.includes('granularidad') && !isTrendAnalysis) show = true;
                     element.style.display = show ? 'block' : 'none';
                 }
             });
+
+            updateMunicipalityLocationScopeFields(
+                chartType,
+                document.getElementById('tipoMunicipioFilter')?.value || activeFilters.tipoMunicipio
+            );
+
+            const demographicFields = document.querySelector(
+                '#statisticsDemographicFilterGroup .statistics-demographic-fields'
+            );
+            if (demographicFields) {
+                const visibleDemographicControls = Array.from(
+                    demographicFields.querySelectorAll(':scope > .dynamic-filter')
+                ).filter(control => control.style.display !== 'none');
+
+                demographicFields.classList.toggle(
+                    'has-single-filter',
+                    visibleDemographicControls.length === 1
+                );
+            }
 
             document.querySelectorAll('[data-statistics-filter-group]').forEach(group => {
                 const hasVisibleControl = Array.from(group.querySelectorAll('.dynamic-filter'))
@@ -5542,12 +5764,8 @@
             activeFilters.municipiosNames = Array.from(document.getElementById('municipiosFilter').selectedOptions || []).map(o => o.text);
             activeFilters.causas = Array.from(document.getElementById('causasFilter').selectedOptions || []).map(o => o.value);
             activeFilters.causasNames = Array.from(document.getElementById('causasFilter').selectedOptions || []).map(o => o.text);
-            activeFilters.distritoes = Array.from(document.getElementById('distritoesFilter').selectedOptions || []).map(o => o.value);
-            activeFilters.distritoesNames = Array.from(document.getElementById('distritoesFilter').selectedOptions || []).map(o => o.text);
-            activeFilters.residenceDistricts = Array.from(document.getElementById('residenceDistrictsFilter')?.selectedOptions || []).map(o => o.value);
-            activeFilters.residenceDistrictNames = Array.from(document.getElementById('residenceDistrictsFilter')?.selectedOptions || []).map(o => o.text);
-            activeFilters.deathDistricts = Array.from(document.getElementById('deathDistrictsFilter')?.selectedOptions || []).map(o => o.value);
-            activeFilters.deathDistrictNames = Array.from(document.getElementById('deathDistrictsFilter')?.selectedOptions || []).map(o => o.text);
+            syncDistrictFiltersForCurrentMetric();
+            syncActiveDistrictFiltersFromControls();
             activeFilters.deathLocations = Array.from(document.getElementById('deathLocationsFilter')?.selectedOptions || []).map(o => o.value);
             activeFilters.deathLocationNames = Array.from(document.getElementById('deathLocationsFilter')?.selectedOptions || []).map(o => o.text);
             activeFilters.sexo = document.getElementById('sexoFilter').value || null;
@@ -5653,7 +5871,9 @@
                 );
             }
 
-            if (metricSupportsFilter(currentChartType, 'distritoes') && activeFilters.distritoes.length > 0) {
+            if (currentChartType !== 'municipios'
+                && metricSupportsFilter(currentChartType, 'distritoes')
+                && activeFilters.distritoes.length > 0) {
                 addFilter(
                     'distritoes',
                     `${activeFilters.distritoes.length === 1 ? 'Distrito' : 'Distritos'} de ${activeFilters.tipoMunicipio === 'residencia' ? 'residencia' : 'defunción'}`,
@@ -5664,13 +5884,19 @@
                 );
             }
 
-            if (currentChartType === 'municipios' && activeFilters.residenceDistricts.length > 0) {
+            if (currentChartType === 'municipios'
+                && activeFilters.tipoMunicipio === 'residencia'
+                && activeFilters.residenceDistricts.length > 0) {
                 addFilter('residenceDistricts', 'Distrito de residencia', activeFilters.residenceDistrictNames.join(', '), 'Quitar filtro de distritos de residencia', activeFilters.residenceDistricts.length === 1 ? activeFilters.residenceDistrictNames[0] : `${activeFilters.residenceDistricts.length} seleccionados`, activeFilters.residenceDistrictNames);
             }
-            if (currentChartType === 'municipios' && activeFilters.deathDistricts.length > 0) {
+            if (currentChartType === 'municipios'
+                && activeFilters.tipoMunicipio === 'defuncion'
+                && activeFilters.deathDistricts.length > 0) {
                 addFilter('deathDistricts', 'Distrito de defunción', activeFilters.deathDistrictNames.join(', '), 'Quitar filtro de distritos de defunción', activeFilters.deathDistricts.length === 1 ? activeFilters.deathDistrictNames[0] : `${activeFilters.deathDistricts.length} seleccionados`, activeFilters.deathDistrictNames);
             }
-            if (currentChartType === 'municipios' && activeFilters.deathLocations.length > 0) {
+            if (((currentChartType === 'municipios' && activeFilters.tipoMunicipio === 'defuncion')
+                || (metricSupportsFilter(currentChartType, 'deathLocations') && activeFilters.tipoMunicipio === 'defuncion'))
+                && activeFilters.deathLocations.length > 0) {
                 addFilter('deathLocations', 'Lugar de defunción', activeFilters.deathLocationNames.join(', '), 'Quitar filtro de lugares de defunción', activeFilters.deathLocations.length === 1 ? activeFilters.deathLocationNames[0] : `${activeFilters.deathLocations.length} seleccionados`, activeFilters.deathLocationNames);
             }
 
@@ -6038,9 +6264,22 @@
                 ...(activeFilters.selectedYears.length && { years: activeFilters.selectedYears }),
                 ...(metricSupportsFilter(chartType, 'municipios') && activeFilters.municipios.length && { municipios: activeFilters.municipios }),
                 ...(metricSupportsFilter(chartType, 'causas') && activeFilters.causas.length && { causas: activeFilters.causas }),
-                ...(chartType === 'municipios' && activeFilters.residenceDistricts.length && { district_ids: activeFilters.residenceDistricts }),
-                ...(chartType === 'municipios' && activeFilters.deathDistricts.length && { death_district_ids: activeFilters.deathDistricts }),
-                ...(chartType === 'municipios' && activeFilters.deathLocations.length && { death_location_ids: activeFilters.deathLocations }),
+                ...(chartType === 'municipios'
+                    && activeFilters.tipoMunicipio === 'residencia'
+                    && activeFilters.residenceDistricts.length
+                    && { district_ids: activeFilters.residenceDistricts }),
+                ...(chartType === 'municipios'
+                    && activeFilters.tipoMunicipio === 'defuncion'
+                    && activeFilters.deathDistricts.length
+                    && { death_district_ids: activeFilters.deathDistricts }),
+                ...(chartType === 'municipios'
+                    && activeFilters.tipoMunicipio === 'defuncion'
+                    && activeFilters.deathLocations.length
+                    && { death_location_ids: activeFilters.deathLocations }),
+                ...(metricSupportsFilter(chartType, 'deathLocations')
+                    && activeFilters.tipoMunicipio === 'defuncion'
+                    && activeFilters.deathLocations.length
+                    && { death_location_ids: activeFilters.deathLocations }),
                 ...(chartType !== 'municipios' && metricSupportsFilter(chartType, 'distritoes') && activeFilters.distritoes.length && (
                     activeFilters.tipoMunicipio === 'residencia'
                         ? { district_ids: activeFilters.distritoes }
@@ -6323,14 +6562,21 @@
             }
             if (metricSupportsFilter(currentChartType, 'causas')) appendMany('cause_ids', activeFilters.causas);
             if (currentChartType === 'municipios') {
-                appendMany('district_ids', activeFilters.residenceDistricts);
-                appendMany('death_district_ids', activeFilters.deathDistricts);
-                appendMany('death_location_ids', activeFilters.deathLocations);
+                if (activeFilters.tipoMunicipio === 'residencia') {
+                    appendMany('district_ids', activeFilters.residenceDistricts);
+                } else {
+                    appendMany('death_district_ids', activeFilters.deathDistricts);
+                    appendMany('death_location_ids', activeFilters.deathLocations);
+                }
             } else if (metricSupportsFilter(currentChartType, 'distritoes')) {
                 appendMany(
                     activeFilters.tipoMunicipio === 'residencia' ? 'district_ids' : 'death_district_ids',
                     activeFilters.distritoes
                 );
+            }
+            if (metricSupportsFilter(currentChartType, 'deathLocations')
+                && activeFilters.tipoMunicipio === 'defuncion') {
+                appendMany('death_location_ids', activeFilters.deathLocations);
             }
             if (metricSupportsFilter(currentChartType, 'sexo') && activeFilters.sexo) params.set('sex', activeFilters.sexo);
             if (metricSupportsFilter(currentChartType, 'edad') && activeFilters.edad) {
@@ -8088,7 +8334,7 @@
                             },
                             textStyle: { fontFamily: chartFontFamily, fontSize: axisFontSize }
                         },
-                        grid: { left: 22, right: 26, top: 18, bottom: 68, containLabel: true },
+                        grid: { left: 22, right: 26, top: 18, bottom: 82, containLabel: true },
                         xAxis: {
                             type: 'category',
                             name: data.x_axis_label || '',
@@ -8126,8 +8372,8 @@
                             orient: 'horizontal',
                             left: 'center',
                             bottom: 2,
-                            itemWidth: 150,
-                            itemHeight: 10,
+                            itemWidth: 10,
+                            itemHeight: 150,
                             text: [formatNumber(maximumCellValue), '0'],
                             textStyle: { fontFamily: chartFontFamily, fontSize: 11, color: '#526278' },
                             inRange: { color: ['#eef1f5', palette[palette.length - 1], palette[Math.min(1, palette.length - 1)], palette[0]] }
@@ -8285,11 +8531,14 @@
                 // Edades y Sexo tienen pocas categorías: usar la misma composición
                 // estable de Municipios evita llamadas externas y mantiene alineadas
                 // las métricas en una leyenda lateral para pastel y dona.
-                const usesMunicipalityCircularComposition = ['edades', 'genero'].includes(currentChartType);
+                // Distritos conserva tambien esta composicion cuando muestra su catalogo completo.
+                const usesMunicipalityCircularComposition = ['edades', 'genero', 'distritoes'].includes(currentChartType);
                 // Las leyendas largas necesitan espacio propio junto al circulo y la tarjeta.
                 // En anchos intermedios, poner la leyenda debajo evita solapamientos.
-                const compactCircularLayout = circularWidth < 880
-                    || (circularLegendNeedsMoreRoom && circularWidth < 1140);
+                const compactCircularLayout = ['causas', 'lugares'].includes(currentChartType)
+                    ? circularWidth < 980
+                    : circularWidth < 880
+                        || (circularLegendNeedsMoreRoom && circularWidth < 1140);
                 const circularLegendShowsMetrics = chartConfig.dataLabelMode !== 'none';
                 const useCircularCallouts = circularLegendShowsMetrics
                     && circularSegmentCount <= 6
@@ -8586,10 +8835,14 @@
                 };
             } else if (chartType === 'line') {
                 // Línea o Área para tendencias
-                const monthlyTrendLabelPattern = /^(Ene|Feb|Mar|Abr|May|Jun|Jul|Ago|Sep|Oct|Nov|Dic)\s+(\d{4})$/iu;
+                const monthlyTrendLabelPattern = /^(Ene|Feb|Mar|Abr|May|Jun|Jul|Ago|Sep|Oct|Nov|Dic)(?:\s+(\d{4}))?$/iu;
                 const monthlyTrendLabels = labels.map(label => String(label).trim().match(monthlyTrendLabelPattern));
+                const monthlyTrendYears = monthlyTrendLabels
+                    .filter(Boolean)
+                    .map(match => match[2])
+                    .filter(Boolean);
                 const usesSingleYearMonthlyLabels = monthlyTrendLabels.every(Boolean)
-                    && new Set(monthlyTrendLabels.map(match => match[2])).size === 1;
+                    && new Set(monthlyTrendYears).size <= 1;
                 const seriesConfig = {
                     name: chartTitles[currentChartType],
                     type: 'line',
@@ -9011,14 +9264,20 @@
                 const sortedCauses = Object.entries(item.top_causes || {})
                     .map(([cause, count]) => ({ cause, count: Number(count || 0) }))
                     .sort((a, b) => b.count - a.count);
+                const causeSlots = Array.from({ length: 3 }, (_, index) => sortedCauses[index] || null);
                 const causes = sortedCauses.length
-                    ? `<ol class="statistics-causes__ranking">${sortedCauses.map((entry, index) => `
-                        <li data-rank="${index + 1}.ª causa">
-                            <span class="sr-only">Posición ${index + 1}: </span>
-                            <span class="statistics-causes__name">${escapeHtml(entry.cause)}</span>
-                            <strong class="statistics-causes__value">${formatCauseValueText(entry.count, item.total)}</strong>
-                        </li>
-                    `).join('')}</ol>`
+                    ? `<ol class="statistics-causes__ranking">${causeSlots.map((entry, index) => entry ? `
+                            <li data-rank="${index + 1}.ª causa">
+                                <span class="sr-only">Posición ${index + 1}: </span>
+                                <span class="statistics-causes__name">${escapeHtml(entry.cause)}</span>
+                                <strong class="statistics-causes__value">${formatCauseValueText(entry.count, item.total)}</strong>
+                            </li>
+                        ` : `
+                            <li class="statistics-causes__missing" data-rank="${index + 1}.ª causa">
+                                <span class="sr-only">Posición ${index + 1}: </span>
+                                <span class="statistics-causes__empty-slot">— Sin otra causa registrada</span>
+                            </li>
+                        `).join('')}</ol>`
                     : '<p class="statistics-causes__empty">No hay causas registradas para este grupo.</p>';
 
                 return `

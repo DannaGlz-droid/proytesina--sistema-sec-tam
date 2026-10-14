@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs';
 import path from 'node:path';
 
 const PERIOD = {
-    start_date: '2024-12-30',
+    start_date: '2025-01-01',
     end_date: '2025-12-29',
     years: [],
     months: [],

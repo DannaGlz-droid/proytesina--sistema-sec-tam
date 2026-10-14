@@ -7,9 +7,9 @@ test.beforeEach(async ({ page }) => {
 });
 
 test('todas las metricas comparten la configuracion lateral de Municipios', async ({ page }) => {
-    await page.getByRole('tab', { name: 'Vista' }).click();
+    await page.getByRole('tab', { name: 'Gráfica' }).click();
 
-    await expect(page.locator('#statisticsGeographicScopeLabel')).toHaveText('Municipio de');
+    await expect(page.locator('#statisticsGeographicScopeLabel')).toHaveText('Mostrar municipios de');
     await expect(page.locator('#statisticsDataLabelLegend')).toHaveText('Mostrar en etiquetas');
     await expect(page.locator('#statisticsPaletteLegend')).toHaveText('Colores');
     await expect(page.locator('#dataLabelButtons [data-value="none"]')).toHaveText('Sin etiquetas');
@@ -55,7 +55,7 @@ test('todas las metricas comparten la configuracion lateral de Municipios', asyn
 test('Tendencias conserva una altura natural sin espacio vacio bajo el pie', async ({ page }) => {
     await page.setViewportSize({ width: 1536, height: 900 });
     await page.getByRole('tab', { name: 'Tendencias', exact: true }).click();
-    await page.getByRole('tab', { name: 'Vista', exact: true }).click();
+    await page.getByRole('tab', { name: 'Gráfica', exact: true }).click();
 
     const verticalGap = await page.evaluate(() => {
         const panel = document.getElementById('statisticsChartPanel')?.getBoundingClientRect();
@@ -70,7 +70,7 @@ test('Tendencias conserva una altura natural sin espacio vacio bajo el pie', asy
 
 test('las metricas conservan un lienzo base consistente', async ({ page }) => {
     await page.setViewportSize({ width: 1920, height: 1080 });
-    await page.getByRole('tab', { name: 'Vista', exact: true }).click();
+    await page.getByRole('tab', { name: 'Gráfica', exact: true }).click();
 
     const canvasHeight = async () => Math.round(
         (await page.locator('.statistics-chart-canvas').boundingBox()).height
@@ -95,11 +95,11 @@ test('las metricas conservan un lienzo base consistente', async ({ page }) => {
     expect(Math.max(...Object.values(heights)) - Math.min(...Object.values(heights))).toBeLessThanOrEqual(1);
 });
 
-test('Municipios y Distritos cambian su ámbito desde Vista', async ({ page }) => {
+test('Municipios y Distritos cambian su ámbito desde Gráfica', async ({ page }) => {
     const scopeControl = page.locator('#statisticsGeographicScopeControl');
     const scopeSelector = page.locator('#geographicScopeSelector');
 
-    await page.getByRole('tab', { name: 'Vista' }).click();
+    await page.getByRole('tab', { name: 'Gráfica' }).click();
     await expect(page.locator('#chartTotalBadge')).toContainText('798 defunciones');
     await expect(scopeControl).toBeVisible();
     await expect(page.locator('#statisticsCopyLink')).toBeHidden();
@@ -127,7 +127,7 @@ test('Municipios y Distritos cambian su ámbito desde Vista', async ({ page }) =
 
     await page.getByRole('tab', { name: 'Distritos' }).click();
     await expect(scopeControl).toBeVisible();
-    await expect(page.locator('#statisticsGeographicScopeLabel')).toHaveText('Distrito de');
+    await expect(page.locator('#statisticsGeographicScopeLabel')).toHaveText('Mostrar distritos de');
     await expect(page.locator('#chartTitle')).toHaveText('Distribución por distritos de residencia');
     await expect(scopeSelector).toHaveValue('residencia');
     await expect(page.locator('#filterTipoMunicipio')).toHaveCSS('display', 'none');
@@ -193,7 +193,65 @@ test('Ver datos conserva los filtros al construir Volver a gráficas', async ({ 
     expect(returnUrl.searchParams.getAll('death_location')).toEqual(['1']);
 });
 
-test('los controles de Vista conservan los filtros de Datos compatibles', async ({ page }) => {
+test('los distritos se conservan entre Municipios y las demas metricas segun el ambito', async ({ page }) => {
+    const setMultiSelect = async (selector, values) => {
+        await page.locator(selector).evaluate((select, selectedValues) => {
+            if (select.tomselect) {
+                select.tomselect.setValue(selectedValues);
+                return;
+            }
+            Array.from(select.options).forEach(option => {
+                option.selected = selectedValues.includes(option.value);
+            });
+            select.dispatchEvent(new Event('change', { bubbles: true }));
+        }, values);
+    };
+
+    await page.getByRole('tab', { name: 'Filtros', exact: true }).click();
+    await setMultiSelect('#deathDistrictsFilter', ['2']);
+
+    const municipalityRequest = page.waitForRequest(request => {
+        const url = new URL(request.url());
+        return url.pathname.endsWith('/api/chart/municipios')
+            && url.searchParams.getAll('death_district_ids[]').includes('2');
+    });
+    await page.locator('#statisticsFiltersApply').click();
+    await municipalityRequest;
+
+    const trendRequest = page.waitForRequest(request => {
+        const url = new URL(request.url());
+        return url.pathname.endsWith('/api/chart/tendencias')
+            && url.searchParams.getAll('death_district_ids[]').includes('2');
+    });
+    await page.getByRole('tab', { name: 'Tendencias', exact: true }).click();
+    await trendRequest;
+    await page.getByRole('tab', { name: 'Filtros', exact: true }).click();
+    await expect(page.locator('#distritoesFilter')).toHaveValues(['2']);
+
+    await page.locator('#tipoMunicipioFilter').selectOption('residencia');
+    await setMultiSelect('#distritoesFilter', ['1']);
+    const residenceTrendRequest = page.waitForRequest(request => {
+        const url = new URL(request.url());
+        return url.pathname.endsWith('/api/chart/tendencias')
+            && url.searchParams.getAll('district_ids[]').includes('1');
+    });
+    await page.locator('#statisticsFiltersApply').click();
+    await residenceTrendRequest;
+
+    const residenceMunicipalityRequest = page.waitForRequest(request => {
+        const url = new URL(request.url());
+        return url.pathname.endsWith('/api/chart/municipios')
+            && url.searchParams.getAll('district_ids[]').includes('1')
+            && url.searchParams.getAll('death_district_ids[]').length === 0;
+    });
+    await page.getByRole('tab', { name: 'Municipios', exact: true }).click();
+    await residenceMunicipalityRequest;
+    await page.getByRole('tab', { name: 'Filtros', exact: true }).click();
+    await expect(page.locator('#residenceDistrictsFilter')).toHaveValues(['1']);
+    await expect(page.locator('#deathDistrictsFilter')).toHaveValues(['2']);
+});
+
+test('los controles de Gráfica conservan los filtros de Datos compatibles', async ({ page }) => {
     const sexSelect = page.locator('#sexoFilter');
     const ageInput = page.locator('#edadFilter');
     const age = '20-30';
@@ -217,7 +275,7 @@ test('los controles de Vista conservan los filtros de Datos compatibles', async 
     await page.locator('#statisticsFiltersApply').click();
     await appliedRequest;
 
-    await page.getByRole('tab', { name: 'Vista' }).click();
+    await page.getByRole('tab', { name: 'Gráfica' }).click();
     const residenceRequest = page.waitForRequest(request => {
         const url = new URL(request.url());
         return url.pathname.endsWith('/api/chart/municipios')
@@ -267,7 +325,7 @@ test('los controles de Vista conservan los filtros de Datos compatibles', async 
 });
 
 test('Municipios de residencia cambia de cantidades a tasas por población', async ({ page }) => {
-    await page.getByRole('tab', { name: 'Vista' }).click();
+    await page.getByRole('tab', { name: 'Gráfica' }).click();
     await expect(page.locator('#statisticsMeasureGroup')).toBeVisible();
 
     const residenceRequest = page.waitForRequest(request => {
@@ -295,7 +353,7 @@ test('Municipios de residencia cambia de cantidades a tasas por población', asy
 
     const filterConfigurationHeight = Math.round((await page.locator('#estadisticas-filtros').boundingBox()).height);
     const filterChartHeight = Math.round((await page.locator('#statisticsChartPanel').boundingBox()).height);
-    await page.getByRole('tab', { name: 'Vista' }).click();
+    await page.getByRole('tab', { name: 'Gráfica' }).click();
     await expect.poll(async () => Math.round(
         (await page.locator('#estadisticas-filtros').boundingBox()).height
     )).toBeLessThan(filterConfigurationHeight - 40);
@@ -379,7 +437,7 @@ test('Municipios de residencia cambia de cantidades a tasas por población', asy
             && Number(extent?.[1] || 0) > value;
     })).toBe(true);
 
-    await page.getByRole('tab', { name: 'Vista' }).click();
+    await page.getByRole('tab', { name: 'Gráfica' }).click();
     await page.locator('#municipalityChartTypeButtons').getByRole('button', { name: 'Barras' }).click();
     await expect.poll(async () => page.evaluate(() => {
         const chart = window.echarts.getInstanceByDom(document.getElementById('mainChart'));
@@ -406,12 +464,12 @@ test('Municipios de residencia cambia de cantidades a tasas por población', asy
     await expect(page.locator('#filtrosActivos')).toContainText('Sin filtros adicionales');
     await expect(page.locator('#chartTitle')).toHaveText('Distribución por municipios de residencia');
     await expect.poll(async () => (await chartState(page)).labels.length).toBeGreaterThan(1);
-    await page.getByRole('tab', { name: 'Vista' }).click();
+    await page.getByRole('tab', { name: 'Gráfica' }).click();
     await expect(page.locator('#statisticsGeographicScopeControl').getByRole('radio', { name: 'Residencia' })).toBeChecked();
     await expect(page.locator('#statisticsMeasureButtons').getByRole('button', { name: 'Cantidad' })).toHaveAttribute('aria-pressed', 'true');
 });
 
-test('Restablecer Vista vuelve a defunción y conserva los filtros aplicados', async ({ page }) => {
+test('Restablecer Gráfica vuelve a defunción y conserva los filtros aplicados', async ({ page }) => {
     await page.getByRole('tab', { name: 'Filtros', exact: true }).click();
     await page.locator('#dateRange').selectOption('years');
     await page.locator('#year').fill('2025');
@@ -423,7 +481,7 @@ test('Restablecer Vista vuelve a defunción y conserva los filtros aplicados', a
     await page.locator('#statisticsFiltersApply').click();
     await yearRequest;
 
-    await page.getByRole('tab', { name: 'Vista' }).click();
+    await page.getByRole('tab', { name: 'Gráfica' }).click();
     const residenceRequest = page.waitForRequest(request => {
         const url = new URL(request.url());
         return url.pathname.endsWith('/api/chart/municipios')
@@ -529,7 +587,154 @@ test('Municipios compacta Sexo y Edad con foco neutral', async ({ page }) => {
     expect(tooltipBox.x).toBeGreaterThanOrEqual(panelBox.x);
 });
 
-test('Municipios distingue Limpiar filtros de Restablecer vista', async ({ page }) => {
+test('Sexo abre hacia arriba cuando el pie del panel ocultaria opciones', async ({ page }) => {
+    await page.setViewportSize({ width: 1920, height: 1080 });
+    await page.getByRole('tab', { name: 'Causas', exact: true }).click();
+    await page.getByRole('tab', { name: 'Filtros', exact: true }).click();
+
+    // El entorno visual puede bloquear el CDN de Tom Select. Montar una
+    // implementaciÃ³n mÃ­nima permite probar el posicionamiento sin red.
+    await page.evaluate(() => {
+        if (document.querySelector('#filterSexo .ts-wrapper')) return;
+
+        class TestTomSelect {
+            constructor(select, config) {
+                this.input = select;
+                this.settings = config;
+                this.items = [];
+                this.isOpen = false;
+                this.handlers = {};
+                this.wrapper = document.createElement('div');
+                this.wrapper.className = 'ts-wrapper single';
+                this.control = document.createElement('div');
+                this.control.className = 'ts-control';
+                this.control.tabIndex = 0;
+                this.control_input = document.createElement('input');
+                this.dropdown = document.createElement('div');
+                this.dropdown.className = 'ts-dropdown';
+                this.dropdown.style.position = 'absolute';
+                this.dropdown.style.display = 'none';
+                const dropdownContent = document.createElement('div');
+                dropdownContent.className = 'ts-dropdown-content';
+
+                Array.from(select.options).forEach(option => {
+                    const item = document.createElement('div');
+                    item.className = 'option';
+                    item.textContent = option.textContent;
+                    dropdownContent.append(item);
+                });
+
+                this.control.append(this.control_input);
+                this.dropdown.append(dropdownContent);
+                this.wrapper.append(this.control, this.dropdown);
+                select.after(this.wrapper);
+                select.hidden = true;
+                select.tomselect = this;
+                this.control.addEventListener('click', () => (
+                    this.isOpen ? this.close() : this.open()
+                ));
+                config.onInitialize?.call(this);
+            }
+
+            on(name, callback) {
+                (this.handlers[name] ||= []).push(callback);
+            }
+
+            open() {
+                this.isOpen = true;
+                this.wrapper.classList.add('dropdown-active');
+                this.dropdown.style.display = 'block';
+                this.settings.onDropdownOpen?.call(this);
+                (this.handlers.dropdown_open || []).forEach(callback => callback());
+            }
+
+            close() {
+                this.isOpen = false;
+                this.wrapper.classList.remove('dropdown-active');
+                this.dropdown.style.display = 'none';
+                this.settings.onDropdownClose?.call(this);
+                (this.handlers.dropdown_close || []).forEach(callback => callback());
+            }
+        }
+
+        window.TomSelect = TestTomSelect;
+        window.AppFilterSelect.init(document.getElementById('dateRange'), {
+            searchable: false,
+        });
+        window.AppFilterSelect.init(document.getElementById('sexoFilter'), {
+            searchable: false,
+            allowEmptyOption: true,
+            placeholder: 'Todos',
+        });
+    });
+
+    const periodWrapper = page.locator('.statistics-date-filter .ts-wrapper').first();
+    const periodControl = periodWrapper.locator('.ts-control');
+    const periodDropdown = periodWrapper.locator('.ts-dropdown');
+
+    await periodControl.click();
+    await expect(periodWrapper).not.toHaveClass(/app-filter-select--auto-drop-up/);
+    const [periodControlBox, periodDropdownBox] = await Promise.all([
+        periodControl.boundingBox(),
+        periodDropdown.boundingBox(),
+    ]);
+    expect(periodDropdownBox.y).toBeGreaterThanOrEqual(
+        periodControlBox.y + periodControlBox.height,
+    );
+    await periodControl.click();
+
+    const wrapper = page.locator('#filterSexo .ts-wrapper');
+    const control = wrapper.locator('.ts-control');
+    const dropdown = wrapper.locator('.ts-dropdown');
+    const masculineOption = dropdown.locator('.option').filter({ hasText: 'Masculino' });
+
+    await control.click();
+    await expect(wrapper).toHaveClass(/app-filter-select--auto-drop-up/);
+    await expect(masculineOption).toBeVisible();
+
+    const [controlBox, dropdownBox] = await Promise.all([
+        control.boundingBox(),
+        dropdown.boundingBox(),
+    ]);
+
+    expect(dropdownBox.y + dropdownBox.height).toBeLessThanOrEqual(controlBox.y - 4);
+});
+
+test('Edades y Sexo aprovechan el ancho completo del filtro demografico disponible', async ({ page }) => {
+    await page.setViewportSize({ width: 1920, height: 1080 });
+
+    await page.getByRole('tab', { name: 'Edades', exact: true }).click();
+    await page.getByRole('tab', { name: 'Filtros', exact: true }).click();
+
+    const demographicFields = page.locator(
+        '#statisticsDemographicFilterGroup .statistics-demographic-fields'
+    );
+    await expect(demographicFields).toHaveClass(/has-single-filter/);
+    await expect(page.locator('#filterSexo')).toBeVisible();
+    await expect(page.locator('#filterEdad')).toBeHidden();
+
+    const [demographicBox, sexBox] = await Promise.all([
+        demographicFields.boundingBox(),
+        page.locator('#filterSexo').boundingBox(),
+    ]);
+    expect(Math.abs(demographicBox.width - sexBox.width)).toBeLessThanOrEqual(1);
+
+    await page.getByRole('tab', { name: 'Sexo', exact: true }).click();
+    await expect(demographicFields).toHaveClass(/has-single-filter/);
+    await expect(page.locator('#filterSexo')).toBeHidden();
+    await expect(page.locator('#filterEdad')).toBeVisible();
+
+    const [ageFilterBox, ageInputBox, ageUnitBox] = await Promise.all([
+        page.locator('#filterEdad').boundingBox(),
+        page.locator('#edadFilter').boundingBox(),
+        page.locator('#edadUnidadFilter').boundingBox(),
+    ]);
+    expect(Math.abs(demographicBox.width - ageFilterBox.width)).toBeLessThanOrEqual(1);
+    expect(ageInputBox.width).toBeGreaterThan(150);
+    expect(ageUnitBox.width).toBeGreaterThan(70);
+});
+
+test('Municipios distingue Limpiar filtros de Restablecer gráfica', async ({ page }) => {
     const filtersReset = page.locator('#limpiarFiltros');
     const viewReset = page.locator('#statisticsPresentationReset');
     const configurationTabs = page.locator('#municipalityConfigurationTabs');
@@ -547,12 +752,12 @@ test('Municipios distingue Limpiar filtros de Restablecer vista', async ({ page 
     });
 
     await expect(configurationTabs.locator('i')).toHaveCount(0);
-    await expect(configurationTabs.getByRole('tab').first()).toHaveText('Vista');
-    await expect(configurationTabs.getByRole('tab', { name: 'Vista' })).toHaveAttribute('aria-selected', 'true');
+    await expect(configurationTabs.getByRole('tab').first()).toHaveText('Gráfica');
+    await expect(configurationTabs.getByRole('tab', { name: 'Gráfica' })).toHaveAttribute('aria-selected', 'true');
     await expect(viewReset).toBeVisible();
     await expect(viewReset).toHaveText('Restablecer');
-    await expect(viewReset).toHaveAttribute('aria-label', 'Restablecer configuración de la vista');
-    await expect(viewReset).toHaveAttribute('title', 'Restablecer configuración de la vista');
+    await expect(viewReset).toHaveAttribute('aria-label', 'Restablecer configuración de la gráfica');
+    await expect(viewReset).toHaveAttribute('title', 'Restablecer configuración de la gráfica');
     await expect(viewReset.locator('i')).toHaveCount(0);
     await expect(viewReset).toBeEnabled();
 
@@ -591,7 +796,7 @@ test('Municipios equilibra graficas compactas sin comprimir barras extensas', as
     await page.getByRole('tab', { name: 'Filtros', exact: true }).click();
     const dataViewHeight = await chartHeight();
 
-    await page.getByRole('tab', { name: 'Vista' }).click();
+    await page.getByRole('tab', { name: 'Gráfica' }).click();
     await page.locator('#municipalityChartTypeButtons')
         .getByRole('button', { name: 'Dona' })
         .click();
@@ -615,7 +820,7 @@ test('Municipios equilibra graficas compactas sin comprimir barras extensas', as
     expect(chartBox.height).toBeGreaterThan(configurationBox.height);
 });
 
-test('Municipios conserva la misma altura entre Filtros y Vista para cada grafica', async ({ page }) => {
+test('Municipios conserva la misma altura entre Filtros y Gráfica para cada grafica', async ({ page }) => {
     await page.setViewportSize({ width: 1536, height: 900 });
 
     const chartPanel = page.locator('#statisticsChartPanel');
@@ -627,7 +832,7 @@ test('Municipios conserva la misma altura entre Filtros y Vista para cada grafic
         return chart?.getModel()?.getSeriesByIndex(0)?.getData()?.count?.() || 0;
     });
     const dataTab = page.getByRole('tab', { name: 'Filtros', exact: true });
-    const viewTab = page.getByRole('tab', { name: 'Vista' });
+    const viewTab = page.getByRole('tab', { name: 'Gráfica' });
 
     const cases = [
         { type: 'bar', limit: '5', expectedLabels: 5 },
@@ -772,7 +977,7 @@ test('la matriz de graficas conserva geometria y etiquetas consistentes', async 
     }
 
     await page.getByRole('tab', { name: 'Municipios', exact: true }).click();
-    await page.getByRole('tab', { name: 'Vista' }).click();
+    await page.getByRole('tab', { name: 'Gráfica' }).click();
     for (const type of ['bar', 'barHorizontal']) {
         await page.locator(`[data-target="chartTypeSelector"][data-value="${type}"]:visible`).first().click();
         for (const limit of ['5', '10', '15', 'all']) {
@@ -789,7 +994,7 @@ test('la matriz de graficas conserva geometria y etiquetas consistentes', async 
 
 test('las graficas circulares muestran un detalle compacto en la esquina del lienzo', async ({ page }) => {
     await page.setViewportSize({ width: 1536, height: 900 });
-    await page.getByRole('tab', { name: 'Vista' }).click();
+    await page.getByRole('tab', { name: 'Gráfica' }).click();
 
     const expectFixedPlacement = async () => {
         const drilldown = page.locator('#statisticsDrilldown');
@@ -846,7 +1051,7 @@ test('las graficas circulares muestran un detalle compacto en la esquina del lie
 
 test('Edades reutiliza la composicion circular de Municipios', async ({ page }) => {
     await page.setViewportSize({ width: 1536, height: 900 });
-    await page.getByRole('tab', { name: 'Vista', exact: true }).click();
+    await page.getByRole('tab', { name: 'Gráfica', exact: true }).click();
 
     const circularGeometry = async () => page.evaluate(() => {
         const chart = window.echarts.getInstanceByDom(document.getElementById('mainChart'));
@@ -1068,13 +1273,13 @@ test('los filtros aplicados permanecen junto a la gráfica sin saltos ni borrado
         updateActiveFiltersDisplay();
     });
 
-    await expect(strip).toHaveAttribute('data-filter-count', '7');
+    await expect(strip).toHaveAttribute('data-filter-count', '6');
     const visibleFilterChips = page.locator('#filtrosActivosList .statistics-filter-chip:visible');
     await expect.poll(() => visibleFilterChips.count()).toBeGreaterThan(0);
     const moreFiltersButton = page.locator('#statisticsActiveFiltersMore');
     await expect(moreFiltersButton).toBeVisible();
     const initialVisibleCount = await visibleFilterChips.count();
-    await expect(moreFiltersButton).toContainText(`Ver ${7 - initialVisibleCount} más`);
+    await expect(moreFiltersButton).toContainText(`Ver ${6 - initialVisibleCount} más`);
     await expect(page.locator('#filtrosActivosList .statistics-filter-chip:has([data-clear-filter="causas"])'))
         .not.toContainText('seleccionadas');
     await expect(page.locator('#filtrosActivosList .statistics-filter-chip:has([data-clear-filter="causas"])'))
@@ -1084,7 +1289,7 @@ test('los filtros aplicados permanecen junto a la gráfica sin saltos ni borrado
     await expect(page.locator('#filtrosActivosList .statistics-filter-chip:has([data-clear-filter="edad"])'))
         .toContainText('10, 20, 30, 40, 50, 60, 70, 90 años');
     await expect(page.locator('#filtrosActivosList .statistics-filter-chip[title]')).not.toHaveCount(0);
-    await expect(page.locator('#filtrosActivosList .statistics-filter-chip button i.fa-xmark')).toHaveCount(7);
+    await expect(page.locator('#filtrosActivosList .statistics-filter-chip button i.fa-xmark')).toHaveCount(6);
     await expect(page.locator('#filtrosActivosList .statistics-filter-chip').first())
         .toHaveCSS('background-color', 'rgb(248, 241, 244)');
     await expect(page.locator('#filtrosActivosList .statistics-filter-chip strong').first())
@@ -1100,7 +1305,7 @@ test('los filtros aplicados permanecen junto a la gráfica sin saltos ni borrado
         const visibleChips = page.locator('#filtrosActivosList .statistics-filter-chip:visible');
         await expect.poll(() => visibleChips.count()).toBeGreaterThan(0);
         const visibleCount = await visibleChips.count();
-        await expect(page.locator('#statisticsActiveFiltersMore')).toContainText(`Ver ${7 - visibleCount} más`);
+        await expect(page.locator('#statisticsActiveFiltersMore')).toContainText(`Ver ${6 - visibleCount} más`);
         const chipBoxes = await visibleChips.evaluateAll(chips => chips.map(chip => {
             const box = chip.getBoundingClientRect();
             return { top: box.top, bottom: box.bottom, right: box.right };
@@ -1116,7 +1321,7 @@ test('los filtros aplicados permanecen junto a la gráfica sin saltos ni borrado
     await expect(popover).toBeVisible();
     await expect(page.locator('#statisticsActiveFiltersMore')).toHaveAttribute('aria-expanded', 'true');
     expect(await page.locator('#statisticsActiveFiltersMore i').evaluate(icon => getComputedStyle(icon).transform)).not.toBe('none');
-    await expect(page.locator('#statisticsActiveFiltersAll .statistics-filter-chip')).toHaveCount(7);
+    await expect(page.locator('#statisticsActiveFiltersAll .statistics-filter-chip')).toHaveCount(6);
     await expect(page.locator('#statisticsActiveFiltersAll .statistics-filter-chip').first())
         .toHaveCSS('background-color', 'rgb(255, 255, 255)');
     await expect(page.locator('#statisticsActiveFiltersAll .statistics-filter-chip strong').first())
@@ -1231,7 +1436,7 @@ test('Fecha muestra contexto y mantiene compactos meses y trimestres', async ({ 
     await setDateMode('custom');
     await expect(page.locator('#customDateSelector')).toBeVisible();
     await expect(page.locator('#customStartDate')).toHaveAttribute('min', '2024-12-29');
-    await expect(page.locator('#customEndDate')).toHaveAttribute('min', '2024-12-30');
+        await expect(page.locator('#customEndDate')).toHaveAttribute('min', '2025-01-01');
     await expect(page.locator('#customStartDate')).toHaveAttribute('max', '2025-12-29');
     await expect(page.locator('#customEndDate')).toHaveAttribute('max', '2025-12-29');
     const acceptsFutureDate = await page.evaluate(() => {
@@ -1279,7 +1484,7 @@ test('Fecha informa cuando no puede comprobar la cobertura y permite reintentar'
             status: 200,
             contentType: 'application/json',
             body: JSON.stringify({
-                start_date: '2024-12-30',
+                start_date: '2025-01-01',
                 end_date: '2025-12-29',
                 data_start: '2024-12-29',
                 data_end: '2025-12-29',
@@ -1295,7 +1500,7 @@ test('Fecha informa cuando no puede comprobar la cobertura y permite reintentar'
 
     await page.locator('#statisticsDateCoverageRetry').click();
     await expect(notice).toBeHidden();
-    await expect(page.locator('#customStartDate')).toHaveValue('2024-12-30');
+    await expect(page.locator('#customStartDate')).toHaveValue('2025-01-01');
     await expect(page.locator('#customEndDate')).toHaveValue('2025-12-29');
 });
 
@@ -1311,12 +1516,12 @@ test('Municipios muestra los filtros de ubicación de forma clara y compacta', a
 
     const residenceEditor = page.locator('#residenceDistrictEditor');
     const deathEditor = page.locator('#deathDistrictEditor');
-    await expect(residenceEditor).toBeVisible();
+    const deathLocation = page.locator('#filterDeathLocations');
+    await expect(residenceEditor).toBeHidden();
     await expect(deathEditor).toBeVisible();
+    await expect(deathLocation).toBeVisible();
 
-    const residenceBox = await residenceEditor.boundingBox();
     const deathBox = await deathEditor.boundingBox();
-    expect(residenceBox.width).toBeGreaterThan(250);
     expect(deathBox.width).toBeGreaterThan(250);
 
     const compactMultiselects = [
@@ -1335,7 +1540,12 @@ test('Municipios muestra los filtros de ubicación de forma clara y compacta', a
         if (usesTomSelect) {
             await select.evaluate((element, values) => element.tomselect.setValue(values), firstTwoValues);
         } else {
-            await select.selectOption(firstTwoValues);
+            await select.evaluate((element, values) => {
+                Array.from(element.options).forEach(option => {
+                    option.selected = values.includes(option.value);
+                });
+                element.dispatchEvent(new Event('change', { bubbles: true }));
+            }, firstTwoValues);
         }
         await expect(select).toHaveValues(firstTwoValues);
         if (id === 'causasFilter') {
@@ -1344,24 +1554,56 @@ test('Municipios muestra los filtros de ubicación de forma clara y compacta', a
         if (usesTomSelect) {
             await select.evaluate(element => element.tomselect.clear());
         } else {
-            await select.selectOption([]);
+            await select.evaluate(element => {
+                Array.from(element.options).forEach(option => {
+                    option.selected = false;
+                });
+                element.dispatchEvent(new Event('change', { bubbles: true }));
+            });
         }
     }
 
     const selected = { residence: '2', death: '2', location: '2' };
-    await page.locator('#residenceDistrictsFilter').selectOption([selected.residence]);
+    await page.locator('#residenceDistrictsFilter').evaluate((element, value) => {
+        if (element.tomselect) element.tomselect.setValue([value]);
+        else {
+            Array.from(element.options).forEach(option => {
+                option.selected = option.value === value;
+            });
+            element.dispatchEvent(new Event('change', { bubbles: true }));
+        }
+    }, selected.residence);
     await page.locator('#deathDistrictsFilter').selectOption([selected.death]);
     await page.locator('#deathLocationsFilter').selectOption([selected.location]);
 
     const requestPromise = page.waitForRequest(request => {
         const url = new URL(request.url());
         return url.pathname.endsWith('/api/chart/municipios')
-            && url.searchParams.get('district_ids[]') === selected.residence
+            && url.searchParams.getAll('district_ids[]').length === 0
             && url.searchParams.get('death_district_ids[]') === selected.death
             && url.searchParams.get('death_location_ids[]') === selected.location;
     });
     await page.locator('#statisticsFiltersApply').click();
     await requestPromise;
+
+    await page.getByRole('tab', { name: 'Gráfica', exact: true }).click();
+    const residenceRequest = page.waitForRequest(request => {
+        const url = new URL(request.url());
+        return url.pathname.endsWith('/api/chart/municipios')
+            && url.searchParams.get('municipio_type') === 'residencia'
+            && url.searchParams.get('district_ids[]') === selected.residence
+            && url.searchParams.getAll('death_district_ids[]').length === 0
+            && url.searchParams.getAll('death_location_ids[]').length === 0;
+    });
+    await page.locator('#statisticsGeographicScopeControl')
+        .getByRole('radio', { name: 'Residencia' })
+        .click();
+    await residenceRequest;
+
+    await page.getByRole('tab', { name: 'Filtros', exact: true }).click();
+    await expect(residenceEditor).toBeVisible();
+    await expect(deathEditor).toBeHidden();
+    await expect(deathLocation).toBeHidden();
 
     await page.locator('#limpiarFiltros').click();
     await expect(page.locator('#residenceDistrictsFilter')).toHaveValues([]);
@@ -1369,7 +1611,7 @@ test('Municipios muestra los filtros de ubicación de forma clara y compacta', a
     await expect(page.locator('#deathLocationsFilter')).toHaveValues([]);
 });
 
-test('Tendencias cambia su agrupación desde Vista', async ({ page }) => {
+test('Tendencias cambia su agrupación desde Gráfica', async ({ page }) => {
     await page.getByRole('tab', { name: 'Tendencias' }).click();
 
     const granularityControl = page.locator('#statisticsTrendGranularityControl');
@@ -1380,6 +1622,7 @@ test('Tendencias cambia su agrupación desde Vista', async ({ page }) => {
     await expect(granularitySelector).toHaveValue('month');
     await expect(page.locator('#chartTitle')).toHaveText('Tendencia mensual');
     await expect(granularityControl.getByRole('radio', { name: 'Mes' })).toHaveAttribute('aria-checked', 'true');
+    await expect.poll(async () => (await chartState(page)).rotation).toBe(0);
 
     const requestPromise = page.waitForRequest(request => {
         const url = new URL(request.url());
@@ -1393,8 +1636,92 @@ test('Tendencias cambia su agrupación desde Vista', async ({ page }) => {
     await expect(page.locator('#chartTitle')).toHaveText('Tendencia anual');
 });
 
+test('Tendencias muestra los filtros geograficos segun residencia o defuncion', async ({ page }) => {
+    await page.getByRole('tab', { name: 'Tendencias', exact: true }).click();
+    await page.getByRole('tab', { name: 'Filtros', exact: true }).click();
+
+    const scope = page.locator('#tipoMunicipioFilter');
+    const deathLocation = page.locator('#filterDeathLocations');
+    const locationGroup = page.locator('#statisticsLocationFilterGroup');
+    const chartPanel = page.locator('#statisticsChartPanel');
+    const deathScopeHeight = (await locationGroup.boundingBox()).height;
+    await expect(page.locator('label[for="tipoMunicipioFilter"]')).toHaveText('Filtrar por ubicación de');
+    await expect(scope.locator('option')).toHaveText(['Defunción', 'Residencia']);
+    await expect(scope).toHaveValue('defuncion');
+    await expect(page.locator('#municipiosFilterLabel')).toHaveText('Municipios de defunción');
+    await expect(page.locator('#distritoesFilterLabel')).toHaveText('Distritos de defunción');
+    await expect(deathLocation).toBeVisible();
+    await expect(deathLocation.locator('label')).toHaveText('Lugares de defunción');
+    await expect(page.locator('#deathLocationsFilter'))
+        .toHaveAttribute('data-placeholder', 'Selecciona lugares de defunción');
+
+    await scope.scrollIntoViewIfNeeded();
+    const scrollTop = await page.evaluate(() => window.scrollY);
+    const chartBoxBefore = await chartPanel.boundingBox();
+    await scope.selectOption('residencia');
+    await expect(page.locator('#municipiosFilterLabel')).toHaveText('Municipios de residencia');
+    await expect(page.locator('#distritoesFilterLabel')).toHaveText('Distritos de residencia');
+    await expect(deathLocation).toBeHidden();
+    const residenceScopeHeight = (await locationGroup.boundingBox()).height;
+    expect(residenceScopeHeight).toBeLessThan(deathScopeHeight - 30);
+    await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(scrollTop);
+    const chartBoxAfter = await chartPanel.boundingBox();
+    expect(Math.abs(chartBoxAfter.y - chartBoxBefore.y)).toBeLessThanOrEqual(1);
+    expect(Math.abs(chartBoxAfter.height - chartBoxBefore.height)).toBeLessThanOrEqual(1);
+
+    await scope.selectOption('defuncion');
+    await expect(deathLocation).toBeVisible();
+    const selectedLocation = '2';
+    await page.locator('#deathLocationsFilter').selectOption([selectedLocation]);
+
+    const filteredResponse = page.waitForResponse(response => {
+        const url = new URL(response.url());
+        return url.pathname.endsWith('/api/chart/tendencias')
+            && url.searchParams.get('death_location_ids[]') === selectedLocation;
+    });
+    await page.locator('#statisticsFiltersApply').click();
+    expect((await filteredResponse).ok()).toBe(true);
+
+    await expect(page.locator('#chartTitle')).toHaveText('Tendencia mensual');
+    await expect(page.locator('#filtrosActivos')).toContainText('Lugar de defunción');
+});
+
+test('Edades, Sexo y Causas comparten el selector geografico estable', async ({ page }) => {
+    const metrics = ['Edades', 'Sexo', 'Causas'];
+
+    for (const metric of metrics) {
+        await page.getByRole('tab', { name: metric, exact: true }).click();
+        await page.getByRole('tab', { name: 'Filtros', exact: true }).click();
+
+        const scope = page.locator('#tipoMunicipioFilter');
+        const deathLocation = page.locator('#filterDeathLocations');
+        const chartPanel = page.locator('#statisticsChartPanel');
+
+        await expect(scope).toBeVisible();
+        await expect(scope.locator('option')).toHaveText(['Defunción', 'Residencia']);
+        await scope.selectOption('defuncion');
+        await expect(deathLocation).toBeVisible();
+        const chartHeight = (await chartPanel.boundingBox()).height;
+
+        await scope.selectOption('residencia');
+        await expect(page.locator('#municipiosFilterLabel')).toHaveText('Municipios de residencia');
+        await expect(page.locator('#distritoesFilterLabel')).toHaveText('Distritos de residencia');
+        await expect(deathLocation).toBeHidden();
+        await expect.poll(async () => (await chartPanel.boundingBox()).height).toBe(chartHeight);
+    }
+
+    await page.getByRole('tab', { name: 'Lugares', exact: true }).click();
+    await page.getByRole('tab', { name: 'Filtros', exact: true }).click();
+    const scope = page.locator('#tipoMunicipioFilter');
+    const deathLocation = page.locator('#filterDeathLocations');
+    await scope.selectOption('defuncion');
+    await expect(deathLocation).toBeHidden();
+    await scope.selectOption('residencia');
+    await expect(deathLocation).toBeHidden();
+});
+
 test('Top 5, 10 y 15 conservan etiquetas legibles', async ({ page }) => {
-    await page.getByRole('tab', { name: 'Vista' }).click();
+    await page.getByRole('tab', { name: 'Gráfica' }).click();
     const limits = page.locator('#chartLimitButtons');
 
     await limits.locator('[data-value="15"]').click();
@@ -1413,7 +1740,7 @@ test('Top 5, 10 y 15 conservan etiquetas legibles', async ({ page }) => {
 
 test('cambiar de representacion conserva el alcance compatible en todas las metricas', async ({ page }) => {
     test.setTimeout(90_000);
-    await page.getByRole('tab', { name: 'Vista' }).click();
+    await page.getByRole('tab', { name: 'Gráfica' }).click();
 
     // Deja una preferencia anterior de Top 5 en Barras para reproducir el caso
     // donde al volver desde Columnas se reemplazaba "Todos" sin solicitarlo.
@@ -1452,7 +1779,7 @@ test('cambiar de representacion conserva el alcance compatible en todas las metr
 });
 
 test('cambiar el limite conserva la paleta elegida', async ({ page }) => {
-    await page.getByRole('tab', { name: 'Vista' }).click();
+    await page.getByRole('tab', { name: 'Gráfica' }).click();
     await page.locator('#statisticsPaletteToggle').click();
     await page.locator('#colorPalettePicker [data-palette="maroon611132"][data-color-mode="qualitative"]').click();
 
@@ -1482,7 +1809,7 @@ test('cambiar el limite conserva la paleta elegida', async ({ page }) => {
 });
 
 test('Cantidad y porcentaje no corta las etiquetas en columnas extensas', async ({ page }) => {
-    await page.getByRole('tab', { name: 'Vista' }).click();
+    await page.getByRole('tab', { name: 'Gráfica' }).click();
     await page.locator('#chartLimitButtons [data-value="all"]').click();
     await expect.poll(async () => (await chartState(page)).labels.length).toBe(44);
 
@@ -1532,6 +1859,33 @@ test('edades muestra y exporta la tabla de causas por separado', async ({ page }
     await expect(detail.locator('.statistics-causes__item')).toHaveCount(4);
     await expect(page.locator('#statisticsChartPanel')).toHaveScreenshot('edades-con-tabla.png');
 
+    const chartDownloadPromise = page.waitForEvent('download');
+    await page.locator('#descargarActual').click();
+    const chartDownload = await chartDownloadPromise;
+    const chartFile = await readFile(await chartDownload.path());
+    expect(chartFile.subarray(1, 4).toString()).toBe('PNG');
+
+    await page.evaluate(() => {
+        window.__statisticsHtml2Canvas = window.html2canvas;
+        let captureAttempts = 0;
+        window.html2canvas = async (...args) => {
+            captureAttempts += 1;
+            if (captureAttempts === 1) throw new Error('Fallo de captura completa simulado');
+            return window.__statisticsHtml2Canvas(...args);
+        };
+    });
+    const fallbackDownloadPromise = page.waitForEvent('download');
+    await page.locator('#descargarActual').click();
+    const fallbackDownload = await fallbackDownloadPromise;
+    const fallbackChartFile = await readFile(await fallbackDownload.path());
+    expect(fallbackChartFile.subarray(1, 4).toString()).toBe('PNG');
+    const fallbackDimensions = pngDimensions(fallbackChartFile);
+    expect(fallbackDimensions.height).toBeGreaterThan(fallbackDimensions.width * 0.5);
+    await page.evaluate(() => {
+        window.html2canvas = window.__statisticsHtml2Canvas;
+        delete window.__statisticsHtml2Canvas;
+    });
+
     const downloadPromise = page.waitForEvent('download');
     await page.locator('#downloadAgeCausesTable').click();
     const download = await downloadPromise;
@@ -1558,6 +1912,19 @@ test('edades muestra y exporta la tabla de causas por separado', async ({ page }
         return { before, after: polished.series[0].radius };
     });
     expect(Number(exportRadii.after[1])).toBeGreaterThan(Number(exportRadii.before[1]));
+
+    await page.evaluate(() => {
+        updateAgeCausesDetail([{
+            range: '<5 años',
+            total: 2,
+            top_causes: {
+                'Vehículo de motor residencia': 1,
+                'Otros accidentes': 1,
+            },
+        }], 2);
+    });
+    await expect(detail.locator('.statistics-causes__missing')).toHaveCount(1);
+    await expect(detail.locator('.statistics-causes__empty-slot')).toHaveText('— Sin otra causa registrada');
 });
 
 test('la preferencia de contexto persiste y cambia únicamente el archivo exportado', async ({ page }) => {
@@ -1590,7 +1957,7 @@ test('la preferencia de contexto persiste y cambia únicamente el archivo export
 test('Sexo usa leyenda lateral estable en pastel y dona', async ({ page }) => {
     await page.setViewportSize({ width: 1536, height: 900 });
     await page.getByRole('tab', { name: 'Sexo', exact: true }).click();
-    await page.getByRole('tab', { name: 'Vista', exact: true }).click();
+    await page.getByRole('tab', { name: 'Gráfica', exact: true }).click();
     await page.locator('#dataLabelButtons [data-value="both"]').click();
 
     const circularLayout = async () => page.evaluate(() => {
@@ -1627,9 +1994,12 @@ test('Sexo usa leyenda lateral estable en pastel y dona', async ({ page }) => {
 test('el selector de paletas de Sexo evita el recorte del panel lateral', async ({ page }) => {
     await page.setViewportSize({ width: 1536, height: 900 });
     await page.getByRole('tab', { name: 'Sexo', exact: true }).click();
-    await page.getByRole('tab', { name: 'Vista', exact: true }).click();
+    await page.getByRole('tab', { name: 'Gráfica', exact: true }).click();
     await page.locator('#municipalityChartTypeButtons [data-value="doughnut"]').click();
     await page.locator('#statisticsPaletteToggle').click();
+    await page.locator('#statisticsPaletteMenu').evaluate(async menu => {
+        await Promise.all(menu.getAnimations().map(animation => animation.finished));
+    });
 
     const geometry = await page.evaluate(() => {
         const menu = document.getElementById('statisticsPaletteMenu');
@@ -1654,6 +2024,123 @@ test('el selector de paletas de Sexo evita el recorte del panel lateral', async 
     expect(geometry.menuBottom).toBeLessThanOrEqual(geometry.panelBottom);
 });
 
+test('Distritos conserva sus doce categorias en una leyenda lateral estable', async ({ page }) => {
+    await page.setViewportSize({ width: 1536, height: 900 });
+    await page.getByRole('tab', { name: 'Distritos', exact: true }).click();
+    await page.getByRole('tab', { name: 'Gráfica', exact: true }).click();
+    await page.locator('#dataLabelButtons [data-value="both"]').click();
+
+    const circularLayout = async () => page.evaluate(() => {
+        const chart = window.echarts?.getInstanceByDom(document.getElementById('mainChart'));
+        const option = chart?.getOption?.();
+        const series = option?.series?.[0] || {};
+        const legend = option?.legend?.[0] || {};
+        return {
+            categories: Array.isArray(series.data) ? series.data.length : 0,
+            center: series.center,
+            radius: series.radius,
+            outsideLabels: Boolean(series.label?.show),
+            legendVisible: Boolean(legend.show),
+            legendType: legend.type,
+            legendOrientation: legend.orient,
+            legendLeft: legend.left,
+        };
+    });
+
+    for (const type of ['pie', 'doughnut']) {
+        await page.locator(`#municipalityChartTypeButtons [data-value="${type}"]`).click();
+        await expect.poll(async () => (await circularLayout()).categories).toBe(12);
+
+        const layout = await circularLayout();
+        expect(layout.outsideLabels).toBe(false);
+        expect(layout.legendVisible).toBe(true);
+        expect(layout.legendType).toBe('plain');
+        expect(layout.legendOrientation).toBe('vertical');
+        expect(Number.parseFloat(layout.center[0])).toBeLessThan(50);
+        expect(Number.parseFloat(layout.legendLeft)).toBeGreaterThan(50);
+        expect(type === 'doughnut' ? Array.isArray(layout.radius) : !Array.isArray(layout.radius)).toBe(true);
+    }
+});
+
+test('Lugares resume el catalogo en una leyenda lateral estable', async ({ page }) => {
+    await page.setViewportSize({ width: 1536, height: 900 });
+    await page.getByRole('tab', { name: 'Lugares', exact: true }).click();
+    await page.getByRole('tab', { name: 'Gráfica', exact: true }).click();
+    await page.locator('#dataLabelButtons [data-value="both"]').click();
+
+    const circularLayout = async () => page.evaluate(() => {
+        const chart = window.echarts?.getInstanceByDom(document.getElementById('mainChart'));
+        const option = chart?.getOption?.();
+        const series = option?.series?.[0] || {};
+        const legend = option?.legend?.[0] || {};
+        const data = Array.isArray(series.data) ? series.data : [];
+        return {
+            categories: data.length,
+            hasGroupedRemainder: data.some(item => /^Lugares restantes \(\d+\)$/.test(String(item?.name))),
+            center: series.center,
+            radius: series.radius,
+            outsideLabels: Boolean(series.label?.show),
+            legendVisible: Boolean(legend.show),
+            legendType: legend.type,
+            legendOrientation: legend.orient,
+            legendLeft: legend.left,
+        };
+    });
+
+    for (const type of ['pie', 'doughnut']) {
+        await page.locator(`#municipalityChartTypeButtons [data-value="${type}"]`).click();
+        await expect.poll(async () => (await circularLayout()).categories).toBe(10);
+
+        const layout = await circularLayout();
+        expect(layout.hasGroupedRemainder).toBe(true);
+        expect(layout.outsideLabels).toBe(false);
+        expect(layout.legendVisible).toBe(true);
+        expect(layout.legendType).toBe('plain');
+        expect(layout.legendOrientation).toBe('vertical');
+        expect(Number.parseFloat(layout.center[0])).toBeLessThan(50);
+        expect(Number.parseFloat(layout.legendLeft)).toBeGreaterThan(50);
+        expect(type === 'doughnut' ? Array.isArray(layout.radius) : !Array.isArray(layout.radius)).toBe(true);
+    }
+});
+
+test('Causas conserva una leyenda lateral completa en pastel y dona', async ({ page }) => {
+    await page.setViewportSize({ width: 1536, height: 900 });
+    await page.getByRole('tab', { name: 'Causas', exact: true }).click();
+    await page.getByRole('tab', { name: 'Gráfica', exact: true }).click();
+    await page.locator('#dataLabelButtons [data-value="both"]').click();
+
+    const circularLayout = async () => page.evaluate(() => {
+        const chart = window.echarts?.getInstanceByDom(document.getElementById('mainChart'));
+        const option = chart?.getOption?.();
+        const series = option?.series?.[0] || {};
+        const legend = option?.legend?.[0] || {};
+        return {
+            categories: Array.isArray(series.data) ? series.data.length : 0,
+            center: series.center,
+            radius: series.radius,
+            outsideLabels: Boolean(series.label?.show),
+            legendVisible: Boolean(legend.show),
+            legendType: legend.type,
+            legendOrientation: legend.orient,
+            legendLeft: legend.left,
+        };
+    });
+
+    for (const type of ['pie', 'doughnut']) {
+        await page.locator(`#municipalityChartTypeButtons [data-value="${type}"]`).click();
+        await expect.poll(async () => (await circularLayout()).categories).toBe(7);
+
+        const layout = await circularLayout();
+        expect(layout.outsideLabels).toBe(false);
+        expect(layout.legendVisible).toBe(true);
+        expect(layout.legendType).toBe('plain');
+        expect(layout.legendOrientation).toBe('vertical');
+        expect(Number.parseFloat(layout.center[0])).toBeLessThan(50);
+        expect(Number.parseFloat(layout.legendLeft)).toBeGreaterThan(50);
+        expect(type === 'doughnut' ? Array.isArray(layout.radius) : !Array.isArray(layout.radius)).toBe(true);
+    }
+});
+
 test('comparativa conserva sus dos series y una presentación legible', async ({ page }) => {
     await page.getByRole('tab', { name: 'Comparativa' }).click();
     await expect(page.locator('#chartTitle')).toHaveText('Municipio de residencia vs. municipio de defunción');
@@ -1673,6 +2160,39 @@ test('comparativa conserva sus dos series y una presentación legible', async ({
         'Municipio de defunción',
     ]);
     await expect(page.locator('#statisticsChartPanel')).toHaveScreenshot('comparativa-municipios.png');
+});
+
+test('comparativa mantiene la escala del mapa de calor fuera de la matriz', async ({ page }) => {
+    await page.setViewportSize({ width: 1536, height: 900 });
+    await page.getByRole('tab', { name: 'Comparativa' }).click();
+    await page.locator('#municipalityChartTypeButtons [data-value="heatmap"]').click();
+
+    await expect.poll(async () => page.evaluate(() => {
+        const chart = window.echarts?.getInstanceByDom(document.getElementById('mainChart'));
+        return chart?.getOption?.()?.series?.[0]?.type;
+    })).toBe('heatmap');
+
+    const layout = await page.evaluate(() => {
+        const chart = window.echarts?.getInstanceByDom(document.getElementById('mainChart'));
+        const option = chart?.getOption?.() || {};
+        const visualMap = option.visualMap?.[0] || {};
+        const grid = option.grid?.[0] || {};
+        return {
+            orientation: visualMap.orient,
+            scaleWidth: visualMap.itemWidth,
+            scaleLength: visualMap.itemHeight,
+            scaleBottom: visualMap.bottom,
+            gridBottom: grid.bottom,
+        };
+    });
+
+    expect(layout).toEqual({
+        orientation: 'horizontal',
+        scaleWidth: 10,
+        scaleLength: 150,
+        scaleBottom: 2,
+        gridBottom: 82,
+    });
 });
 
 test('el PDF amplía gráficas con pocas categorías sin alterar la vista', async ({ page }) => {
@@ -1711,7 +2231,7 @@ test('el PDF amplía gráficas con pocas categorías sin alterar la vista', asyn
 });
 
 test('pagina las barras horizontales extensas y conserva columnas en una hoja', async ({ page }) => {
-    await page.getByRole('tab', { name: 'Vista' }).click();
+    await page.getByRole('tab', { name: 'Gráfica' }).click();
     const limits = page.locator('#chartLimitButtons');
     await limits.getByRole('button', { name: /Mostrar todas las categorías/ }).click();
     await expect.poll(async () => (await chartState(page)).labels.length).toBe(44);

@@ -4,6 +4,56 @@ function resolveElement(target) {
     return null;
 }
 
+function dropdownVerticalBounds(wrapper) {
+    const edgeGap = 8;
+    let top = edgeGap;
+    let bottom = window.innerHeight - edgeGap;
+    let ancestor = wrapper.parentElement;
+
+    while (ancestor && ancestor !== document.body) {
+        const style = window.getComputedStyle(ancestor);
+        const overflowY = style.overflowY || style.overflow;
+
+        if (['auto', 'scroll', 'hidden', 'clip'].includes(overflowY)) {
+            const rect = ancestor.getBoundingClientRect();
+            top = Math.max(top, rect.top);
+            bottom = Math.min(bottom, rect.bottom);
+        }
+
+        ancestor = ancestor.parentElement;
+    }
+
+    return { top, bottom };
+}
+
+function positionDropdownVertically(instance) {
+    const wrapper = instance?.wrapper;
+    const dropdown = instance?.dropdown;
+    if (!wrapper || !dropdown) return;
+
+    wrapper.classList.remove('app-filter-select--auto-drop-up');
+
+    window.requestAnimationFrame(() => {
+        if (!instance.isOpen) return;
+
+        const wrapperRect = wrapper.getBoundingClientRect();
+        const bounds = dropdownVerticalBounds(wrapper);
+        const dropdownRect = dropdown.getBoundingClientRect();
+        const desiredHeight = Math.max(dropdown.scrollHeight, dropdownRect.height);
+        const menuGap = 6;
+        const spaceBelow = Math.max(0, bounds.bottom - wrapperRect.bottom);
+        const spaceAbove = Math.max(0, wrapperRect.top - bounds.top);
+        const forcedDropUp = wrapper.classList.contains('app-filter-select--drop-up');
+        const shouldOpenUp = forcedDropUp
+            || (spaceBelow < desiredHeight + menuGap && spaceAbove > spaceBelow);
+
+        wrapper.classList.toggle(
+            'app-filter-select--auto-drop-up',
+            shouldOpenUp && !forcedDropUp,
+        );
+    });
+}
+
 function init(target, options = {}) {
     const select = resolveElement(target);
 
@@ -23,6 +73,7 @@ function init(target, options = {}) {
     const customOnBlur = options.onBlur;
     const customOnChange = options.onChange;
     const customOnDropdownClose = options.onDropdownClose;
+    const customOnDropdownOpen = options.onDropdownOpen;
     const customOnInitialize = options.onInitialize;
     const customOnItemAdd = options.onItemAdd;
     const compactLabels = Object.fromEntries(
@@ -103,8 +154,13 @@ function init(target, options = {}) {
             customOnItemAdd?.call(this, value, item);
         },
         onDropdownClose: function () {
+            this.wrapper?.classList.remove('app-filter-select--auto-drop-up');
             resetClosedMultiSelectScroll(this);
             customOnDropdownClose?.call(this);
+        },
+        onDropdownOpen: function () {
+            positionDropdownVertically(this);
+            customOnDropdownOpen?.call(this);
         },
         onInitialize: function () {
             syncMultiSelectSummary(this);

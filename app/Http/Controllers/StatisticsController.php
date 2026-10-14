@@ -402,15 +402,12 @@ class StatisticsController extends Controller
         if (!$maxDate) {
             // Si no hay registros, usar hoy y 1 año atrás
             $endDate = now();
-            $startDate = now()->subYear()->addDay();
+            $startDate = $endDate->copy()->startOfMonth()->subMonthsNoOverflow(11);
             $dataStartDate = $startDate->copy();
         } else {
             $endDate = \Carbon\Carbon::parse($maxDate);
-            $startDate = $endDate->copy()->subYear()->addDay();
+            $startDate = $endDate->copy()->startOfMonth()->subMonthsNoOverflow(11);
             $dataStartDate = \Carbon\Carbon::parse($minDate ?: $maxDate);
-            if ($startDate->lt($dataStartDate)) {
-                $startDate = $dataStartDate->copy();
-            }
         }
         
         return [
@@ -904,9 +901,32 @@ class StatisticsController extends Controller
         
         $applyFilters($query);
         $data = $query->get();
+
+        if ($groupBy === 'month' && !empty($filters['start_date']) && !empty($filters['end_date'])) {
+            $recordsByPeriod = $data->keyBy(fn ($item) => (string) $item->period);
+            $cursor = Carbon::parse($filters['start_date'])->startOfMonth();
+            $lastMonth = Carbon::parse($filters['end_date'])->startOfMonth();
+            $completeSeries = collect();
+
+            while ($cursor->lte($lastMonth)) {
+                $period = $cursor->format('Y-m');
+                $completeSeries->push($recordsByPeriod->get($period) ?? (object) [
+                    'period' => $period,
+                    'total' => 0,
+                ]);
+                $cursor->addMonthNoOverflow();
+            }
+
+            $data = $completeSeries;
+        }
         
         $monthsSpanish = [1 => 'Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
-        $data->each(function ($item) use ($groupBy, $monthsSpanish) {
+        $monthlySeriesSpansYears = $groupBy === 'month'
+            && $data->pluck('period')->map(fn ($period) => substr((string) $period, 0, 4))->unique()->count() > 1;
+        $filterStart = !empty($filters['start_date']) ? Carbon::parse($filters['start_date'])->startOfDay() : null;
+        $filterEnd = !empty($filters['end_date']) ? Carbon::parse($filters['end_date'])->startOfDay() : null;
+
+        $data->each(function ($item) use ($groupBy, $monthsSpanish, $monthlySeriesSpansYears, $filterStart, $filterEnd) {
             if ($groupBy === 'day') {
                 [$year, $month, $day] = array_map('intval', explode('-', $item->period));
                 $item->period_label = sprintf('%02d %s %d', $day, $monthsSpanish[$month], $year);
@@ -914,13 +934,17 @@ class StatisticsController extends Controller
                 $item->period_end = $item->period;
             } elseif ($groupBy === 'year') {
                 $item->period_label = (string) $item->period;
-                $item->period_start = $item->period.'-01-01';
-                $item->period_end = $item->period.'-12-31';
+                $periodStart = Carbon::create((int) $item->period, 1, 1)->startOfDay();
+                $periodEnd = $periodStart->copy()->endOfYear()->startOfDay();
+                $item->period_start = ($filterStart && $filterStart->gt($periodStart) ? $filterStart : $periodStart)->format('Y-m-d');
+                $item->period_end = ($filterEnd && $filterEnd->lt($periodEnd) ? $filterEnd : $periodEnd)->format('Y-m-d');
             } else {
                 [$year, $month] = array_map('intval', explode('-', $item->period));
-                $item->period_label = $monthsSpanish[$month].' '.$year;
-                $item->period_start = sprintf('%04d-%02d-01', $year, $month);
-                $item->period_end = date('Y-m-t', strtotime($item->period_start));
+                $item->period_label = $monthsSpanish[$month].($monthlySeriesSpansYears ? ' '.$year : '');
+                $periodStart = Carbon::create($year, $month, 1)->startOfDay();
+                $periodEnd = $periodStart->copy()->endOfMonth()->startOfDay();
+                $item->period_start = ($filterStart && $filterStart->gt($periodStart) ? $filterStart : $periodStart)->format('Y-m-d');
+                $item->period_end = ($filterEnd && $filterEnd->lt($periodEnd) ? $filterEnd : $periodEnd)->format('Y-m-d');
             }
         });
 

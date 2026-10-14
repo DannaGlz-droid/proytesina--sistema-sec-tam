@@ -255,7 +255,8 @@ select.app-filter-select {
   font-size: .78rem !important;
 }
 
-.ts-wrapper.app-filter-select--drop-up .ts-dropdown {
+.ts-wrapper.app-filter-select--drop-up .ts-dropdown,
+.ts-wrapper.app-filter-select--auto-drop-up .ts-dropdown {
   top: auto !important;
   bottom: calc(100% + .28rem) !important;
   margin-top: 0 !important;

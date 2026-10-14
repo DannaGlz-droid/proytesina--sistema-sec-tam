@@ -3937,6 +3937,12 @@
   white-space: nowrap;
 }
 
+.statistics-causes__empty-slot {
+  grid-column: 1 / -1;
+  color: var(--ui-text-muted, #64748b);
+  font-weight: 500;
+}
+
 .statistics-causes__empty {
   align-self: center;
   margin: 0;
@@ -5115,6 +5121,10 @@
     gap: .65rem;
   }
 
+  .statistics-page[data-explorer-layout="true"] #statisticsDemographicFilterGroup .statistics-demographic-fields.has-single-filter {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
   .statistics-page[data-explorer-layout="true"] #statisticsDemographicFilterGroup #filterSexo > label,
   .statistics-page[data-explorer-layout="true"] #statisticsDemographicFilterGroup #filterEdad > .statistics-filter-label-row {
     display: flex;
@@ -5517,6 +5527,7 @@
 @media (min-width: 1024px) {
   .statistics-page[data-explorer-layout="true"] .statistics-layout {
     align-items: stretch;
+    overflow-anchor: none;
   }
 
   .statistics-page[data-explorer-layout="true"] #estadisticas-filtros.statistics-filter-popover {
