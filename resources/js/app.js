@@ -1,6 +1,7 @@
 import './bootstrap';
 import './notifications-handler';
 import './filter-select';
+import './form-validation';
 
 import Alpine from 'alpinejs';
 

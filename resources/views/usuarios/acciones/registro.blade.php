@@ -5,19 +5,15 @@
     @include('components.header-admin')
     @include('components.nav-usuario')
 
-    <div class="users-form-page px-4 sm:px-6 lg:px-10 pt-6 lg:pt-8 pb-8 lg:pb-10">
-        <x-ui.page-header
-            title="Registro de usuario"
-            description="Complete el formulario para registrar un usuario en el sistema."
-            :back-href="route('user.user-gestion')"
-            back-label="Volver a gestión de usuarios"
-            :prefer-history-back="true"
-        />
+    <x-ui.form.page
+        title="Registro de usuario"
+        description="Complete el formulario para registrar un usuario en el sistema."
+        :back-href="route('user.user-gestion')"
+        back-label="Volver a gestión de usuarios"
+        :prefer-history-back="true"
+    >
 
-        <!-- Cuadro del formulario responsive -->
-        <div class="users-form-card">
-
-            <form action="{{ route('user.store') }}" method="POST" id="userRegistroForm">
+            <form action="{{ route('user.store') }}" method="POST" id="userRegistroForm" novalidate data-ui-inline-validation>
                     
                 @csrf
                     <!-- Sección 1: Información del usuario -->
@@ -74,7 +70,7 @@
                             <div class="space-y-3">
                                 <div>
                                     <label for="position_select" class="block">Cargo <span class="text-red-600">*</span></label>
-                                    <select id="position_select" class="tomselect-select" name="position_id" required @error('position_id') aria-invalid="true" aria-describedby="position-error" @enderror>
+                                    <select id="position_select" class="tomselect-select" name="position_id" data-placeholder="Seleccione un cargo" data-validation-required-message="Seleccione un cargo." required @error('position_id') aria-invalid="true" aria-describedby="position-error" @enderror>
                                         <option value="">Seleccione un cargo</option>
                                         @if(isset($positions))
                                             @foreach($positions as $p)
@@ -89,7 +85,7 @@
                             <div class="space-y-3">
                                 <div>
                                     <label for="district_id" class="block">Distrito <span class="text-red-600">*</span></label>
-                                    <select id="district_id" class="tomselect-select" name="district_id" required @error('district_id') aria-invalid="true" aria-describedby="district-error" @enderror>
+                                    <select id="district_id" class="tomselect-select" name="district_id" data-placeholder="Seleccione un distrito" data-validation-required-message="Seleccione un distrito." required @error('district_id') aria-invalid="true" aria-describedby="district-error" @enderror>
                                         <option value="">Seleccione un distrito</option>
                                         @if(isset($districts))
                                             @foreach($districts as $j)
@@ -110,14 +106,14 @@
                             <div>
                                 <label for="username" class="block">Usuario <span class="text-red-600">*</span></label>
                                 <input id="username" name="username" type="text" required minlength="3" maxlength="50" pattern="[a-zA-Z0-9_.-]+" @error('username') aria-invalid="true" aria-describedby="username-error" @enderror
-                                    placeholder="Ej: mgarcia"
+                                    placeholder="Ej: maria.garcia"
                                     value="{{ old('username') }}">
                                 @error('username') <p id="username-error" class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
                             </div>
 
                             <div>
                                 <label for="role_id" class="block">Rol <span class="text-red-600">*</span></label>
-                                <select id="role_id" class="tomselect-select" name="role_id" required @error('role_id') aria-invalid="true" aria-describedby="role-error" @enderror>
+                                <select id="role_id" class="tomselect-select" name="role_id" data-placeholder="Seleccione un rol" data-validation-required-message="Seleccione un rol." required @error('role_id') aria-invalid="true" aria-describedby="role-error" @enderror>
                                     <option value="">Seleccione un rol</option>
                                     @if(isset($roles))
                                         @foreach($roles as $r)
@@ -133,7 +129,7 @@
                                         <label for="password" class="block">Contraseña <span class="text-red-600">*</span></label>
                                         <span id="password-strength" data-level="empty" aria-live="polite">Sin evaluar</span>
                                     </div>
-                                    <div class="relative">
+                                    <div class="relative app-password-input-wrap">
                                         <input name="password" type="password" required minlength="12" maxlength="255" autocomplete="new-password" @error('password') aria-invalid="true" aria-describedby="password-error" @enderror
                                             id="password"
                                             placeholder="Ingrese su contraseña">
@@ -172,8 +168,10 @@
 
                             <div>
                                     <label for="password_confirmation" class="block">Confirmar contraseña <span class="text-red-600">*</span></label>
-                                    <div class="relative">
-                                        <input name="password_confirmation" type="password" required minlength="12" maxlength="255" autocomplete="new-password" @error('password_confirmation') aria-invalid="true" aria-describedby="password-confirmation-error" @enderror
+                                    <div class="relative app-password-input-wrap">
+                                        <input name="password_confirmation" type="password" required minlength="12" maxlength="255" autocomplete="new-password"
+                                            data-match-field="password" data-match-message="Las contraseñas no coinciden."
+                                            @error('password_confirmation') aria-invalid="true" aria-describedby="password-confirmation-error" @enderror
                                             id="password_confirmation"
                                             placeholder="Confirme su contraseña">
                                         <button type="button"
@@ -215,8 +213,7 @@
                         secondaryType="button"
                     />
             </form>
-        </div>
-    </div>
+    </x-ui.form.page>
 
     <!-- Scripts para funcionalidades -->
     <script>
@@ -451,13 +448,27 @@
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const form = document.querySelector('form');
+
+            function initializeFormSelect(select, options) {
+                if (!select || select.tomselect) return null;
+
+                const instance = window.AppFilterSelect?.init(select, options)
+                    ?? new TomSelect(select, options);
+
+                instance.wrapper.classList.add('app-filter-select', 'app-filter-select--form');
+                instance.wrapper.classList.toggle('is-searchable', options.searchable !== false);
+
+                return instance;
+            }
+
             const pos = document.getElementById('position_select');
             if (pos) {
                 try {
-                    new TomSelect(pos, {
+                    initializeFormSelect(pos, {
                         valueField: 'value',
                         labelField: 'text',
                         searchField: [],
+                        searchable: false,
                         create: false,
                         maxItems: 1,
                         preload: false,
@@ -471,10 +482,11 @@
             const dist = document.getElementById('district_id');
             if (dist) {
                 try {
-                    new TomSelect(dist, {
+                    initializeFormSelect(dist, {
                         valueField: 'value',
                         labelField: 'text',
                         searchField: ['text'],
+                        searchable: true,
                         create: false,
                         maxItems: 1,
                         preload: false,
@@ -488,10 +500,11 @@
             const role = document.getElementById('role_id');
             if (role) {
                 try {
-                    new TomSelect(role, {
+                    initializeFormSelect(role, {
                         valueField: 'value',
                         labelField: 'text',
                         searchField: [],
+                        searchable: false,
                         create: false,
                         maxItems: 1,
                         preload: false,
@@ -502,75 +515,8 @@
                 }
             }
 
-            function getTomSelectWrapper(select) {
-                return select?.tomselect?.wrapper || select?.nextElementSibling || null;
-            }
-
-            function getTomSelectValidityInput(select) {
-                return select?.tomselect?.control_input || select?.tomselect?.input || select || null;
-            }
-
-            function showTomSelectError(select, message) {
-                const validityInput = getTomSelectValidityInput(select);
-                if (validityInput?.setCustomValidity) {
-                    validityInput.setCustomValidity(message);
-                }
-            }
-
-            function clearTomSelectError(select) {
-                const validityInput = getTomSelectValidityInput(select);
-                if (validityInput?.setCustomValidity) {
-                    validityInput.setCustomValidity('');
-                }
-            }
-
-            function reportTomSelectValidity(select) {
-                if (select?.tomselect) {
-                    select.tomselect.focus();
-                }
-
-                const validityInput = getTomSelectValidityInput(select);
-                if (validityInput?.reportValidity) {
-                    validityInput.reportValidity();
-                } else if (select?.reportValidity) {
-                    select.reportValidity();
-                }
-            }
-
-            function validateRequiredTomSelect(select, message) {
-                if (!select || !select.hasAttribute('required') || select.value) {
-                    if (select) clearTomSelectError(select);
-                    return true;
-                }
-
-                showTomSelectError(select, message);
-                return false;
-            }
-
-            function validateUsuarioRegistroTomSelects(focusFirst = false) {
-                const requiredSelects = [
-                    { select: pos, message: 'Seleccione un cargo.' },
-                    { select: dist, message: 'Seleccione un distrito.' },
-                    { select: role, message: 'Seleccione un rol.' },
-                ];
-                let firstInvalid = null;
-
-                requiredSelects.forEach(({ select, message }) => {
-                    if (!validateRequiredTomSelect(select, message) && !firstInvalid) {
-                        firstInvalid = select;
-                    }
-                });
-
-                if (firstInvalid && focusFirst) {
-                    reportTomSelectValidity(firstInvalid);
-                }
-
-                return !firstInvalid;
-            }
-
             window.resetUsuarioRegistroTomSelects = function() {
                 [pos, dist, role].forEach(select => {
-                    clearTomSelectError(select);
                     if (select?.tomselect) {
                         select.tomselect.clear(true);
                         select.tomselect.setTextboxValue('');
@@ -581,30 +527,6 @@
                 });
             };
 
-            [pos, dist, role].forEach(select => {
-                if (!select) return;
-                select.addEventListener('change', () => clearTomSelectError(select));
-                select.addEventListener('invalid', function(event) {
-                    event.preventDefault();
-                    const message = select === pos
-                        ? 'Seleccione un cargo.'
-                        : select === dist
-                            ? 'Seleccione un distrito.'
-                            : 'Seleccione un rol.';
-                    showTomSelectError(select, message);
-                    requestAnimationFrame(() => reportTomSelectValidity(select));
-                });
-                if (select.tomselect) {
-                    select.tomselect.on('change', () => clearTomSelectError(select));
-                }
-            });
-
-            form?.addEventListener('submit', function(event) {
-                if (!validateUsuarioRegistroTomSelects(true)) {
-                    event.preventDefault();
-                    event.stopPropagation();
-                }
-            });
         });
     </script>
 
@@ -636,8 +558,6 @@
                         const field = document.getElementById(fieldId);
                         if (field && errors[fieldName][0]) {
                             field.setCustomValidity(errors[fieldName][0]);
-                            // Hacer que el campo muestre el tooltip
-                            field.reportValidity();
                         }
                     }
                 });

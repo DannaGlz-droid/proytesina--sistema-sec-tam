@@ -299,6 +299,10 @@ Excepciones:
 
 ### 6.1 Estructura
 
+- Todo formulario administrativo de página completa debe ensamblarse con `x-ui.form.page`. Este componente fija el contenedor `ui-form-page`, la tarjeta `ui-form-card`, el ancho, espaciado y encabezado; las vistas solo proporcionan título, descripción, regreso, clases de variante y contenido.
+- Las secciones internas usan `x-ui.form.section` y el pie conserva `x-form-buttons` con la clase `users-form-actions`. No reconstruir estos tres niveles manualmente en una vista.
+- Crear y editar una misma entidad deben compartir un único parcial de campos cuando su estructura sea equivalente. Las vistas de operación conservan únicamente ruta, método, valores iniciales, título y etiquetas de acciones. Registrar y editar defunción usan `estadisticas.acciones.partials.death-form-fields` como referencia.
+- Las diferencias de contenido entre módulos son válidas; no justifican cambiar el ancho, tarjeta, encabezados de sección, cuadrícula, espaciado o pie de acciones definidos por la plantilla.
 - Agrupar por significado, no por cantidad de campos.
 - Cada sección usa una franja gris clara de 38 px, icono opcional y título.
 - La franja es la variante oficial para formularios de página completa. Un editor breve incrustado en una tarjeta puede usar una variante compacta: leyenda en Open Sans, peso 600, mayúsculas con espaciado moderado y una línea neutral que complete el ancho. No añadir una segunda franja ni iconos decorativos en esta variante.
@@ -323,12 +327,14 @@ Excepciones:
 
 - Usar un icono de ayuda junto a la etiqueta únicamente cuando el campo acepte formatos que no sean evidentes, tenga una regla especial que deba conocerse antes de capturar, provoque errores frecuentes sin explicación o necesite ejemplos que no quepan adecuadamente en el placeholder.
 - La ayuda contextual es apropiada para instrucciones complementarias y breves. Por ejemplo, el filtro Edad puede explicar: “Escribe una edad (25), un rango (20-30) o varias separadas por comas (5,10,15)”.
+- En campos derivados o deshabilitados, como Distrito de residencia y Distrito de defunción, usar ayuda contextual para explicar brevemente de qué selección depende su asignación. El estado visible del campo debe seguir comunicando su valor o que está pendiente; el tooltip solo explica el mecanismo.
 - Mantener el placeholder como pista corta. El tooltip amplía la instrucción, pero no debe repetir literalmente la etiqueta ni el placeholder.
 - Mostrar el tooltip al pasar el cursor y cuando el botón reciba foco con teclado. En dispositivos táctiles debe poder abrirse mediante pulsación y cerrarse al pulsar fuera.
 - Usar el icono oficial de Font Awesome `fa-circle-question`, sin color institucional, dentro de un botón con `aria-label`. Asociar el tooltip mediante `aria-describedby` y marcar su contenido con `role="tooltip"`.
 - El botón conserva un foco neutral visible mediante `--ui-focus` y `--ui-focus-ring`. El tooltip usa la superficie flotante, tipografía y elevación oficiales del sistema.
 - Si la instrucción es indispensable para completar correctamente el campo, tiene implicaciones legales o no puede resumirse en una frase breve, mostrar ayuda persistente debajo del campo en lugar de ocultarla en un tooltip.
 - No usar ayuda contextual en campos evidentes como Sexo, Estado o Periodo, para repetir información visible ni como sustituto de validaciones y mensajes de error.
+- Los errores, requisitos indispensables y consecuencias legales permanecen visibles debajo del campo; nunca se ocultan detrás del icono de ayuda.
 - Antes de agregar este patrón en una segunda pantalla, extraerlo a un componente compartido; las vistas no deben duplicar su markup, estilos ni comportamiento.
 
 Estados:
@@ -344,30 +350,40 @@ Estados:
 
 ### 6.3 Selects
 
-- Todos los selects visibles de una misma pantalla deben usar el mismo componente.
+- Todos los selects visibles del sistema que cumplan la misma función deben usar el mismo componente, aunque pertenezcan a módulos o formularios distintos. Registro de usuario y Registrar defunción son la referencia conjunta para esta equivalencia.
 - Usar Tom Select para consistencia visual entre navegadores.
-- Construir los selects con `x-filtros.select` e inicializarlos mediante `AppFilterSelect`; el componente aplica la clase global `app-filter-select`, sus estados compartidos y, cuando corresponda, una variante declarada como `compact`. No copiar estilos de Tom Select dentro de cada página ni limitar el componente a un contenedor concreto.
+- Inicializar siempre mediante `AppFilterSelect`. Los filtros construidos con `x-filtros.select` usan la clase global `app-filter-select`; los selects de formularios deben usar además la variante compartida `app-filter-select--form`. Cuando corresponda puede declararse otra variante documentada, como `compact`. No inicializar Tom Select directamente ni copiar estilos del control dentro de una página.
+- El contrato visual de `app-filter-select--form` es transversal y obligatorio: control de 34 px en escritorio y 40 px en móvil, radio de 7 px, borde y foco neutrales, valor seleccionado en Open Sans de 0.80 rem y peso 600, y placeholder con peso 500. El panel, las opciones, la flecha y la barra de desplazamiento pertenecen al mismo contrato; una vista no puede redefinirlos.
+- Las opciones usan Open Sans de 0.79 rem y peso 500. La opción seleccionada usa peso 600 y fondo neutral tenue; la opción activa o en hover usa el fondo gris azulado compartido. Si ambos estados coinciden, se conserva el peso 600 y prevalece el fondo activo.
+- El panel desplegable conserva el mismo borde, radio de 7 px, sombra, separación respecto al control, altura máxima y grosor de scrollbar en todos los formularios. Las opciones son filas de ancho completo, sin margen lateral ni radio individual.
+- Son diferencias válidas el texto proveniente del catálogo, el uso de mayúsculas definido por los datos, la cantidad de filas visibles y la longitud del pulgar del scrollbar. Esas variaciones no justifican cambiar fuente, peso, color, espaciado, grosor o estados del componente.
+- Cualquier cambio visual del select se realiza en el contrato compartido y se valida al menos en Registro de usuario y Registrar defunción, tanto cerrado como abierto, con estados normal, hover, foco, seleccionado, activo, error y deshabilitado. No aprobar una modificación comparando solamente el control cerrado.
 - Habilitar búsqueda cuando haya más de 10 opciones o la lista pueda crecer.
 - Deshabilitar búsqueda cuando haya 10 opciones o menos y el catálogo sea estable; activarla aunque la lista sea corta si se prevé un crecimiento considerable.
 - Configuración de los formularios de usuario: Distrito con búsqueda; Cargo, Rol y Estado sin búsqueda.
 - Conservar selección anterior, validación, navegación por teclado y limpieza del formulario.
-- “Seleccione…” funciona únicamente como placeholder; no debe aparecer como una opción elegible dentro del menú.
+- “Seleccione…” funciona únicamente como placeholder; no debe aparecer como una opción elegible dentro del menú. Su redacción debe ser contextual y completar la acción (`Seleccione un cargo`, `Seleccione un distrito`, `Seleccione el sexo`); no usar el genérico `Seleccionar` en formularios.
 - El menú debe mostrarse completo sobre las secciones y acciones siguientes; ningún contenedor del formulario puede recortarlo.
 - El menú elige automáticamente su dirección según el espacio útil del viewport: abre debajo cuando cabe y arriba cuando está próximo al borde inferior. Su altura máxima se limita al espacio disponible y las opciones usan desplazamiento interno; no desplazar toda la página para hacer visible el menú.
 - Recalcular la dirección y altura del menú al abrir, escribir, cargar opciones, desplazar cualquier contenedor o redimensionar la ventana. La flecha del control debe corresponder con la dirección en la que aparece el menú.
 - Este posicionamiento adaptativo pertenece al componente compartido de Tom Select. No duplicar observadores, cálculos de posición ni valores de `z-index` en cada vista.
-- Diferenciar sin iconos el valor seleccionado y la opción activa: el seleccionado conserva un fondo neutral muy tenue y peso 600; la opción recorrida por cursor o teclado usa un gris ligeramente más marcado.
-- Si la opción seleccionada también está activa, prevalece el fondo del estado activo y se conserva el peso 600.
 - La opción activa usa azul grisáceo o neutral, no el color institucional.
 - En selects dependientes, elegir el campo padre filtra el catálogo hijo y limpia cualquier valor hijo incompatible; si el hijo permite inferir el padre, la asignación puede realizarse automáticamente sin interrumpir la selección actual.
 - Cuando el padre inferido o seleccionado limite un catálogo que inicialmente era completo, ofrecer una acción visible y específica para quitar ese filtro. La acción limpia solamente la pareja dependiente, restaura el catálogo completo y no reinicia los demás campos del formulario.
 
 ### 6.4 Validación
 
-- Validar al salir del campo y al enviar; no mostrar errores mientras el usuario apenas empieza a escribir.
+- Los campos obligatorios sin interacción previa se validan por primera vez al intentar enviar el formulario. Abrir y cerrar un select, enfocarlo o abandonarlo sin elegir no muestra por sí solo un mensaje rojo.
+- Después del primer intento de envío, revalidar cada campo al cambiarlo: retirar el error en cuanto sea válido y mantenerlo actualizado mientras siga siendo inválido.
+- Un error recibido del servidor permanece asociado al campo hasta que la persona modifique o corrija ese valor.
+- No mostrar errores mientras la persona apenas empieza a escribir. Las restricciones de formato pueden comprobarse al terminar la captura, pero no deben convertir una exploración o un foco accidental en un error.
 - Mensajes directos: “Seleccione un distrito”, no “Campo inválido”.
 - El primer campo inválido recibe foco.
 - Los errores del servidor deben regresar al mismo componente y conservar los valores válidos.
+- Los formularios administrativos de página completa usan `novalidate` y el comportamiento compartido `data-ui-inline-validation`: todos los errores se presentan debajo de su campo y el primer inválido recibe foco.
+- No invocar `reportValidity()` ni mezclar globos nativos del navegador con mensajes inline. La validación nativa puede usarse internamente para detectar restricciones, pero su presentación corresponde al componente compartido.
+- Tras un envío válido, el comportamiento compartido conserva el ancho del botón primario, lo deshabilita y muestra el patrón `[spinner] Guardando…`; formulario y botón se marcan con `aria-busy`. Las vistas no duplican esta lógica ni permiten envíos repetidos.
+- Los campos de contraseña que incorporan el botón compartido para mostrar u ocultar el valor deben usar `app-password-input-wrap`. En ellos se ocultan los reveladores nativos del navegador para mantener una sola acción visible y accesible.
 - No depender únicamente de alertas del navegador o del color.
 
 ### 6.5 Contraseñas
@@ -691,7 +707,9 @@ resources/views/components/ui/
   page-header.blade.php
   button.blade.php
   back-link.blade.php
+  form/page.blade.php
   form/field.blade.php
+  form/help-tooltip.blade.php
   form/select.blade.php
   form/section.blade.php
   table/shell.blade.php
@@ -705,6 +723,7 @@ API mínima recomendada:
 - `x-ui.dialog size="sm|task|md|lg" labelledby="..." describedby="..."`
 - `x-ui.page-header title="..." description="..." backHref="..."`
 - `x-ui.form.field label="..." required error="..." help="..."`
+- `x-ui.form.help-tooltip id="..." label="..."` para instrucciones complementarias asociadas a una etiqueta de campo.
 - `x-ui.form.select searchable="true|false"`
 - `x-ui.badge tone="success|warning|danger|neutral|info|category"`
 
@@ -790,6 +809,7 @@ Una pantalla se considera migrada cuando:
 - Todos los selects de un formulario comparten Tom Select; la búsqueda depende del tamaño de la lista.
 - Guardar es primario; Limpiar es secundario; Generar contraseña es contextual.
 - La asistencia de contraseña se distribuye junto a los dos campos correspondientes.
+- Las instrucciones complementarias y breves usan el icono contextual `fa-circle-question` mediante `x-ui.form.help-tooltip`; la ayuda indispensable y los errores permanecen visibles.
 - Font Awesome es la familia oficial de iconos y la migración se hará por pantalla.
 - Los formularios tienen un ancho máximo de 1440 px.
 - Las tablas usan una sola densidad administrativa de 56 px por fila.

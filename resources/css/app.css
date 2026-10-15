@@ -8875,6 +8875,161 @@ html[data-ui-theme="tamaulipas-salud"] .app-document-surface {
   color: var(--users-text) !important;
 }
 
+/* Form selects use the compact, full-row menu from the registration pilot. */
+.users-form-page .users-form-card form .app-filter-select--form .ts-dropdown-content {
+  padding: 0 !important;
+}
+
+.users-form-page .users-form-card form .app-filter-select--form .ts-dropdown .option,
+.users-form-page .users-form-card form .app-filter-select--form .ts-dropdown .no-results {
+  border-radius: 0 !important;
+}
+
+/*
+ * Canonical form-select contract.
+ * Keep every visual state here so user and death registration cannot drift
+ * through page-specific or Tom Select defaults.
+ */
+.users-form-page .users-form-card form .ts-wrapper.app-filter-select--form {
+  width: 100% !important;
+  margin: 0 !important;
+  color: #10233f !important;
+  font-family: "Open Sans", system-ui, sans-serif !important;
+  font-size: 0.8rem !important;
+  font-weight: 500 !important;
+  line-height: 1.15 !important;
+}
+
+.users-form-page .users-form-card form .ts-wrapper.app-filter-select--form .ts-control {
+  box-sizing: border-box !important;
+  width: 100% !important;
+  min-height: 34px !important;
+  height: 34px !important;
+  padding: 0 2rem 0 0.72rem !important;
+  gap: 0.28rem !important;
+  overflow: hidden !important;
+  border: 1px solid #cbd5e1 !important;
+  border-radius: 7px !important;
+  background: #ffffff !important;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04) !important;
+  color: #10233f !important;
+  font: inherit !important;
+  transition: background-color 120ms ease, border-color 120ms ease, box-shadow 120ms ease !important;
+}
+
+.users-form-page .users-form-card form .ts-wrapper.app-filter-select--form .ts-control:hover {
+  border-color: #bdc8d5 !important;
+  background: #f8fafc !important;
+}
+
+.users-form-page .users-form-card form .ts-wrapper.app-filter-select--form.focus .ts-control,
+.users-form-page .users-form-card form .ts-wrapper.app-filter-select--form.dropdown-active .ts-control {
+  border-color: #475569 !important;
+  background: #ffffff !important;
+  box-shadow: 0 0 0 2px rgba(71, 85, 105, 0.18) !important;
+}
+
+.users-form-page .users-form-card form .ts-wrapper.app-filter-select--form .ts-control .item,
+.users-form-page .users-form-card form .ts-wrapper.app-filter-select--form .ts-control > input {
+  color: #10233f !important;
+  font-family: "Open Sans", system-ui, sans-serif !important;
+  font-size: 0.8rem !important;
+  font-weight: 600 !important;
+  line-height: 1.15 !important;
+  letter-spacing: 0 !important;
+}
+
+.users-form-page .users-form-card form .ts-wrapper.app-filter-select--form .ts-control > input::placeholder {
+  color: #7b8798 !important;
+  font-weight: 500 !important;
+  opacity: 1 !important;
+}
+
+.users-form-page .users-form-card form .ts-wrapper.app-filter-select--form.single .ts-control::after {
+  top: 50% !important;
+  right: 0.72rem !important;
+  border-width: 5px 5px 0 !important;
+  border-color: #64748b transparent transparent !important;
+}
+
+.users-form-page .users-form-card form .ts-wrapper.app-filter-select--form .ts-dropdown {
+  margin-top: 0.28rem !important;
+  max-height: 11.5rem !important;
+  overflow: hidden !important;
+  border: 1px solid #cbd5e1 !important;
+  border-radius: 7px !important;
+  background: #ffffff !important;
+  box-shadow: 0 16px 32px rgba(15, 23, 42, 0.12) !important;
+  color: #10233f !important;
+  font-family: "Open Sans", system-ui, sans-serif !important;
+  font-size: 0.79rem !important;
+  font-weight: 500 !important;
+  line-height: 1.15rem !important;
+}
+
+.users-form-page .users-form-card form .ts-wrapper.app-filter-select--form .ts-dropdown-content {
+  max-height: 11.5rem !important;
+  padding: 0 !important;
+  overflow-y: auto !important;
+  scrollbar-color: #cbd5e1 transparent;
+  scrollbar-width: thin;
+}
+
+.users-form-page .users-form-card form .ts-wrapper.app-filter-select--form .ts-dropdown .option,
+.users-form-page .users-form-card form .ts-wrapper.app-filter-select--form .ts-dropdown .no-results {
+  padding: 0.42rem 0.58rem !important;
+  border-radius: 0 !important;
+  background: #ffffff !important;
+  color: #10233f !important;
+  font-family: "Open Sans", system-ui, sans-serif !important;
+  font-size: 0.79rem !important;
+  font-weight: 500 !important;
+  line-height: 1.15rem !important;
+  letter-spacing: 0 !important;
+  text-transform: none !important;
+}
+
+.users-form-page .users-form-card form .ts-wrapper.app-filter-select--form .ts-dropdown .option.selected {
+  background: #f8fafc !important;
+  color: #10233f !important;
+  font-weight: 600 !important;
+}
+
+.users-form-page .users-form-card form .ts-wrapper.app-filter-select--form .ts-dropdown .option.active,
+.users-form-page .users-form-card form .ts-wrapper.app-filter-select--form .ts-dropdown .option:hover,
+.users-form-page .users-form-card form .ts-wrapper.app-filter-select--form .ts-dropdown .option.selected.active {
+  background: #e9eef4 !important;
+  color: #10233f !important;
+}
+
+.users-form-page .users-form-card form .ts-wrapper.app-filter-select--form .ts-dropdown .option.selected.active {
+  font-weight: 600 !important;
+}
+
+.users-form-page .users-form-card form .ts-wrapper.app-filter-select--form .ts-dropdown-content::-webkit-scrollbar {
+  width: 0.42rem;
+}
+
+.users-form-page .users-form-card form .ts-wrapper.app-filter-select--form .ts-dropdown-content::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.users-form-page .users-form-card form .ts-wrapper.app-filter-select--form .ts-dropdown-content::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: #cbd5e1;
+}
+
+.users-form-page .users-form-card form .ts-wrapper.app-filter-select--form .ts-dropdown-content::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+@media (max-width: 760px) {
+  .users-form-page .users-form-card form .ts-wrapper.app-filter-select--form .ts-control {
+    min-height: 40px !important;
+    height: 40px !important;
+  }
+}
+
 /* Keep form dropdowns above subsequent sections and outside the card bounds. */
 .users-form-page .users-form-card {
   overflow: visible !important;
@@ -9002,6 +9157,19 @@ html[data-ui-theme="tamaulipas-salud"] .app-document-surface {
 .users-form-page [aria-invalid="true"]:focus,
 .users-form-page .ts-wrapper:has(select[aria-invalid="true"]).focus .ts-control {
   box-shadow: 0 0 0 2px rgba(185, 28, 28, 0.14) !important;
+}
+
+.users-form-page .ui-field-error {
+  margin-top: .25rem;
+  color: var(--ui-danger-text, #b91c1c);
+  font-family: "Open Sans", system-ui, sans-serif;
+  font-size: .75rem;
+  font-weight: 400;
+  line-height: 1rem;
+}
+
+.users-form-page .ui-field-error.hidden {
+  display: none;
 }
 
 /* Shared field contract used by report registration and inline correction forms. */
@@ -9811,6 +9979,24 @@ html[data-ui-theme="tamaulipas-salud"] .app-document-surface {
   line-height: 1;
   cursor: pointer;
   transition: color 150ms ease, background-color 150ms ease;
+}
+
+/* Edge agrega un revelador nativo; cuando existe el control compartido se
+   oculta para evitar dos acciones superpuestas dentro del mismo campo. */
+.app-password-input-wrap input[type="password"]::-ms-reveal,
+.app-password-input-wrap input[type="password"]::-ms-clear {
+  display: none;
+  width: 0;
+  height: 0;
+}
+
+/* Edge agrega un revelador nativo; cuando existe el control compartido se
+   oculta para evitar dos acciones superpuestas dentro del mismo campo. */
+.app-password-input-wrap input[type="password"]::-ms-reveal,
+.app-password-input-wrap input[type="password"]::-ms-clear {
+  display: none;
+  width: 0;
+  height: 0;
 }
 
 .users-form-page .app-password-visibility,

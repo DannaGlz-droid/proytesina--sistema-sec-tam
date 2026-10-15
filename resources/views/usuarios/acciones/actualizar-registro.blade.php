@@ -5,17 +5,14 @@
     @include('components.header-admin')
     @include('components.nav-usuario')
 
-    <div class="users-form-page px-4 sm:px-6 lg:px-10 pt-6 lg:pt-8 pb-8 lg:pb-10">
-        <x-ui.page-header
-            title="Editar usuario"
-            description="Actualice la información y los permisos de acceso de esta cuenta."
-            :back-href="$returnToProfile ? route('usuario.miperfil') : route('user.user-gestion')"
-            :back-label="$returnToProfile ? 'Volver a Mi perfil' : 'Volver a gestión de usuarios'"
-            :prefer-history-back="true"
-        />
-
-        <div class="users-form-card">
-            <form action="{{ route('user.update', $user->id) }}" method="POST" id="userEditForm">
+    <x-ui.form.page
+        title="Editar usuario"
+        description="Actualice la información y los permisos de acceso de esta cuenta."
+        :back-href="$returnToProfile ? route('usuario.miperfil') : route('user.user-gestion')"
+        :back-label="$returnToProfile ? 'Volver a Mi perfil' : 'Volver a gestión de usuarios'"
+        :prefer-history-back="true"
+    >
+            <form action="{{ route('user.update', $user->id) }}" method="POST" id="userEditForm" novalidate data-ui-inline-validation>
                 @csrf
                 @method('PUT')
                 @if($returnToProfile)
@@ -68,7 +65,7 @@
                 <x-ui.form.section title="Información laboral" icon="work">
                     <div>
                         <label for="position_select" class="block">Cargo <span class="text-red-600">*</span></label>
-                        <select id="position_select" class="tomselect-select" name="position_id" required @error('position_id') aria-invalid="true" aria-describedby="position-error" @enderror>
+                        <select id="position_select" class="tomselect-select" name="position_id" data-placeholder="Seleccione un cargo" data-validation-required-message="Seleccione un cargo." required @error('position_id') aria-invalid="true" aria-describedby="position-error" @enderror>
                             <option value="">Seleccione un cargo</option>
                             @foreach($positions ?? [] as $position)
                                 <option value="{{ $position->id }}" @selected((string) old('position_id', $user->position_id) === (string) $position->id)>
@@ -81,7 +78,7 @@
 
                     <div>
                         <label for="district_id" class="block">Distrito <span class="text-red-600">*</span></label>
-                        <select id="district_id" class="tomselect-select" name="district_id" required @error('district_id') aria-invalid="true" aria-describedby="district-error" @enderror>
+                        <select id="district_id" class="tomselect-select" name="district_id" data-placeholder="Seleccione un distrito" data-validation-required-message="Seleccione un distrito." required @error('district_id') aria-invalid="true" aria-describedby="district-error" @enderror>
                             <option value="">Seleccione un distrito</option>
                             @foreach($districts ?? [] as $district)
                                 <option value="{{ $district->id }}" @selected((string) old('district_id', $user->district_id) === (string) $district->id)>
@@ -100,14 +97,14 @@
                         <label for="username" class="block">Usuario <span class="text-red-600">*</span></label>
                         <input id="username" name="username" type="text" required minlength="3" maxlength="50" @error('username') aria-invalid="true" aria-describedby="username-error" @enderror
                             pattern="[a-zA-Z0-9_.-]+" autocomplete="username"
-                            placeholder="Ej: mgarcia" value="{{ old('username', $user->username) }}">
+                            placeholder="Ej: maria.garcia" value="{{ old('username', $user->username) }}">
                         @error('username') <p id="username-error" class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
                     </div>
 
                     <div class="grid grid-cols-1 sm:grid-cols-[minmax(0,2fr)_minmax(8rem,1fr)] gap-3">
                         <div>
                             <label for="role_id" class="block">Rol <span class="text-red-600">*</span></label>
-                            <select id="role_id" class="tomselect-select" name="role_id" required @error('role_id') aria-invalid="true" aria-describedby="role-error" @enderror>
+                            <select id="role_id" class="tomselect-select" name="role_id" data-placeholder="Seleccione un rol" data-validation-required-message="Seleccione un rol." required @error('role_id') aria-invalid="true" aria-describedby="role-error" @enderror>
                                 <option value="">Seleccione un rol</option>
                                 @foreach($roles ?? [] as $role)
                                     <option value="{{ $role->id }}" data-role-name="{{ mb_strtolower(trim($role->name), 'UTF-8') }}" @selected((string) old('role_id', $user->role_id) === (string) $role->id)>
@@ -166,8 +163,7 @@
                     secondaryType="button"
                 />
             </form>
-        </div>
-    </div>
+    </x-ui.form.page>
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
@@ -287,8 +283,8 @@
                 form.querySelectorAll('[data-server-error]').forEach((error) => error.remove());
             };
 
-            form.addEventListener('submit', () => {
-                navigationState.submitting = true;
+            form.addEventListener('submit', (event) => {
+                if (!event.defaultPrevented) navigationState.submitting = true;
             });
 
             document.addEventListener('click', async (event) => {

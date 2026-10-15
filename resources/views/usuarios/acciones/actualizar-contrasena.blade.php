@@ -54,7 +54,7 @@
                     <div class="space-y-3">
                         <div>
                             <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Nueva contraseña *</label>
-                            <div class="relative">
+                            <div class="relative app-password-input-wrap">
                     <input type="password" 
                         id="password"
                         name="password"
@@ -79,7 +79,7 @@
                     <div class="space-y-3">
                         <div>
                             <label class="block text-xs lg:text-sm font-medium text-[#404041] mb-1 font-lora">Confirmar contraseña *</label>
-                            <div class="relative">
+                            <div class="relative app-password-input-wrap">
                     <input type="password" 
                         id="password_confirmation"
                         name="password_confirmation"

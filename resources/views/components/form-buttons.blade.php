@@ -52,11 +52,14 @@
     @endif
     
     <!-- Botón primario -->
-    <button type="{{ $primaryType }}" 
-            class="ui-button ui-button--primary">
+    <button type="{{ $primaryType }}"
+            class="ui-button ui-button--primary"
+            data-ui-submit-button
+            data-loading-text="Guardando…">
         @if($primaryIcon)
-            <i class="fas {{ $primaryIcon }} text-xs"></i>
+            <i class="fas {{ $primaryIcon }} text-xs" data-ui-submit-icon aria-hidden="true"></i>
         @endif
-        {{ $primaryText }}
+        <i class="fas fa-spinner fa-spin text-xs" data-ui-submit-spinner aria-hidden="true" hidden></i>
+        <span data-ui-submit-label>{{ $primaryText }}</span>
     </button>
 </div>

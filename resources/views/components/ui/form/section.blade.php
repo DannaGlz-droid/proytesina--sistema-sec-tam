@@ -12,7 +12,7 @@
     };
 @endphp
 
-<section {{ $attributes->merge(['class' => 'users-form-section mb-6 lg:mb-8']) }}>
+<section {{ $attributes->merge(['class' => 'ui-form-section users-form-section mb-6 lg:mb-8']) }}>
     <div class="users-form-section-header flex items-center mb-4">
         <i class="{{ $iconClass }}" aria-hidden="true"></i>
         <h2>{{ $title }}</h2>

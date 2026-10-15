@@ -40,7 +40,7 @@
                         <label for="user-password-new">Nueva contraseña <span>*</span></label>
                         <span id="user-password-dialog-strength" data-level="empty" aria-live="polite">Sin evaluar</span>
                     </div>
-                    <div class="user-password-dialog-input-wrap">
+                    <div class="user-password-dialog-input-wrap app-password-input-wrap">
                         <input id="user-password-new" name="password" type="password" required minlength="12" maxlength="255" autocomplete="new-password" placeholder="Ingrese la nueva contraseña">
                         <button type="button" class="app-password-visibility user-password-dialog-visibility" data-password-toggle="user-password-new" aria-label="Mostrar contraseña" title="Mostrar contraseña">
                             <i class="far fa-eye" aria-hidden="true"></i>
@@ -60,7 +60,7 @@
 
                 <div class="user-password-dialog-field">
                     <label for="user-password-confirm">Confirmar contraseña <span>*</span></label>
-                    <div class="user-password-dialog-input-wrap">
+                    <div class="user-password-dialog-input-wrap app-password-input-wrap">
                         <input id="user-password-confirm" name="password_confirmation" type="password" required minlength="12" maxlength="255" autocomplete="new-password" placeholder="Confirme la nueva contraseña">
                         <button type="button" class="app-password-visibility user-password-dialog-visibility" data-password-toggle="user-password-confirm" aria-label="Mostrar contraseña" title="Mostrar contraseña">
                             <i class="far fa-eye" aria-hidden="true"></i>
