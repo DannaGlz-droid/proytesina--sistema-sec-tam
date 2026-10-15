@@ -104,7 +104,6 @@
 }
 
 .statistics-death-form-page .ui-button--primary:disabled {
-  cursor: wait;
   opacity: .72;
 }
 

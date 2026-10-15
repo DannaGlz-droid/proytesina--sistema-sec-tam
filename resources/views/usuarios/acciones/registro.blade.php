@@ -23,7 +23,7 @@
                                 <input id="name" name="name" type="text" required minlength="2" maxlength="191" @error('name') aria-invalid="true" aria-describedby="name-error" @enderror
                                     placeholder="Ej: María Elena"
                                     value="{{ old('name') }}">
-                                @error('name') <p id="name-error" class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
+                                @error('name') <p id="name-error" class="text-xs text-red-600 mt-1" data-server-error role="alert">{{ $message }}</p> @enderror
                             </div>
 
                             <div>
@@ -31,7 +31,7 @@
                                 <input id="first_last_name" name="first_last_name" type="text" required minlength="2" maxlength="191" @error('first_last_name') aria-invalid="true" aria-describedby="first-last-name-error" @enderror
                                     placeholder="Ej: García"
                                     value="{{ old('first_last_name') }}">
-                                @error('first_last_name') <p id="first-last-name-error" class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
+                                @error('first_last_name') <p id="first-last-name-error" class="text-xs text-red-600 mt-1" data-server-error role="alert">{{ $message }}</p> @enderror
                             </div>
 
                             <div>
@@ -39,7 +39,7 @@
                                 <input id="second_last_name" name="second_last_name" type="text" minlength="2" maxlength="191" @error('second_last_name') aria-invalid="true" aria-describedby="second-last-name-error" @enderror
                                     placeholder="Ej: López"
                                     value="{{ old('second_last_name') }}">
-                                @error('second_last_name') <p id="second-last-name-error" class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
+                                @error('second_last_name') <p id="second-last-name-error" class="text-xs text-red-600 mt-1" data-server-error role="alert">{{ $message }}</p> @enderror
                             </div>
 
                             <div>
@@ -49,14 +49,14 @@
                                         <input id="email" name="email" type="email" required maxlength="255" autocomplete="email" @error('email') aria-invalid="true" aria-describedby="email-error" @enderror
                                             placeholder="Ej: usuario@ejemplo.com"
                                             value="{{ old('email') }}">
-                                        @error('email') <p id="email-error" class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
+                                        @error('email') <p id="email-error" class="text-xs text-red-600 mt-1" data-server-error role="alert">{{ $message }}</p> @enderror
                                     </div>
                                     <div>
                                         <label for="phone" class="block">Teléfono</label>
                                         <input id="phone" name="phone" type="tel" maxlength="10" pattern="[0-9]{10}" inputmode="numeric" autocomplete="tel" title="Capture exactamente 10 dígitos, sin espacios ni guiones" @error('phone') aria-invalid="true" aria-describedby="phone-error" @enderror
                                             placeholder="10 dígitos, sin espacios"
                                             value="{{ old('phone') }}">
-                                        @error('phone') <p id="phone-error" class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
+                                        @error('phone') <p id="phone-error" class="text-xs text-red-600 mt-1" data-server-error role="alert">{{ $message }}</p> @enderror
                                     </div>
                                 </div>
                             </div>
@@ -78,7 +78,7 @@
                                             @endforeach
                                         @endif
                                     </select>
-                                    @error('position_id') <p id="position-error" class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
+                                    @error('position_id') <p id="position-error" class="text-xs text-red-600 mt-1" data-server-error role="alert">{{ $message }}</p> @enderror
                                 </div>
                             </div>
                             
@@ -93,7 +93,7 @@
                                             @endforeach
                                         @endif
                                     </select>
-                                    @error('district_id') <p id="district-error" class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
+                                    @error('district_id') <p id="district-error" class="text-xs text-red-600 mt-1" data-server-error role="alert">{{ $message }}</p> @enderror
                                 </div>
                             </div>
                     </x-ui.form.section>
@@ -108,7 +108,7 @@
                                 <input id="username" name="username" type="text" required minlength="3" maxlength="50" pattern="[a-zA-Z0-9_.-]+" @error('username') aria-invalid="true" aria-describedby="username-error" @enderror
                                     placeholder="Ej: maria.garcia"
                                     value="{{ old('username') }}">
-                                @error('username') <p id="username-error" class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
+                                @error('username') <p id="username-error" class="text-xs text-red-600 mt-1" data-server-error role="alert">{{ $message }}</p> @enderror
                             </div>
 
                             <div>
@@ -121,7 +121,7 @@
                                         @endforeach
                                     @endif
                                 </select>
-                                @error('role_id') <p id="role-error" class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
+                                @error('role_id') <p id="role-error" class="text-xs text-red-600 mt-1" data-server-error role="alert">{{ $message }}</p> @enderror
                             </div>
 
                             <div>
@@ -141,7 +141,7 @@
                                             <i class="far fa-eye" aria-hidden="true"></i>
                                         </button>
                                     </div>
-                                    @error('password') <p id="password-error" class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
+                                    @error('password') <p id="password-error" class="text-xs text-red-600 mt-1" data-server-error role="alert">{{ $message }}</p> @enderror
                                     <div id="password-strength-track" class="users-password-meter-track" role="progressbar"
                                         aria-label="Fortaleza de la contrase&ntilde;a" aria-valuemin="0" aria-valuemax="5" aria-valuenow="0">
                                         <div id="password-strength-bar" data-level="empty"></div>
@@ -182,7 +182,7 @@
                                             <i class="far fa-eye" aria-hidden="true"></i>
                                         </button>
                                     </div>
-                                    @error('password_confirmation') <p id="password-confirmation-error" class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
+                                    @error('password_confirmation') <p id="password-confirmation-error" class="text-xs text-red-600 mt-1" data-server-error role="alert">{{ $message }}</p> @enderror
                                     <div class="users-password-confirm-tools">
                                         <span id="password-match-status" data-status="empty" aria-live="polite">
                                             <i class="far fa-circle" aria-hidden="true"></i>
@@ -285,12 +285,12 @@
             password = secureShuffle(password);
             
             // Establecer en ambos campos
-            document.getElementById('password').value = password;
-            document.getElementById('password_confirmation').value = password;
-            
-            // Actualizar indicador de fortaleza
-            checkPasswordStrength(password);
-            checkPasswordMatch();
+            const passwordField = document.getElementById('password');
+            const confirmationField = document.getElementById('password_confirmation');
+            passwordField.value = password;
+            confirmationField.value = password;
+            passwordField.dispatchEvent(new Event('input', { bubbles: true }));
+            confirmationField.dispatchEvent(new Event('input', { bubbles: true }));
         }
 
         // Función para verificar fortaleza de contraseña
@@ -530,77 +530,4 @@
         });
     </script>
 
-    <!-- Script para convertir errores de Laravel en tooltips HTML5 -->
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            @if($errors->any())
-                const errors = @json($errors->messages());
-                
-                // Mapear nombres de campos a sus IDs en el DOM
-                const fieldMap = {
-                    'name': 'name',
-                    'first_last_name': 'first_last_name',
-                    'second_last_name': 'second_last_name',
-                    'email': 'email',
-                    'phone': 'phone',
-                    'username': 'username',
-                    'password': 'password',
-                    'password_confirmation': 'password_confirmation',
-                    'role_id': 'role_id',
-                    'position_id': 'position_select',
-                    'district_id': 'district_id'
-                };
-
-                // Aplicar setCustomValidity a cada campo con error
-                Object.keys(errors).forEach(fieldName => {
-                    const fieldId = fieldMap[fieldName];
-                    if (fieldId) {
-                        const field = document.getElementById(fieldId);
-                        if (field && errors[fieldName][0]) {
-                            field.setCustomValidity(errors[fieldName][0]);
-                        }
-                    }
-                });
-
-                // Scroll al primer campo con error
-                const firstErrorField = Object.keys(errors)[0];
-                if (firstErrorField && fieldMap[firstErrorField]) {
-                    const field = document.getElementById(fieldMap[firstErrorField]);
-                    if (field) {
-                        field.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                        field.focus();
-                    }
-                }
-            @endif
-
-            // Limpiar validación personalizada cuando el usuario empieza a escribir
-            const allInputs = document.querySelectorAll('input, select');
-            allInputs.forEach(input => {
-                input.addEventListener('input', function() {
-                    this.setCustomValidity('');
-                });
-            });
-
-            // Validación personalizada: coincidencia de contraseñas
-            const passwordField = document.getElementById('password');
-            const confirmPasswordField = document.getElementById('password_confirmation');
-            
-            if (passwordField && confirmPasswordField) {
-                confirmPasswordField.addEventListener('input', function() {
-                    if (this.value !== passwordField.value) {
-                        this.setCustomValidity('Las contraseñas no coinciden');
-                    } else {
-                        this.setCustomValidity('');
-                    }
-                });
-
-                passwordField.addEventListener('input', function() {
-                    // Re-validar confirmación cuando se cambia la contraseña
-                    if (confirmPasswordField.value) {
-                        confirmPasswordField.dispatchEvent(new Event('input'));
-                    }
-                });
-            }
-        });
-    </script>
 @endsection

@@ -4,6 +4,7 @@
     'backHref' => null,
     'backLabel' => null,
     'preferHistoryBack' => false,
+    'historyBackScope' => null,
 ])
 
 <div {{ $attributes->class(['app-page-header', 'users-form-header']) }}>
@@ -11,7 +12,8 @@
         @if($backHref && $backLabel)
             <a href="{{ $backHref }}"
                class="users-form-back-link"
-               @if($preferHistoryBack) data-history-back="true" @endif>
+               @if($preferHistoryBack) data-history-back="true" @endif
+               @if($historyBackScope) data-history-back-scope="{{ $historyBackScope }}" @endif>
                 <i class="fas fa-arrow-left" aria-hidden="true"></i>
                 <span>{{ $backLabel }}</span>
             </a>

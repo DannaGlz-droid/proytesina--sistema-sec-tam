@@ -24,21 +24,21 @@
                         <label for="name" class="block">Nombre(s) <span class="text-red-600">*</span></label>
                         <input id="name" name="name" type="text" required minlength="2" maxlength="191" @error('name') aria-invalid="true" aria-describedby="name-error" @enderror
                             placeholder="Ej: María Elena" value="{{ old('name', $user->name) }}">
-                        @error('name') <p id="name-error" class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
+                        @error('name') <p id="name-error" class="text-xs text-red-600 mt-1" data-server-error role="alert">{{ $message }}</p> @enderror
                     </div>
 
                     <div>
                         <label for="first_last_name" class="block">Apellido paterno <span class="text-red-600">*</span></label>
                         <input id="first_last_name" name="first_last_name" type="text" required minlength="2" maxlength="191" @error('first_last_name') aria-invalid="true" aria-describedby="first-last-name-error" @enderror
                             placeholder="Ej: García" value="{{ old('first_last_name', $user->first_last_name) }}">
-                        @error('first_last_name') <p id="first-last-name-error" class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
+                        @error('first_last_name') <p id="first-last-name-error" class="text-xs text-red-600 mt-1" data-server-error role="alert">{{ $message }}</p> @enderror
                     </div>
 
                     <div>
                         <label for="second_last_name" class="block">Apellido materno</label>
                         <input id="second_last_name" name="second_last_name" type="text" minlength="2" maxlength="191" @error('second_last_name') aria-invalid="true" aria-describedby="second-last-name-error" @enderror
                             placeholder="Ej: López" value="{{ old('second_last_name', $user->second_last_name) }}">
-                        @error('second_last_name') <p id="second-last-name-error" class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
+                        @error('second_last_name') <p id="second-last-name-error" class="text-xs text-red-600 mt-1" data-server-error role="alert">{{ $message }}</p> @enderror
                     </div>
 
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -46,7 +46,7 @@
                             <label for="email" class="block">Correo electrónico <span class="text-red-600">*</span></label>
                             <input id="email" name="email" type="email" required maxlength="255" autocomplete="email" @error('email') aria-invalid="true" aria-describedby="email-error" @enderror
                                 placeholder="Ej: usuario@ejemplo.com" value="{{ old('email', $user->email) }}">
-                            @error('email') <p id="email-error" class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
+                            @error('email') <p id="email-error" class="text-xs text-red-600 mt-1" data-server-error role="alert">{{ $message }}</p> @enderror
                         </div>
 
                         <div>
@@ -55,7 +55,7 @@
                                 inputmode="numeric" autocomplete="tel"
                                 title="Capture exactamente 10 dígitos, sin espacios ni guiones"
                                 placeholder="10 dígitos, sin espacios" value="{{ old('phone', $user->phone) }}">
-                            @error('phone') <p id="phone-error" class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
+                            @error('phone') <p id="phone-error" class="text-xs text-red-600 mt-1" data-server-error role="alert">{{ $message }}</p> @enderror
                         </div>
                     </div>
                 </x-ui.form.section>
@@ -73,7 +73,7 @@
                                 </option>
                             @endforeach
                         </select>
-                        @error('position_id') <p id="position-error" class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
+                        @error('position_id') <p id="position-error" class="text-xs text-red-600 mt-1" data-server-error role="alert">{{ $message }}</p> @enderror
                     </div>
 
                     <div>
@@ -86,7 +86,7 @@
                                 </option>
                             @endforeach
                         </select>
-                        @error('district_id') <p id="district-error" class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
+                        @error('district_id') <p id="district-error" class="text-xs text-red-600 mt-1" data-server-error role="alert">{{ $message }}</p> @enderror
                     </div>
                 </x-ui.form.section>
 
@@ -98,7 +98,7 @@
                         <input id="username" name="username" type="text" required minlength="3" maxlength="50" @error('username') aria-invalid="true" aria-describedby="username-error" @enderror
                             pattern="[a-zA-Z0-9_.-]+" autocomplete="username"
                             placeholder="Ej: maria.garcia" value="{{ old('username', $user->username) }}">
-                        @error('username') <p id="username-error" class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
+                        @error('username') <p id="username-error" class="text-xs text-red-600 mt-1" data-server-error role="alert">{{ $message }}</p> @enderror
                     </div>
 
                     <div class="grid grid-cols-1 sm:grid-cols-[minmax(0,2fr)_minmax(8rem,1fr)] gap-3">
@@ -112,7 +112,7 @@
                                     </option>
                                 @endforeach
                             </select>
-                            @error('role_id') <p id="role-error" class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
+                            @error('role_id') <p id="role-error" class="text-xs text-red-600 mt-1" data-server-error role="alert">{{ $message }}</p> @enderror
                         </div>
 
                         <div>
@@ -121,7 +121,7 @@
                                 <option value="1" @selected((string) old('is_active', (int) $user->is_active) === '1')>Activo</option>
                                 <option value="0" @selected((string) old('is_active', (int) $user->is_active) === '0')>Inactivo</option>
                             </select>
-                            @error('is_active') <p id="status-error" class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
+                            @error('is_active') <p id="status-error" class="text-xs text-red-600 mt-1" data-server-error role="alert">{{ $message }}</p> @enderror
                         </div>
                     </div>
 
@@ -139,6 +139,7 @@
                                 type="checkbox"
                                 value="1"
                                 @checked($isSystemContactSelected)
+                                @error('is_system_contact') aria-invalid="true" aria-describedby="system-contact-error" @enderror
                             >
                             <span class="user-system-contact-check" aria-hidden="true">
                                 <i class="fas fa-check"></i>
@@ -148,7 +149,7 @@
                                 <small id="systemContactDescription">{{ $isSystemContactSelected ? 'Esta cuenta proporciona el contacto mostrado en Mi perfil.' : 'Usar los datos de esta cuenta en la ayuda de Mi perfil; reemplazará al responsable anterior.' }}</small>
                             </span>
                         </label>
-                        @error('is_system_contact') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
+                        @error('is_system_contact') <p id="system-contact-error" class="text-xs text-red-600 mt-1" data-server-error role="alert">{{ $message }}</p> @enderror
                     </div>
                 </x-ui.form.section>
 
@@ -267,6 +268,7 @@
 
             window.resetUserEditForm = async (event) => {
                 event?.preventDefault();
+                const hadChanges = hasUnsavedChanges();
 
                 const shouldReset = await confirmDiscardChanges({
                     question: '¿Deseas restablecer los cambios?',
@@ -281,6 +283,10 @@
                 form.reset();
                 selects.forEach((select) => select.tomselect.setValue(select.dataset.initialValue, true));
                 form.querySelectorAll('[data-server-error]').forEach((error) => error.remove());
+                if (hadChanges) {
+                    if (window.AppToast?.info) window.AppToast.info('Cambios restablecidos.');
+                    else window.showToast?.('Cambios restablecidos.', 'info', 4000);
+                }
             };
 
             form.addEventListener('submit', (event) => {

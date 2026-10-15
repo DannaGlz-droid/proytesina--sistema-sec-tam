@@ -136,6 +136,9 @@ function init(target, options = {}) {
             remove_button: { title: 'Eliminar esta selección' },
         } : {}),
         ...options,
+        // Los menús cortos no muestran un buscador permanente, pero deben
+        // conservar la búsqueda incremental por teclado (p. ej. "fem").
+        searchField: searchable ? (options.searchField ?? ['text']) : ['text'],
         onBlur: function () {
             resetClosedMultiSelectScroll(this);
             customOnBlur?.call(this);

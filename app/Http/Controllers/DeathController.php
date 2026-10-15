@@ -319,6 +319,8 @@ class DeathController extends Controller
             'death_location_id' => ['required','integer','exists:death_locations,id'],
             'death_cause_id' => $this->allowedDeathCauseValidationRules(),
             'death_date' => ['required','date','before_or_equal:today'],
+        ], [
+            'gov_folio.unique' => 'Este folio ya está registrado.',
         ]);
 
         // Normalize sex values to short form if possible
@@ -458,6 +460,8 @@ class DeathController extends Controller
             'death_location_id' => ['required','integer','exists:death_locations,id'],
             'death_cause_id' => $this->allowedDeathCauseValidationRules(),
             'death_date' => ['required','date','before_or_equal:today'],
+        ], [
+            'gov_folio.unique' => 'Este folio ya está registrado.',
         ]);
 
         // Normalize sex values to short form if possible
@@ -719,6 +723,13 @@ class DeathController extends Controller
     {
         // Delete the specified death record
         $death->delete();
+
+        if ($request->expectsJson() || $request->ajax()) {
+            return response()->json([
+                'ok' => true,
+                'message' => 'El registro de defunción se eliminó correctamente.',
+            ]);
+        }
 
         return Redirect::route('statistic.data')->with('success', 'Registro de defunción eliminado correctamente.');
     }

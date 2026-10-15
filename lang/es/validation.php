@@ -12,6 +12,7 @@ return [
     'required' => 'El campo :attribute es obligatorio.',
     'string' => 'El campo :attribute debe ser texto.',
     'confirmed' => 'La confirmación de :attribute no coincide.',
+    'unique' => 'El valor de :attribute ya está registrado.',
 
     'attributes' => [
         'login' => 'usuario o correo',

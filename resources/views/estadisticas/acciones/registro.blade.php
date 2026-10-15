@@ -28,14 +28,23 @@
         $selectedAgeValue = old('edad_valor', '');
         $selectedAgeUnit = (string) old('edad_unidad', '');
         $selectedDeathDate = old('death_date', '');
+
+        $statisticsDataPath = parse_url(route('statistic.data'), PHP_URL_PATH);
+        $requestedReturnTo = request('return_to');
+        $statisticsReturnUrl = is_string($requestedReturnTo)
+            && str_starts_with($requestedReturnTo, '/')
+            && parse_url($requestedReturnTo, PHP_URL_PATH) === $statisticsDataPath
+                ? $requestedReturnTo
+                : route('statistic.data');
     @endphp
 
     <x-ui.form.page
         title="Registrar defunción"
         description="Complete la información de la persona y los datos de la defunción."
-        :back-href="route('statistic.data')"
+        :back-href="$statisticsReturnUrl"
         back-label="Volver a datos de defunciones"
         :prefer-history-back="true"
+        history-back-scope="deaths"
         page-class="statistics-death-form-page"
     >
             <form id="death-register-form" method="POST" action="{{ route('statistic.store') }}" novalidate data-ui-inline-validation>

@@ -45,6 +45,34 @@ for (const example of forms) {
     });
 }
 
+test('los selects cortos permiten elegir por escritura y Enter', async ({ page }) => {
+    await page.goto('/estadisticas/registro');
+
+    await page.locator('#sex').evaluate((select) => {
+        if (select.tomselect) {
+            select.tomselect.focus();
+            select.tomselect.open();
+        } else {
+            select.focus();
+        }
+    });
+    await page.keyboard.type('fem');
+    await page.keyboard.press('Enter');
+    await expect(page.locator('#sex')).toHaveValue('femenino');
+
+    await page.locator('#edad_unidad').evaluate((select) => {
+        if (select.tomselect) {
+            select.tomselect.focus();
+            select.tomselect.open();
+        } else {
+            select.focus();
+        }
+    });
+    await page.keyboard.type('mes');
+    await page.keyboard.press('Enter');
+    await expect(page.locator('#edad_unidad')).toHaveValue('meses');
+});
+
 test('un envío válido de usuario muestra el spinner y el estado compartido Guardando', async ({ page }) => {
     await page.goto('/usuario/gestion-de-usuarios/registro');
 
@@ -67,6 +95,10 @@ test('un envío válido de usuario muestra el spinner y el estado compartido Gua
     await expect(form).toHaveAttribute('aria-busy', 'true');
     await expect(submit).toBeDisabled();
     await expect(submit).toHaveAttribute('aria-busy', 'true');
-    await expect(submit.locator('[data-ui-submit-spinner]')).toBeVisible();
+    await expect(submit).toHaveCSS('cursor', 'wait');
+    const spinner = submit.locator('[data-ui-submit-spinner]');
+    await expect(spinner).not.toHaveAttribute('hidden', '');
+    await expect(spinner).toHaveClass(/fa-spin/);
     await expect(submit.locator('[data-ui-submit-label]')).toHaveText('Guardando…');
 });
+

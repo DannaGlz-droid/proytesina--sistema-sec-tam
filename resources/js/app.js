@@ -194,15 +194,15 @@ function canReturnThroughHistory(targetHref) {
     }
 }
 
-function usersTableRestoreIntentKey() {
+function tableRestoreIntentKey(tableScope = 'users') {
     const scope = document.documentElement.dataset.authStorageScope || 'guest';
-    return `sistema-sec-tam.users-table-restore-intent.v1.${scope}`;
+    return `sistema-sec-tam.${tableScope}-table-restore-intent.v1.${scope}`;
 }
 
-function markUsersTableHistoryReturn(targetHref) {
+function markTableHistoryReturn(targetHref, tableScope = 'users') {
     try {
         const targetUrl = new URL(targetHref, window.location.href);
-        sessionStorage.setItem(usersTableRestoreIntentKey(), JSON.stringify({
+        sessionStorage.setItem(tableRestoreIntentKey(tableScope), JSON.stringify({
             target: `${targetUrl.pathname}${targetUrl.search}`,
             createdAt: Date.now(),
         }));
@@ -225,22 +225,24 @@ function isPlainPrimaryNavigation(event, link) {
 window.addEventListener('pageshow', (event) => {
     if (!event.persisted) return;
 
-    try {
-        const restoreIntentKey = usersTableRestoreIntentKey();
-        const restoreIntent = JSON.parse(sessionStorage.getItem(restoreIntentKey) || 'null');
-        const currentTarget = `${window.location.pathname}${window.location.search}`;
+    ['users', 'deaths'].forEach((tableScope) => {
+        try {
+            const restoreIntentKey = tableRestoreIntentKey(tableScope);
+            const restoreIntent = JSON.parse(sessionStorage.getItem(restoreIntentKey) || 'null');
+            const currentTarget = `${window.location.pathname}${window.location.search}`;
 
-        if (restoreIntent?.target === currentTarget) {
-            sessionStorage.removeItem(restoreIntentKey);
+            if (restoreIntent?.target === currentTarget) {
+                sessionStorage.removeItem(restoreIntentKey);
+            }
+        } catch (error) {
+            try { sessionStorage.removeItem(tableRestoreIntentKey(tableScope)); } catch (storageError) {}
         }
-    } catch (error) {
-        try { sessionStorage.removeItem(usersTableRestoreIntentKey()); } catch (storageError) {}
-    }
+    });
 });
 
 window.navigateBackOrVisit = function navigateBackOrVisit(targetHref) {
     if (canReturnThroughHistory(targetHref)) {
-        markUsersTableHistoryReturn(targetHref);
+        markTableHistoryReturn(targetHref);
         window.history.back();
         return;
     }
@@ -251,7 +253,18 @@ window.navigateBackOrVisit = function navigateBackOrVisit(targetHref) {
 document.addEventListener('click', (event) => {
     const preserveLink = event.target.closest('a[data-users-table-return]');
     if (preserveLink && isPlainPrimaryNavigation(event, preserveLink)) {
-        markUsersTableHistoryReturn(preserveLink.dataset.usersTableReturn);
+        markTableHistoryReturn(preserveLink.dataset.usersTableReturn);
+    }
+
+    const preserveDeathsLink = event.target.closest('a[data-deaths-table-return]');
+    if (preserveDeathsLink && isPlainPrimaryNavigation(event, preserveDeathsLink)) {
+        const returnUrl = new URL(preserveDeathsLink.dataset.deathsTableReturn, window.location.href);
+        const destinationUrl = new URL(preserveDeathsLink.href, window.location.href);
+        const currentReturnTarget = `${window.location.pathname}${window.location.search}`;
+
+        destinationUrl.searchParams.set('return_to', currentReturnTarget);
+        preserveDeathsLink.href = destinationUrl.toString();
+        markTableHistoryReturn(`${returnUrl.pathname}${window.location.search}`, 'deaths');
     }
 
     const link = event.target.closest('a[data-history-back="true"]');
@@ -263,7 +276,8 @@ document.addEventListener('click', (event) => {
     }
 
     event.preventDefault();
-    markUsersTableHistoryReturn(link.href);
+    const historyScope = link.dataset.historyBackScope || 'users';
+    markTableHistoryReturn(link.href, historyScope);
     window.history.back();
 });
 

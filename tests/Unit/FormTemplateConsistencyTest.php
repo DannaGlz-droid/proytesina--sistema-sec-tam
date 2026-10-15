@@ -67,3 +67,16 @@ it('keeps one password visibility control in Edge', function (): void {
         ->and($styles)->toContain('.app-password-input-wrap input[type="password"]::-ms-reveal')
         ->and($styles)->toContain('.app-password-input-wrap input[type="password"]::-ms-clear');
 });
+
+it('marks death form navigation to restore the originating table context', function (): void {
+    $data = projectView('estadisticas/datos.blade.php');
+    $actions = projectView('estadisticas/partials/table-actions.blade.php');
+    $create = projectView('estadisticas/acciones/registro.blade.php');
+    $edit = projectView('estadisticas/acciones/actualizar-registro.blade.php');
+
+    expect($data)->toContain('data-deaths-table-return=')
+        ->toContain('deaths-table-context.v1.')
+        ->and($actions)->toContain('data-deaths-table-return=')
+        ->and($create)->toContain('history-back-scope="deaths"')
+        ->and($edit)->toContain('history-back-scope="deaths"');
+});

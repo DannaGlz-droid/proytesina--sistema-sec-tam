@@ -10298,6 +10298,11 @@ html[data-ui-theme="tamaulipas-salud"] .app-document-surface {
   opacity: 0.58;
 }
 
+/* A busy submit is processing, not unavailable. */
+.ui-button[data-ui-submit-button][aria-busy="true"]:disabled {
+  cursor: wait;
+}
+
 .app-page-header {
   display: flex;
   align-items: flex-start;

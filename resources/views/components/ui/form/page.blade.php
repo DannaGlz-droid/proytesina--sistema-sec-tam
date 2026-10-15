@@ -4,6 +4,7 @@
     'backHref' => null,
     'backLabel' => null,
     'preferHistoryBack' => false,
+    'historyBackScope' => null,
     'pageClass' => null,
     'cardClass' => null,
 ])
@@ -20,6 +21,7 @@
         :back-href="$backHref"
         :back-label="$backLabel"
         :prefer-history-back="$preferHistoryBack"
+        :history-back-scope="$historyBackScope"
     >
         @isset($headerActions)
             <x-slot:actions>

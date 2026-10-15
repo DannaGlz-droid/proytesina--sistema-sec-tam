@@ -3,12 +3,16 @@
         <i class="fas fa-ellipsis-v" aria-hidden="true"></i>
     </button>
     <div class="users-row-menu hidden" role="menu">
-        <a href="{{ route('statistic.edit', $death->id) }}" class="users-row-menu-item" role="menuitem">
+        <a href="{{ route('statistic.edit', $death->id) }}"
+           class="users-row-menu-item"
+           role="menuitem"
+           data-deaths-table-return="{{ route('statistic.data') }}">
             <i class="fas fa-edit users-row-menu-icon" aria-hidden="true"></i>
             <span>Editar</span>
         </a>
         <form method="POST"
               action="{{ route('statistic.destroy', $death->id) }}"
+              class="js-delete-death-form"
               data-confirm-delete-form
               data-confirm-title="Eliminar registro"
               data-confirm-subject="el registro {{ $death->id }}"

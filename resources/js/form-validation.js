@@ -77,10 +77,20 @@ function errorElement(field) {
 
 function clearServerError(field) {
     const describedBy = (field.getAttribute('aria-describedby') || '').split(/\s+/).filter(Boolean);
+    const remainingDescriptions = [];
+
     describedBy.forEach((id) => {
         const error = document.getElementById(id);
-        if (error?.matches('[data-server-error]')) error.remove();
+        if (error?.matches('[data-server-error]')) {
+            error.remove();
+            return;
+        }
+
+        remainingDescriptions.push(id);
     });
+
+    if (remainingDescriptions.length) field.setAttribute('aria-describedby', remainingDescriptions.join(' '));
+    else field.removeAttribute('aria-describedby');
 }
 
 function renderFieldValidity(field) {

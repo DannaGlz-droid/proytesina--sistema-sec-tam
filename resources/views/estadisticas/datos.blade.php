@@ -20,7 +20,9 @@
                     <i class="fas fa-file-arrow-up" aria-hidden="true"></i>
                     <span>Importar Excel</span>
                 </button>
-                <a href="{{ route('statistic.create') }}" class="users-page-create-btn">
+                <a href="{{ route('statistic.create') }}"
+                   class="users-page-create-btn"
+                   data-deaths-table-return="{{ route('statistic.data') }}">
                     <i class="fas fa-plus" aria-hidden="true"></i>
                     Registrar defunción
                 </a>
@@ -576,6 +578,43 @@ document.addEventListener('DOMContentLoaded', function () {
         return;
     }
 
+    const deathsTableStorageScope = '{{ auth()->id() }}';
+    const deathsTableContextKey = `sistema-sec-tam.deaths-table-context.v1.${deathsTableStorageScope}`;
+    const deathsTableRestoreIntentKey = `sistema-sec-tam.deaths-table-restore-intent.v1.${deathsTableStorageScope}`;
+    const deathsRestoreIntentTtl = 30 * 60 * 1000;
+
+    function readDeathsTableContext() {
+        try {
+            return JSON.parse(sessionStorage.getItem(deathsTableContextKey) || '{}');
+        } catch (error) {
+            return {};
+        }
+    }
+
+    function shouldRestoreDeathsTableContext() {
+        try {
+            const intent = JSON.parse(sessionStorage.getItem(deathsTableRestoreIntentKey) || 'null');
+            sessionStorage.removeItem(deathsTableRestoreIntentKey);
+            const currentTarget = `${window.location.pathname}${window.location.search}`;
+            const navigation = window.performance?.getEntriesByType?.('navigation')?.[0];
+            const validIntent = intent
+                && Number.isFinite(intent.createdAt)
+                && Date.now() - intent.createdAt <= deathsRestoreIntentTtl
+                && intent.target === currentTarget;
+
+            return Boolean(validIntent || navigation?.type === 'reload');
+        } catch (error) {
+            try { sessionStorage.removeItem(deathsTableRestoreIntentKey); } catch (storageError) {}
+            return false;
+        }
+    }
+
+    const restoreDeathsTableContext = shouldRestoreDeathsTableContext();
+    const deathsTableContext = restoreDeathsTableContext ? readDeathsTableContext() : {};
+    if (!restoreDeathsTableContext) {
+        try { sessionStorage.removeItem(deathsTableContextKey); } catch (error) {}
+    }
+
     // Get current URL parameters for filters
     const urlParams = new URLSearchParams(window.location.search);
     const filterData = {};
@@ -598,6 +637,10 @@ document.addEventListener('DOMContentLoaded', function () {
         }
         // single value
         filterData[key] = value;
+    }
+
+    if (restoreDeathsTableContext && deathsTableContext.filters && typeof deathsTableContext.filters === 'object') {
+        Object.assign(filterData, deathsTableContext.filters);
     }
 
     function setDeathFilterValue(target, rawKey, value) {
@@ -885,6 +928,38 @@ document.addEventListener('DOMContentLoaded', function () {
         document.getElementById('dt-search-deaths')?.setAttribute('aria-busy', 'false');
     });
 
+    const initialDeathsPageLength = [10, 25, 50, 100].includes(Number(deathsTableContext.pageLength))
+        ? Number(deathsTableContext.pageLength)
+        : 10;
+    const initialDeathsPage = Number.isInteger(Number(deathsTableContext.page)) && Number(deathsTableContext.page) >= 0
+        ? Number(deathsTableContext.page)
+        : 0;
+    const initialDeathsSearch = typeof deathsTableContext.search === 'string'
+        ? deathsTableContext.search
+        : '';
+    const savedDeathsOrder = Array.isArray(deathsTableContext.order) && deathsTableContext.order.length
+        ? deathsTableContext.order
+        : [[3, 'desc']];
+
+    function saveDeathsTableContext(api) {
+        try {
+            const info = api.page.info();
+            sessionStorage.setItem(deathsTableContextKey, JSON.stringify({
+                page: info.page,
+                pageLength: info.length,
+                search: api.search(),
+                order: api.order(),
+                filters: filterData
+            }));
+        } catch (error) {
+            // Session storage is an enhancement; the fallback URL still works.
+        }
+    }
+
+    $('#dt-search-deaths').val(initialDeathsSearch);
+    $('#dt-clear-deaths-btn').toggleClass('hidden', !initialDeathsSearch);
+    $('#dt-per-page-deaths').val(String(initialDeathsPageLength));
+
     // Initialize DataTables with server-side processing
     window.deathsTable = $('#deaths-table').DataTable({
         serverSide: true,
@@ -895,6 +970,8 @@ document.addEventListener('DOMContentLoaded', function () {
         searching: true,  // Enable DataTables search
         lengthChange: false, // Disable DataTables length (use custom)
         dom: 't', // Only show table
+        displayStart: initialDeathsPage * initialDeathsPageLength,
+        search: { search: initialDeathsSearch },
         ajax: {
             url: '{{ route('statistic.datatable') }}',
             type: 'POST',
@@ -937,8 +1014,8 @@ document.addEventListener('DOMContentLoaded', function () {
             { targets: [1], className: 'app-cell-wrap app-cell-strong' },
             { targets: [2, 4, 5, 6, 7], className: 'app-cell-wrap' }
         ],
-        pageLength: 10,
-        order: [[3, 'desc']],
+        pageLength: initialDeathsPageLength,
+        order: savedDeathsOrder,
         language: {
             emptyTable: '<div class="users-table-state users-table-state--empty" role="status"><i class="fas fa-table-list" aria-hidden="true"></i><strong>Aún no hay defunciones registradas</strong><span>Importe un archivo o registre una defunción para comenzar.</span></div>',
             loadingRecords: '<div class="users-table-skeleton" role="status" aria-label="Cargando defunciones"><span class="sr-only">Cargando defunciones</span><div></div><div></div><div></div><div></div><div></div></div>',
@@ -959,6 +1036,7 @@ document.addEventListener('DOMContentLoaded', function () {
             settleAnalysisCount(tableInfo.recordsDisplay);
             updateCustomInfoDeaths(this.api());
             updateCustomPaginationDeaths(this.api());
+            saveDeathsTableContext(this.api());
             // Ensure bulk-delete visibility is refreshed after each draw
             try { toggleBulkDeleteButton(); } catch (e) { console.error('toggleBulkDeleteButton error', e); }
             // Uncheck header select-all when page changes (to avoid stale state)
@@ -1265,6 +1343,59 @@ document.addEventListener('DOMContentLoaded', function () {
         clearVisibleDeathSelection();
     });
 
+    function reloadDeathsAfterDeletion() {
+        window.deathsTable.ajax.reload(function(json) {
+            const pageInfo = window.deathsTable.page.info();
+            const currentPageIsEmpty = Array.isArray(json?.data) && json.data.length === 0;
+
+            // A filtered result may legitimately become empty. Only step back when
+            // deleting the final row from a later, otherwise populated page.
+            if (currentPageIsEmpty && pageInfo.page > 0 && pageInfo.recordsDisplay > 0) {
+                window.deathsTable.page('previous').draw('page');
+            }
+        }, false);
+    }
+
+    $('body')
+        .off('submit.deathsDelete', '.js-delete-death-form')
+        .on('submit.deathsDelete', '.js-delete-death-form', async function(event) {
+            event.preventDefault();
+            event.stopPropagation();
+
+            const form = this;
+            const confirmed = await window.confirmDeleteDialog({
+                title: form.dataset.confirmTitle || 'Eliminar registro',
+                subject: form.dataset.confirmSubject || 'este registro',
+                description: form.dataset.confirmDescription || 'El registro dejará de estar disponible de forma permanente.'
+            });
+
+            if (!confirmed) return;
+
+            $.ajax({
+                url: form.action,
+                method: 'POST',
+                data: $(form).serialize(),
+                success: function(res) {
+                    if (!res || res.ok !== true) {
+                        notifyDeaths(res?.message || 'No se pudo eliminar el registro. Inténtalo nuevamente.', 'error');
+                        return;
+                    }
+
+                    notifyDeaths(res.message || 'El registro de defunción se eliminó correctamente.', 'success');
+                    clearVisibleDeathSelection();
+                    reloadDeathsAfterDeletion();
+                },
+                error: function(xhr) {
+                    console.error(xhr);
+                    notifyDeaths(
+                        xhr.responseJSON?.message || 'No se pudo eliminar el registro. Inténtalo nuevamente.',
+                        'error',
+                        4500
+                    );
+                }
+            });
+        });
+
     // Bulk delete action
     $('#bulk-delete-deaths').on('click', async function() {
         const ids = [];
@@ -1301,8 +1432,7 @@ document.addEventListener('DOMContentLoaded', function () {
                             : `Se eliminaron ${deletedRecords} registros.`,
                         'success'
                     );
-                    // reload current page of table
-                    window.deathsTable.ajax.reload(null, false);
+                    reloadDeathsAfterDeletion();
                     // reset header checkbox
                     clearVisibleDeathSelection();
                 } else {

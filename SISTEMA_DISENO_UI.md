@@ -363,6 +363,7 @@ Estados:
 - Configuración de los formularios de usuario: Distrito con búsqueda; Cargo, Rol y Estado sin búsqueda.
 - Conservar selección anterior, validación, navegación por teclado y limpieza del formulario.
 - “Seleccione…” funciona únicamente como placeholder; no debe aparecer como una opción elegible dentro del menú. Su redacción debe ser contextual y completar la acción (`Seleccione un cargo`, `Seleccione un distrito`, `Seleccione el sexo`); no usar el genérico `Seleccionar` en formularios.
+- Los selects cortos pueden omitir un buscador visible, pero conservan búsqueda incremental por teclado: al escribir el inicio de una opción (`fem`, `ope`) deben resaltarla y permitir confirmarla con `Enter`. Nunca deben ignorar la escritura y seleccionar por defecto la primera opción.
 - El menú debe mostrarse completo sobre las secciones y acciones siguientes; ningún contenedor del formulario puede recortarlo.
 - El menú elige automáticamente su dirección según el espacio útil del viewport: abre debajo cuando cabe y arriba cuando está próximo al borde inferior. Su altura máxima se limita al espacio disponible y las opciones usan desplazamiento interno; no desplazar toda la página para hacer visible el menú.
 - Recalcular la dirección y altura del menú al abrir, escribir, cargar opciones, desplazar cualquier contenedor o redimensionar la ventana. La flecha del control debe corresponder con la dirección en la que aparece el menú.
@@ -382,7 +383,7 @@ Estados:
 - Los errores del servidor deben regresar al mismo componente y conservar los valores válidos.
 - Los formularios administrativos de página completa usan `novalidate` y el comportamiento compartido `data-ui-inline-validation`: todos los errores se presentan debajo de su campo y el primer inválido recibe foco.
 - No invocar `reportValidity()` ni mezclar globos nativos del navegador con mensajes inline. La validación nativa puede usarse internamente para detectar restricciones, pero su presentación corresponde al componente compartido.
-- Tras un envío válido, el comportamiento compartido conserva el ancho del botón primario, lo deshabilita y muestra el patrón `[spinner] Guardando…`; formulario y botón se marcan con `aria-busy`. Las vistas no duplican esta lógica ni permiten envíos repetidos.
+- Tras un envío válido, el comportamiento compartido conserva el ancho del botón primario, lo deshabilita y muestra el patrón `[spinner] Guardando…`; formulario y botón se marcan con `aria-busy`. Mientras procesa, el botón usa el cursor de espera (`wait`), no el cursor de acción no permitida (`not-allowed`); este último se reserva para controles indisponibles que no están ejecutando una operación. Las vistas no duplican esta lógica ni permiten envíos repetidos.
 - Los campos de contraseña que incorporan el botón compartido para mostrar u ocultar el valor deben usar `app-password-input-wrap`. En ellos se ocultan los reveladores nativos del navegador para mantener una sola acción visible y accesible.
 - No depender únicamente de alertas del navegador o del color.
 
@@ -413,6 +414,7 @@ Estados:
 - Al recargar, cerrar la pestaña o usar la navegación del navegador, usar la advertencia nativa mediante `beforeunload`.
 - Enviar correctamente el formulario no muestra una advertencia de salida.
 - “Restablecer cambios” solicita confirmación únicamente cuando existen cambios y devuelve todos los controles, incluidos los selects enriquecidos, a su valor inicial.
+- Cuando “Restablecer cambios” deshace al menos una modificación, confirmar el resultado mediante el toast informativo global “Cambios restablecidos.”. No mostrar el toast si el formulario ya estaba en su estado inicial; el color verde se reserva para información persistida correctamente.
 - Si el usuario devuelve manualmente todos los campos a sus valores iniciales, el formulario deja de considerarse modificado.
 
 ### 6.8 Corrección inline en tarjetas
@@ -598,6 +600,7 @@ Cuando “Ver datos” se abre desde una gráfica, integrar el contexto como enc
 - Resaltar el nombre o identificador del elemento afectado con peso 600 y color de texto principal. No usar rojo, píldoras ni recuadros para este énfasis.
 - Para eliminar una entidad, separar el contenido en dos niveles: pregunta directa con el nombre destacado y, debajo, una explicación neutral de que la acción es permanente.
 - Todas las eliminaciones y descartes irreversibles deben invocar el componente compartido mediante `window.confirmDeleteDialog()`. No crear markup específico ni usar `window.confirm()` en una vista.
+- En listados con búsqueda, filtros o paginación, una eliminación confirmada actualiza únicamente la tabla y conserva ese contexto. Si el elemento eliminado era el único resultado de la búsqueda o los filtros, mostrar el estado “No encontramos resultados” y su acción para limpiar; no restablecer automáticamente el listado completo. Si se elimina la última fila de una página posterior sin dejar vacío el conjunto filtrado, retroceder a la página válida anterior.
 - La vista proporciona únicamente `title`, `subject` o `question`, `description` y, si hace falta, la etiqueta de confirmación. El componente fija icono, variante roja, botones, accesibilidad y movimiento.
 - En eliminaciones múltiples, destacar como sujeto la cantidad y el tipo de elementos afectados, por ejemplo “3 usuarios”.
 - Advertencias y confirmaciones no destructivas usan el mismo componente y jerarquía de pregunta más consecuencia; cambia únicamente su icono, color semántico y verbo de confirmación.

@@ -94,7 +94,9 @@ class UserRequest extends FormRequest
     {
         return [
             'email.email' => 'Capture un correo electrónico válido.',
+            'email.unique' => 'Este correo electrónico ya está registrado.',
             'phone.regex' => 'El teléfono debe tener exactamente 10 dígitos, sin espacios, guiones ni lada.',
+            'username.unique' => 'Este nombre de usuario ya está registrado.',
         ];
     }
 }

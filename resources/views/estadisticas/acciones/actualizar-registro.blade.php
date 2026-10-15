@@ -51,14 +51,23 @@
             'death_date',
             $defuncion->death_date ? \Carbon\Carbon::parse($defuncion->death_date)->format('Y-m-d') : ''
         );
+
+        $statisticsDataPath = parse_url(route('statistic.data'), PHP_URL_PATH);
+        $requestedReturnTo = request('return_to');
+        $statisticsReturnUrl = is_string($requestedReturnTo)
+            && str_starts_with($requestedReturnTo, '/')
+            && parse_url($requestedReturnTo, PHP_URL_PATH) === $statisticsDataPath
+                ? $requestedReturnTo
+                : route('statistic.data');
     @endphp
 
     <x-ui.form.page
         title="Editar defunción"
         description="Modifique los campos necesarios y guarde los cambios."
-        :back-href="route('statistic.data')"
+        :back-href="$statisticsReturnUrl"
         back-label="Volver a datos de defunciones"
         :prefer-history-back="true"
+        history-back-scope="deaths"
         page-class="statistics-death-form-page"
     >
             <form id="death-update-form" method="POST" action="{{ route('statistic.update', $defuncion) }}" novalidate data-ui-inline-validation>
@@ -218,6 +227,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     window.resetDeathEditForm = async function (event) {
         event?.preventDefault();
+        const hadChanges = hasUnsavedChanges();
         const shouldReset = await confirmDiscardChanges({
             question: '¿Deseas restablecer los cambios?',
             description: 'Los campos volverán a los valores con los que abriste esta edición.',
@@ -236,6 +246,10 @@ document.addEventListener('DOMContentLoaded', function () {
         form.querySelectorAll('[data-server-error]').forEach((error) => error.remove());
         updateDistricts();
         updateAgeLimit(false);
+        if (hadChanges) {
+            if (window.AppToast?.info) window.AppToast.info('Cambios restablecidos.');
+            else window.showToast?.('Cambios restablecidos.', 'info', 4000);
+        }
     };
 
     form.addEventListener('submit', function (event) {
