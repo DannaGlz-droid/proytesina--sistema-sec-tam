@@ -1,0 +1,87 @@
+.users-form-page .statistics-form-label-row {
+  display: flex;
+  align-items: center;
+  gap: .28rem;
+  height: .9rem;
+  min-height: .9rem;
+  margin-bottom: .32rem;
+}
+
+.users-form-page .statistics-form-label-row > label {
+  margin-bottom: 0 !important;
+}
+
+.users-form-page .statistics-form-help-popover {
+  position: relative;
+  display: inline-flex;
+}
+
+.users-form-page .statistics-form-help-trigger {
+  display: inline-flex;
+  width: .875rem !important;
+  min-width: .875rem !important;
+  height: .875rem !important;
+  min-height: .875rem !important;
+  flex: 0 0 .875rem;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--ui-text-muted, #64748b);
+  cursor: help;
+  font-size: .68rem;
+  line-height: 1;
+  transition: color 150ms ease, background-color 150ms ease;
+}
+
+.users-form-page .statistics-form-help-trigger:hover,
+.users-form-page .statistics-form-help-trigger:focus-visible {
+  background: var(--ui-surface-hover, #f1f5f9);
+  color: var(--ui-text, #10233f);
+}
+
+.users-form-page .statistics-form-help-trigger:focus-visible {
+  outline: 2px solid var(--ui-focus, #475569);
+  outline-offset: 2px;
+}
+
+.users-form-page .statistics-form-tooltip {
+  position: absolute;
+  z-index: 20;
+  bottom: calc(100% + .48rem);
+  left: -.35rem;
+  width: max-content;
+  max-width: min(16rem, calc(100vw - 2rem));
+  padding: .42rem .55rem;
+  border-radius: .35rem;
+  background: var(--ui-text, #10233f);
+  box-shadow: 0 .45rem 1rem rgb(15 35 63 / 18%);
+  color: var(--ui-surface, #fff);
+  font-family: "Open Sans", system-ui, sans-serif;
+  font-size: .68rem;
+  font-weight: 500;
+  line-height: 1.4;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(.18rem);
+  transition: opacity 120ms ease, transform 120ms ease, visibility 120ms ease;
+  visibility: hidden;
+}
+
+.users-form-page .statistics-form-tooltip::after {
+  position: absolute;
+  top: 100%;
+  left: .48rem;
+  border: .28rem solid transparent;
+  border-top-color: var(--ui-text, #10233f);
+  content: '';
+}
+
+.users-form-page .statistics-form-help-popover:hover .statistics-form-tooltip,
+.users-form-page .statistics-form-help-popover:focus-within .statistics-form-tooltip {
+  opacity: 1;
+  transform: translateY(0);
+  visibility: visible;
+}

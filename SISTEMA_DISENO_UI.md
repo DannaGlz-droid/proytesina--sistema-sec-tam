@@ -317,11 +317,13 @@ Excepciones:
 ### 6.2 Campos
 
 - Alto estándar: 34 px en escritorio y 40 px en móvil.
+- En móvil, inputs, selects, textarea y el campo editable interno de los selects usan un tamaño computado de al menos 16 px para evitar el acercamiento automático de iOS al recibir foco. El placeholder puede conservar la escala visual compacta de 0.80 rem mediante `::placeholder`, sin reducir el tamaño computado del control. No bloquear el zoom manual mediante la configuración del viewport.
 - Fondo blanco, borde neutral y radio de 7 px.
 - Label encima; no usar placeholder como sustituto de label.
 - Placeholder solo como ejemplo o formato: “Ej: usuario@ejemplo.com”.
 - Asterisco obligatorio en `--ui-danger`.
 - La ayuda puede ser contextual o persistente según su importancia; no elegir el formato únicamente para ahorrar espacio.
+- Los iconos de ayuda, indicadores de estado y demás elementos auxiliares colocados junto a una etiqueta no deben aumentar la altura de su renglón ni desplazar el control. Los controles que comparten una fila deben comenzar exactamente en la misma línea, tanto en el zoom normal como al ampliar la interfaz.
 
 #### Ayuda contextual en campos
 
@@ -364,6 +366,7 @@ Estados:
 - Conservar selección anterior, validación, navegación por teclado y limpieza del formulario.
 - “Seleccione…” funciona únicamente como placeholder; no debe aparecer como una opción elegible dentro del menú. Su redacción debe ser contextual y completar la acción (`Seleccione un cargo`, `Seleccione un distrito`, `Seleccione el sexo`); no usar el genérico `Seleccionar` en formularios.
 - Los selects cortos pueden omitir un buscador visible, pero conservan búsqueda incremental por teclado: al escribir el inicio de una opción (`fem`, `ope`) deben resaltarla y permitir confirmarla con `Enter`. Nunca deben ignorar la escritura y seleccionar por defecto la primera opción.
+- El filtrado por teclado debe actualizarse con cada entrada, sin exigir una pausa antes de confirmar. `Enter` actúa siempre sobre los resultados de la consulta visible actual; si esos resultados todavía no están disponibles, no debe seleccionar una opción activa perteneciente a la consulta anterior.
 - El menú debe mostrarse completo sobre las secciones y acciones siguientes; ningún contenedor del formulario puede recortarlo.
 - El menú elige automáticamente su dirección según el espacio útil del viewport: abre debajo cuando cabe y arriba cuando está próximo al borde inferior. Su altura máxima se limita al espacio disponible y las opciones usan desplazamiento interno; no desplazar toda la página para hacer visible el menú.
 - Recalcular la dirección y altura del menú al abrir, escribir, cargar opciones, desplazar cualquier contenedor o redimensionar la ventana. La flecha del control debe corresponder con la dirección en la que aparece el menú.
@@ -404,7 +407,8 @@ Estados:
 - Presentar archivos en filas compactas: icono, nombre como información principal, formato y tamaño como información secundaria, y una única acción accesible para retirar el archivo.
 - En edición, separar claramente archivos guardados de archivos por agregar. Marcar un archivo existente para reemplazo o eliminación debe ser reversible antes de guardar y no ejecuta una eliminación inmediata.
 - Los estados Pendiente, Incompleto y Completado se comunican mediante texto y color semántico suave; los contadores dinámicos usan `aria-live` cuando aporten contexto.
-- Validar formato, tamaño, duplicados y cantidades tanto en cliente como en servidor. Un error aparece inline junto a la zona de carga y lleva el foco a la acción de selección.
+- Validar formato, tamaño, duplicados y cantidades tanto en cliente como en servidor. El error del grupo lleva el foco a la acción de selección y se relaciona con ella mediante `aria-describedby`.
+- Mantener estable el orden del componente: zona de selección, lista de archivos seleccionados y, al final, mensaje de error del grupo. Si no existen archivos seleccionados y la lista no se muestra, el error queda inmediatamente debajo de la zona; nunca se inserta entre la zona y una lista visible.
 - En móvil, el resumen de requisitos se apila y las filas conservan nombre, metadatos y acción sin introducir desplazamiento horizontal.
 
 ### 6.7 Cambios sin guardar

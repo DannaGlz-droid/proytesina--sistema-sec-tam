@@ -159,7 +159,8 @@ document.addEventListener('DOMContentLoaded', function () {
         else if (unit === 'dias' && value > 30) message = 'La edad en días no puede ser mayor a 30.';
         ageValue.setCustomValidity(message);
         if (error) { error.textContent = message; error.classList.toggle('hidden', !message); }
-        ageValue.toggleAttribute('aria-invalid', Boolean(message));
+        if (message) ageValue.setAttribute('aria-invalid', 'true');
+        else ageValue.removeAttribute('aria-invalid');
         return !message;
     }
 

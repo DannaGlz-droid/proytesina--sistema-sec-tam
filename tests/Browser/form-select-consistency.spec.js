@@ -110,8 +110,13 @@ test('los selectores de ambos formularios comparten el mismo contrato visual', a
             page,
             '/estadisticas/registro',
         );
+        const alcoholSelect = await selectVisualContract(
+            page,
+            '/reportes/registro/alcoholimetria',
+        );
 
         expect(deathSelect).toEqual(userSelect);
+        expect(alcoholSelect).toEqual(userSelect);
     }
 });
 
@@ -135,6 +140,12 @@ test('los selectores de formulario usan placeholders contextuales', async ({ pag
                 death_cause: 'Seleccione una causa',
             },
         },
+        {
+            url: '/reportes/registro/alcoholimetria',
+            placeholders: {
+                alcohol_municipality_select: 'Seleccione un municipio',
+            },
+        },
     ];
 
     for (const example of cases) {
@@ -144,6 +155,17 @@ test('los selectores de formulario usan placeholders contextuales', async ({ pag
             const select = page.locator(`#${id}`);
             await expect(select).toHaveAttribute('data-placeholder', placeholder);
         }
+    }
+
+    await page.goto('/reportes/registro/alcoholimetria');
+    const selectableDistrict = page.locator('#jurisdiction_select_alcohol');
+    const assignedDistrict = page.locator('#jurisdiction_display_alcohol');
+    expect(await selectableDistrict.count() + await assignedDistrict.count()).toBe(1);
+    if (await selectableDistrict.count()) {
+        await expect(selectableDistrict).toHaveAttribute('data-placeholder', 'Seleccione un distrito');
+    } else {
+        await expect(assignedDistrict).toBeDisabled();
+        await expect(assignedDistrict).not.toHaveValue('');
     }
 });
 

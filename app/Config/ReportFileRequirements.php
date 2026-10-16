@@ -165,6 +165,6 @@ class ReportFileRequirements
             $messages[] = "{$typeName} ({$missing['current']}/{$missing['required']})";
         }
 
-        return 'El reporte requiere: ' . implode(', ', $messages);
+        return 'El reporte requiere como mínimo: ' . implode(', ', $messages);
     }
 }

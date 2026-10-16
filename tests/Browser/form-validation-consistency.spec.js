@@ -19,6 +19,12 @@ const forms = [
             'Seleccione la causa de la defunción.',
         ],
     },
+    {
+        url: '/reportes/registro/alcoholimetria',
+        form: '#alcoholimetriaForm',
+        expectedError: 'Capture el tema.',
+        expectedSelectErrors: ['Seleccione un municipio.'],
+    },
 ];
 
 for (const example of forms) {

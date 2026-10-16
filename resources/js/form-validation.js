@@ -82,7 +82,13 @@ function clearServerError(field) {
     describedBy.forEach((id) => {
         const error = document.getElementById(id);
         if (error?.matches('[data-server-error]')) {
-            error.remove();
+            if (error.hasAttribute('data-ui-error-slot')) {
+                error.removeAttribute('data-server-error');
+                error.textContent = '';
+                error.classList.add('hidden');
+            } else {
+                error.remove();
+            }
             return;
         }
 
@@ -93,13 +99,33 @@ function clearServerError(field) {
     else field.removeAttribute('aria-describedby');
 }
 
+function syncErrorDescription(field, error, invalid) {
+    if (!error?.id) return;
+
+    const describedBy = new Set(
+        (field.getAttribute('aria-describedby') || '').split(/\s+/).filter(Boolean)
+    );
+
+    if (invalid) describedBy.add(error.id);
+    else describedBy.delete(error.id);
+
+    if (describedBy.size) field.setAttribute('aria-describedby', Array.from(describedBy).join(' '));
+    else field.removeAttribute('aria-describedby');
+}
+
+function setAriaInvalid(field, invalid) {
+    if (invalid) field.setAttribute('aria-invalid', 'true');
+    else field.removeAttribute('aria-invalid');
+}
+
 function renderFieldValidity(field) {
     const error = errorElement(field);
     const invalid = !field.validity.valid;
 
-    field.toggleAttribute('aria-invalid', invalid);
+    setAriaInvalid(field, invalid);
     error.textContent = invalid ? validationMessage(field) : '';
     error.classList.toggle('hidden', !invalid);
+    syncErrorDescription(field, error, invalid);
 
     return !invalid;
 }
@@ -185,7 +211,8 @@ function initializeInlineValidation(form) {
             const invalid = !field.validity.valid;
             const error = errorElement(field);
 
-            field.toggleAttribute('aria-invalid', invalid);
+            setAriaInvalid(field, invalid);
+            syncErrorDescription(field, error, invalid);
 
             if (!invalid) {
                 error.textContent = '';

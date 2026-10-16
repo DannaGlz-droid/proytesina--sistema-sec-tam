@@ -4,14 +4,15 @@
     @include('components.header-admin')
     @include('components.nav-reportes')
 
-    <div class="report-road-form-page report-alcohol-form-page users-form-page px-4 sm:px-6 lg:px-10 pt-6 lg:pt-8 pb-8 lg:pb-10">
-        <x-ui.page-header
+    <x-ui.form.page
             :title="isset($publication) ? 'Editar reporte de alcoholimetría' : 'Registrar reporte de alcoholimetría'"
             :description="isset($publication) ? 'Actualiza los resultados del operativo y conserva la trazabilidad de sus archivos.' : 'Captura la información, los resultados del operativo y los archivos de respaldo.'"
             :back-href="route('reportes.index', ['tipo' => request('redirect_tipo', 'alcoholimetria')])"
             back-label="Volver a publicaciones"
             :prefer-history-back="true"
-        />
+            page-class="report-road-form-page report-alcohol-form-page"
+            card-class="report-road-form-card"
+        >
 
         @php
             $validationMessages = collect($errors->getMessages());
@@ -55,27 +56,27 @@
             ];
         @endphp
 
-        <div class="report-road-form-card users-form-card">
-            <form id="alcoholimetriaForm" class="report-road-form ui-form-fields" action="{{ isset($publication) ? route('reportes.alcoholimetria.update', $publication) : route('reportes.alcoholimetria.store') }}" method="POST" enctype="multipart/form-data">
+            <form id="alcoholimetriaForm" class="report-road-form ui-form-fields" action="{{ isset($publication) ? route('reportes.alcoholimetria.update', $publication) : route('reportes.alcoholimetria.store') }}" method="POST" enctype="multipart/form-data" novalidate data-ui-inline-validation>
                 @csrf
                 @if(isset($publication)) @method('PUT') @endif
 
-                <section class="report-road-section report-road-general">
-                    <div class="report-road-section-heading"><i class="far fa-file-alt" aria-hidden="true"></i><h2>Información general</h2></div>
-                    <div class="report-road-fields-grid grid grid-cols-1 gap-x-3 gap-y-3 lg:grid-cols-2 lg:gap-x-4">
+                <x-ui.form.section title="Información general" icon="far fa-file-alt" variant="report-road"
+                    class="report-road-general" content-class="report-road-fields-grid grid grid-cols-1 gap-x-3 gap-y-3 lg:grid-cols-2 lg:gap-x-4">
                         <div>
                             <label for="tema">Tema <span class="text-red-600">*</span></label>
                             <input id="tema" type="text" name="tema" placeholder="Ej: Operativo de alcoholimetría"
                                    value="{{ old('tema', isset($publication) ? $publication->topic : '') }}" required minlength="3" maxlength="150"
-                                   aria-invalid="{{ $errors->has('tema') ? 'true' : 'false' }}" @error('tema') aria-describedby="tema-error" @enderror>
-                            @error('tema') <p id="tema-error" class="report-road-field-error" role="alert">{{ $message }}</p> @enderror
+                                   data-validation-error-id="tema-error" data-validation-required-message="Capture el tema."
+                                   @error('tema') aria-invalid="true" aria-describedby="tema-error" @enderror>
+                            <p id="tema-error" class="report-road-field-error ui-field-error {{ $errors->has('tema') ? '' : 'hidden' }}" data-ui-error-slot @if($errors->has('tema')) data-server-error @endif role="alert">{{ $errors->first('tema') }}</p>
                         </div>
                         <div>
                             <label for="fecha">Fecha de la actividad <span class="text-red-600">*</span></label>
                             <input id="fecha" type="date" name="fecha"
                                    value="{{ old('fecha', isset($publication) ? $publication->activity_date->format('Y-m-d') : '') }}" required max="{{ date('Y-m-d') }}"
-                                   aria-invalid="{{ $errors->has('fecha') ? 'true' : 'false' }}" @error('fecha') aria-describedby="fecha-error" @enderror>
-                            @error('fecha') <p id="fecha-error" class="report-road-field-error" role="alert">{{ $message }}</p> @enderror
+                                   data-validation-error-id="fecha-error" data-validation-required-message="Seleccione la fecha de la actividad." data-validation-number-message="La fecha no puede ser futura."
+                                   @error('fecha') aria-invalid="true" aria-describedby="fecha-error" @enderror>
+                            <p id="fecha-error" class="report-road-field-error ui-field-error {{ $errors->has('fecha') ? '' : 'hidden' }}" data-ui-error-slot @if($errors->has('fecha')) data-server-error @endif role="alert">{{ $errors->first('fecha') }}</p>
                         </div>
                         <div>
                             <div class="report-road-municipality-label-row">
@@ -88,38 +89,44 @@
                             </div>
                             @php $selectedMunicipio = old('municipio', isset($report) ? $report->municipality_id : ''); @endphp
                             <select id="alcohol_municipality_select" name="municipio" class="tomselect-select" required
-                                    aria-invalid="{{ $errors->has('municipio') ? 'true' : 'false' }}" @error('municipio') aria-describedby="municipio-error" @enderror>
+                                    data-select-variant="form" data-placeholder="Seleccione un municipio" data-validation-required-message="Seleccione un municipio." data-validation-error-id="municipio-error"
+                                    @error('municipio') aria-invalid="true" aria-describedby="municipio-error" @enderror>
                                 <option value="">Seleccione un municipio</option>
                                 @if($selectedMunicipio)
                                     @php $selectedMunicipalityModel = $municipalities->firstWhere('id', $selectedMunicipio); @endphp
                                     @if($selectedMunicipalityModel)<option value="{{ $selectedMunicipalityModel->id }}" selected>{{ $selectedMunicipalityModel->name }}</option>@endif
                                 @endif
                             </select>
-                            @error('municipio') <p id="municipio-error" class="report-road-field-error" role="alert">{{ $message }}</p> @enderror
+                            <p id="municipio-error" class="report-road-field-error ui-field-error {{ $errors->has('municipio') ? '' : 'hidden' }}" data-ui-error-slot @if($errors->has('municipio')) data-server-error @endif role="alert">{{ $errors->first('municipio') }}</p>
                         </div>
                         <div>
                             @if($canSelectAnyDistrict ?? false)
                                 <label for="jurisdiction_select_alcohol">Distrito <span class="text-red-600">*</span></label>
                                 @php $selectedDistrito = old('jurisdiccion', isset($report) ? $report->district_id : ''); @endphp
                                 <select id="jurisdiction_select_alcohol" name="jurisdiccion" class="tomselect-select" required
-                                        aria-invalid="{{ $errors->has('jurisdiccion') ? 'true' : 'false' }}" @error('jurisdiccion') aria-describedby="jurisdiccion-error" @enderror>
+                                        data-select-variant="form" data-placeholder="Seleccione un distrito" data-validation-required-message="Seleccione un distrito." data-validation-error-id="jurisdiccion-error"
+                                        @error('jurisdiccion') aria-invalid="true" aria-describedby="jurisdiccion-error" @enderror>
                                     <option value="">Seleccione un distrito</option>
                                     @foreach($districts as $district)<option value="{{ $district->id }}" {{ (string) $selectedDistrito === (string) $district->id ? 'selected' : '' }}>{{ $district->display_name }}</option>@endforeach
                                 </select>
                             @else
-                                <label for="jurisdiction_display_alcohol">Distrito asignado</label>
+                                <div class="statistics-form-label-row">
+                                    <label for="jurisdiction_display_alcohol">Distrito asignado</label>
+                                    <x-ui.form.help-tooltip id="alcohol-assigned-district-help" label="Cómo se asigna el distrito">
+                                        Se asigna automáticamente según el distrito de tu cuenta.
+                                    </x-ui.form.help-tooltip>
+                                </div>
                                 <input type="hidden" id="jurisdiction_input_alcohol" name="jurisdiccion" value="{{ auth()->user()->district_id }}" required>
                                 <input id="jurisdiction_display_alcohol" type="text" class="ui-field--disabled" value="{{ optional(auth()->user()->district)->display_name }}" disabled aria-disabled="true">
                             @endif
-                            @error('jurisdiccion') <p id="jurisdiccion-error" class="report-road-field-error" role="alert">{{ $message }}</p> @enderror
+                            <p id="jurisdiccion-error" class="report-road-field-error ui-field-error {{ $errors->has('jurisdiccion') ? '' : 'hidden' }}" data-ui-error-slot @if($errors->has('jurisdiccion')) data-server-error @endif role="alert">{{ $errors->first('jurisdiccion') }}</p>
                         </div>
-                    </div>
-                </section>
+                </x-ui.form.section>
 
                 @foreach($numericSections as $section)
-                    <section class="report-road-section report-alcohol-data-section">
-                        <div class="report-road-section-heading"><i class="{{ $section['icon'] }}" aria-hidden="true"></i><h2>{{ $section['title'] }}</h2></div>
-                        <div class="report-road-fields-grid grid grid-cols-1 gap-x-3 gap-y-3 {{ count($section['fields']) > 1 ? 'lg:grid-cols-2' : 'report-alcohol-single-field' }} lg:gap-x-4">
+                    <x-ui.form.section :title="$section['title']" :icon="$section['icon']" variant="report-road"
+                        class="report-alcohol-data-section"
+                        content-class="report-road-fields-grid grid grid-cols-1 gap-x-3 gap-y-3 {{ count($section['fields']) > 1 ? 'lg:grid-cols-2' : 'report-alcohol-single-field' }} lg:gap-x-4">
                             @foreach($section['fields'] as $field)
                                 @php
                                     $fieldName = $field['name'];
@@ -129,33 +136,35 @@
                                 <div>
                                     <label for="{{ $fieldName }}">{{ $field['label'] }} <span class="text-red-600">*</span></label>
                                     <input id="{{ $fieldName }}" type="number" name="{{ $fieldName }}" min="0" max="{{ $field['max'] }}"
-                                           placeholder="{{ $field['placeholder'] }}" value="{{ $fieldValue }}" required
-                                           aria-invalid="{{ $errors->has($fieldName) ? 'true' : 'false' }}"
-                                           @if($errors->has($fieldName)) aria-describedby="{{ $fieldErrorId }}" @endif>
-                                    @error($fieldName) <p id="{{ $fieldErrorId }}" class="report-road-field-error" role="alert">{{ $message }}</p> @enderror
+                                           placeholder="{{ $field['placeholder'] }}" value="{{ $fieldValue }}" required inputmode="numeric"
+                                           data-validation-error-id="{{ $fieldName === 'conductores_no_aptos' ? 'alcohol-totals-error' : $fieldErrorId }}"
+                                           data-validation-number-message="Capture un número entero entre 0 y {{ $field['max'] }}."
+                                           @if($errors->has($fieldName)) aria-invalid="true" aria-describedby="{{ $fieldName === 'conductores_no_aptos' ? 'alcohol-totals-error' : $fieldErrorId }}" @endif>
+                                    @if($fieldName !== 'conductores_no_aptos')
+                                        <p id="{{ $fieldErrorId }}" class="report-road-field-error ui-field-error {{ $errors->has($fieldName) ? '' : 'hidden' }}" data-ui-error-slot @if($errors->has($fieldName)) data-server-error @endif role="alert">{{ $errors->first($fieldName) }}</p>
+                                    @endif
                                     @if($fieldName === 'conductores_no_aptos')
-                                        <p id="alcohol-totals-error" class="report-road-field-error hidden" role="alert"></p>
+                                        <p id="alcohol-totals-error" class="report-road-field-error ui-field-error {{ $errors->has($fieldName) ? '' : 'hidden' }}" data-ui-error-slot @if($errors->has($fieldName)) data-server-error @endif role="alert">{{ $errors->first($fieldName) }}</p>
                                     @endif
                                 </div>
                             @endforeach
-                        </div>
-                    </section>
+                    </x-ui.form.section>
                 @endforeach
 
-                <section class="report-road-section report-road-description">
-                    <div class="report-road-section-heading"><i class="far fa-clipboard" aria-hidden="true"></i><h2>Descripción</h2></div>
-                    <div class="space-y-3"><div>
+                <x-ui.form.section title="Descripción" icon="far fa-clipboard" variant="report-road"
+                    class="report-road-description" content-class="space-y-3">
+                    <div>
                         <label for="descripcion">Descripción de la actividad</label>
                         <textarea id="descripcion" name="descripcion" class="description-scroll" rows="4" maxlength="5000"
                                   placeholder="Agregue contexto, resultados u observaciones relevantes"
-                                  aria-invalid="{{ $errors->has('descripcion') ? 'true' : 'false' }}" @error('descripcion') aria-describedby="descripcion-error" @enderror>{{ old('descripcion', isset($publication) && $publication->description !== 'Sin descripción adicional.' ? $publication->description : '') }}</textarea>
-                        @error('descripcion') <p id="descripcion-error" class="report-road-field-error" role="alert">{{ $message }}</p> @enderror
-                    </div></div>
-                </section>
+                                  data-validation-error-id="descripcion-error"
+                                  @error('descripcion') aria-invalid="true" aria-describedby="descripcion-error" @enderror>{{ old('descripcion', isset($publication) && $publication->description !== 'Sin descripción adicional.' ? $publication->description : '') }}</textarea>
+                        <p id="descripcion-error" class="report-road-field-error ui-field-error {{ $errors->has('descripcion') ? '' : 'hidden' }}" data-ui-error-slot @if($errors->has('descripcion')) data-server-error @endif role="alert">{{ $errors->first('descripcion') }}</p>
+                    </div>
+                </x-ui.form.section>
 
-                <section class="report-road-section report-road-files">
-                    <div class="report-road-section-heading"><i class="fas fa-cloud-upload-alt" aria-hidden="true"></i><h2>Carga de archivos</h2></div>
-                    <div class="space-y-4">
+                <x-ui.form.section title="Carga de archivos" icon="fas fa-cloud-upload-alt" variant="report-road"
+                    class="report-road-files" content-class="space-y-4">
                         @if(isset($publication) && $publication->files->count() > 0)
                             <section class="report-road-file-collection" aria-labelledby="existing-files-title">
                                 <div class="report-road-file-collection-header">
@@ -182,12 +191,12 @@
                         <div class="report-road-file-requirements" aria-label="Requisitos de archivos">
                             <div class="report-road-file-requirement">
                                 <span class="report-road-file-requirement-icon" aria-hidden="true"><i class="far fa-file-excel"></i></span>
-                                <span class="report-road-file-requirement-copy"><strong>Hoja de cálculo</strong><small>1 archivo · XLSX</small></span>
+                                <span class="report-road-file-requirement-copy"><strong>Hoja de cálculo</strong><small>Mínimo 1 archivo · XLS o XLSX</small></span>
                                 <span id="excel-status-badge" class="report-road-file-status" data-status="pending" aria-live="polite">Pendiente</span>
                             </div>
                             <div class="report-road-file-requirement">
                                 <span class="report-road-file-requirement-icon" aria-hidden="true"><i class="far fa-image"></i></span>
-                                <span class="report-road-file-requirement-copy"><strong>Fotografía</strong><small>1 archivo · JPG o PNG</small></span>
+                                <span class="report-road-file-requirement-copy"><strong>Fotografía</strong><small>Mínimo 1 archivo · JPG, JPEG o PNG</small></span>
                                 <span id="photos-status-badge" class="report-road-file-status" data-status="pending" aria-live="polite">Pendiente</span>
                             </div>
                         </div>
@@ -195,61 +204,86 @@
                         <div class="report-road-file-uploader">
                             <div class="report-road-file-uploader-heading"><h3 id="file-upload-title">@if(isset($publication)) Agregar nuevos archivos (opcional) @else Subir archivos (selección múltiple) <span class="text-red-600">*</span> @endif</h3><p>Máximo 10 MB por archivo.</p></div>
                             <div id="file-drop-zone" class="report-road-upload-zone" aria-labelledby="file-upload-title">
-                                <input type="file" id="file-input" name="archivos[]" class="hidden" accept=".xlsx,.xls,.jpg,.jpeg,.png" multiple onchange="addFiles(this.files)">
+                                <input type="file" id="file-input" name="archivos[]" class="hidden" accept=".xlsx,.xls,.jpg,.jpeg,.png" multiple onchange="addFiles(this.files)" aria-describedby="file-error">
                                 <span class="report-road-upload-zone-icon" aria-hidden="true"><i class="fas fa-cloud-upload-alt"></i></span>
-                                <div class="report-road-upload-zone-copy"><p><button id="choose-files-button" type="button">Seleccionar archivos</button><span> o arrástralos aquí</span></p><small>XLSX, XLS, JPG, JPEG o PNG · selección múltiple</small></div>
+                                <div class="report-road-upload-zone-copy"><p><button id="choose-files-button" type="button" aria-describedby="file-error">Seleccionar archivos</button><span> o arrástralos aquí</span></p><small>XLSX, XLS, JPG, JPEG o PNG · selección múltiple</small></div>
                             </div>
-                            <div id="file-error" class="report-road-file-error hidden" role="alert"></div>
-                            @if($fileErrors->isNotEmpty())<div class="report-road-file-error" role="alert">@foreach($fileErrors as $error)<div>{{ $error }}</div>@endforeach</div>@endif
                             <section id="file-list" class="report-road-file-collection hidden" aria-labelledby="selected-files-title">
                                 <div class="report-road-file-collection-header"><div><h3 id="selected-files-title">Archivos por agregar</h3><p id="selected-files-count">0 archivos seleccionados</p></div></div>
                                 <ul id="file-names" class="report-road-file-rows"></ul>
                             </section>
+                            <div id="file-error" class="report-road-file-error {{ $fileErrors->isNotEmpty() ? '' : 'hidden' }}" role="alert">{{ $fileErrors->join(' ') }}</div>
                         </div>
-                    </div>
-                </section>
+                </x-ui.form.section>
 
-                <div class="report-road-form-actions">
-                    @if(isset($publication))<x-form-buttons primaryText="Actualizar registro" secondaryText="" primaryType="submit" />
-                    @else<x-form-buttons primaryText="Guardar registro" secondaryText="Limpiar formulario" primaryType="submit" secondaryType="button" secondaryOnclick="clearAlcoholimetriaForm()" />@endif
-                </div>
+                @if(isset($publication))<x-form-buttons class="users-form-actions" primaryText="Actualizar registro" secondaryText="Restablecer cambios" primaryType="submit" secondaryType="button" secondaryOnclick="resetAlcoholimetriaEditForm(event)" />
+                @else<x-form-buttons class="users-form-actions" primaryText="Guardar registro" secondaryText="Limpiar formulario" primaryType="submit" secondaryType="button" secondaryOnclick="clearAlcoholimetriaForm()" />@endif
                 @if(isset($publication))<input type="hidden" id="files-to-delete" name="files_to_delete" value="">@endif
                 <input type="hidden" name="redirect_tipo" value="{{ request('redirect_tipo', 'alcoholimetria') }}">
             </form>
-        </div>
-    </div>
+    </x-ui.form.page>
 
     <script>
         let selectedFiles = [];
+        let alcoholValidationAttempted = false;
+        const alcoholNumericFields = [
+            'pruebas_realizadas', 'conductores_no_aptos', 'mujeres_no_aptas', 'hombres_no_aptos',
+            'automoviles_camionetas', 'motocicletas', 'transporte_colectivo',
+            'transporte_individual', 'transporte_carga', 'vehiculos_emergencia'
+        ];
         const alcoholNumber = name => Number(document.querySelector(`[name="${name}"]`)?.value || 0);
 
         function clearAlcoholTotalsError() {
             const input = document.getElementById('conductores_no_aptos');
             const error = document.getElementById('alcohol-totals-error');
-            if (input && !input.dataset.serverInvalid) input.setAttribute('aria-invalid', 'false');
-            if (error) { error.textContent = ''; error.classList.add('hidden'); }
+            input?.setCustomValidity('');
+            input?.removeAttribute('aria-invalid');
+            if (input && error) {
+                const describedBy = (input.getAttribute('aria-describedby') || '').split(/\s+/).filter(id => id && id !== error.id);
+                if (describedBy.length) input.setAttribute('aria-describedby', describedBy.join(' '));
+                else input.removeAttribute('aria-describedby');
+            }
+            if (error) {
+                error.removeAttribute('data-server-error');
+                error.textContent = '';
+                error.classList.add('hidden');
+            }
         }
 
-        function validateAlcoholTotals(focusFirst = false) {
+        function validateAlcoholTotals() {
             const input = document.getElementById('conductores_no_aptos');
             const error = document.getElementById('alcohol-totals-error');
             if (!input || !error) return true;
+            input.setCustomValidity('');
+
+            const fields = alcoholNumericFields.map(name => document.querySelector(`[name="${name}"]`));
+            if (fields.some(field => !field || field.value === '' || !field.validity.valid)) {
+                if (!error.hasAttribute('data-server-error')) {
+                    error.textContent = '';
+                    error.classList.add('hidden');
+                }
+                return true;
+            }
+
             const total = alcoholNumber('conductores_no_aptos');
             let message = '';
             if (total > alcoholNumber('pruebas_realizadas')) message = 'Los conductores no aptos no pueden ser mayores que las pruebas realizadas.';
             else if (alcoholNumber('mujeres_no_aptas') + alcoholNumber('hombres_no_aptos') !== total) message = 'La suma de mujeres y hombres no aptos debe coincidir con el total.';
             else if (['automoviles_camionetas','motocicletas','transporte_colectivo','transporte_individual','transporte_carga','vehiculos_emergencia'].reduce((sum, name) => sum + alcoholNumber(name), 0) !== total) message = 'La suma por tipo de vehículo debe coincidir con el total de conductores no aptos.';
+            input.setCustomValidity(message);
             error.textContent = message;
             error.classList.toggle('hidden', !message);
-            input.setAttribute('aria-invalid', message ? 'true' : 'false');
-            if (message && focusFirst) input.focus();
+            if (message) input.setAttribute('aria-invalid', 'true');
+            else input.removeAttribute('aria-invalid');
+            if (message) input.setAttribute('aria-describedby', 'alcohol-totals-error');
             return !message;
         }
 
-        function showFileError(message) {
+        function showFileError(message, focus = true) {
             const error = document.getElementById('file-error');
             if (!error) return;
             error.textContent = message; error.classList.remove('hidden');
+            if (!focus) return;
             const reduceMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
             error.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'center' });
             document.getElementById('choose-files-button')?.focus();
@@ -260,7 +294,7 @@
             clearFileError();
             Array.from(files).forEach(file => {
                 const extension = file.name.split('.').pop().toLowerCase();
-                if (!['xlsx','xls','jpg','jpeg','png'].includes(extension)) { showFileError('Formato no válido. Solo se permiten Excel y fotografías JPG o PNG.'); return; }
+                if (!['xlsx','xls','jpg','jpeg','png'].includes(extension)) { showFileError('Formato no válido. Solo se permiten archivos Excel (XLS o XLSX) y fotografías (JPG, JPEG o PNG).'); return; }
                 if (file.size > 10 * 1024 * 1024) { showFileError(`El archivo ${file.name} excede el tamaño máximo permitido (10 MB).`); return; }
                 if (!selectedFiles.some(item => item.name === file.name && item.size === file.size)) selectedFiles.push(file);
             });
@@ -288,11 +322,21 @@
             const badge = document.getElementById(`${type}-status-badge`); if (!badge) return;
             badge.textContent = count >= 1 ? 'Completado' : 'Pendiente'; badge.dataset.status = count >= 1 ? 'complete' : 'pending';
         }
-        function updateFileCounters() {
+        function getAlcoholFileCounts() {
             let excel = 0, photos = 0;
             document.querySelectorAll('#existing-files-list .file-item').forEach(row => { if (!row.querySelector('.file-delete-checkbox')?.checked) row.dataset.fileType === 'excel' ? excel++ : row.dataset.fileType === 'photos' ? photos++ : null; });
             selectedFiles.forEach(file => ['xlsx','xls'].includes(file.name.split('.').pop().toLowerCase()) ? excel++ : photos++);
+            return { excel, photos };
+        }
+        function updateFileCounters() {
+            const { excel, photos } = getAlcoholFileCounts();
             setFileBadge('excel', excel); setFileBadge('photos', photos);
+        }
+        function validateAlcoholFiles(focus = false) {
+            const { excel, photos } = getAlcoholFileCounts();
+            if (excel >= 1 && photos >= 1) { clearFileError(); return true; }
+            showFileError(`El reporte requiere como mínimo: archivo Excel (${excel}/1), fotografía (${photos}/1).`, focus);
+            return false;
         }
         function updateFileDisplay() {
             const list = document.getElementById('file-names'); const collection = document.getElementById('file-list'); const count = document.getElementById('selected-files-count');
@@ -308,11 +352,28 @@
         }
         async function clearAlcoholimetriaForm() {
             const form = document.getElementById('alcoholimetriaForm'); const canClear = window.confirmFormClear ? await window.confirmFormClear(form, selectedFiles.length) : false;
-            if (!canClear) return; form?.reset(); selectedFiles = []; updateFileDisplay(); updateFileCounters(); clearAlcoholTotalsError(); window.resetAlcoholimetriaTomSelects?.(); window.showToast?.('Formulario limpiado.', 'info', 2400);
+            if (!canClear) return;
+            alcoholValidationAttempted = false;
+            form?.reset();
+            selectedFiles = [];
+            updateFileDisplay();
+            updateFileCounters();
+            clearFileError();
+            clearAlcoholTotalsError();
+            await window.resetAlcoholimetriaTomSelects?.();
+            form?.querySelectorAll('[data-ui-error-slot]').forEach(error => {
+                error.removeAttribute('data-server-error'); error.textContent = ''; error.classList.add('hidden');
+            });
+            window.showToast?.('Formulario limpiado.', 'info', 2400);
         }
 
         document.addEventListener('DOMContentLoaded', function() {
-            document.querySelectorAll('[name="pruebas_realizadas"],[name="conductores_no_aptos"],[name="mujeres_no_aptas"],[name="hombres_no_aptos"],[name="automoviles_camionetas"],[name="motocicletas"],[name="transporte_colectivo"],[name="transporte_individual"],[name="transporte_carga"],[name="vehiculos_emergencia"]').forEach(input => input.addEventListener('input', clearAlcoholTotalsError));
+            const form = document.getElementById('alcoholimetriaForm');
+            form?.addEventListener('input', event => {
+                if (!event.target.matches(alcoholNumericFields.map(name => `[name="${name}"]`).join(','))) return;
+                clearAlcoholTotalsError();
+                if (alcoholValidationAttempted) validateAlcoholTotals();
+            }, true);
             const drop = document.getElementById('file-drop-zone'); const input = document.getElementById('file-input'); document.getElementById('choose-files-button')?.addEventListener('click', () => input?.click());
             if (drop && input) {
                 ['dragenter','dragover','dragleave','drop'].forEach(name => drop.addEventListener(name, event => { event.preventDefault(); event.stopPropagation(); }));
@@ -328,43 +389,190 @@
             const municipalityToDistrict = @json($municipalities->mapWithKeys(fn($item) => [$item->id => $item->district_id]));
             const districtNames = @json($districts->mapWithKeys(fn($item) => [$item->id => $item->display_name]));
             const currentDistrict = @json(optional(auth()->user())->district_id); const canSelectAnyDistrict = @json($canSelectAnyDistrict ?? false);
-            const oldDistrict = @json(old('jurisdiccion', '')); const oldMunicipality = @json(old('municipio', isset($report) ? $report->municipality_id : ''));
             const municipality = document.getElementById('alcohol_municipality_select'); const district = document.getElementById('jurisdiction_select_alcohol');
             const districtDisplay = document.getElementById('jurisdiction_display_alcohol'); const hiddenDistrict = document.getElementById('jurisdiction_input_alcohol');
             const clearFilter = document.getElementById('clear-district-filter-alcohol'); const form = document.getElementById('alcoholimetriaForm'); let loadId = 0;
-            const validityInput = select => select?.tomselect?.control_input || select?.tomselect?.input || select;
-            const clearSelectError = select => validityInput(select)?.setCustomValidity?.(''); const showSelectError = (select, message) => validityInput(select)?.setCustomValidity?.(message);
-            function reportValidity(select) { select?.tomselect ? select.tomselect.focus() : select?.focus(); const input = validityInput(select); input?.reportValidity ? input.reportValidity() : select?.reportValidity?.(); }
-            function validateSelect(select, message) { if (!select || !select.required || select.value) { clearSelectError(select); return true; } showSelectError(select, message); return false; }
+            const isEdit = Boolean(form?.querySelector('input[name="_method"][value="PUT"]'));
+            const navigationState = { submitting: false, navigating: false, confirming: false };
+
+            if (!form || !window.AppFilterSelect) return;
+
+            function selectError(select) {
+                return document.getElementById(select?.dataset.validationErrorId || '');
+            }
+            function clearSelectError(select) {
+                if (!select) return;
+                select.removeAttribute('aria-invalid');
+                const error = selectError(select);
+                if (!error) return;
+                const describedBy = (select.getAttribute('aria-describedby') || '').split(/\s+/).filter(id => id && id !== error.id);
+                if (describedBy.length) select.setAttribute('aria-describedby', describedBy.join(' '));
+                else select.removeAttribute('aria-describedby');
+                error.removeAttribute('data-server-error');
+                error.textContent = '';
+                error.classList.add('hidden');
+            }
+            function validateSelect(select, message) {
+                if (!select || !select.required || select.value) { clearSelectError(select); return true; }
+                const error = selectError(select);
+                select.setAttribute('aria-invalid', 'true');
+                if (error) {
+                    error.textContent = message;
+                    error.classList.remove('hidden');
+                    select.setAttribute('aria-describedby', error.id);
+                }
+                return false;
+            }
             function selectedDistrict() { if (!canSelectAnyDistrict && currentDistrict) return String(currentDistrict); return canSelectAnyDistrict && district ? String(district.value || '') : ''; }
-            function fetchMunicipalities(query) { let url = '/api/municipalities/search?q=' + encodeURIComponent(query) + '&limit=100'; const selected = selectedDistrict(); if (selected) url += '&district_id=' + encodeURIComponent(selected); return fetch(url).then(r => r.json()).then(items => items.map(item => ({ value: String(item.id), text: item.name }))); }
-            function loadMunicipalities(open = false) { if (!municipality?.tomselect) return; const requestId = ++loadId; const requested = selectedDistrict(); fetchMunicipalities('').then(items => { if (requestId !== loadId || requested !== selectedDistrict()) return; const ts = municipality.tomselect; ts.clearOptions(); items.forEach(item => ts.addOption(item)); ts.refreshOptions(open); if (open) ts.open(); }).catch(() => {}); }
+            function fetchMunicipalities(query) {
+                let url = '/api/municipalities/search?q=' + encodeURIComponent(query) + '&limit=100';
+                const selected = selectedDistrict();
+                if (selected) url += '&district_id=' + encodeURIComponent(selected);
+                return fetch(url).then(response => {
+                    if (!response.ok) throw new Error('No se pudieron cargar los municipios.');
+                    return response.json();
+                }).then(items => items.map(item => ({ value: String(item.id), text: item.name })));
+            }
+            async function loadMunicipalities(open = false, valueToRestore = '') {
+                if (!municipality?.tomselect) return;
+                const requestId = ++loadId; const requested = selectedDistrict();
+                try {
+                    const items = await fetchMunicipalities('');
+                    if (requestId !== loadId || requested !== selectedDistrict()) return;
+                    const ts = municipality.tomselect;
+                    ts.clearOptions(); items.forEach(item => ts.addOption(item));
+                    if (valueToRestore) ts.setValue(String(valueToRestore), true);
+                    ts.refreshOptions(open); if (open) ts.open();
+                } catch (error) {
+                    if (requestId !== loadId) return;
+                    const municipalityError = selectError(municipality);
+                    municipality?.setAttribute('aria-invalid', 'true');
+                    if (municipalityError) {
+                        municipalityError.textContent = 'No se pudieron cargar los municipios. Inténtalo nuevamente.';
+                        municipalityError.classList.remove('hidden');
+                        municipality?.setAttribute('aria-describedby', municipalityError.id);
+                    }
+                }
+            }
             function updateClearFilter() { if (clearFilter && district) clearFilter.hidden = !district.value; }
             function resetMunicipality(open = false) { const ts = municipality?.tomselect; if (!ts) { if (municipality) municipality.value = ''; return; } ts.clear(true); municipality.value = ''; ts.setTextboxValue(''); ts.clearOptions(); ts.clearCache?.(); loadMunicipalities(open); }
 
             if (canSelectAnyDistrict && district) {
-                new TomSelect(district, { valueField: 'value', labelField: 'text', searchField: ['text'], create: false, maxItems: 1, preload: false, maxOptions: 50 });
-                if (oldDistrict && districtNames[oldDistrict]) district.tomselect.setValue(String(oldDistrict), true);
-                district.addEventListener('change', () => { clearSelectError(district); clearSelectError(municipality); resetMunicipality(false); updateClearFilter(); }); updateClearFilter();
+                window.AppFilterSelect.init(district, {
+                    searchable: true, maxOptions: 100,
+                    onChange: () => {
+                        if (alcoholValidationAttempted) validateSelect(district, 'Seleccione un distrito.'); else clearSelectError(district);
+                        clearSelectError(municipality); resetMunicipality(false); updateClearFilter();
+                    }
+                });
+                updateClearFilter();
             }
             clearFilter?.addEventListener('click', () => { district.tomselect?.clear(true); district.value = ''; clearSelectError(district); clearSelectError(municipality); updateClearFilter(); resetMunicipality(true); });
             if (municipality) {
-                new TomSelect(municipality, { valueField: 'value', labelField: 'text', searchField: ['text'], create: false, maxItems: 1, preload: true, maxOptions: 50, load: function(query, callback) { const requested = selectedDistrict(); fetchMunicipalities(query).then(items => callback(requested === selectedDistrict() ? items : [])).catch(() => callback()); } });
-                if (oldMunicipality) municipality.tomselect.setValue(String(oldMunicipality), true);
-                municipality.addEventListener('change', () => { clearSelectError(municipality); const districtId = municipalityToDistrict[municipality.value]; if (districtId && canSelectAnyDistrict && district) { district.tomselect?.setValue(String(districtId), true); clearSelectError(district); loadMunicipalities(false); updateClearFilter(); } });
+                window.AppFilterSelect.init(municipality, {
+                    searchable: true, preload: true, maxOptions: 100,
+                    load: function(query, callback) { const requested = selectedDistrict(); fetchMunicipalities(query).then(items => callback(requested === selectedDistrict() ? items : [])).catch(() => callback()); },
+                    onChange: () => {
+                        if (alcoholValidationAttempted) validateSelect(municipality, 'Seleccione un municipio.'); else clearSelectError(municipality);
+                        const districtId = municipalityToDistrict[municipality.value];
+                        if (districtId && canSelectAnyDistrict && district) {
+                            district.tomselect?.setValue(String(districtId), true); clearSelectError(district); updateClearFilter();
+                            loadMunicipalities(false, municipality.value);
+                        }
+                    }
+                });
             }
             if (!canSelectAnyDistrict && currentDistrict) { if (hiddenDistrict) hiddenDistrict.value = currentDistrict; if (districtDisplay) districtDisplay.value = districtNames[currentDistrict] || districtDisplay.value; }
-            window.resetAlcoholimetriaTomSelects = function() { if (canSelectAnyDistrict && district) { district.tomselect?.clear(true); district.value = ''; updateClearFilter(); } resetMunicipality(false); clearSelectError(municipality); clearSelectError(district); if (!canSelectAnyDistrict && currentDistrict) { if (hiddenDistrict) hiddenDistrict.value = currentDistrict; if (districtDisplay) districtDisplay.value = districtNames[currentDistrict] || ''; } };
-            form?.addEventListener('invalid', event => { if (event.target === municipality) { event.preventDefault(); showSelectError(municipality, 'Seleccione un municipio.'); reportValidity(municipality); } if (event.target === district) { event.preventDefault(); showSelectError(district, 'Seleccione un distrito.'); reportValidity(district); } }, true);
-            form?.addEventListener('submit', function(event) {
-                const municipalityValid = validateSelect(municipality, 'Seleccione un municipio.'); const districtValid = validateSelect(canSelectAnyDistrict ? district : null, 'Seleccione un distrito.');
-                if (!municipalityValid || !districtValid) { event.preventDefault(); reportValidity(!municipalityValid ? municipality : district); return; }
-                if (!validateAlcoholTotals(true)) { event.preventDefault(); return; }
-                updateFilesToDeleteInput(); const edit = !!form.querySelector('input[name="_method"][value="PUT"]');
-                const excel = selectedFiles.filter(file => ['xlsx','xls'].includes(file.name.split('.').pop().toLowerCase())).length; const photos = selectedFiles.filter(file => ['jpg','jpeg','png'].includes(file.name.split('.').pop().toLowerCase())).length;
-                if (!edit && (excel < 1 || photos < 1)) { event.preventDefault(); showFileError(`El reporte requiere: archivo Excel (${excel}/1), fotografía (${photos}/1).`); return; }
-                if (selectedFiles.length) { const transfer = new DataTransfer(); selectedFiles.forEach(file => transfer.items.add(file)); document.getElementById('file-input').files = transfer.files; }
-            });
+
+            const initialDistrict = String(district?.value || '');
+            const initialMunicipality = String(municipality?.value || '');
+            window.resetAlcoholimetriaTomSelects = async function(values = {}) {
+                const districtValue = String(values.district ?? ''); const municipalityValue = String(values.municipality ?? '');
+                if (canSelectAnyDistrict && district) { district.tomselect?.setValue(districtValue, true); district.value = districtValue; updateClearFilter(); }
+                await loadMunicipalities(false, municipalityValue);
+                clearSelectError(municipality); clearSelectError(district);
+                if (!canSelectAnyDistrict && currentDistrict) { if (hiddenDistrict) hiddenDistrict.value = currentDistrict; if (districtDisplay) districtDisplay.value = districtNames[currentDistrict] || ''; }
+            };
+
+            const getFormSnapshot = () => JSON.stringify(Array.from(new FormData(form).entries())
+                .filter(([name]) => !['_token', '_method', 'archivos[]'].includes(name))
+                .map(([name, value]) => [name, String(value)]));
+            const initialSnapshot = getFormSnapshot();
+            const hasUnsavedChanges = () => getFormSnapshot() !== initialSnapshot || selectedFiles.length > 0;
+
+            async function confirmDiscardChanges(options) {
+                if (!hasUnsavedChanges()) return true;
+                if (navigationState.confirming) return false;
+                navigationState.confirming = true;
+                try {
+                    if (typeof window.confirmDialog !== 'function') return window.confirm(`${options.question}\n\n${options.description}`);
+                    return await window.confirmDialog({ title: 'Descartar cambios', question: options.question, description: options.description, confirmText: options.confirmText, cancelText: 'Continuar editando', variant: 'warning' });
+                } finally { navigationState.confirming = false; }
+            }
+
+            window.resetAlcoholimetriaEditForm = async function(event) {
+                event?.preventDefault();
+                const hadChanges = hasUnsavedChanges();
+                const shouldReset = await confirmDiscardChanges({ question: '¿Deseas restablecer los cambios?', description: 'Los campos y archivos volverán al estado con el que abriste esta edición.', confirmText: 'Restablecer' });
+                if (!shouldReset) return;
+                alcoholValidationAttempted = false; form.reset(); selectedFiles = [];
+                document.querySelectorAll('#existing-files-list .file-delete-checkbox').forEach(box => { box.checked = false; toggleFileStrikethrough(box); });
+                updateFilesToDeleteInput(); updateFileDisplay(); clearFileError(); clearAlcoholTotalsError();
+                form.querySelectorAll('[data-ui-error-slot]').forEach(error => { error.removeAttribute('data-server-error'); error.textContent = ''; error.classList.add('hidden'); });
+                await window.resetAlcoholimetriaTomSelects({ district: initialDistrict, municipality: initialMunicipality });
+                updateFileCounters();
+                if (hadChanges) window.AppToast?.info ? window.AppToast.info('Cambios restablecidos.') : window.showToast?.('Cambios restablecidos.', 'info', 4000);
+            };
+
+            form.addEventListener('submit', function(event) {
+                alcoholValidationAttempted = true;
+                const municipalityValid = validateSelect(municipality, 'Seleccione un municipio.');
+                const districtValid = validateSelect(canSelectAnyDistrict ? district : null, 'Seleccione un distrito.');
+                const totalsValid = validateAlcoholTotals();
+                updateFilesToDeleteInput();
+                const filesValid = validateAlcoholFiles(false);
+
+                if (selectedFiles.length) {
+                    const transfer = new DataTransfer(); selectedFiles.forEach(file => transfer.items.add(file));
+                    document.getElementById('file-input').files = transfer.files;
+                }
+
+                if (!municipalityValid || !districtValid || !totalsValid || !filesValid) {
+                    event.preventDefault();
+                    const firstInvalid = Array.from(form.querySelectorAll('input, select, textarea')).find(field => {
+                        if (field.disabled || field.type === 'hidden' || field.type === 'file') return false;
+                        if (field === municipality || field === district) return !field.value;
+                        return field.willValidate && !field.validity.valid;
+                    });
+                    window.requestAnimationFrame(() => {
+                        if (firstInvalid?.tomselect) firstInvalid.tomselect.focus();
+                        else if (firstInvalid) firstInvalid.focus({ preventScroll: true });
+                        else if (!filesValid) showFileError(document.getElementById('file-error')?.textContent || 'Complete los archivos requeridos.');
+                    });
+                    return;
+                }
+
+                queueMicrotask(() => { if (!event.defaultPrevented) navigationState.submitting = true; });
+            }, true);
+
+            if (isEdit) {
+                document.addEventListener('click', async function(event) {
+                    const link = event.target.closest('a[href]');
+                    if (!link || event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || link.target === '_blank' || link.hasAttribute('download') || !hasUnsavedChanges()) return;
+                    const href = link.getAttribute('href'); if (!href || href.startsWith('#') || href.startsWith('javascript:')) return;
+                    const destination = new URL(link.href, window.location.href); if (destination.origin !== window.location.origin) return;
+                    event.preventDefault();
+                    const shouldLeave = await confirmDiscardChanges({ question: '¿Deseas salir de la edición?', description: 'Los cambios realizados no se guardarán.', confirmText: 'Salir sin guardar' });
+                    if (!shouldLeave) return;
+                    navigationState.navigating = true;
+                    if (typeof window.navigateBackOrVisit === 'function') window.navigateBackOrVisit(destination.href); else window.location.assign(destination.href);
+                }, true);
+
+                window.addEventListener('beforeunload', function(event) {
+                    if (navigationState.submitting || navigationState.navigating || !hasUnsavedChanges()) return;
+                    event.preventDefault(); event.returnValue = '';
+                });
+            }
         });
     </script>
 @endsection

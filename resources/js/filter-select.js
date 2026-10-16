@@ -123,6 +123,11 @@ function init(target, options = {}) {
         valueField: 'value',
         labelField: 'text',
         searchField: searchable ? ['text'] : [],
+        // El valor predeterminado de Tom Select retrasa 300 ms el filtrado.
+        // Si el usuario escribe y pulsa Enter antes de ese intervalo, todavía
+        // puede quedar activa una opción de la consulta anterior. Los catálogos
+        // locales deben refrescarse en el mismo evento de entrada.
+        refreshThrottle: 0,
         maxOptions: 100,
         maxItems: multiple ? null : 1,
         create: false,

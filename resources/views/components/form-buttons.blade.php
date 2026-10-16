@@ -25,7 +25,7 @@
             @endif
             {{ $secondaryText }}
         </a>
-    @elseif($secondaryText && !request()->is('reportes/*/*/edit'))
+    @elseif($secondaryText)
         <button type="{{ $secondaryType }}" 
                 @if($secondaryOnclick) onclick="{!! $secondaryOnclick !!}" @endif
                 class="ui-button ui-button--secondary">

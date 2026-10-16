@@ -956,9 +956,24 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
+    function syncDeathsPageLengthControl(value) {
+        const normalizedValue = String(value);
+        const select = document.getElementById('dt-per-page-deaths');
+        const label = document.getElementById('dt-per-page-deaths-label');
+        const menu = document.getElementById('dt-per-page-deaths-menu');
+
+        if (select) select.value = normalizedValue;
+        if (label) label.textContent = normalizedValue;
+        menu?.querySelectorAll('.users-page-size-option').forEach(option => {
+            const isSelected = option.dataset.value === normalizedValue;
+            option.classList.toggle('is-active', isSelected);
+            option.setAttribute('aria-selected', String(isSelected));
+        });
+    }
+
     $('#dt-search-deaths').val(initialDeathsSearch);
     $('#dt-clear-deaths-btn').toggleClass('hidden', !initialDeathsSearch);
-    $('#dt-per-page-deaths').val(String(initialDeathsPageLength));
+    syncDeathsPageLengthControl(initialDeathsPageLength);
 
     // Initialize DataTables with server-side processing
     window.deathsTable = $('#deaths-table').DataTable({

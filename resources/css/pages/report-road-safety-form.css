@@ -638,9 +638,9 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-    .report-road-form-page *,
-    .report-road-form-page *::before,
-    .report-road-form-page *::after {
+    .users-form-page *,
+    .users-form-page *::before,
+    .users-form-page *::after {
         scroll-behavior: auto !important;
         transition-duration: .01ms !important;
         animation-duration: .01ms !important;

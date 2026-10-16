@@ -1,4 +1,6 @@
 @import './design-system/dialog.css';
+@import './design-system/form-help.css';
+@import './design-system/form-help.css';
 @import './pages/report-publications.css';
 @import './pages/report-road-safety-form.css';
 @import './pages/report-observatory-form.css';
@@ -9325,6 +9327,50 @@ html[data-ui-theme="tamaulipas-salud"] .app-document-surface {
 .ui-form-fields .ts-dropdown .option.active {
   background: #e9eef4 !important;
   color: var(--ui-text) !important;
+}
+
+/*
+ * Keep the invalid state above the normal, hover and focus contracts.
+ * These selectors intentionally match the specificity of the canonical form
+ * controls so native fields and Tom Select render the same error treatment.
+ */
+.users-form-page .users-form-card form [aria-invalid="true"]:not([type="checkbox"]):not([type="radio"]),
+.users-form-page .users-form-card form .ts-wrapper.app-filter-select--form:has(select[aria-invalid="true"]) .ts-control,
+.users-form-page .users-form-card form select[aria-invalid="true"] + .ts-wrapper.app-filter-select--form .ts-control {
+  border-color: var(--ui-danger) !important;
+}
+
+.users-form-page .users-form-card form [aria-invalid="true"]:not([type="checkbox"]):not([type="radio"]):focus,
+.users-form-page .users-form-card form .ts-wrapper.app-filter-select--form:has(select[aria-invalid="true"]).focus .ts-control,
+.users-form-page .users-form-card form .ts-wrapper.app-filter-select--form:has(select[aria-invalid="true"]).dropdown-active .ts-control,
+.users-form-page .users-form-card form select[aria-invalid="true"] + .ts-wrapper.app-filter-select--form.focus .ts-control,
+.users-form-page .users-form-card form select[aria-invalid="true"] + .ts-wrapper.app-filter-select--form.dropdown-active .ts-control {
+  border-color: var(--ui-danger) !important;
+  box-shadow: 0 0 0 2px rgba(185, 28, 28, 0.14) !important;
+}
+
+/* iOS Safari zooms the viewport when a focused form control uses text below 16px. */
+@media (max-width: 760px) {
+  .users-form-page .users-form-card form .ts-wrapper.app-filter-select--form .ts-control > input,
+  .users-form-page input:not([type="checkbox"]):not([type="radio"]),
+  .users-form-page select,
+  .users-form-page textarea,
+  .users-form-page .ts-control > input,
+  .ui-form-fields input:not([type="checkbox"]):not([type="radio"]),
+  .ui-form-fields select,
+  .ui-form-fields textarea,
+  .ui-form-fields .ts-control > input {
+    font-size: 1rem !important;
+  }
+
+  .users-form-page input:not([type="checkbox"]):not([type="radio"])::placeholder,
+  .users-form-page textarea::placeholder,
+  .users-form-page .users-form-card form .ts-wrapper.app-filter-select--form .ts-control > input::placeholder,
+  .ui-form-fields input:not([type="checkbox"]):not([type="radio"])::placeholder,
+  .ui-form-fields textarea::placeholder,
+  .ui-form-fields .ts-control > input::placeholder {
+    font-size: 0.8rem !important;
+  }
 }
 
 .app-toast-container {
