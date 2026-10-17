@@ -93,6 +93,21 @@ it('keeps death form labels with help icons aligned with regular labels', functi
         ->toContain('min-height: .875rem !important;');
 });
 
+it('keeps the alcohol municipality and district controls aligned when showing the filter action', function (): void {
+    $view = projectView('reportes/registro/alcoholimetria.blade.php');
+    $styles = file_get_contents(dirname(__DIR__, 2).'/resources/css/pages/report-road-safety-form.css');
+
+    expect($view)->toContain('class="report-road-field-label-row report-road-municipality-label-row"')
+        ->toContain("@if(\$canSelectAnyDistrict ?? false)\n                                <div class=\"report-road-field-label-row\">")
+        ->toContain('class="report-road-clear-district-filter"')
+        ->and($styles)->toContain('.report-road-field-label-row')
+        ->toContain('align-items: center;')
+        ->toContain('height: .9rem;')
+        ->toContain('min-height: .9rem;')
+        ->toContain('.report-road-clear-district-filter')
+        ->toContain('min-height: 0 !important;');
+});
+
 it('applies the complete shared form contract to alcohol reports', function (): void {
     $view = projectView('reportes/registro/alcoholimetria.blade.php');
     $section = projectView('components/ui/form/section.blade.php');
@@ -168,5 +183,98 @@ it('renders the alcohol file error after the complete upload group', function ()
         ->and($view)->toContain('archivos Excel (XLS o XLSX) y fotografías (JPG, JPEG o PNG)')
         ->and($requirements)->toContain("El reporte requiere como mínimo: ")
         ->and($guide)->toContain('zona de selección, lista de archivos seleccionados y, al final, mensaje de error del grupo')
+        ->toContain('Mínimo N`, `Exactamente N` o `Máximo N')
+        ->toContain('superar el mínimo no genera error')
+        ->toContain('puede mostrar valores como `2/1`')
+        ->toContain('si se admite JPEG, debe nombrarse junto con JPG y PNG')
         ->toContain('nunca se inserta entre la zona y una lista visible');
+});
+
+it('uses reporte as the user-facing term throughout the reports module', function (): void {
+    $forms = [
+        'reportes/registro/alcoholimetria.blade.php',
+        'reportes/registro/seguridad-vial.blade.php',
+        'reportes/registro/observatorio-de-lesiones.blade.php',
+        'reportes/registro/grupos-vulnerables.blade.php',
+    ];
+
+    foreach ($forms as $form) {
+        expect(projectView($form))
+            ->toContain('back-label="Volver a reportes"')
+            ->not->toContain('back-label="Volver a publicaciones"');
+    }
+
+    $index = projectView('reportes/publicaciones.blade.php');
+    $email = projectView('emails/reportes/comment.blade.php');
+    $controller = file_get_contents(dirname(__DIR__, 2).'/app/Http/Controllers/ReportController.php');
+    $guide = file_get_contents(dirname(__DIR__, 2).'/SISTEMA_DISENO_UI.md');
+
+    expect($index)
+        ->toContain("title: 'Eliminar reporte'")
+        ->toContain("showToast('Reporte eliminado.'")
+        ->not->toContain("title: 'Eliminar publicación'")
+        ->and($email)->toContain('Nuevo comentario en tu reporte')
+        ->and($controller)->toContain('Solo los administradores pueden eliminar reportes aprobados.')
+        ->toContain('Solo puedes comentar en tus propios reportes.')
+        ->not->toContain("->with('error', 'No tienes permisos para editar esta publicación.')")
+        ->and($guide)->toContain('el objeto visible se denomina `reporte`');
+});
+
+it('compacts alcohol quantities without changing their field contract', function (): void {
+    $view = projectView('reportes/registro/alcoholimetria.blade.php');
+    $styles = file_get_contents(dirname(__DIR__, 2).'/resources/css/pages/report-alcohol-form.css');
+    $guide = file_get_contents(dirname(__DIR__, 2).'/SISTEMA_DISENO_UI.md');
+    $fields = [
+        'puntos_revision',
+        'pruebas_realizadas',
+        'conductores_no_aptos',
+        'mujeres_no_aptas',
+        'hombres_no_aptos',
+        'automoviles_camionetas',
+        'motocicletas',
+        'transporte_colectivo',
+        'transporte_individual',
+        'transporte_carga',
+        'vehiculos_emergencia',
+    ];
+
+    foreach ($fields as $field) {
+        expect($view)->toContain("['name' => '{$field}'");
+    }
+
+    expect($view)
+        ->toContain('content-class="report-alcohol-metrics"')
+        ->toContain('role="group"')
+        ->toContain('aria-labelledby="{{ $groupTitleId }}"')
+        ->toContain('type="number" name="{{ $fieldName }}" min="0" max="{{ $field[\'max\'] }}"')
+        ->toContain('value="{{ $fieldValue }}" required inputmode="numeric"')
+        ->toContain('data-validation-number-message="Capture un número entero entre 0 y {{ $field[\'max\'] }}."')
+        ->toContain("['name' => 'puntos_revision', 'label' => 'Puntos de revisión instalados', 'placeholder' => 'Ej: 15', 'property' => 'checkpoints', 'max' => 9999]")
+        ->toContain("['name' => 'pruebas_realizadas', 'label' => 'Pruebas realizadas', 'placeholder' => 'Ej: 250', 'property' => 'tests_performed', 'max' => 999999]")
+        ->and($styles)->toContain('@media (min-width: 640px)')
+        ->toContain('@media (min-width: 1280px)')
+        ->toContain('grid-template-columns: 13rem minmax(0, 1fr);')
+        ->toContain('.report-alcohol-metric-group--primary')
+        ->toContain('grid-column: 2;')
+        ->not->toContain('padding-top: 1.32rem;')
+        ->toContain('grid-template-columns: repeat(3, minmax(0, 1fr));')
+        ->and($guide)->toContain('Los grupos densos de cantidades breves pueden usar una variante compacta')
+        ->toContain('debe reservar la misma columna de títulos y alinear el control con la primera columna de los subgrupos')
+        ->toContain('No reducir los inputs a anchos fijos ni cambiar su contrato visual.');
+});
+
+it('prevents the mouse wheel from changing focused number inputs while preserving page scroll', function (): void {
+    $app = file_get_contents(dirname(__DIR__, 2).'/resources/js/app.js');
+    $behavior = file_get_contents(dirname(__DIR__, 2).'/resources/js/number-input-wheel.js');
+    $guide = file_get_contents(dirname(__DIR__, 2).'/SISTEMA_DISENO_UI.md');
+
+    expect($app)->toContain("import './number-input-wheel';")
+        ->and($behavior)
+        ->toContain("input.type !== 'number'")
+        ->toContain('document.activeElement !== input')
+        ->toContain('input.blur();')
+        ->toContain("document.addEventListener('wheel', releaseFocusedNumberInput")
+        ->toContain('passive: true')
+        ->not->toContain('preventDefault')
+        ->and($guide)->toContain('debe desplazar la página sin alterar el valor');
 });

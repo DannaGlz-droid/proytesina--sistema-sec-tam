@@ -9,7 +9,7 @@
             :title="isset($publication) ? 'Editar reporte de grupos vulnerables' : 'Registrar reporte de grupos vulnerables'"
             :description="isset($publication) ? 'Actualiza la información de la actividad y conserva la trazabilidad de sus archivos.' : 'Captura la información general, la actividad y los archivos de respaldo del reporte.'"
             :back-href="route('reportes.index', ['tipo' => request('redirect_tipo', 'grupos-vulnerables')])"
-            back-label="Volver a publicaciones"
+            back-label="Volver a reportes"
             :prefer-history-back="true"
         />
 

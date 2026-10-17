@@ -9,7 +9,7 @@
             :title="isset($publication) ? 'Editar reporte de observatorio de lesiones' : 'Registrar reporte de observatorio de lesiones'"
             :description="isset($publication) ? 'Actualiza la información del reporte y conserva la trazabilidad de sus archivos.' : 'Captura la información general y adjunta la hoja de cálculo requerida.'"
             :back-href="route('reportes.index', ['tipo' => request('redirect_tipo', 'observatorio')])"
-            back-label="Volver a publicaciones"
+            back-label="Volver a reportes"
             :prefer-history-back="true"
         />
 

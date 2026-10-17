@@ -2947,7 +2947,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             
             if (!publicationId) {
-                showToast('No se encontró la publicación seleccionada.', 'error', 4000, {
+                showToast('No se encontró el reporte seleccionado.', 'error', 4000, {
                     description: 'Actualiza la página e inténtalo nuevamente.'
                 });
                 return;
@@ -3428,9 +3428,9 @@ document.addEventListener('DOMContentLoaded', function() {
             const redirectTipo = button.dataset.redirectTipo;
 
             const confirmed = await window.confirmDeleteDialog({
-                title: 'Eliminar publicación',
-                subject: 'esta publicación',
-                description: 'La publicación y sus archivos dejarán de estar disponibles de forma permanente.'
+                title: 'Eliminar reporte',
+                subject: 'este reporte',
+                description: 'El reporte y sus archivos dejarán de estar disponibles de forma permanente.'
             });
             if (!confirmed) {
                 return;
@@ -3457,12 +3457,12 @@ document.addEventListener('DOMContentLoaded', function() {
                     scroll: false
                 });
                 if (replaced) {
-                    showToast('Publicación eliminada.', 'success', 3000);
+                    showToast('Reporte eliminado.', 'success', 3000);
                 }
             })
             .catch(error => {
                 console.error('Error eliminando reporte:', error);
-                showToast('No se pudo eliminar la publicación.', 'error', 3000);
+                showToast('No se pudo eliminar el reporte.', 'error', 3000);
             });
         }
     });

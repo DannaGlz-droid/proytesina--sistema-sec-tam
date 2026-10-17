@@ -10,7 +10,7 @@
             :title="isset($publication) ? 'Editar reporte de seguridad vial' : 'Registrar reporte de seguridad vial'"
             :description="isset($publication) ? 'Actualiza la información del reporte y conserva la trazabilidad de sus archivos.' : 'Captura la información general, la actividad y los archivos de respaldo del reporte.'"
             :back-href="route('reportes.index', ['tipo' => request('redirect_tipo', 'seguridad_vial')])"
-            back-label="Volver a publicaciones"
+            back-label="Volver a reportes"
             :prefer-history-back="true"
         />
 

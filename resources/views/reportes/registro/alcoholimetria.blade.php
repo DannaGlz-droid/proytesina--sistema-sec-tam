@@ -8,7 +8,7 @@
             :title="isset($publication) ? 'Editar reporte de alcoholimetría' : 'Registrar reporte de alcoholimetría'"
             :description="isset($publication) ? 'Actualiza los resultados del operativo y conserva la trazabilidad de sus archivos.' : 'Captura la información, los resultados del operativo y los archivos de respaldo.'"
             :back-href="route('reportes.index', ['tipo' => request('redirect_tipo', 'alcoholimetria')])"
-            back-label="Volver a publicaciones"
+            back-label="Volver a reportes"
             :prefer-history-back="true"
             page-class="report-road-form-page report-alcohol-form-page"
             card-class="report-road-form-card"
@@ -79,7 +79,7 @@
                             <p id="fecha-error" class="report-road-field-error ui-field-error {{ $errors->has('fecha') ? '' : 'hidden' }}" data-ui-error-slot @if($errors->has('fecha')) data-server-error @endif role="alert">{{ $errors->first('fecha') }}</p>
                         </div>
                         <div>
-                            <div class="report-road-municipality-label-row">
+                            <div class="report-road-field-label-row report-road-municipality-label-row">
                                 <label for="alcohol_municipality_select">Municipio <span class="text-red-600">*</span></label>
                                 @if($canSelectAnyDistrict ?? false)
                                     <button id="clear-district-filter-alcohol" type="button" class="report-road-clear-district-filter"
@@ -101,7 +101,9 @@
                         </div>
                         <div>
                             @if($canSelectAnyDistrict ?? false)
-                                <label for="jurisdiction_select_alcohol">Distrito <span class="text-red-600">*</span></label>
+                                <div class="report-road-field-label-row">
+                                    <label for="jurisdiction_select_alcohol">Distrito <span class="text-red-600">*</span></label>
+                                </div>
                                 @php $selectedDistrito = old('jurisdiccion', isset($report) ? $report->district_id : ''); @endphp
                                 <select id="jurisdiction_select_alcohol" name="jurisdiccion" class="tomselect-select" required
                                         data-select-variant="form" data-placeholder="Seleccione un distrito" data-validation-required-message="Seleccione un distrito." data-validation-error-id="jurisdiccion-error"
@@ -123,33 +125,45 @@
                         </div>
                 </x-ui.form.section>
 
-                @foreach($numericSections as $section)
-                    <x-ui.form.section :title="$section['title']" :icon="$section['icon']" variant="report-road"
-                        class="report-alcohol-data-section"
-                        content-class="report-road-fields-grid grid grid-cols-1 gap-x-3 gap-y-3 {{ count($section['fields']) > 1 ? 'lg:grid-cols-2' : 'report-alcohol-single-field' }} lg:gap-x-4">
-                            @foreach($section['fields'] as $field)
-                                @php
-                                    $fieldName = $field['name'];
-                                    $fieldErrorId = str_replace('_', '-', $fieldName) . '-error';
-                                    $fieldValue = old($fieldName, isset($report) ? $report->{$field['property']} : '');
-                                @endphp
-                                <div>
-                                    <label for="{{ $fieldName }}">{{ $field['label'] }} <span class="text-red-600">*</span></label>
-                                    <input id="{{ $fieldName }}" type="number" name="{{ $fieldName }}" min="0" max="{{ $field['max'] }}"
-                                           placeholder="{{ $field['placeholder'] }}" value="{{ $fieldValue }}" required inputmode="numeric"
-                                           data-validation-error-id="{{ $fieldName === 'conductores_no_aptos' ? 'alcohol-totals-error' : $fieldErrorId }}"
-                                           data-validation-number-message="Capture un número entero entre 0 y {{ $field['max'] }}."
-                                           @if($errors->has($fieldName)) aria-invalid="true" aria-describedby="{{ $fieldName === 'conductores_no_aptos' ? 'alcohol-totals-error' : $fieldErrorId }}" @endif>
-                                    @if($fieldName !== 'conductores_no_aptos')
-                                        <p id="{{ $fieldErrorId }}" class="report-road-field-error ui-field-error {{ $errors->has($fieldName) ? '' : 'hidden' }}" data-ui-error-slot @if($errors->has($fieldName)) data-server-error @endif role="alert">{{ $errors->first($fieldName) }}</p>
-                                    @endif
-                                    @if($fieldName === 'conductores_no_aptos')
-                                        <p id="alcohol-totals-error" class="report-road-field-error ui-field-error {{ $errors->has($fieldName) ? '' : 'hidden' }}" data-ui-error-slot @if($errors->has($fieldName)) data-server-error @endif role="alert">{{ $errors->first($fieldName) }}</p>
+                <x-ui.form.section :title="$numericSections[0]['title']" :icon="$numericSections[0]['icon']" variant="report-road"
+                    class="report-alcohol-data-section"
+                    content-class="report-alcohol-metrics">
+                        @foreach($numericSections as $sectionIndex => $section)
+                            @php $groupTitleId = 'alcohol-metric-group-' . $sectionIndex; @endphp
+                            <div class="report-alcohol-metric-group {{ $sectionIndex === 0 ? 'report-alcohol-metric-group--primary' : '' }}"
+                                 role="group"
+                                 @if($sectionIndex === 0) aria-label="{{ $section['title'] }}" @else aria-labelledby="{{ $groupTitleId }}" @endif>
+                                <div class="report-alcohol-metric-group-heading">
+                                    @if($sectionIndex > 0)
+                                        <h3 id="{{ $groupTitleId }}">{{ $section['title'] }}</h3>
                                     @endif
                                 </div>
-                            @endforeach
-                    </x-ui.form.section>
-                @endforeach
+                                <div class="report-alcohol-metric-fields">
+                                    @foreach($section['fields'] as $field)
+                                        @php
+                                            $fieldName = $field['name'];
+                                            $fieldErrorId = str_replace('_', '-', $fieldName) . '-error';
+                                            $fieldValue = old($fieldName, isset($report) ? $report->{$field['property']} : '');
+                                        @endphp
+                                        <div>
+                                            <label for="{{ $fieldName }}">{{ $field['label'] }} <span class="text-red-600">*</span></label>
+                                            <input id="{{ $fieldName }}" type="number" name="{{ $fieldName }}" min="0" max="{{ $field['max'] }}"
+                                                   placeholder="{{ $field['placeholder'] }}" value="{{ $fieldValue }}" required inputmode="numeric"
+                                                   data-validation-error-id="{{ $fieldName === 'conductores_no_aptos' ? 'alcohol-totals-error' : $fieldErrorId }}"
+                                                   data-validation-number-message="Capture un número entero entre 0 y {{ $field['max'] }}."
+                                                   @if($errors->has($fieldName)) aria-invalid="true" aria-describedby="{{ $fieldName === 'conductores_no_aptos' ? 'alcohol-totals-error' : $fieldErrorId }}" @endif>
+                                            @if($fieldName !== 'conductores_no_aptos')
+                                                <p id="{{ $fieldErrorId }}" class="report-road-field-error ui-field-error {{ $errors->has($fieldName) ? '' : 'hidden' }}" data-ui-error-slot @if($errors->has($fieldName)) data-server-error @endif role="alert">{{ $errors->first($fieldName) }}</p>
+                                            @endif
+                                            @if($fieldName === 'conductores_no_aptos')
+                                                <p id="alcohol-totals-error" class="report-road-field-error ui-field-error {{ $errors->has($fieldName) ? '' : 'hidden' }}" data-ui-error-slot @if($errors->has($fieldName)) data-server-error @endif role="alert">{{ $errors->first($fieldName) }}</p>
+                                            @endif
+                                        </div>
+                                    @endforeach
+                                </div>
+                            </div>
+                        @endforeach
+                </x-ui.form.section>
 
                 <x-ui.form.section title="Descripción" icon="far fa-clipboard" variant="report-road"
                     class="report-road-description" content-class="space-y-3">

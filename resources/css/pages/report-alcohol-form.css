@@ -2,12 +2,76 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
-.report-alcohol-form-page .report-alcohol-single-field {
+.report-alcohol-form-page .report-alcohol-metrics {
+    padding: 0;
+}
+
+.report-alcohol-form-page .report-alcohol-metric-group {
+    display: grid;
     grid-template-columns: minmax(0, 1fr);
+    gap: .55rem;
+    padding: .78rem .9rem .9rem;
+    border-top: 1px solid var(--ui-border-soft);
+}
+
+.report-alcohol-form-page .report-alcohol-metric-group:first-child {
+    border-top: 0;
+}
+
+.report-alcohol-form-page .report-alcohol-metric-group-heading {
+    min-width: 0;
+}
+
+.report-alcohol-form-page .report-alcohol-metric-group-heading:empty {
+    display: none;
+}
+
+.report-alcohol-form-page .report-alcohol-metric-group-heading h3 {
+    margin: 0;
+    color: var(--ui-text-secondary);
+    font-family: "Open Sans", sans-serif;
+    font-size: .76rem;
+    font-weight: 700;
+    line-height: 1.35;
+}
+
+.report-alcohol-form-page .report-alcohol-metric-fields {
+    display: grid;
+    min-width: 0;
+    grid-template-columns: minmax(0, 1fr);
+    align-items: start;
+    gap: .75rem 1rem;
+}
+
+@media (min-width: 640px) {
+    .report-alcohol-form-page .report-alcohol-metric-fields {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (min-width: 1024px) {
+    .report-alcohol-form-page .report-alcohol-metric-group {
+        grid-template-columns: 13rem minmax(0, 1fr);
+        gap: 1rem;
+    }
+
+    .report-alcohol-form-page .report-alcohol-metric-group--primary .report-alcohol-metric-fields {
+        grid-column: 2;
+    }
+}
+
+@media (min-width: 1280px) {
+    .report-alcohol-form-page .report-alcohol-metric-fields {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
 }
 
 @media (max-width: 767px) {
     .report-alcohol-form-page .report-road-file-requirements {
         grid-template-columns: minmax(0, 1fr);
+    }
+
+    .report-alcohol-form-page .report-alcohol-metric-group {
+        padding: .72rem;
     }
 }

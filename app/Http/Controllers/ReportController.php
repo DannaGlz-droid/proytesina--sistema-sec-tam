@@ -277,13 +277,13 @@ class ReportController extends Controller
                 if (! $user->isAdmin()) {
                     return redirect()
                         ->route('reportes.index', ['tipo' => $redirectTipo])
-                        ->with('error', 'Solo los administradores pueden eliminar publicaciones aprobadas.');
+                        ->with('error', 'Solo los administradores pueden eliminar reportes aprobados.');
                 }
             } else {
                 if ($publication->user_id !== $user->id && ! $user->isAdmin()) {
                     return redirect()
                         ->route('reportes.index', ['tipo' => $redirectTipo])
-                        ->with('error', 'No tienes permisos para eliminar esta publicación.');
+                        ->with('error', 'No tienes permisos para eliminar este reporte.');
                 }
             }
 
@@ -327,14 +327,14 @@ class ReportController extends Controller
 
             return redirect()
                 ->route('reportes.index', ['tipo' => $redirectTipo])
-                ->with('success', 'Publicación eliminada correctamente.');
+                ->with('success', 'Reporte eliminado correctamente.');
 
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('No se pudo eliminar la publicación.', ['exception' => $e]);
             return redirect()
                 ->route('reportes.index', ['tipo' => $redirectTipo])
-                ->with('error', 'No se pudo eliminar la publicación. Inténtalo nuevamente.');
+                ->with('error', 'No se pudo eliminar el reporte. Inténtalo nuevamente.');
         }
     }
 
@@ -617,7 +617,7 @@ class ReportController extends Controller
         if ($publication->publication_type !== 'seguridad_vial') {
             return redirect()
                 ->route('reportes.index')
-                ->with('error', 'Esta publicación no corresponde a Seguridad Vial.');
+                ->with('error', 'Este reporte no corresponde a Seguridad Vial.');
         }
 
         // Permitir edición solo al autor Y que NO esté aprobada
@@ -625,13 +625,13 @@ class ReportController extends Controller
         if ($publication->user_id !== $user->id) {
             return redirect()
                 ->route('reportes.index')
-                ->with('error', 'No tienes permisos para editar esta publicación.');
+                ->with('error', 'No tienes permisos para editar este reporte.');
         }
 
         if ($publication->status === 'aprobado') {
             return redirect()
                 ->route('reportes.index')
-                ->with('error', 'No puedes editar una publicación aprobada.');
+                ->with('error', 'No puedes editar un reporte aprobado.');
         }
 
         $report = $publication->roadSafetyReports->first();
@@ -656,13 +656,13 @@ class ReportController extends Controller
         if ($publication->user_id !== $user->id) {
             return redirect()
                 ->route('reportes.index')
-                ->with('error', 'No tienes permisos para actualizar esta publicación.');
+                ->with('error', 'No tienes permisos para actualizar este reporte.');
         }
 
         if ($publication->status === 'aprobado') {
             return redirect()
                 ->route('reportes.index')
-                ->with('error', 'No puedes actualizar una publicación aprobada.');
+                ->with('error', 'No puedes actualizar un reporte aprobado.');
         }
 
         $userDistrictId = optional($user)->district_id;
@@ -841,7 +841,7 @@ class ReportController extends Controller
         if ($publication->publication_type !== 'observatorio') {
             return redirect()
                 ->route('reportes.index')
-                ->with('error', 'Esta publicación no corresponde al Observatorio de Lesiones.');
+                ->with('error', 'Este reporte no corresponde al Observatorio de Lesiones.');
         }
 
         // Permitir edición solo al autor Y que NO esté aprobada
@@ -849,13 +849,13 @@ class ReportController extends Controller
         if ($publication->user_id !== $user->id) {
             return redirect()
                 ->route('reportes.index')
-                ->with('error', 'No tienes permisos para editar esta publicación.');
+                ->with('error', 'No tienes permisos para editar este reporte.');
         }
 
         if ($publication->status === 'aprobado') {
             return redirect()
                 ->route('reportes.index')
-                ->with('error', 'No puedes editar una publicación aprobada.');
+                ->with('error', 'No puedes editar un reporte aprobado.');
         }
 
         $report = $publication->injuryObservatoryReports->first();
@@ -878,13 +878,13 @@ class ReportController extends Controller
         if ($publication->user_id !== $user->id) {
             return redirect()
                 ->route('reportes.index')
-                ->with('error', 'No tienes permisos para actualizar esta publicación.');
+                ->with('error', 'No tienes permisos para actualizar este reporte.');
         }
 
         if ($publication->status === 'aprobado') {
             return redirect()
                 ->route('reportes.index')
-                ->with('error', 'No puedes actualizar una publicación aprobada.');
+                ->with('error', 'No puedes actualizar un reporte aprobado.');
         }
 
         $userDistrictId = optional($user)->district_id;
@@ -1086,7 +1086,7 @@ class ReportController extends Controller
         if ($publication->publication_type !== 'alcoholimetria') {
             return redirect()
                 ->route('reportes.index')
-                ->with('error', 'Esta publicación no corresponde a Alcoholimetría.');
+                ->with('error', 'Este reporte no corresponde a Alcoholimetría.');
         }
 
         // Permitir edición solo al autor Y que NO esté aprobada
@@ -1094,13 +1094,13 @@ class ReportController extends Controller
         if ($publication->user_id !== $user->id) {
             return redirect()
                 ->route('reportes.index')
-                ->with('error', 'No tienes permisos para editar esta publicación.');
+                ->with('error', 'No tienes permisos para editar este reporte.');
         }
 
         if ($publication->status === 'aprobado') {
             return redirect()
                 ->route('reportes.index')
-                ->with('error', 'No puedes editar una publicación aprobada.');
+                ->with('error', 'No puedes editar un reporte aprobado.');
         }
 
         $report = $publication->breathalyzerReports->first();
@@ -1124,13 +1124,13 @@ class ReportController extends Controller
         if ($publication->user_id !== $user->id) {
             return redirect()
                 ->route('reportes.index')
-                ->with('error', 'No tienes permisos para actualizar esta publicación.');
+                ->with('error', 'No tienes permisos para actualizar este reporte.');
         }
 
         if ($publication->status === 'aprobado') {
             return redirect()
                 ->route('reportes.index')
-                ->with('error', 'No puedes actualizar una publicación aprobada.');
+                ->with('error', 'No puedes actualizar un reporte aprobado.');
         }
 
         $userDistrictId = optional($user)->district_id;
@@ -1317,7 +1317,7 @@ class ReportController extends Controller
     {
         // Verificar que sea del tipo correcto
         if ($publication->publication_type !== 'grupos-vulnerables') {
-            return redirect()->route('reportes.index')->with('error', 'Publicación no encontrada.');
+            return redirect()->route('reportes.index')->with('error', 'Reporte no encontrado.');
         }
 
         $report = $publication->gruposVulnerablesReport;
@@ -1335,7 +1335,7 @@ class ReportController extends Controller
     {
         // Verificar que sea del tipo correcto
         if ($publication->publication_type !== 'grupos-vulnerables') {
-            return redirect()->route('reportes.index')->with('error', 'Publicación no encontrada.');
+            return redirect()->route('reportes.index')->with('error', 'Reporte no encontrado.');
         }
 
         // Permitir actualización solo al autor Y que NO esté aprobada
@@ -1343,13 +1343,13 @@ class ReportController extends Controller
         if ($publication->user_id !== $user->id) {
             return redirect()
                 ->route('reportes.index')
-                ->with('error', 'No tienes permisos para actualizar esta publicación.');
+                ->with('error', 'No tienes permisos para actualizar este reporte.');
         }
 
         if ($publication->status === 'aprobado') {
             return redirect()
                 ->route('reportes.index')
-                ->with('error', 'No puedes actualizar una publicación aprobada.');
+                ->with('error', 'No puedes actualizar un reporte aprobado.');
         }
 
         $validated = $request->validated();
@@ -1446,7 +1446,7 @@ class ReportController extends Controller
     {
         // Verificar que sea del tipo correcto
         if ($publication->publication_type !== 'grupos-vulnerables') {
-            return response()->json(['success' => false, 'message' => 'No se encontró la publicación seleccionada.'], 404);
+            return response()->json(['success' => false, 'message' => 'No se encontró el reporte seleccionado.'], 404);
         }
 
         $report = $publication->gruposVulnerablesReport;
@@ -1515,7 +1515,7 @@ class ReportController extends Controller
         if ($user->isOperator() && $publication->user_id !== $user->id) {
             return response()->json([
                 'success' => false,
-                'message' => 'Solo puedes comentar en tus propias publicaciones.',
+                'message' => 'Solo puedes comentar en tus propios reportes.',
             ], 403);
         }
 
@@ -2042,7 +2042,7 @@ class ReportController extends Controller
         $files = $publication->files;
 
         if ($files->isEmpty()) {
-            return redirect()->back()->with('error', 'Esta publicación no tiene archivos para descargar.');
+            return redirect()->back()->with('error', 'Este reporte no tiene archivos para descargar.');
         }
 
         // Si solo hay un archivo, descargarlo directamente

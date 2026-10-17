@@ -39,7 +39,7 @@ class ReportCommentMail extends Mailable
             : 'Nuevo comentario en';
 
         return new Envelope(
-            subject: $prefix . ' “' . Str::limit($this->publication->topic ?? 'Publicación', 90) . '”'
+            subject: $prefix . ' “' . Str::limit($this->publication->topic ?? 'Reporte', 90) . '”'
         );
     }
 

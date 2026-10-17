@@ -50,6 +50,7 @@ Reglas:
 - Las descripciones deben explicar el propósito en una sola oración, con máximo aproximado de 65 caracteres por línea.
 - En tarjetas de contenido con autor, mostrar el nombre o nombres registrados y el primer apellido; conservar el nombre completo con ambos apellidos como texto accesible o ayuda, y usar el nombre de usuario únicamente como respaldo cuando falten los datos personales. Esta regla no sustituye la variante más breve definida para notificaciones.
 - No usar tamaños o familias distintas dentro de un mismo tipo de componente.
+- Mantener un vocabulario de dominio único en toda la interfaz. En el módulo de Reportes, el objeto visible se denomina `reporte`; `publicación` queda reservado para modelos, variables, rutas y otros nombres técnicos internos. Usar, por ejemplo, “Volver a reportes”, “Eliminar reporte” y “Reporte eliminado”.
 
 ### 3.2 Paleta base permanente
 
@@ -305,6 +306,10 @@ Excepciones:
 - Las diferencias de contenido entre módulos son válidas; no justifican cambiar el ancho, tarjeta, encabezados de sección, cuadrícula, espaciado o pie de acciones definidos por la plantilla.
 - Agrupar por significado, no por cantidad de campos.
 - Cada sección usa una franja gris clara de 38 px, icono opcional y título.
+- Los grupos densos de cantidades breves pueden usar una variante compacta dentro de una única sección semántica: el título principal conserva la franja oficial y cada subgrupo mantiene su nombre como subtítulo lateral en escritorio y superior en pantallas menores. Esta variante requiere al menos dos subgrupos relacionados y no se aplica a texto, fechas, selects ni campos de identidad.
+- En esa variante numérica, usar tres columnas desde 1280 px, dos desde 640 px y una por debajo; conservar controles fluidos dentro de cada celda, etiquetas completas, mensajes bajo su campo y alineación superior. No reducir los inputs a anchos fijos ni cambiar su contrato visual.
+- Cada subgrupo compacto usa `role="group"` y un nombre accesible mediante `aria-labelledby` o `aria-label`. El orden del DOM y de Tab permanece fila por fila, de izquierda a derecha, y coincide con la presentación en móvil.
+- Si la sección numérica compacta incluye un campo independiente sin subtítulo lateral, en escritorio debe reservar la misma columna de títulos y alinear el control con la primera columna de los subgrupos; en móvil debe ocupar todo el ancho disponible.
 - La franja es la variante oficial para formularios de página completa. Un editor breve incrustado en una tarjeta puede usar una variante compacta: leyenda en Open Sans, peso 600, mayúsculas con espaciado moderado y una línea neutral que complete el ancho. No añadir una segunda franja ni iconos decorativos en esta variante.
 - La variante compacta no modifica el contrato del formulario: conserva etiquetas, campos, ayudas, validaciones, orden de lectura y componentes compartidos. La diferencia responde únicamente al espacio y jerarquía del contexto incrustado.
 - Dos columnas desde 1024 px; una columna debajo de ese ancho.
@@ -317,6 +322,7 @@ Excepciones:
 ### 6.2 Campos
 
 - Alto estándar: 34 px en escritorio y 40 px en móvil.
+- La rueda del mouse sobre un `input[type="number"]` enfocado debe desplazar la página sin alterar el valor. La escritura, las flechas propias del control y las teclas de dirección conservan su comportamiento nativo.
 - En móvil, inputs, selects, textarea y el campo editable interno de los selects usan un tamaño computado de al menos 16 px para evitar el acercamiento automático de iOS al recibir foco. El placeholder puede conservar la escala visual compacta de 0.80 rem mediante `::placeholder`, sin reducir el tamaño computado del control. No bloquear el zoom manual mediante la configuración del viewport.
 - Fondo blanco, borde neutral y radio de 7 px.
 - Label encima; no usar placeholder como sustituto de label.
@@ -324,6 +330,7 @@ Excepciones:
 - Asterisco obligatorio en `--ui-danger`.
 - La ayuda puede ser contextual o persistente según su importancia; no elegir el formato únicamente para ahorrar espacio.
 - Los iconos de ayuda, indicadores de estado y demás elementos auxiliares colocados junto a una etiqueta no deben aumentar la altura de su renglón ni desplazar el control. Los controles que comparten una fila deben comenzar exactamente en la misma línea, tanto en el zoom normal como al ampliar la interfaz.
+- Cuando una etiqueta incluya una acción auxiliar —por ejemplo, `Mostrar todos`—, los campos paralelos deben usar la misma estructura compartida de fila de etiqueta aunque no tengan una acción. Esa fila conserva la misma altura con la acción visible u oculta; no alinear los controles mediante márgenes o desplazamientos particulares de una vista.
 
 #### Ayuda contextual en campos
 
@@ -402,11 +409,15 @@ Estados:
 ### 6.6 Carga de archivos
 
 - Mostrar los requisitos como un resumen compacto y continuo, no como tarjetas decorativas independientes. Cada requisito incluye nombre, cantidad/formato esperado y estado textual.
+- Expresar siempre la naturaleza de la cantidad: `Mínimo N`, `Exactamente N` o `Máximo N`. No mostrar únicamente “N archivos” cuando se permitan cantidades adicionales.
+- Cuando el requisito sea mínimo, aceptar archivos adicionales válidos. `Pendiente` significa que aún no se alcanza el mínimo y `Completado` que se alcanzó o superó; superar el mínimo no genera error.
+- Un contador `X/N` representa la cantidad actual frente al mínimo y puede mostrar valores como `2/1`. La cantidad total seleccionada se informa en el encabezado de la lista, sin duplicarla dentro del estado.
 - La zona de carga usa borde discontinuo neutral, altura contenida, acción secundaria “Seleccionar archivos” y soporte equivalente para arrastrar y soltar. Formatos permitidos, selección múltiple y tamaño máximo permanecen visibles.
 - Los iconos de formato son neutrales. Reservar éxito, advertencia y error para el estado del requisito o la validación; no asignar colores intensos distintos a PDF, hoja de cálculo y fotografía.
 - Presentar archivos en filas compactas: icono, nombre como información principal, formato y tamaño como información secundaria, y una única acción accesible para retirar el archivo.
 - En edición, separar claramente archivos guardados de archivos por agregar. Marcar un archivo existente para reemplazo o eliminación debe ser reversible antes de guardar y no ejecuta una eliminación inmediata.
 - Los estados Pendiente, Incompleto y Completado se comunican mediante texto y color semántico suave; los contadores dinámicos usan `aria-live` cuando aporten contexto.
+- Mantener sincronizados los formatos, límites y cantidades que aparecen en el resumen, la zona de selección, el atributo `accept` y los mensajes de error. La lista de extensiones debe ser exacta; por ejemplo, si se admite JPEG, debe nombrarse junto con JPG y PNG.
 - Validar formato, tamaño, duplicados y cantidades tanto en cliente como en servidor. El error del grupo lleva el foco a la acción de selección y se relaciona con ella mediante `aria-describedby`.
 - Mantener estable el orden del componente: zona de selección, lista de archivos seleccionados y, al final, mensaje de error del grupo. Si no existen archivos seleccionados y la lista no se muestra, el error queda inmediatamente debajo de la zona; nunca se inserta entre la zona y una lista visible.
 - En móvil, el resumen de requisitos se apila y las filas conservan nombre, metadatos y acción sin introducir desplazamiento horizontal.

@@ -18,7 +18,7 @@
                                 Notificación de reportes
                             </p>
                             <h1 style="margin:0 0 14px; font-size:22px; color:#404041;">
-                                {{ $isReply ? 'Nueva respuesta' : 'Nuevo comentario en tu publicación' }}
+                                {{ $isReply ? 'Nueva respuesta' : 'Nuevo comentario en tu reporte' }}
                             </h1>
                             <p style="margin:0 0 18px; font-size:15px; line-height:1.55;">
                                 <span style="font-style:italic; font-weight:600;">{{ $senderFullName }}</span>
