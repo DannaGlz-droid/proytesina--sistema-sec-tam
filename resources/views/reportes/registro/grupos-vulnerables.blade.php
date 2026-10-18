@@ -126,46 +126,52 @@
                     <div class="report-road-section-heading"><i class="fas fa-cloud-upload-alt" aria-hidden="true"></i><h2>Carga de archivos</h2></div>
                     <div class="space-y-4">
                         @if(isset($publication) && $publication->files->count() > 0)
-                            <section class="report-road-file-collection" aria-labelledby="existing-files-title">
+                            <section class="report-road-file-collection report-road-file-collection--mosaic report-road-file-collection--existing report-road-file-collection--columns-3" aria-labelledby="existing-files-title">
                                 <div class="report-road-file-collection-header">
-                                    <div><h3 id="existing-files-title">Archivos actuales</h3><p>{{ $publication->files->count() }} {{ $publication->files->count() === 1 ? 'archivo guardado' : 'archivos guardados' }}. Marca únicamente los que deseas eliminar o reemplazar.</p></div>
+                                    <div><h3 id="existing-files-title">Archivos actuales</h3><p>{{ $publication->files->count() }} {{ $publication->files->count() === 1 ? 'archivo guardado' : 'archivos guardados' }}.</p></div>
                                     <button id="select-all-existing-files" type="button" class="report-road-file-text-action" onclick="toggleAllExistingFiles()" aria-pressed="false">Seleccionar todos</button>
                                 </div>
-                                <ul class="report-road-file-rows" id="existing-files-list">
+                                <ul class="report-road-file-rows report-road-file-mosaic" id="existing-files-list">
                                     @foreach($publication->files as $file)
                                         @php
                                             $extension = strtolower(pathinfo($file->original_name, PATHINFO_EXTENSION));
                                             $fileType = \App\Config\ReportFileRequirements::getFileType($file->original_name);
                                             $fileIcon = match($fileType) { 'pdf' => 'far fa-file-pdf', 'photos' => 'far fa-image', default => 'far fa-file-excel' };
                                         @endphp
-                                        <li class="report-road-file-row file-item" data-file-id="{{ $file->id }}" data-file-type="{{ $fileType }}">
-                                            <input type="checkbox" class="file-delete-checkbox report-road-file-checkbox" onchange="toggleFileStrikethrough(this)" aria-label="Marcar {{ $file->original_name }} para eliminar o reemplazar">
-                                            <span class="report-road-file-icon" aria-hidden="true"><i class="{{ $fileIcon }}"></i></span>
-                                            <div class="report-road-file-info"><p class="report-road-file-name">{{ $file->original_name }}</p><p class="report-road-file-meta"><span class="report-road-file-format">{{ strtoupper($extension) }}</span><span>{{ number_format($file->file_size / 1024 / 1024, 2) }} MB</span></p></div>
+                                        <li class="report-road-file-row report-road-file-card file-item" data-file-id="{{ $file->id }}" data-file-type="{{ $fileType }}">
+                                            <label class="report-road-file-checkbox-hitbox inline-flex" title="Seleccionar {{ $file->original_name }}"><input type="checkbox" class="file-delete-checkbox report-road-file-checkbox" onchange="toggleFileStrikethrough(this)" aria-label="Marcar {{ $file->original_name }} para eliminar"><span class="report-road-file-checkbox-visual" aria-hidden="true"><i class="fas fa-check"></i></span></label>
+                                            <span class="report-road-file-card-preview {{ $fileType === 'photos' ? 'report-road-file-card-preview--photo' : 'report-road-file-card-preview--document' }}">@if($fileType === 'photos')<img src="{{ route('reportes.file.preview', $file) }}" alt="Vista previa de {{ $file->original_name }}" loading="lazy">@else<i class="{{ $fileIcon }}" aria-hidden="true"></i>@endif</span>
+                                            <div class="report-road-file-info"><p class="report-road-file-name"><a href="{{ route('reportes.file.preview', $file) }}" class="report-road-file-preview-link" target="_blank" rel="noopener">{{ $file->original_name }}</a></p><p class="report-road-file-meta"><span class="report-road-file-format">{{ strtoupper($extension) }}</span><span>{{ number_format($file->file_size / 1024 / 1024, 2) }} MB</span></p><p class="report-road-file-removal-state">Se eliminará al guardar</p></div>
                                         </li>
                                     @endforeach
                                 </ul>
                             </section>
                         @endif
 
-                        <div class="report-road-file-requirements" aria-label="Requisitos de archivos">
+                        <div class="report-road-file-requirements report-road-file-requirements--triple" aria-label="Requisitos de archivos">
                             <div class="report-road-file-requirement"><span class="report-road-file-requirement-icon" aria-hidden="true"><i class="far fa-file-pdf"></i></span><span class="report-road-file-requirement-copy"><strong>Documento PDF</strong><small>1 archivo · PDF</small></span><span id="pdf-status-badge" class="report-road-file-status" data-status="pending" aria-live="polite">Pendiente</span></div>
                             <div class="report-road-file-requirement"><span class="report-road-file-requirement-icon" aria-hidden="true"><i class="far fa-file-excel"></i></span><span class="report-road-file-requirement-copy"><strong>Hoja de cálculo</strong><small>1 archivo · XLSX</small></span><span id="excel-status-badge" class="report-road-file-status" data-status="pending" aria-live="polite">Pendiente</span></div>
                             <div class="report-road-file-requirement"><span class="report-road-file-requirement-icon" aria-hidden="true"><i class="far fa-image"></i></span><span class="report-road-file-requirement-copy"><strong>Fotografías</strong><small>4 archivos · JPG o PNG</small></span><span id="photos-status-badge" class="report-road-file-status" data-status="pending" aria-live="polite">0/4</span></div>
                         </div>
 
                         <div class="report-road-file-uploader">
-                            <div class="report-road-file-uploader-heading"><h3 id="file-upload-title">@if(isset($publication)) Agregar nuevos archivos (opcional) @else Subir archivos (selección múltiple) <span class="text-red-600">*</span> @endif</h3><p>Máximo 10 MB por archivo.</p></div>
+                            <div class="report-road-file-uploader-heading"><h3 id="file-upload-title">@if(isset($publication)) Agregar nuevos archivos (opcional) @else Subir archivos <span class="text-red-600">*</span> @endif</h3></div>
                             <div id="file-drop-zone" class="report-road-upload-zone" aria-labelledby="file-upload-title">
                                 <input type="file" id="file-input" name="archivos[]" class="hidden" accept=".pdf,.xlsx,.xls,.jpg,.jpeg,.png" multiple onchange="addFiles(this.files)">
                                 <span class="report-road-upload-zone-icon" aria-hidden="true"><i class="fas fa-cloud-upload-alt"></i></span>
-                                <div class="report-road-upload-zone-copy"><p><button id="choose-files-button" type="button">Seleccionar archivos</button><span> o arrástralos aquí</span></p><small>PDF, XLSX, XLS, JPG, JPEG o PNG · selección múltiple</small></div>
+                                <div class="report-road-upload-zone-copy">
+                                    <p><button id="choose-files-button" type="button">Seleccionar archivos</button><span> o arrástralos aquí</span></p>
+                                    <div class="report-road-upload-zone-details">
+                                        <small>Formatos: PDF, XLSX, XLS, JPG, JPEG o PNG</small>
+                                        <small>Máx. 10 MB por archivo · Puedes seleccionar varios</small>
+                                    </div>
+                                </div>
                             </div>
                             <div id="file-error" class="report-road-file-error hidden" role="alert"></div>
                             @if($fileErrors->isNotEmpty())<div class="report-road-file-error" role="alert">@foreach($fileErrors as $error)<div>{{ $error }}</div>@endforeach</div>@endif
-                            <section id="file-list" class="report-road-file-collection hidden" aria-labelledby="selected-files-title">
+                            <section id="file-list" class="report-road-file-collection report-road-file-collection--mosaic hidden" aria-labelledby="selected-files-title">
                                 <div class="report-road-file-collection-header"><div><h3 id="selected-files-title">Archivos por agregar</h3><p id="selected-files-count">0 archivos seleccionados</p></div></div>
-                                <ul id="file-names" class="report-road-file-rows"></ul>
+                                <ul id="file-names" class="report-road-file-rows report-road-file-mosaic"></ul>
                             </section>
                         </div>
                     </div>
@@ -183,6 +189,7 @@
 
     <script>
         let selectedFiles = [];
+        let selectedFilePreviewUrls = [];
         function showFileError(message) { const error = document.getElementById('file-error'); if (!error) return; error.textContent = message; error.classList.remove('hidden'); const reduce = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches; error.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'center' }); document.getElementById('choose-files-button')?.focus(); }
         function clearFileError() { const error = document.getElementById('file-error'); if (error) { error.textContent = ''; error.classList.add('hidden'); } }
         function addFiles(files) {
@@ -201,9 +208,34 @@
             setFileBadge('pdf', totals.pdf, 1); setFileBadge('excel', totals.excel, 1); setFileBadge('photos', totals.photos, 4);
         }
         function updateFileDisplay() {
-            const list = document.getElementById('file-names'); const collection = document.getElementById('file-list'); const count = document.getElementById('selected-files-count'); if (!list || !collection) return; list.innerHTML = '';
-            selectedFiles.forEach((file, index) => { const extension = file.name.split('.').pop().toLowerCase(); const icon = extension === 'pdf' ? 'fa-file-pdf' : ['xlsx','xls'].includes(extension) ? 'fa-file-excel' : 'fa-image'; const row = document.createElement('li'); row.className = 'report-road-file-row'; row.innerHTML = `<span class="report-road-file-icon" aria-hidden="true"><i class="far ${icon}"></i></span><div class="report-road-file-info"><p class="report-road-file-name"></p><p class="report-road-file-meta"><span class="report-road-file-format">${extension.toUpperCase()}</span><span>${(file.size / 1024 / 1024).toFixed(2)} MB</span></p></div><button type="button" class="report-road-file-remove" onclick="removeFile(${index})" title="Quitar archivo"><i class="fas fa-times" aria-hidden="true"></i></button>`; row.querySelector('.report-road-file-name').textContent = file.name; row.querySelector('.report-road-file-remove').setAttribute('aria-label', `Quitar ${file.name}`); list.appendChild(row); });
-            if (count) count.textContent = selectedFiles.length === 1 ? '1 archivo seleccionado' : `${selectedFiles.length} archivos seleccionados`; collection.classList.toggle('hidden', selectedFiles.length === 0);
+            const list = document.getElementById('file-names');
+            const collection = document.getElementById('file-list');
+            const count = document.getElementById('selected-files-count');
+            if (!list || !collection) return;
+            list.innerHTML = '';
+            selectedFilePreviewUrls.forEach(url => URL.revokeObjectURL(url));
+            selectedFilePreviewUrls = [];
+            selectedFiles.forEach((file, index) => {
+                const extension = file.name.split('.').pop().toLowerCase();
+                const isPhoto = ['jpg', 'jpeg', 'png'].includes(extension);
+                const icon = extension === 'pdf' ? 'fa-file-pdf' : ['xlsx', 'xls'].includes(extension) ? 'fa-file-excel' : 'fa-image';
+                const row = document.createElement('li');
+                row.className = 'report-road-file-row report-road-file-card';
+                row.innerHTML = `<span class="report-road-file-card-preview ${isPhoto ? 'report-road-file-card-preview--photo' : 'report-road-file-card-preview--document'}">${isPhoto ? '<img alt="">' : `<i class="far ${icon}" aria-hidden="true"></i>`}</span><div class="report-road-file-info"><p class="report-road-file-name"></p><p class="report-road-file-meta"><span class="report-road-file-format">${extension.toUpperCase()}</span><span>${(file.size / 1024 / 1024).toFixed(2)} MB</span></p></div><button type="button" class="report-road-file-remove" onclick="removeFile(${index})" title="Quitar archivo"><i class="fas fa-times" aria-hidden="true"></i></button>`;
+                row.querySelector('.report-road-file-name').textContent = file.name;
+                row.querySelector('.report-road-file-remove').setAttribute('aria-label', `Quitar ${file.name}`);
+                if (isPhoto) {
+                    const previewUrl = URL.createObjectURL(file);
+                    selectedFilePreviewUrls.push(previewUrl);
+                    const image = row.querySelector('.report-road-file-card-preview img');
+                    image.src = previewUrl;
+                    image.alt = `Vista previa de ${file.name}`;
+                }
+                list.appendChild(row);
+            });
+            if (count) count.textContent = selectedFiles.length === 1 ? '1 archivo seleccionado' : `${selectedFiles.length} archivos seleccionados`;
+            collection.classList.toggle('hidden', selectedFiles.length === 0);
+            document.getElementById('file-drop-zone')?.toggleAttribute('data-has-files', selectedFiles.length > 0);
         }
         async function clearGruposVulnerablesForm() { const form = document.getElementById('gruposVulnerablesForm'); const canClear = window.confirmFormClear ? await window.confirmFormClear(form, selectedFiles.length) : false; if (!canClear) return; form?.reset(); selectedFiles = []; updateFileDisplay(); updateFileCounters(); window.resetGruposVulnerablesTomSelects?.(); window.showToast?.('Formulario limpiado.', 'info', 2400); }
         document.addEventListener('DOMContentLoaded', function() { const drop = document.getElementById('file-drop-zone'); const input = document.getElementById('file-input'); document.getElementById('choose-files-button')?.addEventListener('click', () => input?.click()); if (drop && input) { ['dragenter','dragover','dragleave','drop'].forEach(name => drop.addEventListener(name, event => { event.preventDefault(); event.stopPropagation(); })); ['dragenter','dragover'].forEach(name => drop.addEventListener(name, () => drop.dataset.dragActive = 'true')); ['dragleave','drop'].forEach(name => drop.addEventListener(name, () => delete drop.dataset.dragActive)); drop.addEventListener('drop', event => addFiles(event.dataTransfer.files)); } updateFileCounters(); });

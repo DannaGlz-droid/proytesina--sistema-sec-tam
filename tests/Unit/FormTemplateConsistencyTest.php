@@ -190,6 +190,104 @@ it('renders the alcohol file error after the complete upload group', function ()
         ->toContain('nunca se inserta entre la zona y una lista visible');
 });
 
+it('documents one shared checkbox contract for selection and descriptive form options', function (): void {
+    $guide = file_get_contents(dirname(__DIR__, 2).'/SISTEMA_DISENO_UI.md');
+
+    expect($guide)
+        ->toContain('### 6.3 Checkboxes')
+        ->toContain('La variante oficial para **seleccionar elementos**')
+        ->toContain('La variante **descriptiva de formulario**')
+        ->toContain('La selección funcional nunca usa vino institucional ni rojo semántico')
+        ->toContain('No crear casillas con estilos locales')
+        ->toContain('Space` debe funcionar al navegar con teclado');
+});
+
+it('uses the file name as the discreet preview action in alcohol edit mode', function (): void {
+    $view = projectView('reportes/registro/alcoholimetria.blade.php');
+    $guide = file_get_contents(dirname(__DIR__, 2).'/SISTEMA_DISENO_UI.md');
+
+    expect($view)
+        ->toContain('route(\'reportes.file.preview\', $file)')
+        ->toContain('class="report-road-file-preview-link"')
+        ->toContain('target="_blank"')
+        ->and($guide)
+        ->toContain('su nombre funciona como enlace discreto')
+        ->toContain('No repetir una acción textual `Ver` en cada fila');
+});
+
+it('uses a visual attachment mosaic without changing the alcohol upload contract', function (): void {
+    $view = projectView('reportes/registro/alcoholimetria.blade.php');
+    $styles = file_get_contents(dirname(__DIR__, 2).'/resources/css/pages/report-road-safety-form.css');
+    $guide = file_get_contents(dirname(__DIR__, 2).'/SISTEMA_DISENO_UI.md');
+
+    expect($view)
+        ->toContain('id="file-input" name="archivos[]"')
+        ->toContain('accept=".xlsx,.xls,.jpg,.jpeg,.png" multiple')
+        ->toContain('class="file-delete-checkbox report-road-file-checkbox"')
+        ->toContain('id="files-to-delete" name="files_to_delete"')
+        ->toContain('report-road-file-card')
+        ->toContain('URL.createObjectURL(file)')
+        ->toContain('const showNewFileOrigin = @json(isset($publication));')
+        ->toContain("showNewFileOrigin ? '<span class=\"report-road-file-origin\"")
+        ->and($styles)
+        ->toContain('object-fit: contain')
+        ->toContain('background: var(--ui-surface-section)')
+        ->and($guide)
+        ->toContain('se permite un mosaico compacto')
+        ->toContain('no el contrato de carga ni sus validaciones');
+});
+
+it('adapts the shared attachment layout to every report requirement count', function (): void {
+    $roadSafety = projectView('reportes/registro/seguridad-vial.blade.php');
+    $vulnerableGroups = projectView('reportes/registro/grupos-vulnerables.blade.php');
+    $injuryObservatory = projectView('reportes/registro/observatorio-de-lesiones.blade.php');
+    $alcohol = projectView('reportes/registro/alcoholimetria.blade.php');
+    $styles = file_get_contents(dirname(__DIR__, 2).'/resources/css/pages/report-road-safety-form.css');
+
+    expect($roadSafety)
+        ->toContain('report-road-file-requirements report-road-file-requirements--triple')
+        ->toContain('report-road-file-collection--columns-3')
+        ->toContain('report-road-file-collection--mosaic')
+        ->toContain('report-road-file-card')
+        ->and($vulnerableGroups)
+        ->toContain('report-road-file-requirements report-road-file-requirements--triple')
+        ->toContain('report-road-file-collection--columns-3')
+        ->toContain('report-road-file-collection--mosaic')
+        ->toContain('report-road-file-card')
+        ->and($injuryObservatory)
+        ->toContain('report-road-file-requirements report-road-file-requirements--single')
+        ->toContain('report-road-file-collection--columns-1')
+        ->toContain('report-road-file-collection--mosaic')
+        ->toContain('report-road-file-card')
+        ->and($alcohol)
+        ->toContain('class="report-road-file-requirements"')
+        ->toContain('report-road-file-collection--columns-2')
+        ->toContain('report-road-file-collection--mosaic')
+        ->and($styles)
+        ->toContain('.report-road-file-requirements--single')
+        ->toContain('.report-road-file-requirements--triple')
+        ->toContain('.report-road-file-collection--columns-1')
+        ->toContain('.report-road-file-collection--columns-2')
+        ->toContain('.report-road-file-collection--columns-3');
+});
+
+it('keeps the per-file size limit inside every report upload zone', function (): void {
+    $forms = [
+        'reportes/registro/alcoholimetria.blade.php',
+        'reportes/registro/seguridad-vial.blade.php',
+        'reportes/registro/observatorio-de-lesiones.blade.php',
+        'reportes/registro/grupos-vulnerables.blade.php',
+    ];
+
+    foreach ($forms as $form) {
+        expect(projectView($form))
+            ->toContain('report-road-upload-zone-details')
+            ->toContain('Máx. 10 MB por archivo · Puedes seleccionar varios')
+            ->not->toContain('Subir archivos (selección múltiple)')
+            ->not->toContain('<p>Máximo 10 MB por archivo.</p>');
+    }
+});
+
 it('uses reporte as the user-facing term throughout the reports module', function (): void {
     $forms = [
         'reportes/registro/alcoholimetria.blade.php',

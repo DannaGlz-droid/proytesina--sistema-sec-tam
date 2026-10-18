@@ -180,22 +180,31 @@
                 <x-ui.form.section title="Carga de archivos" icon="fas fa-cloud-upload-alt" variant="report-road"
                     class="report-road-files" content-class="space-y-4">
                         @if(isset($publication) && $publication->files->count() > 0)
-                            <section class="report-road-file-collection" aria-labelledby="existing-files-title">
+                            <section class="report-road-file-collection report-road-file-collection--mosaic report-road-file-collection--existing report-road-file-collection--columns-2" aria-labelledby="existing-files-title">
                                 <div class="report-road-file-collection-header">
-                                    <div><h3 id="existing-files-title">Archivos actuales</h3><p>{{ $publication->files->count() }} {{ $publication->files->count() === 1 ? 'archivo guardado' : 'archivos guardados' }}. Marca únicamente los que deseas eliminar o reemplazar.</p></div>
+                                    <div><h3 id="existing-files-title">Archivos actuales</h3><p>{{ $publication->files->count() }} {{ $publication->files->count() === 1 ? 'archivo guardado' : 'archivos guardados' }}</p></div>
                                     <button id="select-all-existing-files" type="button" class="report-road-file-text-action" onclick="toggleAllExistingFiles()" aria-pressed="false">Seleccionar todos</button>
                                 </div>
-                                <ul class="report-road-file-rows" id="existing-files-list">
+                                <ul class="report-road-file-rows report-road-file-mosaic" id="existing-files-list">
                                     @foreach($publication->files as $file)
                                         @php
                                             $extension = strtolower(pathinfo($file->original_name, PATHINFO_EXTENSION));
                                             $fileType = \App\Config\ReportFileRequirements::getFileType($file->original_name);
                                             $fileIcon = $fileType === 'photos' ? 'far fa-image' : 'far fa-file-excel';
                                         @endphp
-                                        <li class="report-road-file-row file-item" data-file-id="{{ $file->id }}" data-file-type="{{ $fileType }}">
-                                            <input type="checkbox" class="file-delete-checkbox report-road-file-checkbox" onchange="toggleFileStrikethrough(this)" aria-label="Marcar {{ $file->original_name }} para eliminar o reemplazar">
-                                            <span class="report-road-file-icon" aria-hidden="true"><i class="{{ $fileIcon }}"></i></span>
-                                            <div class="report-road-file-info"><p class="report-road-file-name">{{ $file->original_name }}</p><p class="report-road-file-meta"><span class="report-road-file-format">{{ strtoupper($extension) }}</span><span>{{ number_format($file->file_size / 1024 / 1024, 2) }} MB</span></p></div>
+                                        <li class="report-road-file-row report-road-file-card file-item" data-file-id="{{ $file->id }}" data-file-type="{{ $fileType }}">
+                                            <label class="report-road-file-checkbox-hitbox inline-flex" title="Seleccionar {{ $file->original_name }}">
+                                                <input type="checkbox" class="file-delete-checkbox report-road-file-checkbox" onchange="toggleFileStrikethrough(this)" aria-label="Marcar {{ $file->original_name }} para eliminar">
+                                                <span class="report-road-file-checkbox-visual" aria-hidden="true"><i class="fas fa-check"></i></span>
+                                            </label>
+                                            <span class="report-road-file-card-preview {{ $fileType === 'photos' ? 'report-road-file-card-preview--photo' : 'report-road-file-card-preview--document' }}">
+                                                @if($fileType === 'photos')
+                                                    <img src="{{ route('reportes.file.preview', $file) }}" alt="Vista previa de {{ $file->original_name }}" loading="lazy">
+                                                @else
+                                                    <i class="{{ $fileIcon }}" aria-hidden="true"></i>
+                                                @endif
+                                            </span>
+                                            <div class="report-road-file-info"><p class="report-road-file-name"><a href="{{ route('reportes.file.preview', $file) }}" class="report-road-file-preview-link" target="_blank" rel="noopener" title="Ver archivo" aria-label="Ver archivo {{ $file->original_name }}">{{ $file->original_name }}</a></p><p class="report-road-file-meta"><span class="report-road-file-format">{{ strtoupper($extension) }}</span><span>{{ number_format($file->file_size / 1024 / 1024, 2) }} MB</span></p><p class="report-road-file-removal-state">Se eliminará al guardar</p></div>
                                         </li>
                                     @endforeach
                                 </ul>
@@ -216,15 +225,32 @@
                         </div>
 
                         <div class="report-road-file-uploader">
-                            <div class="report-road-file-uploader-heading"><h3 id="file-upload-title">@if(isset($publication)) Agregar nuevos archivos (opcional) @else Subir archivos (selección múltiple) <span class="text-red-600">*</span> @endif</h3><p>Máximo 10 MB por archivo.</p></div>
+                            <div class="report-road-file-uploader-heading"><h3 id="file-upload-title">@if(isset($publication)) Agregar nuevos archivos (opcional) @else Subir archivos <span class="text-red-600">*</span> @endif</h3></div>
                             <div id="file-drop-zone" class="report-road-upload-zone" aria-labelledby="file-upload-title">
                                 <input type="file" id="file-input" name="archivos[]" class="hidden" accept=".xlsx,.xls,.jpg,.jpeg,.png" multiple onchange="addFiles(this.files)" aria-describedby="file-error">
                                 <span class="report-road-upload-zone-icon" aria-hidden="true"><i class="fas fa-cloud-upload-alt"></i></span>
-                                <div class="report-road-upload-zone-copy"><p><button id="choose-files-button" type="button" aria-describedby="file-error">Seleccionar archivos</button><span> o arrástralos aquí</span></p><small>XLSX, XLS, JPG, JPEG o PNG · selección múltiple</small></div>
+                                <div class="report-road-upload-zone-copy">
+                                    <p><button id="choose-files-button" type="button" aria-describedby="file-error">Seleccionar archivos</button><span> o arrástralos aquí</span></p>
+                                    <div class="report-road-upload-zone-details">
+                                        <small>Formatos: XLSX, XLS, JPG, JPEG o PNG</small>
+                                        <small>Máx. 10 MB por archivo · Puedes seleccionar varios</small>
+                                    </div>
+                                </div>
                             </div>
-                            <section id="file-list" class="report-road-file-collection hidden" aria-labelledby="selected-files-title">
+                            <section id="file-list" class="report-road-file-collection report-road-file-collection--mosaic hidden" aria-labelledby="selected-files-title">
                                 <div class="report-road-file-collection-header"><div><h3 id="selected-files-title">Archivos por agregar</h3><p id="selected-files-count">0 archivos seleccionados</p></div></div>
-                                <ul id="file-names" class="report-road-file-rows"></ul>
+                                <div class="report-road-file-groups">
+                                    <section class="report-road-file-group" aria-labelledby="selected-excel-title">
+                                        <div class="report-road-file-group-heading"><h4 id="selected-excel-title">Hojas de cálculo</h4><p id="selected-excel-count">0 archivos</p></div>
+                                        <ul id="selected-excel-files" class="report-road-file-rows"></ul>
+                                        <p id="selected-excel-empty" class="report-road-file-group-empty">Aún no agregas hojas de cálculo.</p>
+                                    </section>
+                                    <section class="report-road-file-group" aria-labelledby="selected-photos-title">
+                                        <div class="report-road-file-group-heading"><h4 id="selected-photos-title">Fotografías</h4><p id="selected-photos-count">0 archivos</p></div>
+                                        <ul id="selected-photo-files" class="report-road-file-rows"></ul>
+                                        <p id="selected-photos-empty" class="report-road-file-group-empty">Aún no agregas fotografías.</p>
+                                    </section>
+                                </div>
                             </section>
                             <div id="file-error" class="report-road-file-error {{ $fileErrors->isNotEmpty() ? '' : 'hidden' }}" role="alert">{{ $fileErrors->join(' ') }}</div>
                         </div>
@@ -239,6 +265,8 @@
 
     <script>
         let selectedFiles = [];
+        let selectedFilePreviewUrls = [];
+        const showNewFileOrigin = @json(isset($publication));
         let alcoholValidationAttempted = false;
         const alcoholNumericFields = [
             'pruebas_realizadas', 'conductores_no_aptos', 'mujeres_no_aptas', 'hombres_no_aptos',
@@ -353,16 +381,27 @@
             return false;
         }
         function updateFileDisplay() {
-            const list = document.getElementById('file-names'); const collection = document.getElementById('file-list'); const count = document.getElementById('selected-files-count');
-            if (!list || !collection) return; list.innerHTML = '';
+            const collection = document.getElementById('file-list'); const count = document.getElementById('selected-files-count');
+            const excelList = document.getElementById('selected-excel-files'); const photoList = document.getElementById('selected-photo-files');
+            if (!collection || !excelList || !photoList) return; excelList.innerHTML = ''; photoList.innerHTML = '';
+            selectedFilePreviewUrls.forEach(url => URL.revokeObjectURL(url)); selectedFilePreviewUrls = [];
+            let excelCount = 0; let photoCount = 0;
             selectedFiles.forEach((file, index) => {
                 const extension = file.name.split('.').pop().toLowerCase(); const isPhoto = ['jpg','jpeg','png'].includes(extension); const row = document.createElement('li');
-                row.className = 'report-road-file-row';
-                row.innerHTML = `<span class="report-road-file-icon" aria-hidden="true"><i class="far ${isPhoto ? 'fa-image' : 'fa-file-excel'}"></i></span><div class="report-road-file-info"><p class="report-road-file-name"></p><p class="report-road-file-meta"><span class="report-road-file-format">${extension.toUpperCase()}</span><span>${(file.size / 1024 / 1024).toFixed(2)} MB</span></p></div><button type="button" class="report-road-file-remove" onclick="removeFile(${index})" title="Quitar archivo"><i class="fas fa-times" aria-hidden="true"></i></button>`;
-                row.querySelector('.report-road-file-name').textContent = file.name; row.querySelector('.report-road-file-remove').setAttribute('aria-label', `Quitar ${file.name}`); list.appendChild(row);
+                row.className = 'report-road-file-row report-road-file-card';
+                row.innerHTML = `<span class="report-road-file-card-preview ${isPhoto ? 'report-road-file-card-preview--photo' : 'report-road-file-card-preview--document'}">${isPhoto ? '<img alt="">' : '<i class="far fa-file-excel" aria-hidden="true"></i>'}</span><div class="report-road-file-info"><p class="report-road-file-name"></p><p class="report-road-file-meta"><span class="report-road-file-format">${extension.toUpperCase()}</span><span>${(file.size / 1024 / 1024).toFixed(2)} MB</span>${showNewFileOrigin ? '<span class="report-road-file-origin" data-origin="new">Nuevo</span>' : ''}</p></div><button type="button" class="report-road-file-remove" onclick="removeFile(${index})" title="Quitar archivo"><i class="fas fa-times" aria-hidden="true"></i></button>`;
+                row.querySelector('.report-road-file-name').textContent = file.name; row.querySelector('.report-road-file-remove').setAttribute('aria-label', `Quitar ${file.name}`);
+                if (isPhoto) { const previewUrl = URL.createObjectURL(file); selectedFilePreviewUrls.push(previewUrl); const image = row.querySelector('.report-road-file-card-preview img'); image.src = previewUrl; image.alt = `Vista previa de ${file.name}`; }
+                if (isPhoto) { photoList.appendChild(row); photoCount++; } else { excelList.appendChild(row); excelCount++; }
             });
             if (count) count.textContent = selectedFiles.length === 1 ? '1 archivo seleccionado' : `${selectedFiles.length} archivos seleccionados`;
+            const excelCounter = document.getElementById('selected-excel-count'); const photoCounter = document.getElementById('selected-photos-count');
+            if (excelCounter) excelCounter.textContent = excelCount === 1 ? '1 archivo' : `${excelCount} archivos`;
+            if (photoCounter) photoCounter.textContent = photoCount === 1 ? '1 archivo' : `${photoCount} archivos`;
+            document.getElementById('selected-excel-empty')?.toggleAttribute('hidden', excelCount > 0);
+            document.getElementById('selected-photos-empty')?.toggleAttribute('hidden', photoCount > 0);
             collection.classList.toggle('hidden', selectedFiles.length === 0);
+            document.getElementById('file-drop-zone')?.toggleAttribute('data-has-files', selectedFiles.length > 0);
         }
         async function clearAlcoholimetriaForm() {
             const form = document.getElementById('alcoholimetriaForm'); const canClear = window.confirmFormClear ? await window.confirmFormClear(form, selectedFiles.length) : false;

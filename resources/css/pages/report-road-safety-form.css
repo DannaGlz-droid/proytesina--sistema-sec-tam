@@ -216,11 +216,19 @@
 
 .report-road-file-requirements {
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     overflow: hidden;
     border: 1px solid var(--ui-border-soft);
     border-radius: 7px;
     background: var(--ui-surface);
+}
+
+.report-road-file-requirements--single {
+    grid-template-columns: minmax(0, 1fr);
+}
+
+.report-road-file-requirements--triple {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
 .report-road-file-requirement {
@@ -356,6 +364,11 @@
     transition: border-color 160ms ease, background-color 160ms ease, box-shadow 160ms ease;
 }
 
+.report-road-upload-zone[data-has-files="true"] {
+    min-height: 68px;
+    padding-block: .62rem;
+}
+
 .report-road-upload-zone:hover,
 .report-road-upload-zone:focus-within,
 .report-road-upload-zone[data-drag-active="true"] {
@@ -421,6 +434,11 @@
     color: var(--ui-text-muted);
     font-size: .67rem;
     line-height: 1.3;
+}
+
+.report-road-upload-zone-details {
+    display: grid;
+    gap: .04rem;
 }
 
 .report-road-file-error {
@@ -492,16 +510,81 @@
     text-decoration: line-through;
 }
 
-.report-road-file-checkbox {
-    width: 15px;
-    height: 15px;
-    flex: 0 0 auto;
-    margin: 0;
-    accent-color: var(--ui-danger);
+.report-road-file-checkbox-hitbox {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.8rem;
+    height: 1.8rem;
+    min-width: 1.8rem;
+    min-height: 1.8rem;
+    flex: 0 0 1.8rem;
+    margin: 0 !important;
+    border-radius: 6px;
     cursor: pointer;
+    touch-action: manipulation;
 }
 
-.report-road-file-checkbox:focus-visible {
+.report-road-file-checkbox-hitbox:hover .report-road-file-checkbox-visual {
+    border-color: var(--ui-focus);
+}
+
+.report-road-file-checkbox {
+    position: absolute !important;
+    width: 1px !important;
+    height: 1px !important;
+    min-width: 0 !important;
+    min-height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    clip-path: inset(50%);
+    opacity: 0;
+    white-space: nowrap;
+}
+
+.report-road-file-checkbox-visual {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: .95rem;
+    height: .95rem;
+    flex: 0 0 .95rem;
+    border: 1px solid #c3ccd8;
+    border-radius: .25rem;
+    background: #fff;
+    color: #fff;
+    font-size: .58rem;
+    line-height: 1;
+    box-shadow: none;
+    cursor: pointer;
+    transition: background-color 160ms ease, border-color 160ms ease, box-shadow 160ms ease;
+}
+
+.report-road-file-checkbox-visual i {
+    opacity: 0;
+    transform: scale(.72);
+    transition: opacity 120ms ease, transform 120ms ease;
+}
+
+.report-road-file-checkbox:checked + .report-road-file-checkbox-visual {
+    border-color: #526278;
+    background: #526278;
+}
+
+.report-road-file-checkbox:checked + .report-road-file-checkbox-visual i {
+    opacity: 1;
+    transform: scale(1);
+}
+
+.report-road-file-checkbox:focus + .report-road-file-checkbox-visual {
+    outline: 0;
+    box-shadow: 0 0 0 3px rgba(71, 85, 105, .14) !important;
+}
+
+.report-road-file-checkbox:focus-visible + .report-road-file-checkbox-visual {
     outline: 2px solid var(--ui-focus);
     outline-offset: 2px;
 }
@@ -532,6 +615,24 @@
     white-space: nowrap;
 }
 
+.report-road-file-preview-link {
+    color: inherit;
+    text-decoration: none;
+    text-underline-offset: 3px;
+}
+
+.report-road-file-preview-link:hover {
+    color: var(--ui-focus);
+    text-decoration: underline;
+}
+
+.report-road-file-preview-link:focus-visible {
+    border-radius: 3px;
+    outline: 2px solid var(--ui-focus);
+    outline-offset: 2px;
+    text-decoration: underline;
+}
+
 .report-road-file-meta {
     display: flex;
     align-items: center;
@@ -541,19 +642,83 @@
     line-height: 1.2;
 }
 
+.report-road-file-origin {
+    font-weight: 600;
+}
+
+.report-road-file-origin::before {
+    content: "·";
+    margin-right: .3rem;
+    color: var(--ui-text-muted);
+}
+
+.report-road-file-origin[data-origin="new"] {
+    color: var(--ui-success-text);
+}
+
+.report-road-file-groups {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.report-road-file-group + .report-road-file-group {
+    border-left: 1px solid var(--ui-border-soft);
+}
+
+.report-road-file-group-heading {
+    display: flex;
+    align-items: center;
+    gap: .55rem;
+    min-height: 45px;
+    padding: .48rem .72rem;
+    border-bottom: 1px solid var(--ui-border-soft);
+    background: var(--ui-surface-soft);
+}
+
+.report-road-file-group-heading > div {
+    display: grid;
+    gap: .05rem;
+}
+
+.report-road-file-group-heading :is(h4, p),
+.report-road-file-group-empty {
+    margin: 0;
+    font-family: "Open Sans", sans-serif;
+}
+
+.report-road-file-group-heading h4 {
+    color: var(--ui-text);
+    font-size: .72rem;
+    font-weight: 600;
+    line-height: 1.2;
+}
+
+.report-road-file-group-heading p,
+.report-road-file-group-empty {
+    color: var(--ui-text-muted);
+    font-size: .65rem;
+    line-height: 1.3;
+}
+
+.report-road-file-group-empty {
+    padding: .68rem .72rem;
+}
+
 .report-road-file-format {
     display: inline-flex;
     align-items: center;
-    min-height: 15px;
-    padding: 0 .24rem;
-    border: 1px solid var(--ui-border-soft);
-    border-radius: 3px;
-    background: var(--ui-surface-section);
     color: var(--ui-text-secondary);
-    font-size: .57rem;
-    font-weight: 700;
+    font-size: .62rem;
+    font-weight: 600;
     line-height: 1;
-    letter-spacing: .02em;
+    letter-spacing: .025em;
+}
+
+.report-road-file-format::after {
+    content: "·";
+    margin-left: .3rem;
+    color: var(--ui-text-muted);
+    font-weight: 400;
 }
 
 .report-road-file-remove {
@@ -581,6 +746,246 @@
 
 .report-road-file-remove:active {
     transform: translateY(1px);
+}
+
+/* Mosaico de adjuntos: misma lectura visual que las tarjetas del modal de reportes. */
+.report-road-file-collection--mosaic {
+    overflow: visible;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+}
+
+.report-road-file-collection--mosaic .report-road-file-collection-header {
+    padding: .58rem 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+}
+
+.report-road-file-collection--existing .report-road-file-collection-header {
+    justify-content: space-between;
+    gap: 1rem;
+    padding: .62rem .72rem;
+    border-bottom: 1px solid var(--ui-border-soft);
+    background: var(--ui-surface-section);
+}
+
+.report-road-file-mosaic,
+.report-road-file-collection--mosaic .report-road-file-groups {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(10.75rem, 12.75rem));
+    justify-content: start;
+    gap: .68rem;
+    padding: .58rem 0 0;
+}
+
+.report-road-file-collection--mosaic .report-road-file-group,
+.report-road-file-collection--mosaic .report-road-file-group .report-road-file-rows {
+    display: contents;
+}
+
+.report-road-file-collection--mosaic .report-road-file-group-heading,
+.report-road-file-collection--mosaic .report-road-file-group-empty {
+    display: none;
+}
+
+.report-road-file-card {
+    position: relative;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    align-content: start;
+    gap: 0;
+    min-width: 0;
+    min-height: 0;
+    padding: 0;
+    overflow: hidden;
+    border: 1px solid var(--ui-border-soft);
+    border-radius: 7px;
+    background: var(--ui-surface);
+    transition: border-color 160ms ease, background-color 160ms ease, box-shadow 160ms ease;
+}
+
+.report-road-file-card + .report-road-file-card {
+    border-top: 1px solid var(--ui-border-soft);
+}
+
+.report-road-file-card:hover {
+    border-color: var(--ui-border);
+    box-shadow: 0 3px 10px rgba(16, 35, 63, .06);
+}
+
+.report-road-file-card-preview {
+    position: relative;
+    display: grid;
+    width: 100%;
+    height: 5.75rem;
+    place-items: center;
+    overflow: hidden;
+    border-bottom: 1px solid var(--ui-border-soft);
+    background: var(--ui-surface-section);
+    color: var(--ui-text-secondary);
+}
+
+.report-road-file-card-preview--photo img {
+    width: 100%;
+    height: 100%;
+    background: var(--ui-surface-soft);
+    object-fit: contain;
+}
+
+.report-road-file-card-preview--document {
+    align-content: center;
+    background: var(--ui-surface-section);
+    color: var(--ui-text-secondary);
+}
+
+.report-road-file-card-preview--document i {
+    font-size: 1.8rem;
+    line-height: 1;
+}
+
+.report-road-file-card .report-road-file-info {
+    gap: .18rem;
+    padding: .54rem .62rem .62rem;
+}
+
+.report-road-file-card .report-road-file-name {
+    font-size: .7rem;
+}
+
+.report-road-file-card .report-road-file-meta {
+    flex-wrap: wrap;
+}
+
+.report-road-file-card .report-road-file-remove,
+.report-road-file-card .report-road-file-checkbox-hitbox {
+    position: absolute;
+    top: .42rem;
+    right: .42rem;
+    z-index: 2;
+    border: 1px solid rgba(203, 213, 225, .92);
+    background: rgba(255, 255, 255, .94);
+    box-shadow: 0 1px 3px rgba(16, 35, 63, .08);
+}
+
+.report-road-file-card .report-road-file-checkbox-hitbox {
+    width: 1.8rem;
+    height: 1.8rem;
+    min-width: 1.8rem;
+    min-height: 1.8rem;
+    flex-basis: 1.8rem;
+    border: 0;
+    background: transparent;
+    box-shadow: none;
+}
+
+.report-road-file-card .report-road-file-remove:hover {
+    border-color: var(--ui-border-strong);
+    background: var(--ui-surface);
+}
+
+.report-road-file-card .report-road-file-checkbox-hitbox:hover {
+    border: 0;
+    background: transparent;
+}
+
+/* En edición, los archivos guardados son una referencia compacta; los nuevos conservan el mosaico visual. */
+.report-road-file-collection--existing {
+    overflow: hidden;
+    border: 1px solid var(--ui-border-soft);
+    border-radius: 7px;
+    background: var(--ui-surface);
+}
+
+.report-road-file-collection--existing .report-road-file-mosaic {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: .62rem;
+    padding: .68rem;
+}
+
+.report-road-file-collection--columns-1 .report-road-file-mosaic {
+    grid-template-columns: minmax(0, 1fr);
+}
+
+.report-road-file-collection--columns-2 .report-road-file-mosaic,
+.report-road-file-collection--columns-3 .report-road-file-mosaic {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.report-road-file-collection--existing .report-road-file-card {
+    grid-template-columns: 3rem minmax(0, 1fr);
+    align-items: center;
+    column-gap: .55rem;
+    min-height: 4rem;
+    padding: .45rem 2.75rem .45rem .45rem;
+    background: var(--ui-surface);
+}
+
+.report-road-file-collection--existing .report-road-file-card-preview {
+    width: 3rem;
+    height: 3rem;
+    border: 1px solid var(--ui-border-soft);
+    border-radius: 5px;
+}
+
+.report-road-file-collection--existing .report-road-file-card-preview--document i {
+    font-size: 1.25rem;
+}
+
+.report-road-file-collection--existing .report-road-file-card .report-road-file-info {
+    padding: 0;
+}
+
+.report-road-file-collection--existing .report-road-file-card .report-road-file-checkbox-hitbox {
+    top: 50%;
+    right: .48rem;
+    transform: translateY(-50%);
+}
+
+@media (min-width: 1280px) {
+    .report-road-file-collection--columns-1 .report-road-file-mosaic {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .report-road-file-collection--columns-2 .report-road-file-mosaic {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .report-road-file-collection--columns-3 .report-road-file-mosaic {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+}
+
+.report-road-file-removal-state {
+    display: none;
+    margin: .1rem 0 0;
+    color: var(--ui-warning-text);
+    font-family: "Open Sans", sans-serif;
+    font-size: .64rem;
+    font-weight: 600;
+    line-height: 1.25;
+}
+
+.report-road-file-card[data-marked-for-removal="true"] {
+    border-color: var(--ui-danger-border);
+    background: var(--ui-danger-soft);
+}
+
+.report-road-file-card[data-marked-for-removal="true"] .report-road-file-info {
+    opacity: 1;
+}
+
+.report-road-file-card[data-marked-for-removal="true"] .report-road-file-card-preview {
+    opacity: .68;
+}
+
+.report-road-file-card[data-marked-for-removal="true"] :is(.report-road-file-name, .report-road-file-meta) {
+    opacity: .78;
+}
+
+.report-road-file-card[data-marked-for-removal="true"] .report-road-file-removal-state {
+    display: block;
 }
 
 .report-road-form-actions {
@@ -621,6 +1026,15 @@
         border-left: 0;
     }
 
+    .report-road-file-groups {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .report-road-file-group + .report-road-file-group {
+        border-top: 1px solid var(--ui-border-soft);
+        border-left: 0;
+    }
+
     .report-road-upload-zone {
         justify-content: flex-start;
         min-height: 80px;
@@ -631,6 +1045,11 @@
         align-items: flex-start;
     }
 
+    .report-road-file-collection--existing .report-road-file-collection-header {
+        align-items: center;
+        gap: .45rem .85rem;
+    }
+
     .report-road-file-row {
         padding-inline: .62rem;
     }
@@ -638,6 +1057,30 @@
     .report-road-file-remove {
         width: 40px;
         height: 40px;
+    }
+
+    .report-road-file-mosaic,
+    .report-road-file-collection--mosaic .report-road-file-groups {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: .58rem;
+        padding: .52rem 0 0;
+    }
+
+    .report-road-file-collection--existing .report-road-file-mosaic {
+        grid-template-columns: minmax(0, 1fr);
+        padding: .62rem;
+    }
+
+    .report-road-file-card .report-road-file-remove {
+        width: 2.25rem;
+        height: 2.25rem;
+    }
+}
+
+@media (max-width: 420px) {
+    .report-road-file-mosaic,
+    .report-road-file-collection--mosaic .report-road-file-groups {
+        grid-template-columns: minmax(0, 1fr);
     }
 }
 

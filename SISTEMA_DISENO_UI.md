@@ -357,7 +357,19 @@ Estados:
 - Para un valor derivado que solo se muestra y no debe recibir interacción, usar `disabled`, `aria-disabled="true"` y la clase compartida `ui-field--disabled`. Si el valor debe enviarse, conservarlo en un `input type="hidden"` y validarlo nuevamente en el servidor; el campo visible deshabilitado no lleva `name`.
 - Usar `readonly` en lugar de `disabled` solo cuando la persona necesite enfocar, seleccionar o copiar el contenido. Un campo `readonly` puede conservar respuesta de foco, pero nunca debe parecer editable.
 
-### 6.3 Selects
+### 6.3 Checkboxes
+
+- Todos los checkboxes pertenecen al contrato neutral compartido del sistema. No crear casillas con estilos locales, colores del módulo, controles nativos visibles que cambien entre navegadores ni una tercera variante visual.
+- La variante oficial para **seleccionar elementos** se usa en tarjetas, tablas, listas de archivos y acciones masivas. El cuadro visible mide `0.95rem`, tiene borde de 1 px con `--ui-border`, radio de `0.25rem`, fondo `--ui-surface` y permanece centrado dentro de un área clicable de al menos 32 × 32 px. El área puede crecer con la fila o celda, pero el cuadro visible no cambia de tamaño.
+- Al seleccionar, el borde y el fondo usan `--ui-focus` y la marca blanca usa el icono oficial `fa-check`. La selección funcional nunca usa vino institucional ni rojo semántico. Si seleccionar implica una eliminación pendiente, la consecuencia se comunica en la fila, texto o estado asociado; no cambiando el color del checkbox.
+- Hover refuerza únicamente el borde. El foco conserva el halo neutral con `--ui-focus-ring`; al navegar con teclado añade un contorno claramente visible. El estado deshabilitado reduce contraste y usa `cursor: not-allowed`, sin perder la marca cuando ya está seleccionado.
+- La variante **descriptiva de formulario** puede medir `1.125rem` únicamente cuando acompaña un título y una explicación persistente, como “Responsable principal del sistema”. Conserva los mismos colores, radio, icono, estados y comportamiento de foco que la variante de selección. No se usa dentro de tablas, tarjetas ni listas de archivos.
+- El `input[type="checkbox"]` nativo permanece en el DOM, conserva su nombre, valor, estado y semántica, pero puede ocultarse visualmente para evitar diferencias entre navegadores. La representación visible se asocia mediante un `label`; pulsar la etiqueta debe alternar el valor y `Space` debe funcionar al navegar con teclado.
+- La casilla siempre tiene un nombre accesible contextual. En selecciones masivas, “Seleccionar todos” y “Deseleccionar todos” actualizan texto y `aria-pressed` sin cambiar el significado de las casillas individuales.
+- Las nuevas pantallas deben reutilizar el componente o clases compartidas del checkbox. No copiar el markup, dibujar la palomita con CSS distinto ni redefinir tamaño, borde, radio, color o foco dentro de una hoja de módulo.
+- Antes de modificar el contrato, comprobar como mínimo la selección de tarjetas de reportes, una tabla administrativa, una lista de archivos y la opción descriptiva del formulario de usuario, en estados normal, hover, seleccionado, foco, teclado y deshabilitado.
+
+### 6.4 Selects
 
 - Todos los selects visibles del sistema que cumplan la misma función deben usar el mismo componente, aunque pertenezcan a módulos o formularios distintos. Registro de usuario y Registrar defunción son la referencia conjunta para esta equivalencia.
 - Usar Tom Select para consistencia visual entre navegadores.
@@ -382,7 +394,7 @@ Estados:
 - En selects dependientes, elegir el campo padre filtra el catálogo hijo y limpia cualquier valor hijo incompatible; si el hijo permite inferir el padre, la asignación puede realizarse automáticamente sin interrumpir la selección actual.
 - Cuando el padre inferido o seleccionado limite un catálogo que inicialmente era completo, ofrecer una acción visible y específica para quitar ese filtro. La acción limpia solamente la pareja dependiente, restaura el catálogo completo y no reinicia los demás campos del formulario.
 
-### 6.4 Validación
+### 6.5 Validación
 
 - Los campos obligatorios sin interacción previa se validan por primera vez al intentar enviar el formulario. Abrir y cerrar un select, enfocarlo o abandonarlo sin elegir no muestra por sí solo un mensaje rojo.
 - Después del primer intento de envío, revalidar cada campo al cambiarlo: retirar el error en cuanto sea válido y mantenerlo actualizado mientras siga siendo inválido.
@@ -397,7 +409,7 @@ Estados:
 - Los campos de contraseña que incorporan el botón compartido para mostrar u ocultar el valor deben usar `app-password-input-wrap`. En ellos se ocultan los reveladores nativos del navegador para mantener una sola acción visible y accesible.
 - No depender únicamente de alertas del navegador o del color.
 
-### 6.5 Contraseñas
+### 6.6 Contraseñas
 
 - Fortaleza y reglas pertenecen al campo Contraseña.
 - Coincidencia pertenece a Confirmar contraseña.
@@ -406,23 +418,26 @@ Estados:
 - Mostrar contraseña es una acción de solo icono con etiqueta accesible.
 - Los estados de seguridad usan colores semánticos, nunca color de marca.
 
-### 6.6 Carga de archivos
+### 6.7 Carga de archivos
 
 - Mostrar los requisitos como un resumen compacto y continuo, no como tarjetas decorativas independientes. Cada requisito incluye nombre, cantidad/formato esperado y estado textual.
+- El resumen adapta sus columnas a la cantidad real de tipos requeridos: un tipo ocupa una fila completa, dos tipos se distribuyen en dos columnas y tres tipos en tres columnas equivalentes. No fijar dos columnas para todos los reportes ni dejar un requisito aislado en una segunda fila en escritorio.
 - Expresar siempre la naturaleza de la cantidad: `Mínimo N`, `Exactamente N` o `Máximo N`. No mostrar únicamente “N archivos” cuando se permitan cantidades adicionales.
 - Cuando el requisito sea mínimo, aceptar archivos adicionales válidos. `Pendiente` significa que aún no se alcanza el mínimo y `Completado` que se alcanzó o superó; superar el mínimo no genera error.
 - Un contador `X/N` representa la cantidad actual frente al mínimo y puede mostrar valores como `2/1`. La cantidad total seleccionada se informa en el encabezado de la lista, sin duplicarla dentro del estado.
 - La zona de carga usa borde discontinuo neutral, altura contenida, acción secundaria “Seleccionar archivos” y soporte equivalente para arrastrar y soltar. Formatos permitidos, selección múltiple y tamaño máximo permanecen visibles.
 - Los iconos de formato son neutrales. Reservar éxito, advertencia y error para el estado del requisito o la validación; no asignar colores intensos distintos a PDF, hoja de cálculo y fotografía.
-- Presentar archivos en filas compactas: icono, nombre como información principal, formato y tamaño como información secundaria, y una única acción accesible para retirar el archivo.
+- Presentar archivos en filas compactas de forma predeterminada. Cuando la confirmación visual sea relevante —por ejemplo, evidencia fotográfica o continuidad con el visor de adjuntos—, se permite un mosaico compacto: fotografías con miniatura real, documentos con representación ligera, nombre como información principal, formato y tamaño como información secundaria, y una única acción accesible pegada a cada archivo. El mosaico cambia la presentación, no el contrato de carga ni sus validaciones.
+- Cuando los formularios de reportes compartan el mosaico, los archivos nuevos conservan tarjetas de ancho estable y se agregan o envuelven según la cantidad. En edición, la retícula compacta de archivos guardados refleja la composición mínima del reporte: una columna para un archivo requerido, dos para dos y tres para seis distribuidos entre tres tipos. En anchos intermedios puede reducirse a dos columnas y en móvil a una. Esta adaptación no altera los mínimos de cada tipo.
 - En edición, separar claramente archivos guardados de archivos por agregar. Marcar un archivo existente para reemplazo o eliminación debe ser reversible antes de guardar y no ejecuta una eliminación inmediata.
+- Cuando un archivo guardado pueda previsualizarse, su nombre funciona como enlace discreto y abre la vista previa en una pestaña nueva. El enlace conserva el aspecto del nombre en reposo, se subraya en hover y muestra foco neutral con teclado; incluye un nombre accesible contextual. No repetir una acción textual `Ver` en cada fila ni convertir toda la fila en enlace, porque debe coexistir sin conflicto con el checkbox de selección.
 - Los estados Pendiente, Incompleto y Completado se comunican mediante texto y color semántico suave; los contadores dinámicos usan `aria-live` cuando aporten contexto.
 - Mantener sincronizados los formatos, límites y cantidades que aparecen en el resumen, la zona de selección, el atributo `accept` y los mensajes de error. La lista de extensiones debe ser exacta; por ejemplo, si se admite JPEG, debe nombrarse junto con JPG y PNG.
 - Validar formato, tamaño, duplicados y cantidades tanto en cliente como en servidor. El error del grupo lleva el foco a la acción de selección y se relaciona con ella mediante `aria-describedby`.
 - Mantener estable el orden del componente: zona de selección, lista de archivos seleccionados y, al final, mensaje de error del grupo. Si no existen archivos seleccionados y la lista no se muestra, el error queda inmediatamente debajo de la zona; nunca se inserta entre la zona y una lista visible.
-- En móvil, el resumen de requisitos se apila y las filas conservan nombre, metadatos y acción sin introducir desplazamiento horizontal.
+- En móvil, el resumen de requisitos se apila. Las filas conservan nombre, metadatos y acción; el mosaico reduce columnas hasta mostrar una sola cuando el ancho no admite dos, siempre sin desplazamiento horizontal.
 
-### 6.7 Cambios sin guardar
+### 6.8 Cambios sin guardar
 
 - Los formularios de edición comparan su estado actual con el estado inicial; abrir la vista sin modificarla nunca genera una advertencia.
 - Al intentar navegar mediante un enlace interno con cambios pendientes, usar el diálogo compartido “Descartar cambios”.
@@ -432,7 +447,7 @@ Estados:
 - Cuando “Restablecer cambios” deshace al menos una modificación, confirmar el resultado mediante el toast informativo global “Cambios restablecidos.”. No mostrar el toast si el formulario ya estaba en su estado inicial; el color verde se reserva para información persistida correctamente.
 - Si el usuario devuelve manualmente todos los campos a sus valores iniciales, el formulario deja de considerarse modificado.
 
-### 6.8 Corrección inline en tarjetas
+### 6.9 Corrección inline en tarjetas
 
 - Usar este patrón cuando una persona deba revisar y corregir registros concretos sin abandonar un listado. No sustituye un formulario completo ni debe utilizarse para editar entidades con muchas secciones o flujos secundarios.
 - El ciclo oficial contiene tres estados: **Requiere corrección**, **Editando corrección** y **Corrección guardada**. Pendiente usa rojo semántico y `fa-circle-exclamation`; edición usa superficie e icono neutrales; guardado usa verde semántico y `fa-circle-check`.
@@ -829,6 +844,7 @@ Una pantalla se considera migrada cuando:
 - La asistencia de contraseña se distribuye junto a los dos campos correspondientes.
 - Las instrucciones complementarias y breves usan el icono contextual `fa-circle-question` mediante `x-ui.form.help-tooltip`; la ayuda indispensable y los errores permanecen visibles.
 - Font Awesome es la familia oficial de iconos y la migración se hará por pantalla.
+- Los checkboxes usan el contrato neutral compartido: variante compacta para selección de elementos y variante descriptiva únicamente para opciones de formulario con texto auxiliar. No se admiten estilos particulares por pantalla.
 - Los formularios tienen un ancho máximo de 1440 px.
 - Las tablas usan una sola densidad administrativa de 56 px por fila.
 - Carga, vacío, sin resultados y error se presentan dentro del componente afectado.
