@@ -4,10 +4,13 @@ namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 use App\Config\ReportFileRequirements;
+use App\Http\Requests\Concerns\ValidatesReportFileDuplicates;
 use Closure;
 
 class GruposVulnerablesReportRequest extends FormRequest
 {
+    use ValidatesReportFileDuplicates;
+
     protected function prepareForValidation(): void
     {
         $this->merge([
@@ -71,6 +74,8 @@ class GruposVulnerablesReportRequest extends FormRequest
     {
         return [
             function ($validator) {
+                $this->addDuplicateFileErrors($validator);
+
                 $publication = $this->route('publication');
                     
                     // Obtener archivos a eliminar

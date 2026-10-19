@@ -4,10 +4,13 @@ namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 use App\Config\ReportFileRequirements;
+use App\Http\Requests\Concerns\ValidatesReportFileDuplicates;
 use Closure;
 
 class InjuryObservatoryReportRequest extends FormRequest
 {
+    use ValidatesReportFileDuplicates;
+
     /**
      * Determine if the user is authorized to make this request.
      */
@@ -48,6 +51,8 @@ class InjuryObservatoryReportRequest extends FormRequest
     {
         return [
             function ($validator) {
+                $this->addDuplicateFileErrors($validator);
+
                 $publication = $this->route('publication');
                     
                     // Obtener archivos a eliminar

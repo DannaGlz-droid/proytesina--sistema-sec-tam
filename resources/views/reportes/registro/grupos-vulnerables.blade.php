@@ -129,7 +129,7 @@
                             <section class="report-road-file-collection report-road-file-collection--mosaic report-road-file-collection--existing report-road-file-collection--columns-3" aria-labelledby="existing-files-title">
                                 <div class="report-road-file-collection-header">
                                     <div><h3 id="existing-files-title">Archivos actuales</h3><p>{{ $publication->files->count() }} {{ $publication->files->count() === 1 ? 'archivo guardado' : 'archivos guardados' }}.</p></div>
-                                    <button id="select-all-existing-files" type="button" class="report-road-file-text-action" onclick="toggleAllExistingFiles()" aria-pressed="false">Seleccionar todos</button>
+                                    <button id="select-all-existing-files" type="button" class="report-road-file-text-action" onclick="toggleAllExistingFiles()" aria-pressed="false">Marcar todos para eliminar</button>
                                 </div>
                                 <ul class="report-road-file-rows report-road-file-mosaic" id="existing-files-list">
                                     @foreach($publication->files as $file)
@@ -138,8 +138,8 @@
                                             $fileType = \App\Config\ReportFileRequirements::getFileType($file->original_name);
                                             $fileIcon = match($fileType) { 'pdf' => 'far fa-file-pdf', 'photos' => 'far fa-image', default => 'far fa-file-excel' };
                                         @endphp
-                                        <li class="report-road-file-row report-road-file-card file-item" data-file-id="{{ $file->id }}" data-file-type="{{ $fileType }}">
-                                            <label class="report-road-file-checkbox-hitbox inline-flex" title="Seleccionar {{ $file->original_name }}"><input type="checkbox" class="file-delete-checkbox report-road-file-checkbox" onchange="toggleFileStrikethrough(this)" aria-label="Marcar {{ $file->original_name }} para eliminar"><span class="report-road-file-checkbox-visual" aria-hidden="true"><i class="fas fa-check"></i></span></label>
+                                        <li class="report-road-file-row report-road-file-card file-item" data-file-id="{{ $file->id }}" data-file-type="{{ $fileType }}" data-file-name="{{ $file->original_name }}" data-file-size="{{ $file->file_size }}">
+                                            <label class="report-road-file-checkbox-hitbox inline-flex" title="Marcar {{ $file->original_name }} para eliminar"><input type="checkbox" class="file-delete-checkbox report-road-file-checkbox" onchange="toggleFileStrikethrough(this)" aria-label="Marcar {{ $file->original_name }} para eliminar"><span class="report-road-file-checkbox-visual" aria-hidden="true"><i class="fas fa-check"></i></span></label>
                                             <span class="report-road-file-card-preview {{ $fileType === 'photos' ? 'report-road-file-card-preview--photo' : 'report-road-file-card-preview--document' }}">@if($fileType === 'photos')<img src="{{ route('reportes.file.preview', $file) }}" alt="Vista previa de {{ $file->original_name }}" loading="lazy">@else<i class="{{ $fileIcon }}" aria-hidden="true"></i>@endif</span>
                                             <div class="report-road-file-info"><p class="report-road-file-name"><a href="{{ route('reportes.file.preview', $file) }}" class="report-road-file-preview-link" target="_blank" rel="noopener">{{ $file->original_name }}</a></p><p class="report-road-file-meta"><span class="report-road-file-format">{{ strtoupper($extension) }}</span><span>{{ number_format($file->file_size / 1024 / 1024, 2) }} MB</span></p><p class="report-road-file-removal-state">Se eliminará al guardar</p></div>
                                         </li>
@@ -189,16 +189,45 @@
 
     <script>
         let selectedFiles = [];
+        const filesPendingEntryAnimation = new WeakSet();
         let selectedFilePreviewUrls = [];
         function showFileError(message) { const error = document.getElementById('file-error'); if (!error) return; error.textContent = message; error.classList.remove('hidden'); const reduce = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches; error.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'center' }); document.getElementById('choose-files-button')?.focus(); }
         function clearFileError() { const error = document.getElementById('file-error'); if (error) { error.textContent = ''; error.classList.add('hidden'); } }
+        function duplicateFileMessage(file) {
+            const normalizedName = file.name.trim().toLowerCase();
+            const duplicateNew = selectedFiles.some(item => item.name.trim().toLowerCase() === normalizedName && item.size === file.size);
+            if (duplicateNew) return `El archivo "${file.name}" ya está seleccionado.`;
+            const duplicateExisting = Array.from(document.querySelectorAll('#existing-files-list .file-item')).some(row => {
+                const markedForRemoval = row.querySelector('.file-delete-checkbox')?.checked;
+                return !markedForRemoval && (row.dataset.fileName || '').trim().toLowerCase() === normalizedName && Number(row.dataset.fileSize) === file.size;
+            });
+            return duplicateExisting ? `El archivo "${file.name}" ya está guardado. Márcalo para eliminar o reemplazar antes de volver a agregarlo.` : '';
+        }
         function addFiles(files) {
-            clearFileError(); Array.from(files).forEach(file => { const extension = file.name.split('.').pop().toLowerCase(); if (!['pdf','xlsx','xls','jpg','jpeg','png'].includes(extension)) { showFileError('Formato no válido. Solo se permiten PDF, Excel y fotografías JPG o PNG.'); return; } if (file.size > 10 * 1024 * 1024) { showFileError(`El archivo ${file.name} excede el tamaño máximo permitido (10 MB).`); return; } if (!selectedFiles.some(item => item.name === file.name && item.size === file.size)) selectedFiles.push(file); });
+            clearFileError(); Array.from(files).forEach(file => { const extension = file.name.split('.').pop().toLowerCase(); if (!['pdf','xlsx','xls','jpg','jpeg','png'].includes(extension)) { showFileError('Formato no válido. Solo se permiten PDF, Excel y fotografías JPG o PNG.'); return; } if (file.size > 10 * 1024 * 1024) { showFileError(`El archivo ${file.name} excede el tamaño máximo permitido (10 MB).`); return; } const duplicateMessage = duplicateFileMessage(file); if (duplicateMessage) { showFileError(duplicateMessage); return; } selectedFiles.push(file); filesPendingEntryAnimation.add(file); });
             updateFileDisplay(); updateFileCounters(); document.getElementById('file-input').value = '';
         }
-        function removeFile(index) { clearFileError(); selectedFiles.splice(index, 1); updateFileDisplay(); updateFileCounters(); }
+        function removeFile(index, trigger) {
+            clearFileError();
+            const file = selectedFiles[index];
+            const row = trigger?.closest('.report-road-file-card');
+            const reduceMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+            let finished = false;
+            const finishRemoval = () => {
+                if (finished) return;
+                finished = true;
+                const currentIndex = selectedFiles.indexOf(file);
+                if (currentIndex !== -1) selectedFiles.splice(currentIndex, 1);
+                updateFileDisplay();
+                updateFileCounters();
+            };
+            if (!row || reduceMotion) { finishRemoval(); return; }
+            row.classList.add('report-road-file-card--removing');
+            row.addEventListener('animationend', finishRemoval, { once: true });
+            window.setTimeout(finishRemoval, 220);
+        }
         function updateFilesToDeleteInput() { const input = document.getElementById('files-to-delete'); if (input) input.value = Array.from(document.querySelectorAll('#existing-files-list .file-delete-checkbox:checked')).map(box => box.closest('.file-item')?.dataset.fileId).filter(Boolean).join(','); }
-        function syncSelectAllExistingFiles() { const button = document.getElementById('select-all-existing-files'); const boxes = Array.from(document.querySelectorAll('#existing-files-list .file-delete-checkbox')); if (!button || !boxes.length) return; const all = boxes.every(box => box.checked); button.textContent = all ? 'Deseleccionar todos' : 'Seleccionar todos'; button.setAttribute('aria-pressed', all ? 'true' : 'false'); }
+        function syncSelectAllExistingFiles() { const button = document.getElementById('select-all-existing-files'); const boxes = Array.from(document.querySelectorAll('#existing-files-list .file-delete-checkbox')); if (!button || !boxes.length) return; const all = boxes.every(box => box.checked); button.textContent = all ? 'Desmarcar todos' : 'Marcar todos para eliminar'; button.setAttribute('aria-pressed', all ? 'true' : 'false'); }
         function toggleAllExistingFiles() { const boxes = Array.from(document.querySelectorAll('#existing-files-list .file-delete-checkbox')); const checked = !boxes.every(box => box.checked); boxes.forEach(box => { box.checked = checked; toggleFileStrikethrough(box); }); syncSelectAllExistingFiles(); }
         function toggleFileStrikethrough(box) { const row = box.closest('.file-item'); if (box.checked) row.dataset.markedForRemoval = 'true'; else delete row.dataset.markedForRemoval; updateFilesToDeleteInput(); updateFileCounters(); syncSelectAllExistingFiles(); }
         function setFileBadge(type, count, required) { const badge = document.getElementById(`${type}-status-badge`); if (!badge) return; const complete = count >= required; badge.textContent = complete ? 'Completado' : type === 'photos' ? `${count}/${required}` : 'Pendiente'; badge.dataset.status = complete ? 'complete' : count ? 'partial' : 'pending'; }
@@ -221,8 +250,11 @@
                 const icon = extension === 'pdf' ? 'fa-file-pdf' : ['xlsx', 'xls'].includes(extension) ? 'fa-file-excel' : 'fa-image';
                 const row = document.createElement('li');
                 row.className = 'report-road-file-row report-road-file-card';
-                row.innerHTML = `<span class="report-road-file-card-preview ${isPhoto ? 'report-road-file-card-preview--photo' : 'report-road-file-card-preview--document'}">${isPhoto ? '<img alt="">' : `<i class="far ${icon}" aria-hidden="true"></i>`}</span><div class="report-road-file-info"><p class="report-road-file-name"></p><p class="report-road-file-meta"><span class="report-road-file-format">${extension.toUpperCase()}</span><span>${(file.size / 1024 / 1024).toFixed(2)} MB</span></p></div><button type="button" class="report-road-file-remove" onclick="removeFile(${index})" title="Quitar archivo"><i class="fas fa-times" aria-hidden="true"></i></button>`;
-                row.querySelector('.report-road-file-name').textContent = file.name;
+                if (filesPendingEntryAnimation.has(file)) { row.classList.add('report-road-file-card--entering'); filesPendingEntryAnimation.delete(file); }
+                row.innerHTML = `<span class="report-road-file-card-preview ${isPhoto ? 'report-road-file-card-preview--photo' : 'report-road-file-card-preview--document'}">${isPhoto ? '<img alt="">' : `<i class="far ${icon}" aria-hidden="true"></i>`}</span><div class="report-road-file-info"><p class="report-road-file-name"></p><p class="report-road-file-meta"><span class="report-road-file-format">${extension.toUpperCase()}</span><span>${(file.size / 1024 / 1024).toFixed(2)} MB</span></p></div><button type="button" class="report-road-file-remove" onclick="removeFile(${index}, this)" title="Quitar archivo"><i class="fas fa-times" aria-hidden="true"></i></button>`;
+                const fileNameElement = row.querySelector('.report-road-file-name');
+                fileNameElement.textContent = file.name;
+                fileNameElement.title = file.name;
                 row.querySelector('.report-road-file-remove').setAttribute('aria-label', `Quitar ${file.name}`);
                 if (isPhoto) {
                     const previewUrl = URL.createObjectURL(file);

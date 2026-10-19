@@ -4,6 +4,7 @@ namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 use App\Config\ReportFileRequirements;
+use App\Http\Requests\Concerns\ValidatesReportFileDuplicates;
 use App\Models\District;
 use App\Models\Municipality;
 use Closure;
@@ -11,6 +12,8 @@ use Illuminate\Validation\Rule;
 
 class RoadSafetyReportRequest extends FormRequest
 {
+    use ValidatesReportFileDuplicates;
+
     protected function prepareForValidation(): void
     {
         $userDistrictId = (int) $this->user()?->district_id;
@@ -91,6 +94,8 @@ class RoadSafetyReportRequest extends FormRequest
     {
         return [
             function ($validator) {
+                $this->addDuplicateFileErrors($validator);
+
                 $publication = $this->route('publication');
 
                     $municipality = Municipality::find($this->input('municipio'));

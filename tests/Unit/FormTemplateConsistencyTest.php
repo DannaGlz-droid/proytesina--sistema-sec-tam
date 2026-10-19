@@ -122,7 +122,12 @@ it('applies the complete shared form contract to alcohol reports', function (): 
         ->not->toContain('reportValidity(')
         ->toContain('Restablecer cambios')
         ->toContain('resetAlcoholimetriaEditForm')
+        ->toContain('municipalitySelect.clear(true);')
+        ->toContain("if (municipality) municipality.value = '';")
+        ->toContain("isEdit ? '¿Deseas salir de la edición?' : '¿Deseas salir del registro?'")
+        ->toContain("isEdit ? 'Los cambios realizados no se guardarán.' : 'Los datos capturados no se guardarán.'")
         ->toContain("window.addEventListener('beforeunload'")
+        ->not->toContain("if (isEdit) {\n                document.addEventListener('click'")
         ->toContain('getAlcoholFileCounts')
         ->toContain('data-ui-error-slot')
         ->not->toContain('<div class="report-road-form-actions">')
@@ -131,6 +136,30 @@ it('applies the complete shared form contract to alcohol reports', function (): 
         ->and($buttons)->not->toContain("!request()->is('reportes/*/*/edit')")
         ->and($validation)->toContain("error.hasAttribute('data-ui-error-slot')")
         ->toContain('syncErrorDescription(field, error, invalid)');
+});
+
+it('applies the complete shared form contract to road safety reports', function (): void {
+    $view = projectView('reportes/registro/seguridad-vial.blade.php');
+
+    expect($view)->toContain('<x-ui.form.page')
+        ->toContain('<x-ui.form.section')
+        ->toContain('novalidate data-ui-inline-validation')
+        ->toContain('@foreach($activityTypes as $activityType)')
+        ->toContain('window.AppFilterSelect.init')
+        ->not->toContain('new TomSelect(')
+        ->not->toContain('reportValidity(')
+        ->toContain('Restablecer cambios')
+        ->toContain('resetSeguridadVialEditForm')
+        ->toContain('resetSeguridadVialTomSelects')
+        ->toContain('municipalitySelect.clear(true);')
+        ->toContain("if (municipality) municipality.value = '';")
+        ->toContain("window.addEventListener('beforeunload'")
+        ->toContain('getRoadSafetyFileCounts')
+        ->toContain("setFileBadge('pdf', pdf, 1)")
+        ->toContain("setFileBadge('excel', excel, 1)")
+        ->toContain("setFileBadge('photos', photos, 4)")
+        ->toContain('data-ui-error-slot')
+        ->not->toContain('<div class="report-road-form-actions">');
 });
 
 it('prevents automatic iOS zoom without disabling manual viewport zoom', function (): void {
@@ -227,14 +256,53 @@ it('uses a visual attachment mosaic without changing the alcohol upload contract
         ->toContain('id="files-to-delete" name="files_to_delete"')
         ->toContain('report-road-file-card')
         ->toContain('URL.createObjectURL(file)')
-        ->toContain('const showNewFileOrigin = @json(isset($publication));')
-        ->toContain("showNewFileOrigin ? '<span class=\"report-road-file-origin\"")
+        ->not->toContain('report-road-file-origin')
         ->and($styles)
         ->toContain('object-fit: contain')
         ->toContain('background: var(--ui-surface-section)')
+        ->not->toContain('report-road-file-origin')
         ->and($guide)
         ->toContain('se permite un mosaico compacto')
         ->toContain('no el contrato de carga ni sus validaciones');
+});
+
+it('explains that selecting saved report files marks them for deletion', function (): void {
+    $styles = file_get_contents(dirname(__DIR__, 2).'/resources/css/pages/report-road-safety-form.css');
+    $views = [
+        'reportes/registro/alcoholimetria.blade.php',
+        'reportes/registro/seguridad-vial.blade.php',
+        'reportes/registro/observatorio-de-lesiones.blade.php',
+        'reportes/registro/grupos-vulnerables.blade.php',
+    ];
+
+    foreach ($views as $view) {
+        expect(projectView($view))
+            ->toContain('Marcar todos para eliminar')
+            ->toContain('Desmarcar todos')
+            ->not->toContain('Marca los que deseas eliminar al actualizar.')
+            ->not->toContain('report-road-file-bulk-control')
+            ->not->toContain('Eliminar al actualizar:')
+            ->toContain('para eliminar">');
+    }
+
+    expect($styles)
+        ->toContain('.report-road-file-row[data-marked-for-removal="true"] .report-road-file-checkbox-visual')
+        ->toContain('.report-road-file-row[data-marked-for-removal="true"] .report-road-file-checkbox-visual i');
+});
+
+it('exposes the full name of selected report files when the card truncates it', function (): void {
+    $views = [
+        'reportes/registro/alcoholimetria.blade.php',
+        'reportes/registro/seguridad-vial.blade.php',
+        'reportes/registro/observatorio-de-lesiones.blade.php',
+        'reportes/registro/grupos-vulnerables.blade.php',
+    ];
+
+    foreach ($views as $view) {
+        expect(projectView($view))
+            ->toContain("fileNameElement.textContent = file.name")
+            ->toContain("fileNameElement.title = file.name");
+    }
 });
 
 it('adapts the shared attachment layout to every report requirement count', function (): void {
@@ -286,6 +354,33 @@ it('keeps the per-file size limit inside every report upload zone', function ():
             ->not->toContain('Subir archivos (selección múltiple)')
             ->not->toContain('<p>Máximo 10 MB por archivo.</p>');
     }
+});
+
+it('animates adding and removing newly selected report files consistently', function (): void {
+    $forms = [
+        'reportes/registro/alcoholimetria.blade.php',
+        'reportes/registro/seguridad-vial.blade.php',
+        'reportes/registro/observatorio-de-lesiones.blade.php',
+        'reportes/registro/grupos-vulnerables.blade.php',
+    ];
+
+    foreach ($forms as $form) {
+        expect(projectView($form))
+            ->toContain('const filesPendingEntryAnimation = new WeakSet();')
+            ->toContain("filesPendingEntryAnimation.add(file);")
+            ->toContain("report-road-file-card--entering")
+            ->toContain("report-road-file-card--removing")
+            ->toContain("onclick=\"removeFile(\${index}, this)\"")
+            ->toContain("prefers-reduced-motion: reduce");
+    }
+
+    $styles = file_get_contents(dirname(__DIR__, 2).'/resources/css/pages/report-road-safety-form.css');
+
+    expect($styles)
+        ->toContain('@keyframes report-road-file-card-enter')
+        ->toContain('@keyframes report-road-file-card-exit')
+        ->toContain('.report-road-file-card--entering')
+        ->toContain('.report-road-file-card--removing');
 });
 
 it('uses reporte as the user-facing term throughout the reports module', function (): void {
@@ -356,6 +451,10 @@ it('compacts alcohol quantities without changing their field contract', function
         ->toContain('grid-column: 2;')
         ->not->toContain('padding-top: 1.32rem;')
         ->toContain('grid-template-columns: repeat(3, minmax(0, 1fr));')
+        ->toContain('@media (max-width: 767px)')
+        ->toContain('.report-alcohol-form-page .report-alcohol-metric-group:not(:first-child)')
+        ->toContain('color: var(--ui-text-primary);')
+        ->toContain('text-wrap: pretty;')
         ->and($guide)->toContain('Los grupos densos de cantidades breves pueden usar una variante compacta')
         ->toContain('debe reservar la misma columna de títulos y alinear el control con la primera columna de los subgrupos')
         ->toContain('No reducir los inputs a anchos fijos ni cambiar su contrato visual.');
@@ -375,4 +474,18 @@ it('prevents the mouse wheel from changing focused number inputs while preservin
         ->toContain('passive: true')
         ->not->toContain('preventDefault')
         ->and($guide)->toContain('debe desplazar la página sin alterar el valor');
+});
+
+it('documents the complete create and edit form action lifecycle', function (): void {
+    $guide = file_get_contents(dirname(__DIR__, 2).'/SISTEMA_DISENO_UI.md');
+
+    expect($guide)
+        ->toContain('### 6.8 Limpieza y cambios sin guardar')
+        ->toContain('Ejecutar únicamente `form.reset()` no es suficiente')
+        ->toContain('La protección no puede condicionarse únicamente al modo edición.')
+        ->toContain('no depender únicamente del repintado de `input:checked`')
+        ->toContain('se interpreta como reemplazo')
+        ->toContain('especialmente los basados en WebKit en iOS')
+        ->toContain('toda página que capture o envíe formularios debe servirse mediante HTTPS')
+        ->toContain('persiste exactamente un alta o una actualización.');
 });

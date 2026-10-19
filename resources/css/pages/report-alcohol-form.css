@@ -72,6 +72,23 @@
     }
 
     .report-alcohol-form-page .report-alcohol-metric-group {
-        padding: .72rem;
+        gap: .68rem;
+        padding: .78rem .72rem .88rem;
+    }
+
+    .report-alcohol-form-page .report-alcohol-metric-group:not(:first-child) {
+        padding-top: .92rem;
+    }
+
+    .report-alcohol-form-page .report-alcohol-metric-group-heading h3 {
+        max-width: 28rem;
+        color: var(--ui-text-primary);
+        font-size: .8rem;
+        line-height: 1.45;
+        text-wrap: pretty;
+    }
+
+    .report-alcohol-form-page .report-alcohol-metric-fields {
+        row-gap: .82rem;
     }
 }

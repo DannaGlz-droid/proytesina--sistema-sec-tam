@@ -304,6 +304,7 @@ Excepciones:
 - Las secciones internas usan `x-ui.form.section` y el pie conserva `x-form-buttons` con la clase `users-form-actions`. No reconstruir estos tres niveles manualmente en una vista.
 - Crear y editar una misma entidad deben compartir un único parcial de campos cuando su estructura sea equivalente. Las vistas de operación conservan únicamente ruta, método, valores iniciales, título y etiquetas de acciones. Registrar y editar defunción usan `estadisticas.acciones.partials.death-form-fields` como referencia.
 - Las diferencias de contenido entre módulos son válidas; no justifican cambiar el ancho, tarjeta, encabezados de sección, cuadrícula, espaciado o pie de acciones definidos por la plantilla.
+- Alcoholimetría, Seguridad vial, Observatorio de lesiones y Grupos vulnerables forman una misma familia de formularios de reportes. Todo cambio en un patrón compartido debe revisarse en los cuatro tipos, tanto al crear como al editar y en escritorio, tableta y móvil. Solo pueden variar los campos propios del reporte y sus requisitos de archivos; estructura, controles, validación, estados y acciones conservan el contrato común.
 - Agrupar por significado, no por cantidad de campos.
 - Cada sección usa una franja gris clara de 38 px, icono opcional y título.
 - Los grupos densos de cantidades breves pueden usar una variante compacta dentro de una única sección semántica: el título principal conserva la franja oficial y cada subgrupo mantiene su nombre como subtítulo lateral en escritorio y superior en pantallas menores. Esta variante requiere al menos dos subgrupos relacionados y no se aplica a texto, fechas, selects ni campos de identidad.
@@ -365,7 +366,8 @@ Estados:
 - Hover refuerza únicamente el borde. El foco conserva el halo neutral con `--ui-focus-ring`; al navegar con teclado añade un contorno claramente visible. El estado deshabilitado reduce contraste y usa `cursor: not-allowed`, sin perder la marca cuando ya está seleccionado.
 - La variante **descriptiva de formulario** puede medir `1.125rem` únicamente cuando acompaña un título y una explicación persistente, como “Responsable principal del sistema”. Conserva los mismos colores, radio, icono, estados y comportamiento de foco que la variante de selección. No se usa dentro de tablas, tarjetas ni listas de archivos.
 - El `input[type="checkbox"]` nativo permanece en el DOM, conserva su nombre, valor, estado y semántica, pero puede ocultarse visualmente para evitar diferencias entre navegadores. La representación visible se asocia mediante un `label`; pulsar la etiqueta debe alternar el valor y `Space` debe funcionar al navegar con teclado.
-- La casilla siempre tiene un nombre accesible contextual. En selecciones masivas, “Seleccionar todos” y “Deseleccionar todos” actualizan texto y `aria-pressed` sin cambiar el significado de las casillas individuales.
+- La casilla siempre tiene un nombre accesible contextual. Cuando la selección prepara una eliminación diferida, el encabezado mantiene el conteo separado y usa una acción explícita como “Marcar todos para eliminar”, que cambia a “Desmarcar todos” y actualiza `aria-pressed` sin cambiar el significado de las casillas individuales.
+- En eliminaciones diferidas, la casilla visible y el estado de la fila deben responder a una misma fuente de verdad. Si la fila mantiene un atributo de estado como `data-marked-for-removal`, la representación visual de la marca también debe reconocerlo y no depender únicamente del repintado de `input:checked`; esto evita estados desincronizados en Safari móvil.
 - Las nuevas pantallas deben reutilizar el componente o clases compartidas del checkbox. No copiar el markup, dibujar la palomita con CSS distinto ni redefinir tamaño, borde, radio, color o foco dentro de una hoja de módulo.
 - Antes de modificar el contrato, comprobar como mínimo la selección de tarjetas de reportes, una tabla administrativa, una lista de archivos y la opción descriptiva del formulario de usuario, en estados normal, hover, seleccionado, foco, teclado y deshabilitado.
 
@@ -406,6 +408,7 @@ Estados:
 - Los formularios administrativos de página completa usan `novalidate` y el comportamiento compartido `data-ui-inline-validation`: todos los errores se presentan debajo de su campo y el primer inválido recibe foco.
 - No invocar `reportValidity()` ni mezclar globos nativos del navegador con mensajes inline. La validación nativa puede usarse internamente para detectar restricciones, pero su presentación corresponde al componente compartido.
 - Tras un envío válido, el comportamiento compartido conserva el ancho del botón primario, lo deshabilita y muestra el patrón `[spinner] Guardando…`; formulario y botón se marcan con `aria-busy`. Mientras procesa, el botón usa el cursor de espera (`wait`), no el cursor de acción no permitida (`not-allowed`); este último se reserva para controles indisponibles que no están ejecutando una operación. Las vistas no duplican esta lógica ni permiten envíos repetidos.
+- En producción, toda página que capture o envíe formularios debe servirse mediante HTTPS. Los avisos del navegador sobre información no protegida en entornos HTTP locales pertenecen a la configuración del entorno y no deben reemplazarse, ocultarse ni simularse desde la interfaz.
 - Los campos de contraseña que incorporan el botón compartido para mostrar u ocultar el valor deben usar `app-password-input-wrap`. En ellos se ocultan los reveladores nativos del navegador para mantener una sola acción visible y accesible.
 - No depender únicamente de alertas del navegador o del color.
 
@@ -430,20 +433,24 @@ Estados:
 - Presentar archivos en filas compactas de forma predeterminada. Cuando la confirmación visual sea relevante —por ejemplo, evidencia fotográfica o continuidad con el visor de adjuntos—, se permite un mosaico compacto: fotografías con miniatura real, documentos con representación ligera, nombre como información principal, formato y tamaño como información secundaria, y una única acción accesible pegada a cada archivo. El mosaico cambia la presentación, no el contrato de carga ni sus validaciones.
 - Cuando los formularios de reportes compartan el mosaico, los archivos nuevos conservan tarjetas de ancho estable y se agregan o envuelven según la cantidad. En edición, la retícula compacta de archivos guardados refleja la composición mínima del reporte: una columna para un archivo requerido, dos para dos y tres para seis distribuidos entre tres tipos. En anchos intermedios puede reducirse a dos columnas y en móvil a una. Esta adaptación no altera los mínimos de cada tipo.
 - En edición, separar claramente archivos guardados de archivos por agregar. Marcar un archivo existente para reemplazo o eliminación debe ser reversible antes de guardar y no ejecuta una eliminación inmediata.
+- Al agregar o quitar archivos nuevos, se permite una transición breve de opacidad y desplazamiento vertical para confirmar la acción. No animar la salida de archivos guardados al marcarlos, porque su eliminación sigue pendiente hasta actualizar el registro; respetar siempre `prefers-reduced-motion`.
 - Cuando un archivo guardado pueda previsualizarse, su nombre funciona como enlace discreto y abre la vista previa en una pestaña nueva. El enlace conserva el aspecto del nombre en reposo, se subraya en hover y muestra foco neutral con teclado; incluye un nombre accesible contextual. No repetir una acción textual `Ver` en cada fila ni convertir toda la fila en enlace, porque debe coexistir sin conflicto con el checkbox de selección.
 - Los estados Pendiente, Incompleto y Completado se comunican mediante texto y color semántico suave; los contadores dinámicos usan `aria-live` cuando aporten contexto.
 - Mantener sincronizados los formatos, límites y cantidades que aparecen en el resumen, la zona de selección, el atributo `accept` y los mensajes de error. La lista de extensiones debe ser exacta; por ejemplo, si se admite JPEG, debe nombrarse junto con JPG y PNG.
 - Validar formato, tamaño, duplicados y cantidades tanto en cliente como en servidor. El error del grupo lleva el foco a la acción de selección y se relaciona con ella mediante `aria-describedby`.
+- En edición, volver a seleccionar un archivo guardado que permanece activo se rechaza como duplicado y no añade otra tarjeta. Si ese archivo está marcado para eliminación, puede seleccionarse de nuevo y se interpreta como reemplazo; al actualizar se elimina la versión anterior y se conserva la nueva sin incrementar artificialmente la cantidad de adjuntos.
 - Mantener estable el orden del componente: zona de selección, lista de archivos seleccionados y, al final, mensaje de error del grupo. Si no existen archivos seleccionados y la lista no se muestra, el error queda inmediatamente debajo de la zona; nunca se inserta entre la zona y una lista visible.
 - En móvil, el resumen de requisitos se apila. Las filas conservan nombre, metadatos y acción; el mosaico reduce columnas hasta mostrar una sola cuando el ancho no admite dos, siempre sin desplazamiento horizontal.
 
-### 6.8 Cambios sin guardar
+### 6.8 Limpieza y cambios sin guardar
 
-- Los formularios de edición comparan su estado actual con el estado inicial; abrir la vista sin modificarla nunca genera una advertencia.
-- Al intentar navegar mediante un enlace interno con cambios pendientes, usar el diálogo compartido “Descartar cambios”.
-- Al recargar, cerrar la pestaña o usar la navegación del navegador, usar la advertencia nativa mediante `beforeunload`.
-- Enviar correctamente el formulario no muestra una advertencia de salida.
-- “Restablecer cambios” solicita confirmación únicamente cuando existen cambios y devuelve todos los controles, incluidos los selects enriquecidos, a su valor inicial.
+- “Limpiar formulario” en creación devuelve el formulario completo a su estado inicial: campos nativos, selects enriquecidos, catálogos y valores dependientes, archivos seleccionados, contadores, requisitos, errores y estados visuales. Ejecutar únicamente `form.reset()` no es suficiente cuando existen componentes con estado interno.
+- Después de limpiar, el formulario ya no se considera modificado y navegar no debe mostrar una advertencia hasta que la persona realice un nuevo cambio.
+- Los formularios de creación y edición comparan su estado actual con el estado inicial; abrir la vista sin modificarla nunca genera una advertencia. El estado modificado incluye campos, selects enriquecidos, archivos nuevos y archivos guardados marcados para eliminación.
+- La protección no puede condicionarse únicamente al modo edición. Al intentar navegar mediante cualquier enlace interno con cambios pendientes —incluidos navegación principal, “Volver” y enlaces de cambio de módulo—, usar el diálogo compartido “Descartar cambios”.
+- Al recargar, cerrar la pestaña o usar Atrás o Adelante del navegador, solicitar la advertencia nativa mediante `beforeunload`. Algunos navegadores móviles, especialmente los basados en WebKit en iOS, pueden omitirla; esta limitación no se resuelve insertando entradas artificiales en el historial ni impidiendo la navegación. La protección garantizada corresponde a los enlaces internos controlados por la aplicación.
+- Enviar correctamente el formulario no muestra una advertencia de salida. El estado de navegación segura se activa solamente después de que todas las validaciones permitan el envío.
+- “Restablecer cambios” en edición solicita confirmación únicamente cuando existen cambios y devuelve campos, selects enriquecidos, archivos nuevos y eliminaciones pendientes al estado exacto con el que se abrió la vista.
 - Cuando “Restablecer cambios” deshace al menos una modificación, confirmar el resultado mediante el toast informativo global “Cambios restablecidos.”. No mostrar el toast si el formulario ya estaba en su estado inicial; el color verde se reserva para información persistida correctamente.
 - Si el usuario devuelve manualmente todos los campos a sus valores iniciales, el formulario deja de considerarse modificado.
 
@@ -828,6 +835,10 @@ Una pantalla se considera migrada cuando:
 - Tablas incluyen carga, vacío, error y paginación.
 - Funciona con teclado y foco visible.
 - Responde correctamente en móvil y escritorio.
+- En familias de formularios equivalentes, se comprobaron todos sus tipos y sus variantes de creación y edición; validar únicamente la pantalla usada como piloto no completa la migración.
+- En creación, “Limpiar formulario” restablece campos, selects enriquecidos, dependencias, archivos, validaciones y estados; en edición, “Restablecer cambios” recupera el estado inicial completo.
+- Crear y editar advierten antes de abandonar cambios mediante enlaces internos y navegación del navegador, pero permiten salir sin advertencia después de un envío válido.
+- Un envío válido bloquea pulsaciones repetidas, muestra progreso y persiste exactamente un alta o una actualización.
 - No contiene colores institucionales hardcodeados.
 - No agrega estilos inline ni nuevas excepciones globales.
 - Pasó revisión funcional y visual.

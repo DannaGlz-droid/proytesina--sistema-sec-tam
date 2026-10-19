@@ -4,10 +4,13 @@ namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 use App\Config\ReportFileRequirements;
+use App\Http\Requests\Concerns\ValidatesReportFileDuplicates;
 use Closure;
 
 class BreathalyzerReportRequest extends FormRequest
 {
+    use ValidatesReportFileDuplicates;
+
     /**
      * Determine if the user is authorized to make this request.
      */
@@ -103,6 +106,8 @@ class BreathalyzerReportRequest extends FormRequest
     {
         return [
             function ($validator) {
+                $this->addDuplicateFileErrors($validator);
+
                 $testsPerformed = (int) $this->input('pruebas_realizadas', 0);
                 $driversNotFit = (int) $this->input('conductores_no_aptos', 0);
                 $genderTotal = (int) $this->input('mujeres_no_aptas', 0)
