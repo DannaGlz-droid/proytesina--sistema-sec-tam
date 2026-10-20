@@ -765,7 +765,7 @@ class ReportController extends Controller
         $userDistrictId = optional($user)->district_id;
         $mustUseAssignedDistrict = $user->isOperator()
             && $userDistrictId
-            && (int) $userDistrictId !== 999;
+            && (int) $userDistrictId !== District::CENTRAL_OFFICE_ID;
 
         if ($mustUseAssignedDistrict) {
             $municipality = Municipality::find($validated['municipio']);
@@ -871,6 +871,12 @@ class ReportController extends Controller
      */
     public function updateObservatorio(InjuryObservatoryReportRequest $request, Publication $publication)
     {
+        if ($publication->publication_type !== 'observatorio') {
+            return redirect()
+                ->route('reportes.index')
+                ->with('error', 'Este reporte no corresponde al Observatorio de Lesiones.');
+        }
+
         $validated = $request->validated();
 
         // Permitir actualización solo al autor Y que NO esté aprobada
@@ -890,7 +896,7 @@ class ReportController extends Controller
         $userDistrictId = optional($user)->district_id;
         $mustUseAssignedDistrict = $user->isOperator()
             && $userDistrictId
-            && (int) $userDistrictId !== 999;
+            && (int) $userDistrictId !== District::CENTRAL_OFFICE_ID;
 
         if ($mustUseAssignedDistrict) {
             $municipality = Municipality::find($validated['municipio']);

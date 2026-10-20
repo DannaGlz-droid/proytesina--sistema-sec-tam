@@ -2,14 +2,26 @@
 
 namespace App\Http\Requests;
 
-use Illuminate\Foundation\Http\FormRequest;
 use App\Config\ReportFileRequirements;
 use App\Http\Requests\Concerns\ValidatesReportFileDuplicates;
+use App\Models\District;
+use App\Models\Municipality;
 use Closure;
+use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class InjuryObservatoryReportRequest extends FormRequest
 {
     use ValidatesReportFileDuplicates;
+
+    protected function prepareForValidation(): void
+    {
+        $userDistrictId = (int) $this->user()?->district_id;
+
+        if ($userDistrictId && $userDistrictId !== District::CENTRAL_OFFICE_ID) {
+            $this->merge(['jurisdiccion' => $userDistrictId]);
+        }
+    }
 
     /**
      * Determine if the user is authorized to make this request.
@@ -28,14 +40,24 @@ class InjuryObservatoryReportRequest extends FormRequest
     {
         $publication = $this->route('publication');
         $isUpdate = $publication !== null;
+        $userDistrictId = (int) $this->user()?->district_id;
+        $canSelectAnyDistrict = $userDistrictId === District::CENTRAL_OFFICE_ID;
+        $allowedDistrictIds = $canSelectAnyDistrict
+            ? District::numberedCatalog()->pluck('id')->map(fn ($id) => (int) $id)->all()
+            : [$userDistrictId];
+        $municipalityRule = Rule::exists('municipalities', 'id');
+
+        if (! $canSelectAnyDistrict) {
+            $municipalityRule->where(fn ($query) => $query->where('district_id', $userDistrictId));
+        }
 
         return [
             'tema' => 'required|string|min:3|max:150',
             'fecha' => 'required|date|before_or_equal:today',
-            'municipio' => 'required|exists:municipalities,id',
-            'jurisdiccion' => 'required|exists:districts,id',
+            'municipio' => ['required', 'integer', $municipalityRule],
+            'jurisdiccion' => ['required', 'integer', Rule::in($allowedDistrictIds)],
             'descripcion' => 'nullable|string|max:5000',
-            // En modo edición, los archivos son opcionales; en creación, obligatorio al menos 1
+            // En modo edición, los archivos son opcionales; en creación, se exige al menos uno.
             'archivos' => $isUpdate ? 'nullable|array' : 'required|array|min:1',
             'archivos.*' => 'file|mimes:xlsx,xls|max:10240',
             'files_to_delete' => 'nullable|string', // IDs de archivos a eliminar separados por comas
@@ -54,47 +76,40 @@ class InjuryObservatoryReportRequest extends FormRequest
                 $this->addDuplicateFileErrors($validator);
 
                 $publication = $this->route('publication');
-                    
-                    // Obtener archivos a eliminar
-                    $filesToDeleteIds = [];
-                    if ($this->filled('files_to_delete')) {
-                        $filesToDeleteIds = array_filter(
-                            explode(',', $this->input('files_to_delete')),
-                            fn($id) => !empty($id)
-                        );
-                    }
-                    
-                    // Contar archivos existentes que NO van a ser eliminados
-                    $remainingFiles = $publication
-                        ? $publication->files->whereNotIn('id', $filesToDeleteIds)->all()
-                        : [];
-                    
-                    // Contar archivos nuevos por tipo
-                    $newFiles = $this->file('archivos', []);
-                    if (!is_array($newFiles)) {
-                        $newFiles = [];
-                    }
-                    
-                    // Contar existentes Excel
-                    $excelCount = count(array_filter($remainingFiles, fn($f) => 
-                        in_array(strtolower(pathinfo($f->original_name, PATHINFO_EXTENSION)), ['xlsx', 'xls'])
-                    ));
-                    
-                    // Contar nuevos Excel
-                    foreach ($newFiles as $file) {
-                        $ext = strtolower(pathinfo($file->getClientOriginalName(), PATHINFO_EXTENSION));
-                        if (in_array($ext, ['xlsx', 'xls'])) $excelCount++;
-                    }
-                    
-                    // Validar contra requisitos (observatorio solo requiere 1 XLSX)
-                    $requirements = ReportFileRequirements::getRequirements('observatorio');
-                    $missingMessage = ReportFileRequirements::getMissingFilesMessage('observatorio', 
-                        collect($remainingFiles)->merge($newFiles));
-                    
-                    // Verificar que se cumplan los requisitos mínimos
-                    if ($excelCount < $requirements['required_files']['excel']['min']) {
-                        $validator->errors()->add('archivos', $missingMessage);
-                    }
+                $municipality = Municipality::find($this->input('municipio'));
+
+                if ($municipality && (int) $municipality->district_id !== (int) $this->input('jurisdiccion')) {
+                    $validator->errors()->add('municipio', 'El municipio no pertenece al distrito seleccionado.');
+                }
+
+                $filesToDeleteIds = $this->filled('files_to_delete')
+                    ? array_filter(explode(',', (string) $this->input('files_to_delete')))
+                    : [];
+                $remainingFiles = $publication
+                    ? $publication->files->whereNotIn('id', $filesToDeleteIds)->all()
+                    : [];
+                $newFiles = $this->file('archivos', []);
+
+                if (! is_array($newFiles)) {
+                    $newFiles = [];
+                }
+
+                $requirements = ReportFileRequirements::getRequirements('observatorio');
+                $allRemainingFiles = collect($remainingFiles)->merge($newFiles);
+                $excelCount = $allRemainingFiles
+                    ->filter(fn ($file) => ReportFileRequirements::getFileType(
+                        method_exists($file, 'getClientOriginalName')
+                            ? $file->getClientOriginalName()
+                            : $file->original_name
+                    ) === 'excel')
+                    ->count();
+
+                if ($excelCount < $requirements['required_files']['excel']['min']) {
+                    $validator->errors()->add(
+                        'archivos',
+                        ReportFileRequirements::getMissingFilesMessage('observatorio', $allRemainingFiles)
+                    );
+                }
             },
         ];
     }
@@ -116,7 +131,7 @@ class InjuryObservatoryReportRequest extends FormRequest
             'municipio.required' => 'El municipio es obligatorio.',
             'municipio.exists' => 'El municipio seleccionado no es válido.',
             'jurisdiccion.required' => 'El distrito es obligatorio.',
-            'jurisdiccion.exists' => 'El distrito seleccionado no es válido.',
+            'jurisdiccion.in' => 'El distrito seleccionado no está permitido para este usuario.',
             'descripcion.max' => 'La descripción no puede exceder 5000 caracteres.',
             'archivos.required' => 'Debe subir al menos un archivo Excel.',
             'archivos.array' => 'Los archivos deben ser un array válido.',

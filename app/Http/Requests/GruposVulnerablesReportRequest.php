@@ -2,10 +2,13 @@
 
 namespace App\Http\Requests;
 
-use Illuminate\Foundation\Http\FormRequest;
 use App\Config\ReportFileRequirements;
 use App\Http\Requests\Concerns\ValidatesReportFileDuplicates;
+use App\Models\District;
+use App\Models\Municipality;
 use Closure;
+use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class GruposVulnerablesReportRequest extends FormRequest
 {
@@ -13,10 +16,17 @@ class GruposVulnerablesReportRequest extends FormRequest
 
     protected function prepareForValidation(): void
     {
-        $this->merge([
+        $userDistrictId = (int) $this->user()?->district_id;
+        $normalized = [
             'lugar' => $this->normalizeFreeText($this->input('lugar')),
             'promotor' => $this->normalizeFreeText($this->input('promotor')),
-        ]);
+        ];
+
+        if ($userDistrictId && $userDistrictId !== District::CENTRAL_OFFICE_ID) {
+            $normalized['jurisdiccion'] = $userDistrictId;
+        }
+
+        $this->merge($normalized);
     }
 
     private function normalizeFreeText($value): ?string
@@ -47,6 +57,16 @@ class GruposVulnerablesReportRequest extends FormRequest
     {
         $publication = $this->route('publication');
         $isUpdate = $publication !== null;
+        $userDistrictId = (int) $this->user()?->district_id;
+        $canSelectAnyDistrict = $userDistrictId === District::CENTRAL_OFFICE_ID;
+        $allowedDistrictIds = $canSelectAnyDistrict
+            ? District::numberedCatalog()->pluck('id')->map(fn ($id) => (int) $id)->all()
+            : [$userDistrictId];
+        $municipalityRule = Rule::exists('municipalities', 'id');
+
+        if (! $canSelectAnyDistrict) {
+            $municipalityRule->where(fn ($query) => $query->where('district_id', $userDistrictId));
+        }
 
         return [
             'tema' => 'required|string|min:3|max:150',
@@ -55,8 +75,8 @@ class GruposVulnerablesReportRequest extends FormRequest
             'activity_type_id' => 'required|exists:activity_types,id',
             'participantes' => 'required|integer|min:1|max:9999',
             'promotor' => 'required|string|min:3|max:180',
-            'municipio' => 'required|exists:municipalities,id',
-            'jurisdiccion' => 'required|exists:districts,id',
+            'municipio' => ['required', 'integer', $municipalityRule],
+            'jurisdiccion' => ['required', 'integer', Rule::in($allowedDistrictIds)],
             'descripcion' => 'nullable|string|max:5000',
             // En modo edición, los archivos son opcionales
             'archivos' => $isUpdate ? 'nullable|array' : 'required|array|min:1',
@@ -77,58 +97,64 @@ class GruposVulnerablesReportRequest extends FormRequest
                 $this->addDuplicateFileErrors($validator);
 
                 $publication = $this->route('publication');
-                    
-                    // Obtener archivos a eliminar
-                    $filesToDeleteIds = [];
-                    if ($this->filled('files_to_delete')) {
-                        $filesToDeleteIds = array_filter(
-                            explode(',', $this->input('files_to_delete')),
-                            fn($id) => !empty($id)
-                        );
+
+                $municipality = Municipality::find($this->input('municipio'));
+                if ($municipality && (int) $municipality->district_id !== (int) $this->input('jurisdiccion')) {
+                    $validator->errors()->add('municipio', 'El municipio no pertenece al distrito seleccionado.');
+                }
+
+                // Obtener archivos a eliminar
+                $filesToDeleteIds = [];
+                if ($this->filled('files_to_delete')) {
+                    $filesToDeleteIds = array_filter(
+                        explode(',', $this->input('files_to_delete')),
+                        fn ($id) => ! empty($id)
+                    );
+                }
+
+                // Contar archivos existentes que NO van a ser eliminados
+                $remainingFiles = $publication
+                    ? $publication->files->whereNotIn('id', $filesToDeleteIds)->all()
+                    : [];
+
+                // Contar archivos nuevos por tipo
+                $newFiles = $this->file('archivos', []);
+                if (! is_array($newFiles)) {
+                    $newFiles = [];
+                }
+
+                // Contar existentes por tipo
+                $pdfCount = count(array_filter($remainingFiles, fn ($f) => strtolower(pathinfo($f->original_name, PATHINFO_EXTENSION)) === 'pdf'
+                ));
+                $excelCount = count(array_filter($remainingFiles, fn ($f) => in_array(strtolower(pathinfo($f->original_name, PATHINFO_EXTENSION)), ['xlsx', 'xls'])
+                ));
+                $photosCount = count(array_filter($remainingFiles, fn ($f) => in_array(strtolower(pathinfo($f->original_name, PATHINFO_EXTENSION)), ['jpg', 'jpeg', 'png'])
+                ));
+
+                // Contar nuevos por tipo
+                foreach ($newFiles as $file) {
+                    $ext = strtolower(pathinfo($file->getClientOriginalName(), PATHINFO_EXTENSION));
+                    if ($ext === 'pdf') {
+                        $pdfCount++;
+                    } elseif (in_array($ext, ['xlsx', 'xls'])) {
+                        $excelCount++;
+                    } elseif (in_array($ext, ['jpg', 'jpeg', 'png'])) {
+                        $photosCount++;
                     }
-                    
-                    // Contar archivos existentes que NO van a ser eliminados
-                    $remainingFiles = $publication
-                        ? $publication->files->whereNotIn('id', $filesToDeleteIds)->all()
-                        : [];
-                    
-                    // Contar archivos nuevos por tipo
-                    $newFiles = $this->file('archivos', []);
-                    if (!is_array($newFiles)) {
-                        $newFiles = [];
-                    }
-                    
-                    // Contar existentes por tipo
-                    $pdfCount = count(array_filter($remainingFiles, fn($f) => 
-                        strtolower(pathinfo($f->original_name, PATHINFO_EXTENSION)) === 'pdf'
-                    ));
-                    $excelCount = count(array_filter($remainingFiles, fn($f) => 
-                        in_array(strtolower(pathinfo($f->original_name, PATHINFO_EXTENSION)), ['xlsx', 'xls'])
-                    ));
-                    $photosCount = count(array_filter($remainingFiles, fn($f) => 
-                        in_array(strtolower(pathinfo($f->original_name, PATHINFO_EXTENSION)), ['jpg', 'jpeg', 'png'])
-                    ));
-                    
-                    // Contar nuevos por tipo
-                    foreach ($newFiles as $file) {
-                        $ext = strtolower(pathinfo($file->getClientOriginalName(), PATHINFO_EXTENSION));
-                        if ($ext === 'pdf') $pdfCount++;
-                        elseif (in_array($ext, ['xlsx', 'xls'])) $excelCount++;
-                        elseif (in_array($ext, ['jpg', 'jpeg', 'png'])) $photosCount++;
-                    }
-                    
-                    // Validar contra requisitos
-                    $requirements = ReportFileRequirements::getRequirements('grupos-vulnerables');
-                    $missingMessage = ReportFileRequirements::getMissingFilesMessage('grupos-vulnerables', 
-                        collect($remainingFiles)->merge($newFiles));
-                    
-                    // Verificar que se cumplan los requisitos mínimos
-                    if ($pdfCount < $requirements['required_files']['pdf']['min'] ||
-                        $excelCount < $requirements['required_files']['excel']['min'] ||
-                        $photosCount < $requirements['required_files']['photos']['min']) {
-                        
-                        $validator->errors()->add('archivos', $missingMessage);
-                    }
+                }
+
+                // Validar contra requisitos
+                $requirements = ReportFileRequirements::getRequirements('grupos-vulnerables');
+                $missingMessage = ReportFileRequirements::getMissingFilesMessage('grupos-vulnerables',
+                    collect($remainingFiles)->merge($newFiles));
+
+                // Verificar que se cumplan los requisitos mínimos
+                if ($pdfCount < $requirements['required_files']['pdf']['min'] ||
+                    $excelCount < $requirements['required_files']['excel']['min'] ||
+                    $photosCount < $requirements['required_files']['photos']['min']) {
+
+                    $validator->errors()->add('archivos', $missingMessage);
+                }
             },
         ];
     }
@@ -162,7 +188,7 @@ class GruposVulnerablesReportRequest extends FormRequest
             'municipio.required' => 'El municipio es obligatorio.',
             'municipio.exists' => 'El municipio seleccionado no es válido.',
             'jurisdiccion.required' => 'El distrito es obligatorio.',
-            'jurisdiccion.exists' => 'El distrito seleccionado no es válido.',
+            'jurisdiccion.in' => 'El distrito seleccionado no está permitido para este usuario.',
             'descripcion.max' => 'La descripción no puede exceder 5000 caracteres.',
             'archivos.required' => 'Debe subir al menos un archivo.',
             'archivos.array' => 'Los archivos deben ser un conjunto válido.',

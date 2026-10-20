@@ -151,6 +151,9 @@ it('applies the complete shared form contract to road safety reports', function 
         ->toContain('Restablecer cambios')
         ->toContain('resetSeguridadVialEditForm')
         ->toContain('resetSeguridadVialTomSelects')
+        ->toContain("old('files_to_delete', '')")
+        ->toContain('@checked($markedForDeletion)')
+        ->toContain('data-marked-for-removal="true"')
         ->toContain('municipalitySelect.clear(true);')
         ->toContain("if (municipality) municipality.value = '';")
         ->toContain("window.addEventListener('beforeunload'")
@@ -162,6 +165,62 @@ it('applies the complete shared form contract to road safety reports', function 
         ->not->toContain('<div class="report-road-form-actions">');
 });
 
+it('applies the complete shared form contract to vulnerable groups reports', function (): void {
+    $view = projectView('reportes/registro/grupos-vulnerables.blade.php');
+
+    expect($view)->toContain('<x-ui.form.page')
+        ->toContain('<x-ui.form.section')
+        ->toContain('novalidate data-ui-inline-validation')
+        ->toContain('@foreach($activityTypes as $activityType)')
+        ->toContain('window.AppFilterSelect.init')
+        ->not->toContain('new TomSelect(')
+        ->not->toContain('reportValidity(')
+        ->toContain('Restablecer cambios')
+        ->toContain('resetGruposVulnerablesEditForm')
+        ->toContain('resetGruposVulnerablesTomSelects')
+        ->toContain("old('files_to_delete', '')")
+        ->toContain('@checked($markedForDeletion)')
+        ->toContain('data-marked-for-removal="true"')
+        ->toContain('municipalitySelect.clear(true);')
+        ->toContain("if (municipality) municipality.value = '';")
+        ->toContain("window.addEventListener('beforeunload'")
+        ->toContain('getVulnerableGroupsFileCounts')
+        ->toContain("setFileBadge('pdf', pdf, 1)")
+        ->toContain("setFileBadge('excel', excel, 1)")
+        ->toContain("setFileBadge('photos', photos, 4)")
+        ->toContain('data-ui-error-slot')
+        ->not->toContain('<div class="report-road-form-actions">');
+});
+
+it('applies the complete shared form contract to injury observatory reports', function (): void {
+    $view = projectView('reportes/registro/observatorio-de-lesiones.blade.php');
+
+    expect($view)->toContain('<x-ui.form.page')
+        ->toContain('<x-ui.form.section')
+        ->toContain('novalidate data-ui-inline-validation')
+        ->toContain('window.AppFilterSelect.init')
+        ->not->toContain('new TomSelect(')
+        ->not->toContain('reportValidity(')
+        ->toContain('Restablecer cambios')
+        ->toContain('resetObservatorioEditForm')
+        ->toContain('resetObservatorioTomSelects')
+        ->toContain("old('files_to_delete', '')")
+        ->toContain('@checked($markedForDeletion)')
+        ->toContain('data-marked-for-removal="true"')
+        ->toContain('municipalitySelect.clear(true);')
+        ->toContain("if (municipality) municipality.value = '';")
+        ->toContain("window.addEventListener('beforeunload'")
+        ->toContain('getObservatoryFileCounts')
+        ->toContain("setFileBadge('excel', excel, 1)")
+        ->toContain('accept=".xlsx,.xls"')
+        ->toContain('data-ui-error-slot')
+        ->not->toContain('name="activity_type_id"')
+        ->not->toContain('name="participantes"')
+        ->not->toContain('name="lugar"')
+        ->not->toContain('name="promotor"')
+        ->not->toContain('<div class="report-road-form-actions">');
+});
+
 it('prevents automatic iOS zoom without disabling manual viewport zoom', function (): void {
     $styles = file_get_contents(dirname(__DIR__, 2).'/resources/css/app.css');
     $guide = file_get_contents(dirname(__DIR__, 2).'/SISTEMA_DISENO_UI.md');
@@ -169,10 +228,10 @@ it('prevents automatic iOS zoom without disabling manual viewport zoom', functio
     expect($styles)->toContain('iOS Safari zooms the viewport')
         ->toContain('@media (max-width: 760px)')
         ->toContain('.users-form-page input:not([type="checkbox"]):not([type="radio"])')
-            ->toContain('.users-form-page .users-form-card form .ts-wrapper.app-filter-select--form .ts-control > input')
-            ->toContain('font-size: 1rem !important;')
-            ->toContain('.users-form-page input:not([type="checkbox"]):not([type="radio"])::placeholder')
-            ->toContain('font-size: 0.8rem !important;')
+        ->toContain('.users-form-page .users-form-card form .ts-wrapper.app-filter-select--form .ts-control > input')
+        ->toContain('font-size: 1rem !important;')
+        ->toContain('.users-form-page input:not([type="checkbox"]):not([type="radio"])::placeholder')
+        ->toContain('font-size: 0.8rem !important;')
         ->and($guide)->toContain('tamaño computado de al menos 16 px')
         ->toContain('placeholder puede conservar la escala visual compacta de 0.80 rem')
         ->toContain('No bloquear el zoom manual');
@@ -210,7 +269,7 @@ it('renders the alcohol file error after the complete upload group', function ()
         ->toContain('Mínimo 1 archivo · JPG, JPEG o PNG')
         ->toContain('El reporte requiere como mínimo: archivo Excel (${excel}/1), fotografía (${photos}/1).')
         ->and($view)->toContain('archivos Excel (XLS o XLSX) y fotografías (JPG, JPEG o PNG)')
-        ->and($requirements)->toContain("El reporte requiere como mínimo: ")
+        ->and($requirements)->toContain('El reporte requiere como mínimo: ')
         ->and($guide)->toContain('zona de selección, lista de archivos seleccionados y, al final, mensaje de error del grupo')
         ->toContain('Mínimo N`, `Exactamente N` o `Máximo N')
         ->toContain('superar el mínimo no genera error')
@@ -300,8 +359,8 @@ it('exposes the full name of selected report files when the card truncates it', 
 
     foreach ($views as $view) {
         expect(projectView($view))
-            ->toContain("fileNameElement.textContent = file.name")
-            ->toContain("fileNameElement.title = file.name");
+            ->toContain('fileNameElement.textContent = file.name')
+            ->toContain('fileNameElement.title = file.name');
     }
 });
 
@@ -325,6 +384,7 @@ it('adapts the shared attachment layout to every report requirement count', func
         ->and($injuryObservatory)
         ->toContain('report-road-file-requirements report-road-file-requirements--single')
         ->toContain('report-road-file-collection--columns-1')
+        ->toContain('<section id="file-list" class="report-road-file-collection report-road-file-collection--mosaic hidden"')
         ->toContain('report-road-file-collection--mosaic')
         ->toContain('report-road-file-card')
         ->and($alcohol)
@@ -367,11 +427,11 @@ it('animates adding and removing newly selected report files consistently', func
     foreach ($forms as $form) {
         expect(projectView($form))
             ->toContain('const filesPendingEntryAnimation = new WeakSet();')
-            ->toContain("filesPendingEntryAnimation.add(file);")
-            ->toContain("report-road-file-card--entering")
-            ->toContain("report-road-file-card--removing")
-            ->toContain("onclick=\"removeFile(\${index}, this)\"")
-            ->toContain("prefers-reduced-motion: reduce");
+            ->toContain('filesPendingEntryAnimation.add(file);')
+            ->toContain('report-road-file-card--entering')
+            ->toContain('report-road-file-card--removing')
+            ->toContain('onclick="removeFile(${index}, this)"')
+            ->toContain('prefers-reduced-motion: reduce');
     }
 
     $styles = file_get_contents(dirname(__DIR__, 2).'/resources/css/pages/report-road-safety-form.css');
@@ -474,6 +534,18 @@ it('prevents the mouse wheel from changing focused number inputs while preservin
         ->toContain('passive: true')
         ->not->toContain('preventDefault')
         ->and($guide)->toContain('debe desplazar la página sin alterar el valor');
+});
+
+it('documents restoration after a rejected report file update', function (): void {
+    $guide = file_get_contents(dirname(__DIR__, 2).'/SISTEMA_DISENO_UI.md');
+
+    expect($guide)
+        ->toContain('identificadores de `files_to_delete`')
+        ->toContain('reconstruir `files_to_delete` como fuente de verdad')
+        ->toContain('las mismas filas vuelven marcadas')
+        ->toContain('nunca puede convivir con todas las filas desmarcadas')
+        ->toContain('`input[type="file"]`')
+        ->toContain('estado inicial en el DOM');
 });
 
 it('documents the complete create and edit form action lifecycle', function (): void {

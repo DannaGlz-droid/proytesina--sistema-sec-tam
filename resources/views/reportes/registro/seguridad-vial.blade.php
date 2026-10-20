@@ -19,6 +19,11 @@
             $selectedActivity = old('activity_type_id', isset($report) ? $report->activity_type_id : '');
             $selectedMunicipio = old('municipio', isset($report) ? $report->municipality_id : '');
             $selectedDistrito = old('jurisdiccion', isset($report) ? $report->district_id : '');
+            $oldFilesToDelete = collect(explode(',', (string) old('files_to_delete', '')))
+                ->map(fn($id) => trim($id))
+                ->filter()
+                ->values()
+                ->all();
         @endphp
 
         <form id="seguridadVialForm" class="report-road-form ui-form-fields"
@@ -152,10 +157,11 @@
                                     $extension = strtolower(pathinfo($file->original_name, PATHINFO_EXTENSION));
                                     $fileType = \App\Config\ReportFileRequirements::getFileType($file->original_name);
                                     $fileIcon = match($fileType) { 'pdf' => 'far fa-file-pdf', 'excel' => 'far fa-file-excel', default => 'far fa-image' };
+                                    $markedForDeletion = in_array((string) $file->id, $oldFilesToDelete, true);
                                 @endphp
-                                <li class="report-road-file-row report-road-file-card file-item" data-file-id="{{ $file->id }}" data-file-type="{{ $fileType }}" data-file-name="{{ $file->original_name }}" data-file-size="{{ $file->file_size }}">
+                                <li class="report-road-file-row report-road-file-card file-item" data-file-id="{{ $file->id }}" data-file-type="{{ $fileType }}" data-file-name="{{ $file->original_name }}" data-file-size="{{ $file->file_size }}" @if($markedForDeletion) data-marked-for-removal="true" @endif>
                                     <label class="report-road-file-checkbox-hitbox inline-flex" title="Marcar {{ $file->original_name }} para eliminar">
-                                        <input type="checkbox" class="file-delete-checkbox report-road-file-checkbox" onchange="toggleFileStrikethrough(this)" aria-label="Marcar {{ $file->original_name }} para eliminar">
+                                        <input type="checkbox" class="file-delete-checkbox report-road-file-checkbox" onchange="toggleFileStrikethrough(this)" aria-label="Marcar {{ $file->original_name }} para eliminar" @checked($markedForDeletion)>
                                         <span class="report-road-file-checkbox-visual" aria-hidden="true"><i class="fas fa-check"></i></span>
                                     </label>
                                     <span class="report-road-file-card-preview {{ $fileType === 'photos' ? 'report-road-file-card-preview--photo' : 'report-road-file-card-preview--document' }}">
@@ -221,7 +227,7 @@
             @else
                 <x-form-buttons class="users-form-actions" primaryText="Guardar registro" secondaryText="Limpiar formulario" primaryType="submit" secondaryType="button" secondaryOnclick="clearSeguridadVialForm()" />
             @endif
-            @if(isset($publication))<input type="hidden" id="files-to-delete" name="files_to_delete" value="">@endif
+            @if(isset($publication))<input type="hidden" id="files-to-delete" name="files_to_delete" value="{{ old('files_to_delete', '') }}">@endif
             <input type="hidden" name="redirect_tipo" value="{{ request('redirect_tipo', 'seguridad_vial') }}">
         </form>
     </x-ui.form.page>
@@ -457,7 +463,9 @@
                 ['dragleave', 'drop'].forEach(name => drop.addEventListener(name, () => delete drop.dataset.dragActive));
                 drop.addEventListener('drop', event => addFiles(event.dataTransfer.files));
             }
+            updateFilesToDeleteInput();
             updateFileCounters();
+            syncSelectAllExistingFiles();
         });
     </script>
 
