@@ -32,7 +32,17 @@ function validationMessage(field) {
     }
 
     if (validity.tooShort) {
+        if (field.dataset.validationMinlengthMessage) {
+            return field.dataset.validationMinlengthMessage;
+        }
+
         return `${field.labels?.[0]?.textContent.replace('*', '').trim() || 'Este campo'} debe tener al menos ${field.minLength} caracteres.`;
+    }
+
+    // A field-specific rule knows the business constraint better than the
+    // generic HTML min/max/step fallback (for example, age limits by unit).
+    if (validity.customError) {
+        return field.validationMessage;
     }
 
     if (validity.rangeUnderflow || validity.rangeOverflow || validity.stepMismatch || validity.badInput) {
@@ -41,10 +51,6 @@ function validationMessage(field) {
 
     if (validity.patternMismatch) {
         return field.dataset.validationPatternMessage || field.title || `Revise el formato de ${label}.`;
-    }
-
-    if (validity.customError) {
-        return field.validationMessage;
     }
 
     return `Revise ${label}.`;

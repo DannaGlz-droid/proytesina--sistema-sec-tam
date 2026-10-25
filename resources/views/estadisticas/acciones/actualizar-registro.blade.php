@@ -104,7 +104,7 @@ document.addEventListener('DOMContentLoaded', function () {
         [ageUnit, 'Seleccione la unidad de la edad.', 'age-client-error'],
         [residenceMunicipality, 'Seleccione el municipio de residencia.', 'residence-municipality-client-error'],
         [document.getElementById('death_municipality_select'), 'Seleccione el municipio de defunción.', 'death-municipality-client-error'],
-        [document.getElementById('death_municipality_location'), 'Seleccione el lugar específico.', 'death-location-client-error'],
+        [document.getElementById('death_municipality_location'), 'Seleccione el lugar de defunción.', 'death-location-client-error'],
         [document.getElementById('death_cause'), 'Seleccione la causa de la defunción.', 'death-cause-client-error']
     ];
     const selects = requiredSelects.map(([select]) => select).filter(Boolean);

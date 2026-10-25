@@ -501,10 +501,11 @@
     justify-content: center;
     width: 2rem;
     height: 2rem;
-    border: 1px solid #d8e0ea;
-    border-radius: .5rem;
-    background: #f8fafc;
+    border: 0;
+    border-radius: .375rem;
+    background: #f1f5f9;
     color: #63748d;
+    font-size: .9rem;
 }
 
 .statistics-failed-imports-page .failed-imports-list {
@@ -612,7 +613,7 @@
 .statistics-failed-imports-page .action-buttons-view,
 .statistics-failed-imports-page .action-buttons-edit {
     margin: 0 !important;
-    padding: .8rem 1rem !important;
+    padding: .7rem .9rem !important;
     border-top: 1px solid #d9e0e8;
     background: #fff;
     gap: .65rem !important;
@@ -688,11 +689,6 @@
         padding: .7rem;
     }
 
-    .statistics-failed-imports-page .action-buttons-view,
-    .statistics-failed-imports-page .action-buttons-edit {
-        align-items: stretch;
-        flex-direction: column;
-    }
 }
 
 /* Failed imports: compact review surface aligned with the report redesign. */
@@ -707,6 +703,21 @@
     --failed-success: var(--ui-success, #16a34a);
     --failed-success-text: var(--ui-success-text, #166534);
     --failed-success-soft: var(--ui-success-soft, #f0fdf4);
+    box-sizing: border-box;
+    width: 100%;
+    max-width: 100vw;
+    overflow-x: clip;
+}
+
+.statistics-failed-imports-page .failed-imports-card,
+.statistics-failed-imports-page .app-table-toolbar,
+.statistics-failed-imports-page #records-container,
+.statistics-failed-imports-page .failed-imports-list,
+.statistics-failed-imports-page .failed-imports-footer {
+    box-sizing: border-box;
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
 }
 
 .statistics-failed-imports-page .failed-imports-card {
@@ -721,13 +732,14 @@
 }
 
 .statistics-failed-imports-page .failed-imports-file-icon {
-    width: 2.25rem;
-    height: 2.25rem;
-    flex-basis: 2.25rem;
-    border-color: var(--ui-border, #cbd5e1);
-    border-radius: var(--ui-radius-control, 7px);
-    background: var(--failed-section);
-    color: #4b5563;
+    width: 2rem;
+    height: 2rem;
+    flex-basis: 2rem;
+    border: 0;
+    border-radius: .375rem;
+    background: var(--ui-surface-soft, #f1f5f9);
+    color: var(--ui-text-muted, #64748b);
+    font-size: .9rem;
 }
 
 .statistics-failed-imports-page .failed-imports-file-context strong {
@@ -859,12 +871,11 @@
         grid-column: 1 / -1;
     }
 
-    .statistics-failed-imports-page .failed-imports-list > .record-card:only-child {
-        grid-column: 1 / -1;
-    }
 }
 
 .statistics-failed-imports-page .record-card {
+    min-width: 0;
+    max-width: 100%;
     border: 1px solid var(--failed-line) !important;
     border-top: 1px solid var(--failed-line) !important;
     border-radius: var(--ui-radius-panel, 10px) !important;
@@ -896,25 +907,27 @@
 
 .statistics-failed-imports-page .record-card > .failed-record-error {
     display: grid;
-    grid-template-columns: 1.85rem minmax(0, 1fr);
+    grid-template-columns: 1.5rem minmax(0, 1fr);
     align-items: start;
-    gap: .7rem;
+    gap: .58rem;
     margin: 0 !important;
-    padding: .72rem 1rem !important;
+    padding: .62rem .9rem !important;
     border: 0 !important;
     border-bottom: 1px solid var(--ui-danger-border, #fecaca) !important;
     border-radius: 0 !important;
-    background: var(--failed-danger-soft) !important;
+    background: #fffafa !important;
+    box-shadow: inset 3px 0 0 var(--failed-danger) !important;
+    transition: background-color 160ms ease, border-color 160ms ease, box-shadow 160ms ease;
 }
 
 .statistics-failed-imports-page .failed-record-error-icon {
     display: inline-flex;
-    width: 1.75rem;
-    height: 1.75rem;
+    width: 1.4rem;
+    height: 1.4rem;
     align-items: center;
     justify-content: center;
     color: var(--failed-danger);
-    font-size: 1rem;
+    font-size: .86rem;
 }
 
 .statistics-failed-imports-page .failed-record-error-title {
@@ -922,15 +935,16 @@
     color: var(--failed-danger-text) !important;
     font-size: .72rem !important;
     font-weight: 600 !important;
-    letter-spacing: .02em;
+    line-height: 1.3;
+    letter-spacing: 0;
 }
 
 .statistics-failed-imports-page .record-card > .failed-record-error .error-messages {
-    margin: .12rem 0 0 !important;
+    margin: .08rem 0 0 !important;
     padding: 0;
     color: var(--failed-danger-text) !important;
-    font-size: .78rem !important;
-    line-height: 1.42;
+    font-size: .76rem !important;
+    line-height: 1.38;
     list-style: none;
 }
 
@@ -940,7 +954,8 @@
 
 .statistics-failed-imports-page .record-card > .failed-record-error.is-corrected {
     border-bottom-color: var(--ui-success-border, #bbf7d0) !important;
-    background: var(--failed-success-soft) !important;
+    background: #f8fcf9 !important;
+    box-shadow: inset 3px 0 0 var(--failed-success) !important;
 }
 
 .statistics-failed-imports-page .failed-record-error.is-corrected .failed-record-error-icon {
@@ -954,7 +969,8 @@
 
 .statistics-failed-imports-page .record-card > .failed-record-error.is-editing {
     border-bottom-color: var(--failed-line) !important;
-    background: var(--failed-section) !important;
+    background: var(--ui-surface-soft, #f8fafc) !important;
+    box-shadow: inset 3px 0 0 var(--ui-text-muted, #64748b) !important;
 }
 
 .statistics-failed-imports-page .failed-record-error.is-editing .failed-record-error-icon {
@@ -974,90 +990,173 @@
     color: var(--failed-muted) !important;
 }
 
-.statistics-failed-imports-page .correction-form > .mb-6,
-.statistics-failed-imports-page .correction-form > .lg\:mb-8 {
-    margin: 0 !important;
-    padding: .9rem 1rem 1rem !important;
+.statistics-failed-imports-page .failed-correction-section {
+    margin: 0;
+    overflow: visible;
     border-bottom: 1px solid var(--failed-line);
 }
 
-.statistics-failed-imports-page .correction-form > .mb-6 > .flex.items-center,
-.statistics-failed-imports-page .correction-form > .lg\:mb-8 > .flex.items-center {
-    min-height: auto;
-    margin: 0 0 .8rem !important;
-    padding: 0;
-    border: 0;
-    background: transparent;
+.statistics-failed-imports-page .failed-correction-section-heading {
+    display: flex;
+    min-height: 2.375rem;
+    align-items: center;
+    gap: .48rem;
+    padding: .58rem .82rem;
+    border-bottom: 1px solid var(--failed-line);
+    background: var(--failed-section);
 }
 
-.statistics-failed-imports-page .correction-form > .mb-6 > .flex.items-center h2,
-.statistics-failed-imports-page .correction-form > .lg\:mb-8 > .flex.items-center h2 {
-    flex: 0 0 auto;
-    color: #5b6472 !important;
-    font-family: inherit !important;
-    font-size: .68rem !important;
-    font-weight: 700 !important;
-    letter-spacing: .105em;
-    line-height: 1.3;
-    text-transform: uppercase;
+.statistics-failed-imports-page .failed-correction-section-heading i {
+    width: 1rem;
+    color: var(--ui-text-secondary, #475569);
+    font-size: .82rem;
+    text-align: center;
 }
 
-.statistics-failed-imports-page .correction-form > .mb-6 > .flex.items-center ion-icon,
-.statistics-failed-imports-page .correction-form > .lg\:mb-8 > .flex.items-center ion-icon {
-    display: none;
+.statistics-failed-imports-page .failed-correction-section-heading h2 {
+    margin: 0;
+    color: var(--failed-ink);
+    font-family: "Open Sans", system-ui, sans-serif;
+    font-size: .82rem;
+    font-weight: 700;
+    line-height: 1.22;
 }
 
-.statistics-failed-imports-page .correction-form > .mb-6 > .flex.items-center .h-px,
-.statistics-failed-imports-page .correction-form > .lg\:mb-8 > .flex.items-center .h-px {
-    display: block !important;
-    height: 1px;
-    margin-left: .7rem !important;
-    background: var(--failed-line) !important;
-}
-
-.statistics-failed-imports-page .correction-form > .h-px {
-    display: none !important;
-}
-
-.statistics-failed-imports-page .correction-form .grid {
-    gap: .75rem 1rem !important;
-}
-
-.statistics-failed-imports-page .correction-form .space-y-3 > :not([hidden]) ~ :not([hidden]) {
-    margin-top: .75rem !important;
-}
-
-/* Keep both location columns compact; the specific place closes the group below them. */
+.statistics-failed-imports-page .failed-correction-grid,
 .statistics-failed-imports-page .failed-location-grid {
-    align-items: start;
-    align-content: start;
-    grid-auto-rows: max-content;
-    gap: .6rem 1rem !important;
-}
-
-.statistics-failed-imports-page .failed-location-grid > .space-y-3 {
     display: grid;
-    align-content: start;
-    gap: .6rem;
+    align-items: start;
+    gap: .66rem .85rem;
+    padding: .82rem .9rem .95rem;
 }
 
-.statistics-failed-imports-page .failed-location-grid > .space-y-3 > :not([hidden]) {
-    margin-top: 0 !important;
-    margin-bottom: 0 !important;
+.statistics-failed-imports-page .failed-correction-grid--three {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.statistics-failed-imports-page .failed-correction-grid--two,
+.statistics-failed-imports-page .failed-location-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.statistics-failed-imports-page .failed-location-column {
+    display: grid;
+    min-width: 0;
+    align-content: start;
+    gap: .78rem;
+}
+
+.statistics-failed-imports-page .failed-correction-field {
+    min-width: 0;
 }
 
 .statistics-failed-imports-page .failed-location-place {
-    grid-column: 1 / -1;
-    margin-top: 0 !important;
+    grid-column: 1;
 }
 
 .statistics-failed-imports-page .correction-form label {
+    display: block;
     margin-bottom: .28rem !important;
     color: #4b5563 !important;
     font-family: inherit !important;
     font-size: .7rem !important;
     font-weight: 600 !important;
     line-height: 1.35;
+}
+
+.statistics-failed-imports-page .statistics-form-label-row {
+    display: flex;
+    height: .9rem;
+    min-height: .9rem;
+    align-items: center;
+    gap: .28rem;
+    margin-bottom: .32rem;
+}
+
+.statistics-failed-imports-page .statistics-form-label-row > label {
+    margin-bottom: 0 !important;
+}
+
+.statistics-failed-imports-page .statistics-form-help-popover {
+    position: relative;
+    display: inline-flex;
+}
+
+.statistics-failed-imports-page .statistics-form-help-trigger {
+    display: inline-flex;
+    width: .875rem !important;
+    min-width: .875rem !important;
+    height: .875rem !important;
+    min-height: .875rem !important;
+    flex: 0 0 .875rem;
+    align-items: center;
+    justify-content: center;
+    padding: 0 !important;
+    border: 0 !important;
+    border-radius: 50%;
+    background: transparent !important;
+    color: var(--ui-text-muted, #64748b);
+    cursor: help;
+    font-size: .68rem;
+    line-height: 1;
+    transition: color 150ms ease, background-color 150ms ease;
+}
+
+.statistics-failed-imports-page .statistics-form-help-trigger:hover,
+.statistics-failed-imports-page .statistics-form-help-trigger:focus-visible {
+    background: var(--ui-surface-hover, #f1f5f9) !important;
+    color: var(--ui-text, #10233f);
+}
+
+.statistics-failed-imports-page .statistics-form-help-trigger:focus-visible {
+    outline: 2px solid var(--ui-focus, #475569);
+    outline-offset: 2px;
+}
+
+.statistics-failed-imports-page .statistics-form-tooltip {
+    position: absolute;
+    z-index: 80;
+    bottom: calc(100% + .48rem);
+    left: -.35rem;
+    width: max-content;
+    max-width: min(16rem, calc(100vw - 2rem));
+    padding: .42rem .55rem;
+    border-radius: .35rem;
+    background: var(--ui-text, #10233f);
+    box-shadow: 0 .45rem 1rem rgb(15 35 63 / 18%);
+    color: var(--ui-surface, #fff);
+    font-family: "Open Sans", system-ui, sans-serif;
+    font-size: .68rem;
+    font-weight: 500;
+    line-height: 1.4;
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(.18rem);
+    transition: opacity 120ms ease, transform 120ms ease, visibility 120ms ease;
+    visibility: hidden;
+}
+
+.statistics-failed-imports-page .statistics-form-tooltip::after {
+    position: absolute;
+    top: 100%;
+    left: .48rem;
+    border: .28rem solid transparent;
+    border-top-color: var(--ui-text, #10233f);
+    content: '';
+}
+
+.statistics-failed-imports-page .statistics-form-help-popover:hover .statistics-form-tooltip,
+.statistics-failed-imports-page .statistics-form-help-popover:focus-within .statistics-form-tooltip {
+    opacity: 1;
+    transform: translateY(0);
+    visibility: visible;
+}
+
+.statistics-failed-imports-page .failed-correction-field > input,
+.statistics-failed-imports-page .failed-correction-field > select,
+.statistics-failed-imports-page .failed-correction-field > .ts-wrapper {
+    width: 100% !important;
+    min-width: 0;
 }
 
 .statistics-failed-imports-page .correction-form input,
@@ -1075,6 +1174,7 @@
     font-size: .78rem !important;
     line-height: 1.35 !important;
     box-shadow: none !important;
+    transition: background-color 160ms ease, border-color 160ms ease, color 160ms ease, box-shadow 160ms ease;
 }
 
 .statistics-failed-imports-page .correction-form input:focus,
@@ -1176,7 +1276,7 @@
 }
 
 .statistics-failed-imports-page .record-card:not(.is-editing-fields) .view-mode .failed-age-fields {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: minmax(0, 1fr) minmax(6.5rem, .7fr);
     gap: .55rem !important;
 }
 
@@ -1205,20 +1305,75 @@
 
 .statistics-failed-imports-page .action-buttons-view,
 .statistics-failed-imports-page .action-buttons-edit {
+    min-width: 0;
+    flex-wrap: wrap;
     margin: 0 !important;
-    padding: .8rem 1rem !important;
+    padding: .7rem .9rem !important;
     border-top: 0;
     background: #fff;
     gap: .55rem !important;
 }
 
-.statistics-failed-imports-page .action-buttons-view .ui-button:active:not(:disabled),
-.statistics-failed-imports-page .action-buttons-edit .ui-button:active:not(:disabled) {
-    transform: translateY(1px);
+.statistics-failed-imports-page .action-buttons-view .ui-button,
+.statistics-failed-imports-page .action-buttons-edit .ui-button {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: auto !important;
+    min-width: 0 !important;
+    height: 34px !important;
+    min-height: 34px !important;
+    padding: 0 .88rem !important;
+    border-radius: 7px !important;
+    font-family: "Open Sans", system-ui, sans-serif !important;
+    font-size: .78rem !important;
+    font-weight: 600 !important;
+    line-height: 1 !important;
+    letter-spacing: 0 !important;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, .04) !important;
+    transition: background-color .12s ease, border-color .12s ease, color .12s ease !important;
+}
+
+.statistics-failed-imports-page .action-buttons-view .ui-button--secondary,
+.statistics-failed-imports-page .action-buttons-edit .ui-button--secondary {
+    border: 1px solid #cbd5e1 !important;
+    background: #fff !important;
+    color: #1f2f46 !important;
+}
+
+.statistics-failed-imports-page .action-buttons-view .ui-button--secondary:hover:not(:disabled),
+.statistics-failed-imports-page .action-buttons-edit .ui-button--secondary:hover:not(:disabled) {
+    border-color: #bdc8d5 !important;
+    background: #f3f6f9 !important;
+    color: var(--failed-ink) !important;
+}
+
+.statistics-failed-imports-page .action-buttons-view .ui-button--primary,
+.statistics-failed-imports-page .action-buttons-edit .ui-button--primary {
+    border: 1px solid var(--brand-primary) !important;
+    background: var(--brand-primary) !important;
+    color: #fff !important;
+}
+
+.statistics-failed-imports-page .action-buttons-view .ui-button--primary:hover:not(:disabled),
+.statistics-failed-imports-page .action-buttons-edit .ui-button--primary:hover:not(:disabled) {
+    border-color: var(--brand-primary-hover) !important;
+    background: var(--brand-primary-hover) !important;
+}
+
+/* Match the canonical form submit feedback while an inline action is running. */
+.statistics-failed-imports-page .record-card[aria-busy="true"] .ui-button[aria-busy="true"]:disabled {
+    cursor: wait;
 }
 
 .statistics-failed-imports-page .action-buttons-view .btn-discard {
     color: var(--failed-danger-text) !important;
+}
+
+.statistics-failed-imports-page .action-buttons-view .btn-discard:hover:not(:disabled) {
+    border-color: #fecaca !important;
+    background: #fff5f5 !important;
+    color: #b42318 !important;
 }
 
 .statistics-failed-imports-page .action-buttons-view .btn-discard:disabled:hover {
@@ -1316,8 +1471,18 @@
 .statistics-failed-imports-page .failed-imports-list,
 .statistics-failed-imports-page .record-card,
 .statistics-failed-imports-page .correction-form,
-.statistics-failed-imports-page .correction-form > div {
+.statistics-failed-imports-page .correction-form > div,
+.statistics-failed-imports-page .failed-correction-section {
     overflow: visible !important;
+}
+
+.statistics-failed-imports-page .failed-imports-list,
+.statistics-failed-imports-page .correction-form,
+.statistics-failed-imports-page .failed-correction-section,
+.statistics-failed-imports-page .failed-correction-grid,
+.statistics-failed-imports-page .failed-location-grid {
+    min-width: 0;
+    max-width: 100%;
 }
 
 .statistics-failed-imports-page .record-card {
@@ -1328,38 +1493,69 @@
     z-index: 60;
 }
 
-.statistics-failed-imports-page .correction-form > div:has(.ts-wrapper.dropdown-active),
+.statistics-failed-imports-page .failed-correction-section {
+    position: relative;
+    z-index: 0;
+}
+
+.statistics-failed-imports-page .failed-correction-section:has(.ts-wrapper.dropdown-active) {
+    z-index: 80;
+}
+
 .statistics-failed-imports-page .correction-form .ts-wrapper.dropdown-active {
     position: relative;
-    z-index: 70;
+    z-index: 80;
 }
 
 .statistics-failed-imports-page .correction-form .ts-dropdown {
     z-index: 80 !important;
-    max-height: var(--failed-ts-available-height, 15rem);
+    margin-top: .28rem !important;
+    max-height: 11.5rem;
     overflow: hidden;
     border-color: var(--ui-border, #cbd5e1) !important;
     border-radius: var(--ui-radius-control, 7px) !important;
+    background: var(--ui-surface, #fff) !important;
     box-shadow: 0 16px 32px rgba(15, 23, 42, .12) !important;
+    color: var(--ui-text, #10233f) !important;
+    font-size: .79rem !important;
+    font-weight: 500 !important;
+    line-height: 1.15rem !important;
 }
 
 .statistics-failed-imports-page .correction-form .ts-dropdown .ts-dropdown-content {
-    max-height: var(--failed-ts-available-height, 15rem);
+    max-height: 11.5rem;
     overflow-y: auto;
+    padding: 0 !important;
 }
 
-.statistics-failed-imports-page .correction-form .ts-wrapper.dropdown-up .ts-dropdown {
-    top: auto !important;
-    bottom: calc(100% + .25rem) !important;
-    margin: 0 !important;
+.statistics-failed-imports-page .correction-form .ts-wrapper.app-filter-select--form .ts-dropdown .option,
+.statistics-failed-imports-page .correction-form .ts-wrapper.app-filter-select--form .ts-dropdown .no-results {
+    padding: .42rem .58rem !important;
+    border-radius: 0 !important;
+    background: var(--ui-surface, #fff) !important;
+    color: var(--ui-text, #10233f) !important;
+    font-size: .79rem !important;
+    font-weight: 500 !important;
+    line-height: 1.15rem !important;
+    letter-spacing: 0 !important;
+    text-transform: none !important;
 }
 
-.statistics-failed-imports-page .correction-form .ts-wrapper.single.dropdown-active:not(.dropdown-up) .ts-control::after {
-    transform: translateY(-50%) rotate(0deg) !important;
+.statistics-failed-imports-page .correction-form .ts-wrapper.app-filter-select--form .ts-dropdown .option.selected {
+    background: var(--ui-surface-soft, #f8fafc) !important;
+    color: var(--ui-text, #10233f) !important;
+    font-weight: 600 !important;
 }
 
-.statistics-failed-imports-page .correction-form .ts-wrapper.single.dropdown-active.dropdown-up .ts-control::after {
-    transform: translateY(-50%) rotate(180deg) !important;
+.statistics-failed-imports-page .correction-form .ts-wrapper.app-filter-select--form .ts-dropdown .option.active,
+.statistics-failed-imports-page .correction-form .ts-wrapper.app-filter-select--form .ts-dropdown .option:hover,
+.statistics-failed-imports-page .correction-form .ts-wrapper.app-filter-select--form .ts-dropdown .option.selected.active {
+    background: #e9eef4 !important;
+    color: var(--ui-text, #10233f) !important;
+}
+
+.statistics-failed-imports-page .correction-form .ts-wrapper.app-filter-select--form .ts-dropdown .option.selected.active {
+    font-weight: 600 !important;
 }
 
 .statistics-failed-imports-page .record-card > .failed-record-error {
@@ -1378,15 +1574,85 @@
 .statistics-failed-imports-page .is-editing-fields .correction-form select {
     min-height: 34px !important;
     height: 34px !important;
-    padding: 0 .58rem !important;
+    padding: 0 .72rem !important;
     font-size: .8rem !important;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, .025) !important;
+}
+
+.statistics-failed-imports-page .record-card.is-editing-fields .correction-form input:not([type="hidden"]):not([readonly]):not([role="combobox"]):hover {
+    border-color: #bdc8d5 !important;
+    background: var(--ui-surface-soft, #f8fafc) !important;
+}
+
+/* Preserve the canonical focus ring after an inline error is corrected.
+   Tom Select's searchable input has role="combobox" and is styled through
+   its visible .ts-control below, so this rule only targets native fields. */
+.statistics-failed-imports-page .record-card.is-editing-fields .correction-form input:not([type="hidden"]):not([readonly]):not([role="combobox"]):focus {
+    border-color: var(--ui-focus, #475569) !important;
+    background: var(--ui-surface, #fff) !important;
+    outline: none !important;
+    box-shadow: 0 0 0 2px var(--ui-focus-ring, rgba(71, 85, 105, .18)) !important;
 }
 
 .statistics-failed-imports-page .is-editing-fields .correction-form .ts-control {
+    box-sizing: border-box !important;
+    width: 100% !important;
     min-height: 34px !important;
     height: 34px !important;
     padding: 0 2rem 0 .72rem !important;
+    gap: .28rem !important;
+    overflow: hidden !important;
+    border: 1px solid var(--ui-border, #cbd5e1) !important;
+    border-radius: var(--ui-radius-control, 7px) !important;
+    background: var(--ui-surface, #fff) !important;
+    color: var(--ui-text, #10233f) !important;
+    font-family: "Open Sans", system-ui, sans-serif !important;
     font-size: .8rem !important;
+    font-weight: 500 !important;
+    line-height: 1.15 !important;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, .04) !important;
+    transition: background-color 120ms ease, border-color 120ms ease, box-shadow 120ms ease !important;
+}
+
+.statistics-failed-imports-page .is-editing-fields .correction-form .ts-wrapper.app-filter-select--form .ts-control:hover {
+    border-color: #bdc8d5 !important;
+    background: var(--ui-surface-soft, #f8fafc) !important;
+}
+
+.statistics-failed-imports-page .is-editing-fields .correction-form .ts-wrapper.app-filter-select--form.focus .ts-control,
+.statistics-failed-imports-page .is-editing-fields .correction-form .ts-wrapper.app-filter-select--form.dropdown-active .ts-control {
+    border-color: var(--ui-focus, #475569) !important;
+    background: var(--ui-surface, #fff) !important;
+    box-shadow: 0 0 0 2px var(--ui-focus-ring, rgba(71, 85, 105, .18)) !important;
+}
+
+.statistics-failed-imports-page .is-editing-fields .correction-form .ts-wrapper.app-filter-select--form .ts-control .item,
+.statistics-failed-imports-page .is-editing-fields .correction-form .ts-wrapper.app-filter-select--form .ts-control > input,
+.statistics-failed-imports-page .is-editing-fields .correction-form .ts-wrapper.app-filter-select--form .ts-control > input:focus {
+    min-height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    color: var(--ui-text, #10233f) !important;
+    font-family: "Open Sans", system-ui, sans-serif !important;
+    font-size: .8rem !important;
+    font-weight: 600 !important;
+    line-height: 1.15 !important;
+    letter-spacing: 0 !important;
+    box-shadow: none !important;
+}
+
+.statistics-failed-imports-page .is-editing-fields .correction-form .ts-wrapper.app-filter-select--form.single.ui-has-search-query .ts-control > .item {
+    display: none !important;
+}
+
+.statistics-failed-imports-page .is-editing-fields .correction-form .ts-wrapper.app-filter-select--form.single.ui-has-search-query .ts-control > input {
+    width: auto !important;
+    min-width: 0 !important;
+    flex: 1 1 100% !important;
+    background: transparent !important;
 }
 
 .statistics-failed-imports-page .is-editing-fields .correction-form [data-derived-field]:disabled,
@@ -1398,13 +1664,26 @@
     box-shadow: none !important;
 }
 
-.statistics-failed-imports-page .correction-form [aria-invalid="true"]:not([type="hidden"]),
-.statistics-failed-imports-page .correction-form .ts-wrapper:has(select[aria-invalid="true"]) .ts-control {
+.statistics-failed-imports-page .record-card.is-editing-fields .correction-form [aria-invalid="true"]:not([type="hidden"]),
+.statistics-failed-imports-page .record-card.is-editing-fields .correction-form .ts-wrapper.app-filter-select--form:has(select[aria-invalid="true"]) .ts-control,
+.statistics-failed-imports-page .record-card.is-editing-fields .correction-form select[aria-invalid="true"] + .ts-wrapper.app-filter-select--form .ts-control,
+.statistics-failed-imports-page .record-card.is-editing-fields .correction-form .ts-wrapper.app-filter-select--form:has(.ts-control > input[aria-invalid="true"]) .ts-control,
+.statistics-failed-imports-page .record-card.is-editing-fields .correction-form input.has-field-error:not([type="hidden"]):not([role="combobox"]),
+.statistics-failed-imports-page .record-card.is-editing-fields .correction-form select.has-field-error + .ts-wrapper.app-filter-select--form .ts-control {
     border-color: var(--ui-danger, #dc2626) !important;
 }
 
-.statistics-failed-imports-page .correction-form [aria-invalid="true"]:focus,
-.statistics-failed-imports-page .correction-form .ts-wrapper:has(select[aria-invalid="true"]).focus .ts-control {
+.statistics-failed-imports-page .record-card.is-editing-fields .correction-form [aria-invalid="true"]:not([type="hidden"]):focus,
+.statistics-failed-imports-page .record-card.is-editing-fields .correction-form .ts-wrapper.app-filter-select--form:has(select[aria-invalid="true"]).focus .ts-control,
+.statistics-failed-imports-page .record-card.is-editing-fields .correction-form .ts-wrapper.app-filter-select--form:has(select[aria-invalid="true"]).dropdown-active .ts-control,
+.statistics-failed-imports-page .record-card.is-editing-fields .correction-form select[aria-invalid="true"] + .ts-wrapper.app-filter-select--form.focus .ts-control,
+.statistics-failed-imports-page .record-card.is-editing-fields .correction-form select[aria-invalid="true"] + .ts-wrapper.app-filter-select--form.dropdown-active .ts-control,
+.statistics-failed-imports-page .record-card.is-editing-fields .correction-form .ts-wrapper.app-filter-select--form:has(.ts-control > input[aria-invalid="true"]).focus .ts-control,
+.statistics-failed-imports-page .record-card.is-editing-fields .correction-form .ts-wrapper.app-filter-select--form:has(.ts-control > input[aria-invalid="true"]).dropdown-active .ts-control,
+.statistics-failed-imports-page .record-card.is-editing-fields .correction-form input.has-field-error:not([type="hidden"]):not([role="combobox"]):focus,
+.statistics-failed-imports-page .record-card.is-editing-fields .correction-form select.has-field-error + .ts-wrapper.app-filter-select--form.focus .ts-control,
+.statistics-failed-imports-page .record-card.is-editing-fields .correction-form select.has-field-error + .ts-wrapper.app-filter-select--form.dropdown-active .ts-control {
+    border-color: var(--ui-danger, #dc2626) !important;
     box-shadow: 0 0 0 2px rgba(185, 28, 28, .14) !important;
 }
 
@@ -1412,9 +1691,9 @@
     margin: .28rem 0 0;
     color: var(--ui-danger-text, #b91c1c);
     font-family: "Open Sans", system-ui, sans-serif;
-    font-size: .7rem;
+    font-size: .75rem;
     font-weight: 400;
-    line-height: 1.35;
+    line-height: 1rem;
 }
 
 .statistics-failed-imports-page .failed-field-error.hidden {
@@ -1423,7 +1702,7 @@
 
 .statistics-failed-imports-page .failed-age-fields {
     display: grid !important;
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1fr) minmax(6.5rem, .7fr);
     gap: .55rem !important;
 }
 
@@ -1433,7 +1712,83 @@
     min-width: 0;
 }
 
+/* Inline correction changes mode without moving the card or morphing controls. */
+@keyframes failed-import-edit-mode-enter {
+    from {
+        opacity: .72;
+        transform: translateY(3px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes failed-import-view-mode-enter {
+    from {
+        opacity: .8;
+        transform: translateY(-2px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.statistics-failed-imports-page .record-card.is-entering-edit-mode > .failed-record-error,
+.statistics-failed-imports-page .record-card.is-entering-edit-mode .failed-correction-grid,
+.statistics-failed-imports-page .record-card.is-entering-edit-mode .action-buttons-edit {
+    animation: failed-import-edit-mode-enter 160ms ease-out both;
+}
+
+.statistics-failed-imports-page .record-card.is-entering-view-mode > .failed-record-error,
+.statistics-failed-imports-page .record-card.is-entering-view-mode .failed-correction-grid,
+.statistics-failed-imports-page .record-card.is-entering-view-mode .action-buttons-view {
+    animation: failed-import-view-mode-enter 140ms ease-out both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .statistics-failed-imports-page .record-card.is-entering-edit-mode > .failed-record-error,
+    .statistics-failed-imports-page .record-card.is-entering-edit-mode .failed-correction-grid,
+    .statistics-failed-imports-page .record-card.is-entering-edit-mode .action-buttons-edit,
+    .statistics-failed-imports-page .record-card.is-entering-view-mode > .failed-record-error,
+    .statistics-failed-imports-page .record-card.is-entering-view-mode .failed-correction-grid,
+    .statistics-failed-imports-page .record-card.is-entering-view-mode .action-buttons-view {
+        animation: none !important;
+    }
+}
+
+@media (min-width: 1024px) and (max-width: 1279px) {
+    .statistics-failed-imports-page .failed-correction-grid--three {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 1023px) {
+    .statistics-failed-imports-page .failed-correction-grid--three,
+    .statistics-failed-imports-page .failed-correction-grid--two,
+    .statistics-failed-imports-page .failed-location-grid {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .statistics-failed-imports-page .failed-location-place {
+        grid-column: auto;
+    }
+}
+
 @media (max-width: 639px) {
+
+    .statistics-failed-imports-page .failed-correction-section-heading {
+        padding-inline: .78rem;
+    }
+
+    .statistics-failed-imports-page .failed-correction-grid,
+    .statistics-failed-imports-page .failed-location-grid {
+        padding: .75rem .78rem .88rem;
+    }
+
     .statistics-failed-imports-page .is-editing-fields .correction-form input:not([type="hidden"]),
     .statistics-failed-imports-page .is-editing-fields .correction-form select {
         min-height: 40px !important;
@@ -1447,5 +1802,18 @@
 
     .statistics-failed-imports-page .failed-age-fields {
         grid-template-columns: minmax(0, 1fr);
+    }
+}
+
+@media (max-width: 640px) {
+    .statistics-failed-imports-page .action-buttons-view,
+    .statistics-failed-imports-page .action-buttons-edit {
+        align-items: stretch !important;
+        flex-direction: column !important;
+    }
+
+    .statistics-failed-imports-page .action-buttons-view .ui-button,
+    .statistics-failed-imports-page .action-buttons-edit .ui-button {
+        width: 100% !important;
     }
 }

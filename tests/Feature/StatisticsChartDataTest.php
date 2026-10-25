@@ -57,6 +57,38 @@ function statisticsChartResponse(string $type, array $filters = []): array
     return app(StatisticsController::class)->getChartData($request, $type)->getData(true);
 }
 
+it('finds a person when the search contains name terms stored in different columns', function (): void {
+    Death::create([
+        'gov_folio' => 'FULL-NAME-1',
+        'name' => 'Lucia',
+        'first_last_name' => 'Ortiz',
+        'second_last_name' => 'Navarro',
+        'age' => 3,
+        'age_days' => 3,
+        'sex' => 'F',
+        'death_date' => '2020-05-02',
+        'residence_municipality_id' => $this->municipalityA->id,
+        'district_id' => $this->municipalityA->district_id,
+        'death_municipality_id' => $this->municipalityB->id,
+        'death_district_id' => $this->municipalityB->district_id,
+        'death_location_id' => $this->locationB->id,
+        'death_cause_id' => $this->causeA->id,
+    ]);
+
+    $response = app(DeathController::class)
+        ->dataTable(Request::create('/', 'POST', [
+            'length' => 25,
+            'search' => ['value' => 'Lucia Ortiz'],
+        ]))
+        ->getData(true);
+
+    expect($response['recordsFiltered'])->toBe(1)
+        ->and($response['data'])->toHaveCount(1)
+        ->and($response['data'][0]['gov_folio'])->toBe('FULL-NAME-1')
+        ->and($response['data'][0]['name'])->toBe('Lucia')
+        ->and($response['data'][0]['first_last_name'])->toBe('Ortiz');
+});
+
 it('reports the default period and the complete available date coverage', function (): void {
     Death::query()->where('gov_folio', 'STAT-1')->update(['death_date' => '2023-05-10']);
 

@@ -31,7 +31,7 @@ class DeathController extends Controller
         $draw = (int) $request->input('draw', 1);
         $start = (int) $request->input('start', 0);
         $length = (int) $request->input('length', 25);
-        $searchValue = $request->input('search.value', '');
+        $searchValue = trim((string) $request->input('search.value', ''));
         
         // Order parameters
         $orderColumnIndex = $request->input('order.0.column', 0);
@@ -49,14 +49,23 @@ class DeathController extends Controller
         $query = Death::query();
         
         // Apply search
-        if (!empty($searchValue)) {
-            $query->where(function ($q) use ($searchValue) {
-                $q->where('gov_folio', 'like', "%{$searchValue}%")
-                  ->orWhere('name', 'like', "%{$searchValue}%")
-                  ->orWhere('first_last_name', 'like', "%{$searchValue}%")
-                  ->orWhere('second_last_name', 'like', "%{$searchValue}%");
-                if (is_numeric($searchValue)) {
-                    $q->orWhere('age', (int) $searchValue);
+        if ($searchValue !== '') {
+            $searchTerms = preg_split('/\s+/u', $searchValue, -1, PREG_SPLIT_NO_EMPTY) ?: [];
+
+            $query->where(function ($searchQuery) use ($searchTerms) {
+                foreach ($searchTerms as $searchTerm) {
+                    $searchQuery->where(function ($termQuery) use ($searchTerm) {
+                        $term = "%{$searchTerm}%";
+
+                        $termQuery->where('gov_folio', 'like', $term)
+                            ->orWhere('name', 'like', $term)
+                            ->orWhere('first_last_name', 'like', $term)
+                            ->orWhere('second_last_name', 'like', $term);
+
+                        if (is_numeric($searchTerm)) {
+                            $termQuery->orWhere('age', (int) $searchTerm);
+                        }
+                    });
                 }
             });
         }
@@ -320,6 +329,7 @@ class DeathController extends Controller
             'death_cause_id' => $this->allowedDeathCauseValidationRules(),
             'death_date' => ['required','date','before_or_equal:today'],
         ], [
+            'gov_folio.regex' => 'Ingrese 9 dígitos o el folio alfanumérico oficial.',
             'gov_folio.unique' => 'Este folio ya está registrado.',
         ]);
 
@@ -461,6 +471,7 @@ class DeathController extends Controller
             'death_cause_id' => $this->allowedDeathCauseValidationRules(),
             'death_date' => ['required','date','before_or_equal:today'],
         ], [
+            'gov_folio.regex' => 'Ingrese 9 dígitos o el folio alfanumérico oficial.',
             'gov_folio.unique' => 'Este folio ya está registrado.',
         ]);
 

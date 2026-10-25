@@ -180,7 +180,7 @@ class DeathImportController extends Controller
         // Prepare death locations and causes lookup (require existing entries for strict import)
         $deathLocationLookup = [];
         foreach (DeathLocation::all() as $loc) {
-            $deathLocationLookup[mb_strtolower(trim($loc->name))] = $loc;
+            $deathLocationLookup[$this->normalizeDeathLocationName($loc->name)] = $loc;
         }
 
         $deathCauseLookup = $this->buildAllowedDeathCauseLookup();
@@ -332,18 +332,16 @@ class DeathImportController extends Controller
                     $municipalityLookup[$this->normalizeMunicipalityName($deathMunicipality->name)] = $deathMunicipality;
                 }
 
-                // map or create death location: use existing or create new if missing
+                // Resolve against the same closed location catalogue used by manual registration.
                 $deathLocation = null;
                 if ($siteName) {
                     if (mb_strlen($siteName) > 191) {
                         $errors[] = 'Lugar de defunción: excede 191 caracteres. Reduzca su longitud.';
                     } else {
-                        $normSite = mb_strtolower(trim($siteName));
+                        $normSite = $this->normalizeDeathLocationName($siteName);
                         $deathLocation = $deathLocationLookup[$normSite] ?? null;
                         if (!$deathLocation) {
-                            // Preserve the current policy: new death locations may be added during import.
-                            $deathLocation = DeathLocation::firstOrCreate(['name' => $siteName]);
-                            $deathLocationLookup[mb_strtolower(trim($deathLocation->name))] = $deathLocation;
+                            $errors[] = 'Lugar de defunción: seleccione una opción permitida.';
                         }
                     }
                 } else {
@@ -791,6 +789,7 @@ class DeathImportController extends Controller
         try {
             $perPage = min(max((int) request()->query('per_page', 4), 1), 10);
             $search = trim((string) request()->query('search', ''));
+            $searchTerms = preg_split('/\s+/u', $search, -1, PREG_SPLIT_NO_EMPTY) ?: [];
             $totalPending = $search === ''
                 ? null
                 : FailedImportRecord::where('import_id', $importId)
@@ -799,16 +798,77 @@ class DeathImportController extends Controller
 
             $failedRecords = FailedImportRecord::where('import_id', $importId)
                 ->whereIn('status', ['pending', 'corrected'])
-                ->when($search !== '', function ($query) use ($search) {
-                    $term = '%' . $search . '%';
-                    $query->where(function ($nested) use ($term) {
-                        $nested->where('error_message', 'like', $term)
-                            ->orWhere('original_row_data', 'like', $term)
-                            ->orWhere('corrected_data', 'like', $term);
+                ->when($searchTerms !== [], function ($query) use ($searchTerms) {
+                    $query->where(function ($searchQuery) use ($searchTerms) {
+                        foreach ($searchTerms as $searchTerm) {
+                            $searchQuery->where(function ($termQuery) use ($searchTerm) {
+                                $term = '%' . $searchTerm . '%';
+
+                                $termQuery->where('error_message', 'like', $term)
+                                    ->orWhere('original_row_data', 'like', $term)
+                                    ->orWhere('corrected_data', 'like', $term);
+                            });
+                        }
                     });
                 })
                 ->orderBy('created_at', 'desc')
                 ->paginate($perPage);
+
+            // Present person names exactly as the deaths table does, while
+            // keeping the original spreadsheet payload unchanged in storage.
+            $records = $failedRecords->getCollection();
+            $records->each(function (FailedImportRecord $record) {
+                $record->original_row_data = $this->normalizeImportPersonNames(
+                    $record->original_row_data ?? []
+                );
+                $record->corrected_data = $record->corrected_data === null
+                    ? null
+                    : $this->normalizeImportPersonNames($record->corrected_data);
+            });
+
+            $currentValidations = $records
+                ->where('status', 'pending')
+                ->mapWithKeys(function (FailedImportRecord $record) {
+                    $currentData = array_replace(
+                        $record->original_row_data ?? [],
+                        $record->corrected_data ?? []
+                    );
+
+                    return [$record->id => $this->validateAndNormalizeImportRow($currentData)];
+                });
+            $foliosToCheck = $currentValidations
+                ->pluck('folio')
+                ->filter()
+                ->unique()
+                ->values();
+            $existingFolios = $foliosToCheck->isEmpty()
+                ? collect()
+                : Death::whereIn('gov_folio', $foliosToCheck)
+                    ->pluck('gov_folio')
+                    ->mapWithKeys(fn ($folio) => [strtoupper((string) $folio) => true]);
+
+            $records->transform(function (FailedImportRecord $record) use ($currentValidations, $existingFolios) {
+
+                if ($record->status === 'pending') {
+                    $currentValidation = $currentValidations->get($record->id);
+                    $currentErrors = $currentValidation['errors'] ?? [];
+                    $currentFolio = $currentValidation['folio'] ?? null;
+                    if ($currentFolio && $existingFolios->has(strtoupper($currentFolio))) {
+                        $currentErrors[] = 'Folio: ya existe en el sistema. Ingrese uno diferente.';
+                    }
+                    $storedErrors = is_array($record->error_details) && $record->error_details !== []
+                        ? $record->error_details
+                        : preg_split('/;\s*/', trim((string) $record->error_message), -1, PREG_SPLIT_NO_EMPTY);
+                    $completeErrors = array_values(array_unique(array_merge($storedErrors, $currentErrors)));
+
+                    // Complete legacy summaries for the response without mutating
+                    // the source row or turning this read endpoint into a write.
+                    $record->error_details = $completeErrors;
+                    $record->error_message = implode('; ', $completeErrors);
+                }
+
+                return $record;
+            });
 
             $totalPending ??= $failedRecords->total();
 
@@ -828,11 +888,11 @@ class DeathImportController extends Controller
      */
     public function saveFailedRecordCorrection(Request $request, $recordId)
     {
-        try {
-            $request->validate([
-                'corrected_data' => 'required|array',
-            ]);
+        $request->validate([
+            'corrected_data' => 'required|array',
+        ]);
 
+        try {
             $failedRecord = FailedImportRecord::findOrFail($recordId);
 
             $rowData = array_replace(
@@ -840,6 +900,7 @@ class DeathImportController extends Controller
                 $failedRecord->corrected_data ?? [],
                 $request->input('corrected_data', [])
             );
+            $rowData = $this->normalizeImportPersonNames($rowData);
             $validated = $this->validateAndNormalizeImportRow($rowData);
             $errors = $validated['errors'];
             $errors = array_merge($errors, $this->validateCorrectionMunicipalities($rowData));
@@ -849,10 +910,16 @@ class DeathImportController extends Controller
             }
 
             $siteName = trim((string) ($rowData['sitiodefunciond'] ?? $rowData['sitiodefuncion'] ?? ''));
+            $deathLocation = null;
             if ($siteName === '') {
                 $errors[] = 'Lugar de defunción: este campo es obligatorio.';
             } elseif (mb_strlen($siteName) > 191) {
                 $errors[] = 'Lugar de defunción: excede 191 caracteres. Reduzca su longitud.';
+            } else {
+                $deathLocation = $this->resolveExistingDeathLocation($siteName);
+                if (!$deathLocation) {
+                    $errors[] = 'Lugar de defunción: seleccione una opción permitida.';
+                }
             }
 
             $causeCandidates = [
@@ -906,6 +973,10 @@ class DeathImportController extends Controller
      */
     public function retryFailedRecord(Request $request, $recordId)
     {
+        $request->validate([
+            'corrected_data' => 'sometimes|array',
+        ]);
+
         try {
             $failedRecord = FailedImportRecord::findOrFail($recordId);
 
@@ -918,6 +989,7 @@ class DeathImportController extends Controller
                 $failedRecord->corrected_data ?? [],
                 $request->input('corrected_data', [])
             );
+            $rowData = $this->normalizeImportPersonNames($rowData);
             $validated = $this->validateAndNormalizeImportRow($rowData);
             $errors = $validated['errors'];
             $errors = array_merge($errors, $this->validateCorrectionMunicipalities($rowData));
@@ -927,10 +999,16 @@ class DeathImportController extends Controller
             }
 
             $siteName = trim((string) ($rowData['sitiodefunciond'] ?? $rowData['sitiodefuncion'] ?? '')) ?: null;
+            $deathLocation = null;
             if (!$siteName) {
                 $errors[] = 'Lugar de defunción: este campo es obligatorio.';
             } elseif (mb_strlen($siteName) > 191) {
                 $errors[] = 'Lugar de defunción: excede 191 caracteres. Reduzca su longitud.';
+            } else {
+                $deathLocation = $this->resolveExistingDeathLocation($siteName);
+                if (!$deathLocation) {
+                    $errors[] = 'Lugar de defunción: seleccione una opción permitida.';
+                }
             }
 
             $causeCandidates = [
@@ -978,8 +1056,6 @@ class DeathImportController extends Controller
             $deathMunicipalityName = trim((string) ($rowData['municipiodefunciond'] ?? $rowData['municipiodefuncion'] ?? ''));
             $residenceMunicipality = $municipalityLookup[$this->normalizeMunicipalityName($residenceName)] ?? $otherMunicipality;
             $deathMunicipality = $municipalityLookup[$this->normalizeMunicipalityName($deathMunicipalityName)] ?? $otherMunicipality;
-            $deathLocation = DeathLocation::firstOrCreate(['name' => $siteName]);
-
             DB::transaction(function () use (
                 $failedRecord,
                 $rowData,
@@ -1582,6 +1658,33 @@ class DeathImportController extends Controller
         ]);
     }
 
+    /**
+     * Apply the same person-name presentation used by persisted deaths.
+     * Alternate spreadsheet headings are included for legacy imports.
+     */
+    private function normalizeImportPersonNames(array $rowData): array
+    {
+        foreach ([
+            'nombre',
+            'primerapellido',
+            'primerapellid',
+            'segundoapellido',
+            'segundoapellid',
+        ] as $field) {
+            if (!array_key_exists($field, $rowData) || $rowData[$field] === null) {
+                continue;
+            }
+
+            if (!is_string($rowData[$field]) && !is_numeric($rowData[$field])) {
+                continue;
+            }
+
+            $rowData[$field] = Death::formatPersonName((string) $rowData[$field]) ?? '';
+        }
+
+        return $rowData;
+    }
+
     private function updateFailedImportErrors(FailedImportRecord $record, array $errors): void
     {
         $errors = array_values(array_unique(array_filter(array_map('trim', $errors))));
@@ -1839,6 +1942,25 @@ class DeathImportController extends Controller
         $s = preg_replace('/[^A-Z0-9\s]/', ' ', $s);
         $s = preg_replace('/\s+/', ' ', $s);
         return trim($s);
+    }
+
+    private function normalizeDeathLocationName(?string $name): string
+    {
+        return $this->normalizeDeathCauseName($name);
+    }
+
+    private function resolveExistingDeathLocation(?string $name): ?DeathLocation
+    {
+        $normalizedName = $this->normalizeDeathLocationName($name);
+        if ($normalizedName === '') {
+            return null;
+        }
+
+        return DeathLocation::query()
+            ->get()
+            ->first(fn (DeathLocation $location) =>
+                $this->normalizeDeathLocationName($location->name) === $normalizedName
+            );
     }
 
     /**

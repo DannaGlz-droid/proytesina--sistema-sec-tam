@@ -12,6 +12,8 @@
 @import './design-system/filter-select.css';
 
 :root {
+  --ui-shell-header-layer: 110;
+  --ui-shell-subnav-layer: 100;
   --ui-report-dialog-layer: 999980;
   --ui-task-dialog-layer: 999990;
   --ui-confirm-dialog-layer: 1000000;
@@ -2746,6 +2748,7 @@ html[data-ui-theme="tamaulipas-salud"] .app-document-surface {
 /* Institutional shell: aligned with the pilot controls and typography. */
 .app-top-header {
 	position: relative;
+	z-index: var(--ui-shell-header-layer);
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
@@ -3650,6 +3653,7 @@ html[data-ui-theme="tamaulipas-salud"] .app-document-surface {
 
 .app-subnav {
 	position: relative;
+	z-index: var(--ui-shell-subnav-layer);
 	background: var(--brand-shell-secondary) !important;
 	font-family: 'Open Sans', sans-serif;
 }

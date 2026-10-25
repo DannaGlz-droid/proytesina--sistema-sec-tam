@@ -12,6 +12,8 @@
         </div>
         <input id="gov_folio" name="gov_folio" type="text" value="{{ old('gov_folio', data_get($deathRecord, 'gov_folio')) }}" required minlength="9" maxlength="17"
             pattern="([0-9]{9}|[0-9]{2}[A-Za-z][0-9]{5}[A-Za-z][0-9]{8})"
+            data-validation-minlength-message="Ingrese 9 dígitos o el folio alfanumérico oficial."
+            data-validation-pattern-message="Ingrese 9 dígitos o el folio alfanumérico oficial."
             title="Capture 9 dígitos o el folio alfanumérico oficial"
             placeholder="Ej: 230787888 o 28M19673E00000007"
             aria-describedby="gov-folio-help @error('gov_folio') gov-folio-error @enderror"
