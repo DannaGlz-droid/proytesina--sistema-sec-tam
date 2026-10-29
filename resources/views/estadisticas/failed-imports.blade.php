@@ -156,13 +156,13 @@
                     </div>
                     <div class="failed-location-grid">
                         <div class="failed-location-column">
-                            <div class="failed-correction-field">
+                            <div class="failed-correction-field failed-location-residence-municipality">
                                 <label>Municipio de residencia <span class="text-red-600">*</span></label>
                                 <select name="municipioresidenciad" required disabled class="tomselect-select" data-select-variant="form" data-placeholder="Seleccione un municipio">
                                     <option value="">Seleccione un municipio</option>
                                 </select>
                             </div>
-                            <div class="failed-correction-field">
+                            <div class="failed-correction-field failed-location-death-municipality">
                                 <label>Municipio de defunción <span class="text-red-600">*</span></label>
                                 <select name="municipiodefunciond" required disabled class="tomselect-select" data-select-variant="form" data-placeholder="Seleccione un municipio">
                                     <option value="">Seleccione un municipio</option>
@@ -170,7 +170,7 @@
                             </div>
                         </div>
                         <div class="failed-location-column">
-                            <div class="failed-correction-field">
+                            <div class="failed-correction-field failed-location-residence-district">
                                 <div class="statistics-form-label-row">
                                     <label>Distrito de residencia</label>
                                     <span class="statistics-form-help-popover">
@@ -182,7 +182,7 @@
                                 </div>
                                 <input name="distrito" type="text" value="" readonly disabled data-derived-field aria-disabled="true" placeholder="Seleccione un municipio primero">
                             </div>
-                            <div class="failed-correction-field">
+                            <div class="failed-correction-field failed-location-death-district">
                                 <div class="statistics-form-label-row">
                                     <label>Distrito de defunción</label>
                                     <span class="statistics-form-help-popover">

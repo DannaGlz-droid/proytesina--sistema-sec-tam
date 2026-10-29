@@ -4,6 +4,19 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Self-service password reset
+    |--------------------------------------------------------------------------
+    |
+    | Keep public password recovery disabled while account credentials are
+    | managed by administrators. The controllers and views remain available
+    | so the workflow can be enabled later without rebuilding it.
+    |
+    */
+
+    'self_service_password_reset' => env('SELF_SERVICE_PASSWORD_RESET_ENABLED', false),
+
+    /*
+    |--------------------------------------------------------------------------
     | Authentication Defaults
     |--------------------------------------------------------------------------
     |

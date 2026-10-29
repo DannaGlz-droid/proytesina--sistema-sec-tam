@@ -1,6 +1,7 @@
 @import './design-system/dialog.css';
 @import './design-system/form-help.css';
 @import './design-system/form-help.css';
+@import './pages/login.css';
 @import './pages/report-publications.css';
 @import './pages/report-road-safety-form.css';
 @import './pages/report-observatory-form.css';

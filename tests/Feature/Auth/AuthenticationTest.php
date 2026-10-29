@@ -76,7 +76,7 @@ test('inactive users cannot authenticate', function () {
     $this->post('/login', [
         'login' => $user->username,
         'password' => 'password',
-    ])->assertSessionHasErrors('login');
+    ])->assertSessionHasErrors('credentials');
 
     $this->assertGuest();
 });
@@ -112,7 +112,7 @@ test('login attempts are rate limited', function () {
     }
 
     $this->post('/login', $payload)
-        ->assertSessionHasErrors('login');
+        ->assertSessionHasErrors('credentials');
 
     expect(RateLimiter::tooManyAttempts('login:test-user|127.0.0.1', 5))->toBeTrue();
 });

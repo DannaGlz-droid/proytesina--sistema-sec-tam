@@ -1773,8 +1773,47 @@
         grid-template-columns: minmax(0, 1fr);
     }
 
+    .statistics-failed-imports-page .failed-location-column {
+        display: contents;
+    }
+
+    .statistics-failed-imports-page .failed-location-residence-municipality {
+        order: 1;
+    }
+
+    .statistics-failed-imports-page .failed-location-residence-district {
+        order: 2;
+    }
+
+    .statistics-failed-imports-page .failed-location-death-municipality {
+        order: 3;
+    }
+
+    .statistics-failed-imports-page .failed-location-death-district {
+        order: 4;
+    }
+
     .statistics-failed-imports-page .failed-location-place {
         grid-column: auto;
+        order: 5;
+    }
+}
+
+/* Match the canonical forms: iOS zooms the viewport when an editable control
+   or Tom Select's internal search input computes below 16px. */
+@media (max-width: 760px) {
+    .statistics-failed-imports-page .record-card.is-editing-fields .correction-form input:not([type="hidden"]),
+    .statistics-failed-imports-page .record-card.is-editing-fields .correction-form select,
+    .statistics-failed-imports-page .record-card.is-editing-fields .correction-form textarea,
+    .statistics-failed-imports-page .record-card.is-editing-fields .correction-form .ts-wrapper.app-filter-select--form .ts-control > input,
+    .statistics-failed-imports-page .record-card.is-editing-fields .correction-form .ts-wrapper.app-filter-select--form .ts-control > input:focus {
+        font-size: 1rem !important;
+    }
+
+    .statistics-failed-imports-page .record-card.is-editing-fields .correction-form input:not([type="hidden"])::placeholder,
+    .statistics-failed-imports-page .record-card.is-editing-fields .correction-form textarea::placeholder,
+    .statistics-failed-imports-page .record-card.is-editing-fields .correction-form .ts-wrapper.app-filter-select--form .ts-control > input::placeholder {
+        font-size: .8rem !important;
     }
 }
 
@@ -1806,6 +1845,55 @@
 }
 
 @media (max-width: 640px) {
+    .statistics-failed-imports-page .failed-imports-card > .app-table-toolbar .failed-imports-controls .users-filter-topbar {
+        display: grid !important;
+        grid-template-columns: minmax(0, 1fr) !important;
+        align-items: center !important;
+        gap: .65rem !important;
+    }
+
+    .statistics-failed-imports-page .failed-imports-card > .app-table-toolbar .failed-imports-file-context {
+        grid-column: 1 / -1 !important;
+        order: 1 !important;
+        width: 100% !important;
+        align-items: flex-start;
+        padding: .05rem 0 .15rem;
+    }
+
+    .statistics-failed-imports-page .failed-imports-card > .app-table-toolbar .failed-imports-file-icon {
+        width: 2.25rem;
+        height: 2.25rem;
+        flex-basis: 2.25rem;
+        font-size: 1rem;
+    }
+
+    .statistics-failed-imports-page .failed-imports-card > .app-table-toolbar .failed-imports-file-context strong,
+    .statistics-failed-imports-page .failed-imports-card > .app-table-toolbar .failed-imports-file-context small {
+        line-height: 1.35;
+    }
+
+    .statistics-failed-imports-page .failed-imports-card > .app-table-toolbar .users-filter-page-size {
+        grid-column: 1 / -1 !important;
+        order: 2 !important;
+        width: 100% !important;
+        min-width: 0 !important;
+    }
+
+    .statistics-failed-imports-page .failed-imports-card > .app-table-toolbar .users-filter-page-size .users-page-size-dropdown,
+    .statistics-failed-imports-page .failed-imports-card > .app-table-toolbar .users-filter-page-size .users-page-size-button {
+        width: 100% !important;
+        min-width: 0 !important;
+    }
+
+    .statistics-failed-imports-page .failed-imports-card > .app-table-toolbar .users-filter-search {
+        grid-column: 1 / -1 !important;
+        order: 3 !important;
+        width: 100% !important;
+        min-width: 0 !important;
+        max-width: none !important;
+        margin-left: 0 !important;
+    }
+
     .statistics-failed-imports-page .action-buttons-view,
     .statistics-failed-imports-page .action-buttons-edit {
         align-items: stretch !important;

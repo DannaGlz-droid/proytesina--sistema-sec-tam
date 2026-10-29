@@ -61,15 +61,37 @@ it('uses one inline validation contract without native validity bubbles', functi
 
 it('keeps one password visibility control in Edge', function (): void {
     $createUser = projectView('usuarios/acciones/registro.blade.php');
-    $updatePassword = projectView('usuarios/acciones/actualizar-contrasena.blade.php');
     $passwordDialog = projectView('components/user-password-dialog.blade.php');
     $styles = file_get_contents(dirname(__DIR__, 2).'/resources/css/app.css');
 
     expect(substr_count($createUser, 'app-password-input-wrap'))->toBe(2)
-        ->and(substr_count($updatePassword, 'app-password-input-wrap'))->toBe(2)
         ->and(substr_count($passwordDialog, 'app-password-input-wrap'))->toBe(2)
         ->and($styles)->toContain('.app-password-input-wrap input[type="password"]::-ms-reveal')
         ->and($styles)->toContain('.app-password-input-wrap input[type="password"]::-ms-clear');
+});
+
+it('keeps the login aligned with the shared form and mobile contracts', function (): void {
+    $view = projectView('auth/login.blade.php');
+    $styles = file_get_contents(dirname(__DIR__, 2).'/resources/css/pages/login.css');
+
+    expect($view)
+        ->toContain('novalidate')
+        ->toContain('data-ui-inline-validation')
+        ->toContain('app-password-input-wrap')
+        ->toContain('data-login-password-toggle')
+        ->toContain('data-login-eye-open')
+        ->toContain('data-login-eye-closed')
+        ->toContain("@error('credentials')")
+        ->toContain('data-login-auth-error')
+        ->toContain('authenticationError.remove()')
+        ->toContain('data-loading-text="Iniciando sesión…"')
+        ->toContain('data-server-error')
+        ->not->toContain('Sesión protegida')
+        ->and($styles)
+        ->toContain('min-height: 100dvh;')
+        ->toContain('@media (max-width: 640px)')
+        ->toMatch('/@media \(max-width: 640px\)[\s\S]*?\.login-field input\[type="text"\],[\s\S]*?font-size:\s*1rem;/s')
+        ->not->toContain('zoom:');
 });
 
 it('marks death form navigation to restore the originating table context', function (): void {
@@ -596,6 +618,16 @@ it('uses the shared correction form contract for failed imports', function (): v
         ->toMatch('/\.statistics-failed-imports-page \.action-buttons-view \.ui-button,[^{]+\{[^}]*height:\s*34px\s*!important;[^}]*padding:\s*0 \.88rem\s*!important;[^}]*font-family:\s*"Open Sans", system-ui, sans-serif\s*!important;[^}]*font-weight:\s*600\s*!important;/s')
         ->toMatch('/\.statistics-failed-imports-page \.action-buttons-view \.ui-button--primary,[^{]+\{[^}]*border:\s*1px solid var\(--brand-primary\)\s*!important;[^}]*background:\s*var\(--brand-primary\)\s*!important;/s')
         ->toContain('@media (max-width: 640px)')
+        ->toMatch('/@media \(max-width: 640px\)[\s\S]*?\.statistics-failed-imports-page \.failed-imports-card > \.app-table-toolbar \.failed-imports-file-context\s*\{[^}]*grid-column:\s*1 \/ -1\s*!important;[^}]*order:\s*1\s*!important;/s')
+        ->toMatch('/@media \(max-width: 640px\)[\s\S]*?\.statistics-failed-imports-page \.failed-imports-card > \.app-table-toolbar \.users-filter-page-size\s*\{[^}]*grid-column:\s*1 \/ -1\s*!important;[^}]*order:\s*2\s*!important;/s')
+        ->toMatch('/@media \(max-width: 640px\)[\s\S]*?\.statistics-failed-imports-page \.failed-imports-card > \.app-table-toolbar \.users-filter-search\s*\{[^}]*grid-column:\s*1 \/ -1\s*!important;[^}]*order:\s*3\s*!important;/s')
+        ->toContain('failed-location-residence-municipality')
+        ->toContain('failed-location-residence-district')
+        ->toContain('failed-location-death-municipality')
+        ->toContain('failed-location-death-district')
+        ->toMatch('/@media \(max-width: 1023px\)[\s\S]*?\.statistics-failed-imports-page \.failed-location-column\s*\{[^}]*display:\s*contents;[^}]*\}[\s\S]*?\.statistics-failed-imports-page \.failed-location-residence-municipality\s*\{[^}]*order:\s*1;[^}]*\}[\s\S]*?\.statistics-failed-imports-page \.failed-location-residence-district\s*\{[^}]*order:\s*2;[^}]*\}[\s\S]*?\.statistics-failed-imports-page \.failed-location-death-municipality\s*\{[^}]*order:\s*3;[^}]*\}[\s\S]*?\.statistics-failed-imports-page \.failed-location-death-district\s*\{[^}]*order:\s*4;/s')
+        ->toMatch('/@media \(max-width: 760px\)[\s\S]*?\.statistics-failed-imports-page \.record-card\.is-editing-fields \.correction-form \.ts-wrapper\.app-filter-select--form \.ts-control > input,[\s\S]*?font-size:\s*1rem\s*!important;/s')
+        ->toMatch('/@media \(max-width: 760px\)[\s\S]*?\.statistics-failed-imports-page \.record-card\.is-editing-fields \.correction-form input:not\(\[type="hidden"\]\),[\s\S]*?font-size:\s*1rem\s*!important;/s')
         ->toContain('.record-card.is-editing-fields .correction-form input:not([type="hidden"]):not([readonly]):not([role="combobox"]):hover')
         ->toMatch('/\.record-card\.is-editing-fields \.correction-form input:not\(\[type="hidden"\]\):not\(\[readonly\]\):not\(\[role="combobox"\]\):focus\s*\{[^}]*border-color:\s*var\(--ui-focus, #475569\)\s*!important;[^}]*background:\s*var\(--ui-surface, #fff\)\s*!important;[^}]*box-shadow:\s*0 0 0 2px var\(--ui-focus-ring, rgba\(71, 85, 105, \.18\)\)\s*!important;/s')
         ->toMatch('/\.statistics-failed-imports-page \.is-editing-fields \.correction-form \.ts-control\s*\{[^}]*padding:\s*0 2rem 0 \.72rem\s*!important;[^}]*box-shadow:\s*0 1px 2px rgba\(15, 23, 42, \.04\)\s*!important;/s')
