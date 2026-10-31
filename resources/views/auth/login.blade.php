@@ -119,9 +119,10 @@
                   <circle cx="12" cy="12" r="2.75"></circle>
                 </svg>
                 <svg data-login-eye-closed viewBox="0 0 24 24" fill="none" aria-hidden="true" hidden>
-                  <path d="M2.75 12s3.5-6 9.25-6 9.25 6 9.25 6-3.5 6-9.25 6-9.25-6-9.25-6Z"></path>
-                  <circle cx="12" cy="12" r="2.75"></circle>
-                  <path d="M4 4 20 20"></path>
+                  <path d="M3 3 21 21" class="login-eye-slash"></path>
+                  <path d="M6.65 6.65C4.55 8.05 3.15 10.15 2.5 12c1.55 3.45 5.1 6 9.5 6 1.35 0 2.6-.25 3.7-.7"></path>
+                  <path d="M10.15 5.15A10.5 10.5 0 0 1 12 5c4.4 0 7.95 2.55 9.5 7a11.7 11.7 0 0 1-2.2 3.35"></path>
+                  <path d="M10.25 10.25a2.5 2.5 0 0 0 3.5 3.5"></path>
                 </svg>
               </button>
             </div>
@@ -187,8 +188,8 @@
           const label = willShow ? 'Ocultar contraseña' : 'Mostrar contraseña';
           toggle.setAttribute('aria-label', label);
           toggle.setAttribute('title', label);
-          toggle.querySelector('[data-login-eye-open]').hidden = willShow;
-          toggle.querySelector('[data-login-eye-closed]').hidden = !willShow;
+          toggle.querySelector('[data-login-eye-open]').toggleAttribute('hidden', willShow);
+          toggle.querySelector('[data-login-eye-closed]').toggleAttribute('hidden', !willShow);
           password.focus({ preventScroll: true });
         });
       });

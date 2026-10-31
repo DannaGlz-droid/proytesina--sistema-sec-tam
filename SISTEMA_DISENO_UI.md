@@ -520,6 +520,25 @@ Cuando exista ese motivo, la refactorización debe ser incremental, sin cambios 
 
 Archivos de referencia para esta decisión: `resources/views/estadisticas/failed-imports.blade.php`, `resources/css/pages/statistics-imports.css`, `resources/views/components/ui/form/`, `resources/views/estadisticas/acciones/partials/death-form-fields.blade.php`, `tests/Feature/FailedImportsViewTest.php` y `tests/Unit/FormTemplateConsistencyTest.php`.
 
+### 6.10 Inicio de sesión y autenticación
+
+La pantalla de inicio de sesión es la referencia oficial para los formularios de autenticación. Su composición institucional puede diferir de los formularios administrativos internos, pero conserva los mismos contratos de campos, validación, foco, accesibilidad y carga.
+
+- Mantener una sola tarjeta centrada, con logotipos institucionales, título, descripción, formulario y aviso de confidencialidad. No añadir enlaces, adornos o acciones secundarias que compitan con el acceso.
+- La tarjeta usa ancho limitado en escritorio y ocupa el ancho disponible con márgenes seguros en móvil. Debe funcionar en orientación vertical y horizontal, crecer con los mensajes de error y permitir desplazamiento vertical cuando el viewport o el teclado virtual reduzcan la altura disponible. Nunca debe provocar desplazamiento horizontal.
+- Usuario o correo y Contraseña conservan etiquetas visibles. El placeholder es una pista y no sustituye a la etiqueta. Los mensajes de validación aparecen inmediatamente debajo de su campo, sin mover ni deformar controles internos como el botón para mostrar la contraseña.
+- El orden de teclado es: usuario, contraseña, mostrar u ocultar contraseña, Recordarme e Iniciar sesión. Todos muestran foco visible. `Space` alterna el checkbox; los botones responden a `Enter` y `Space`; `Enter` dentro de los campos envía el formulario mediante su semántica nativa.
+- El control para mostrar la contraseña usa `app-password-input-wrap`, conserva una única acción visible y alterna entre ojo y ojo tachado. También actualiza su `aria-label` entre “Mostrar contraseña” y “Ocultar contraseña”; no depende únicamente del cambio de icono.
+- Los errores por campos vacíos, formato inválido o credenciales rechazadas usan el contrato inline de la sección 6.5. El primer campo inválido recibe foco y corregirlo retira su error sin alterar el foco del checkbox, la posición del ojo ni la geometría del botón.
+- Después de un envío válido, el botón conserva su ancho, se deshabilita de inmediato y muestra `[spinner] Iniciando sesión…`. El formulario expone el estado ocupado mediante `aria-busy` y bloquea envíos posteriores por clic, teclado o eventos repetidos. Si la autenticación falla, el estado se restaura para permitir otro intento.
+- `Recordarme` conserva su semántica nativa de checkbox y una etiqueta asociada que amplía el área pulsable. Su representación visual puede pertenecer a la variante de autenticación, pero el tamaño, foco, marca, interacción y accesibilidad deben provenir del contrato compartido; no se reconstruyen localmente en otras pantallas.
+- Sin `Recordarme`, la sesión expira al cerrar completamente el navegador. Con `Recordarme`, la autenticación puede restaurarse en una visita posterior de acuerdo con la duración configurada por el servidor. Este contrato requiere `SESSION_EXPIRE_ON_CLOSE=true`; cambiar esa configuración exige revisar y actualizar también la redacción y el comportamiento de esta opción.
+- Cerrar sesión invalida la sesión actual, regenera el token correspondiente y lleva al inicio de sesión. Las respuestas autenticadas y la pantalla de acceso usan una política de caché privada sin almacenamiento para que el historial no restaure una página protegida funcional después de salir.
+- La flecha Atrás puede mostrar momentáneamente una instantánea administrada por el navegador, pero cualquier navegación o solicitud protegida debe regresar al inicio de sesión. La autorización real siempre se valida en el servidor; una redirección de JavaScript al restaurar una página desde `bfcache` es únicamente una protección visual complementaria.
+- En producción, el acceso se sirve exclusivamente mediante HTTPS. El navegador puede mostrar advertencias, estilos de autocompletado, administradores de contraseñas, barras de navegación o accesorios del teclado propios; no ocultarlos ni imitarlos. Solo corregirlos cuando bloqueen contenido, cambien la geometría del formulario o impidan completar una acción.
+- Los campos usan un tamaño computado mínimo de 16 px en móvil para evitar el zoom automático de iOS. Con el teclado abierto, el usuario debe poder desplazar la vista hasta `Recordarme` y el botón de acceso sin que controles fijos los cubran.
+- Los colores, tipografías, radios, sombras, espaciados, logotipos y estados de la pantalla pertenecen a su hoja o componente compartido de autenticación. Una pantalla futura de recuperación, verificación o cambio de contraseña debe reutilizar esta base en lugar de copiar estilos o crear otra tarjeta institucional.
+
 ## 7. Tablas y páginas de consulta
 
 ### 7.1 Composición

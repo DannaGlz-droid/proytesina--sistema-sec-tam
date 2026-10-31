@@ -59,11 +59,12 @@ function validationMessage(field) {
 function errorAnchor(field) {
     if (field.tomselect?.wrapper) return field.tomselect.wrapper;
     if (field.closest('.statistics-age-fields')) return field.closest('.statistics-age-fields');
+    if (field.closest('.app-password-input-wrap')) return field.closest('.app-password-input-wrap');
     if (field.parentElement?.classList.contains('relative')) return field.parentElement;
     return field;
 }
 
-function errorElement(field) {
+function errorElement(field, create = true) {
     const explicitId = field.dataset.validationErrorId;
     const explicitError = explicitId ? document.getElementById(explicitId) : null;
     if (explicitError) return explicitError;
@@ -71,6 +72,7 @@ function errorElement(field) {
     const id = `${field.id || field.name}-client-error`;
     let error = document.getElementById(id);
     if (error) return error;
+    if (!create) return null;
 
     error = document.createElement('p');
     error.id = id;
@@ -125,12 +127,14 @@ function setAriaInvalid(field, invalid) {
 }
 
 function renderFieldValidity(field) {
-    const error = errorElement(field);
     const invalid = !field.validity.valid;
+    const error = errorElement(field, invalid);
 
     setAriaInvalid(field, invalid);
-    error.textContent = invalid ? validationMessage(field) : '';
-    error.classList.toggle('hidden', !invalid);
+    if (error) {
+        error.textContent = invalid ? validationMessage(field) : '';
+        error.classList.toggle('hidden', !invalid);
+    }
     syncErrorDescription(field, error, invalid);
 
     return !invalid;
@@ -215,14 +219,16 @@ function initializeInlineValidation(form) {
         fields.forEach((field) => {
             validateMatches(field);
             const invalid = !field.validity.valid;
-            const error = errorElement(field);
+            const error = errorElement(field, invalid);
 
             setAriaInvalid(field, invalid);
             syncErrorDescription(field, error, invalid);
 
             if (!invalid) {
-                error.textContent = '';
-                error.classList.add('hidden');
+                if (error) {
+                    error.textContent = '';
+                    error.classList.add('hidden');
+                }
                 return;
             }
 

@@ -65,9 +65,13 @@ test('external URLs are not used as post-login destinations', function () {
 test('authenticated users are redirected away from the login screen', function () {
     $user = User::factory()->create();
 
-    $this->actingAs($user)
-        ->get('/login')
-        ->assertRedirect(route('reportes.index'));
+    $response = $this->actingAs($user)->get('/login');
+
+    $response->assertRedirect(route('reportes.index'));
+    expect($response->headers->get('Cache-Control'))
+        ->toContain('no-store')
+        ->toContain('private')
+        ->toContain('must-revalidate');
 });
 
 test('inactive users cannot authenticate', function () {

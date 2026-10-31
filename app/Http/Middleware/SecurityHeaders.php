@@ -31,9 +31,10 @@ class SecurityHeaders
             );
         }
 
-        if ($request->routeIs('login', 'password.*')) {
-            $response->headers->set('Cache-Control', 'no-store, max-age=0');
+        if ($request->user() || $request->routeIs('login', 'password.*')) {
+            $response->headers->set('Cache-Control', 'no-store, private, max-age=0, must-revalidate');
             $response->headers->set('Pragma', 'no-cache');
+            $response->headers->set('Expires', '0');
         }
 
         return $response;

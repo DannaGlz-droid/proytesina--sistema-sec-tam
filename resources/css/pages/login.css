@@ -271,6 +271,10 @@
   stroke-width: 2;
 }
 
+.login-password-visibility .login-eye-slash {
+  stroke-width: 2.6;
+}
+
 .login-password-visibility svg[hidden] {
   display: none;
 }
@@ -556,9 +560,11 @@
     background: #526278;
   }
 
-  .login-remember input:focus-visible + .login-remember-control {
+  .login-remember input:focus + .login-remember-control {
     border-color: var(--ui-focus, #475569);
-    box-shadow: 0 0 0 2px var(--ui-focus-ring, rgba(71, 85, 105, 0.18));
+    box-shadow:
+      0 0 0 1px #fff,
+      0 0 0 3px var(--ui-focus, #475569);
   }
 
   .login-submit {

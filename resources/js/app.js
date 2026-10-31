@@ -6,6 +6,56 @@ import './number-input-wheel';
 
 import Alpine from 'alpinejs';
 
+const logoutHistoryMarker = 'sistema-sec-tam.logout-completed';
+const isAuthenticatedDocument = document.documentElement.hasAttribute('data-auth-storage-scope');
+
+function readLogoutHistoryMarker() {
+    try {
+        return sessionStorage.getItem(logoutHistoryMarker) === 'true';
+    } catch (error) {
+        return false;
+    }
+}
+
+function writeLogoutHistoryMarker(value) {
+    try {
+        if (value) sessionStorage.setItem(logoutHistoryMarker, 'true');
+        else sessionStorage.removeItem(logoutHistoryMarker);
+    } catch (error) {
+        // The server-side no-store policy remains the primary protection.
+    }
+}
+
+if (isAuthenticatedDocument) {
+    // A protected document restored after logout must never reveal its cached
+    // contents, regardless of how many history entries the user traverses.
+    if (readLogoutHistoryMarker()) {
+        window.location.replace('/login');
+    }
+
+    window.addEventListener('pageshow', () => {
+        if (readLogoutHistoryMarker()) {
+            window.location.replace('/login');
+        }
+    });
+}
+
+document.addEventListener('submit', (event) => {
+    const form = event.target;
+    if (!(form instanceof HTMLFormElement)) return;
+
+    try {
+        const action = new URL(form.action, window.location.href);
+        if (action.origin === window.location.origin && action.pathname === '/logout') {
+            writeLogoutHistoryMarker(true);
+        } else if (action.origin === window.location.origin && action.pathname === '/login') {
+            writeLogoutHistoryMarker(false);
+        }
+    } catch (error) {
+        // An invalid action will be handled by the browser as usual.
+    }
+});
+
 window.Alpine = Alpine;
 
 Alpine.data('notificationCenter', () => ({
