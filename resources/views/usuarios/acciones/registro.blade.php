@@ -130,7 +130,7 @@
                                         <span id="password-strength" data-level="empty" aria-live="polite">Sin evaluar</span>
                                     </div>
                                     <div class="relative app-password-input-wrap">
-                                        <input name="password" type="password" required minlength="12" maxlength="255" autocomplete="new-password" @error('password') aria-invalid="true" aria-describedby="password-error" @enderror
+                                        <input name="password" type="password" required minlength="12" maxlength="255" autocomplete="new-password" autocapitalize="none" autocorrect="off" spellcheck="false" @error('password') aria-invalid="true" aria-describedby="password-error" @enderror
                                             id="password"
                                             placeholder="Ingrese su contraseña">
                                         <button type="button"
@@ -169,7 +169,7 @@
                             <div>
                                     <label for="password_confirmation" class="block">Confirmar contraseña <span class="text-red-600">*</span></label>
                                     <div class="relative app-password-input-wrap">
-                                        <input name="password_confirmation" type="password" required minlength="12" maxlength="255" autocomplete="new-password"
+                                        <input name="password_confirmation" type="password" required minlength="12" maxlength="255" autocomplete="new-password" autocapitalize="none" autocorrect="off" spellcheck="false"
                                             data-match-field="password" data-match-message="Las contraseñas no coinciden."
                                             @error('password_confirmation') aria-invalid="true" aria-describedby="password-confirmation-error" @enderror
                                             id="password_confirmation"
@@ -366,6 +366,7 @@
             const text = status.querySelector('span');
 
             if (!confirmation) {
+                status.hidden = false;
                 status.dataset.status = 'empty';
                 icon.className = 'far fa-circle';
                 text.textContent = 'Confirme la contraseña';
@@ -373,9 +374,10 @@
             }
 
             const matches = password === confirmation;
+            status.hidden = !matches;
             status.dataset.status = matches ? 'match' : 'mismatch';
             icon.className = matches ? 'fas fa-check-circle' : 'fas fa-exclamation-circle';
-            text.textContent = matches ? 'Las contraseñas coinciden' : 'Las contraseñas no coinciden';
+            text.textContent = matches ? 'Las contraseñas coinciden' : 'Confirme la contraseña';
         }
 
         // Event listener para verificar contraseña en tiempo real

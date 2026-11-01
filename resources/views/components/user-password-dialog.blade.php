@@ -41,12 +41,12 @@
                         <span id="user-password-dialog-strength" data-level="empty" aria-live="polite">Sin evaluar</span>
                     </div>
                     <div class="user-password-dialog-input-wrap app-password-input-wrap">
-                        <input id="user-password-new" name="password" type="password" required minlength="12" maxlength="255" autocomplete="new-password" placeholder="Ingrese la nueva contraseña">
+                        <input id="user-password-new" name="password" type="password" required minlength="12" maxlength="255" autocomplete="new-password" autocapitalize="none" autocorrect="off" spellcheck="false" placeholder="Ingrese la nueva contraseña" aria-describedby="user-password-new-error">
                         <button type="button" class="app-password-visibility user-password-dialog-visibility" data-password-toggle="user-password-new" aria-label="Mostrar contraseña" title="Mostrar contraseña">
                             <i class="far fa-eye" aria-hidden="true"></i>
                         </button>
                     </div>
-                    <p class="user-password-dialog-field-error hidden" data-error-for="password"></p>
+                    <p id="user-password-new-error" class="user-password-dialog-field-error hidden" data-error-for="password" aria-live="polite"></p>
                     <div id="user-password-dialog-meter" class="user-password-dialog-meter" role="progressbar" aria-label="Fortaleza de la contraseña" aria-valuemin="0" aria-valuemax="5" aria-valuenow="0">
                         <span data-level="empty"></span>
                     </div>
@@ -61,12 +61,12 @@
                 <div class="user-password-dialog-field">
                     <label for="user-password-confirm">Confirmar contraseña <span>*</span></label>
                     <div class="user-password-dialog-input-wrap app-password-input-wrap">
-                        <input id="user-password-confirm" name="password_confirmation" type="password" required minlength="12" maxlength="255" autocomplete="new-password" placeholder="Confirme la nueva contraseña">
+                        <input id="user-password-confirm" name="password_confirmation" type="password" required minlength="12" maxlength="255" autocomplete="new-password" autocapitalize="none" autocorrect="off" spellcheck="false" placeholder="Confirme la nueva contraseña" aria-describedby="user-password-confirm-error">
                         <button type="button" class="app-password-visibility user-password-dialog-visibility" data-password-toggle="user-password-confirm" aria-label="Mostrar contraseña" title="Mostrar contraseña">
                             <i class="far fa-eye" aria-hidden="true"></i>
                         </button>
                     </div>
-                    <p class="user-password-dialog-field-error hidden" data-error-for="password_confirmation"></p>
+                    <p id="user-password-confirm-error" class="user-password-dialog-field-error hidden" data-error-for="password_confirmation" aria-live="polite"></p>
                     <div class="user-password-dialog-confirm-tools">
                         <span id="user-password-dialog-match" data-status="empty" aria-live="polite"><i class="far fa-circle" aria-hidden="true"></i><span>Confirme la contraseña</span></span>
                         <button type="button" id="user-password-dialog-generate"><i class="fas fa-key" aria-hidden="true"></i>Generar contraseña</button>
@@ -75,8 +75,11 @@
             </div>
 
             <footer class="ui-dialog__actions user-password-dialog-actions">
-                <button type="button" class="user-password-dialog-button user-password-dialog-cancel" data-password-dialog-close>Cancelar</button>
-                <button type="submit" class="user-password-dialog-button user-password-dialog-save">Guardar contraseña</button>
+                <button type="button" class="ui-button ui-button--secondary user-password-dialog-button user-password-dialog-cancel" data-password-dialog-close>Cancelar</button>
+                <button type="submit" class="ui-button ui-button--primary user-password-dialog-button user-password-dialog-save">
+                    <i class="fas fa-spinner fa-spin" data-password-save-spinner aria-hidden="true" hidden></i>
+                    <span data-password-save-label>Guardar contraseña</span>
+                </button>
             </footer>
         </form>
 </x-ui.dialog>
@@ -96,7 +99,17 @@
         const match = document.getElementById('user-password-dialog-match');
         const errorBox = document.getElementById('user-password-dialog-error');
         const saveButton = root.querySelector('.user-password-dialog-save');
-        const state = { dirty: false, closing: false, awaitingDiscard: false, previousFocus: null, previousOverflow: '' };
+        const saveSpinner = saveButton.querySelector('[data-password-save-spinner]');
+        const saveLabel = saveButton.querySelector('[data-password-save-label]');
+        const state = {
+            dirty: false,
+            closing: false,
+            awaitingDiscard: false,
+            previousFocus: null,
+            previousOverflow: '',
+            submitting: false,
+            validationAttempted: false
+        };
 
         function passwordChecks(value) {
             return {
@@ -133,21 +146,90 @@
                 icon.className = complete ? 'fas fa-check-circle' : 'far fa-circle';
             });
 
-            const hasConfirmation = confirmation.value.length > 0;
-            const matches = hasConfirmation && confirmation.value === value;
-            match.dataset.status = !hasConfirmation ? 'empty' : matches ? 'match' : 'mismatch';
-            match.querySelector('i').className = !hasConfirmation ? 'far fa-circle' : matches ? 'fas fa-check-circle' : 'fas fa-exclamation-circle';
-            match.querySelector('span').textContent = !hasConfirmation ? 'Confirme la contraseña' : matches ? 'Las contraseñas coinciden' : 'Las contraseñas no coinciden';
-            confirmation.setCustomValidity(hasConfirmation && !matches ? 'Las contraseñas no coinciden.' : '');
+            updatePasswordMatchState();
         }
 
-        function clearErrors() {
-            errorBox.textContent = '';
-            errorBox.classList.add('hidden');
-            root.querySelectorAll('[data-error-for]').forEach(element => {
-                element.textContent = '';
-                element.classList.add('hidden');
-            });
+        function updatePasswordMatchState() {
+            const hasConfirmation = confirmation.value.length > 0;
+            const matches = hasConfirmation && confirmation.value === password.value;
+            const confirmationInvalid = confirmation.getAttribute('aria-invalid') === 'true';
+            match.hidden = confirmationInvalid || (hasConfirmation && !matches);
+            match.dataset.status = !hasConfirmation ? 'empty' : matches ? 'match' : 'mismatch';
+            match.querySelector('i').className = !hasConfirmation ? 'far fa-circle' : matches ? 'fas fa-check-circle' : 'fas fa-exclamation-circle';
+            match.querySelector('span').textContent = matches ? 'Las contraseñas coinciden' : 'Confirme la contraseña';
+        }
+
+        function fieldError(field) {
+            return root.querySelector(`[data-error-for="${field.name}"]`);
+        }
+
+        function setFieldError(field, message = '') {
+            const error = fieldError(field);
+            if (!error) return;
+
+            const invalid = Boolean(message);
+            error.textContent = message;
+            error.classList.toggle('hidden', !invalid);
+            if (invalid) field.setAttribute('aria-invalid', 'true');
+            else field.removeAttribute('aria-invalid');
+            if (field === confirmation) updatePasswordMatchState();
+        }
+
+        function passwordMessage() {
+            const value = password.value;
+            const checks = passwordChecks(value);
+
+            if (!value) return 'Capture la nueva contraseña.';
+            if (!checks.length) return 'La nueva contraseña debe tener al menos 12 caracteres.';
+            if (!checks.case) return 'Incluya al menos una letra mayúscula y una minúscula.';
+            if (!checks.number) return 'Incluya al menos un número.';
+            if (!checks.special) return 'Incluya al menos un símbolo.';
+            return '';
+        }
+
+        function confirmationMessage() {
+            if (!confirmation.value) return 'Confirme la nueva contraseña.';
+            if (confirmation.value !== password.value) return 'Las contraseñas no coinciden.';
+            return '';
+        }
+
+        function validateField(field) {
+            const message = field === password ? passwordMessage() : confirmationMessage();
+            setFieldError(field, message);
+            return !message;
+        }
+
+        function focusInvalidField(field) {
+            field.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            window.requestAnimationFrame(() => field.focus({ preventScroll: true }));
+        }
+
+        function validateForm({ focus = false } = {}) {
+            updatePasswordState();
+            const passwordValid = validateField(password);
+            const confirmationValid = validateField(confirmation);
+            const firstInvalid = !passwordValid ? password : !confirmationValid ? confirmation : null;
+            if (focus && firstInvalid) focusInvalidField(firstInvalid);
+            return !firstInvalid;
+        }
+
+        function clearErrors({ general = true } = {}) {
+            if (general) {
+                errorBox.textContent = '';
+                errorBox.classList.add('hidden');
+            }
+            setFieldError(password);
+            setFieldError(confirmation);
+        }
+
+        function setSubmitting(submitting) {
+            state.submitting = submitting;
+            form.dataset.uiSubmitting = submitting ? 'true' : 'false';
+            form.setAttribute('aria-busy', String(submitting));
+            saveButton.disabled = submitting;
+            saveButton.setAttribute('aria-busy', String(submitting));
+            saveSpinner.hidden = !submitting;
+            saveLabel.textContent = submitting ? 'Guardando…' : 'Guardar contraseña';
         }
 
         function openDialog(trigger) {
@@ -155,7 +237,9 @@
             state.previousOverflow = document.body.style.overflow;
             state.dirty = false;
             state.closing = false;
+            state.validationAttempted = false;
             form.reset();
+            setSubmitting(false);
             form.action = trigger.dataset.passwordUpdateUrl;
             const userName = trigger.dataset.userName || 'Usuario';
             document.getElementById('user-password-dialog-name').textContent = userName;
@@ -164,6 +248,13 @@
             photo.src = trigger.dataset.userPhoto || '{{ asset('images/default_pfp.svg.png') }}';
             photo.alt = `Foto de ${userName}`;
             clearErrors();
+            root.querySelectorAll('[data-password-toggle]').forEach(toggle => {
+                const input = document.getElementById(toggle.dataset.passwordToggle);
+                input.type = 'password';
+                toggle.setAttribute('aria-label', 'Mostrar contraseña');
+                toggle.setAttribute('title', 'Mostrar contraseña');
+                toggle.querySelector('i').className = 'far fa-eye';
+            });
             updatePasswordState();
             root.classList.remove('hidden', 'is-closing');
             root.classList.add('flex');
@@ -194,6 +285,7 @@
         }
 
         async function requestClose() {
+            if (state.submitting) return;
             if (state.awaitingDiscard) return;
             if (!state.dirty) {
                 closeDialog();
@@ -232,6 +324,7 @@
             state.dirty = true;
             clearErrors();
             updatePasswordState();
+            if (state.validationAttempted) validateForm();
             password.focus();
         }
 
@@ -261,8 +354,16 @@
 
         [password, confirmation].forEach(input => input.addEventListener('input', function() {
             state.dirty = Boolean(password.value || confirmation.value);
-            clearErrors();
+            errorBox.textContent = '';
+            errorBox.classList.add('hidden');
             updatePasswordState();
+            if (state.validationAttempted || input.getAttribute('aria-invalid') === 'true') {
+                validateField(input);
+                if (input === password && confirmation.value) validateField(confirmation);
+            } else {
+                setFieldError(input);
+                if (confirmation.value) validateField(confirmation);
+            }
         }));
 
         document.addEventListener('keydown', function(event) {
@@ -284,15 +385,13 @@
 
         form.addEventListener('submit', async function(event) {
             event.preventDefault();
-            clearErrors();
-            updatePasswordState();
-            if (!form.checkValidity()) {
-                form.reportValidity();
-                return;
-            }
+            if (state.submitting) return;
 
-            saveButton.disabled = true;
-            saveButton.textContent = 'Guardando...';
+            state.validationAttempted = true;
+            clearErrors();
+            if (!validateForm({ focus: true })) return;
+
+            setSubmitting(true);
             try {
                 const response = await fetch(form.action, {
                     method: 'POST',
@@ -302,14 +401,24 @@
                 const data = await response.json().catch(() => ({}));
                 if (!response.ok) {
                     const errors = data.errors || {};
+                    let firstInvalid = null;
                     Object.entries(errors).forEach(([field, messages]) => {
                         const element = root.querySelector(`[data-error-for="${field}"]`);
                         if (!element) return;
                         element.textContent = messages[0];
                         element.classList.remove('hidden');
+                        const input = form.elements.namedItem(field);
+                        if (input instanceof HTMLInputElement) {
+                            input.setAttribute('aria-invalid', 'true');
+                            if (!firstInvalid) firstInvalid = input;
+                        }
                     });
-                    errorBox.textContent = data.message || 'Revisa los datos e intenta nuevamente.';
-                    errorBox.classList.remove('hidden');
+                    if (firstInvalid) {
+                        focusInvalidField(firstInvalid);
+                    } else {
+                        errorBox.textContent = data.message || 'Revisa los datos e intenta nuevamente.';
+                        errorBox.classList.remove('hidden');
+                    }
                     return;
                 }
                 state.dirty = false;
@@ -319,8 +428,7 @@
                 errorBox.textContent = 'No se pudo actualizar la contraseña. Intenta nuevamente.';
                 errorBox.classList.remove('hidden');
             } finally {
-                saveButton.disabled = false;
-                saveButton.textContent = 'Guardar contraseña';
+                setSubmitting(false);
             }
         });
     })();

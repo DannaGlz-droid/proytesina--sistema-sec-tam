@@ -158,6 +158,19 @@ function validateMatches(field) {
     field.setCustomValidity(mismatch ? (field.dataset.matchMessage || 'Los valores no coinciden.') : '');
 }
 
+function renderLiveMatchValidity(field) {
+    validateMatches(field);
+    const invalid = field.validity.customError;
+    const error = errorElement(field, invalid);
+
+    setAriaInvalid(field, invalid);
+    if (error) {
+        error.textContent = invalid ? field.validationMessage : '';
+        error.classList.toggle('hidden', !invalid);
+    }
+    syncErrorDescription(field, error, invalid);
+}
+
 function validationFields(form) {
     return Array.from(form.elements).filter((field) =>
         field instanceof HTMLInputElement || field instanceof HTMLSelectElement || field instanceof HTMLTextAreaElement
@@ -257,7 +270,20 @@ function initializeInlineValidation(form) {
             if (!(field instanceof HTMLInputElement || field instanceof HTMLSelectElement || field instanceof HTMLTextAreaElement)) return;
 
             clearServerError(field);
-            if (!validationAttempted && field.getAttribute('aria-invalid') !== 'true') return;
+            if (!validationAttempted) {
+                const liveMatchFields = new Set();
+                if (field.dataset.matchField) liveMatchFields.add(field);
+                if (field.id) {
+                    form.querySelectorAll(`[data-match-field="${CSS.escape(field.id)}"]`).forEach(matchField => liveMatchFields.add(matchField));
+                }
+
+                if (liveMatchFields.size) {
+                    queueMicrotask(() => liveMatchFields.forEach(renderLiveMatchValidity));
+                    return;
+                }
+
+                if (field.getAttribute('aria-invalid') !== 'true') return;
+            }
             queueMicrotask(() => validateField(field));
         });
     });

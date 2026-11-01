@@ -418,10 +418,15 @@ Estados:
 
 - Fortaleza y reglas pertenecen al campo Contraseña.
 - Coincidencia pertenece a Confirmar contraseña.
+- El estado inicial es neutral: mostrar los requisitos pendientes y la indicación para confirmar, sin bordes ni mensajes rojos antes de que la persona escriba o intente guardar.
+- Los campos obligatorios vacíos muestran su error después del intento de envío. Cuando ambos campos tienen contenido, la falta de coincidencia se valida en tiempo real sin esperar otro envío.
+- La falta de coincidencia se comunica una sola vez debajo de Confirmar contraseña, con borde rojo, círculo de exclamación y texto directo. Al corregirla, retirar inmediatamente el error y mostrar el estado verde de coincidencia; no conservar mensajes duplicados ni estados contradictorios.
 - Generar contraseña se coloca con la confirmación porque completa ambos campos.
-- El generador debe llenar contraseña y confirmación y usar aleatoriedad criptográfica.
-- Mostrar contraseña es una acción de solo icono con etiqueta accesible.
+- El generador debe llenar contraseña y confirmación, usar aleatoriedad criptográfica y recalcular de inmediato fortaleza, requisitos y coincidencia.
+- Mostrar contraseña es una acción de solo icono con etiqueta accesible. Cada campo controla su visibilidad de manera independiente y alterna icono, `aria-label` y tooltip sin modificar el valor ni sus estados de validación.
+- Los campos destinados a crear o cambiar credenciales usan `autocomplete="new-password"`, `autocapitalize="none"`, `autocorrect="off"` y `spellcheck="false"`.
 - Los estados de seguridad usan colores semánticos, nunca color de marca.
+- No incluir contraseñas reales o temporales en documentación, capturas permanentes, fixtures, registros de depuración ni datos de ejemplo. Si una credencial se expone durante una revisión, debe rotarse al finalizar.
 
 ### 6.7 Carga de archivos
 
@@ -530,6 +535,7 @@ La pantalla de inicio de sesión es la referencia oficial para los formularios d
 - El orden de teclado es: usuario, contraseña, mostrar u ocultar contraseña, Recordarme e Iniciar sesión. Todos muestran foco visible. `Space` alterna el checkbox; los botones responden a `Enter` y `Space`; `Enter` dentro de los campos envía el formulario mediante su semántica nativa.
 - El control para mostrar la contraseña usa `app-password-input-wrap`, conserva una única acción visible y alterna entre ojo y ojo tachado. También actualiza su `aria-label` entre “Mostrar contraseña” y “Ocultar contraseña”; no depende únicamente del cambio de icono.
 - Los errores por campos vacíos, formato inválido o credenciales rechazadas usan el contrato inline de la sección 6.5. El primer campo inválido recibe foco y corregirlo retira su error sin alterar el foco del checkbox, la posición del ojo ni la geometría del botón.
+- Un acceso rechazado por usuario inexistente, contraseña incorrecta o cuenta inactiva usa el mismo mensaje genérico y no confirma cuál condición ocurrió. La redacción debe ser precisa para todos esos casos y orientar a verificar credenciales o estado de la cuenta sin facilitar la enumeración de usuarios.
 - Después de un envío válido, el botón conserva su ancho, se deshabilita de inmediato y muestra `[spinner] Iniciando sesión…`. El formulario expone el estado ocupado mediante `aria-busy` y bloquea envíos posteriores por clic, teclado o eventos repetidos. Si la autenticación falla, el estado se restaura para permitir otro intento.
 - `Recordarme` conserva su semántica nativa de checkbox y una etiqueta asociada que amplía el área pulsable. Su representación visual puede pertenecer a la variante de autenticación, pero el tamaño, foco, marca, interacción y accesibilidad deben provenir del contrato compartido; no se reconstruyen localmente en otras pantallas.
 - Sin `Recordarme`, la sesión expira al cerrar completamente el navegador. Con `Recordarme`, la autenticación puede restaurarse en una visita posterior de acuerdo con la duración configurada por el servidor. Este contrato requiere `SESSION_EXPIRE_ON_CLOSE=true`; cambiar esa configuración exige revisar y actualizar también la redacción y el comportamiento de esta opción.
@@ -740,6 +746,7 @@ Cuando “Ver datos” se abre desde una gráfica, integrar el contexto como enc
 - Si existen cambios escritos, cerrar, usar Escape o pulsar el overlay debe pedir confirmación antes de descartarlos.
 - La ruta de página debe conservarse como respaldo cuando JavaScript no esté disponible o se acceda mediante URL directa.
 - Todo modal de tarea ofrece cierre visible, Escape y clic en el overlay; contiene Tab, devuelve el foco al disparador y bloquea el desplazamiento de fondo mientras está abierto.
+- En móvil, limitar la superficie a la altura dinámica disponible y permitir desplazamiento vertical dentro del modal. Con el teclado virtual abierto deben seguir siendo alcanzables los campos, ayudas y acciones, sin desplazamiento horizontal ni controles ocultos de forma permanente.
 - La entrada y salida reutilizan la transición compartida de opacidad y desplazamiento vertical de hasta 4 px. No usar escala, rebote ni una animación propia por módulo.
 - Los expedientes, galerías y vistas previas de archivo son visores, no tareas breves. Pueden conservar un panel amplio o de pantalla completa, pero reutilizan los tokens de overlay, borde, sombra, cierre, foco y movimiento.
 

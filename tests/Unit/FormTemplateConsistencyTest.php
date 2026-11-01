@@ -59,6 +59,15 @@ it('uses one inline validation contract without native validity bubbles', functi
     }
 });
 
+it('validates populated confirmation fields immediately without validating empty fields early', function (): void {
+    $script = file_get_contents(dirname(__DIR__, 2).'/resources/js/form-validation.js');
+
+    expect($script)
+        ->toContain('function renderLiveMatchValidity(field)')
+        ->toContain('field.validity.customError')
+        ->toContain('liveMatchFields.forEach(renderLiveMatchValidity)');
+});
+
 it('keeps one password visibility control in Edge', function (): void {
     $createUser = projectView('usuarios/acciones/registro.blade.php');
     $passwordDialog = projectView('components/user-password-dialog.blade.php');
@@ -68,6 +77,45 @@ it('keeps one password visibility control in Edge', function (): void {
         ->and(substr_count($passwordDialog, 'app-password-input-wrap'))->toBe(2)
         ->and($styles)->toContain('.app-password-input-wrap input[type="password"]::-ms-reveal')
         ->and($styles)->toContain('.app-password-input-wrap input[type="password"]::-ms-clear');
+});
+
+it('disables writing assistance on password creation and change fields', function (): void {
+    $createUser = projectView('usuarios/acciones/registro.blade.php');
+    $passwordDialog = projectView('components/user-password-dialog.blade.php');
+
+    foreach ([$createUser, $passwordDialog] as $view) {
+        expect(substr_count($view, 'autocapitalize="none"'))->toBe(2)
+            ->and(substr_count($view, 'autocorrect="off"'))->toBe(2)
+            ->and(substr_count($view, 'spellcheck="false"'))->toBe(2);
+    }
+});
+
+it('uses inline validation and a guarded loading state in the user password dialog', function (): void {
+    $view = projectView('components/user-password-dialog.blade.php');
+    $styles = file_get_contents(dirname(__DIR__, 2).'/resources/css/app.css');
+
+    expect($view)
+        ->toContain('id="user-password-new-error"')
+        ->toContain('id="user-password-confirm-error"')
+        ->toContain("return 'Capture la nueva contraseña.';")
+        ->toContain("return 'Confirme la nueva contraseña.';")
+        ->toContain("return 'Las contraseñas no coinciden.';")
+        ->toContain("match.hidden = confirmationInvalid || (hasConfirmation && !matches)")
+        ->toContain('data-password-save-spinner')
+        ->toContain("saveLabel.textContent = submitting ? 'Guardando…' : 'Guardar contraseña';")
+        ->toContain("form.setAttribute('aria-busy', String(submitting))")
+        ->toContain('if (state.submitting) return;')
+        ->toContain('ui-button ui-button--secondary user-password-dialog-button')
+        ->toContain('ui-button ui-button--primary user-password-dialog-button')
+        ->not->toContain('reportValidity(')
+        ->not->toContain('users-form-page')
+        ->not->toContain('users-form-card')
+        ->and($styles)
+        ->toContain('.user-password-dialog-field label')
+        ->toContain('.user-password-dialog-input-wrap input')
+        ->toContain('.user-password-dialog-field-error')
+        ->toContain('#password_confirmation-client-error')
+        ->toContain('content: "!";');
 });
 
 it('keeps the login aligned with the shared form and mobile contracts', function (): void {

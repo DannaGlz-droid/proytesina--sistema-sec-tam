@@ -8755,6 +8755,14 @@ html[data-ui-theme="tamaulipas-salud"] .app-document-surface {
   transition: color 0.16s ease;
 }
 
+.users-form-page #password-match-status[hidden] {
+  display: none;
+}
+
+.users-form-page div:has(#password_confirmation[aria-invalid="true"]) #password-match-status {
+  display: none;
+}
+
 .users-form-page #password-match-status ion-icon,
 .users-form-page #password-match-status i {
   flex: 0 0 auto;
@@ -9177,6 +9185,40 @@ html[data-ui-theme="tamaulipas-salud"] .app-document-surface {
 
 .users-form-page .ui-field-error.hidden {
   display: none;
+}
+
+.users-form-page :is(
+  #password-error,
+  #password-confirmation-error,
+  #password-client-error,
+  #password_confirmation-client-error
+):not(.hidden),
+.user-password-dialog-field-error:not(.hidden) {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.users-form-page :is(
+  #password-error,
+  #password-confirmation-error,
+  #password-client-error,
+  #password_confirmation-client-error
+):not(.hidden)::before,
+.user-password-dialog-field-error:not(.hidden)::before {
+  content: "!";
+  display: inline-flex;
+  width: 0.9rem;
+  height: 0.9rem;
+  flex: 0 0 0.9rem;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: var(--ui-danger, #dc2626);
+  color: #ffffff;
+  font-size: 0.62rem;
+  font-weight: 700;
+  line-height: 1;
 }
 
 /* Shared field contract used by report registration and inline correction forms. */
@@ -10001,7 +10043,7 @@ html[data-ui-theme="tamaulipas-salud"] .app-document-surface {
 
 /* Contextual task modal used from the user table. */
 .user-password-dialog {
-  font-family: "Open Sans", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-family: "Open Sans", system-ui, sans-serif;
 }
 
 .user-password-dialog-card {
@@ -10155,8 +10197,10 @@ html[data-ui-theme="tamaulipas-salud"] .app-document-surface {
   display: block;
   margin-bottom: 0.32rem;
   color: #10233f;
-  font-size: 0.75rem;
+  font-family: "Open Sans", system-ui, sans-serif;
+  font-size: 0.72rem;
   font-weight: 600;
+  line-height: 1.25;
 }
 
 .user-password-dialog-field .user-password-dialog-label-row label { margin-bottom: 0; }
@@ -10165,16 +10209,16 @@ html[data-ui-theme="tamaulipas-salud"] .app-document-surface {
 
 #user-password-dialog-strength {
   display: inline-flex;
-  min-height: 1.25rem;
+  min-height: 1rem;
   align-items: center;
-  padding: 0.12rem 0.48rem;
-  border: 1px solid #d8dee8;
+  padding: 0.06rem 0.36rem;
+  border: 1px solid #d8e1ec;
   border-radius: 999px;
   background: #f8fafc;
   color: #64748b;
-  font-size: 0.65rem;
-  font-weight: 600;
-  line-height: 1.2;
+  font-size: 0.61rem;
+  font-weight: 700;
+  line-height: 1;
 }
 
 #user-password-dialog-strength[data-level="weak"] { border-color: #fecaca; background: #fef2f2; color: #b91c1c; }
@@ -10192,12 +10236,18 @@ html[data-ui-theme="tamaulipas-salud"] .app-document-surface {
   border-radius: 7px;
   background: #ffffff;
   color: #10233f;
+  font-family: "Open Sans", system-ui, sans-serif;
   font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0;
   transition: border-color 150ms ease, box-shadow 150ms ease;
 }
 
-.user-password-dialog-input-wrap input::placeholder { color: #8190a5; }
-.user-password-dialog-input-wrap input:focus { border-color: var(--ui-focus); box-shadow: 0 0 0 2px var(--ui-focus-ring); outline: none; }
+.user-password-dialog-input-wrap input::placeholder { color: #7d8ca1; font-weight: 500; }
+.user-password-dialog-input-wrap input:hover { border-color: #bdc8d5; background: #f8fafc; }
+.user-password-dialog-input-wrap input:focus { border-color: var(--ui-focus); background: #ffffff; box-shadow: 0 0 0 2px var(--ui-focus-ring); outline: none; }
+.user-password-dialog-input-wrap input[aria-invalid="true"] { border-color: var(--ui-danger); }
+.user-password-dialog-input-wrap input[aria-invalid="true"]:focus { box-shadow: 0 0 0 2px rgba(185, 28, 28, 0.14); }
 
 .user-password-dialog-visibility {
   position: absolute;
@@ -10206,11 +10256,17 @@ html[data-ui-theme="tamaulipas-salud"] .app-document-surface {
   border-radius: 0 7px 7px 0;
 }
 
-.user-password-dialog-field-error { margin: 0.28rem 0 0; color: #b91c1c; font-size: 0.7rem; }
+.user-password-dialog-field-error {
+  margin: 0.25rem 0 0;
+  color: var(--ui-danger-text);
+  font-size: 0.75rem;
+  font-weight: 400;
+  line-height: 1rem;
+}
 
 .user-password-dialog-meter {
   height: 3px;
-  margin-top: 0.38rem;
+  margin-top: 0.32rem;
   overflow: hidden;
   background: #e2e8f0;
 }
@@ -10224,8 +10280,8 @@ html[data-ui-theme="tamaulipas-salud"] .app-document-surface {
 .user-password-dialog-rules {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0.45rem 1.1rem;
-  margin: 0.65rem 0 0;
+  gap: 0.38rem 1.15rem;
+  margin: 0.42rem 0 0;
   padding: 0;
   list-style: none;
 }
@@ -10235,67 +10291,76 @@ html[data-ui-theme="tamaulipas-salud"] .app-document-surface {
   display: inline-flex;
   align-items: center;
   gap: 0.35rem;
-  color: #64748b;
-  font-size: 0.68rem;
-  line-height: 1.3;
+  color: #68788d;
+  font-size: 0.67rem;
+  font-weight: 500;
+  line-height: 1.2;
 }
 
+#user-password-dialog-match[hidden] { display: none; }
+
 .user-password-dialog-rules li i,
-#user-password-dialog-match i { width: 0.75rem; flex: 0 0 0.75rem; font-size: 0.62rem; }
+#user-password-dialog-match i { width: 0.8rem; flex: 0 0 0.8rem; color: #94a3b8; font-size: 0.8rem; }
 .user-password-dialog-rules li[data-complete="true"],
 #user-password-dialog-match[data-status="match"] { color: #15803d; }
+.user-password-dialog-rules li[data-complete="true"] i,
+#user-password-dialog-match[data-status="match"] i { color: #16a34a; }
 #user-password-dialog-match[data-status="mismatch"] { color: #b91c1c; }
+#user-password-dialog-match[data-status="mismatch"] i { color: #dc2626; }
 
 .user-password-dialog-confirm-tools {
   display: flex;
+  min-height: 29px;
   align-items: center;
   justify-content: space-between;
   gap: 0.75rem;
-  margin-top: 0.6rem;
+  margin-top: 0.38rem;
 }
 
 #user-password-dialog-generate {
   display: inline-flex;
-  height: 34px;
+  min-height: 27px;
+  height: 27px;
   align-items: center;
-  gap: 0.4rem;
-  padding: 0 0.65rem;
+  gap: 0.3rem;
+  padding: 0 0.58rem;
   border: 1px solid #cbd5e1;
-  border-radius: 6px;
+  border-radius: var(--ui-radius-control);
   background: #ffffff;
-  color: #334155;
-  font-size: 0.72rem;
-  font-weight: 600;
+  color: #26384f;
+  font-family: "Open Sans", system-ui, sans-serif;
+  font-size: 0.66rem;
+  font-weight: 700;
+  line-height: 1;
   white-space: nowrap;
 }
 
-#user-password-dialog-generate:hover { border-color: #aebaca; background: #f3f6f9; }
+#user-password-dialog-generate:hover { border-color: #94a3b8; background: #f8fafc; color: #10233f; }
 
-.user-password-dialog-button {
-  display: inline-flex;
+.ui-button.user-password-dialog-button {
+  min-height: 34px;
   height: 34px;
-  align-items: center;
-  justify-content: center;
-  padding: 0 0.85rem;
-  border: 1px solid transparent;
-  border-radius: 7px;
-  font-size: 0.75rem;
-  font-weight: 600;
+  padding: 0 0.88rem;
+  font-family: "Open Sans", system-ui, sans-serif;
 }
 
+.user-password-dialog-button [data-password-save-spinner] { margin-right: 0.4rem; }
+
 .user-password-dialog-button:active { transform: translateY(1px); }
-.user-password-dialog-cancel { border-color: #cbd5e1; background: #ffffff; color: #1f2f46; }
-.user-password-dialog-cancel:hover { background: #f3f6f9; }
-.user-password-dialog-save { border-color: var(--brand-primary); background: var(--brand-primary); color: var(--brand-on-primary); }
-.user-password-dialog-save:hover { border-color: var(--brand-primary-hover); background: var(--brand-primary-hover); }
+.ui-button.user-password-dialog-cancel { color: #1f2f46; }
 .user-password-dialog-save:disabled { cursor: wait; opacity: 0.65; }
 
 @media (max-width: 639px) {
-  .user-password-dialog-input-wrap input { height: 40px; padding-right: 2.6rem; }
+  .user-password-dialog-input-wrap input {
+    height: 40px;
+    padding-right: 2.6rem;
+    /* iOS Safari amplifies focused controls whose text is smaller than 16px. */
+    font-size: 16px;
+  }
   .user-password-dialog-visibility { width: 2.5rem; }
   .user-password-dialog-rules { grid-template-columns: 1fr; }
   .user-password-dialog-confirm-tools { align-items: flex-start; flex-direction: column; }
-  .user-password-dialog-button { width: 100%; height: 40px; }
+  .ui-button.user-password-dialog-button { width: 100%; min-height: 40px; height: 40px; }
 }
 
 /* Shared action component. Variants are explicit; order never determines meaning. */
