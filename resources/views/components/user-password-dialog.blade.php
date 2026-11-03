@@ -101,6 +101,7 @@
         const saveButton = root.querySelector('.user-password-dialog-save');
         const saveSpinner = saveButton.querySelector('[data-password-save-spinner]');
         const saveLabel = saveButton.querySelector('[data-password-save-label]');
+        const visibilityPointerState = new WeakMap();
         const state = {
             dirty: false,
             closing: false,
@@ -328,6 +329,34 @@
             password.focus();
         }
 
+        root.addEventListener('pointerdown', function(event) {
+            const toggle = event.target.closest('[data-password-toggle]');
+            if (!toggle || !root.contains(toggle)) return;
+
+            const input = document.getElementById(toggle.dataset.passwordToggle);
+            if (!input || document.activeElement !== input) return;
+
+            visibilityPointerState.set(toggle, {
+                input,
+                start: input.selectionStart,
+                end: input.selectionEnd,
+                direction: input.selectionDirection
+            });
+
+            // Evita que el botón tome el foco y cierre el teclado virtual.
+            event.preventDefault();
+        });
+
+        root.addEventListener('pointercancel', function(event) {
+            const toggle = event.target.closest('[data-password-toggle]');
+            if (toggle) visibilityPointerState.delete(toggle);
+        });
+
+        root.addEventListener('keydown', function(event) {
+            const toggle = event.target.closest('[data-password-toggle]');
+            if (toggle) visibilityPointerState.delete(toggle);
+        });
+
         document.addEventListener('click', function(event) {
             const trigger = event.target.closest('.js-change-password');
             if (trigger) {
@@ -340,12 +369,21 @@
             const toggle = event.target.closest('[data-password-toggle]');
             if (toggle && root.contains(toggle)) {
                 const input = document.getElementById(toggle.dataset.passwordToggle);
+                const pointerState = visibilityPointerState.get(toggle);
                 const visible = input.type === 'text';
                 input.type = visible ? 'password' : 'text';
                 const accessibleLabel = visible ? 'Mostrar contraseña' : 'Ocultar contraseña';
                 toggle.setAttribute('aria-label', accessibleLabel);
                 toggle.setAttribute('title', accessibleLabel);
                 toggle.querySelector('i').className = visible ? 'far fa-eye' : 'far fa-eye-slash';
+
+                if (pointerState?.input === input) {
+                    input.focus({ preventScroll: true });
+                    if (pointerState.start !== null && pointerState.end !== null) {
+                        input.setSelectionRange(pointerState.start, pointerState.end, pointerState.direction || 'none');
+                    }
+                    visibilityPointerState.delete(toggle);
+                }
                 return;
             }
             if (event.target.closest('#user-password-dialog-generate')) generatePassword();

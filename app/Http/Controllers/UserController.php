@@ -85,8 +85,14 @@ class UserController extends Controller
 
         try {
             DB::beginTransaction();
-            // Delete related notifications first to avoid FK issues
-            Notification::whereIn('recipient_user_id', $ids)->orWhereIn('sender_user_id', $ids)->delete();
+            // Notifications use soft deletes, but their foreign keys still reference
+            // users. They must be physically removed before deleting the users.
+            Notification::withTrashed()
+                ->where(function ($query) use ($ids) {
+                    $query->whereIn('recipient_user_id', $ids)
+                        ->orWhereIn('sender_user_id', $ids);
+                })
+                ->forceDelete();
             $deleted = User::whereIn('id', $ids)->delete();
             DB::commit();
 
@@ -390,6 +396,38 @@ class UserController extends Controller
                 ->orderByRaw("({$districtOrderCase}) " . strtoupper($orderDir))
                 ->orderBy('order_districts.name')
                 ->orderBy('users.username');
+        } elseif ($orderColumn === 'last_session') {
+            $activeSessionCutoff = now()->subHours(24)->timestamp;
+            $hasActiveSessionSql = 'EXISTS (
+                SELECT 1
+                FROM sessions
+                WHERE sessions.user_id = users.id
+                  AND sessions.last_activity >= ?
+            )';
+
+            if (strtolower($orderDir) === 'desc') {
+                // Actividad más reciente: en línea, sesiones fechadas y sin registro.
+                $query->orderByRaw(
+                    "CASE
+                        WHEN {$hasActiveSessionSql} THEN 0
+                        WHEN users.last_session IS NOT NULL THEN 1
+                        ELSE 2
+                    END ASC",
+                    [$activeSessionCutoff]
+                )->orderByDesc('users.last_session');
+            } else {
+                // Orden inverso: sin registro, sesiones fechadas y en línea.
+                $query->orderByRaw(
+                    "CASE
+                        WHEN users.last_session IS NULL AND NOT {$hasActiveSessionSql} THEN 0
+                        WHEN users.last_session IS NOT NULL THEN 1
+                        ELSE 2
+                    END ASC",
+                    [$activeSessionCutoff]
+                )->orderBy('users.last_session');
+            }
+
+            $query->orderBy('users.username');
         } else {
             $query->orderBy($orderColumn, $orderDir);
         }
@@ -650,7 +688,12 @@ class UserController extends Controller
     {
         // Remove related notifications that reference this user to avoid FK constraint errors.
         // We delete both notifications where the user is recipient or sender.
-        Notification::where('recipient_user_id', $user->id)->orWhere('sender_user_id', $user->id)->delete();
+        Notification::withTrashed()
+            ->where(function ($query) use ($user) {
+                $query->where('recipient_user_id', $user->id)
+                    ->orWhere('sender_user_id', $user->id);
+            })
+            ->forceDelete();
 
         // Optionally: if you want to remove other dependent data (comments, sessions, etc.),
         // handle them here before deleting the user.

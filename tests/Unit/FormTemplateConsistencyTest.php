@@ -877,3 +877,21 @@ it('documents the complete create and edit form action lifecycle', function (): 
         ->toContain('toda página que capture o envíe formularios debe servirse mediante HTTPS')
         ->toContain('persiste exactamente un alta o una actualización.');
 });
+
+it('keeps the user table search clear control synchronized', function (): void {
+    $view = projectView('usuarios/gestion-de-usuarios.blade.php');
+
+    expect($view)
+        ->toContain('function syncUsersSearchClearButton()')
+        ->toContain("usersSearchInput.on('input', syncUsersSearchClearButton);")
+        ->toContain("$('#dt-search-users').val('');\n                syncUsersSearchClearButton();")
+        ->toContain("$('#users-table tbody').on('click', '[data-clear-users-state]'");
+});
+
+it('synchronizes user row selection with a visible and accessible row state', function (): void {
+    $view = projectView('usuarios/gestion-de-usuarios.blade.php');
+
+    expect($view)
+        ->toContain(".toggleClass('is-selected', isSelected)")
+        ->toContain(".attr('aria-selected', isSelected ? 'true' : 'false')");
+});

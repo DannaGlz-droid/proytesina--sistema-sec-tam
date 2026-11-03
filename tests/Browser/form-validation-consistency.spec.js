@@ -306,3 +306,43 @@ test('los campos del modal evitan el zoom automatico de iOS en movil', async ({ 
     await expect(dialog.locator('#user-password-confirm')).toHaveCSS('font-size', '16px');
 });
 
+test('los ojos del modal conservan el foco y la seleccion durante la escritura', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto('/usuario/gestion-de-usuarios');
+    await page.evaluate(() => {
+        const trigger = document.createElement('button');
+        trigger.type = 'button';
+        trigger.className = 'js-change-password';
+        trigger.dataset.passwordUpdateUrl = '/usuario/gestion-de-usuarios/actualizar-contrasena/1';
+        trigger.dataset.userName = 'Usuario de prueba';
+        trigger.dataset.username = 'usuario.prueba';
+        document.body.appendChild(trigger);
+        trigger.click();
+    });
+
+    const dialog = page.locator('#user-password-dialog');
+
+    for (const fieldId of ['user-password-new', 'user-password-confirm']) {
+        const field = dialog.locator(`#${fieldId}`);
+        const toggle = dialog.locator(`[data-password-toggle="${fieldId}"]`);
+
+        await field.fill('PruebaSegura#2026');
+        await field.evaluate((element) => {
+            element.focus();
+            element.setSelectionRange(3, 9, 'forward');
+        });
+
+        await toggle.click();
+        await expect(field).toBeFocused();
+        await expect(field).toHaveAttribute('type', 'text');
+        await expect(field).toHaveJSProperty('selectionStart', 3);
+        await expect(field).toHaveJSProperty('selectionEnd', 9);
+
+        await toggle.click();
+        await expect(field).toBeFocused();
+        await expect(field).toHaveAttribute('type', 'password');
+        await expect(field).toHaveJSProperty('selectionStart', 3);
+        await expect(field).toHaveJSProperty('selectionEnd', 9);
+    }
+});
+

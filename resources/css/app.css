@@ -9701,6 +9701,31 @@ html[data-ui-theme="tamaulipas-salud"] .app-document-surface {
   animation: usersSkeletonPulse 1.15s ease-in-out infinite;
 }
 
+/* Los estados de carga son informativos: no deben parecer filas interactivas. */
+.app-data-table tbody tr:has(.users-table-skeleton) > td,
+.app-data-table tbody tr:has(.users-table-skeleton):hover > td,
+.app-data-table tbody tr:hover > td.dt-empty:has(.users-table-skeleton),
+.app-data-table tbody tr:hover > td.dataTables_empty:has(.users-table-skeleton) {
+  background: #ffffff !important;
+}
+
+.app-data-table tbody tr:has(.users-table-skeleton) {
+  cursor: default;
+}
+
+/* La selección debe distinguirse del alternado y conservarse durante el hover. */
+.users-management-page .users-table-card #users-table tbody tr.is-selected > td {
+  background-color: #fdf2f5 !important;
+}
+
+.users-management-page .users-table-card #users-table tbody tr.is-selected:hover > td {
+  background-color: #fae8ee !important;
+}
+
+.users-management-page .users-table-card #users-table tbody tr.is-selected > td:first-child {
+  box-shadow: inset 3px 0 0 #750b35;
+}
+
 .users-table-state-row > td {
   padding: 0 !important;
   background: #ffffff !important;
@@ -11724,10 +11749,51 @@ body .app-standard-filter-panel.users-filter-panel .users-filter-apply {
 }
 
 @media (max-width: 639px) {
-  body .app-standard-filter-panel.users-filter-panel {
-    position: fixed !important;
-    inset: auto .75rem .75rem !important;
-    width: auto !important;
-    max-height: calc(100dvh - 5rem) !important;
+  .users-management-page .users-table-card > .app-table-toolbar .users-filter-topbar {
+    grid-template-rows: auto auto auto !important;
+  }
+
+  .users-management-page .users-table-card > .app-table-toolbar .users-filter-popover-wrap {
+    display: contents !important;
+  }
+
+  .users-management-page .users-table-card > .app-table-toolbar .users-filter-toggle {
+    grid-column: 1 !important;
+    grid-row: 1 !important;
+  }
+
+  .users-management-page .users-table-card > .app-table-toolbar .users-filter-page-size {
+    grid-column: 2 !important;
+    grid-row: 1 !important;
+  }
+
+  .users-management-page .users-table-card > .app-table-toolbar .users-filter-search {
+    grid-column: 1 / -1 !important;
+    grid-row: 2 !important;
+  }
+
+  body .users-management-page .users-table-card > .app-table-toolbar
+    .app-standard-filter-panel.users-filter-panel {
+    position: static !important;
+    grid-column: 1 / -1 !important;
+    grid-row: 3 !important;
+    top: auto !important;
+    right: auto !important;
+    bottom: auto !important;
+    left: auto !important;
+    width: 100% !important;
+    max-width: none !important;
+    max-height: none !important;
+    margin-top: .15rem !important;
+    border-radius: .65rem !important;
+    box-shadow: none !important;
+    z-index: auto !important;
+  }
+
+  /* iOS Safari zooms focused controls whose text is smaller than 16px. */
+  .users-management-page #usersFilterPanel select.app-filter-select,
+  .users-management-page #usersFilterPanel
+    .ts-wrapper.app-filter-select .ts-control > input {
+    font-size: 16px !important;
   }
 }

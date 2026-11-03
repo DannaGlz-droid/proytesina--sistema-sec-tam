@@ -172,6 +172,37 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
+            const usersFilterToggle = document.getElementById('usersFilterToggle');
+            const usersFilterPanel = document.getElementById('usersFilterPanel');
+
+            function setUsersFilterPanelOpen(open) {
+                if (!usersFilterPanel || !usersFilterToggle) return;
+                usersFilterPanel.classList.toggle('is-collapsed', !open);
+                usersFilterToggle.setAttribute('aria-expanded', String(open));
+            }
+
+            usersFilterToggle?.addEventListener('click', function(event) {
+                event.stopPropagation();
+                setUsersFilterPanelOpen(usersFilterPanel.classList.contains('is-collapsed'));
+            });
+
+            document.getElementById('closeUsersFilters')?.addEventListener('click', function() {
+                setUsersFilterPanelOpen(false);
+            });
+
+            document.addEventListener('click', function(event) {
+                if (!event.target.closest('.users-filter-popover-wrap')) {
+                    setUsersFilterPanelOpen(false);
+                }
+            });
+
+            document.addEventListener('keydown', function(event) {
+                if (event.key === 'Escape' && !usersFilterPanel?.classList.contains('is-collapsed')) {
+                    setUsersFilterPanelOpen(false);
+                    usersFilterToggle?.focus();
+                }
+            });
+
             if (!window.jQuery || !$.fn.DataTable) {
                 console.error('jQuery or DataTables not loaded');
                 return;
@@ -930,24 +961,30 @@
                 usersSearchInput.attr('aria-busy', 'false');
             }
 
+            function syncUsersSearchClearButton() {
+                const hasValue = String(usersSearchInput.val() || '').trim().length > 0;
+                $('#dt-clear-btn').toggleClass('hidden', !hasValue);
+            }
+
             $('#dt-search-users').val(initialSearch);
             usersSearchInput.attr('aria-busy', 'false');
-            $('#dt-clear-btn').toggleClass('hidden', !initialSearch);
+            syncUsersSearchClearButton();
+
+            usersSearchInput.on('input', syncUsersSearchClearButton);
 
             $('#dt-search-users').on('keyup', function(e) {
                 const val = $(this).val();
                 if (e.key === 'Enter') {
                     beginUsersSearch();
                     table.search(val).draw();
-                    $('#dt-clear-btn').toggleClass('hidden', !val);
                 }
             });
 
             $('#dt-clear-btn').on('click', function() {
                 $('#dt-search-users').val('');
+                syncUsersSearchClearButton();
                 beginUsersSearch();
                 table.search('').draw();
-                $(this).addClass('hidden');
             });
 
             $('#users-table').on('draw.dt xhr.dt error.dt', function() {
@@ -1192,6 +1229,13 @@
                 const allSelected = totalVisible > 0 && checkedCount === totalVisible;
                 const selectAll = $('#select-all-users');
 
+                visibleChecks.each(function() {
+                    const isSelected = this.checked;
+                    $(this).closest('tr')
+                        .toggleClass('is-selected', isSelected)
+                        .attr('aria-selected', isSelected ? 'true' : 'false');
+                });
+
                 selectAll.prop('checked', allSelected);
                 selectAll.prop('indeterminate', hasSelection && !allSelected);
 
@@ -1265,6 +1309,8 @@
 
             $('#users-table tbody').on('click', '[data-clear-users-state]', function() {
                 $('#dt-search-users').val('');
+                syncUsersSearchClearButton();
+                beginUsersSearch();
                 table.search('');
                 $('#clearUsersFilters').trigger('click');
             });
@@ -1315,21 +1361,43 @@
                 });
             });
 
-            $('#users-table')
+            $(document)
                 .off('submit.usersDelete', '.js-delete-user-form')
                 .on('submit.usersDelete', '.js-delete-user-form', async function(e) {
                 e.preventDefault();
                 e.stopPropagation();
 
                 const form = this;
+                if (form.dataset.deleteDialogOpen === 'true' || form.dataset.deletePending === 'true') return;
+
+                form.dataset.deleteDialogOpen = 'true';
+                closeUserActionMenus();
+
                 const userName = form.dataset.userName || 'este usuario';
-                const confirmed = await window.confirmDeleteDialog({
-                    title: 'Eliminar usuario',
-                    subject: userName,
-                    messagePrefix: '¿Deseas eliminar a '
-                });
+                let confirmed = false;
+
+                try {
+                    confirmed = await window.confirmDeleteDialog({
+                        title: 'Eliminar usuario',
+                        subject: userName,
+                        messagePrefix: '¿Deseas eliminar a '
+                    });
+                } finally {
+                    delete form.dataset.deleteDialogOpen;
+                }
 
                 if (!confirmed) return;
+
+                const submitButton = form.querySelector('button[type="submit"]');
+                const submitLabel = submitButton?.querySelector('span');
+                const originalLabel = submitLabel?.textContent;
+
+                form.dataset.deletePending = 'true';
+                if (submitButton) {
+                    submitButton.disabled = true;
+                    submitButton.setAttribute('aria-busy', 'true');
+                }
+                if (submitLabel) submitLabel.textContent = 'Eliminando…';
 
                 $.ajax({
                     url: form.action,
@@ -1343,6 +1411,14 @@
                     error: function(xhr) {
                         console.error(xhr);
                         notifyUser('No se pudo eliminar el usuario. Inténtalo nuevamente.', 'error');
+                    },
+                    complete: function() {
+                        delete form.dataset.deletePending;
+                        if (submitButton) {
+                            submitButton.disabled = false;
+                            submitButton.removeAttribute('aria-busy');
+                        }
+                        if (submitLabel && originalLabel) submitLabel.textContent = originalLabel;
                     }
                 });
                 });
@@ -1500,33 +1576,6 @@
                 setFilterValue(target, this.value || '');
                 syncUsersFilterPanel();
                 updateUsersFilterChips();
-            });
-
-            $('#usersFilterToggle').on('click', function() {
-                const panel = $('#usersFilterPanel');
-                const collapsed = !panel.hasClass('is-collapsed');
-                panel.toggleClass('is-collapsed', collapsed);
-                $(this).attr('aria-expanded', collapsed ? 'false' : 'true');
-            });
-
-            $('#closeUsersFilters').on('click', function() {
-                $('#usersFilterPanel').addClass('is-collapsed');
-                $('#usersFilterToggle').attr('aria-expanded', 'false');
-            });
-
-            $(document).on('click', function(e) {
-                if (!$(e.target).closest('.users-filter-popover-wrap').length) {
-                    $('#usersFilterPanel').addClass('is-collapsed');
-                    $('#usersFilterToggle').attr('aria-expanded', 'false');
-                }
-            });
-
-            $(document).on('keydown', function(e) {
-                if (e.key === 'Escape' && !$('#usersFilterPanel').hasClass('is-collapsed')) {
-                    $('#usersFilterPanel').addClass('is-collapsed');
-                    $('#usersFilterToggle').attr('aria-expanded', 'false');
-                    $('#usersFilterToggle').trigger('focus');
-                }
             });
 
             // Handle date range selector visibility

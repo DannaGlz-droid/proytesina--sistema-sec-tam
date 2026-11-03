@@ -279,6 +279,7 @@ Excepciones:
 - En menús de acciones de tabla, usar icono más texto: lápiz para Editar, llave para Cambiar contraseña y papelera para Eliminar. Mantener los iconos alineados en una columna y reservar el rojo únicamente para la opción destructiva.
 - Usar una llave para Generar contraseña; evitar chispas u otros símbolos ambiguos.
 - En campos de contraseña, usar `far fa-eye` y `far fa-eye-slash` con color gris neutro, tamaño visual de 15–16 px y un área transparente de 40 × 40 px. El control debe actualizar `aria-label` y tooltip entre “Mostrar contraseña” y “Ocultar contraseña”; no usar el color institucional.
+- Al mostrar u ocultar una contraseña mediante pulsación mientras el campo está activo, conservar el foco, la posición o selección del cursor y el teclado virtual abierto. La activación mediante teclado conserva el foco propio del botón para no alterar su navegación accesible.
 - Guardar, Cancelar, Limpiar y Aplicar no necesitan icono si el texto es inequívoco.
 - No mezclar familias dentro de un mismo componente. Los Ionicons existentes se reemplazarán gradualmente al migrar cada pantalla, sin hacer una sustitución global riesgosa.
 - Mantener el mismo grosor visual y tamaño entre iconos equivalentes.
