@@ -81,7 +81,22 @@ class UserController extends Controller
             'ids.*' => ['integer']
         ]);
 
-        $ids = $data['ids'];
+        $ids = array_values(array_unique(array_map('intval', $data['ids'])));
+        $currentUserId = (int) $request->user()->getKey();
+
+        if (in_array($currentUserId, $ids, true)) {
+            return response()->json([
+                'ok' => false,
+                'message' => 'No puedes eliminar tu propia cuenta.',
+            ], 422);
+        }
+
+        if (User::query()->whereIn('id', $ids)->where('is_system_contact', true)->exists()) {
+            return response()->json([
+                'ok' => false,
+                'message' => 'No puedes eliminar al responsable principal. Designa primero a otro administrador activo.',
+            ], 422);
+        }
 
         try {
             DB::beginTransaction();
@@ -436,7 +451,11 @@ class UserController extends Controller
                        ->take($length)
                        ->get();
 
-        $data = $users->map(function ($user) {
+        $currentUserId = (int) ($request->user()?->getKey() ?? 0);
+
+        $data = $users->map(function ($user) use ($currentUserId) {
+            $isCurrentUser = $currentUserId === (int) $user->getKey();
+            $isSystemContact = (bool) $user->is_system_contact;
             $roleName = optional($user->role)->name ?? '—';
             $roleLower = strtolower($roleName);
             if (in_array($roleLower, ['administrador', 'admin'])) {
@@ -501,6 +520,8 @@ class UserController extends Controller
 
             return [
                 'id' => $user->id,
+                'is_current_user' => $isCurrentUser,
+                'is_system_contact' => $isSystemContact,
                 'username' => $user->username,
                 'name' => $user->name,
                 'first_last_name' => $user->first_last_name,
@@ -514,7 +535,7 @@ class UserController extends Controller
                 'role' => "<span class='inline-flex items-center justify-center px-3 py-1 rounded-full text-xs leading-none font-medium whitespace-nowrap {$roleClasses}'>{$roleName}</span>",
                 'status' => "<div class='flex items-center gap-1 whitespace-nowrap {$statusClass}'><span class='w-2 h-2 rounded-full {$statusDot}'></span><span class='text-xs'>{$statusText}</span></div>",
                 'last_session' => $lastSession,
-                'actions' => view('usuarios.partials.table-actions', compact('user'))->render(),
+                'actions' => view('usuarios.partials.table-actions', compact('user', 'isCurrentUser', 'isSystemContact'))->render(),
             ];
         });
 
@@ -586,11 +607,13 @@ class UserController extends Controller
         $districts = District::userAssignmentCatalog();
         $returnToProfile = request()->query('from') === 'profile'
             && (int) auth()->id() === (int) $user->getKey();
+        $isEditingSelf = (int) auth()->id() === (int) $user->getKey();
+        $isProtectedSystemContact = (bool) $user->is_system_contact;
         
         // Solo mostrar: Administrador, Operador, Coordinador (usar nombres canónicos en español)
         $roles = Role::whereIn('name', ['Administrador', 'Operador', 'Coordinador', 'administrador', 'operador', 'coordinador'])->get();
 
-        return view('usuarios.acciones.actualizar-registro', compact('user', 'positions', 'districts', 'roles', 'returnToProfile'));
+        return view('usuarios.acciones.actualizar-registro', compact('user', 'positions', 'districts', 'roles', 'returnToProfile', 'isEditingSelf', 'isProtectedSystemContact'));
       }
 
     public function update(UserRequest $request, User $user)
@@ -601,12 +624,36 @@ class UserController extends Controller
         $data['is_active'] = $request->has('is_active') ? (bool) $request->input('is_active') : false;
         $data['is_system_contact'] = $request->boolean('is_system_contact');
 
-        if ($data['is_system_contact']) {
-            $selectedRole = Role::find($data['role_id']);
-            $isAdministrator = $selectedRole
-                && mb_strtolower(trim((string) $selectedRole->name), 'UTF-8') === 'administrador';
+        if ((int) $request->user()->getKey() === (int) $user->getKey() && ! $data['is_active']) {
+            throw ValidationException::withMessages([
+                'is_active' => 'No puedes desactivar tu propia cuenta.',
+            ]);
+        }
 
-            if (! $isAdministrator || ! $data['is_active']) {
+        $selectedRole = Role::find($data['role_id']);
+        $selectedRoleIsAdministrator = $selectedRole
+            && mb_strtolower(trim((string) $selectedRole->name), 'UTF-8') === 'administrador';
+
+        if ($user->is_system_contact) {
+            $protectionErrors = [];
+
+            if (! $data['is_active']) {
+                $protectionErrors['is_active'] = 'El responsable principal debe permanecer activo.';
+            }
+            if (! $selectedRoleIsAdministrator) {
+                $protectionErrors['role_id'] = 'El responsable principal debe conservar el rol de Administrador.';
+            }
+            if (! $data['is_system_contact']) {
+                $protectionErrors['is_system_contact'] = 'Designa primero a otro administrador activo como responsable principal.';
+            }
+
+            if ($protectionErrors !== []) {
+                throw ValidationException::withMessages($protectionErrors);
+            }
+        }
+
+        if ($data['is_system_contact']) {
+            if (! $selectedRoleIsAdministrator || ! $data['is_active']) {
                 throw ValidationException::withMessages([
                     'is_system_contact' => 'El responsable principal debe ser un administrador activo.',
                 ]);
@@ -686,6 +733,30 @@ class UserController extends Controller
 
     public function destroy(Request $request, User $user)
     {
+        if ((int) $request->user()->getKey() === (int) $user->getKey()) {
+            if ($request->expectsJson() || $request->ajax()) {
+                return response()->json([
+                    'ok' => false,
+                    'message' => 'No puedes eliminar tu propia cuenta.',
+                ], 422);
+            }
+
+            return redirect()->route('user.user-gestion')
+                ->with('error', 'No puedes eliminar tu propia cuenta.');
+        }
+
+        if ($user->is_system_contact) {
+            if ($request->expectsJson() || $request->ajax()) {
+                return response()->json([
+                    'ok' => false,
+                    'message' => 'No puedes eliminar al responsable principal. Designa primero a otro administrador activo.',
+                ], 422);
+            }
+
+            return redirect()->route('user.user-gestion')
+                ->with('error', 'No puedes eliminar al responsable principal. Designa primero a otro administrador activo.');
+        }
+
         // Remove related notifications that reference this user to avoid FK constraint errors.
         // We delete both notifications where the user is recipient or sender.
         Notification::withTrashed()

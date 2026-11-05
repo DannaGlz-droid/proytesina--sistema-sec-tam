@@ -133,27 +133,24 @@
 
             {{ $slot }}
 
-            <div class="users-filter-search">
-                <i class="fas fa-search" aria-hidden="true"></i>
-                <input type="search" id="dt-search-deaths" placeholder="Buscar defunciones..." aria-label="Buscar defunciones" autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false" enterkeyhint="search" aria-busy="false">
-                <span class="users-search-progress" aria-hidden="true"></span>
-                <button type="button" id="dt-clear-deaths-btn" class="hidden" title="Limpiar búsqueda" aria-label="Limpiar búsqueda"><i class="fas fa-times" aria-hidden="true"></i></button>
-            </div>
+            <x-ui.data-table.search
+                id="dt-search-deaths"
+                clear-id="dt-clear-deaths-btn"
+                placeholder="Buscar defunciones..."
+                label="Buscar defunciones"
+            />
 
-            <div class="app-table-page-size users-filter-page-size">
-                <select id="dt-per-page-deaths" class="users-native-page-size" aria-hidden="true" tabindex="-1">
-                    <option value="10" selected>10</option><option value="25">25</option><option value="50">50</option><option value="100">100</option>
-                </select>
-                <div class="users-page-size-dropdown">
-                    <button id="dt-per-page-deaths-button" type="button" class="users-page-size-button" aria-haspopup="listbox" aria-expanded="false"><span>Mostrar</span><strong id="dt-per-page-deaths-label">10</strong><i class="fas fa-list-ul users-page-size-icon" aria-hidden="true"></i></button>
-                    <div id="dt-per-page-deaths-menu" class="users-page-size-menu hidden" role="listbox" aria-labelledby="dt-per-page-deaths-button">
-                        @foreach([10,25,50,100] as $size)<button type="button" role="option" class="users-page-size-option {{ $size === 10 ? 'is-active' : '' }}" data-value="{{ $size }}">{{ $size }}</button>@endforeach
-                    </div>
-                </div>
-            </div>
+            <x-ui.data-table.page-size
+                id="dt-per-page-deaths"
+                button-id="dt-per-page-deaths-button"
+                label-id="dt-per-page-deaths-label"
+                menu-id="dt-per-page-deaths-menu"
+                :options="[10, 25, 50, 100]"
+                :selected="10"
+            />
         </div>
 
-        <div id="deathsFilterChips" class="users-filter-chips" aria-live="polite"></div>
+        <div id="deathsFilterChips" class="ui-data-table__filter-chips users-filter-chips" aria-live="polite"></div>
     </form>
 </section>
 
@@ -163,8 +160,11 @@ document.addEventListener('DOMContentLoaded', function () {
     const form = document.getElementById('filters-form');
     const panel = document.getElementById('deathsFilterPanel');
     const toggle = document.getElementById('deathsFilterToggle');
+    const pageSelect = document.getElementById('dt-per-page-deaths');
     const pageButton = document.getElementById('dt-per-page-deaths-button');
+    const pageLabel = document.getElementById('dt-per-page-deaths-label');
     const pageMenu = document.getElementById('dt-per-page-deaths-menu');
+    let deathsPageSizeController = null;
     if (!form || !panel || !toggle) return;
 
     const getControl = (name) => form.querySelector(`[name="${name}"]`);
@@ -179,6 +179,10 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function closePageMenu() {
+        if (deathsPageSizeController) {
+            deathsPageSizeController.close();
+            return;
+        }
         pageMenu?.classList.add('hidden');
         pageButton?.setAttribute('aria-expanded', 'false');
     }
@@ -187,6 +191,26 @@ document.addEventListener('DOMContentLoaded', function () {
         document.dispatchEvent(new CustomEvent('statistics-toolbar-menu-open', {
             detail: { source },
         }));
+    }
+
+    const initializeDeathsPageSize = () => {
+        if (deathsPageSizeController) return deathsPageSizeController;
+
+        deathsPageSizeController = window.AppDataTable?.initPageSize({
+            select: pageSelect,
+            button: pageButton,
+            label: pageLabel,
+            menu: pageMenu,
+            initialValue: pageSelect?.value,
+            onOpen: () => announceToolbarMenu('page-size'),
+            onChange: () => pageSelect?.dispatchEvent(new Event('change', { bubbles: true })),
+        }) || null;
+
+        return deathsPageSizeController;
+    };
+
+    if (!initializeDeathsPageSize()) {
+        window.addEventListener('app:data-table-ready', initializeDeathsPageSize, { once: true });
     }
 
     document.addEventListener('statistics-toolbar-menu-open', event => {
@@ -386,29 +410,6 @@ document.addEventListener('DOMContentLoaded', function () {
         });
         updateChips();
         form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
-    });
-
-    pageButton?.addEventListener('click', event => {
-        event.stopPropagation();
-        const open = pageMenu.classList.contains('hidden');
-        if (open) announceToolbarMenu('page-size');
-        pageMenu.classList.toggle('hidden', !open);
-        pageButton.setAttribute('aria-expanded', String(open));
-    });
-    pageMenu?.addEventListener('click', event => {
-        const option = event.target.closest('[data-value]');
-        if (!option) return;
-        const value = option.dataset.value;
-        document.getElementById('dt-per-page-deaths').value = value;
-        document.getElementById('dt-per-page-deaths-label').textContent = value;
-        pageMenu.querySelectorAll('.users-page-size-option').forEach(item => item.classList.toggle('is-active', item === option));
-        document.getElementById('dt-per-page-deaths').dispatchEvent(new Event('change', { bubbles: true }));
-        closePageMenu();
-    });
-    document.addEventListener('click', event => {
-        if (!event.target.closest('.users-page-size-dropdown')) {
-            closePageMenu();
-        }
     });
 
     form.addEventListener('change', updateChips);

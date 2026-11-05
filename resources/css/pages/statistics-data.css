@@ -165,16 +165,6 @@
 .statistics-data-page .statistics-table-card { overflow: visible; }
 .statistics-data-page .statistics-table-card > .app-table-toolbar { position: relative; z-index: 30; }
 .users-management-page.statistics-data-page .statistics-table-card > .app-table-toolbar .statistics-filter-toolbar { flex: 1 1 auto; min-width: 0; }
-.users-management-page.statistics-data-page .statistics-table-card > .app-table-toolbar .users-filter-toggle:focus-visible,
-.users-management-page.statistics-data-page .statistics-table-card > .app-table-toolbar .users-filter-toggle[aria-expanded="true"],
-.users-management-page.statistics-data-page .statistics-table-card > .app-table-toolbar .users-filter-search:focus-within,
-.users-management-page.statistics-data-page .statistics-table-card > .app-table-toolbar .users-page-size-button:focus-visible,
-.users-management-page.statistics-data-page .statistics-table-card > .app-table-toolbar .users-page-size-button[aria-expanded="true"] {
-  border-color: var(--ui-focus, #475569) !important;
-  background: var(--ui-surface, #fff) !important;
-  box-shadow: inset 0 0 0 1px var(--ui-focus-ring, rgb(71 85 105 / 14%)), 0 1px 2px rgb(15 23 42 / 3.5%) !important;
-  outline: none !important;
-}
 .statistics-data-page .users-page-create-btn.is-importing { background: #f1f5f9; color: #64748b; }
 
 .statistics-data-page .statistics-inline-error {
@@ -424,7 +414,6 @@
   height: .9rem !important;
   margin: 0 auto !important;
 }
-.users-management-page.statistics-data-page .statistics-table-card #deaths-table.dataTable tbody tr { height: 3.5rem; }
 .users-management-page.statistics-data-page .statistics-table-card #deaths-table.dataTable tbody td {
   height: auto;
   padding: .48rem .5rem !important;

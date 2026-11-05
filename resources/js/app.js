@@ -3,8 +3,16 @@ import './notifications-handler';
 import './filter-select';
 import './form-validation';
 import './number-input-wheel';
+import { initDataTablePageSize, initDataTableRowActions } from './data-table';
 
 import Alpine from 'alpinejs';
+
+window.AppDataTable = Object.freeze({
+    ...(window.AppDataTable || {}),
+    initPageSize: initDataTablePageSize,
+    initRowActions: initDataTableRowActions,
+});
+window.dispatchEvent(new CustomEvent('app:data-table-ready'));
 
 const logoutHistoryMarker = 'sistema-sec-tam.logout-completed';
 const isAuthenticatedDocument = document.documentElement.hasAttribute('data-auth-storage-scope');

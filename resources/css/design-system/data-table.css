@@ -1,0 +1,128 @@
+/* Shared shell and interaction baseline for configurable data tables. */
+.ui-data-table {
+  --data-table-font: "Open Sans", system-ui, sans-serif;
+  --data-table-text: var(--table-ink, #1f2937);
+  --data-table-surface: var(--table-surface, #fff);
+  --data-table-focus: var(--table-accent, #475569);
+  --data-table-row-min-height: 4.25rem;
+  --data-table-actions-width: 4rem;
+  --data-table-selected: #fdf2f5;
+  --data-table-selected-hover: #fae8ee;
+  --data-table-selected-indicator: #750b35;
+  --data-table-divider: var(--table-line, #d9e2ec);
+  color: var(--data-table-text);
+  font-family: var(--data-table-font);
+  font-variant-numeric: tabular-nums;
+}
+
+.ui-data-table__toolbar,
+.ui-data-table__bulk-actions,
+.ui-data-table__footer { font-family: var(--data-table-font); }
+
+/* The table header owns the separator below bulk selection. Avoid stacking
+   the bar's border with the header's own top border. */
+.ui-data-table__bulk-actions:not(.hidden) {
+  box-sizing: border-box;
+  border-top: 0 !important;
+  border-bottom: 0 !important;
+}
+
+/* Filter chips extend below the toolbar's border through legacy negative
+   margins. Draw the visible separator on that final white strip whenever the
+   selection bar follows it. */
+.ui-data-table__toolbar:has(+ .ui-data-table__bulk-actions:not(.hidden))
+  .ui-data-table__filter-chips:not(:empty) {
+  border-bottom: 1px solid #e5e7eb !important;
+}
+
+/* Active filters need a little more breathing room before the bulk actions.
+   Increase the bar itself instead of moving its labels or buttons. */
+.ui-data-table__toolbar:has(.ui-data-table__filter-chips:not(:empty))
+  + .ui-data-table__bulk-actions:not(.hidden) {
+  padding-top: calc(0.36rem + 0.2rem) !important;
+}
+
+.ui-data-table__viewport {
+  position: relative;
+  width: 100%;
+  background: var(--data-table-surface);
+  overscroll-behavior-inline: contain;
+  scrollbar-gutter: auto;
+}
+
+.ui-data-table__table {
+  border-collapse: separate;
+  border-spacing: 0;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Keep the actions column optically centered with enough breathing room from
+   the table edge. The legacy class remains supported for current screens. */
+.ui-data-table__table :is(th, td).dt-actions-cell {
+  width: var(--data-table-actions-width) !important;
+  min-width: var(--data-table-actions-width) !important;
+  max-width: var(--data-table-actions-width) !important;
+  padding-inline: 0 !important;
+  text-align: center !important;
+  vertical-align: middle !important;
+}
+.ui-data-table__table .dt-actions-cell :is(.ui-data-table__row-actions, .users-row-actions) {
+  width: 100%;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Canonical row rhythm. Content may make a row taller, but standard data rows
+   never become denser than the shared baseline. */
+.ui-data-table__table tbody > tr:not(.users-table-state-row):not(.child-row) {
+  height: var(--data-table-row-min-height);
+}
+
+/* A checked row keeps the same selected treatment in every table, whether a
+   screen also mirrors the state to `.is-selected` or relies on the checkbox. */
+.ui-data-table__table tbody tr:is(.is-selected, :has(input[type="checkbox"]:checked)) > td {
+  background-color: var(--data-table-selected) !important;
+}
+
+.ui-data-table__table tbody tr:is(.is-selected, :has(input[type="checkbox"]:checked)):hover > td {
+  background-color: var(--data-table-selected-hover) !important;
+}
+
+.ui-data-table__table tbody tr:is(.is-selected, :has(input[type="checkbox"]:checked)) > td:first-child {
+  box-shadow: inset 3px 0 0 var(--data-table-selected-indicator);
+}
+
+.ui-data-table__table :is(button, a, input, select):focus-visible,
+.ui-data-table__toolbar :is(button, a, input, select):focus-visible,
+.ui-data-table__footer :is(button, a):focus-visible {
+  outline: 2px solid var(--data-table-focus);
+  outline-offset: 2px;
+}
+
+.ui-data-table__search,
+.ui-data-table__page-size { min-width: 0; }
+
+.ui-data-table__info,
+.ui-data-table__pagination { font-variant-numeric: tabular-nums; }
+
+@media (max-width: 639px) {
+  .ui-data-table { border-radius: .75rem; }
+  .ui-data-table__toolbar { align-items: stretch; }
+  .ui-data-table__bulk-actions {
+    max-width: 100%;
+    overflow-x: auto;
+    overscroll-behavior-inline: contain;
+  }
+  .ui-data-table__footer { justify-content: center; }
+  .ui-data-table__info,
+  .ui-data-table__pagination {
+    flex-basis: 100%;
+    text-align: center;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ui-data-table *,
+  .ui-data-table *::before,
+  .ui-data-table *::after { scroll-behavior: auto !important; }
+}

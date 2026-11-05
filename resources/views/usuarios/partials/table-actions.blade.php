@@ -20,16 +20,18 @@
             <i class="fas fa-key users-row-menu-icon" aria-hidden="true"></i>
             <span>Cambiar contraseña</span>
         </a>
-        <form method="POST"
-              action="{{ route('user.destroy', $user->id) }}"
-              class="js-delete-user-form"
-              data-user-name="{{ trim($user->name . ' ' . $user->first_last_name) ?: $user->username }}">
-            @csrf
-            @method('DELETE')
-            <button type="submit" class="users-row-menu-item users-row-menu-item-danger" role="menuitem">
-                <i class="fas fa-trash users-row-menu-icon" aria-hidden="true"></i>
-                <span>Eliminar</span>
-            </button>
-        </form>
+        @unless(($isCurrentUser ?? ((int) auth()->id() === (int) $user->getKey())) || ($isSystemContact ?? (bool) $user->is_system_contact))
+            <form method="POST"
+                  action="{{ route('user.destroy', $user->id) }}"
+                  class="js-delete-user-form"
+                  data-user-name="{{ trim($user->name . ' ' . $user->first_last_name) ?: $user->username }}">
+                @csrf
+                @method('DELETE')
+                <button type="submit" class="users-row-menu-item users-row-menu-item-danger" role="menuitem">
+                    <i class="fas fa-trash users-row-menu-icon" aria-hidden="true"></i>
+                    <span>Eliminar</span>
+                </button>
+            </form>
+        @endunless
     </div>
 </div>

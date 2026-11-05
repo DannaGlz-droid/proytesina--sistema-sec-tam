@@ -1,32 +1,27 @@
 <?php
 
 use App\Models\User;
+use Illuminate\Support\Facades\Route;
 
-test('confirm password screen can be rendered', function () {
-    $user = User::factory()->create();
-
-    $response = $this->actingAs($user)->get('/confirm-password');
-
-    $response->assertStatus(200);
+test('password confirmation self service routes are disabled', function () {
+    expect(Route::has('password.confirm'))->toBeFalse()
+        ->and(Route::has('password.confirmation'))->toBeFalse();
 });
 
-test('password can be confirmed', function () {
+test('confirm password screen is not exposed', function () {
     $user = User::factory()->create();
 
-    $response = $this->actingAs($user)->post('/confirm-password', [
-        'password' => 'password',
-    ]);
-
-    $response->assertRedirect();
-    $response->assertSessionHasNoErrors();
+    $this->actingAs($user)
+        ->get('/confirm-password')
+        ->assertNotFound();
 });
 
-test('password is not confirmed with invalid password', function () {
+test('confirm password submissions are not accepted', function () {
     $user = User::factory()->create();
 
-    $response = $this->actingAs($user)->post('/confirm-password', [
-        'password' => 'wrong-password',
-    ]);
+    $this->actingAs($user)
+        ->post('/confirm-password', ['password' => 'password'])
+        ->assertNotFound();
 
-    $response->assertSessionHasErrors();
+    $this->assertAuthenticatedAs($user);
 });

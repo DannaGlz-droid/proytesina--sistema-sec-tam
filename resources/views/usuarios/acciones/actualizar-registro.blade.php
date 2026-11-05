@@ -104,7 +104,10 @@
                     <div class="grid grid-cols-1 sm:grid-cols-[minmax(0,2fr)_minmax(8rem,1fr)] gap-3">
                         <div>
                             <label for="role_id" class="block">Rol <span class="text-red-600">*</span></label>
-                            <select id="role_id" class="tomselect-select" name="role_id" data-placeholder="Seleccione un rol" data-validation-required-message="Seleccione un rol." required @error('role_id') aria-invalid="true" aria-describedby="role-error" @enderror>
+                            @if($isProtectedSystemContact)
+                                <input type="hidden" name="role_id" value="{{ $user->role_id }}">
+                            @endif
+                            <select id="role_id" class="tomselect-select" @unless($isProtectedSystemContact) name="role_id" required @endunless data-placeholder="Seleccione un rol" data-validation-required-message="Seleccione un rol." @disabled($isProtectedSystemContact) @error('role_id') aria-invalid="true" aria-describedby="role-error" @enderror>
                                 <option value="">Seleccione un rol</option>
                                 @foreach($roles ?? [] as $role)
                                     <option value="{{ $role->id }}" data-role-name="{{ mb_strtolower(trim($role->name), 'UTF-8') }}" @selected((string) old('role_id', $user->role_id) === (string) $role->id)>
@@ -112,15 +115,28 @@
                                     </option>
                                 @endforeach
                             </select>
+                            @if($isProtectedSystemContact)
+                                <p class="users-form-field-hint">El responsable principal debe conservar el rol de Administrador.</p>
+                            @endif
                             @error('role_id') <p id="role-error" class="text-xs text-red-600 mt-1" data-server-error role="alert">{{ $message }}</p> @enderror
                         </div>
 
                         <div>
                             <label for="status_select" class="block">Estado <span class="text-red-600">*</span></label>
-                            <select id="status_select" class="tomselect-select" name="is_active" required @error('is_active') aria-invalid="true" aria-describedby="status-error" @enderror>
-                                <option value="1" @selected((string) old('is_active', (int) $user->is_active) === '1')>Activo</option>
-                                <option value="0" @selected((string) old('is_active', (int) $user->is_active) === '0')>Inactivo</option>
+                            @if($isEditingSelf || $isProtectedSystemContact)
+                                <input type="hidden" name="is_active" value="1">
+                            @endif
+                            <select id="status_select" class="tomselect-select" @unless($isEditingSelf || $isProtectedSystemContact) name="is_active" required @endunless @disabled($isEditingSelf || $isProtectedSystemContact) @error('is_active') aria-invalid="true" aria-describedby="status-error" @enderror>
+                                <option value="1" @selected($isEditingSelf || $isProtectedSystemContact || (string) old('is_active', (int) $user->is_active) === '1')>Activo</option>
+                                @unless($isEditingSelf || $isProtectedSystemContact)
+                                    <option value="0" @selected((string) old('is_active', (int) $user->is_active) === '0')>Inactivo</option>
+                                @endunless
                             </select>
+                            @if($isEditingSelf)
+                                <p class="users-form-field-hint">Tu propia cuenta debe permanecer activa.</p>
+                            @elseif($isProtectedSystemContact)
+                                <p class="users-form-field-hint">El responsable principal debe permanecer activo.</p>
+                            @endif
                             @error('is_active') <p id="status-error" class="text-xs text-red-600 mt-1" data-server-error role="alert">{{ $message }}</p> @enderror
                         </div>
                     </div>
@@ -130,15 +146,16 @@
                         $isSystemContactSelected = (bool) $user->is_system_contact;
                     @endphp
                     <div id="systemContactControl" class="user-system-contact {{ $selectedRoleName === 'administrador' ? '' : 'hidden' }}">
-                        <input type="hidden" name="is_system_contact" value="0">
+                        <input type="hidden" name="is_system_contact" value="{{ $isProtectedSystemContact ? '1' : '0' }}">
                         <label for="is_system_contact" class="user-system-contact-label">
                             <input
                                 id="is_system_contact"
-                                name="is_system_contact"
+                                @unless($isProtectedSystemContact) name="is_system_contact" @endunless
                                 class="user-system-contact-input"
                                 type="checkbox"
                                 value="1"
                                 @checked($isSystemContactSelected)
+                                @disabled($isProtectedSystemContact)
                                 @error('is_system_contact') aria-invalid="true" aria-describedby="system-contact-error" @enderror
                             >
                             <span class="user-system-contact-check" aria-hidden="true">
@@ -146,7 +163,7 @@
                             </span>
                             <span class="user-system-contact-copy">
                                 <strong id="systemContactTitle">{{ $isSystemContactSelected ? 'Responsable principal del sistema' : 'Designar como responsable principal' }}</strong>
-                                <small id="systemContactDescription">{{ $isSystemContactSelected ? 'Esta cuenta proporciona el contacto mostrado en Mi perfil.' : 'Usar los datos de esta cuenta en la ayuda de Mi perfil; reemplazará al responsable anterior.' }}</small>
+                                <small id="systemContactDescription">{{ $isProtectedSystemContact ? 'Para reemplazarlo, designa primero a otro administrador activo.' : ($isSystemContactSelected ? 'Esta cuenta proporciona el contacto mostrado en Mi perfil.' : 'Usar los datos de esta cuenta en la ayuda de Mi perfil; reemplazará al responsable anterior.') }}</small>
                             </span>
                         </label>
                         @error('is_system_contact') <p id="system-contact-error" class="text-xs text-red-600 mt-1" data-server-error role="alert">{{ $message }}</p> @enderror
@@ -178,9 +195,16 @@
             const systemContactCheckbox = document.getElementById('is_system_contact');
             const systemContactTitle = document.getElementById('systemContactTitle');
             const systemContactDescription = document.getElementById('systemContactDescription');
+            const isProtectedSystemContact = @json($isProtectedSystemContact);
 
             const syncSystemContactCopy = () => {
                 if (!systemContactCheckbox || !systemContactTitle || !systemContactDescription) return;
+
+                if (isProtectedSystemContact) {
+                    systemContactTitle.textContent = 'Responsable principal del sistema';
+                    systemContactDescription.textContent = 'Para reemplazarlo, designa primero a otro administrador activo.';
+                    return;
+                }
 
                 if (systemContactCheckbox.checked) {
                     systemContactTitle.textContent = 'Responsable principal del sistema';

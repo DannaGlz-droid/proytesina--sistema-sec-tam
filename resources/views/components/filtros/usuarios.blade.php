@@ -212,39 +212,23 @@
                 </x-filtros.panel>
             </div>
 
-            <div class="users-filter-search">
-                <i class="fas fa-search" aria-hidden="true"></i>
-                <input type="search" id="dt-search-users" placeholder="Buscar usuarios..." aria-label="Buscar usuarios"
-                    autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false" enterkeyhint="search" aria-busy="false">
-                <span class="users-search-progress" aria-hidden="true"></span>
-                <button type="button" id="dt-clear-btn" class="hidden" title="Limpiar búsqueda" aria-label="Limpiar búsqueda">
-                    <i class="fas fa-times" aria-hidden="true"></i>
-                </button>
-            </div>
+            <x-ui.data-table.search
+                id="dt-search-users"
+                clear-id="dt-clear-btn"
+                placeholder="Buscar usuarios..."
+                label="Buscar usuarios"
+            />
 
-            <div class="app-table-page-size users-filter-page-size">
-                <select id="dt-per-page" class="users-native-page-size" aria-hidden="true" tabindex="-1">
-                    <option value="10">10</option>
-                    <option value="25" selected>25</option>
-                    <option value="50">50</option>
-                    <option value="100">100</option>
-                </select>
-                <div class="users-page-size-dropdown">
-                    <button id="dt-per-page-button" type="button" class="users-page-size-button" aria-haspopup="listbox" aria-expanded="false">
-                        <span>Mostrar</span>
-                        <strong id="dt-per-page-label">25</strong>
-                        <i class="fas fa-list-ul users-page-size-icon" aria-hidden="true"></i>
-                    </button>
-                    <div id="dt-per-page-menu" class="users-page-size-menu hidden" role="listbox" aria-labelledby="dt-per-page-button">
-                        <button type="button" role="option" class="users-page-size-option" data-value="10">10</button>
-                        <button type="button" role="option" class="users-page-size-option is-active" data-value="25">25</button>
-                        <button type="button" role="option" class="users-page-size-option" data-value="50">50</button>
-                        <button type="button" role="option" class="users-page-size-option" data-value="100">100</button>
-                    </div>
-                </div>
-            </div>
+            <x-ui.data-table.page-size
+                id="dt-per-page"
+                button-id="dt-per-page-button"
+                label-id="dt-per-page-label"
+                menu-id="dt-per-page-menu"
+                :options="[10, 25, 50, 100]"
+                :selected="25"
+            />
         </div>
 
-        <div id="usersFilterChips" class="users-filter-chips" aria-live="polite"></div>
+        <div id="usersFilterChips" class="ui-data-table__filter-chips users-filter-chips" aria-live="polite"></div>
     </form>
 </section>

@@ -1,85 +1,62 @@
 <?php
 
+use App\Models\Role;
 use App\Models\User;
 
-test('profile page is displayed', function () {
+test('profile page displays the authenticated account', function () {
     $user = User::factory()->create();
 
-    $response = $this
-        ->actingAs($user)
-        ->get('/profile');
-
-    $response->assertOk();
+    $this->actingAs($user)
+        ->get(route('usuario.miperfil'))
+        ->assertOk()
+        ->assertSee('Mi perfil')
+        ->assertSee($user->email);
 });
 
-test('profile information can be updated', function () {
+test('legacy profile url redirects to the current profile page', function () {
     $user = User::factory()->create();
 
-    $response = $this
-        ->actingAs($user)
-        ->patch('/profile', [
-            'name' => 'Test User',
-            'email' => 'test@example.com',
-        ]);
+    $this->actingAs($user)
+        ->get('/profile')
+        ->assertRedirect(route('usuario.miperfil'));
+});
 
-    $response
-        ->assertSessionHasNoErrors()
-        ->assertRedirect('/profile');
+test('legacy profile endpoint does not update account information', function () {
+    $user = User::factory()->create();
+    $originalName = $user->name;
+    $originalEmail = $user->email;
+
+    $this->actingAs($user)
+        ->patch('/profile', [
+            'name' => 'Nombre modificado',
+            'email' => 'modified@example.com',
+        ])
+        ->assertRedirect(route('usuario.miperfil'));
 
     $user->refresh();
-
-    $this->assertSame('Test User', $user->name);
-    $this->assertSame('test@example.com', $user->email);
-    $this->assertNull($user->email_verified_at);
+    $this->assertSame($originalName, $user->name);
+    $this->assertSame($originalEmail, $user->email);
 });
 
-test('email verification status is unchanged when the email address is unchanged', function () {
+test('legacy profile endpoint does not delete the account', function () {
     $user = User::factory()->create();
 
-    $response = $this
-        ->actingAs($user)
-        ->patch('/profile', [
-            'name' => 'Test User',
-            'email' => $user->email,
-        ]);
+    $this->actingAs($user)
+        ->delete('/profile', ['password' => 'password'])
+        ->assertRedirect(route('usuario.miperfil'));
 
-    $response
-        ->assertSessionHasNoErrors()
-        ->assertRedirect('/profile');
-
-    $this->assertNotNull($user->refresh()->email_verified_at);
-});
-
-test('user can delete their account', function () {
-    $user = User::factory()->create();
-
-    $response = $this
-        ->actingAs($user)
-        ->delete('/profile', [
-            'password' => 'password',
-        ]);
-
-    $response
-        ->assertSessionHasNoErrors()
-        ->assertRedirect('/');
-
-    $this->assertGuest();
-    $this->assertNull($user->fresh());
-});
-
-test('correct password must be provided to delete account', function () {
-    $user = User::factory()->create();
-
-    $response = $this
-        ->actingAs($user)
-        ->from('/profile')
-        ->delete('/profile', [
-            'password' => 'wrong-password',
-        ]);
-
-    $response
-        ->assertSessionHasErrorsIn('userDeletion', 'password')
-        ->assertRedirect('/profile');
-
+    $this->assertAuthenticatedAs($user);
     $this->assertNotNull($user->fresh());
+});
+
+test('administrator profile links to current account management', function () {
+    $administrator = User::factory()->create([
+        'role_id' => Role::query()->firstOrCreate(['name' => 'Administrador'])->id,
+    ]);
+
+    $this->actingAs($administrator)
+        ->get(route('usuario.miperfil'))
+        ->assertOk()
+        ->assertSee('Administrar esta cuenta')
+        ->assertSee(route('user.edit', ['user' => $administrator, 'from' => 'profile']), false);
 });

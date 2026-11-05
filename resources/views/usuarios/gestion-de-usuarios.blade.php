@@ -25,18 +25,13 @@
                 <div class="space-y-4">
                     <div class="min-w-0">
                         <!-- Custom controls wrapper styled like the site -->
-                        <div class="app-table-card users-table-card">
+                        <x-ui.data-table.panel class="users-table-card" label="Listado de usuarios">
                             <!-- Toolbar: create button LEFT · search + per-page RIGHT (matching reference layout) -->
-                            <div class="app-table-toolbar flex flex-row flex-wrap items-center justify-between gap-3 p-4">
+                            <x-ui.data-table.toolbar>
                                 <x-filtros.usuarios :positions="$positions" :districts="$districts" :roles="$roles" />
 
                                 <!-- Bulk selection bar (JS moves this after the toolbar) -->
-                                <div id="bulk-selection-bar" class="app-table-bulk-inline hidden items-center gap-3">
-                                    <div class="flex items-center gap-2">
-                                        <span class="app-table-selection-marker"></span>
-                                        <span id="bulk-selected-count" class="app-table-selection-count text-xs whitespace-nowrap"></span>
-                                    </div>
-                                    <span class="hidden xl:inline text-xs text-gray-500">En esta página</span>
+                                <x-ui.data-table.bulk-actions id="bulk-selection-bar" count-id="bulk-selected-count">
                                     <button id="clear-selected-users" type="button" class="hidden text-xs font-semibold text-slate-600 hover:underline whitespace-nowrap" title="Quitar selección">
                                         Quitar selección
                                     </button>
@@ -44,20 +39,20 @@
                                         <i class="fas fa-trash text-xs"></i>
                                         <span>Eliminar</span>
                                     </button>
-                                </div>
-                            </div>
+                                </x-ui.data-table.bulk-actions>
+                            </x-ui.data-table.toolbar>
 
                             <!-- Table wrapper -->
-                            <div class="app-table-shell overflow-x-auto min-w-0">
+                            <x-ui.data-table.viewport>
                                 <div class="users-table-refresh-progress" aria-hidden="true"></div>
                                 <span id="users-table-refresh-status" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></span>
-                        <table id="users-table" class="app-data-table min-w-full w-full text-sm text-left text-gray-500">
+                        <x-ui.data-table.table id="users-table">
                             <thead class="text-xs">
                                 <tr>
                                     <th scope="col" class="px-4 py-2 whitespace-nowrap text-xs" data-orderable="false"></th>
                                     <th scope="col" class="dt-checkbox-cell px-3 py-2 whitespace-nowrap text-xs text-center">
                                         <label class="users-checkbox-hitbox" for="select-all-users">
-                                            <input id="select-all-users" type="checkbox" aria-label="Seleccionar todos los usuarios visibles" />
+                                            <input id="select-all-users" type="checkbox" autocomplete="off" aria-label="Seleccionar todos los usuarios visibles" />
                                         </label>
                                     </th>
                                     <th scope="col" class="px-3 py-2 whitespace-nowrap text-xs">ID</th>
@@ -73,7 +68,7 @@
                                     <th scope="col" class="px-3 py-2 whitespace-nowrap text-xs">Rol</th>
                                     <th scope="col" class="px-3 py-2 whitespace-nowrap text-xs">Estado</th>
                                     <th scope="col" class="px-3 py-2 whitespace-nowrap text-xs">Últ. sesión</th>
-                                    <th scope="col" class="px-3 py-2 whitespace-nowrap text-xs text-center" data-orderable="false">
+                                    <th scope="col" class="dt-actions-cell px-3 py-2 whitespace-nowrap text-xs text-center" data-orderable="false">
                                         <span class="sr-only">Acciones</span>
                                     </th>
                                 </tr>
@@ -81,17 +76,17 @@
                             <tbody>
                                 <!-- DataTables will populate this via AJAX -->
                             </tbody>
-                        </table>
-                            </div>
+                        </x-ui.data-table.table>
+                            </x-ui.data-table.viewport>
 
                             <!-- Custom pagination styled like the site -->
-                            <nav class="users-table-footer flex flex-row flex-wrap items-center justify-between gap-3 p-4 border-t border-gray-100">
-                                <span class="text-sm font-normal text-gray-500 flex-1 min-w-0 is-loading" id="dt-info">
-                                    Preparando tabla
-                                </span>
-                                <div id="dt-pagination" class="flex-none"></div>
-                            </nav>
-                        </div>
+                            <x-ui.data-table.footer
+                                class="users-table-footer"
+                                info-id="dt-info"
+                                pagination-id="dt-pagination"
+                                initial-text="Preparando tabla"
+                            />
+                        </x-ui.data-table.panel>
                         <script>
                             (function restoreUsersTableSnapshot() {
                                 const snapshotKey = 'sistema-sec-tam.users-table-snapshot.v1.{{ auth()->id() }}';
@@ -174,6 +169,31 @@
         document.addEventListener('DOMContentLoaded', function() {
             const usersFilterToggle = document.getElementById('usersFilterToggle');
             const usersFilterPanel = document.getElementById('usersFilterPanel');
+            const perPageSelect = document.getElementById('dt-per-page');
+            const perPageButton = document.getElementById('dt-per-page-button');
+            const perPageLabel = document.getElementById('dt-per-page-label');
+            const perPageMenu = document.getElementById('dt-per-page-menu');
+            let usersPageSizeController = null;
+
+            const initializeUsersPageSize = () => {
+                if (usersPageSizeController) return usersPageSizeController;
+
+                usersPageSizeController = window.AppDataTable?.initPageSize({
+                    select: perPageSelect,
+                    button: perPageButton,
+                    label: perPageLabel,
+                    menu: perPageMenu,
+                    initialValue: perPageSelect?.value,
+                    onOpen: () => setUsersFilterPanelOpen(false),
+                    onChange: () => window.jQuery?.('#dt-per-page').trigger('change'),
+                }) || null;
+
+                return usersPageSizeController;
+            };
+
+            if (!initializeUsersPageSize()) {
+                window.addEventListener('app:data-table-ready', initializeUsersPageSize, { once: true });
+            }
 
             function setUsersFilterPanelOpen(open) {
                 if (!usersFilterPanel || !usersFilterToggle) return;
@@ -183,7 +203,9 @@
 
             usersFilterToggle?.addEventListener('click', function(event) {
                 event.stopPropagation();
-                setUsersFilterPanelOpen(usersFilterPanel.classList.contains('is-collapsed'));
+                const open = usersFilterPanel.classList.contains('is-collapsed');
+                if (open) usersPageSizeController?.close();
+                setUsersFilterPanelOpen(open);
             });
 
             document.getElementById('closeUsersFilters')?.addEventListener('click', function() {
@@ -637,7 +659,7 @@
         <span class="users-identity-copy">
             <span class="users-name-row">
                 <span class="users-name">${escapeHtml(fullName)}</span>
-                ${username ? `<span class="users-username-badge">${escapeHtml(username)}</span>` : ''}
+                ${username ? `<span class="users-username-badge" title="${escapeHtml(username)}"><span class="users-username-text">${escapeHtml(username)}</span></span>` : ''}
             </span>
             <span class="users-meta users-email">${escapeHtml(email || 'Sin correo')}</span>
         </span>
@@ -834,7 +856,13 @@
                 columns: [
                     { data: null, name: 'details', orderable: false, searchable: false, defaultContent: '<button type="button" class="dt-details-toggle" title="Ver detalles" aria-label="Ver detalles"><i class="fas fa-chevron-right"></i></button>' },
                     { data: 'id', name: 'id', orderable: false, searchable: false, render: function(data, type, row) {
-                        return '<label class="users-checkbox-hitbox"><input class="row-check-user" data-id="'+data+'" type="checkbox" aria-label="Seleccionar usuario" /></label>';
+                        if (row.is_current_user) {
+                            return '<label class="users-checkbox-hitbox" title="Tu cuenta no se puede seleccionar"><input class="row-check-user" data-id="'+data+'" type="checkbox" autocomplete="off" disabled aria-label="Tu cuenta no se puede seleccionar" /></label>';
+                        }
+                        if (row.is_system_contact) {
+                            return '<label class="users-checkbox-hitbox" title="El responsable principal no se puede seleccionar"><input class="row-check-user" data-id="'+data+'" type="checkbox" autocomplete="off" disabled aria-label="El responsable principal no se puede seleccionar" /></label>';
+                        }
+                        return '<label class="users-checkbox-hitbox"><input class="row-check-user" data-id="'+data+'" type="checkbox" autocomplete="off" aria-label="Seleccionar usuario" /></label>';
                     } },
                     { data: 'id', name: 'id' },
                     { data: 'username', name: 'username', render: function(data, type, row) {
@@ -1003,190 +1031,36 @@
                 saveUsersTablePrefs({ order: table.order() });
             });
 
-            const perPageSelect = document.getElementById('dt-per-page');
-            const perPageButton = document.getElementById('dt-per-page-button');
-            const perPageLabel = document.getElementById('dt-per-page-label');
-            const perPageMenu = document.getElementById('dt-per-page-menu');
-            const perPageOptions = document.querySelectorAll('.users-page-size-option');
-
-            function closePerPageMenu() {
-                if (!perPageMenu || !perPageButton) return;
-                perPageMenu.classList.add('hidden');
-                perPageButton.setAttribute('aria-expanded', 'false');
-            }
-
-            function updatePerPageDropdown(value) {
-                if (perPageLabel) perPageLabel.textContent = value;
-                perPageOptions.forEach(option => {
-                    const isActive = option.dataset.value === String(value);
-                    option.classList.toggle('is-active', isActive);
-                    option.setAttribute('aria-selected', isActive ? 'true' : 'false');
-                });
-            }
-
-            if (perPageButton && perPageMenu && perPageSelect) {
-                perPageSelect.value = String(table.page.len());
-                updatePerPageDropdown(perPageSelect.value);
-
-                perPageButton.addEventListener('click', function(e) {
-                    e.stopPropagation();
-                    const isOpen = !perPageMenu.classList.contains('hidden');
-                    perPageMenu.classList.toggle('hidden', isOpen);
-                    perPageButton.setAttribute('aria-expanded', isOpen ? 'false' : 'true');
-                    if (!isOpen) {
-                        const activeOption = perPageMenu.querySelector('[aria-selected="true"]') || perPageOptions[0];
-                        window.requestAnimationFrame(() => activeOption?.focus());
-                    }
-                });
-
-                perPageOptions.forEach(option => {
-                    option.addEventListener('click', function(e) {
-                        e.preventDefault();
-                        const value = option.dataset.value;
-                        perPageSelect.value = value;
-                        updatePerPageDropdown(value);
-                        closePerPageMenu();
-                        $('#dt-per-page').trigger('change');
-                    });
-                });
-
-                document.addEventListener('click', function(e) {
-                    if (!perPageMenu.contains(e.target) && !perPageButton.contains(e.target)) {
-                        closePerPageMenu();
-                    }
-                });
-
-            
-
-                document.addEventListener('keydown', function(e) {
-                    if (e.key === 'Escape' && !perPageMenu.classList.contains('hidden')) {
-                        closePerPageMenu();
-                        perPageButton.focus();
-                        return;
-                    }
-
-                    if (!perPageMenu.classList.contains('hidden') && ['ArrowDown', 'ArrowUp', 'Home', 'End'].includes(e.key)) {
-                        e.preventDefault();
-                        const options = Array.from(perPageOptions);
-                        const currentIndex = Math.max(0, options.indexOf(document.activeElement));
-                        const nextIndex = e.key === 'Home'
-                            ? 0
-                            : e.key === 'End'
-                                ? options.length - 1
-                                : (currentIndex + (e.key === 'ArrowDown' ? 1 : -1) + options.length) % options.length;
-                        options[nextIndex]?.focus();
-                    }
-                });
-            }
+            usersPageSizeController?.update(table.page.len());
 
             // Checkbox selection for users table
             $('#select-all-users').on('change', function() {
-                const visibleChecks = $('#users-table tbody .row-check-user');
+                const visibleChecks = $('#users-table tbody .row-check-user:not(:disabled)');
                 const checkedCount = visibleChecks.filter(':checked').length;
                 const shouldCheck = checkedCount !== visibleChecks.length;
                 visibleChecks.prop('checked', shouldCheck);
                 updateUserSelectionState();
             });
 
-            function restoreUserActionMenu(menu) {
-                const host = menu._usersMenuHost;
+            var usersRowActionsController = null;
 
-                menu.classList.remove('is-viewport-positioned', 'opens-upward');
-                menu.style.removeProperty('top');
-                menu.style.removeProperty('right');
-                menu.style.removeProperty('bottom');
-                menu.style.removeProperty('left');
+            function initializeUsersRowActions() {
+                if (usersRowActionsController) return usersRowActionsController;
 
-                if (host?.isConnected && menu.parentElement !== host) {
-                    host.appendChild(menu);
-                } else if (!host?.isConnected && menu.parentElement === document.body) {
-                    menu.remove();
-                }
+                usersRowActionsController = window.AppDataTable?.initRowActions({
+                    table: document.getElementById('users-table'),
+                }) || null;
 
-                delete menu._usersMenuHost;
-                delete menu._usersMenuTrigger;
+                return usersRowActionsController;
             }
 
-            function closeUserActionMenus(exceptMenu) {
-                document.querySelectorAll('.users-row-menu').forEach(menu => {
-                    if (menu !== exceptMenu) {
-                        const trigger = menu._usersMenuTrigger
-                            || menu.closest('.users-row-actions')?.querySelector('.users-row-menu-button');
-
-                        menu.classList.add('hidden');
-                        trigger?.setAttribute('aria-expanded', 'false');
-                        restoreUserActionMenu(menu);
-                    }
-                });
+            if (!initializeUsersRowActions()) {
+                window.addEventListener('app:data-table-ready', initializeUsersRowActions, { once: true });
             }
 
-            function positionUserActionMenu(menu, trigger) {
-                const viewportMargin = 8;
-                const spacing = 6;
-                const triggerRect = trigger.getBoundingClientRect();
-
-                menu._usersMenuHost = menu.parentElement;
-                menu._usersMenuTrigger = trigger;
-                document.body.appendChild(menu);
-                menu.classList.add('is-viewport-positioned');
-                menu.classList.remove('opens-upward');
-
-                const menuWidth = menu.offsetWidth;
-                const menuHeight = menu.offsetHeight;
-                const left = Math.min(
-                    window.innerWidth - menuWidth - viewportMargin,
-                    Math.max(viewportMargin, triggerRect.right - menuWidth)
-                );
-                let top = triggerRect.bottom + spacing;
-
-                if (top + menuHeight > window.innerHeight - viewportMargin) {
-                    top = Math.max(viewportMargin, triggerRect.top - menuHeight - spacing);
-                    menu.classList.add('opens-upward');
-                }
-
-                menu.style.left = `${left}px`;
-                menu.style.top = `${top}px`;
-                menu.style.right = 'auto';
-                menu.style.bottom = 'auto';
+            function closeUserActionMenus() {
+                usersRowActionsController?.close();
             }
-
-            $('#users-table tbody').on('click', '.users-row-menu-button', function(e) {
-                e.preventDefault();
-                e.stopPropagation();
-
-                const menu = this.closest('.users-row-actions')?.querySelector('.users-row-menu');
-                if (!menu) return;
-
-                const isOpen = !menu.classList.contains('hidden');
-                closeUserActionMenus(menu);
-                menu.classList.toggle('hidden', isOpen);
-                this.setAttribute('aria-expanded', isOpen ? 'false' : 'true');
-
-                if (!isOpen) {
-                    positionUserActionMenu(menu, this);
-                } else {
-                    closeUserActionMenus();
-                }
-            });
-
-            document.addEventListener('click', function(e) {
-                if (!e.target.closest('.users-row-actions, .users-row-menu')) {
-                    closeUserActionMenus();
-                }
-            });
-
-            document.addEventListener('keydown', function(e) {
-                if (e.key === 'Escape') {
-                    const openMenu = document.querySelector('.users-row-menu:not(.hidden)');
-                    const trigger = openMenu?._usersMenuTrigger
-                        || openMenu?.closest('.users-row-actions')?.querySelector('.users-row-menu-button');
-                    closeUserActionMenus();
-                    trigger?.focus();
-                }
-            });
-
-            window.addEventListener('resize', () => closeUserActionMenus());
-            window.addEventListener('scroll', () => closeUserActionMenus(), true);
 
             // Prevent row-expansion clicks when interacting with checkboxes or action buttons
             $('#users-table tbody').on('click', '.users-checkbox-hitbox, input.row-check-user, button:not(.dt-details-toggle), a', function(e) {
@@ -1222,7 +1096,7 @@
             }
 
             function updateUserSelectionState() {
-                const visibleChecks = $('#users-table tbody .row-check-user');
+                const visibleChecks = $('#users-table tbody .row-check-user:not(:disabled)');
                 const checkedCount = visibleChecks.filter(':checked').length;
                 const totalVisible = visibleChecks.length;
                 const hasSelection = checkedCount > 0;
@@ -1257,6 +1131,13 @@
                 $('#users-table tbody .row-check-user').prop('checked', false);
                 updateUserSelectionState();
             }
+
+            // Browsers may restore checkbox values when this page returns from the
+            // back-forward cache, while the JavaScript selection state starts empty.
+            // Keep the table, highlighted rows and bulk action bar synchronized.
+            window.addEventListener('pageshow', function() {
+                window.requestAnimationFrame(clearVisibleUserSelection);
+            });
 
             function updateEmptyState(api) {
                 const info = api.page.info();
@@ -1356,7 +1237,10 @@
                     },
                     error: function(xhr) {
                         console.error(xhr);
-                        notifyUser('No se pudieron eliminar los usuarios. Intenta nuevamente.', 'error');
+                        notifyUser(
+                            xhr.responseJSON?.message || 'No se pudieron eliminar los usuarios. Intenta nuevamente.',
+                            'error'
+                        );
                     }
                 });
             });

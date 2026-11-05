@@ -46,7 +46,7 @@
 
         <div class="space-y-4">
             <div class="min-w-0">
-                <div class="app-table-card users-table-card statistics-table-card">
+                <x-ui.data-table.panel class="users-table-card statistics-table-card" label="Datos de defunciones">
                     @if($analysisContext)
                         <section id="statisticsAnalysisContext" class="statistics-analysis-context {{ $isExcludedReview ? 'is-warning' : '' }}" aria-labelledby="statistics-analysis-title">
                             <div class="statistics-analysis-context__icon" aria-hidden="true">
@@ -98,7 +98,7 @@
                             </div>
                         </section>
                     @endif
-                    <div class="app-table-toolbar flex flex-row flex-wrap items-center justify-between gap-3 p-4">
+                    <x-ui.data-table.toolbar>
                         <x-filtros.defunciones :districts="$districts" :municipalities="$municipalities" :causes="$causes" :death-locations="$deathLocations" :inherited-filter-chips="$analysisFilterChips ?? []">
                             @if($analysisContext && $analysisOriginOptions)
                                 <div class="statistics-origin-filter">
@@ -123,24 +123,19 @@
                                 </div>
                             @endif
                         </x-filtros.defunciones>
-                        <div id="bulk-selection-bar-deaths" class="app-table-bulk-inline hidden items-center gap-3">
-                            <div class="flex items-center gap-2">
-                                <span class="app-table-selection-marker"></span>
-                                <span id="bulk-selected-count-deaths" class="app-table-selection-count text-xs whitespace-nowrap"></span>
-                            </div>
-                            <span class="hidden xl:inline text-xs text-gray-500">En esta página</span>
+                        <x-ui.data-table.bulk-actions id="bulk-selection-bar-deaths" count-id="bulk-selected-count-deaths">
                             <button id="clear-selected-deaths" type="button" class="hidden text-xs font-semibold text-slate-600 hover:underline whitespace-nowrap">Quitar selección</button>
                             <button id="bulk-delete-deaths" type="button" class="app-table-bulk-danger items-center gap-2" style="display:none;">
                                 <i class="fas fa-trash" aria-hidden="true"></i><span>Eliminar</span>
                             </button>
-                        </div>
-                    </div>
+                        </x-ui.data-table.bulk-actions>
+                    </x-ui.data-table.toolbar>
 
                     <!-- Table wrapper -->
-                    <div class="app-table-shell overflow-x-auto min-w-0">
+                    <x-ui.data-table.viewport>
                     <div class="users-table-refresh-progress" aria-hidden="true"></div>
                     <span id="statistics-table-status" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></span>
-                    <table id="deaths-table" class="app-data-table min-w-full w-full text-sm text-left text-gray-500">
+                    <x-ui.data-table.table id="deaths-table">
                         <thead class="text-xs">
                             <tr>
                                 <th scope="col" class="app-cell-check dt-checkbox-cell whitespace-nowrap text-xs">
@@ -167,17 +162,17 @@
                         <tbody>
                             <!-- DataTables will populate this via AJAX -->
                         </tbody>
-                    </table>
-                    </div>
+                    </x-ui.data-table.table>
+                    </x-ui.data-table.viewport>
                         
                     <!-- Custom pagination -->
-                    <nav class="users-table-footer statistics-table-footer flex flex-row flex-wrap items-center justify-between gap-3 p-4">
-                        <span class="text-sm font-normal text-gray-500 flex-1 min-w-0 is-loading" id="dt-info">
-                            Mostrando <span class="font-semibold text-gray-900">0-0</span> de <span class="font-semibold text-gray-900">0</span>
-                        </span>
-                        <div id="dt-pagination" class="flex-none"></div>
-                    </nav>
-                </div>
+                    <x-ui.data-table.footer
+                        class="users-table-footer statistics-table-footer"
+                        info-id="dt-info"
+                        pagination-id="dt-pagination"
+                        initial-text="Mostrando 0-0 de 0"
+                    />
+                </x-ui.data-table.panel>
                 </div>
             </div>
 
@@ -1244,69 +1239,25 @@ document.addEventListener('DOMContentLoaded', function () {
         document.getElementById('limpiarFiltros')?.click();
     });
 
-    function restoreDeathActionMenu(menu) {
-        const host = menu._deathMenuHost;
-        menu.classList.remove('is-viewport-positioned', 'opens-upward');
-        ['top','right','bottom','left'].forEach(property => menu.style.removeProperty(property));
-        if (host?.isConnected && menu.parentElement !== host) host.appendChild(menu);
-        else if (!host?.isConnected && menu.parentElement === document.body) menu.remove();
-        delete menu._deathMenuHost;
-        delete menu._deathMenuTrigger;
+    var deathRowActionsController = null;
+
+    function initializeDeathRowActions() {
+        if (deathRowActionsController) return deathRowActionsController;
+
+        deathRowActionsController = window.AppDataTable?.initRowActions({
+            table: document.getElementById('deaths-table'),
+        }) || null;
+
+        return deathRowActionsController;
     }
 
-    function closeDeathActionMenus(exceptMenu) {
-        document.querySelectorAll('.statistics-data-page .users-row-menu, body > .users-row-menu').forEach(menu => {
-            if (menu === exceptMenu) return;
-            const trigger = menu._deathMenuTrigger || menu.closest('.users-row-actions')?.querySelector('.users-row-menu-button');
-            menu.classList.add('hidden');
-            trigger?.setAttribute('aria-expanded', 'false');
-            restoreDeathActionMenu(menu);
-        });
+    if (!initializeDeathRowActions()) {
+        window.addEventListener('app:data-table-ready', initializeDeathRowActions, { once: true });
     }
 
-    function positionDeathActionMenu(menu, trigger) {
-        const margin = 8;
-        const spacing = 6;
-        const triggerRect = trigger.getBoundingClientRect();
-        menu._deathMenuHost = menu.parentElement;
-        menu._deathMenuTrigger = trigger;
-        document.body.appendChild(menu);
-        menu.classList.add('is-viewport-positioned');
-        menu.classList.remove('opens-upward');
-        const left = Math.min(window.innerWidth - menu.offsetWidth - margin, Math.max(margin, triggerRect.right - menu.offsetWidth));
-        let top = triggerRect.bottom + spacing;
-        if (top + menu.offsetHeight > window.innerHeight - margin) {
-            top = Math.max(margin, triggerRect.top - menu.offsetHeight - spacing);
-            menu.classList.add('opens-upward');
-        }
-        menu.style.left = `${left}px`;
-        menu.style.top = `${top}px`;
-        menu.style.right = 'auto';
-        menu.style.bottom = 'auto';
+    function closeDeathActionMenus() {
+        deathRowActionsController?.close();
     }
-
-    $('#deaths-table tbody').on('click', '.users-row-menu-button', function(event) {
-        event.preventDefault();
-        event.stopPropagation();
-        const menu = this.closest('.users-row-actions')?.querySelector('.users-row-menu');
-        if (!menu) return;
-        const isOpen = !menu.classList.contains('hidden');
-        closeDeathActionMenus(menu);
-        menu.classList.toggle('hidden', isOpen);
-        this.setAttribute('aria-expanded', isOpen ? 'false' : 'true');
-        if (!isOpen) positionDeathActionMenu(menu, this);
-        else closeDeathActionMenus();
-    });
-    document.addEventListener('click', event => { if (!event.target.closest('.users-row-actions, .users-row-menu')) closeDeathActionMenus(); });
-    document.addEventListener('keydown', event => {
-        if (event.key !== 'Escape') return;
-        const menu = document.querySelector('body > .users-row-menu:not(.hidden), .statistics-data-page .users-row-menu:not(.hidden)');
-        const trigger = menu?._deathMenuTrigger;
-        closeDeathActionMenus();
-        trigger?.focus();
-    });
-    window.addEventListener('resize', () => closeDeathActionMenus());
-    window.addEventListener('scroll', () => closeDeathActionMenus(), true);
 
     // Checkbox selection: select-all for visible page
     $('#select-all-deaths').on('change', function() {
@@ -1330,6 +1281,13 @@ document.addEventListener('DOMContentLoaded', function () {
         const any = checkedCount > 0;
         const allSelected = visibleChecks.length > 0 && checkedCount === visibleChecks.length;
         const selectAll = $('#select-all-deaths');
+
+        visibleChecks.each(function() {
+            const isSelected = this.checked;
+            $(this).closest('tr')
+                .toggleClass('is-selected', isSelected)
+                .attr('aria-selected', isSelected ? 'true' : 'false');
+        });
 
         selectAll.prop('checked', allSelected);
         selectAll.prop('indeterminate', any && !allSelected);

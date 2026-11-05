@@ -1,6 +1,6 @@
 @import './design-system/dialog.css';
 @import './design-system/form-help.css';
-@import './design-system/form-help.css';
+@import './design-system/data-table.css';
 @import './pages/login.css';
 @import './pages/report-publications.css';
 @import './pages/report-road-safety-form.css';
@@ -2095,6 +2095,14 @@ html[data-ui-theme="tamaulipas-salud"] .app-document-surface {
 	font-size: 0.66rem;
 	font-weight: 500;
 	line-height: 1.2;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.users-username-text {
+	display: block;
+	min-width: 0;
+	overflow: hidden;
 	text-overflow: ellipsis;
 	white-space: nowrap;
 }
@@ -6146,11 +6154,6 @@ html[data-ui-theme="tamaulipas-salud"] .app-document-surface {
 	color: var(--users-accent-hover) !important;
 }
 
-.users-management-page .users-table-card > .app-table-toolbar .users-page-size-button[aria-expanded="true"],
-.users-management-page .users-table-card > .app-table-toolbar .users-page-size-button:focus-visible {
-	border-color: var(--users-accent) !important;
-}
-
 .users-management-page .users-table-card > .app-table-toolbar .users-page-size-option.is-active {
 	background: var(--users-accent-soft) !important;
 	color: var(--users-accent) !important;
@@ -6374,17 +6377,6 @@ html[data-ui-theme="tamaulipas-salud"] .app-document-surface {
 	width: 2.4rem !important;
 	min-width: 2.4rem !important;
 	max-width: 2.4rem !important;
-	padding-left: 0 !important;
-	padding-right: 0 !important;
-	text-align: center !important;
-	vertical-align: middle !important;
-}
-
-.users-management-page .users-table-card .app-data-table th.dt-actions-cell,
-.users-management-page .users-table-card .app-data-table td.dt-actions-cell {
-	width: 2.75rem !important;
-	min-width: 2.75rem !important;
-	max-width: 2.75rem !important;
 	padding-left: 0 !important;
 	padding-right: 0 !important;
 	text-align: center !important;
@@ -6617,15 +6609,6 @@ html[data-ui-theme="tamaulipas-salud"] .app-document-surface {
         padding-left: 0.75rem !important;
     }
 
-	.users-management-page .users-table-card #users-table th.dt-actions-cell,
-	.users-management-page .users-table-card #users-table td.dt-actions-cell,
-	.users-management-page .users-table-card #users-table th:last-child,
-	.users-management-page .users-table-card #users-table td:last-child {
-		width: 2.75rem !important;
-		min-width: 2.75rem !important;
-		max-width: 2.75rem !important;
-	}
-
 	.users-management-page .users-table-card .users-name-row {
 		flex-wrap: wrap !important;
 		row-gap: 0.1rem !important;
@@ -6783,12 +6766,6 @@ html[data-ui-theme="tamaulipas-salud"] .app-document-surface {
 .users-management-page .users-table-card #users-table tbody td.dt-phone-cell {
 	white-space: nowrap !important;
 	text-align: left !important;
-}
-
-.users-management-page .users-table-card #users-table .users-row-actions {
-	width: 100%;
-	align-items: center;
-	justify-content: center;
 }
 
 .users-management-page .users-table-card #users-table thead th.dt-role-cell,
@@ -9713,19 +9690,6 @@ html[data-ui-theme="tamaulipas-salud"] .app-document-surface {
   cursor: default;
 }
 
-/* La selección debe distinguirse del alternado y conservarse durante el hover. */
-.users-management-page .users-table-card #users-table tbody tr.is-selected > td {
-  background-color: #fdf2f5 !important;
-}
-
-.users-management-page .users-table-card #users-table tbody tr.is-selected:hover > td {
-  background-color: #fae8ee !important;
-}
-
-.users-management-page .users-table-card #users-table tbody tr.is-selected > td:first-child {
-  box-shadow: inset 3px 0 0 #750b35;
-}
-
 .users-table-state-row > td {
   padding: 0 !important;
   background: #ffffff !important;
@@ -10052,6 +10016,14 @@ html[data-ui-theme="tamaulipas-salud"] .app-document-surface {
     height: 40px;
     min-height: 40px;
   }
+}
+
+.users-form-field-hint {
+  margin-top: .35rem;
+  color: #64748b;
+  font-family: "Open Sans", system-ui, sans-serif;
+  font-size: .75rem;
+  line-height: 1.35;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -11525,7 +11497,9 @@ body .app-standard-filter-toggle.users-filter-toggle:active {
 }
 
 body .app-standard-filter-toggle.users-filter-toggle:focus-visible,
-body .app-standard-filter-toggle.users-filter-toggle[aria-expanded="true"] {
+body .app-standard-filter-toggle.users-filter-toggle[aria-expanded="true"],
+body .ui-data-table__toolbar .users-page-size-button:focus-visible,
+body .ui-data-table__toolbar .users-page-size-button[aria-expanded="true"] {
   border-color: var(--ui-focus, #475569) !important;
   background: var(--ui-surface, #fff) !important;
   box-shadow: inset 0 0 0 1px var(--ui-focus-ring, rgb(71 85 105 / 14%)), 0 1px 2px rgb(15 23 42 / 3.5%) !important;
