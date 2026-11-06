@@ -149,11 +149,8 @@
                                     <span class="statistics-column-label--full">Fecha de defunción</span>
                                     <span class="statistics-column-label--short" aria-hidden="true">Fecha def.</span>
                                 </th>
-                                <th scope="col" class="px-3 py-2 whitespace-nowrap text-xs">Residencia</th>
-                                <th scope="col" class="px-3 py-2 whitespace-nowrap text-xs">
-                                    <span class="statistics-column-label--full">Municipio de defunción</span>
-                                    <span class="statistics-column-label--short" aria-hidden="true">Municipio (def.)</span>
-                                </th>
+                                <th scope="col" class="px-3 py-2 whitespace-nowrap text-xs" aria-label="Municipio de residencia" title="Municipio de residencia">Residencia</th>
+                                <th scope="col" class="px-3 py-2 whitespace-nowrap text-xs" aria-label="Municipio de defunción" title="Municipio de defunción">Defunción</th>
                                 <th scope="col" class="px-3 py-2 whitespace-nowrap text-xs">Lugar</th>
                                 <th scope="col" class="px-3 py-2 whitespace-nowrap text-xs">Causa</th>
                                 <th scope="col" class="dt-actions-cell px-3 py-2 whitespace-nowrap text-xs text-center" data-orderable="false"><span class="sr-only">Acciones</span></th>
@@ -1565,6 +1562,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         applyDeathFiltersWithoutReload();
+        this.dispatchEvent(new CustomEvent('statistics:filters-applied'));
     });
 });
 </script>

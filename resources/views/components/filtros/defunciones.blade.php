@@ -25,7 +25,7 @@
 
                         <p id="statistics-filter-error" class="statistics-inline-error hidden" role="alert"></p>
                         </x-slot:beforeBody>
-                            <div class="users-filter-section is-open" data-filter-section>
+                            <div class="users-filter-section is-open" data-filter-section="date">
                                 <button type="button" class="users-filter-section-toggle" data-filter-section-toggle>
                                     <i class="fas fa-chevron-down" aria-hidden="true"></i><span>Fecha de defunción</span>
                                 </button>
@@ -40,7 +40,7 @@
                                                 <option value="quarter" @selected($dateRangeValue === 'quarter')>Por trimestre</option>
                                                 <option value="custom" @selected($dateRangeValue === 'custom')>Rango personalizado</option>
                                             </x-filtros.select>
-                                            <p id="statisticsDateModeHelp" class="statistics-date-mode-help">Muestra todos los registros disponibles.</p>
+                                            <p id="statisticsDateModeHelp" class="statistics-date-mode-help hidden"></p>
                                         </div>
                                     </div>
                                     <div id="statisticsDateContext" class="statistics-date-context">
@@ -76,56 +76,66 @@
                                 </div>
                             </div>
 
-                            <div class="users-filter-section {{ request('distrito') || request('distritoDefuncion') || request('municipio') || request('municipioDefuncion') || request('lugar') ? 'is-open' : '' }}" data-filter-section>
+                            <div class="users-filter-section {{ request('distrito') || request('distritoDefuncion') || request('municipio') || request('municipioDefuncion') || request('lugar') ? 'is-open' : '' }}" data-filter-section="location">
                                 <button type="button" class="users-filter-section-toggle" data-filter-section-toggle>
                                     <i class="fas {{ request('distrito') || request('distritoDefuncion') || request('municipio') || request('municipioDefuncion') || request('lugar') ? 'fa-chevron-down' : 'fa-chevron-right' }}" aria-hidden="true"></i><span>Ubicación</span>
                                 </button>
                                 <div class="users-filter-section-content">
-                                    <div class="statistics-filter-fields">
-                                        <div class="statistics-filter-field">
-                                            <label for="distrito">Distrito de residencia</label>
-                                            <x-filtros.select id="distrito" name="distrito" placeholder="Todos"><option value="">Todos</option>@foreach($districts ?? [] as $district)<option value="{{ $district->name }}" @selected(request('distrito') === $district->name)>{{ $district->display_name }}</option>@endforeach</x-filtros.select>
+                                    <div class="statistics-location-groups">
+                                        <div class="statistics-location-group" role="group" aria-labelledby="statistics-location-residence-title">
+                                            <h4 class="statistics-location-group-title" id="statistics-location-residence-title">Residencia</h4>
+                                            <div class="statistics-filter-fields">
+                                                <div class="statistics-filter-field">
+                                                    <label for="distrito">Distrito</label>
+                                                    <x-filtros.select id="distrito" name="distrito" placeholder="Todos"><option value="">Todos</option>@foreach($districts ?? [] as $district)<option value="{{ $district->name }}" @selected(request('distrito') === $district->name)>{{ $district->display_name }}</option>@endforeach</x-filtros.select>
+                                                </div>
+                                                <div class="statistics-filter-field">
+                                                    <label for="municipio">Municipio</label>
+                                                    <x-filtros.select id="municipio" name="municipio" placeholder="Todos"><option value="">Todos</option>@foreach($municipalities ?? [] as $municipality)<option value="{{ $municipality->name }}" @selected(request('municipio') === $municipality->name)>{{ $municipality->display_name }}</option>@endforeach</x-filtros.select>
+                                                </div>
+                                            </div>
                                         </div>
-                                        <div class="statistics-filter-field">
-                                            <label for="municipio">Municipio de residencia</label>
-                                            <x-filtros.select id="municipio" name="municipio" placeholder="Todos"><option value="">Todos</option>@foreach($municipalities ?? [] as $municipality)<option value="{{ $municipality->name }}" @selected(request('municipio') === $municipality->name)>{{ $municipality->display_name }}</option>@endforeach</x-filtros.select>
-                                        </div>
-                                        <div class="statistics-filter-field">
-                                            <label for="distritoDefuncion">Distrito de defunción</label>
-                                            <x-filtros.select id="distritoDefuncion" name="distritoDefuncion" placeholder="Todos"><option value="">Todos</option>@foreach($districts ?? [] as $district)<option value="{{ $district->name }}" @selected(request('distritoDefuncion') === $district->name)>{{ $district->display_name }}</option>@endforeach</x-filtros.select>
-                                        </div>
-                                        <div class="statistics-filter-field">
-                                            <label for="municipioDefuncion">Municipio de defunción</label>
-                                            <x-filtros.select id="municipioDefuncion" name="municipioDefuncion" placeholder="Todos"><option value="">Todos</option>@foreach($municipalities ?? [] as $municipality)<option value="{{ $municipality->name }}" @selected(request('municipioDefuncion') === $municipality->name)>{{ $municipality->display_name }}</option>@endforeach</x-filtros.select>
-                                        </div>
-                                        <div class="statistics-filter-field">
-                                            <label for="lugar">Lugar de defunción</label>
-                                            <x-filtros.select id="lugar" name="lugar" placeholder="Todos"><option value="">Todos</option>@foreach($deathLocations ?? [] as $location)<option value="{{ $location->id }}" @selected((string) request('lugar') === (string) $location->id)>{{ $location->display_name }}</option>@endforeach</x-filtros.select>
+                                        <div class="statistics-location-group" role="group" aria-labelledby="statistics-location-death-title">
+                                            <h4 class="statistics-location-group-title" id="statistics-location-death-title">Defunción</h4>
+                                            <div class="statistics-filter-fields">
+                                                <div class="statistics-filter-field">
+                                                    <label for="distritoDefuncion">Distrito</label>
+                                                    <x-filtros.select id="distritoDefuncion" name="distritoDefuncion" placeholder="Todos"><option value="">Todos</option>@foreach($districts ?? [] as $district)<option value="{{ $district->name }}" @selected(request('distritoDefuncion') === $district->name)>{{ $district->display_name }}</option>@endforeach</x-filtros.select>
+                                                </div>
+                                                <div class="statistics-filter-field">
+                                                    <label for="municipioDefuncion">Municipio</label>
+                                                    <x-filtros.select id="municipioDefuncion" name="municipioDefuncion" placeholder="Todos"><option value="">Todos</option>@foreach($municipalities ?? [] as $municipality)<option value="{{ $municipality->name }}" @selected(request('municipioDefuncion') === $municipality->name)>{{ $municipality->display_name }}</option>@endforeach</x-filtros.select>
+                                                </div>
+                                                <div class="statistics-filter-field">
+                                                    <label for="lugar">Lugar</label>
+                                                    <x-filtros.select id="lugar" name="lugar" placeholder="Todos"><option value="">Todos</option>@foreach($deathLocations ?? [] as $location)<option value="{{ $location->id }}" @selected((string) request('lugar') === (string) $location->id)>{{ $location->display_name }}</option>@endforeach</x-filtros.select>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
                             </div>
 
-                            <div class="users-filter-section {{ request('sexo') || request('edad') ? 'is-open' : '' }}" data-filter-section>
+                            <div class="users-filter-section {{ request('sexo') || request('edad') ? 'is-open' : '' }}" data-filter-section="demographics">
                                 <button type="button" class="users-filter-section-toggle" data-filter-section-toggle>
                                     <i class="fas {{ request('sexo') || request('edad') ? 'fa-chevron-down' : 'fa-chevron-right' }}" aria-hidden="true"></i><span>Datos demográficos</span>
                                 </button>
                                 <div class="users-filter-section-content">
                                     <div class="users-filter-options">
                                         @foreach([''=>'Todos','F'=>'Femenino','M'=>'Masculino'] as $value => $label)
-                                            <button type="button" class="users-filter-option" data-filter-target="sexo" data-filter-value="{{ $value }}"><span class="users-filter-check"><i class="fas fa-check" aria-hidden="true"></i></span><span>{{ $label }}</span></button>
+                                            <button type="button" class="users-filter-option {{ $value === '' ? 'users-filter-option--all' : '' }}" data-filter-target="sexo" data-filter-value="{{ $value }}"><span class="users-filter-check"><i class="fas fa-check" aria-hidden="true"></i></span><span>{{ $label }}</span></button>
                                         @endforeach
                                     </div>
-                                    <div class="statistics-filter-detail is-visible"><label for="edad">Edad</label><input type="text" id="edad" name="edad" value="{{ request('edad') }}" placeholder="Ej. 25, 20-30 o 5,10,15"></div>
+                                    <div class="statistics-filter-detail is-visible"><label for="edad">Edad</label><input type="text" id="edad" name="edad" value="{{ request('edad') }}" placeholder="Ej. 25, 20-30, 5,10,15 o 65+" maxlength="50"></div>
                                 </div>
                             </div>
 
-                            <div class="users-filter-section {{ request('causa') ? 'is-open' : '' }}" data-filter-section>
+                            <div class="users-filter-section {{ request('causa') ? 'is-open' : '' }}" data-filter-section="cause">
                                 <button type="button" class="users-filter-section-toggle" data-filter-section-toggle>
                                     <i class="fas {{ request('causa') ? 'fa-chevron-down' : 'fa-chevron-right' }}" aria-hidden="true"></i><span>Causa de defunción</span>
                                 </button>
                                 <div class="users-filter-section-content">
-                                    <x-filtros.select id="causa" name="causa" placeholder="Todas" aria-label="Causa de defunción"><option value="">Todas</option>@foreach($causes ?? [] as $cause)<option value="{{ $cause->id }}" @selected(request('causa') == $cause->id)>{{ $cause->display_name }}</option>@endforeach</x-filtros.select>
+                                    <x-filtros.select id="causa" name="causa" placeholder="Todas" :allow-empty-option="true" aria-label="Causa de defunción"><option value="" @selected(!request()->filled('causa'))>Todas</option>@foreach($causes ?? [] as $cause)<option value="{{ $cause->id }}" @selected((string) request('causa', '') === (string) $cause->id)>{{ $cause->display_name }}</option>@endforeach</x-filtros.select>
                                 </div>
                             </div>
                     </x-filtros.panel>
@@ -165,6 +175,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const pageLabel = document.getElementById('dt-per-page-deaths-label');
     const pageMenu = document.getElementById('dt-per-page-deaths-menu');
     let deathsPageSizeController = null;
+    let deathsFilterDraftSnapshot = null;
     if (!form || !panel || !toggle) return;
 
     const getControl = (name) => form.querySelector(`[name="${name}"]`);
@@ -173,7 +184,24 @@ document.addEventListener('DOMContentLoaded', function () {
     const monthNames = { '01':'Ene', '02':'Feb', '03':'Mar', '04':'Abr', '05':'May', '06':'Jun', '07':'Jul', '08':'Ago', '09':'Sep', '10':'Oct', '11':'Nov', '12':'Dic' };
     const inheritedFilterChips = @json(array_values($inheritedFilterChips));
 
-    function setPanel(open) {
+    function captureDeathsFilterState() {
+        return window.AppFilterPanel?.capture(form) || null;
+    }
+
+    function restoreDeathsFilterState(snapshot) {
+        if (!snapshot) return;
+        window.AppFilterPanel?.restore(snapshot);
+        updateChips();
+    }
+
+    function setPanel(open, { discardDraft = false } = {}) {
+        if (open) {
+            deathsFilterDraftSnapshot = captureDeathsFilterState();
+        } else if (discardDraft && deathsFilterDraftSnapshot) {
+            restoreDeathsFilterState(deathsFilterDraftSnapshot);
+            deathsFilterDraftSnapshot = null;
+        }
+
         panel.classList.toggle('is-collapsed', !open);
         toggle.setAttribute('aria-expanded', String(open));
     }
@@ -214,39 +242,41 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     document.addEventListener('statistics-toolbar-menu-open', event => {
-        if (event.detail?.source !== 'filters') setPanel(false);
+        if (event.detail?.source !== 'filters') setPanel(false, { discardDraft: true });
         if (event.detail?.source !== 'page-size') closePageMenu();
     });
 
     toggle.addEventListener('click', () => {
         const open = panel.classList.contains('is-collapsed');
         if (open) announceToolbarMenu('filters');
-        setPanel(open);
+        setPanel(open, { discardDraft: !open });
     });
-    document.getElementById('closeDeathsFilters')?.addEventListener('click', () => setPanel(false));
+    document.getElementById('closeDeathsFilters')?.addEventListener('click', () => {
+        setPanel(false, { discardDraft: true });
+    });
     document.addEventListener('click', event => {
-        if (!event.target.closest('.users-filter-popover-wrap')) setPanel(false);
+        if (!event.target.closest('.users-filter-popover-wrap')) {
+            setPanel(false, { discardDraft: true });
+        }
     });
     document.addEventListener('keydown', event => {
         if (event.key !== 'Escape') return;
-        setPanel(false);
+        setPanel(false, { discardDraft: true });
         closePageMenu();
     });
 
     form.querySelectorAll('[data-filter-section]').forEach(section => {
         section.querySelector('[data-filter-section-toggle]')?.addEventListener('click', function () {
-            section.classList.toggle('is-open');
+            const open = !section.classList.contains('is-open');
+            window.setFilterSectionExpanded?.(section, open);
             const icon = this.querySelector('i');
-            icon?.classList.toggle('fa-chevron-down', section.classList.contains('is-open'));
-            icon?.classList.toggle('fa-chevron-right', !section.classList.contains('is-open'));
+            icon?.classList.toggle('fa-chevron-down', open);
+            icon?.classList.toggle('fa-chevron-right', !open);
         });
     });
 
     function setFilterValue(name, value) {
-        const control = getControl(name);
-        if (!control) return;
-        if (control.tomselect) control.tomselect.setValue(value, true);
-        else control.value = value;
+        window.AppFilterPanel?.setValue(form, name, value);
     }
 
     function updateDateDetails() {
@@ -254,14 +284,18 @@ document.addEventListener('DOMContentLoaded', function () {
         const help = document.getElementById('statisticsDateModeHelp');
         const context = document.getElementById('statisticsDateContext');
         const descriptions = {
-            all: 'Muestra todos los registros disponibles.',
+            all: '',
             years: 'Puede consultar un año, varios años o un periodo continuo.',
             months: 'Seleccione uno o varios meses dentro del año indicado.',
             quarter: 'Seleccione el año y el trimestre que desea consultar.',
             custom: 'Defina una fecha inicial, una fecha final o ambas.'
         };
 
-        if (help) help.textContent = descriptions[value] || descriptions.all;
+        if (help) {
+            const description = descriptions[value] || '';
+            help.textContent = description;
+            help.classList.toggle('hidden', !description);
+        }
         if (context) {
             context.classList.toggle('has-detail', value !== 'all');
         }
@@ -295,14 +329,41 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function updateChips() {
+        const sectionByKey = {
+            date: 'date',
+            residence_district: 'location',
+            residence_municipality: 'location',
+            death_district: 'location',
+            death_municipality: 'location',
+            death_location: 'location',
+            sex: 'demographics',
+            age: 'demographics',
+            cause: 'cause',
+        };
+        const focusByKey = {
+            date: 'dateRange',
+            residence_district: 'distrito',
+            residence_municipality: 'municipio',
+            death_district: 'distritoDefuncion',
+            death_municipality: 'municipioDefuncion',
+            death_location: 'lugar',
+            sex: 'sexo',
+            age: 'edad',
+            cause: 'causa',
+        };
         const chips = inheritedFilterChips
-            .map((chip, inheritedIndex) => ({ ...chip, inheritedIndex }))
+            .map((chip, inheritedIndex) => ({
+                ...chip,
+                inheritedIndex,
+                section: sectionByKey[chip.key] || chip.section || '',
+                focusTarget: focusByKey[chip.key] || chip.focusTarget || '',
+            }))
             .filter(chip => chip.active !== false);
         const inheritedKeys = new Set(chips.map(chip => chip.key));
         const addSelect = (name, prefix, key, defaults = ['']) => {
             if (inheritedKeys.has(key)) return;
             const control = getControl(name);
-            if (control && !defaults.includes(String(control.value))) chips.push({ key, label: `${prefix}: ${selectedText(control)}`, fields: [name] });
+            if (control && !defaults.includes(String(control.value))) chips.push({ key, section: sectionByKey[key], focusTarget: name, label: `${prefix}: ${selectedText(control)}`, fields: [name] });
         };
         const dateMode = getControl('dateRange')?.value || 'all';
         const yearValue = getControl('year')?.value?.trim() || '';
@@ -332,6 +393,9 @@ document.addEventListener('DOMContentLoaded', function () {
 
         if (dateLabel) {
             chips.push({
+                key: 'date',
+                section: 'date',
+                focusTarget: 'dateRange',
                 label: dateLabel,
                 fields: ['dateRange','year','month','selectedMonths[]','quarter','startDate','endDate']
             });
@@ -343,7 +407,7 @@ document.addEventListener('DOMContentLoaded', function () {
         addSelect('lugar', 'Lugar de defunción', 'death_location');
         addSelect('sexo', 'Sexo', 'sex');
         addSelect('causa', 'Causa', 'cause');
-        if (!inheritedKeys.has('age') && getControl('edad')?.value) chips.push({ key: 'age', label: `Edad: ${getControl('edad').value}`, fields: ['edad'] });
+        if (!inheritedKeys.has('age') && getControl('edad')?.value) chips.push({ key: 'age', section: 'demographics', focusTarget: 'edad', label: `Edad: ${getControl('edad').value}`, fields: ['edad'] });
 
         const container = document.getElementById('deathsFilterChips');
         const count = document.getElementById('deathsFilterCount');
@@ -351,7 +415,10 @@ document.addEventListener('DOMContentLoaded', function () {
             const clearAttribute = Number.isInteger(chip.inheritedIndex)
                 ? `data-clear-inherited-filter="${chip.inheritedIndex}"`
                 : `data-clear-filter="${chip.fields.join(',')}"`;
-            return `<span class="users-filter-chip"><span>${escapeText(chip.label)}</span><button type="button" ${clearAttribute} aria-label="Quitar ${escapeText(chip.label)}"><i class="fas fa-times" aria-hidden="true"></i></button></span>`;
+            const label = chip.section
+                ? `<button type="button" class="users-filter-chip-label" data-open-filter-section="${escapeText(chip.section)}" data-focus-filter="${escapeText(chip.focusTarget || '')}" aria-label="Editar ${escapeText(chip.label)}">${escapeText(chip.label)}</button>`
+                : `<span>${escapeText(chip.label)}</span>`;
+            return `<span class="users-filter-chip">${label}<button type="button" class="users-filter-chip-remove" ${clearAttribute} aria-label="Quitar ${escapeText(chip.label)}"><i class="fas fa-times" aria-hidden="true"></i></button></span>`;
         }).join('');
         count.textContent = chips.length;
         count.classList.toggle('hidden', chips.length === 0);
@@ -370,9 +437,32 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     document.getElementById('limpiarFiltros')?.addEventListener('click', function () {
-        form.reset();
-        form.querySelectorAll('select[data-filter-select]').forEach(select => select.tomselect?.clear(true));
-        setFilterValue('dateRange', 'all');
+        window.AppFilterPanel?.clear(form, [
+            'dateRange',
+            'year',
+            'month',
+            'selectedMonths[]',
+            'quarter',
+            'startDate',
+            'endDate',
+            'distrito',
+            'municipio',
+            'distritoDefuncion',
+            'municipioDefuncion',
+            'lugar',
+            'sexo',
+            'edad',
+            'causa',
+        ], { dateRange: 'all' });
+
+        const filterError = document.getElementById('statistics-filter-error');
+        if (filterError) {
+            filterError.textContent = '';
+            filterError.classList.add('hidden');
+            delete filterError.dataset.errorSource;
+        }
+        document.getElementById('edad')?.removeAttribute('aria-invalid');
+
         const inheritedFields = inheritedFilterChips.flatMap(chip => chip.active === false ? [] : (chip.fields || []));
         const inheritedReturnKeys = inheritedFilterChips.flatMap(chip => chip.active === false ? [] : (chip.return_keys || []));
         inheritedFilterChips.forEach(chip => { chip.active = false; });
@@ -387,6 +477,19 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     document.getElementById('deathsFilterChips')?.addEventListener('click', function (event) {
+        const openButton = event.target.closest('[data-open-filter-section]');
+        if (openButton) {
+            event.stopPropagation();
+            window.AppFilterPanel?.openSection({
+                panel,
+                sectionKey: openButton.dataset.openFilterSection,
+                focusName: openButton.dataset.focusFilter,
+                form,
+                openPanel: () => setPanel(true),
+            });
+            return;
+        }
+
         const inheritedButton = event.target.closest('[data-clear-inherited-filter]');
         if (inheritedButton) {
             const chip = inheritedFilterChips[Number(inheritedButton.dataset.clearInheritedFilter)];
@@ -412,8 +515,59 @@ document.addEventListener('DOMContentLoaded', function () {
         form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
     });
 
+    const ageInput = document.getElementById('edad');
+    const filterError = document.getElementById('statistics-filter-error');
+    const ageErrorMessage = 'Formato de edad no válido. Use 25, 20-30, 5,10,15 o 65+ (de 0 a 150).';
+
+    function isValidAgeFilter(value) {
+        const normalized = value.trim();
+        if (!normalized) return true;
+
+        const valuesAreInRange = values => values.every(item => Number(item) >= 0 && Number(item) <= 150);
+
+        if (/^\d+$/.test(normalized)) return valuesAreInRange([normalized]);
+
+        const range = normalized.match(/^(\d+)\s*-\s*(\d+)$/);
+        if (range) return valuesAreInRange([range[1], range[2]]);
+
+        const minimum = normalized.match(/^(\d+)\s*\+$/);
+        if (minimum) return valuesAreInRange([minimum[1]]);
+
+        if (/^\d+(?:\s*,\s*\d+)+$/.test(normalized)) {
+            return valuesAreInRange(normalized.split(',').map(item => item.trim()));
+        }
+
+        return false;
+    }
+
+    ageInput?.addEventListener('input', function () {
+        this.removeAttribute('aria-invalid');
+
+        if (filterError?.dataset.errorSource === 'age') {
+            filterError.textContent = '';
+            filterError.classList.add('hidden');
+            delete filterError.dataset.errorSource;
+        }
+    });
+
     form.addEventListener('change', updateChips);
-    form.addEventListener('submit', () => setPanel(false));
+    form.addEventListener('submit', event => {
+        if (ageInput && !isValidAgeFilter(ageInput.value)) {
+            event.preventDefault();
+            event.stopImmediatePropagation();
+            ageInput.setAttribute('aria-invalid', 'true');
+            if (filterError) {
+                filterError.textContent = ageErrorMessage;
+                filterError.dataset.errorSource = 'age';
+                filterError.classList.remove('hidden');
+            }
+            ageInput.focus();
+        }
+    }, true);
+    form.addEventListener('statistics:filters-applied', () => {
+        deathsFilterDraftSnapshot = null;
+        setPanel(false);
+    });
     updateChips();
 });
 </script>

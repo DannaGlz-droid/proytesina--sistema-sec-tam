@@ -320,6 +320,21 @@
 .statistics-data-page .statistics-filter-detail { margin-top: .65rem; }
 .statistics-data-page .statistics-filter-fields { display: grid; gap: .85rem; }
 .statistics-data-page .statistics-filter-field { display: grid; gap: .32rem; min-width: 0; }
+.statistics-data-page .statistics-location-groups { display: grid; gap: .85rem; }
+.statistics-data-page .statistics-location-group { display: grid; gap: .62rem; }
+.statistics-data-page .statistics-location-group + .statistics-location-group {
+  padding-top: .82rem;
+  border-top: 1px solid #e8edf3;
+}
+.statistics-data-page .statistics-location-group .statistics-filter-fields { gap: .72rem; }
+.statistics-data-page .statistics-location-group-title {
+  margin: 0;
+  color: #334155;
+  font-size: .7rem;
+  font-weight: 700;
+  letter-spacing: .015em;
+  line-height: 1.3;
+}
 .statistics-data-page .statistics-filter-detail > label,
 .statistics-data-page .statistics-filter-date-grid label,
 .statistics-data-page .statistics-filter-field > label {
@@ -351,6 +366,12 @@
   border-color: var(--users-accent);
   outline: none;
   box-shadow: 0 0 0 3px var(--users-accent-ring);
+}
+.statistics-data-page .statistics-filter-detail input[aria-invalid="true"] {
+  border-color: var(--ui-danger, #b91c1c);
+}
+.statistics-data-page .statistics-filter-detail input[aria-invalid="true"]:focus {
+  box-shadow: 0 0 0 3px rgb(185 28 28 / 14%);
 }
 .statistics-data-page .statistics-filter-detail.statistics-filter-date-grid.is-visible { display: grid; grid-template-columns: 1fr 1fr; gap: .55rem; }
 .statistics-data-page .statistics-filter-label { display: block; margin-bottom: .42rem; }
@@ -446,9 +467,9 @@
 .statistics-data-page .statistics-table-card #deaths-table th:nth-child(4),
 .statistics-data-page .statistics-table-card #deaths-table td:nth-child(4) { width: 7.2rem; }
 .statistics-data-page .statistics-table-card #deaths-table th:nth-child(5),
-.statistics-data-page .statistics-table-card #deaths-table td:nth-child(5) { width: 10.5rem; }
+.statistics-data-page .statistics-table-card #deaths-table td:nth-child(5) { width: 10rem; }
 .statistics-data-page .statistics-table-card #deaths-table th:nth-child(6),
-.statistics-data-page .statistics-table-card #deaths-table td:nth-child(6) { width: 9rem; }
+.statistics-data-page .statistics-table-card #deaths-table td:nth-child(6) { width: 10rem; }
 .statistics-data-page .statistics-table-card #deaths-table th:nth-child(7),
 .statistics-data-page .statistics-table-card #deaths-table td:nth-child(7) { width: 10rem; }
 .statistics-data-page .statistics-table-card #deaths-table th:nth-child(8),

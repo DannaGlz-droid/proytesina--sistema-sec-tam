@@ -33,6 +33,29 @@ function positionDropdownVertically(instance) {
 
     wrapper.classList.remove('app-filter-select--auto-drop-up');
 
+    const filterPanelBody = wrapper.closest('.app-standard-filter-panel .users-filter-panel-body');
+    if (filterPanelBody) {
+        const filterPanel = filterPanelBody.closest('.app-standard-filter-panel');
+        filterPanelBody.classList.add('has-open-filter-select');
+        filterPanel?.classList.add('has-open-filter-select');
+        window.requestAnimationFrame(() => {
+            if (!instance.isOpen) return;
+
+            const bodyRect = filterPanelBody.getBoundingClientRect();
+            const dropdownRect = dropdown.getBoundingClientRect();
+            const hiddenBelow = dropdownRect.bottom - bodyRect.bottom;
+
+            if (hiddenBelow > 0) {
+                const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+                filterPanelBody.scrollBy({
+                    top: hiddenBelow + 8,
+                    behavior: reduceMotion ? 'auto' : 'smooth',
+                });
+            }
+        });
+        return;
+    }
+
     window.requestAnimationFrame(() => {
         if (!instance.isOpen) return;
 
@@ -76,13 +99,22 @@ function init(target, options = {}) {
     const customOnDropdownOpen = options.onDropdownOpen;
     const customOnInitialize = options.onInitialize;
     const customOnItemAdd = options.onItemAdd;
+    const placeholder = select.dataset.placeholder || (multiple ? 'Selecciona opciones' : 'Seleccionar');
+    const emptyOptionText = Array.from(select.options)
+        .find((option) => option.value === '')
+        ?.textContent?.trim();
+    const emptyOptionLabel = emptyOptionText && emptyOptionText !== '-'
+        ? emptyOptionText
+        : placeholder;
     const compactLabels = Object.fromEntries(
         Array.from(select.options)
             .filter((option) => option.dataset.compactLabel)
             .map((option) => [option.value, option.dataset.compactLabel]),
     );
     const itemRenderer = (data, escape) => {
-        const fullLabel = String(data.text ?? '');
+        const fullLabel = String(data.value ?? '') === ''
+            ? emptyOptionLabel
+            : String(data.text ?? '');
         const visibleLabel = compactLabels[data.value] || fullLabel;
 
         return `<div title="${escape(fullLabel)}" aria-label="${escape(fullLabel)}"><span class="app-filter-select__item-label">${escape(visibleLabel)}</span></div>`;
@@ -132,7 +164,7 @@ function init(target, options = {}) {
         maxItems: multiple ? null : 1,
         create: false,
         allowEmptyOption,
-        placeholder: select.dataset.placeholder || (multiple ? 'Selecciona opciones' : 'Seleccionar'),
+        placeholder,
         // En selecciones múltiples, los elementos elegidos ya están visibles
         // como chips y no deben volver a ofrecerse como resultados duplicados.
         hideSelected: multiple,
@@ -163,6 +195,13 @@ function init(target, options = {}) {
         },
         onDropdownClose: function () {
             this.wrapper?.classList.remove('app-filter-select--auto-drop-up');
+            const filterPanelBody = this.wrapper?.closest('.app-standard-filter-panel .users-filter-panel-body');
+            const filterPanel = filterPanelBody?.closest('.app-standard-filter-panel');
+            window.requestAnimationFrame(() => {
+                const stillHasOpenSelect = filterPanelBody?.querySelector('.ts-wrapper.dropdown-active');
+                filterPanelBody?.classList.toggle('has-open-filter-select', Boolean(stillHasOpenSelect));
+                filterPanel?.classList.toggle('has-open-filter-select', Boolean(stillHasOpenSelect));
+            });
             resetClosedMultiSelectScroll(this);
             customOnDropdownClose?.call(this);
         },

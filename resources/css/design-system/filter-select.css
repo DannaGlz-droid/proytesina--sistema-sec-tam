@@ -318,3 +318,109 @@ select.app-filter-select {
   padding-top: .3rem !important;
   padding-bottom: .3rem !important;
 }
+
+/*
+ * Canonical filter-panel select contract.
+ * It mirrors the approved administrative forms while keeping the compact
+ * proportions required by a filter popover. Any future standard panel gets
+ * the same control, menu and interaction states without page-specific CSS.
+ */
+.app-standard-filter-panel .ts-wrapper.app-filter-select .ts-control {
+  height: 34px !important;
+  min-height: 34px !important;
+  max-height: 34px !important;
+  flex-wrap: nowrap !important;
+  overflow: hidden !important;
+  padding: 0 2rem 0 .72rem !important;
+  gap: .28rem !important;
+  border-color: #cbd5e1 !important;
+  border-radius: 7px !important;
+  background: #fff !important;
+  box-shadow: 0 1px 2px rgb(15 23 42 / 4%) !important;
+}
+
+.app-standard-filter-panel .ts-wrapper.app-filter-select .ts-control:hover {
+  border-color: #bdc8d5 !important;
+  background: #f8fafc !important;
+}
+
+.app-standard-filter-panel .ts-wrapper.app-filter-select.focus .ts-control,
+.app-standard-filter-panel .ts-wrapper.app-filter-select.dropdown-active .ts-control {
+  border-color: #475569 !important;
+  background: #fff !important;
+  box-shadow: 0 0 0 2px rgb(71 85 105 / 18%) !important;
+}
+
+.app-standard-filter-panel .ts-wrapper.app-filter-select .ts-control .item,
+.app-standard-filter-panel .ts-wrapper.app-filter-select .ts-control > input {
+  color: #10233f !important;
+  font-family: "Open Sans", system-ui, sans-serif !important;
+  font-size: .8rem !important;
+  font-weight: 600 !important;
+  line-height: 1.15 !important;
+  letter-spacing: 0 !important;
+}
+
+.app-standard-filter-panel .ts-wrapper.app-filter-select .ts-control > input::placeholder {
+  color: #7b8798 !important;
+  font-weight: 500 !important;
+  opacity: 1 !important;
+}
+
+.app-standard-filter-panel .ts-wrapper.app-filter-select.single .ts-control::after {
+  right: .72rem !important;
+  border-width: 5px 5px 0 !important;
+  border-color: #64748b transparent transparent !important;
+}
+
+.app-standard-filter-panel .ts-wrapper.app-filter-select .ts-dropdown {
+  position: static !important;
+  inset: auto !important;
+  width: 100% !important;
+  margin-top: .28rem !important;
+  margin-bottom: 0 !important;
+  transform: none !important;
+  max-height: 11.5rem !important;
+  overflow: hidden !important;
+  border-color: #cbd5e1 !important;
+  border-radius: 7px !important;
+  background: #fff !important;
+  box-shadow: 0 16px 32px rgb(15 23 42 / 12%) !important;
+  color: #10233f !important;
+  font-family: "Open Sans", system-ui, sans-serif !important;
+  font-size: .79rem !important;
+  font-weight: 500 !important;
+  line-height: 1.15rem !important;
+}
+
+.app-standard-filter-panel .ts-wrapper.app-filter-select .ts-dropdown-content {
+  max-height: 11.5rem !important;
+  overscroll-behavior: contain;
+  padding: 0 !important;
+}
+
+.app-standard-filter-panel .ts-wrapper.app-filter-select .ts-dropdown .option,
+.app-standard-filter-panel .ts-wrapper.app-filter-select .ts-dropdown .no-results {
+  padding: .42rem .58rem !important;
+  border-radius: 0 !important;
+  background: #fff !important;
+  color: #10233f !important;
+  font-family: "Open Sans", system-ui, sans-serif !important;
+  font-size: .79rem !important;
+  font-weight: 500 !important;
+  line-height: 1.15rem !important;
+  letter-spacing: 0 !important;
+  text-transform: none !important;
+}
+
+.app-standard-filter-panel .ts-wrapper.app-filter-select .ts-dropdown .option.selected {
+  background: #f8fafc !important;
+  font-weight: 600 !important;
+}
+
+.app-standard-filter-panel .ts-wrapper.app-filter-select .ts-dropdown .option.active,
+.app-standard-filter-panel .ts-wrapper.app-filter-select .ts-dropdown .option:hover,
+.app-standard-filter-panel .ts-wrapper.app-filter-select .ts-dropdown .option.selected.active {
+  background: #e9eef4 !important;
+  color: #10233f !important;
+}

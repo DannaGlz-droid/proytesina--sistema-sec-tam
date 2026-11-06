@@ -174,6 +174,7 @@
             const perPageLabel = document.getElementById('dt-per-page-label');
             const perPageMenu = document.getElementById('dt-per-page-menu');
             let usersPageSizeController = null;
+            let usersFilterDraftSnapshot = null;
 
             const initializeUsersPageSize = () => {
                 if (usersPageSizeController) return usersPageSizeController;
@@ -184,7 +185,7 @@
                     label: perPageLabel,
                     menu: perPageMenu,
                     initialValue: perPageSelect?.value,
-                    onOpen: () => setUsersFilterPanelOpen(false),
+                    onOpen: () => setUsersFilterPanelOpen(false, { discardDraft: true }),
                     onChange: () => window.jQuery?.('#dt-per-page').trigger('change'),
                 }) || null;
 
@@ -195,8 +196,28 @@
                 window.addEventListener('app:data-table-ready', initializeUsersPageSize, { once: true });
             }
 
-            function setUsersFilterPanelOpen(open) {
+            function captureUsersFilterState() {
+                return window.AppFilterPanel?.capture(filtersForm) || null;
+            }
+
+            function restoreUsersFilterState(snapshot) {
+                if (!snapshot) return;
+
+                window.AppFilterPanel?.restore(snapshot);
+                syncUsersFilterPanel();
+                updateUsersFilterChips();
+            }
+
+            function setUsersFilterPanelOpen(open, { discardDraft = false } = {}) {
                 if (!usersFilterPanel || !usersFilterToggle) return;
+
+                if (open) {
+                    usersFilterDraftSnapshot = captureUsersFilterState();
+                } else if (discardDraft && usersFilterDraftSnapshot) {
+                    restoreUsersFilterState(usersFilterDraftSnapshot);
+                    usersFilterDraftSnapshot = null;
+                }
+
                 usersFilterPanel.classList.toggle('is-collapsed', !open);
                 usersFilterToggle.setAttribute('aria-expanded', String(open));
             }
@@ -205,22 +226,22 @@
                 event.stopPropagation();
                 const open = usersFilterPanel.classList.contains('is-collapsed');
                 if (open) usersPageSizeController?.close();
-                setUsersFilterPanelOpen(open);
+                setUsersFilterPanelOpen(open, { discardDraft: !open });
             });
 
             document.getElementById('closeUsersFilters')?.addEventListener('click', function() {
-                setUsersFilterPanelOpen(false);
+                setUsersFilterPanelOpen(false, { discardDraft: true });
             });
 
             document.addEventListener('click', function(event) {
                 if (!event.target.closest('.users-filter-popover-wrap')) {
-                    setUsersFilterPanelOpen(false);
+                    setUsersFilterPanelOpen(false, { discardDraft: true });
                 }
             });
 
             document.addEventListener('keydown', function(event) {
                 if (event.key === 'Escape' && !usersFilterPanel?.classList.contains('is-collapsed')) {
-                    setUsersFilterPanelOpen(false);
+                    setUsersFilterPanelOpen(false, { discardDraft: true });
                     usersFilterToggle?.focus();
                 }
             });
@@ -261,17 +282,7 @@
             }
 
             function setFilterValue(name, value) {
-                const control = getFilterControl(name);
-                if (!control) return;
-                if (control.tomselect) {
-                    if (value === null || value === '') {
-                        control.tomselect.clear(true);
-                    } else {
-                        control.tomselect.setValue(value, true);
-                    }
-                } else {
-                    control.value = value;
-                }
+                window.AppFilterPanel?.setValue(filtersForm, name, value);
             }
 
             function initUsersDistrictTomSelect() {
@@ -337,10 +348,10 @@
                 const dateTo = getFilterControl('date_to');
 
                 if (activeStatus && activeStatus.value !== '') {
-                    chips.push({ label: `Estado: ${selectedText(activeStatus)}`, fields: ['is_active'] });
+                    chips.push({ label: `Estado: ${selectedText(activeStatus)}`, fields: ['is_active'], section: 'status', focusTarget: 'is_active' });
                 }
                 if (lastSession && lastSession.value !== '') {
-                    chips.push({ label: `Ult. sesión: ${selectedText(lastSession)}`, fields: ['last_session'] });
+                    chips.push({ label: `Ult. sesión: ${selectedText(lastSession)}`, fields: ['last_session'], section: 'last-session', focusTarget: 'last_session' });
                 }
                 if (dateRange && dateRange.value && dateRange.value !== 'all') {
                     let label = `Fecha alta: ${selectedText(dateRange)}`;
@@ -349,22 +360,22 @@
                         const to = dateTo?.value || 'hoy';
                         label = `Fecha alta: ${from} a ${to}`;
                     }
-                    chips.push({ label, fields: ['date_range', 'date_from', 'date_to'] });
+                    chips.push({ label, fields: ['date_range', 'date_from', 'date_to'], section: 'date', focusTarget: dateRange.value === 'custom' ? 'date_from' : 'date_range' });
                 }
                 if (position && position.value !== '') {
-                    chips.push({ label: `Cargo: ${selectedText(position)}`, fields: ['position_id'] });
+                    chips.push({ label: `Cargo: ${selectedText(position)}`, fields: ['position_id'], section: 'position', focusTarget: 'position_id' });
                 }
                 if (district && district.value !== '') {
-                    chips.push({ label: `Distrito: ${selectedText(district)}`, fields: ['district_id'] });
+                    chips.push({ label: `Distrito: ${selectedText(district)}`, fields: ['district_id'], section: 'district', focusTarget: 'district_id' });
                 }
                 if (role && role.value !== '') {
-                    chips.push({ label: `Rol: ${selectedText(role)}`, fields: ['role_id'] });
+                    chips.push({ label: `Rol: ${selectedText(role)}`, fields: ['role_id'], section: 'role', focusTarget: 'role_id' });
                 }
 
                 chipsContainer.innerHTML = chips.map((chip) => `
                     <span class="users-filter-chip">
-                        ${escapeHtml(chip.label)}
-                        <button type="button" data-clear-filter="${chip.fields.join(',')}" aria-label="Quitar ${escapeHtml(chip.label)}">
+                        <button type="button" class="users-filter-chip-label" data-open-filter-section="${chip.section}" data-focus-filter="${chip.focusTarget}" aria-label="Editar ${escapeHtml(chip.label)}">${escapeHtml(chip.label)}</button>
+                        <button type="button" class="users-filter-chip-remove" data-clear-filter="${chip.fields.join(',')}" aria-label="Quitar ${escapeHtml(chip.label)}">
                             <i class="fas fa-times" aria-hidden="true"></i>
                         </button>
                     </span>
@@ -1316,7 +1327,7 @@
                 const totalAll = info.recordsTotal;
                 let text = `<span class="users-table-info-main">Mostrando <span class="font-semibold text-gray-900">${start}-${end}</span> de <span class="font-semibold text-gray-900">${filteredTotal}</span></span>`;
                 if (filteredTotal !== totalAll) {
-                    text += `<span class="users-table-info-context text-sm text-gray-400">(${totalAll} totales)</span>`;
+                    text += `<span class="users-table-info-context text-sm text-gray-400">(de ${totalAll} totales)</span>`;
                 }
                 $('#dt-info').removeClass('is-loading').html(text);
             }
@@ -1388,6 +1399,7 @@
             $('#filtersForm').on('submit', function(e) {
                 e.preventDefault();
                 try {
+                    usersFilterDraftSnapshot = null;
                     table.clearPipeline().ajax.reload();
                     updateUsersFilterChips();
                     $('#usersFilterPanel').addClass('is-collapsed');
@@ -1399,17 +1411,20 @@
             });
 
             $('#clearUsersFilters').on('click', function() {
-                setFilterValue('is_active', '');
-                setFilterValue('last_session', '');
-                setFilterValue('date_range', 'all');
-                setFilterValue('date_from', '');
-                setFilterValue('date_to', '');
-                setFilterValue('position_id', '');
-                setFilterValue('district_id', '');
-                setFilterValue('role_id', '');
+                window.AppFilterPanel?.clear(filtersForm, [
+                    'is_active',
+                    'last_session',
+                    'date_range',
+                    'date_from',
+                    'date_to',
+                    'position_id',
+                    'district_id',
+                    'role_id',
+                ], { date_range: 'all' });
                 $('#customRangeSelector').removeClass('is-visible');
                 syncUsersFilterPanel();
                 updateUsersFilterChips();
+                usersFilterDraftSnapshot = captureUsersFilterState();
                 table.clearPipeline().ajax.reload();
             });
 
@@ -1428,10 +1443,21 @@
                 table.clearPipeline().ajax.reload();
             });
 
+            $('#usersFilterChips').on('click', '[data-open-filter-section]', function(event) {
+                event.stopPropagation();
+                window.AppFilterPanel?.openSection({
+                    panel: usersFilterPanel,
+                    sectionKey: this.dataset.openFilterSection,
+                    focusName: this.dataset.focusFilter,
+                    form: filtersForm,
+                    openPanel: () => setUsersFilterPanelOpen(true),
+                });
+            });
+
             $('#usersFilterPanel').on('click', '[data-filter-section-toggle]', function() {
                 const section = $(this).closest('[data-filter-section]');
                 const isOpen = section.hasClass('is-open');
-                section.toggleClass('is-open', !isOpen);
+                window.setFilterSectionExpanded?.(section.get(0), !isOpen);
                 $(this).find('i')
                     .toggleClass('fa-chevron-down', !isOpen)
                     .toggleClass('fa-chevron-right', isOpen);

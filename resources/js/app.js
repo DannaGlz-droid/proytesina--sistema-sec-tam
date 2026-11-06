@@ -399,3 +399,228 @@ document.addEventListener('focusout', (event) => {
         wrapper.classList.remove('ui-has-search-query');
     }, 0);
 });
+
+/**
+ * Smoothly expands or collapses a section inside the standard filter panel.
+ */
+window.setFilterSectionExpanded = (section, open) => {
+    if (!(section instanceof HTMLElement)) return;
+
+    const toggle = section.querySelector('[data-filter-section-toggle]');
+    const content = section.querySelector(':scope > .users-filter-section-content');
+    toggle?.setAttribute('aria-expanded', String(open));
+
+    if (!(content instanceof HTMLElement)
+        || window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        section.classList.toggle('is-open', open);
+        return;
+    }
+
+    const runningAnimation = content.getAnimations().find(animation => animation.playState === 'running');
+    if (runningAnimation) {
+        try {
+            runningAnimation.commitStyles();
+        } catch (_) {
+            // Continue from the current rendered size when commitStyles is unavailable.
+        }
+        runningAnimation.cancel();
+    }
+
+    const startHeight = content.getBoundingClientRect().height;
+    if (open) section.classList.add('is-open');
+    const endHeight = open ? content.scrollHeight : 0;
+    const animation = content.animate([
+        { height: `${startHeight}px`, opacity: open ? 0 : 1 },
+        { height: `${endHeight}px`, opacity: open ? 1 : 0 },
+    ], {
+        duration: 180,
+        easing: 'cubic-bezier(0.2, 0, 0, 1)',
+    });
+
+    content.style.overflow = 'hidden';
+    animation.addEventListener('finish', () => {
+        section.classList.toggle('is-open', open);
+        content.style.removeProperty('height');
+        content.style.removeProperty('opacity');
+        content.style.removeProperty('overflow');
+    }, { once: true });
+};
+
+window.AppFilterPanel = {
+    highlightTimers: new WeakMap(),
+    panelTimers: new WeakMap(),
+    sectionTimers: new WeakMap(),
+
+    getControl(form, name) {
+        return form?.querySelector(`[name="${name}"]`) || null;
+    },
+
+    setValue(form, name, value) {
+        const control = this.getControl(form, name);
+        if (!control) return;
+
+        if (control.tomselect) {
+            if (value === null || value === '') control.tomselect.clear(true);
+            else control.tomselect.setValue(value, true);
+            return;
+        }
+
+        if (control instanceof HTMLInputElement && ['checkbox', 'radio'].includes(control.type)) {
+            control.checked = Boolean(value);
+            return;
+        }
+
+        control.value = value ?? '';
+    },
+
+    clear(form, fields, defaults = {}) {
+        fields.forEach(name => {
+            if (name.endsWith('[]')) {
+                form?.querySelectorAll(`[name="${name}"]`).forEach(control => { control.checked = false; });
+                return;
+            }
+            this.setValue(form, name, Object.prototype.hasOwnProperty.call(defaults, name) ? defaults[name] : '');
+        });
+    },
+
+    capture(form) {
+        if (!form) return null;
+        return Array.from(form.elements)
+            .filter(control => control instanceof HTMLInputElement || control instanceof HTMLSelectElement)
+            .map(control => ({
+                control,
+                value: control instanceof HTMLSelectElement && control.multiple
+                    ? Array.from(control.selectedOptions, option => option.value)
+                    : control.value,
+                checked: control instanceof HTMLInputElement ? control.checked : null,
+            }));
+    },
+
+    restore(snapshot) {
+        if (!snapshot) return;
+        snapshot.forEach(({ control, value, checked }) => {
+            if (!control?.isConnected) return;
+            if (control instanceof HTMLInputElement && ['checkbox', 'radio'].includes(control.type)) {
+                control.checked = checked;
+                return;
+            }
+            if (control.tomselect) {
+                if (Array.isArray(value)) control.tomselect.setValue(value, true);
+                else if (value === '') control.tomselect.clear(true);
+                else control.tomselect.setValue(value, true);
+                return;
+            }
+            control.value = value;
+        });
+    },
+
+    highlightTarget(target) {
+        if (!(target instanceof HTMLElement)
+            || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+        const previousTimer = this.highlightTimers.get(target);
+        if (previousTimer) window.clearTimeout(previousTimer);
+        target.classList.remove('app-filter-target-highlight');
+        void target.offsetWidth;
+        target.classList.add('app-filter-target-highlight');
+
+        const timer = window.setTimeout(() => {
+            target.classList.remove('app-filter-target-highlight');
+            this.highlightTimers.delete(target);
+        }, 800);
+        this.highlightTimers.set(target, timer);
+    },
+
+    animateEntry(target, className, timers, duration) {
+        if (!(target instanceof HTMLElement)
+            || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+        const previousTimer = timers.get(target);
+        if (previousTimer) window.clearTimeout(previousTimer);
+        target.classList.remove(className);
+        void target.offsetWidth;
+        target.classList.add(className);
+
+        const timer = window.setTimeout(() => {
+            target.classList.remove(className);
+            timers.delete(target);
+        }, duration);
+        timers.set(target, timer);
+    },
+
+    placeCaretAtEnd(control) {
+        if (!(control instanceof HTMLInputElement || control instanceof HTMLTextAreaElement)) return;
+        if (control instanceof HTMLInputElement
+            && !['text', 'search', 'tel', 'url', 'email', 'number'].includes(control.type)) return;
+
+        const end = control.value.length;
+        try {
+            control.setSelectionRange(end, end);
+        } catch {
+            // Algunos tipos de input no exponen una selección de texto.
+        }
+    },
+
+    openSection({ panel, sectionKey, focusName = '', form, openPanel }) {
+        if (!(panel instanceof HTMLElement)) return false;
+        const section = Array.from(panel.querySelectorAll('[data-filter-section]'))
+            .find(item => item.dataset.filterSection === sectionKey);
+        if (!section) return false;
+
+        const panelWasClosed = panel.classList.contains('is-collapsed');
+        openPanel?.();
+        if (panelWasClosed) this.animateEntry(panel, 'app-filter-panel-enter', this.panelTimers, 220);
+        window.setFilterSectionExpanded?.(section, true);
+        this.animateEntry(section, 'app-filter-section-reveal', this.sectionTimers, 300);
+        const icon = section.querySelector('[data-filter-section-toggle] i');
+        icon?.classList.add('fa-chevron-down');
+        icon?.classList.remove('fa-chevron-right');
+
+        window.setTimeout(() => {
+            const body = panel.querySelector('.users-filter-panel-body');
+            let shouldWaitForScroll = false;
+            if (body instanceof HTMLElement) {
+                const bodyRect = body.getBoundingClientRect();
+                const sectionRect = section.getBoundingClientRect();
+                const targetTop = Math.max(0, body.scrollTop + sectionRect.top - bodyRect.top - 8);
+                shouldWaitForScroll = Math.abs(body.scrollTop - targetTop) > 8;
+                body.scrollTo({
+                    top: targetTop,
+                    behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth',
+                });
+            }
+
+            window.setTimeout(() => {
+                const control = focusName ? this.getControl(form, focusName) : null;
+                const dateProxy = focusName ? section.querySelector(`[data-filter-date-proxy="${focusName}"]`) : null;
+                const selectedOption = focusName
+                    ? Array.from(section.querySelectorAll('.users-filter-option[data-filter-target]'))
+                        .find(option => option.dataset.filterTarget === focusName
+                            && String(option.dataset.filterValue || '') === String(control?.value || ''))
+                    : null;
+
+                let focusTarget = null;
+                if (dateProxy) {
+                    dateProxy.focus({ preventScroll: true });
+                    focusTarget = dateProxy;
+                } else if (selectedOption) {
+                    selectedOption.focus({ preventScroll: true });
+                    focusTarget = selectedOption;
+                } else if (control?.tomselect) {
+                    control.tomselect.focus();
+                    focusTarget = control.tomselect.wrapper || control.tomselect.control;
+                } else if (control && !control.hidden && control.tabIndex !== -1) {
+                    control.focus({ preventScroll: true });
+                    this.placeCaretAtEnd(control);
+                    focusTarget = control;
+                } else {
+                    focusTarget = section.querySelector('[data-filter-section-toggle]');
+                    focusTarget?.focus({ preventScroll: true });
+                }
+                this.highlightTarget(focusTarget);
+            }, shouldWaitForScroll ? 240 : 0);
+        }, 200);
+
+        return true;
+    },
+};

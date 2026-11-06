@@ -74,7 +74,7 @@
                         <input type="date" name="date_to" id="endDate" value="{{ request('date_to') }}" max="{{ now()->toDateString() }}" tabindex="-1">
                     </div>
                     </x-slot:beforeBody>
-                        <div class="users-filter-section" data-filter-section>
+                        <div class="users-filter-section" data-filter-section="date">
                             <button type="button" class="users-filter-section-toggle" data-filter-section-toggle>
                                 <i class="fas fa-chevron-right" aria-hidden="true"></i>
                                 <span>Fecha alta</span>
@@ -88,7 +88,7 @@
                                         '90days' => 'Últimos 90 días',
                                         'custom' => 'Personalizado',
                                     ] as $value => $label)
-                                        <button type="button" class="users-filter-option" data-filter-target="date_range" data-filter-value="{{ $value }}">
+                                        <button type="button" class="users-filter-option {{ $value === 'all' ? 'users-filter-option--all' : '' }}" data-filter-target="date_range" data-filter-value="{{ $value }}">
                                             <span class="users-filter-check"><i class="fas fa-check" aria-hidden="true"></i></span>
                                             <span>{{ $label }}</span>
                                         </button>
@@ -107,7 +107,7 @@
                             </div>
                         </div>
 
-                        <div class="users-filter-section {{ $activeValue !== null && $activeValue !== '' ? 'is-open' : '' }}" data-filter-section>
+                        <div class="users-filter-section {{ $activeValue !== null && $activeValue !== '' ? 'is-open' : '' }}" data-filter-section="status">
                             <button type="button" class="users-filter-section-toggle" data-filter-section-toggle>
                                 <i class="fas {{ $activeValue !== null && $activeValue !== '' ? 'fa-chevron-down' : 'fa-chevron-right' }}" aria-hidden="true"></i>
                                 <span>Estado</span>
@@ -115,7 +115,7 @@
                             <div class="users-filter-section-content">
                                 <div class="users-filter-options">
                                     @foreach(['' => 'Todos', '1' => 'Activo', '0' => 'Inactivo'] as $value => $label)
-                                        <button type="button" class="users-filter-option" data-filter-target="is_active" data-filter-value="{{ $value }}">
+                                        <button type="button" class="users-filter-option {{ $value === '' ? 'users-filter-option--all' : '' }}" data-filter-target="is_active" data-filter-value="{{ $value }}">
                                             <span class="users-filter-check"><i class="fas fa-check" aria-hidden="true"></i></span>
                                             <span>{{ $label }}</span>
                                         </button>
@@ -124,7 +124,7 @@
                             </div>
                         </div>
 
-                        <div class="users-filter-section" data-filter-section>
+                        <div class="users-filter-section" data-filter-section="last-session">
                             <button type="button" class="users-filter-section-toggle" data-filter-section-toggle>
                                 <i class="fas fa-chevron-right" aria-hidden="true"></i>
                                 <span>Última sesión</span>
@@ -138,7 +138,7 @@
                                         '30' => 'Últimos 30 días',
                                         'never' => 'Nunca',
                                     ] as $value => $label)
-                                        <button type="button" class="users-filter-option" data-filter-target="last_session" data-filter-value="{{ $value }}">
+                                        <button type="button" class="users-filter-option {{ $value === '' ? 'users-filter-option--all' : '' }}" data-filter-target="last_session" data-filter-value="{{ $value }}">
                                             <span class="users-filter-check"><i class="fas fa-check" aria-hidden="true"></i></span>
                                             <span>{{ $label }}</span>
                                         </button>
@@ -147,14 +147,14 @@
                             </div>
                         </div>
 
-                        <div class="users-filter-section" data-filter-section>
+                        <div class="users-filter-section" data-filter-section="position">
                             <button type="button" class="users-filter-section-toggle" data-filter-section-toggle>
                                 <i class="fas fa-chevron-right" aria-hidden="true"></i>
                                 <span>Cargo</span>
                             </button>
                             <div class="users-filter-section-content">
                                 <div class="users-filter-options">
-                                    <button type="button" class="users-filter-option" data-filter-target="position_id" data-filter-value="">
+                                    <button type="button" class="users-filter-option users-filter-option--all" data-filter-target="position_id" data-filter-value="">
                                         <span class="users-filter-check"><i class="fas fa-check" aria-hidden="true"></i></span>
                                         <span>Todos los cargos</span>
                                     </button>
@@ -168,7 +168,7 @@
                             </div>
                         </div>
 
-                        <div class="users-filter-section {{ $districtValue !== null && $districtValue !== '' ? 'is-open' : '' }}" data-filter-section>
+                        <div class="users-filter-section {{ $districtValue !== null && $districtValue !== '' ? 'is-open' : '' }}" data-filter-section="district">
                             <button type="button" class="users-filter-section-toggle" data-filter-section-toggle>
                                 <i class="fas {{ $districtValue !== null && $districtValue !== '' ? 'fa-chevron-down' : 'fa-chevron-right' }}" aria-hidden="true"></i>
                                 <span>Distrito</span>
@@ -189,14 +189,14 @@
                             </div>
                         </div>
 
-                        <div class="users-filter-section" data-filter-section>
+                        <div class="users-filter-section" data-filter-section="role">
                             <button type="button" class="users-filter-section-toggle" data-filter-section-toggle>
                                 <i class="fas fa-chevron-right" aria-hidden="true"></i>
                                 <span>Rol</span>
                             </button>
                             <div class="users-filter-section-content">
                                 <div class="users-filter-options">
-                                    <button type="button" class="users-filter-option" data-filter-target="role_id" data-filter-value="">
+                                    <button type="button" class="users-filter-option users-filter-option--all" data-filter-target="role_id" data-filter-value="">
                                         <span class="users-filter-check"><i class="fas fa-check" aria-hidden="true"></i></span>
                                         <span>Todos</span>
                                     </button>

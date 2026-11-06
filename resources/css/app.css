@@ -1650,6 +1650,35 @@ html[data-ui-theme="tamaulipas-salud"] .app-document-surface {
 	color: #4a0e26;
 }
 
+.users-filter-chip .users-filter-chip-label {
+	width: auto;
+	height: auto;
+	min-width: 0;
+	padding: 0;
+	border-radius: 0.2rem;
+	background: transparent;
+	color: inherit;
+	font: inherit;
+	line-height: inherit;
+	text-align: left;
+}
+
+.users-filter-chip .users-filter-chip-label:hover {
+	background: transparent;
+	color: inherit;
+	text-decoration: underline;
+	text-underline-offset: 0.15em;
+}
+
+.users-filter-chip .users-filter-chip-label:focus-visible {
+	outline: 2px solid var(--ui-focus, #475569);
+	outline-offset: 2px;
+}
+
+.users-filter-chip .users-filter-chip-label:active {
+	transform: translateY(1px);
+}
+
 @media (max-width: 1280px) {
 	.users-filter-topbar {
 		flex-wrap: wrap;
@@ -6123,6 +6152,18 @@ html[data-ui-theme="tamaulipas-salud"] .app-document-surface {
 	color: var(--users-accent-hover) !important;
 }
 
+.users-management-page .users-table-card > .app-table-toolbar .users-filter-chip .users-filter-chip-label {
+	width: auto !important;
+	height: auto !important;
+	background: transparent !important;
+	color: inherit !important;
+}
+
+.users-management-page .users-table-card > .app-table-toolbar .users-filter-chip .users-filter-chip-label:hover {
+	background: transparent !important;
+	color: inherit !important;
+}
+
 .users-management-page .users-table-card > .app-table-toolbar .users-filter-menu .users-filter-option.is-active .users-filter-check {
 	background: var(--users-accent) !important;
 	border-color: var(--users-accent) !important;
@@ -10018,6 +10059,54 @@ html[data-ui-theme="tamaulipas-salud"] .app-document-surface {
   }
 }
 
+@keyframes app-filter-target-highlight {
+  0% { box-shadow: 0 0 0 0 rgb(107 18 56 / 0%); }
+  38% { box-shadow: 0 0 0 .3rem rgb(107 18 56 / 18%); }
+  100% { box-shadow: 0 0 0 .55rem rgb(107 18 56 / 0%); }
+}
+
+@keyframes app-filter-panel-enter {
+  from { opacity: 0; transform: translateY(-.3rem); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes app-filter-options-enter {
+  from { opacity: 0; transform: translateY(-.2rem); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.app-filter-panel-enter {
+  animation: app-filter-panel-enter 200ms cubic-bezier(.2, 0, 0, 1);
+}
+
+.app-filter-section-reveal .users-filter-option,
+.app-filter-section-reveal .statistics-filter-field,
+.app-filter-section-reveal .statistics-filter-detail,
+.app-filter-section-reveal .ts-wrapper,
+.app-standard-filter-panel .ts-dropdown {
+  animation: app-filter-options-enter 180ms cubic-bezier(.2, 0, 0, 1);
+}
+
+.app-filter-target-highlight {
+  border-radius: .5rem;
+  animation: app-filter-target-highlight 760ms cubic-bezier(.2, 0, 0, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .app-filter-target-highlight {
+    animation: none;
+  }
+
+  .app-filter-panel-enter,
+  .app-filter-section-reveal .users-filter-option,
+  .app-filter-section-reveal .statistics-filter-field,
+  .app-filter-section-reveal .statistics-filter-detail,
+  .app-filter-section-reveal .ts-wrapper,
+  .app-standard-filter-panel .ts-dropdown {
+    animation: none;
+  }
+}
+
 .users-form-field-hint {
   margin-top: .35rem;
   color: #64748b;
@@ -11569,7 +11658,10 @@ body .app-standard-filter-panel.users-filter-panel .users-filter-panel-body {
   min-height: 0;
   max-height: min(24rem, calc(100vh - 15rem)) !important;
   flex: 1 1 auto;
+  overflow-x: hidden !important;
   overflow-y: auto !important;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
   border-top: 0 !important;
   background: #fff !important;
   padding: 0 !important;
@@ -11588,6 +11680,25 @@ body .app-standard-filter-panel.users-filter-panel .users-filter-panel-body::-we
 body .app-standard-filter-panel.users-filter-panel .users-filter-panel-body::-webkit-scrollbar-thumb {
   border-radius: 999px;
   background: #cbd5e1;
+}
+
+/* Give an inline option list room before introducing a second scroll surface. */
+body .app-standard-filter-panel.users-filter-panel.has-open-filter-select {
+  max-height: min(44rem, calc(100dvh - 9rem)) !important;
+}
+
+body .app-standard-filter-panel.users-filter-panel .users-filter-panel-body.has-open-filter-select {
+  max-height: min(35rem, calc(100dvh - 13rem)) !important;
+}
+
+body .app-standard-filter-panel.users-filter-panel .users-filter-panel-body:has(.ts-wrapper.app-filter-select.dropdown-active) {
+  scrollbar-width: none !important;
+}
+
+body .app-standard-filter-panel.users-filter-panel .users-filter-panel-body:has(.ts-wrapper.app-filter-select.dropdown-active)::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
 }
 
 body .app-standard-filter-panel.users-filter-panel .users-filter-section {
@@ -11635,14 +11746,63 @@ body .app-standard-filter-panel.users-filter-panel .users-filter-section.is-open
   display: block !important;
 }
 
+/* Native fields follow the same compact control contract as shared selects. */
+body .app-standard-filter-panel.users-filter-panel input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]):not([role="combobox"]),
+body .app-standard-filter-panel.users-filter-panel select.app-filter-select {
+  box-sizing: border-box !important;
+  width: 100% !important;
+  height: 34px !important;
+  min-height: 34px !important;
+  border: 1px solid #cbd5e1 !important;
+  border-radius: 7px !important;
+  background: #fff !important;
+  padding: 0 .72rem !important;
+  color: #10233f !important;
+  box-shadow: 0 1px 2px rgb(15 23 42 / 4%) !important;
+  font-family: "Open Sans", system-ui, sans-serif !important;
+  font-size: .8rem !important;
+  font-weight: 500 !important;
+  line-height: 1.15 !important;
+  transition: background-color 120ms ease, border-color 120ms ease, box-shadow 120ms ease !important;
+}
+
+body .app-standard-filter-panel.users-filter-panel input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]):not([role="combobox"]):hover,
+body .app-standard-filter-panel.users-filter-panel select.app-filter-select:hover {
+  border-color: #bdc8d5 !important;
+  background: #f8fafc !important;
+}
+
+body .app-standard-filter-panel.users-filter-panel input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]):not([role="combobox"]):focus,
+body .app-standard-filter-panel.users-filter-panel select.app-filter-select:focus {
+  border-color: #475569 !important;
+  background: #fff !important;
+  box-shadow: 0 0 0 2px rgb(71 85 105 / 18%) !important;
+  outline: none !important;
+}
+
+body .app-standard-filter-panel.users-filter-panel input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]):not([role="combobox"])::placeholder {
+  color: #7b8798 !important;
+  font-weight: 500 !important;
+  opacity: 1 !important;
+}
+
 body .app-standard-filter-panel.users-filter-panel .users-filter-options {
   display: grid !important;
-  gap: .1rem !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: .45rem !important;
+  row-gap: .1rem !important;
+}
+
+/* General choices keep a stable full row regardless of how many specific
+   choices a current or future filter contains. */
+body .app-standard-filter-panel.users-filter-panel .users-filter-option--all {
+  grid-column: 1 / -1;
 }
 
 body .app-standard-filter-panel.users-filter-panel .users-filter-option {
   display: flex !important;
   width: 100% !important;
+  min-width: 0 !important;
   min-height: 1.92rem !important;
   align-items: center !important;
   gap: .62rem !important;
@@ -11723,6 +11883,14 @@ body .app-standard-filter-panel.users-filter-panel .users-filter-apply {
 }
 
 @media (max-width: 639px) {
+  body .app-standard-filter-panel.users-filter-panel .users-filter-options {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  body .app-standard-filter-panel.users-filter-panel .users-filter-option--all {
+    grid-column: auto;
+  }
+
   .users-management-page .users-table-card > .app-table-toolbar .users-filter-topbar {
     grid-template-rows: auto auto auto !important;
   }

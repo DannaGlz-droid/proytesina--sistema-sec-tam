@@ -96,15 +96,63 @@ class DataTableComponentConsistencyTest extends TestCase
         $this->assertStringContainsString('<x-ui.data-table.table id="deaths-table">', $view);
         $this->assertStringContainsString('class="dt-actions-cell px-3 py-2', $view);
         $this->assertStringContainsString('<x-ui.data-table.footer', $view);
+        $this->assertStringContainsString('aria-label="Municipio de residencia" title="Municipio de residencia">Residencia</th>', $view);
+        $this->assertStringContainsString('aria-label="Municipio de defunción" title="Municipio de defunción">Defunción</th>', $view);
         $this->assertStringContainsString('<x-ui.data-table.search', $filters);
         $this->assertStringContainsString('<x-ui.data-table.page-size', $filters);
         $this->assertStringContainsString('class="ui-data-table__filter-chips users-filter-chips"', $filters);
         $this->assertStringContainsString('initializeDeathsPageSize', $filters);
+        $this->assertSame(2, substr_count($filters, 'class="statistics-location-group"'));
+        $this->assertStringContainsString('statistics-location-residence-title', $filters);
+        $this->assertStringContainsString('statistics-location-death-title', $filters);
+        $this->assertStringContainsString('.statistics-location-group + .statistics-location-group', $styles);
         $this->assertStringContainsString('initializeDeathRowActions', $view);
         $this->assertStringContainsString(".toggleClass('is-selected', isSelected)", $view);
         $this->assertStringNotContainsString('function positionDeathActionMenu', $view);
         $this->assertStringNotContainsString('.statistics-table-card > .app-table-toolbar .users-filter-search:focus-within', $styles);
         $this->assertStringNotContainsString('.statistics-table-card > .app-table-toolbar .users-page-size-button[aria-expanded="true"]', $styles);
         $this->assertStringNotContainsString('#deaths-table.dataTable tbody tr { height:', $styles);
+    }
+
+    public function test_user_and_death_filters_share_the_same_panel_behavior(): void
+    {
+        $app = file_get_contents(resource_path('js/app.js'));
+        $filterSelect = file_get_contents(resource_path('js/filter-select.js'));
+        $styles = file_get_contents(resource_path('css/app.css'));
+        $filterSelectStyles = file_get_contents(resource_path('css/design-system/filter-select.css'));
+        $users = file_get_contents(resource_path('views/usuarios/gestion-de-usuarios.blade.php'));
+        $userFilters = file_get_contents(resource_path('views/components/filtros/usuarios.blade.php'));
+        $deaths = file_get_contents(resource_path('views/components/filtros/defunciones.blade.php'));
+
+        $this->assertSame(1, substr_count($app, 'window.AppFilterPanel = {'));
+        $this->assertSame(1, substr_count($app, 'window.setFilterSectionExpanded ='));
+        $this->assertStringContainsString('highlightTarget(target)', $app);
+        $this->assertStringContainsString("body.scrollTo({", $app);
+        $this->assertStringContainsString("'app-filter-section-reveal'", $app);
+        $this->assertStringContainsString("prefers-reduced-motion: reduce", $app);
+        $this->assertStringContainsString('placeCaretAtEnd(control)', $app);
+        $this->assertStringContainsString('emptyOptionLabel', $filterSelect);
+        $this->assertStringContainsString("String(data.value ?? '') === ''", $filterSelect);
+        $this->assertStringContainsString('Canonical filter-panel select contract', $filterSelectStyles);
+        $this->assertStringContainsString('.app-standard-filter-panel .ts-wrapper.app-filter-select .ts-control', $filterSelectStyles);
+        $this->assertStringContainsString('position: static !important', $filterSelectStyles);
+        $this->assertStringContainsString("wrapper.closest('.app-standard-filter-panel .users-filter-panel-body')", $filterSelect);
+        $this->assertStringContainsString('has-open-filter-select', $filterSelect);
+        $this->assertStringContainsString('.users-filter-panel-body.has-open-filter-select', $styles);
+        $this->assertStringContainsString('.app-standard-filter-panel.users-filter-panel.has-open-filter-select', $styles);
+        $this->assertStringContainsString(':has(.ts-wrapper.app-filter-select.dropdown-active)', $styles);
+        $this->assertStringContainsString(':not([role="combobox"])', $styles);
+        $this->assertStringContainsString('overscroll-behavior: contain', $styles);
+        $this->assertStringContainsString('.users-filter-option--all', $styles);
+        $this->assertSame(5, substr_count($userFilters, 'users-filter-option--all'));
+        $this->assertSame(1, substr_count($deaths, 'users-filter-option--all'));
+        $this->assertStringContainsString('AppFilterPanel?.clear', $users);
+        $this->assertStringContainsString('AppFilterPanel?.clear', $deaths);
+        $this->assertStringContainsString('AppFilterPanel?.openSection', $users);
+        $this->assertStringContainsString('AppFilterPanel?.openSection', $deaths);
+        $this->assertStringContainsString('AppFilterPanel?.capture', $users);
+        $this->assertStringContainsString('AppFilterPanel?.capture', $deaths);
+        $this->assertStringContainsString('AppFilterPanel?.restore', $users);
+        $this->assertStringContainsString('AppFilterPanel?.restore', $deaths);
     }
 }
