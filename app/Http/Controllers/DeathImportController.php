@@ -258,9 +258,12 @@ class DeathImportController extends Controller
                 $sex = isset($rowAssoc['sexod']) ? strtoupper(trim((string)$rowAssoc['sexod'])) : null;
                 $dateRaw = $rowAssoc['fechadefuncion'] ?? ($rowAssoc['fechadefuncion'] ?? null);
                 $residenceMunicipalityName = trim((string)($rowAssoc['municipioresidenciad'] ?? '')) ?: null;
+                $residenceDistrictName = trim((string)($rowAssoc['jurisdiccionresidenciad'] ?? $rowAssoc['distritoresidenciad'] ?? '')) ?: null;
                 $deathMunicipalityName = trim((string)($rowAssoc['municipiodefunciond'] ?? '')) ?: null;
                 $deathDistrictName = trim((string)($rowAssoc['jurisdicciondefunciond'] ?? $rowAssoc['distritodefunciond'] ?? '')) ?: null;
                 $siteName = trim((string)($rowAssoc['sitiodefunciond'] ?? '')) ?: null;
+                $cieCauseCode = $this->normalizeImportedDetail($rowAssoc['ciecausabasica'] ?? null, true, 32);
+                $cieCauseDescription = $this->normalizeImportedDetail($rowAssoc['ciecausabasicad'] ?? null);
 
                 $validationRow = $rowAssoc;
                 if ($folio !== null) {
@@ -396,15 +399,46 @@ class DeathImportController extends Controller
                     $incomingDistrictId = District::firstOrCreate(['name' => District::OTHER_NAME])->id;
                 }
 
-                $incomingDeathDistrict = $this->resolveImportDistrict($deathDistrictName, $districtLookup);
-                $incomingDeathDistrictId = $incomingDeathDistrict?->id
-                    ?? $deathMunicipality?->district_id
-                    ?? $otherJur->id;
+                $deathMunicipalityUsesOther = $this->normalizeMunicipalityName($deathMunicipality?->name)
+                    === $this->normalizeMunicipalityName('OTRO');
+                $incomingDeathDistrict = $deathMunicipalityUsesOther
+                    ? null
+                    : $this->resolveImportDistrict($deathDistrictName, $districtLookup);
+                $incomingDeathDistrictId = $deathMunicipalityUsesOther
+                    ? $otherJur->id
+                    : ($incomingDeathDistrict?->id ?? $deathMunicipality?->district_id ?? $otherJur->id);
+
+                $externalLocationDetails = [
+                    'residence_municipality_external' => $this->externalImportLocationDetail(
+                        $residenceMunicipalityName,
+                        $residenceMunicipality?->name
+                    ),
+                    'residence_district_external' => $this->externalImportLocationDetail(
+                        $residenceDistrictName,
+                        optional($residenceMunicipality?->district)->name ?? $otherJur->name
+                    ),
+                    'death_municipality_external' => $this->externalImportLocationDetail(
+                        $deathMunicipalityName,
+                        $deathMunicipality?->name
+                    ),
+                    'death_district_external' => $this->externalImportLocationDetail(
+                        $deathDistrictName,
+                        $incomingDeathDistrict?->name ?? optional($deathMunicipality?->district)->name ?? $otherJur->name
+                    ),
+                ];
+                $importedDetails = array_merge($externalLocationDetails, [
+                    'cie_cause_code' => $cieCauseCode,
+                    'cie_cause_description' => $cieCauseDescription,
+                ]);
 
                 // Accumulated files can contain previous folios. Identical records are omitted;
                 // changed records are reported for review, but never overwritten automatically.
                 $existingDeath = $existingDeathsByFolio->get(strtoupper((string) $folio));
                 if ($existingDeath) {
+                    // A repeated source file can enrich older records that were imported
+                    // before the original external location labels were preserved.
+                    $this->enrichImportedDetails($existingDeath, $importedDetails);
+
                     $incomingDeathData = [
                         'name' => $name,
                         'first_last_name' => $first,
@@ -451,11 +485,17 @@ class DeathImportController extends Controller
                 $d->sex = $sex;
                 $d->death_date = $deathDate ? $deathDate->format('Y-m-d') : null;
                 $d->residence_municipality_id = $residenceMunicipality ? $residenceMunicipality->id : null;
+                $d->residence_municipality_external = $externalLocationDetails['residence_municipality_external'];
                 $d->death_municipality_id = $deathMunicipality->id;
+                $d->death_municipality_external = $externalLocationDetails['death_municipality_external'];
                 $d->district_id = $incomingDistrictId;
+                $d->residence_district_external = $externalLocationDetails['residence_district_external'];
                 $d->death_district_id = $incomingDeathDistrictId;
+                $d->death_district_external = $externalLocationDetails['death_district_external'];
                 $d->death_location_id = $deathLocation ? $deathLocation->id : null;
                 $d->death_cause_id = $deathCause->id;
+                $d->cie_cause_code = $cieCauseCode;
+                $d->cie_cause_description = $cieCauseDescription;
                 // Track which import batch this record came from
                 $d->import_id = $importId;
                 try {
@@ -1053,9 +1093,25 @@ class DeathImportController extends Controller
             }
 
             $residenceName = trim((string) ($rowData['municipioresidenciad'] ?? $rowData['municipioresidencia'] ?? ''));
+            $residenceDistrictName = trim((string) ($rowData['jurisdiccionresidenciad'] ?? $rowData['distritoresidenciad'] ?? ''));
             $deathMunicipalityName = trim((string) ($rowData['municipiodefunciond'] ?? $rowData['municipiodefuncion'] ?? ''));
+            $deathDistrictName = trim((string) ($rowData['jurisdicciondefunciond'] ?? $rowData['distritodefunciond'] ?? ''));
+            $cieCauseCode = $this->normalizeImportedDetail($rowData['ciecausabasica'] ?? null, true, 32);
+            $cieCauseDescription = $this->normalizeImportedDetail($rowData['ciecausabasicad'] ?? null);
             $residenceMunicipality = $municipalityLookup[$this->normalizeMunicipalityName($residenceName)] ?? $otherMunicipality;
             $deathMunicipality = $municipalityLookup[$this->normalizeMunicipalityName($deathMunicipalityName)] ?? $otherMunicipality;
+            $externalLocationDetails = [
+                'residence_municipality_external' => $this->externalImportLocationDetail($residenceName, $residenceMunicipality->name),
+                'residence_district_external' => $this->externalImportLocationDetail(
+                    $residenceDistrictName,
+                    optional($residenceMunicipality->district)->name ?? $otherDistrict->name
+                ),
+                'death_municipality_external' => $this->externalImportLocationDetail($deathMunicipalityName, $deathMunicipality->name),
+                'death_district_external' => $this->externalImportLocationDetail(
+                    $deathDistrictName,
+                    optional($deathMunicipality->district)->name ?? $otherDistrict->name
+                ),
+            ];
             DB::transaction(function () use (
                 $failedRecord,
                 $rowData,
@@ -1064,7 +1120,10 @@ class DeathImportController extends Controller
                 $deathLocation,
                 $residenceMunicipality,
                 $deathMunicipality,
-                $otherDistrict
+                $otherDistrict,
+                $externalLocationDetails,
+                $cieCauseCode,
+                $cieCauseDescription
             ) {
                 $death = new Death();
                 $death->import_id = $failedRecord->import_id;
@@ -1079,11 +1138,17 @@ class DeathImportController extends Controller
                 $death->sex = $validated['sex'];
                 $death->death_date = $validated['death_date']->format('Y-m-d');
                 $death->residence_municipality_id = $residenceMunicipality->id;
+                $death->residence_municipality_external = $externalLocationDetails['residence_municipality_external'];
                 $death->death_municipality_id = $deathMunicipality->id;
+                $death->death_municipality_external = $externalLocationDetails['death_municipality_external'];
                 $death->district_id = $residenceMunicipality->district_id ?? $otherDistrict->id;
+                $death->residence_district_external = $externalLocationDetails['residence_district_external'];
                 $death->death_district_id = $deathMunicipality->district_id ?? $otherDistrict->id;
+                $death->death_district_external = $externalLocationDetails['death_district_external'];
                 $death->death_location_id = $deathLocation->id;
                 $death->death_cause_id = $deathCause->id;
+                $death->cie_cause_code = $cieCauseCode;
+                $death->cie_cause_description = $cieCauseDescription;
                 $death->save();
 
                 $failedRecord->corrected_data = $rowData;
@@ -1290,9 +1355,12 @@ class DeathImportController extends Controller
                 }
                 
                 $death->death_cause_id = $deathCause->id;
+                $death->cie_cause_code = $this->normalizeImportedDetail($rowData['ciecausabasica'] ?? null, true, 32);
+                $death->cie_cause_description = $this->normalizeImportedDetail($rowData['ciecausabasicad'] ?? null);
                 
                 // Set municipalities (try to find them, use OTRO as default)
                 $residenceMunicipalityName = trim((string)($rowData['municipioresidenciad'] ?? '')) ?: null;
+                $residenceDistrictName = trim((string)($rowData['jurisdiccionresidenciad'] ?? $rowData['distritoresidenciad'] ?? '')) ?: null;
                 $deathMunicipalityName = trim((string)($rowData['municipiodefunciond'] ?? '')) ?: null;
                 $deathDistrictName = trim((string)($rowData['jurisdicciondefunciond'] ?? $rowData['distritodefunciond'] ?? '')) ?: null;
                 $otherJur = District::firstOrCreate(['name' => District::OTHER_NAME]);
@@ -1322,11 +1390,30 @@ class DeathImportController extends Controller
                     $death->district_id = $otherJur->id;
                 }
 
-                $deathDistrict = $this->resolveImportDistrict($deathDistrictName, $this->buildImportDistrictLookup());
-                $death->death_district_id = $deathDistrict?->id
-                    ?? $deathMuni?->district_id
-                    ?? $otherMuni->district_id
-                    ?? $otherJur->id;
+                $deathMunicipalityUsesOther = !$deathMuni;
+                $deathDistrict = $deathMunicipalityUsesOther
+                    ? null
+                    : $this->resolveImportDistrict($deathDistrictName, $this->buildImportDistrictLookup());
+                $death->death_district_id = $deathMunicipalityUsesOther
+                    ? $otherJur->id
+                    : ($deathDistrict?->id ?? $deathMuni?->district_id ?? $otherJur->id);
+
+                $death->residence_municipality_external = $this->externalImportLocationDetail(
+                    $residenceMunicipalityName,
+                    $residenceMuni?->name ?? $otherMuni->name
+                );
+                $death->residence_district_external = $this->externalImportLocationDetail(
+                    $residenceDistrictName,
+                    optional($residenceMuni?->district)->name ?? $otherJur->name
+                );
+                $death->death_municipality_external = $this->externalImportLocationDetail(
+                    $deathMunicipalityName,
+                    $deathMuni?->name ?? $otherMuni->name
+                );
+                $death->death_district_external = $this->externalImportLocationDetail(
+                    $deathDistrictName,
+                    $deathDistrict?->name ?? optional($deathMuni?->district)->name ?? $otherJur->name
+                );
                 
                 $death->import_id = $failedRecord->import_id;
                 $death->save();
@@ -1842,6 +1929,51 @@ class DeathImportController extends Controller
         }
 
         return $this->normalizeImportCompareDate($death->death_date) !== $this->normalizeImportCompareDate($incoming['death_date'] ?? null);
+    }
+
+    private function externalImportLocationDetail(?string $source, ?string $resolvedCatalogName): ?string
+    {
+        $source = trim(preg_replace('/\s+/u', ' ', (string) $source) ?? '');
+        if ($source === '' || $this->normalizeMunicipalityName($source) === $this->normalizeMunicipalityName('OTRO')) {
+            return null;
+        }
+
+        if ($this->normalizeMunicipalityName($resolvedCatalogName) !== $this->normalizeMunicipalityName('OTRO')) {
+            return null;
+        }
+
+        return mb_substr($source, 0, 191);
+    }
+
+    /** @param array<string, ?string> $details */
+    private function enrichImportedDetails(Death $death, array $details): void
+    {
+        $updates = [];
+        foreach ($details as $field => $value) {
+            if (($death->{$field} === null || trim((string) $death->{$field}) === '') && $value !== null) {
+                $updates[$field] = $value;
+            }
+        }
+
+        if ($updates !== []) {
+            $death->forceFill($updates)->save();
+        }
+    }
+
+    private function normalizeImportedDetail($value, bool $uppercase = false, ?int $maxLength = null): ?string
+    {
+        if (!is_scalar($value)) {
+            return null;
+        }
+
+        $normalized = trim(preg_replace('/\s+/u', ' ', (string) $value) ?? '');
+        if ($normalized === '') {
+            return null;
+        }
+
+        $normalized = $uppercase ? mb_strtoupper($normalized) : $normalized;
+
+        return $maxLength ? mb_substr($normalized, 0, $maxLength) : $normalized;
     }
 
     private function normalizeImportCompareString($value): string

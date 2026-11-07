@@ -27,11 +27,17 @@ class Death extends Model
         'sex',
         'death_date',
         'residence_municipality_id',
+        'residence_municipality_external',
         'district_id',
+        'residence_district_external',
         'death_municipality_id',
+        'death_municipality_external',
         'death_district_id',
+        'death_district_external',
         'death_location_id',
         'death_cause_id',
+        'cie_cause_code',
+        'cie_cause_description',
     ];
 
     protected $hidden = [

@@ -31,6 +31,7 @@ class DataTableComponentConsistencyTest extends TestCase
         $this->assertStringContainsString('<x-ui.data-table.page-size', $filters);
         $this->assertStringContainsString('id="dt-per-page"', $filters);
         $this->assertStringContainsString('class="ui-data-table__filter-chips users-filter-chips"', $filters);
+        $this->assertStringNotContainsString('usersDateRangeHelp', $filters);
     }
 
     public function test_data_table_design_system_is_imported_once_and_keeps_legacy_hooks(): void
@@ -105,7 +106,25 @@ class DataTableComponentConsistencyTest extends TestCase
         $this->assertSame(2, substr_count($filters, 'class="statistics-location-group"'));
         $this->assertStringContainsString('statistics-location-residence-title', $filters);
         $this->assertStringContainsString('statistics-location-death-title', $filters);
+        $this->assertStringContainsString('$residenceDistricts', $filters);
+        $this->assertStringContainsString('$residenceMunicipalities', $filters);
+        $this->assertStringContainsString("=== 'OTRO'", $filters);
+        $this->assertStringContainsString('id="statisticsYearFormatHelp"', $filters);
+        $this->assertStringContainsString('aria-describedby="statistics-filter-error"', $filters);
+        $this->assertStringNotContainsString('statisticsDateRangeHelp', $filters);
+        $this->assertStringContainsString('id="statisticsAgeFormatHelp"', $filters);
+        $this->assertStringContainsString('placeholder="Ej. 25 o 20-30"', $filters);
+        $this->assertStringContainsString('Si omite el año, se considerarán todos los años.', $filters);
+        $this->assertStringNotContainsString('statisticsDateModeHelp', $filters);
+        $this->assertStringNotContainsString('Sin año, este periodo no se aplicará.', $filters);
         $this->assertStringContainsString('.statistics-location-group + .statistics-location-group', $styles);
+        $this->assertStringContainsString('renderDeathLocation(', $view);
+        $this->assertStringContainsString('statistics-location__classification', $view);
+        $this->assertStringContainsString('.statistics-location .statistics-location__classification', $styles);
+        $this->assertStringContainsString('renderDeathCauseDetail(', $view);
+        $this->assertStringContainsString("dataRow.child(renderDeathCauseDetail", $view);
+        $this->assertStringContainsString('statistics-cause-toggle', $view);
+        $this->assertStringContainsString('.statistics-cause-detail', $styles);
         $this->assertStringContainsString('initializeDeathRowActions', $view);
         $this->assertStringContainsString(".toggleClass('is-selected', isSelected)", $view);
         $this->assertStringNotContainsString('function positionDeathActionMenu', $view);
@@ -123,6 +142,7 @@ class DataTableComponentConsistencyTest extends TestCase
         $users = file_get_contents(resource_path('views/usuarios/gestion-de-usuarios.blade.php'));
         $userFilters = file_get_contents(resource_path('views/components/filtros/usuarios.blade.php'));
         $deaths = file_get_contents(resource_path('views/components/filtros/defunciones.blade.php'));
+        $deathTable = file_get_contents(resource_path('views/estadisticas/datos.blade.php'));
 
         $this->assertSame(1, substr_count($app, 'window.AppFilterPanel = {'));
         $this->assertSame(1, substr_count($app, 'window.setFilterSectionExpanded ='));
@@ -136,6 +156,13 @@ class DataTableComponentConsistencyTest extends TestCase
         $this->assertStringContainsString('Canonical filter-panel select contract', $filterSelectStyles);
         $this->assertStringContainsString('.app-standard-filter-panel .ts-wrapper.app-filter-select .ts-control', $filterSelectStyles);
         $this->assertStringContainsString('position: static !important', $filterSelectStyles);
+        $this->assertStringContainsString('--ui-shadow-dropdown:', $styles);
+        $this->assertStringContainsString('var(--ui-shadow-dropdown', $filterSelectStyles);
+        $this->assertMatchesRegularExpression('/id="quarter"[^>]*:searchable="false"/', $deaths);
+        $this->assertStringContainsString('clip-path: inset(50%)', $filterSelectStyles);
+        $this->assertStringContainsString('data-filter-date-proxy="selectedMonths[]"', $deaths);
+        $this->assertStringContainsString('date: dateFocusTarget', $deaths);
+        $this->assertStringContainsString("quarter: 'quarter'", $deaths);
         $this->assertStringContainsString("wrapper.closest('.app-standard-filter-panel .users-filter-panel-body')", $filterSelect);
         $this->assertStringContainsString('has-open-filter-select', $filterSelect);
         $this->assertStringContainsString('.users-filter-panel-body.has-open-filter-select', $styles);
@@ -143,6 +170,15 @@ class DataTableComponentConsistencyTest extends TestCase
         $this->assertStringContainsString(':has(.ts-wrapper.app-filter-select.dropdown-active)', $styles);
         $this->assertStringContainsString(':not([role="combobox"])', $styles);
         $this->assertStringContainsString('overscroll-behavior: contain', $styles);
+        $this->assertStringContainsString('Shared mobile table contract', $styles);
+        $this->assertStringContainsString('.ui-data-table__search > input[type="search"]', $styles);
+        $this->assertStringContainsString('overflow-x: clip', $styles);
+        $this->assertStringContainsString('.users-row-menu.is-viewport-positioned', $styles);
+        $this->assertStringContainsString("compactMobilePagination = window.matchMedia('(max-width: 639px)').matches", $users);
+        $this->assertStringContainsString("compactMobilePagination = window.matchMedia('(max-width: 639px)').matches", $deathTable);
+        $this->assertStringContainsString('Mobile pagination keeps the standard full-width control', $styles);
+        $this->assertStringContainsString('Action-heavy page headers need a second row', $styles);
+        $this->assertStringContainsString('.app-page-header:has(.app-page-header-actions > :nth-child(2))', $styles);
         $this->assertStringContainsString('.users-filter-option--all', $styles);
         $this->assertSame(5, substr_count($userFilters, 'users-filter-option--all'));
         $this->assertSame(1, substr_count($deaths, 'users-filter-option--all'));

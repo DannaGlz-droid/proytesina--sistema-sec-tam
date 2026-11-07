@@ -11,9 +11,12 @@ use App\Models\DeathLocation;
 use App\Services\DeathFilterService;
 use App\Services\StatisticsAnalysisService;
 use App\Support\CatalogLabel;
+use App\Support\FilterDateRange;
 use Illuminate\Support\Facades\Redirect;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Arr;
 
 class DeathController extends Controller
 {
@@ -27,6 +30,8 @@ class DeathController extends Controller
      */
     public function dataTable(Request $request)
     {
+        $this->validateDateFilters($request);
+
         // DataTables parameters
         $draw = (int) $request->input('draw', 1);
         $start = (int) $request->input('start', 0);
@@ -127,11 +132,25 @@ class DeathController extends Controller
                 'sex' => $this->displaySex($death->sex),
                 'death_date' => $death->death_date ? $death->death_date->format('d/m/Y') : '—',
                 'residence_municipality' => $this->displayMunicipality(optional($death->residenceMunicipality)->name),
+                'residence_municipality_external' => $death->residence_municipality_external
+                    ? $this->displayMunicipality($death->residence_municipality_external)
+                    : null,
                 'death_municipality' => $this->displayMunicipality(optional($death->deathMunicipality)->name),
+                'death_municipality_external' => $death->death_municipality_external
+                    ? $this->displayMunicipality($death->death_municipality_external)
+                    : null,
                 'district' => $this->displayDistrict(optional($death->district)->name),
+                'residence_district_external' => $death->residence_district_external
+                    ? $this->displayDistrict($death->residence_district_external)
+                    : null,
                 'death_district' => $this->displayDistrict(optional($death->deathDistrict)->name),
+                'death_district_external' => $death->death_district_external
+                    ? $this->displayDistrict($death->death_district_external)
+                    : null,
                 'death_location' => $this->displayLocation(optional($death->deathLocation)->name),
                 'death_cause' => $this->displayCause(optional($death->deathCause)->name),
+                'cie_cause_code' => $death->cie_cause_code ?: null,
+                'cie_cause_description' => $death->cie_cause_description ?: null,
                 'actions' => view('estadisticas.partials.table-actions', compact('death'))->render(),
             ];
         });
@@ -151,6 +170,8 @@ class DeathController extends Controller
     //
     public function index(Request $request)
     {
+        $this->validateDateFilters($request);
+
         // Validate and normalize incoming filter/pagination params
         $validated = $request->validate([
             'q' => ['nullable', 'string', 'max:255'],
@@ -162,8 +183,8 @@ class DeathController extends Controller
             'selectedMonths' => ['nullable', 'array'],
             'selectedMonths.*' => ['nullable', 'string'],
             'quarter' => ['nullable', 'in:1,2,3,4'],
-            'startDate' => ['nullable', 'date'],
-            'endDate' => ['nullable', 'date'],
+            'startDate' => ['nullable', 'date_format:Y-m-d', 'before_or_equal:today'],
+            'endDate' => ['nullable', 'date_format:Y-m-d', 'before_or_equal:today'],
             'distrito' => ['nullable', 'string'],
             'distritoDefuncion' => ['nullable', 'string'],
             'jurisdiccion' => ['nullable', 'string'],
@@ -722,6 +743,116 @@ class DeathController extends Controller
             'F', 'FEMENINO', 'MUJER' => 'F',
             default => Death::formatPersonName($value),
         };
+    }
+
+    private function validateDateFilters(Request $request): void
+    {
+        FilterDateRange::validate($request, 'startDate', 'endDate');
+
+        if ($request->has('selectedMonths')) {
+            $request->merge([
+                'selectedMonths' => Arr::wrap($request->input('selectedMonths')),
+            ]);
+        }
+
+        $validator = Validator::make($request->only([
+            'dateRange',
+            'year',
+            'selectedMonths',
+            'quarter',
+        ]), [
+            'dateRange' => ['nullable', 'in:all,year,years,month,months,multiple-months,quarter,custom'],
+            'year' => ['nullable', 'string', 'max:255'],
+            'selectedMonths' => ['nullable', 'array'],
+            'selectedMonths.*' => ['string', 'in:01,02,03,04,05,06,07,08,09,10,11,12,1,2,3,4,5,6,7,8,9'],
+            'quarter' => ['nullable', 'in:1,2,3,4'],
+        ], [
+            'dateRange.in' => 'Seleccione un periodo válido.',
+            'selectedMonths.array' => 'Seleccione meses válidos.',
+            'selectedMonths.*.in' => 'Seleccione meses válidos.',
+            'quarter.in' => 'Seleccione un trimestre válido.',
+        ]);
+
+        $validator->after(function ($validator) use ($request) {
+            $mode = match ((string) $request->input('dateRange', 'all')) {
+                'year' => 'years',
+                'month', 'multiple-months' => 'months',
+                default => (string) $request->input('dateRange', 'all'),
+            };
+
+            if (!in_array($mode, ['years', 'months', 'quarter'], true)) {
+                return;
+            }
+
+            $yearInput = trim((string) $request->input('year', ''));
+            if ($yearInput === '') {
+                $validator->errors()->add('year', 'Indique el año o periodo que desea consultar.');
+                return;
+            }
+
+            $years = $this->filterYearsFromInput($yearInput);
+            if ($years === null) {
+                $validator->errors()->add(
+                    'year',
+                    'Use años entre 1950 y '.now()->year.'; puede separarlos por comas o indicar un periodo en orden ascendente.'
+                );
+                return;
+            }
+
+            if ($mode === 'months') {
+                $months = collect((array) $request->input('selectedMonths', []))
+                    ->map(fn ($month) => (int) $month)
+                    ->filter(fn ($month) => $month >= 1 && $month <= 12)
+                    ->unique()
+                    ->values();
+
+                if ($months->isEmpty()) {
+                    $validator->errors()->add('selectedMonths', 'Seleccione al menos un mes.');
+                    return;
+                }
+
+                if (in_array(now()->year, $years, true) && $months->contains(fn ($month) => $month > now()->month)) {
+                    $validator->errors()->add('selectedMonths', 'No puede seleccionar un mes futuro del año actual.');
+                }
+            }
+
+            if ($mode === 'quarter') {
+                $quarter = (int) $request->input('quarter', 0);
+                if ($quarter < 1 || $quarter > 4) {
+                    $validator->errors()->add('quarter', 'Seleccione un trimestre.');
+                    return;
+                }
+
+                $quarterStartMonth = (($quarter - 1) * 3) + 1;
+                if (in_array(now()->year, $years, true) && $quarterStartMonth > now()->month) {
+                    $validator->errors()->add('quarter', 'No puede seleccionar un trimestre futuro del año actual.');
+                }
+            }
+        });
+
+        $validator->validate();
+    }
+
+    private function filterYearsFromInput(string $value): ?array
+    {
+        if (!preg_match('/^\s*\d{4}(?:\s*-\s*\d{4})?(?:\s*,\s*\d{4}(?:\s*-\s*\d{4})?)*\s*$/', $value)) {
+            return null;
+        }
+
+        $years = [];
+        foreach (preg_split('/\s*,\s*/', trim($value)) ?: [] as $part) {
+            $limits = preg_split('/\s*-\s*/', $part) ?: [];
+            $start = (int) ($limits[0] ?? 0);
+            $end = (int) ($limits[1] ?? $start);
+
+            if ($start < 1950 || $end > now()->year || $start > $end) {
+                return null;
+            }
+
+            $years = array_merge($years, range($start, $end));
+        }
+
+        return array_values(array_unique($years));
     }
 
     public function show(Death $death)

@@ -446,6 +446,60 @@ window.setFilterSectionExpanded = (section, open) => {
     }, { once: true });
 };
 
+function currentLocalDateValue() {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+
+    return `${year}-${month}-${day}`;
+}
+
+window.AppFilterDateRange = Object.freeze({
+    clear({ start, end, error, source = 'date-range' }) {
+        [start, end].forEach(control => control?.removeAttribute('aria-invalid'));
+
+        if (error && (!error.dataset.errorSource || error.dataset.errorSource === source)) {
+            error.textContent = '';
+            error.classList.add('hidden');
+            delete error.dataset.errorSource;
+        }
+    },
+
+    validate({ start, end, error, source = 'date-range', focus = true }) {
+        this.clear({ start, end, error, source });
+
+        const startValue = start?.value || '';
+        const endValue = end?.value || '';
+        const maximum = start?.max || end?.max || currentLocalDateValue();
+        let invalidControl = null;
+        let message = '';
+
+        if (startValue && startValue > maximum) {
+            invalidControl = start;
+            message = 'La fecha inicial no puede ser posterior a hoy.';
+        } else if (endValue && endValue > maximum) {
+            invalidControl = end;
+            message = 'La fecha final no puede ser posterior a hoy.';
+        } else if (startValue && endValue && startValue > endValue) {
+            invalidControl = end;
+            message = 'La fecha final debe ser posterior o igual a la fecha inicial.';
+        }
+
+        if (!message) return { valid: true, message: '', invalidControl: null };
+
+        invalidControl?.setAttribute('aria-invalid', 'true');
+        if (error) {
+            error.textContent = message;
+            error.dataset.errorSource = source;
+            error.classList.remove('hidden');
+        }
+        if (focus) invalidControl?.focus();
+
+        return { valid: false, message, invalidControl };
+    },
+});
+
 window.AppFilterPanel = {
     highlightTimers: new WeakMap(),
     panelTimers: new WeakMap(),

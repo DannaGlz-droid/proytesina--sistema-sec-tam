@@ -100,7 +100,7 @@
                     </div>
                     <div>
                         <span class="profile-overview-label">Rol en el sistema</span>
-                        <span class="profile-role-badge {{ $profileRoleClass }}">{{ $profileRoleLabel }}</span>
+                        <span class="profile-role-badge app-category-tag app-category-tag--{{ str_replace('is-', '', $profileRoleClass) }}">{{ $profileRoleLabel }}</span>
                     </div>
                 </div>
             </header>

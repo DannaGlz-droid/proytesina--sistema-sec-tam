@@ -267,6 +267,53 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
+    function renderDeathLocation(municipality, district, externalMunicipality, externalDistrict) {
+        const isExternal = Boolean(externalMunicipality || externalDistrict);
+        const municipalityLabel = externalMunicipality || municipality || '—';
+        const districtLabel = externalDistrict || district || 'Sin distrito';
+        const classification = isExternal
+            ? '<span class="statistics-location__classification" title="Clasificación: Otro">Otro</span><span aria-hidden="true"> · </span>'
+            : '';
+
+        return `<div class="statistics-location">
+            <div class="statistics-location__primary">
+                <strong>${escapeDeathCell(municipalityLabel)}</strong>
+            </div>
+            <div class="statistics-location__secondary">${classification}<span>${escapeDeathCell(districtLabel)}</span></div>
+        </div>`;
+    }
+
+    function renderDeathCauseCell(row) {
+        const category = row.death_cause || '—';
+        if (!row.cie_cause_code && !row.cie_cause_description) {
+            return escapeDeathCell(category);
+        }
+
+        return `<button type="button" class="statistics-cause-toggle" aria-expanded="false" aria-label="Ver detalle de la causa ${escapeDeathCell(category)}">
+            <span>${escapeDeathCell(category)}</span>
+            <i class="fas fa-chevron-down" aria-hidden="true"></i>
+        </button>`;
+    }
+
+    function renderDeathCauseDetail(row) {
+        const code = row.cie_cause_code
+            ? `<div class="statistics-cause-detail__field statistics-cause-detail__field--code"><dt>Código CIE</dt><dd>${escapeDeathCell(row.cie_cause_code)}</dd></div>`
+            : '';
+        const description = row.cie_cause_description
+            ? `<div class="statistics-cause-detail__field"><dt>Causa específica</dt><dd>${escapeDeathCell(row.cie_cause_description)}</dd></div>`
+            : '';
+
+        return `<section class="statistics-cause-detail" aria-label="Detalle de causa">
+            <div class="statistics-cause-detail__heading">
+                <span>Detalle de causa</span>
+                <button type="button" class="statistics-cause-detail__close" data-close-cause-detail aria-label="Cerrar detalle de causa">
+                    <i class="fas fa-times" aria-hidden="true"></i>
+                </button>
+            </div>
+            <dl>${code}${description}</dl>
+        </section>`;
+    }
+
     function buildDeathImportErrorMessage(rawMessage) {
         var message = String(rawMessage || '').trim();
         if (!message) {
@@ -1006,13 +1053,25 @@ document.addEventListener('DOMContentLoaded', function () {
             } },
             { data: 'death_date', name: 'death_date' },
             { data: null, name: 'residence_municipality_id', orderable: false, render: function(data, type, row) {
-                return `<div class="statistics-location"><strong>${escapeDeathCell(row.residence_municipality || '—')}</strong><span>${escapeDeathCell(row.district || 'Sin distrito')}</span></div>`;
+                return renderDeathLocation(
+                    row.residence_municipality,
+                    row.district,
+                    row.residence_municipality_external,
+                    row.residence_district_external
+                );
             } },
             { data: null, name: 'death_municipality_id', orderable: false, render: function(data, type, row) {
-                return `<div class="statistics-location"><strong>${escapeDeathCell(row.death_municipality || '—')}</strong><span>${escapeDeathCell(row.death_district || 'Sin distrito')}</span></div>`;
+                return renderDeathLocation(
+                    row.death_municipality,
+                    row.death_district,
+                    row.death_municipality_external,
+                    row.death_district_external
+                );
             } },
             { data: 'death_location', name: 'death_location_id', orderable: false },
-            { data: 'death_cause', name: 'death_cause_id', orderable: false },
+            { data: null, name: 'death_cause_id', orderable: false, render: function(data, type, row) {
+                return renderDeathCauseCell(row);
+            } },
             { data: 'actions', name: 'actions', orderable: false, searchable: false, width: '2.75rem', className: 'dt-actions-cell' }
         ],
         columnDefs: [
@@ -1234,6 +1293,48 @@ document.addEventListener('DOMContentLoaded', function () {
         $('#dt-clear-deaths-btn').addClass('hidden');
         window.deathsTable.search('');
         document.getElementById('limpiarFiltros')?.click();
+    });
+
+    function closeDeathCauseDetails(exceptRow = null) {
+        $('#deaths-table tbody tr.is-cause-expanded').each(function() {
+            if (exceptRow && this === exceptRow) return;
+            const dataRow = window.deathsTable.row(this);
+            if (dataRow.child.isShown()) dataRow.child.hide();
+            $(this).removeClass('is-cause-expanded')
+                .find('.statistics-cause-toggle')
+                .attr('aria-expanded', 'false');
+        });
+    }
+
+    $('#deaths-table tbody').on('click', '.statistics-cause-toggle', function(event) {
+        event.preventDefault();
+        event.stopPropagation();
+
+        const button = $(this);
+        const tableRow = button.closest('tr');
+        const dataRow = window.deathsTable.row(tableRow);
+        const wasExpanded = button.attr('aria-expanded') === 'true';
+
+        closeDeathCauseDetails(tableRow[0]);
+        if (wasExpanded) {
+            dataRow.child.hide();
+            tableRow.removeClass('is-cause-expanded');
+            button.attr('aria-expanded', 'false').trigger('focus');
+            return;
+        }
+
+        dataRow.child(renderDeathCauseDetail(dataRow.data()), 'statistics-cause-detail-row').show();
+        tableRow.addClass('is-cause-expanded');
+        button.attr('aria-expanded', 'true');
+    });
+
+    $('#deaths-table tbody').on('click', '[data-close-cause-detail]', function() {
+        const tableRow = $(this).closest('tr').prev('tr.is-cause-expanded');
+        if (!tableRow.length) return;
+        const toggle = tableRow.find('.statistics-cause-toggle');
+        window.deathsTable.row(tableRow).child.hide();
+        tableRow.removeClass('is-cause-expanded');
+        toggle.attr('aria-expanded', 'false').trigger('focus');
     });
 
     var deathRowActionsController = null;
@@ -1464,7 +1565,21 @@ document.addEventListener('DOMContentLoaded', function () {
             ? '<span class="fb-page-btn fb-page-first fb-page-disabled">Anterior</span>'
             : `<a href="#" data-page="${current - 2}" class="dt-page-link-deaths fb-page-btn fb-page-first">Anterior</a>`;
 
-        if (pages <= 5) {
+        const compactMobilePagination = window.matchMedia('(max-width: 639px)').matches;
+
+        if (compactMobilePagination && pages > 5) {
+            if (current <= 3) {
+                for (let page = 1; page <= 3; page++) html += pageButton(page);
+                html += ellipsis() + pageButton(pages);
+            } else if (current >= pages - 2) {
+                html += pageButton(1) + ellipsis();
+                for (let page = pages - 2; page <= pages; page++) html += pageButton(page);
+            } else {
+                html += pageButton(1) + ellipsis();
+                html += pageButton(current);
+                html += ellipsis() + pageButton(pages);
+            }
+        } else if (pages <= 5) {
             for (let page = 1; page <= pages; page++) html += pageButton(page);
         } else if (current <= 3) {
             for (let page = 1; page <= 5; page++) html += pageButton(page);
@@ -1510,55 +1625,85 @@ document.addEventListener('DOMContentLoaded', function () {
 
         const hasSelectedMonths = selectedMonths.length > 0;
         const hasSelectedQuarter = Boolean(quarter);
+        const currentYear = {{ now()->year }};
+        const currentMonth = {{ now()->month }};
+        const yearInput = document.getElementById('year');
+        const quarterInput = document.getElementById('quarter');
 
-        if (dateRange === 'months' && hasSelectedMonths && !year) {
+        [yearInput, quarterInput, ...document.querySelectorAll('input[name="selectedMonths[]"]')]
+            .forEach(control => control?.removeAttribute('aria-invalid'));
+
+        const rejectDateFilter = (control, message) => {
+            control?.setAttribute('aria-invalid', 'true');
             if (filterError) {
-                filterError.textContent = 'Indique el año para aplicar el periodo seleccionado.';
+                filterError.textContent = message;
+                filterError.dataset.errorSource = 'date-period';
                 filterError.classList.remove('hidden');
             }
-            document.getElementById('year')?.focus();
-            notifyDeaths('Indique el año para aplicar el periodo seleccionado.', 'warning');
-            return;
-        }
+            if (control?.tomselect) control.tomselect.focus();
+            else control?.focus();
+            notifyDeaths(message, 'warning');
+        };
 
-        if (dateRange === 'quarter' && hasSelectedQuarter && !year) {
-            if (filterError) {
-                filterError.textContent = 'Indique el año para aplicar el periodo seleccionado.';
-                filterError.classList.remove('hidden');
+        const parseFilterYears = value => {
+            if (!/^\s*\d{4}(?:\s*-\s*\d{4})?(?:\s*,\s*\d{4}(?:\s*-\s*\d{4})?)*\s*$/.test(value)) {
+                return null;
             }
-            document.getElementById('year')?.focus();
-            notifyDeaths('Indique el año para aplicar el periodo seleccionado.', 'warning');
-            return;
-        }
 
-        if (dateRange === 'custom' && startDate && endDate && startDate > endDate) {
-            if (filterError) {
-                filterError.textContent = 'La fecha inicial no puede ser mayor que la fecha final.';
-                filterError.classList.remove('hidden');
+            const years = [];
+            for (const part of value.trim().split(/\s*,\s*/)) {
+                const limits = part.split(/\s*-\s*/).map(Number);
+                const first = limits[0];
+                const last = limits[1] ?? first;
+                if (first < 1950 || last > currentYear || first > last) return null;
+                for (let value = first; value <= last; value += 1) years.push(value);
             }
-            document.getElementById('startDate')?.focus();
-            notifyDeaths('La fecha inicial no puede ser mayor que la fecha final.', 'warning');
-            return;
-        }
 
-        if (dateRange === 'months' && year && !hasSelectedMonths) {
-            if (filterError) {
-                filterError.textContent = 'Seleccione al menos un mes.';
-                filterError.classList.remove('hidden');
-            }
-            document.querySelector('.statistics-month-options input')?.focus();
-            notifyDeaths('Seleccione al menos un mes.', 'warning');
-            return;
-        }
+            return [...new Set(years)];
+        };
 
-        if (dateRange === 'quarter' && year && !hasSelectedQuarter) {
-            if (filterError) {
-                filterError.textContent = 'Seleccione un trimestre.';
-                filterError.classList.remove('hidden');
+        if (['years', 'months', 'quarter'].includes(dateRange)) {
+            if (!year) {
+                rejectDateFilter(yearInput, 'Indique el año o periodo que desea consultar.');
+                return;
             }
-            document.getElementById('quarter')?.tomselect?.focus();
-            notifyDeaths('Seleccione un trimestre.', 'warning');
-            return;
+
+            const years = parseFilterYears(year);
+            if (!years) {
+                rejectDateFilter(
+                    yearInput,
+                    `Use años entre 1950 y ${currentYear}; puede separarlos por comas o indicar un periodo en orden ascendente.`
+                );
+                return;
+            }
+
+            if (dateRange === 'months') {
+                if (!hasSelectedMonths) {
+                    rejectDateFilter(document.querySelector('.statistics-month-options input'), 'Seleccione al menos un mes.');
+                    return;
+                }
+
+                const hasFutureMonth = years.includes(currentYear)
+                    && Array.from(selectedMonths).some(input => Number(input.value) > currentMonth);
+                if (hasFutureMonth) {
+                    const futureMonth = Array.from(selectedMonths).find(input => Number(input.value) > currentMonth);
+                    rejectDateFilter(futureMonth, 'No puede seleccionar un mes futuro del año actual.');
+                    return;
+                }
+            }
+
+            if (dateRange === 'quarter') {
+                if (!hasSelectedQuarter) {
+                    rejectDateFilter(quarterInput, 'Seleccione un trimestre.');
+                    return;
+                }
+
+                const quarterStartMonth = ((Number(quarter) - 1) * 3) + 1;
+                if (years.includes(currentYear) && quarterStartMonth > currentMonth) {
+                    rejectDateFilter(quarterInput, 'No puede seleccionar un trimestre futuro del año actual.');
+                    return;
+                }
+            }
         }
 
         applyDeathFiltersWithoutReload();

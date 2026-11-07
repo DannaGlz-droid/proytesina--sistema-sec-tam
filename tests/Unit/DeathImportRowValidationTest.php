@@ -77,3 +77,23 @@ it('recognizes the misspelled other accidents worksheet name explicitly', functi
     expect($aliases)->toHaveKey('OTROS ACCIDENTEES')
         ->and($aliases['OTROS ACCIDENTEES'])->toBe('OTROS ACCIDENTES');
 });
+
+it('preserves exact external location labels only when the catalog classifies them as other', function (): void {
+    $controller = app(DeathImportController::class);
+    $method = new ReflectionMethod($controller, 'externalImportLocationDetail');
+
+    expect($method->invoke($controller, 'CIUDAD   VALLES', 'OTRO'))->toBe('CIUDAD VALLES')
+        ->and($method->invoke($controller, 'SALTILLO', 'OTRO'))->toBe('SALTILLO')
+        ->and($method->invoke($controller, 'VICTORIA', 'VICTORIA'))->toBeNull()
+        ->and($method->invoke($controller, 'OTRO', 'OTRO'))->toBeNull()
+        ->and($method->invoke($controller, '', 'OTRO'))->toBeNull();
+});
+
+it('normalizes imported CIE details without losing the full description', function (): void {
+    $controller = app(DeathImportController::class);
+    $method = new ReflectionMethod($controller, 'normalizeImportedDetail');
+
+    expect($method->invoke($controller, ' v099 ', true, 32))->toBe('V099')
+        ->and($method->invoke($controller, "PEATÓN   LESIONADO\nEN ACCIDENTE"))->toBe('PEATÓN LESIONADO EN ACCIDENTE')
+        ->and($method->invoke($controller, ''))->toBeNull();
+});

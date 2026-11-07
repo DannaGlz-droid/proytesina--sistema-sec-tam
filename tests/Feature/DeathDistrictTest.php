@@ -50,6 +50,47 @@ it('stores residence and death districts independently', function (): void {
         ->and((new DeathsExport())->map($death)[9])->toBe($deathDistrict->display_name);
 });
 
+it('returns optional CIE details for the expandable cause row', function (): void {
+    $district = District::create(['name' => 'I - Victoria']);
+    $municipality = Municipality::create(['name' => 'Victoria', 'district_id' => $district->id]);
+    $location = DeathLocation::create(['name' => 'Hospital']);
+    $cause = DeathCause::create(['name' => DeathCause::ALLOWED_NAMES[0]]);
+    $administrator = User::factory()->create([
+        'role_id' => Role::create(['name' => 'Administrador'])->id,
+        'district_id' => $district->id,
+    ]);
+
+    Death::create([
+        'gov_folio' => '987654321',
+        'name' => 'María',
+        'first_last_name' => 'López',
+        'age' => 42,
+        'age_years' => 42,
+        'sex' => 'F',
+        'death_date' => now()->subDay()->toDateString(),
+        'residence_municipality_id' => $municipality->id,
+        'district_id' => $district->id,
+        'death_municipality_id' => $municipality->id,
+        'death_district_id' => $district->id,
+        'death_location_id' => $location->id,
+        'death_cause_id' => $cause->id,
+        'cie_cause_code' => 'V099',
+        'cie_cause_description' => 'PEATÓN LESIONADO EN ACCIDENTE DE TRANSPORTE NO ESPECIFICADO',
+    ]);
+
+    $response = $this->actingAs($administrator)->postJson(route('statistic.datatable'), [
+        'draw' => 1,
+        'start' => 0,
+        'length' => 10,
+        'search' => ['value' => '987654321'],
+        'order' => [['column' => 3, 'dir' => 'desc']],
+    ]);
+
+    $response->assertOk()
+        ->assertJsonPath('data.0.cie_cause_code', 'V099')
+        ->assertJsonPath('data.0.cie_cause_description', 'PEATÓN LESIONADO EN ACCIDENTE DE TRANSPORTE NO ESPECIFICADO');
+});
+
 it('recognizes common jurisdiction labels from the death spreadsheet', function (): void {
     $district = District::create(['name' => 'VI - Mante']);
     $controller = app(DeathImportController::class);

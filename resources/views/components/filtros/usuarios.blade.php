@@ -97,12 +97,13 @@
                                 <div id="customRangeSelector" class="users-filter-custom-range {{ $dateRangeValue === 'custom' ? 'is-visible' : '' }}">
                                     <label>
                                         <span>Desde</span>
-                                        <input type="date" data-filter-date-proxy="date_from" value="{{ request('date_from') }}" max="{{ now()->toDateString() }}">
+                                        <input type="date" data-filter-date-proxy="date_from" value="{{ request('date_from') }}" max="{{ now()->toDateString() }}" aria-describedby="users-filter-date-error">
                                     </label>
                                     <label>
                                         <span>Hasta</span>
-                                        <input type="date" data-filter-date-proxy="date_to" value="{{ request('date_to') }}" max="{{ now()->toDateString() }}">
+                                        <input type="date" data-filter-date-proxy="date_to" value="{{ request('date_to') }}" max="{{ now()->toDateString() }}" aria-describedby="users-filter-date-error">
                                     </label>
+                                    <p id="users-filter-date-error" class="users-filter-inline-error hidden" role="alert"></p>
                                 </div>
                             </div>
                         </div>

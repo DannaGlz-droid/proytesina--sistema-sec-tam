@@ -5,6 +5,12 @@
     $sexValue = strtoupper((string) request('sexo', ''));
     $selectedMonths = (array) request('selectedMonths', []);
     $months = ['01'=>'Ene','02'=>'Feb','03'=>'Mar','04'=>'Abr','05'=>'May','06'=>'Jun','07'=>'Jul','08'=>'Ago','09'=>'Sep','10'=>'Oct','11'=>'Nov','12'=>'Dic'];
+    $residenceDistricts = collect($districts ?? [])
+        ->reject(fn ($district) => strtoupper(trim((string) $district->name)) === \App\Models\District::OTHER_NAME)
+        ->values();
+    $residenceMunicipalities = collect($municipalities ?? [])
+        ->reject(fn ($municipality) => strtoupper(trim((string) $municipality->name)) === 'OTRO')
+        ->values();
 @endphp
 
 <section class="users-filter-card statistics-filter-toolbar" aria-label="Controles de datos de defunciones">
@@ -33,34 +39,38 @@
                                     <div class="statistics-date-picker">
                                         <div class="statistics-filter-field">
                                             <label for="dateRange">Periodo</label>
-                                            <x-filtros.select name="dateRange" id="dateRange" placeholder="Todas las fechas" aria-describedby="statisticsDateModeHelp">
+                                            <x-filtros.select name="dateRange" id="dateRange" placeholder="Todas las fechas">
                                                 <option value="all" @selected($dateRangeValue === 'all')>Todas las fechas</option>
                                                 <option value="years" @selected(in_array($dateRangeValue, ['year','years'], true))>Por año</option>
                                                 <option value="months" @selected(in_array($dateRangeValue, ['month','months','multiple-months'], true))>Por meses</option>
                                                 <option value="quarter" @selected($dateRangeValue === 'quarter')>Por trimestre</option>
                                                 <option value="custom" @selected($dateRangeValue === 'custom')>Rango personalizado</option>
                                             </x-filtros.select>
-                                            <p id="statisticsDateModeHelp" class="statistics-date-mode-help hidden"></p>
                                         </div>
                                     </div>
                                     <div id="statisticsDateContext" class="statistics-date-context">
                                         <div class="statistics-filter-detail" data-date-detail="year">
-                                            <label id="statisticsYearLabel" for="year">Año o periodo</label>
-                                            <input type="text" id="year" name="year" value="{{ request('year') }}" placeholder="Ej. {{ now()->year }} o 2024-2026" inputmode="numeric" aria-describedby="statisticsYearHelp">
-                                            <small id="statisticsYearHelp" class="statistics-filter-help">Sin año, este periodo no se aplicará.</small>
+                                            <div class="statistics-filter-label-row">
+                                                <label id="statisticsYearLabel" for="year">Año o periodo</label>
+                                                <x-ui.form.help-tooltip id="statisticsYearFormatHelp" label="Formatos admitidos para el año">
+                                                    Escriba un año ({{ now()->year }}), varios separados por comas (2024, 2026) o un periodo continuo (2024-2026).
+                                                </x-ui.form.help-tooltip>
+                                            </div>
+                                            <input type="text" id="year" name="year" value="{{ request('year') }}" placeholder="Ej. {{ now()->year }} o 2024-2026" inputmode="numeric" aria-describedby="statisticsYearFormatHelp statisticsYearScopeHelp">
+                                            <small id="statisticsYearScopeHelp" class="statistics-filter-help hidden"></small>
                                         </div>
                                         <div class="statistics-filter-detail" data-date-detail="months">
                                             <input type="hidden" id="monthHidden" name="month" value="{{ request('month') }}">
                                             <span class="statistics-filter-label">Meses</span>
-                                            <div class="statistics-month-options">
+                                            <div class="statistics-month-options" data-filter-date-proxy="selectedMonths[]" tabindex="-1">
                                                 @foreach($months as $value => $label)
-                                                    <label><input type="checkbox" name="selectedMonths[]" value="{{ $value }}" @checked(in_array($value, $selectedMonths))><span>{{ $label }}</span></label>
+                                                    <label><input type="checkbox" name="selectedMonths[]" value="{{ $value }}" aria-describedby="statistics-filter-error" @checked(in_array($value, $selectedMonths))><span>{{ $label }}</span></label>
                                                 @endforeach
                                             </div>
                                         </div>
                                         <div class="statistics-filter-detail" data-date-detail="quarter">
                                             <label for="quarter">Trimestre</label>
-                                            <x-filtros.select id="quarter" name="quarter" placeholder="Seleccionar trimestre">
+                                            <x-filtros.select id="quarter" name="quarter" placeholder="Seleccionar trimestre" :allow-empty-option="true" :searchable="false" aria-describedby="statistics-filter-error">
                                                 <option value="">Seleccionar trimestre</option>
                                                 <option value="1" @selected(request('quarter') === '1')>Q1 (Ene–Mar)</option>
                                                 <option value="2" @selected(request('quarter') === '2')>Q2 (Abr–Jun)</option>
@@ -69,8 +79,8 @@
                                             </x-filtros.select>
                                         </div>
                                         <div class="statistics-filter-detail statistics-filter-date-grid" data-date-detail="custom">
-                                            <label>Desde<input type="date" id="startDate" name="startDate" value="{{ request('startDate') }}"></label>
-                                            <label>Hasta<input type="date" id="endDate" name="endDate" value="{{ request('endDate') }}"></label>
+                                            <label>Desde<input type="date" id="startDate" name="startDate" value="{{ request('startDate') }}" max="{{ now()->toDateString() }}" aria-describedby="statistics-filter-error"></label>
+                                            <label>Hasta<input type="date" id="endDate" name="endDate" value="{{ request('endDate') }}" max="{{ now()->toDateString() }}" aria-describedby="statistics-filter-error"></label>
                                         </div>
                                     </div>
                                 </div>
@@ -87,11 +97,11 @@
                                             <div class="statistics-filter-fields">
                                                 <div class="statistics-filter-field">
                                                     <label for="distrito">Distrito</label>
-                                                    <x-filtros.select id="distrito" name="distrito" placeholder="Todos"><option value="">Todos</option>@foreach($districts ?? [] as $district)<option value="{{ $district->name }}" @selected(request('distrito') === $district->name)>{{ $district->display_name }}</option>@endforeach</x-filtros.select>
+                                                    <x-filtros.select id="distrito" name="distrito" placeholder="Todos"><option value="">Todos</option>@foreach($residenceDistricts as $district)<option value="{{ $district->name }}" @selected(request('distrito') === $district->name)>{{ $district->display_name }}</option>@endforeach</x-filtros.select>
                                                 </div>
                                                 <div class="statistics-filter-field">
                                                     <label for="municipio">Municipio</label>
-                                                    <x-filtros.select id="municipio" name="municipio" placeholder="Todos"><option value="">Todos</option>@foreach($municipalities ?? [] as $municipality)<option value="{{ $municipality->name }}" @selected(request('municipio') === $municipality->name)>{{ $municipality->display_name }}</option>@endforeach</x-filtros.select>
+                                                    <x-filtros.select id="municipio" name="municipio" placeholder="Todos"><option value="">Todos</option>@foreach($residenceMunicipalities as $municipality)<option value="{{ $municipality->name }}" @selected(request('municipio') === $municipality->name)>{{ $municipality->display_name }}</option>@endforeach</x-filtros.select>
                                                 </div>
                                             </div>
                                         </div>
@@ -126,7 +136,15 @@
                                             <button type="button" class="users-filter-option {{ $value === '' ? 'users-filter-option--all' : '' }}" data-filter-target="sexo" data-filter-value="{{ $value }}"><span class="users-filter-check"><i class="fas fa-check" aria-hidden="true"></i></span><span>{{ $label }}</span></button>
                                         @endforeach
                                     </div>
-                                    <div class="statistics-filter-detail is-visible"><label for="edad">Edad</label><input type="text" id="edad" name="edad" value="{{ request('edad') }}" placeholder="Ej. 25, 20-30, 5,10,15 o 65+" maxlength="50"></div>
+                                    <div class="statistics-filter-detail is-visible">
+                                        <div class="statistics-filter-label-row">
+                                            <label for="edad">Edad</label>
+                                            <x-ui.form.help-tooltip id="statisticsAgeFormatHelp" label="Formatos admitidos para la edad">
+                                                Use una edad (25), un rango (20-30), varias separadas por comas (5, 10, 15) o una edad mínima (65+).
+                                            </x-ui.form.help-tooltip>
+                                        </div>
+                                        <input type="text" id="edad" name="edad" value="{{ request('edad') }}" placeholder="Ej. 25 o 20-30" maxlength="50" aria-describedby="statisticsAgeFormatHelp">
+                                    </div>
                                 </div>
                             </div>
 
@@ -281,20 +299,15 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function updateDateDetails() {
         const value = getControl('dateRange')?.value || 'all';
-        const help = document.getElementById('statisticsDateModeHelp');
+        const scopeHelp = document.getElementById('statisticsYearScopeHelp');
         const context = document.getElementById('statisticsDateContext');
-        const descriptions = {
-            all: '',
-            years: 'Puede consultar un año, varios años o un periodo continuo.',
-            months: 'Seleccione uno o varios meses dentro del año indicado.',
-            quarter: 'Seleccione el año y el trimestre que desea consultar.',
-            custom: 'Defina una fecha inicial, una fecha final o ambas.'
-        };
 
-        if (help) {
-            const description = descriptions[value] || '';
-            help.textContent = description;
-            help.classList.toggle('hidden', !description);
+        if (scopeHelp) {
+            const showScopeHelp = ['months', 'quarter'].includes(value);
+            scopeHelp.textContent = showScopeHelp
+                ? 'Si omite el año, se considerarán todos los años.'
+                : '';
+            scopeHelp.classList.toggle('hidden', !showScopeHelp);
         }
         if (context) {
             context.classList.toggle('has-detail', value !== 'all');
@@ -329,6 +342,16 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function updateChips() {
+        const dateMode = getControl('dateRange')?.value || 'all';
+        const customDateFocus = getControl('startDate')?.value
+            ? 'startDate'
+            : (getControl('endDate')?.value ? 'endDate' : 'startDate');
+        const dateFocusTarget = {
+            years: 'year',
+            months: 'selectedMonths[]',
+            quarter: 'quarter',
+            custom: customDateFocus,
+        }[dateMode] || 'dateRange';
         const sectionByKey = {
             date: 'date',
             residence_district: 'location',
@@ -341,7 +364,7 @@ document.addEventListener('DOMContentLoaded', function () {
             cause: 'cause',
         };
         const focusByKey = {
-            date: 'dateRange',
+            date: dateFocusTarget,
             residence_district: 'distrito',
             residence_municipality: 'municipio',
             death_district: 'distritoDefuncion',
@@ -365,7 +388,6 @@ document.addEventListener('DOMContentLoaded', function () {
             const control = getControl(name);
             if (control && !defaults.includes(String(control.value))) chips.push({ key, section: sectionByKey[key], focusTarget: name, label: `${prefix}: ${selectedText(control)}`, fields: [name] });
         };
-        const dateMode = getControl('dateRange')?.value || 'all';
         const yearValue = getControl('year')?.value?.trim() || '';
         let dateLabel = '';
 
@@ -395,7 +417,7 @@ document.addEventListener('DOMContentLoaded', function () {
             chips.push({
                 key: 'date',
                 section: 'date',
-                focusTarget: 'dateRange',
+                focusTarget: dateFocusTarget,
                 label: dateLabel,
                 fields: ['dateRange','year','month','selectedMonths[]','quarter','startDate','endDate']
             });
@@ -517,6 +539,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
     const ageInput = document.getElementById('edad');
     const filterError = document.getElementById('statistics-filter-error');
+    const startDateInput = document.getElementById('startDate');
+    const endDateInput = document.getElementById('endDate');
     const ageErrorMessage = 'Formato de edad no válido. Use 25, 20-30, 5,10,15 o 65+ (de 0 a 150).';
 
     function isValidAgeFilter(value) {
@@ -550,8 +574,42 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     });
 
+    [startDateInput, endDateInput].forEach(input => {
+        input?.addEventListener('input', function () {
+            window.AppFilterDateRange?.clear({
+                start: startDateInput,
+                end: endDateInput,
+                error: filterError,
+            });
+        });
+    });
+
     form.addEventListener('change', updateChips);
     form.addEventListener('submit', event => {
+        const customRangeSelected = document.getElementById('dateRange')?.value === 'custom';
+        const dateValidation = customRangeSelected
+            ? window.AppFilterDateRange?.validate({
+                start: startDateInput,
+                end: endDateInput,
+                error: filterError,
+            })
+            : { valid: true };
+
+        if (!customRangeSelected) {
+            window.AppFilterDateRange?.clear({
+                start: startDateInput,
+                end: endDateInput,
+                error: filterError,
+            });
+        }
+
+        if (dateValidation && !dateValidation.valid) {
+            event.preventDefault();
+            event.stopImmediatePropagation();
+            window.AppToast?.warning(dateValidation.message);
+            return;
+        }
+
         if (ageInput && !isValidAgeFilter(ageInput.value)) {
             event.preventDefault();
             event.stopImmediatePropagation();

@@ -1515,7 +1515,7 @@
     border-color: var(--ui-border, #cbd5e1) !important;
     border-radius: var(--ui-radius-control, 7px) !important;
     background: var(--ui-surface, #fff) !important;
-    box-shadow: 0 16px 32px rgba(15, 23, 42, .12) !important;
+    box-shadow: var(--ui-shadow-dropdown, 0 8px 20px rgba(30, 41, 59, .08), 0 1px 3px rgba(30, 41, 59, .04)) !important;
     color: var(--ui-text, #10233f) !important;
     font-size: .79rem !important;
     font-weight: 500 !important;

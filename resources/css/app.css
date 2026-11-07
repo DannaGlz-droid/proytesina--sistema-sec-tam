@@ -821,6 +821,7 @@
 	--ui-surface-hover: #f1f5f9;
 	--ui-focus: #475569;
 	--ui-focus-ring: rgba(71, 85, 105, 0.18);
+	--ui-shadow-dropdown: 0 8px 20px rgba(30, 41, 59, 0.08), 0 1px 3px rgba(30, 41, 59, 0.04);
 	--ui-success: #16a34a;
 	--ui-success-text: #166534;
 	--ui-success-soft: #f0fdf4;
@@ -6024,6 +6025,24 @@ html[data-ui-theme="tamaulipas-salud"] .app-document-surface {
 	font-weight: 500 !important;
 }
 
+.users-management-page .users-table-card > .app-table-toolbar .users-filter-inline-error {
+	grid-column: 1 / -1;
+	margin: 0.1rem 0 0;
+	color: #9f2018;
+	font-size: 0.68rem;
+	font-weight: 500;
+	line-height: 1.35;
+}
+
+.users-management-page .users-table-card > .app-table-toolbar .users-filter-inline-error.hidden {
+	display: none !important;
+}
+
+.users-management-page .users-table-card > .app-table-toolbar .users-filter-custom-range input[aria-invalid="true"] {
+	border-color: #dc2626 !important;
+	box-shadow: 0 0 0 2px rgb(220 38 38 / 12%) !important;
+}
+
 .users-management-page .users-table-card > .app-table-toolbar .users-filter-menu .users-filter-panel-footer {
 	padding: 0.72rem 1rem !important;
 	background: #ffffff !important;
@@ -8242,7 +8261,7 @@ html[data-ui-theme="tamaulipas-salud"] .app-document-surface {
   z-index: 70 !important;
   border-color: var(--users-border-strong, #cbd5e1) !important;
   border-radius: 7px !important;
-  box-shadow: 0 16px 32px rgba(15, 23, 42, 0.12) !important;
+  box-shadow: var(--ui-shadow-dropdown) !important;
 }
 
 /* User registration password area: compact surface matching the users table. */
@@ -8992,7 +9011,7 @@ html[data-ui-theme="tamaulipas-salud"] .app-document-surface {
   border: 1px solid #cbd5e1 !important;
   border-radius: 7px !important;
   background: #ffffff !important;
-  box-shadow: 0 16px 32px rgba(15, 23, 42, 0.12) !important;
+  box-shadow: var(--ui-shadow-dropdown) !important;
   color: #10233f !important;
   font-family: "Open Sans", system-ui, sans-serif !important;
   font-size: 0.79rem !important;
@@ -9370,7 +9389,7 @@ html[data-ui-theme="tamaulipas-salud"] .app-document-surface {
   overflow: auto;
   border-color: var(--ui-border) !important;
   border-radius: var(--ui-radius-control) !important;
-  box-shadow: 0 16px 32px rgba(15, 23, 42, 0.12) !important;
+  box-shadow: var(--ui-shadow-dropdown) !important;
 }
 
 .ui-form-fields .ts-dropdown .option,
@@ -10519,6 +10538,25 @@ html[data-ui-theme="tamaulipas-salud"] .app-document-surface {
   gap: 0.6rem;
 }
 
+/* Action-heavy page headers need a second row before their title begins to
+   collapse. This applies automatically to current and future page headers. */
+@media (max-width: 1023px) {
+  .app-page-header:has(.app-page-header-actions > :nth-child(2)) {
+    flex-direction: column;
+  }
+
+  .app-page-header:has(.app-page-header-actions > :nth-child(2)) > :first-child,
+  .app-page-header:has(.app-page-header-actions > :nth-child(2)) .app-page-header-actions {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .app-page-header:has(.app-page-header-actions > :nth-child(2)) .app-page-header-actions {
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
+}
+
 .users-management-header {
   margin-bottom: 1.5rem;
 }
@@ -11288,6 +11326,66 @@ html[data-ui-theme="tamaulipas-salud"] .app-document-surface {
   color: var(--ui-text-secondary);
 }
 
+/* Compact categorical labels, based on DataTables' example tags. */
+.app-category-tag {
+  display: inline-block;
+  max-width: 100%;
+  padding: 0.16rem 0.38rem;
+  border: 0;
+  border-radius: 0.25rem;
+  font-family: 'Open Sans', sans-serif;
+  font-size: 0.72rem;
+  font-weight: 500;
+  line-height: 1.15;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.app-category-tag--admin {
+  background: #deddef;
+  color: #302d63;
+}
+
+.app-category-tag--coordinator {
+  background: #d4e8cc;
+  color: #254f2b;
+}
+
+.app-category-tag--operator {
+  background: #f4dfb5;
+  color: #6e4715;
+}
+
+.app-category-tag--guest {
+  background: #f1d7df;
+  color: #713246;
+}
+
+.app-category-tag--neutral {
+  background: #e3e6ea;
+  color: #3f4854;
+}
+
+/* Override legacy pill rules in the compact users table. */
+.users-management-page .users-table-card #users-table tbody .dt-role-cell > .app-category-tag {
+  display: inline-block !important;
+  min-height: 0;
+  padding: 0.16rem 0.38rem !important;
+  border-radius: 0.25rem !important;
+  font-size: 0.72rem !important;
+  font-weight: 500 !important;
+  line-height: 1.15 !important;
+}
+
+.profile-role-badge.app-category-tag {
+  min-height: 0;
+  padding: 0.16rem 0.38rem;
+  border-radius: 0.25rem;
+  font-size: 0.72rem;
+  font-weight: 500;
+  line-height: 1.15;
+}
+
 .profile-help-note {
   display: flex;
   align-items: flex-start;
@@ -11937,5 +12035,73 @@ body .app-standard-filter-panel.users-filter-panel .users-filter-apply {
   .users-management-page #usersFilterPanel
     .ts-wrapper.app-filter-select .ts-control > input {
     font-size: 16px !important;
+  }
+
+  /* Shared mobile table contract: the page itself never becomes the
+     horizontal scroller; only the table viewport may exceed its card. */
+  .users-management-page {
+    max-width: 100% !important;
+    overflow-x: hidden;
+    overflow-x: clip;
+  }
+
+  .users-management-page .ui-data-table,
+  .users-management-page .ui-data-table__toolbar,
+  .users-management-page .users-filter-card,
+  .users-management-page .users-filter-form,
+  .users-management-page .users-filter-topbar {
+    min-width: 0 !important;
+    max-width: 100% !important;
+  }
+
+  .users-management-page .ui-data-table__viewport {
+    max-width: 100% !important;
+    overflow-x: auto !important;
+    overscroll-behavior-x: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Prevent Safari from zooming the page when a mobile search or filter
+     field receives focus. */
+  .ui-data-table .ui-data-table__toolbar
+    .ui-data-table__search > input[type="search"],
+  body .users-management-page .app-standard-filter-panel.users-filter-panel
+    input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]),
+  body .users-management-page .app-standard-filter-panel.users-filter-panel
+    .ts-wrapper.app-filter-select .ts-control > input {
+    font-size: 16px !important;
+  }
+
+  .users-management-page .users-page-size-menu,
+  .users-row-menu.is-viewport-positioned {
+    max-width: calc(100vw - 1.5rem) !important;
+  }
+
+  /* Mobile pagination keeps the standard full-width control while rendering
+     fewer page numbers, avoiding a secondary horizontal gesture. */
+  .users-management-page .users-table-card > .users-table-footer #dt-pagination {
+    overflow-x: hidden !important;
+  }
+
+  .users-management-page #dt-pagination .fb-pagination {
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    margin-inline: 0 !important;
+  }
+
+  .users-management-page #dt-pagination .fb-page-num {
+    width: auto !important;
+    min-width: 1.9rem !important;
+    flex: 1 1 0 !important;
+  }
+
+  .users-management-page #dt-pagination :is(.fb-page-first, .fb-page-last) {
+    width: 4.5rem !important;
+    min-width: 0 !important;
+    max-width: 4.5rem !important;
+    flex: 0 1 4.5rem !important;
+    padding-inline: 0.45rem !important;
+    font-size: 0.74rem !important;
   }
 }

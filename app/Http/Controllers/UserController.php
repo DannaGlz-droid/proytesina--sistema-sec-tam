@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use App\Support\FilterDateRange;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
 use App\Models\Role;
@@ -121,6 +122,8 @@ class UserController extends Controller
 
     public function index(Request $request)
     {
+        FilterDateRange::validate($request, 'date_from', 'date_to');
+
         // Validar y normalizar parámetros de entrada: búsqueda, paginación y filtros
         $validated = $request->validate([
             'q' => ['nullable', 'string', 'max:255'],
@@ -129,8 +132,8 @@ class UserController extends Controller
             'is_active' => ['nullable', 'in:0,1','numeric'],
             'last_session' => ['nullable', 'string'],
             'date_range' => ['nullable', 'string'],
-            'date_from' => ['nullable','date'],
-            'date_to' => ['nullable','date'],
+            'date_from' => ['nullable', 'date_format:Y-m-d', 'before_or_equal:today'],
+            'date_to' => ['nullable', 'date_format:Y-m-d', 'before_or_equal:today'],
             'position_id' => ['nullable','integer','exists:positions,id'],
             'district_id' => ['nullable','integer','exists:districts,id'],
             'role_id' => ['nullable','integer','exists:roles,id'],
@@ -271,6 +274,8 @@ class UserController extends Controller
      */
     public function dataTable(Request $request)
     {
+        FilterDateRange::validate($request, 'date_from', 'date_to');
+
         // Debug: log incoming filter params to help diagnose client-side issues
         try {
             Log::debug('User datatable request inputs', $request->only(['last_session', 'search', 'q']));
@@ -459,17 +464,17 @@ class UserController extends Controller
             $roleName = optional($user->role)->name ?? '—';
             $roleLower = strtolower($roleName);
             if (in_array($roleLower, ['administrador', 'admin'])) {
-                $roleClasses = 'bg-[#e0e7ff] text-[#3730a3]';
+                $roleClasses = 'app-category-tag--admin';
             } elseif (in_array($roleLower, ['coordinador'])) {
-                $roleClasses = 'bg-[#dcfce7] text-[#166534]';
+                $roleClasses = 'app-category-tag--coordinator';
             } elseif (in_array($roleLower, ['operador'])) {
-                $roleClasses = 'bg-[#fef3c7] text-[#92400e]';
+                $roleClasses = 'app-category-tag--operator';
             } elseif ($roleLower === 'invitado') {
-                $roleClasses = 'bg-slate-100 text-slate-600';
+                $roleClasses = 'app-category-tag--guest';
             } elseif (in_array($roleLower, ['usuario', 'user'])) {
-                $roleClasses = 'bg-slate-100 text-slate-700';
+                $roleClasses = 'app-category-tag--neutral';
             } else {
-                $roleClasses = 'bg-slate-100 text-slate-700';
+                $roleClasses = 'app-category-tag--neutral';
             }
 
             $isActive = (bool) $user->is_active;
@@ -532,7 +537,7 @@ class UserController extends Controller
                 'district' => optional($user->district)->name ?? '—',
                 'registration_date' => $user->formatted_registration_date ?? $user->registration_date,
                 'profile_photo_url' => $user->profile_photo_path ? asset('storage/' . $user->profile_photo_path) : null,
-                'role' => "<span class='inline-flex items-center justify-center px-3 py-1 rounded-full text-xs leading-none font-medium whitespace-nowrap {$roleClasses}'>{$roleName}</span>",
+                'role' => "<span class='app-category-tag {$roleClasses}'>" . e($roleName) . '</span>',
                 'status' => "<div class='flex items-center gap-1 whitespace-nowrap {$statusClass}'><span class='w-2 h-2 rounded-full {$statusDot}'></span><span class='text-xs'>{$statusText}</span></div>",
                 'last_session' => $lastSession,
                 'actions' => view('usuarios.partials.table-actions', compact('user', 'isCurrentUser', 'isSystemContact'))->render(),

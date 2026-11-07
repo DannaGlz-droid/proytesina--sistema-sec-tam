@@ -336,6 +336,7 @@ Excepciones:
 
 #### Ayuda contextual en campos
 
+- Al crear o migrar una vista con formularios o filtros, revisar cada campo para decidir explícitamente si necesita ayuda contextual. Esta revisión forma parte de la aceptación de la pantalla y no debe depender de recordarlo informalmente.
 - Usar un icono de ayuda junto a la etiqueta únicamente cuando el campo acepte formatos que no sean evidentes, tenga una regla especial que deba conocerse antes de capturar, provoque errores frecuentes sin explicación o necesite ejemplos que no quepan adecuadamente en el placeholder.
 - La ayuda contextual es apropiada para instrucciones complementarias y breves. Por ejemplo, el filtro Edad puede explicar: “Escribe una edad (25), un rango (20-30) o varias separadas por comas (5,10,15)”.
 - En campos derivados o deshabilitados, como Distrito de residencia y Distrito de defunción, usar ayuda contextual para explicar brevemente de qué selección depende su asignación. El estado visible del campo debe seguir comunicando su valor o que está pendiente; el tooltip solo explica el mecanismo.
@@ -346,7 +347,7 @@ Excepciones:
 - Si la instrucción es indispensable para completar correctamente el campo, tiene implicaciones legales o no puede resumirse en una frase breve, mostrar ayuda persistente debajo del campo en lugar de ocultarla en un tooltip.
 - No usar ayuda contextual en campos evidentes como Sexo, Estado o Periodo, para repetir información visible ni como sustituto de validaciones y mensajes de error.
 - Los errores, requisitos indispensables y consecuencias legales permanecen visibles debajo del campo; nunca se ocultan detrás del icono de ayuda.
-- Antes de agregar este patrón en una segunda pantalla, extraerlo a un componente compartido; las vistas no deben duplicar su markup, estilos ni comportamiento.
+- Implementar siempre este patrón con `<x-ui.form.help-tooltip id="..." label="...">`; las vistas no deben duplicar su markup, estilos ni comportamiento. El campo relacionado debe referenciar el identificador de la ayuda mediante `aria-describedby` cuando corresponda.
 
 Estados:
 
@@ -914,6 +915,7 @@ Una pantalla se considera migrada cuando:
 - Tiene una sola acción primaria por contexto.
 - Los iconos cumplen la política y tienen etiquetas accesibles.
 - Formularios, selects y mensajes usan los estados oficiales.
+- Se revisó cada campo y filtro para determinar si requiere ayuda contextual; los formatos o reglas no evidentes usan `x-ui.form.help-tooltip`, mientras que los campos evidentes permanecen sin iconos innecesarios.
 - Tablas incluyen carga, vacío, error y paginación.
 - Funciona con teclado y foco visible.
 - Responde correctamente en móvil y escritorio.

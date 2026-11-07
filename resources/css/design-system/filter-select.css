@@ -208,6 +208,17 @@ select.app-filter-select {
 }
 
 .ts-wrapper.app-filter-select.single:not(.is-searchable) .ts-control > input {
+  position: absolute !important;
+  width: 1px !important;
+  min-width: 1px !important;
+  height: 1px !important;
+  min-height: 1px !important;
+  flex: 0 0 1px !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0);
+  clip-path: inset(50%);
+  opacity: 0;
   caret-color: transparent;
 }
 
@@ -249,7 +260,7 @@ select.app-filter-select {
   border: 1px solid var(--ui-border, #cbd5e1) !important;
   border-radius: var(--ui-radius-panel, .5rem) !important;
   background: var(--ui-surface, #fff) !important;
-  box-shadow: 0 16px 34px rgb(15 23 42 / 14%), 0 1px 2px rgb(15 23 42 / 5%) !important;
+  box-shadow: var(--ui-shadow-dropdown, 0 8px 20px rgb(30 41 59 / 8%), 0 1px 3px rgb(30 41 59 / 4%)) !important;
   color: var(--ui-text, #10233f) !important;
   font-family: "Open Sans", sans-serif !important;
   font-size: .78rem !important;
@@ -385,7 +396,7 @@ select.app-filter-select {
   border-color: #cbd5e1 !important;
   border-radius: 7px !important;
   background: #fff !important;
-  box-shadow: 0 16px 32px rgb(15 23 42 / 12%) !important;
+  box-shadow: var(--ui-shadow-dropdown, 0 8px 20px rgb(30 41 59 / 8%), 0 1px 3px rgb(30 41 59 / 4%)) !important;
   color: #10233f !important;
   font-family: "Open Sans", system-ui, sans-serif !important;
   font-size: .79rem !important;

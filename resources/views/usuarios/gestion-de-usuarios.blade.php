@@ -331,6 +331,21 @@
                 if (dateToProxy && dateTo) dateToProxy.value = dateTo.value || '';
             }
 
+            function validateUsersDateRange(focus = true) {
+                const dateRange = getFilterControl('date_range');
+                const start = document.querySelector('[data-filter-date-proxy="date_from"]');
+                const end = document.querySelector('[data-filter-date-proxy="date_to"]');
+                const error = document.getElementById('users-filter-date-error');
+
+                if (dateRange?.value !== 'custom') {
+                    window.AppFilterDateRange?.clear({ start, end, error });
+                    return { valid: true, message: '' };
+                }
+
+                return window.AppFilterDateRange?.validate({ start, end, error, focus })
+                    || { valid: true, message: '' };
+            }
+
             function updateUsersFilterChips() {
                 if (!filtersForm) return;
                 const chipsContainer = document.getElementById('usersFilterChips');
@@ -1359,7 +1374,25 @@
                 }
 
                 // Page numbers with ellipsis
-                if (pages <= 5) {
+                const compactMobilePagination = window.matchMedia('(max-width: 639px)').matches;
+
+                if (compactMobilePagination && pages > 5) {
+                    if (current <= 3) {
+                        for (let i = 1; i <= 3; i++) html += pageBtn(i);
+                        html += ellipsis();
+                        html += pageBtn(pages);
+                    } else if (current >= pages - 2) {
+                        html += pageBtn(1);
+                        html += ellipsis();
+                        for (let i = pages - 2; i <= pages; i++) html += pageBtn(i);
+                    } else {
+                        html += pageBtn(1);
+                        html += ellipsis();
+                        html += pageBtn(current);
+                        html += ellipsis();
+                        html += pageBtn(pages);
+                    }
+                } else if (pages <= 5) {
                     for (let i = 1; i <= pages; i++) html += pageBtn(i);
                 } else if (current <= 3) {
                     for (let i = 1; i <= 5; i++) html += pageBtn(i);
@@ -1398,6 +1431,11 @@
             // reload the DataTable via AJAX so current filter values are sent.
             $('#filtersForm').on('submit', function(e) {
                 e.preventDefault();
+                const dateValidation = validateUsersDateRange();
+                if (!dateValidation.valid) {
+                    notifyUser(dateValidation.message, 'warning');
+                    return;
+                }
                 try {
                     usersFilterDraftSnapshot = null;
                     table.clearPipeline().ajax.reload();
@@ -1422,6 +1460,7 @@
                     'role_id',
                 ], { date_range: 'all' });
                 $('#customRangeSelector').removeClass('is-visible');
+                validateUsersDateRange(false);
                 syncUsersFilterPanel();
                 updateUsersFilterChips();
                 usersFilterDraftSnapshot = captureUsersFilterState();
@@ -1475,6 +1514,7 @@
                         customSelector.removeClass('is-visible');
                         setFilterValue('date_from', '');
                         setFilterValue('date_to', '');
+                        validateUsersDateRange(false);
                     }
                 }
                 syncUsersFilterPanel();
@@ -1484,6 +1524,11 @@
             $('#usersFilterPanel').on('change', '[data-filter-date-proxy]', function() {
                 const target = this.dataset.filterDateProxy;
                 setFilterValue(target, this.value || '');
+                window.AppFilterDateRange?.clear({
+                    start: document.querySelector('[data-filter-date-proxy="date_from"]'),
+                    end: document.querySelector('[data-filter-date-proxy="date_to"]'),
+                    error: document.getElementById('users-filter-date-error'),
+                });
                 syncUsersFilterPanel();
                 updateUsersFilterChips();
             });
@@ -1498,6 +1543,7 @@
                     $('#usersFilterToggle').attr('aria-expanded', 'true');
                 } else {
                     customSelector.removeClass('is-visible');
+                    validateUsersDateRange(false);
                     table.clearPipeline().ajax.reload();
                 }
                 syncUsersFilterPanel();
