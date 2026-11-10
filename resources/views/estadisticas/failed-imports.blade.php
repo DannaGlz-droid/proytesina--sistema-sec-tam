@@ -11,24 +11,32 @@
             <x-slot:actions><a href="{{ route('statistic.import-history-view') }}" class="users-page-create-btn"><i class="fas fa-arrow-left" aria-hidden="true"></i>Volver al historial</a></x-slot:actions>
         </x-ui.page-header>
 
-        <section class="app-table-card users-table-card failed-imports-card" aria-label="Registros fallidos de la importación">
-            <div class="app-table-toolbar flex flex-row flex-wrap items-center justify-between gap-3 p-4">
-                <section class="users-filter-card failed-imports-controls" aria-label="Controles de registros fallidos">
-                    <div class="users-filter-form">
-                        <div class="users-filter-topbar">
-                            <div class="failed-imports-file-context">
-                                <span class="failed-imports-file-icon" aria-hidden="true"><i class="far fa-file-excel"></i></span>
-                                <div>
-                                    <strong title="{{ $importFileName }}">{{ $importFileName }}</strong>
-                                    <small id="failed-imports-pending-count" aria-live="polite">Consultando registros pendientes…</small>
-                                </div>
-                            </div>
-                            <div class="users-filter-search"><i class="fas fa-search" aria-hidden="true"></i><input id="search-failed-imports" type="search" placeholder="Buscar registros fallidos..." aria-label="Buscar registros fallidos" autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false" enterkeyhint="search" aria-busy="false"><span class="users-search-progress" aria-hidden="true"></span><button id="clear-failed-imports-search" type="button" class="hidden" title="Limpiar búsqueda" aria-label="Limpiar búsqueda"><i class="fas fa-times" aria-hidden="true"></i></button></div>
-                            <div class="app-table-page-size users-filter-page-size"><select id="per-page-failed-imports" class="users-native-page-size" aria-hidden="true" tabindex="-1">@foreach([4,6,10] as $size)<option value="{{ $size }}" @selected($size === 4)>{{ $size }}</option>@endforeach</select><div class="users-page-size-dropdown"><button id="per-page-failed-imports-button" type="button" class="users-page-size-button" aria-haspopup="listbox" aria-expanded="false"><span>Mostrar</span><strong id="per-page-failed-imports-label">4</strong><i class="fas fa-list-ul users-page-size-icon" aria-hidden="true"></i></button><div id="per-page-failed-imports-menu" class="users-page-size-menu hidden" role="listbox" aria-labelledby="per-page-failed-imports-button">@foreach([4,6,10] as $size)<button type="button" role="option" class="users-page-size-option {{ $size === 4 ? 'is-active' : '' }}" data-value="{{ $size }}">{{ $size }}</button>@endforeach</div></div></div>
-                        </div>
+        <x-ui.data-table.panel class="users-table-card failed-imports-card" label="Registros fallidos de la importación">
+            <x-ui.data-table.toolbar class="failed-imports-controls">
+                <div class="failed-imports-file-context">
+                    <span class="failed-imports-file-icon" aria-hidden="true"><i class="far fa-file-excel"></i></span>
+                    <div>
+                        <strong title="{{ $importFileName }}">{{ $importFileName }}</strong>
+                        <small id="failed-imports-pending-count" aria-live="polite">Consultando registros pendientes…</small>
                     </div>
-                </section>
-            </div>
+                </div>
+
+                <x-ui.data-table.search
+                    id="search-failed-imports"
+                    clear-id="clear-failed-imports-search"
+                    placeholder="Buscar registros fallidos..."
+                    label="Buscar registros fallidos"
+                />
+
+                <x-ui.data-table.page-size
+                    id="per-page-failed-imports"
+                    button-id="per-page-failed-imports-button"
+                    label-id="per-page-failed-imports-label"
+                    menu-id="per-page-failed-imports-menu"
+                    :options="[4, 6, 10]"
+                    :selected="4"
+                />
+            </x-ui.data-table.toolbar>
         <!-- Loading State -->
         <div id="loading-state" class="failed-imports-state" role="status" aria-label="Cargando registros fallidos">
             <span class="sr-only">Cargando registros fallidos</span>
@@ -63,16 +71,21 @@
             <!-- Records List (with empty state) -->
             <div id="records-list" class="failed-imports-list">
                 <!-- Empty State (shown when no records) -->
-                <div id="empty-state" class="col-span-full text-center py-12">
-                    <div class="text-gray-400 mb-4"><i class="fas fa-check" aria-hidden="true"></i></div>
-                    <p class="text-lg font-lora text-gray-600">No quedan registros por revisar</p>
-                    <p class="text-sm text-gray-500 font-lora mt-2">Todos los registros fallidos de esta importación ya fueron atendidos.</p>
+                <div id="empty-state" class="users-table-state users-table-state--empty col-span-full" role="status">
+                    <i class="fas fa-check" aria-hidden="true"></i>
+                    <strong>No quedan registros por revisar</strong>
+                    <span>Todos los registros fallidos de esta importación ya fueron atendidos.</span>
                 </div>
             </div>
 
         </div>
-        <nav class="users-table-footer failed-imports-footer flex flex-row flex-wrap items-center justify-between gap-3 p-4" aria-label="Paginación de registros fallidos"><span id="dt-info" class="text-sm font-normal text-gray-500 flex-1 min-w-0 is-loading">Preparando tabla</span><div id="dt-pagination" class="flex-none"></div></nav>
-        </section>
+        <x-ui.data-table.footer
+            class="users-table-footer failed-imports-footer"
+            info-id="dt-info"
+            pagination-id="dt-pagination"
+            initial-text="Preparando registros"
+        />
+        </x-ui.data-table.panel>
     </main>
 
 @endsection
@@ -511,7 +524,9 @@ document.addEventListener('DOMContentLoaded', function() {
     const failedSearchControl = failedSearchInput?.closest('.users-filter-search');
     const failedPerPageSelect = document.getElementById('per-page-failed-imports');
     const failedPerPageButton = document.getElementById('per-page-failed-imports-button');
+    const failedPerPageLabel = document.getElementById('per-page-failed-imports-label');
     const failedPerPageMenu = document.getElementById('per-page-failed-imports-menu');
+    let failedPageSizeController = null;
 
     failedSearchInput?.setAttribute('aria-busy', 'false');
     const updateFailedSearchClear = () => failedSearchClear?.classList.toggle('hidden', !failedSearchInput?.value);
@@ -549,10 +564,10 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         return `
-            <div id="empty-state" class="col-span-full text-center py-12">
-                <div class="text-gray-400 mb-4"><i class="fas fa-check" aria-hidden="true"></i></div>
-                <p class="text-lg font-lora text-gray-600">No quedan registros por revisar</p>
-                <p class="text-sm text-gray-500 font-lora mt-2">Todos los registros fallidos de esta importación ya fueron atendidos.</p>
+            <div id="empty-state" class="users-table-state users-table-state--empty col-span-full" role="status">
+                <i class="fas fa-check" aria-hidden="true"></i>
+                <strong>No quedan registros por revisar</strong>
+                <span>Todos los registros fallidos de esta importación ya fueron atendidos.</span>
             </div>
         `;
     };
@@ -568,43 +583,47 @@ document.addEventListener('DOMContentLoaded', function() {
         void applyFailedSearch('');
     });
     document.getElementById('records-list')?.addEventListener('click', event => {
-        const action = event.target.closest('[data-failed-state-action="search"]');
+        const action = event.target.closest('[data-failed-state-action]');
         if (!action) return;
+
+        if (action.dataset.failedStateAction === 'retry') {
+            isInitialLoad = false;
+            loadFailedRecords(currentPage || 1);
+            return;
+        }
 
         void applyFailedSearch('').then(applied => {
             if (applied) failedSearchInput.focus();
         });
     });
 
-    failedPerPageButton?.addEventListener('click', () => {
-        const open = failedPerPageMenu?.classList.contains('hidden');
-        failedPerPageMenu?.classList.toggle('hidden', !open);
-        failedPerPageButton.setAttribute('aria-expanded', String(open));
-    });
-    failedPerPageMenu?.querySelectorAll('[data-value]').forEach(option => option.addEventListener('click', async () => {
-        const shouldContinue = await confirmDiscardFailedImportChanges({
-            question: '¿Deseas cambiar la cantidad de registros?',
-            confirmText: 'Cambiar sin guardar',
-        });
-        if (!shouldContinue) return;
+    const initializeFailedPageSize = () => {
+        if (failedPageSizeController) return failedPageSizeController;
 
-        failedPerPageSelect.value = option.dataset.value;
-        document.getElementById('per-page-failed-imports-label').textContent = option.dataset.value;
-        failedPerPageMenu.querySelectorAll('[data-value]').forEach(item => item.classList.toggle('is-active', item === option));
-        failedPerPageMenu.classList.add('hidden');
-        failedPerPageButton.setAttribute('aria-expanded', 'false');
-        failedPerPageSelect.dispatchEvent(new Event('change', { bubbles: true }));
-    }));
+        failedPageSizeController = window.AppDataTable?.initPageSize({
+            select: failedPerPageSelect,
+            button: failedPerPageButton,
+            label: failedPerPageLabel,
+            menu: failedPerPageMenu,
+            initialValue: failedPerPageSelect?.value,
+            beforeChange: () => confirmDiscardFailedImportChanges({
+                question: '¿Deseas cambiar la cantidad de registros?',
+                confirmText: 'Cambiar sin guardar',
+            }),
+            onChange: () => failedPerPageSelect?.dispatchEvent(new Event('change', { bubbles: true })),
+        }) || null;
+
+        return failedPageSizeController;
+    };
+
+    if (!initializeFailedPageSize()) {
+        window.addEventListener('app:data-table-ready', initializeFailedPageSize, { once: true });
+    }
+
     failedPerPageSelect?.addEventListener('change', event => {
         failedImportsPerPage = Number(event.target.value) || 4;
         isInitialLoad = false;
         loadFailedRecords(1);
-    });
-    document.addEventListener('click', event => {
-        if (!event.target.closest('.users-page-size-dropdown')) {
-            failedPerPageMenu?.classList.add('hidden');
-            failedPerPageButton?.setAttribute('aria-expanded', 'false');
-        }
     });
 
     function loadFailedRecords(page = 1) {
@@ -731,9 +750,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 updateFailedPaginationInfo({ from: 0, to: 0, total: 0 });
                 document.getElementById('dt-pagination').replaceChildren();
                 recordsList.innerHTML = `
-                    <div class="failed-imports-load-error" role="alert">
-                        <span><i class="fas fa-triangle-exclamation" aria-hidden="true"></i></span>
-                        <div><p>No se pudieron cargar los registros</p><p>Intente nuevamente en unos momentos.</p></div>
+                    <div class="users-table-state users-table-state--error failed-imports-load-error" role="alert">
+                        <i class="fas fa-triangle-exclamation" aria-hidden="true"></i>
+                        <strong>No se pudieron cargar los registros</strong>
+                        <span>Revise su conexión e intente nuevamente.</span>
+                        <button class="users-table-state-action" type="button" data-failed-state-action="retry">Reintentar</button>
                     </div>
                 `;
             })
@@ -1914,7 +1935,19 @@ document.addEventListener('DOMContentLoaded', function() {
             ? '<span class="fb-page-btn fb-page-first fb-page-disabled">Anterior</span>'
             : `<a href="#" data-page="${activePage - 1}" class="pagination-link-failed-imports fb-page-btn fb-page-first">Anterior</a>`;
 
-        if (totalPages <= 5) {
+        const compactMobilePagination = window.matchMedia('(max-width: 639px)').matches;
+
+        if (compactMobilePagination && totalPages > 5) {
+            if (activePage <= 3) {
+                for (let page = 1; page <= 3; page++) html += pageButton(page);
+                html += ellipsis() + pageButton(totalPages);
+            } else if (activePage >= totalPages - 2) {
+                html += pageButton(1) + ellipsis();
+                for (let page = totalPages - 2; page <= totalPages; page++) html += pageButton(page);
+            } else {
+                html += pageButton(1) + ellipsis() + pageButton(activePage) + ellipsis() + pageButton(totalPages);
+            }
+        } else if (totalPages <= 5) {
             for (let page = 1; page <= totalPages; page++) html += pageButton(page);
         } else if (activePage <= 3) {
             for (let page = 1; page <= 5; page++) html += pageButton(page);

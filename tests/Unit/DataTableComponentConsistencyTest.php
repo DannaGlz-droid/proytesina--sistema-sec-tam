@@ -57,6 +57,10 @@ class DataTableComponentConsistencyTest extends TestCase
         $this->assertStringContainsString('border-top: 0 !important;', $dataTableCss);
         $this->assertStringContainsString('border-bottom: 0 !important;', $dataTableCss);
         $this->assertStringContainsString('.ui-data-table__filter-chips:not(:empty)', $dataTableCss);
+        $this->assertMatchesRegularExpression(
+            '/\.ui-data-table__filter-chips:not\(:empty\)\s*\{\s*border-bottom: 1px solid #e5e7eb !important;/',
+            $dataTableCss
+        );
         $this->assertStringContainsString(':has(input[type="checkbox"]:checked)', $dataTableCss);
         $this->assertStringContainsString('height: var(--data-table-row-min-height);', $dataTableCss);
         $this->assertStringContainsString('.ui-data-table__row-actions, .users-row-actions', $dataTableCss);
@@ -190,5 +194,88 @@ class DataTableComponentConsistencyTest extends TestCase
         $this->assertStringContainsString('AppFilterPanel?.capture', $deaths);
         $this->assertStringContainsString('AppFilterPanel?.restore', $users);
         $this->assertStringContainsString('AppFilterPanel?.restore', $deaths);
+        $this->assertMatchesRegularExpression(
+            "/#clearUsersFilters'[\\s\\S]*?table\\.clearPipeline\\(\\)\\.ajax\\.reload\\(\\);[\\s\\S]*?setUsersFilterPanelOpen\\(false\\);/",
+            $users
+        );
+        $this->assertMatchesRegularExpression(
+            "/getElementById\\('limpiarFiltros'\\)[\\s\\S]*?form\\.dispatchEvent\\(new Event\\('submit'[\\s\\S]*?setPanel\\(false\\);/",
+            $deaths
+        );
+    }
+
+    public function test_failed_imports_and_reports_share_the_listing_contract_without_replacing_their_content(): void
+    {
+        $failedImports = file_get_contents(resource_path('views/estadisticas/failed-imports.blade.php'));
+        $reports = file_get_contents(resource_path('views/reportes/publicaciones.blade.php'));
+        $pageSize = file_get_contents(resource_path('views/components/ui/data-table/page-size.blade.php'));
+        $search = file_get_contents(resource_path('views/components/ui/data-table/search.blade.php'));
+        $behavior = file_get_contents(resource_path('js/data-table.js'));
+
+        foreach ([$failedImports, $reports] as $view) {
+            $this->assertStringContainsString('<x-ui.data-table.panel', $view);
+            $this->assertStringContainsString('<x-ui.data-table.toolbar', $view);
+            $this->assertStringContainsString('<x-ui.data-table.search', $view);
+            $this->assertStringContainsString('<x-ui.data-table.page-size', $view);
+            $this->assertStringContainsString('users-table-state', $view);
+        }
+
+        $this->assertStringContainsString('<x-ui.data-table.footer', $failedImports);
+        $this->assertStringContainsString("compactMobilePagination = window.matchMedia('(max-width: 639px)').matches", $failedImports);
+        $this->assertStringContainsString('beforeChange: () => confirmDiscardFailedImportChanges', $failedImports);
+        $this->assertStringContainsString('<template id="record-template">', $failedImports);
+        $this->assertStringContainsString('class="correction-form ui-form-fields"', $failedImports);
+        $this->assertStringContainsString('failed-correction-section', $failedImports);
+
+        $this->assertStringContainsString('class="ui-data-table__footer reports-table-footer"', $reports);
+        $this->assertStringContainsString('ui-data-table__filter-chips users-filter-chips', $reports);
+        $this->assertStringContainsString('ui-data-table__bulk-actions reports-bulk-toolbar', $reports);
+        $this->assertMatchesRegularExpression(
+            '/<x-ui\.data-table\.toolbar>\s*<form id="reports-filter-form"[^>]*class="users-filter-topbar">/',
+            $reports
+        );
+        $this->assertStringContainsString('users-filter-option--all', $reports);
+        $this->assertStringNotContainsString('class="reports-search"', $reports);
+        $this->assertStringNotContainsString('class="reports-page-size"', $reports);
+        $this->assertStringNotContainsString('class="reports-filter-chip"', $reports);
+        $this->assertStringContainsString('class="users-filter-chip-label" data-open-filter-section="status"', $reports);
+        $this->assertStringContainsString('class="users-filter-chip-remove" data-clear-report-filter-url=', $reports);
+        $this->assertStringContainsString('data-filter-section="district"', $reports);
+        $this->assertStringContainsString('data-filter-section="order"', $reports);
+        $this->assertStringContainsString('data-reports-filter-section-toggle data-filter-section-toggle', $reports);
+        $this->assertStringContainsString('window.setFilterSectionExpanded(section, willOpen);', $reports);
+        $this->assertStringContainsString('window.AppFilterPanel?.openSection({', $reports);
+        $this->assertStringContainsString("filterChipRemove.dataset.clearReportFilterUrl", $reports);
+        $this->assertStringContainsString("menu.classList.toggle('opens-upward', openAbove);", $reports);
+        $this->assertStringContainsString("['ArrowDown', 'ArrowUp', 'Home', 'End'].includes(e.key)", $reports);
+        $this->assertStringContainsString('<x-filtros.select id="district_id" name="district_id" placeholder="Todos">', $reports);
+        $this->assertStringContainsString("document.getElementById('reports-filter-panel')", $reports);
+        $this->assertStringNotContainsString("document.querySelector('#reports-filter-popover')", $reports);
+        $this->assertStringContainsString('window.AppFilterSelect.initAll(panel', $reports);
+        $this->assertStringNotContainsString('reports-district-tomselect', $reports);
+        $this->assertStringNotContainsString("dropdownParent: 'body'", $reports);
+        $reportsCss = file_get_contents(resource_path('css/pages/report-publications.css'));
+        $this->assertStringNotContainsString('reports-ts-dropdown', $reportsCss);
+        $this->assertStringContainsString('.reports-row-menu::before {', $reportsCss);
+        $this->assertStringContainsString('.reports-row-menu.opens-upward::before {', $reportsCss);
+        $this->assertStringContainsString('.reports-publications-page .reports-table-card > .reports-type-tabs {', $reportsCss);
+        $this->assertStringContainsString('padding: .65rem .75rem 0 !important;', $reportsCss);
+        $this->assertStringContainsString('padding: .65rem .5rem 0 !important;', $reportsCss);
+        $this->assertStringContainsString('updateReportsCompactPagination', $reports);
+        $this->assertStringContainsString('AppFilterPanel?.capture', $reports);
+        $this->assertStringContainsString('AppFilterPanel?.restore', $reports);
+        $this->assertStringContainsString('AppDataTable?.initPageSize', $reports);
+        $this->assertStringContainsString("window.addEventListener('app:data-table-ready'", $reports);
+        $this->assertStringContainsString("e.target.closest('[data-reports-filter-target]')", $reports);
+        $this->assertStringContainsString('<x-publicacion-card', $reports);
+        $this->assertStringContainsString("@include('components.modal-alcoholimetria')", $reports);
+        $this->assertStringContainsString("@include('components.modal-seguridad-vial')", $reports);
+
+        $this->assertStringContainsString("'name' => null", $pageSize);
+        $this->assertStringContainsString("'buttonClass' => ''", $pageSize);
+        $this->assertStringContainsString("'name' => null", $search);
+        $this->assertStringContainsString("'clearVisible' => false", $search);
+        $this->assertStringContainsString('beforeChange,', $behavior);
+        $this->assertStringContainsString('if (mayChange === false) return;', $behavior);
     }
 }

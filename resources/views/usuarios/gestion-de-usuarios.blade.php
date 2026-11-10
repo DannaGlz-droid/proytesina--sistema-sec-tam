@@ -1463,8 +1463,9 @@
                 validateUsersDateRange(false);
                 syncUsersFilterPanel();
                 updateUsersFilterChips();
-                usersFilterDraftSnapshot = captureUsersFilterState();
                 table.clearPipeline().ajax.reload();
+                usersFilterDraftSnapshot = null;
+                setUsersFilterPanelOpen(false);
             });
 
             $('#usersFilterChips').on('click', '[data-clear-filter]', function() {

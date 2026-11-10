@@ -10,6 +10,7 @@ export function initDataTablePageSize({
     initialValue,
     onChange,
     onOpen,
+    beforeChange,
 }) {
     if (!select || !button || !label || !menu) return null;
 
@@ -69,8 +70,10 @@ export function initDataTablePageSize({
     });
 
     options.forEach((option) => {
-        option.addEventListener('click', (event) => {
+        option.addEventListener('click', async (event) => {
             event.preventDefault();
+            const mayChange = await beforeChange?.(option.dataset.value, select);
+            if (mayChange === false) return;
             update(option.dataset.value);
             close();
             onChange?.(option.dataset.value, select);

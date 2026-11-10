@@ -1845,14 +1845,14 @@
 }
 
 @media (max-width: 640px) {
-    .statistics-failed-imports-page .failed-imports-card > .app-table-toolbar .failed-imports-controls .users-filter-topbar {
+    .statistics-failed-imports-page .failed-imports-card > .failed-imports-controls {
         display: grid !important;
         grid-template-columns: minmax(0, 1fr) !important;
         align-items: center !important;
         gap: .65rem !important;
     }
 
-    .statistics-failed-imports-page .failed-imports-card > .app-table-toolbar .failed-imports-file-context {
+    .statistics-failed-imports-page .failed-imports-card > .failed-imports-controls .failed-imports-file-context {
         grid-column: 1 / -1 !important;
         order: 1 !important;
         width: 100% !important;
@@ -1860,32 +1860,32 @@
         padding: .05rem 0 .15rem;
     }
 
-    .statistics-failed-imports-page .failed-imports-card > .app-table-toolbar .failed-imports-file-icon {
+    .statistics-failed-imports-page .failed-imports-card > .failed-imports-controls .failed-imports-file-icon {
         width: 2.25rem;
         height: 2.25rem;
         flex-basis: 2.25rem;
         font-size: 1rem;
     }
 
-    .statistics-failed-imports-page .failed-imports-card > .app-table-toolbar .failed-imports-file-context strong,
-    .statistics-failed-imports-page .failed-imports-card > .app-table-toolbar .failed-imports-file-context small {
+    .statistics-failed-imports-page .failed-imports-card > .failed-imports-controls .failed-imports-file-context strong,
+    .statistics-failed-imports-page .failed-imports-card > .failed-imports-controls .failed-imports-file-context small {
         line-height: 1.35;
     }
 
-    .statistics-failed-imports-page .failed-imports-card > .app-table-toolbar .users-filter-page-size {
+    .statistics-failed-imports-page .failed-imports-card > .failed-imports-controls .users-filter-page-size {
         grid-column: 1 / -1 !important;
         order: 2 !important;
         width: 100% !important;
         min-width: 0 !important;
     }
 
-    .statistics-failed-imports-page .failed-imports-card > .app-table-toolbar .users-filter-page-size .users-page-size-dropdown,
-    .statistics-failed-imports-page .failed-imports-card > .app-table-toolbar .users-filter-page-size .users-page-size-button {
+    .statistics-failed-imports-page .failed-imports-card > .failed-imports-controls .users-filter-page-size .users-page-size-dropdown,
+    .statistics-failed-imports-page .failed-imports-card > .failed-imports-controls .users-filter-page-size .users-page-size-button {
         width: 100% !important;
         min-width: 0 !important;
     }
 
-    .statistics-failed-imports-page .failed-imports-card > .app-table-toolbar .users-filter-search {
+    .statistics-failed-imports-page .failed-imports-card > .failed-imports-controls .users-filter-search {
         grid-column: 1 / -1 !important;
         order: 3 !important;
         width: 100% !important;
@@ -1903,5 +1903,56 @@
     .statistics-failed-imports-page .action-buttons-view .ui-button,
     .statistics-failed-imports-page .action-buttons-edit .ui-button {
         width: 100% !important;
+    }
+}
+
+/* Shared listing chrome: failed-import content remains card-based, while its
+   controls, states and footer follow the same contract as the data tables. */
+.statistics-failed-imports-page .failed-imports-controls .failed-imports-file-context {
+    margin-right: auto;
+}
+
+.statistics-failed-imports-page #empty-state.users-table-state,
+.statistics-failed-imports-page .failed-imports-load-error.users-table-state {
+    grid-column: 1 / -1;
+    width: 100%;
+    min-height: 13rem;
+    padding: 1.25rem !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    background: var(--ui-surface, #fff) !important;
+    text-align: center;
+}
+
+.statistics-failed-imports-page .failed-imports-load-error.users-table-state {
+    flex-direction: column;
+    gap: .55rem;
+    color: inherit !important;
+}
+
+.statistics-failed-imports-page .failed-imports-load-error.users-table-state > i {
+    color: var(--ui-danger, #dc2626) !important;
+}
+
+.statistics-failed-imports-page .failed-imports-load-error.users-table-state > span {
+    display: block;
+    width: auto;
+    height: auto;
+    flex: initial;
+    padding: 0;
+    border-radius: 0;
+    background: transparent;
+    color: var(--ui-text-muted, #64748b);
+}
+
+.statistics-failed-imports-page #empty-state.users-table-state > i {
+    margin-bottom: .7rem;
+    color: #718096 !important;
+    font-size: 1.15rem !important;
+}
+
+@media (max-width: 639px) {
+    .statistics-failed-imports-page .failed-imports-footer #dt-pagination {
+        overflow-x: hidden !important;
     }
 }

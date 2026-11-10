@@ -6,19 +6,20 @@
     @include('components.nav-reportes')
 
     @php
-        $activeFilterCount = collect(['status', 'district_id', 'date_filter'])->filter(fn ($key) => request()->filled($key))->count();
+        $activeFilterCount = collect(['status', 'district_id', 'date_filter'])->filter(fn ($key) => request()->filled($key))->count()
+            + (request('order_by', 'updated_at:desc') !== 'updated_at:desc' ? 1 : 0);
         $hasActiveCriteria = request()->filled('q') || $activeFilterCount > 0 || request('tipo', 'todos') !== 'todos';
         $districtLabel = optional($districts->firstWhere('id', request('district_id')))->display_name;
     @endphp
 
-    <main class="reports-publications-page px-4 lg:pl-10 pt-5 lg:pt-7 pb-8 lg:pb-10">
+    <main class="users-management-page reports-publications-page px-4 lg:pl-10 pt-5 lg:pt-7 pb-8 lg:pb-10">
         <x-ui.page-header
             class="reports-publications-header"
             title="Centro de control"
             description="Monitoree y administre los reportes registrados en el sistema."
         />
 
-        <div id="reportes-publicaciones-panel" class="app-table-card reports-table-card">
+        <x-ui.data-table.panel id="reportes-publicaciones-panel" class="users-table-card reports-table-card" label="Listado de reportes">
             <nav class="reports-type-tabs" aria-label="Tipos de reporte">
                 @foreach([
                     'todos' => 'Todos',
@@ -36,30 +37,26 @@
                 @endforeach
             </nav>
 
-            <form id="reports-filter-form" method="GET" action="{{ route('reportes.index') }}" class="reports-filter-form">
-                <input type="hidden" name="tipo" id="filter-tipo-input" value="{{ request('tipo', 'todos') }}">
+            <x-ui.data-table.toolbar>
+                <form id="reports-filter-form" method="GET" action="{{ route('reportes.index') }}" class="users-filter-topbar">
+                    <input type="hidden" name="tipo" id="filter-tipo-input" value="{{ request('tipo', 'todos') }}">
 
-                <div class="app-table-toolbar reports-toolbar">
-                    <div class="reports-filter-popover-wrap">
+                    <div class="users-filter-popover-wrap">
                         <x-filtros.boton
                             id="reports-filter-toggle"
                             controls="reports-filter-panel"
                             :count="$activeFilterCount"
                             count-id="reports-filter-count"
-                            count-class="reports-filter-count"
                             class="app-standard-filter-toggle"
                         />
 
                         <x-filtros.panel
                             id="reports-filter-panel"
                             title-id="reports-filter-title"
-                            :clear-href="route('reportes.index', array_filter(['tipo' => request('tipo', 'todos'), 'q' => request('q'), 'order_by' => request('order_by'), 'per_page' => request('per_page')]))"
+                            :clear-href="route('reportes.index', array_filter(['tipo' => request('tipo', 'todos'), 'q' => request('q'), 'per_page' => request('per_page')]))"
                             cancel-id="reports-filter-cancel"
                             apply-type="submit"
-                            :open="true"
-                            class="reports-filter-panel app-standard-filter-panel hidden"
-                            header-class="reports-filter-panel-header"
-                            body-class="reports-filter-panel-body"
+                            class="app-standard-filter-panel"
                         >
                             <x-slot:beforeBody>
                             <div class="reports-filter-native-controls" aria-hidden="true">
@@ -85,16 +82,16 @@
                                     'status' => ['label' => 'Estado', 'value' => request('status', ''), 'options' => ['' => 'Todos', 'pendiente' => 'Pendiente', 'aprobado' => 'Aprobado', 'rechazado' => 'Rechazado']],
                                     'date_filter' => ['label' => 'Periodo', 'value' => request('date_filter', ''), 'options' => ['' => 'Todas las fechas', 'hoy' => 'Hoy', 'semana' => 'Esta semana', 'mes' => 'Este mes', '3meses' => 'Últimos 3 meses', 'anio' => 'Este año']],
                                 ] as $target => $filter)
-                                    <div class="users-filter-section reports-filter-section {{ $filter['value'] !== '' ? 'is-open' : '' }}" data-reports-filter-section>
-                                        <button type="button" class="users-filter-section-toggle reports-filter-section-toggle" data-reports-filter-section-toggle>
+                                    <div class="users-filter-section {{ $filter['value'] !== '' ? 'is-open' : '' }}" data-reports-filter-section data-filter-section="{{ $target }}">
+                                        <button type="button" class="users-filter-section-toggle" data-reports-filter-section-toggle data-filter-section-toggle>
                                             <i class="fas {{ $filter['value'] !== '' ? 'fa-chevron-down' : 'fa-chevron-right' }}" aria-hidden="true"></i>
                                             <span>{{ $filter['label'] }}</span>
                                         </button>
-                                        <div class="users-filter-section-content reports-filter-section-content">
-                                            <div class="users-filter-options reports-filter-options">
+                                        <div class="users-filter-section-content">
+                                            <div class="users-filter-options">
                                                 @foreach($filter['options'] as $value => $label)
-                                                    <button type="button" class="users-filter-option reports-filter-option" data-reports-filter-target="{{ $target }}" data-reports-filter-value="{{ $value }}">
-                                                        <span class="users-filter-check reports-filter-check"><i class="fas fa-check" aria-hidden="true"></i></span>
+                                                    <button type="button" class="users-filter-option {{ $loop->first ? 'users-filter-option--all' : '' }}" data-reports-filter-target="{{ $target }}" data-reports-filter-value="{{ $value }}" data-filter-target="{{ $target }}" data-filter-value="{{ $value }}">
+                                                        <span class="users-filter-check"><i class="fas fa-check" aria-hidden="true"></i></span>
                                                         <span>{{ $label }}</span>
                                                     </button>
                                                 @endforeach
@@ -103,31 +100,31 @@
                                     </div>
                                 @endforeach
 
-                                <div class="users-filter-section reports-filter-section {{ request()->filled('district_id') ? 'is-open' : '' }}" data-reports-filter-section>
-                                    <button type="button" class="users-filter-section-toggle reports-filter-section-toggle" data-reports-filter-section-toggle>
+                                <div class="users-filter-section {{ request()->filled('district_id') ? 'is-open' : '' }}" data-reports-filter-section data-filter-section="district">
+                                    <button type="button" class="users-filter-section-toggle" data-reports-filter-section-toggle data-filter-section-toggle>
                                         <i class="fas {{ request()->filled('district_id') ? 'fa-chevron-down' : 'fa-chevron-right' }}" aria-hidden="true"></i>
                                         <span>Distrito</span>
                                     </button>
-                                    <div class="users-filter-section-content reports-filter-section-content district-filter-field">
-                                        <select id="district_id" name="district_id" class="reports-district-tomselect tomselect-select" data-placeholder="Todos">
+                                    <div class="users-filter-section-content">
+                                        <x-filtros.select id="district_id" name="district_id" placeholder="Todos">
                                             <option value="">Todos</option>
                                             @foreach($districts as $district)
                                                 <option value="{{ $district->id }}" {{ (string) request('district_id') === (string) $district->id ? 'selected' : '' }}>{{ $district->display_name }}</option>
                                             @endforeach
-                                        </select>
+                                        </x-filtros.select>
                                     </div>
                                 </div>
 
-                                <div class="users-filter-section reports-filter-section {{ request('order_by', 'updated_at:desc') !== 'updated_at:desc' ? 'is-open' : '' }}" data-reports-filter-section>
-                                    <button type="button" class="users-filter-section-toggle reports-filter-section-toggle" data-reports-filter-section-toggle>
+                                <div class="users-filter-section {{ request('order_by', 'updated_at:desc') !== 'updated_at:desc' ? 'is-open' : '' }}" data-reports-filter-section data-filter-section="order">
+                                    <button type="button" class="users-filter-section-toggle" data-reports-filter-section-toggle data-filter-section-toggle>
                                         <i class="fas {{ request('order_by', 'updated_at:desc') !== 'updated_at:desc' ? 'fa-chevron-down' : 'fa-chevron-right' }}" aria-hidden="true"></i>
                                         <span>Orden</span>
                                     </button>
-                                    <div class="users-filter-section-content reports-filter-section-content">
-                                        <div class="users-filter-options reports-filter-options">
+                                    <div class="users-filter-section-content">
+                                        <div class="users-filter-options">
                                             @foreach(['updated_at:desc' => 'Última actualización', 'created_at:desc' => 'Creación, recientes', 'created_at:asc' => 'Creación, antiguos', 'titulo:asc' => 'Título, A-Z', 'titulo:desc' => 'Título, Z-A', 'usuario:asc' => 'Usuario, A-Z', 'usuario:desc' => 'Usuario, Z-A'] as $value => $label)
-                                                <button type="button" class="users-filter-option reports-filter-option" data-reports-filter-target="order_by" data-reports-filter-value="{{ $value }}">
-                                                    <span class="users-filter-check reports-filter-check"><i class="fas fa-check" aria-hidden="true"></i></span>
+                                                <button type="button" class="users-filter-option {{ $loop->first ? 'users-filter-option--all' : '' }}" data-reports-filter-target="order_by" data-reports-filter-value="{{ $value }}" data-filter-target="order_by" data-filter-value="{{ $value }}">
+                                                    <span class="users-filter-check"><i class="fas fa-check" aria-hidden="true"></i></span>
                                                     <span>{{ $label }}</span>
                                                 </button>
                                             @endforeach
@@ -137,56 +134,58 @@
                         </x-filtros.panel>
                     </div>
 
-                    <div class="reports-search">
-                        <i class="fas fa-search" aria-hidden="true"></i>
-                        <input type="search" name="q" id="search" value="{{ request('q') }}" placeholder="Buscar por título o autor..." aria-label="Buscar reportes"
-                               autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false" enterkeyhint="search">
-                        <span class="reports-search-progress" aria-hidden="true"></span>
-                        <button type="button" class="reports-search-clear {{ request()->filled('q') ? '' : 'hidden' }}" aria-label="Limpiar búsqueda" title="Limpiar búsqueda">
-                            <i class="fas fa-times" aria-hidden="true"></i>
-                        </button>
-                    </div>
+                    <x-ui.data-table.search
+                        id="search"
+                        clear-id="clear-reports-search"
+                        name="q"
+                        :value="request('q')"
+                        placeholder="Buscar por título o autor..."
+                        label="Buscar reportes"
+                        :clear-visible="request()->filled('q')"
+                    />
 
-                    <div class="reports-page-size">
-                        <select name="per_page" class="reports-native-page-size" aria-hidden="true" tabindex="-1">
-                            @foreach([12, 24, 48] as $size)
-                                <option value="{{ $size }}" {{ (int) request('per_page', 12) === $size ? 'selected' : '' }}>{{ $size }}</option>
-                            @endforeach
-                        </select>
-                        <div class="reports-page-size-dropdown">
-                            <button type="button" class="reports-page-size-button" aria-haspopup="listbox" aria-expanded="false">
-                                <span>Mostrar</span>
-                                <strong>{{ (int) request('per_page', 12) }}</strong>
-                                <i class="fas fa-list-ul reports-page-size-icon" aria-hidden="true"></i>
-                            </button>
-                            <div class="reports-page-size-menu hidden" role="listbox" aria-label="Reportes por página">
-                                @foreach([12, 24, 48] as $size)
-                                    <button type="button" role="option" class="reports-page-size-option {{ (int) request('per_page', 12) === $size ? 'is-active' : '' }}"
-                                            data-value="{{ $size }}" aria-selected="{{ (int) request('per_page', 12) === $size ? 'true' : 'false' }}">
-                                        {{ $size }}
-                                    </button>
-                                @endforeach
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                    <x-ui.data-table.page-size
+                        id="per-page-reports"
+                        button-id="per-page-reports-button"
+                        label-id="per-page-reports-label"
+                        menu-id="per-page-reports-menu"
+                        name="per_page"
+                        :options="[12, 24, 48]"
+                        :selected="(int) request('per_page', 12)"
+                    />
+                </form>
 
-                @if($activeFilterCount > 0)
-                    <div class="reports-filter-chips" aria-label="Filtros activos">
+            @if($activeFilterCount > 0)
+                <div class="ui-data-table__filter-chips users-filter-chips" aria-label="Filtros activos">
                         @if(request()->filled('status'))
-                            <a href="{{ route('reportes.index', request()->except(['status', 'page'])) }}" class="reports-filter-chip">Estado: {{ ucfirst(request('status')) }} <i class="fas fa-times" aria-hidden="true"></i></a>
+                            <span class="users-filter-chip">
+                                <button type="button" class="users-filter-chip-label" data-open-filter-section="status" data-focus-filter="status" aria-label="Editar filtro Estado">Estado: {{ ucfirst(request('status')) }}</button>
+                                <button type="button" class="users-filter-chip-remove" data-clear-report-filter-url="{{ route('reportes.index', request()->except(['status', 'page'])) }}" aria-label="Quitar filtro Estado"><i class="fas fa-times" aria-hidden="true"></i></button>
+                            </span>
                         @endif
                         @if(request()->filled('district_id'))
-                            <a href="{{ route('reportes.index', request()->except(['district_id', 'page'])) }}" class="reports-filter-chip">Distrito: {{ $districtLabel ?? 'Seleccionado' }} <i class="fas fa-times" aria-hidden="true"></i></a>
+                            <span class="users-filter-chip">
+                                <button type="button" class="users-filter-chip-label" data-open-filter-section="district" data-focus-filter="district_id" aria-label="Editar filtro Distrito">Distrito: {{ $districtLabel ?? 'Seleccionado' }}</button>
+                                <button type="button" class="users-filter-chip-remove" data-clear-report-filter-url="{{ route('reportes.index', request()->except(['district_id', 'page'])) }}" aria-label="Quitar filtro Distrito"><i class="fas fa-times" aria-hidden="true"></i></button>
+                            </span>
                         @endif
                         @if(request()->filled('date_filter'))
-                            <a href="{{ route('reportes.index', request()->except(['date_filter', 'page'])) }}" class="reports-filter-chip">Periodo: {{ ['hoy' => 'Hoy', 'semana' => 'Esta semana', 'mes' => 'Este mes', '3meses' => 'Últimos 3 meses', 'anio' => 'Este año'][request('date_filter')] ?? request('date_filter') }} <i class="fas fa-times" aria-hidden="true"></i></a>
+                            <span class="users-filter-chip">
+                                <button type="button" class="users-filter-chip-label" data-open-filter-section="date_filter" data-focus-filter="date_filter" aria-label="Editar filtro Periodo">Periodo: {{ ['hoy' => 'Hoy', 'semana' => 'Esta semana', 'mes' => 'Este mes', '3meses' => 'Últimos 3 meses', 'anio' => 'Este año'][request('date_filter')] ?? request('date_filter') }}</button>
+                                <button type="button" class="users-filter-chip-remove" data-clear-report-filter-url="{{ route('reportes.index', request()->except(['date_filter', 'page'])) }}" aria-label="Quitar filtro Periodo"><i class="fas fa-times" aria-hidden="true"></i></button>
+                            </span>
                         @endif
-                    </div>
-                @endif
-            </form>
+                        @if(request('order_by', 'updated_at:desc') !== 'updated_at:desc')
+                            <span class="users-filter-chip">
+                                <button type="button" class="users-filter-chip-label" data-open-filter-section="order" data-focus-filter="order_by" aria-label="Editar filtro Orden">Orden: {{ ['created_at:desc' => 'Creación, recientes', 'created_at:asc' => 'Creación, antiguos', 'titulo:asc' => 'Título, A-Z', 'titulo:desc' => 'Título, Z-A', 'usuario:asc' => 'Usuario, A-Z', 'usuario:desc' => 'Usuario, Z-A'][request('order_by')] ?? 'Última actualización' }}</button>
+                                <button type="button" class="users-filter-chip-remove" data-clear-report-filter-url="{{ route('reportes.index', array_merge(request()->except(['order_by', 'page']), ['order_by' => 'updated_at:desc'])) }}" aria-label="Quitar filtro Orden"><i class="fas fa-times" aria-hidden="true"></i></button>
+                            </span>
+                        @endif
+                </div>
+            @endif
+            </x-ui.data-table.toolbar>
 
-            <div id="bulk-toolbar" class="reports-bulk-toolbar app-table-bulk-inline hidden items-center gap-3" role="status" aria-live="polite">
+            <div id="bulk-toolbar" class="ui-data-table__bulk-actions reports-bulk-toolbar app-table-bulk-inline hidden items-center gap-3" role="status" aria-live="polite">
                 <div class="reports-bulk-summary">
                     <span class="app-table-selection-marker" aria-hidden="true"></span>
                     <span id="selected-count" class="app-table-selection-count whitespace-nowrap"></span>
@@ -460,12 +459,12 @@
 
                         </x-publicacion-card>
                     @empty
-                        <div class="reports-table-state {{ $hasActiveCriteria ? 'reports-table-state--no-results' : 'reports-table-state--empty' }}" role="status">
+                        <div class="users-table-state reports-table-state {{ $hasActiveCriteria ? 'users-table-state--no-results reports-table-state--no-results' : 'users-table-state--empty reports-table-state--empty' }}" role="status">
                             <i class="fas {{ $hasActiveCriteria ? 'fa-search' : 'fa-file-alt' }}" aria-hidden="true"></i>
                             @if($hasActiveCriteria)
                                 <strong>No encontramos resultados</strong>
                                 <span>Prueba con otra búsqueda o elimina los filtros aplicados.</span>
-                                <a class="reports-table-state-action" href="{{ route('reportes.index') }}">Limpiar búsqueda y filtros</a>
+                                <a class="users-table-state-action reports-table-state-action" href="{{ route('reportes.index') }}">Limpiar búsqueda y filtros</a>
                             @else
                                 <strong>No hay reportes registrados</strong>
                                 <span>Los reportes aparecerán aquí cuando se registre el primero.</span>
@@ -474,7 +473,7 @@
                     @endforelse
             </section>
 
-            <footer class="reports-table-footer">
+            <footer class="ui-data-table__footer reports-table-footer">
                 <p>
                     @if($publications->total() > 0)
                         Mostrando <strong>{{ $publications->firstItem() }}-{{ $publications->lastItem() }}</strong> de <strong>{{ $publications->total() }}</strong>
@@ -499,7 +498,7 @@
                     @endif
                 </div>
             </footer>
-        </div>
+        </x-ui.data-table.panel>
     </main>
 
     <!-- INCLUIR EL COMPONENTE DEL MODAL DE ALCOHOLIMETRÍA -->
@@ -589,6 +588,9 @@ document.addEventListener('DOMContentLoaded', function() {
     let reportesPanelAbortController = null;
     const reportesPanelCache = new Map();
     let reportsMenuTrigger = null;
+    let reportsFilterDraftSnapshot = null;
+    let reportsPageSizeController = null;
+    let reportsPageSizeReadyListenerBound = false;
     let reportPageOverflowBeforeLock = null;
 
     function hasOpenReportLayer() {
@@ -679,6 +681,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!panel) return;
         panel.setAttribute('aria-busy', isLoading ? 'true' : 'false');
         panel.classList.toggle('is-searching', isLoading && kind === 'search');
+        panel.querySelector('.users-filter-search')?.classList.toggle('is-searching', isLoading && kind === 'search');
         const status = panel.querySelector('#reports-table-status');
         if (status) status.textContent = isLoading ? (kind === 'search' ? 'Buscando reportes' : 'Actualizando reportes') : '';
         if (isLoading) panel.querySelector('#reports-table-error')?.classList.add('hidden');
@@ -847,6 +850,9 @@ document.addEventListener('DOMContentLoaded', function() {
         if (typeof window.initializeReportesTomSelect === 'function') {
             window.initializeReportesTomSelect();
         }
+        initializeReportsPageSize();
+        syncReportsFilterPanel();
+        updateReportsCompactPagination();
         if (typeof toggleBulkToolbar === 'function') {
             toggleBulkToolbar();
         }
@@ -873,19 +879,90 @@ document.addEventListener('DOMContentLoaded', function() {
         const toggle = document.getElementById('reports-filter-toggle');
         const form = document.getElementById('reports-filter-form');
         if (!panel || !toggle) return;
-        if (reset && form) {
-            form.reset();
-            const district = form.querySelector('#district_id');
-            if (district?.tomselect) district.tomselect.setValue(district.value, true);
+        if (reset && reportsFilterDraftSnapshot) {
+            window.AppFilterPanel?.restore(reportsFilterDraftSnapshot);
+            syncReportsFilterPanel();
         }
-        panel.classList.add('hidden');
+        reportsFilterDraftSnapshot = null;
+        panel.classList.add('is-collapsed');
         toggle.setAttribute('aria-expanded', 'false');
+    }
+
+    function initializeReportsPageSize() {
+        reportsPageSizeController?.destroy();
+        reportsPageSizeController = null;
+
+        const select = document.getElementById('per-page-reports');
+        const button = document.getElementById('per-page-reports-button');
+        const label = document.getElementById('per-page-reports-label');
+        const menu = document.getElementById('per-page-reports-menu');
+
+        reportsPageSizeController = window.AppDataTable?.initPageSize({
+            select,
+            button,
+            label,
+            menu,
+            initialValue: select?.value,
+            onOpen: () => closeReportsFilter({ reset: true }),
+            onChange: () => select?.dispatchEvent(new Event('change', { bubbles: true })),
+        }) || null;
+
+        if (!reportsPageSizeController && !reportsPageSizeReadyListenerBound) {
+            reportsPageSizeReadyListenerBound = true;
+            window.addEventListener('app:data-table-ready', () => {
+                reportsPageSizeReadyListenerBound = false;
+                initializeReportsPageSize();
+            }, { once: true });
+        }
+
+        return reportsPageSizeController;
+    }
+
+    function updateReportsCompactPagination() {
+        const pagination = document.querySelector('.reports-pagination');
+        if (!pagination) return;
+
+        const pageNumbers = Array.from(pagination.querySelectorAll('.reports-page-number'));
+        const current = Number(pagination.querySelector('.reports-page-number.is-active')?.textContent) || 1;
+        const total = Math.max(...pageNumbers.map(item => Number(item.textContent) || 0), 0);
+        const keep = new Set();
+
+        if (total <= 5) {
+            pageNumbers.forEach(item => keep.add(Number(item.textContent)));
+        } else if (current <= 3) {
+            [1, 2, 3, total].forEach(page => keep.add(page));
+        } else if (current >= total - 2) {
+            [1, total - 2, total - 1, total].forEach(page => keep.add(page));
+        } else {
+            [1, current, total].forEach(page => keep.add(page));
+        }
+
+        pageNumbers.forEach(item => {
+            item.classList.toggle('reports-page-mobile-hidden', !keep.has(Number(item.textContent)));
+        });
+
+        const seenGaps = new Set();
+        Array.from(pagination.querySelectorAll('.reports-page-ellipsis')).forEach(ellipsis => {
+            const previous = pageNumbers
+                .filter(item => item.compareDocumentPosition(ellipsis) & Node.DOCUMENT_POSITION_FOLLOWING)
+                .filter(item => keep.has(Number(item.textContent)))
+                .at(-1);
+            const next = pageNumbers
+                .filter(item => ellipsis.compareDocumentPosition(item) & Node.DOCUMENT_POSITION_FOLLOWING)
+                .find(item => keep.has(Number(item.textContent)));
+            const gapKey = `${previous?.textContent || ''}-${next?.textContent || ''}`;
+            const show = previous && next
+                && Number(next.textContent) - Number(previous.textContent) > 1
+                && !seenGaps.has(gapKey);
+            ellipsis.classList.toggle('reports-page-mobile-hidden', !show);
+            if (show) seenGaps.add(gapKey);
+        });
     }
 
     window.syncReportsFilterPanel = function() {
         const form = document.getElementById('reports-filter-form');
         if (!form) return;
-        form.querySelectorAll('.reports-filter-option[data-reports-filter-target]').forEach(option => {
+        form.querySelectorAll('[data-reports-filter-target]').forEach(option => {
             const control = form.elements.namedItem(option.dataset.reportsFilterTarget);
             const active = control && String(control.value) === String(option.dataset.reportsFilterValue || '');
             option.classList.toggle('is-active', active);
@@ -894,7 +971,12 @@ document.addEventListener('DOMContentLoaded', function() {
     };
 
     function closeReportsRowMenus({ restoreFocus = false } = {}) {
-        document.querySelectorAll('.reports-row-menu:not(.hidden)').forEach(menu => menu.classList.add('hidden'));
+        document.querySelectorAll('.reports-row-menu:not(.hidden)').forEach(menu => {
+            menu.classList.add('hidden');
+            menu.classList.remove('opens-upward');
+            menu.style.removeProperty('top');
+            menu.style.removeProperty('left');
+        });
         document.querySelectorAll('.reports-row-menu-button[aria-expanded="true"]').forEach(button => button.setAttribute('aria-expanded', 'false'));
         if (restoreFocus && reportsMenuTrigger) reportsMenuTrigger.focus();
         reportsMenuTrigger = null;
@@ -910,6 +992,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const buttonRect = button.getBoundingClientRect();
         const menuRect = menu.getBoundingClientRect();
         const openAbove = window.innerHeight - buttonRect.bottom < menuRect.height + 12 && buttonRect.top > menuRect.height + 12;
+        menu.classList.toggle('opens-upward', openAbove);
         menu.style.top = `${openAbove ? buttonRect.top - menuRect.height - 6 : buttonRect.bottom + 6}px`;
         menu.style.left = `${Math.max(8, Math.min(window.innerWidth - menuRect.width - 8, buttonRect.right - menuRect.width))}px`;
         menu.querySelector('[role="menuitem"]')?.focus();
@@ -924,19 +1007,53 @@ document.addEventListener('DOMContentLoaded', function() {
     document.addEventListener('scroll', closeReportsRowMenuOnViewportChange, { capture: true, passive: true });
     window.addEventListener('resize', closeReportsRowMenuOnViewportChange, { passive: true });
     window.addEventListener('orientationchange', closeReportsRowMenuOnViewportChange, { passive: true });
+    window.addEventListener('resize', updateReportsCompactPagination, { passive: true });
 
     document.addEventListener('change', function(e) {
-        const pageSize = e.target.closest('.reports-page-size select');
+        const pageSize = e.target.closest('#per-page-reports');
         if (!pageSize || !getReportesPanel()?.contains(pageSize)) return;
         const form = pageSize.closest('form');
         if (form) loadReportesPanel(buildReportesUrlFromForm(form), { push: true, scroll: false, cache: false });
     });
 
     document.addEventListener('click', function(e) {
-        const searchClear = e.target.closest('.reports-search-clear');
+        const filterChipLabel = e.target.closest('[data-open-filter-section]');
+        if (filterChipLabel && getReportesPanel()?.contains(filterChipLabel)) {
+            e.preventDefault();
+            const filterPanel = document.getElementById('reports-filter-panel');
+            const filterToggle = document.getElementById('reports-filter-toggle');
+            window.AppFilterPanel?.openSection({
+                panel: filterPanel,
+                sectionKey: filterChipLabel.dataset.openFilterSection,
+                focusName: filterChipLabel.dataset.focusFilter,
+                form: document.getElementById('reports-filter-form'),
+                openPanel: () => {
+                    if (filterPanel?.classList.contains('is-collapsed')) {
+                        reportsFilterDraftSnapshot = window.AppFilterPanel?.capture(document.getElementById('reports-filter-form')) || null;
+                        reportsPageSizeController?.close();
+                    }
+                    filterPanel?.classList.remove('is-collapsed');
+                    filterToggle?.setAttribute('aria-expanded', 'true');
+                },
+            });
+            return;
+        }
+
+        const filterChipRemove = e.target.closest('[data-clear-report-filter-url]');
+        if (filterChipRemove && getReportesPanel()?.contains(filterChipRemove)) {
+            e.preventDefault();
+            loadReportesPanel(filterChipRemove.dataset.clearReportFilterUrl, {
+                push: true,
+                scroll: false,
+                cache: false,
+            });
+            return;
+        }
+
+        const searchClear = e.target.closest('#clear-reports-search');
         if (searchClear && getReportesPanel()?.contains(searchClear)) {
             e.preventDefault();
-            const search = searchClear.closest('.reports-search')?.querySelector('#search');
+            const search = searchClear.closest('.users-filter-search')?.querySelector('#search');
             const form = search?.closest('form');
             if (!search || !form) return;
             search.value = '';
@@ -950,57 +1067,22 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
 
-        const pageSizeButton = e.target.closest('.reports-page-size-button');
-        if (pageSizeButton && getReportesPanel()?.contains(pageSizeButton)) {
-            e.preventDefault();
-            e.stopPropagation();
-            const dropdown = pageSizeButton.closest('.reports-page-size-dropdown');
-            const menu = dropdown?.querySelector('.reports-page-size-menu');
-            const willOpen = menu?.classList.contains('hidden');
-            document.querySelectorAll('.reports-page-size-menu:not(.hidden)').forEach(openMenu => {
-                if (openMenu !== menu) {
-                    openMenu.classList.add('hidden');
-                    openMenu.closest('.reports-page-size-dropdown')?.querySelector('.reports-page-size-button')?.setAttribute('aria-expanded', 'false');
-                }
-            });
-            menu?.classList.toggle('hidden', !willOpen);
-            pageSizeButton.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
-            if (willOpen) window.requestAnimationFrame(() => menu?.querySelector('[aria-selected="true"]')?.focus());
-            return;
-        }
-
-        const pageSizeOption = e.target.closest('.reports-page-size-option');
-        if (pageSizeOption && getReportesPanel()?.contains(pageSizeOption)) {
-            e.preventDefault();
-            const dropdown = pageSizeOption.closest('.reports-page-size-dropdown');
-            const pageSize = dropdown?.closest('.reports-page-size')?.querySelector('select');
-            const button = dropdown?.querySelector('.reports-page-size-button');
-            if (!pageSize) return;
-            pageSize.value = pageSizeOption.dataset.value || '12';
-            button?.querySelector('strong')?.replaceChildren(document.createTextNode(pageSize.value));
-            dropdown.querySelectorAll('.reports-page-size-option').forEach(option => {
-                const active = option === pageSizeOption;
-                option.classList.toggle('is-active', active);
-                option.setAttribute('aria-selected', active ? 'true' : 'false');
-            });
-            dropdown.querySelector('.reports-page-size-menu')?.classList.add('hidden');
-            button?.setAttribute('aria-expanded', 'false');
-            pageSize.dispatchEvent(new Event('change', { bubbles: true }));
-            return;
-        }
-
         const filterSectionToggle = e.target.closest('[data-reports-filter-section-toggle]');
         if (filterSectionToggle && getReportesPanel()?.contains(filterSectionToggle)) {
             const section = filterSectionToggle.closest('[data-reports-filter-section]');
             const willOpen = !section?.classList.contains('is-open');
-            section?.classList.toggle('is-open', willOpen);
+            if (typeof window.setFilterSectionExpanded === 'function') {
+                window.setFilterSectionExpanded(section, willOpen);
+            } else {
+                section?.classList.toggle('is-open', willOpen);
+            }
             const icon = filterSectionToggle.querySelector('i');
             icon?.classList.toggle('fa-chevron-down', willOpen);
             icon?.classList.toggle('fa-chevron-right', !willOpen);
             return;
         }
 
-        const filterOption = e.target.closest('.reports-filter-option[data-reports-filter-target]');
+        const filterOption = e.target.closest('[data-reports-filter-target]');
         if (filterOption && getReportesPanel()?.contains(filterOption)) {
             const form = filterOption.closest('form');
             const control = form?.elements.namedItem(filterOption.dataset.reportsFilterTarget);
@@ -1012,8 +1094,12 @@ document.addEventListener('DOMContentLoaded', function() {
         const filterToggle = e.target.closest('#reports-filter-toggle');
         if (filterToggle && getReportesPanel()?.contains(filterToggle)) {
             const filterPanel = document.getElementById('reports-filter-panel');
-            const willOpen = filterPanel?.classList.contains('hidden');
-            filterPanel?.classList.toggle('hidden', !willOpen);
+            const willOpen = filterPanel?.classList.contains('is-collapsed');
+            if (willOpen) {
+                reportsFilterDraftSnapshot = window.AppFilterPanel?.capture(document.getElementById('reports-filter-form')) || null;
+                reportsPageSizeController?.close();
+            }
+            filterPanel?.classList.toggle('is-collapsed', !willOpen);
             filterToggle.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
             if (willOpen) {
                 syncReportsFilterPanel();
@@ -1071,29 +1157,34 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     document.addEventListener('click', function(e) {
-        if (!e.target.closest('.reports-filter-popover-wrap, .ts-dropdown')) closeReportsFilter();
-        if (!e.target.closest('.reports-page-size-dropdown')) {
-            document.querySelectorAll('.reports-page-size-menu:not(.hidden)').forEach(menu => {
-                menu.classList.add('hidden');
-                menu.closest('.reports-page-size-dropdown')?.querySelector('.reports-page-size-button')?.setAttribute('aria-expanded', 'false');
-            });
-        }
+        if (!e.target.closest('.users-filter-popover-wrap, .ts-dropdown, [data-open-filter-section], [data-clear-report-filter-url]')) closeReportsFilter({ reset: true });
         if (!e.target.closest('.reports-row-actions, .reports-row-menu')) closeReportsRowMenus();
     });
 
     document.addEventListener('keydown', function(e) {
+        const openRowMenu = document.querySelector('.reports-row-menu:not(.hidden)');
+        if (openRowMenu && ['ArrowDown', 'ArrowUp', 'Home', 'End'].includes(e.key)) {
+            const items = Array.from(openRowMenu.querySelectorAll('[role="menuitem"]'));
+            if (!items.length) return;
+            e.preventDefault();
+            const current = items.indexOf(document.activeElement);
+            const next = e.key === 'Home'
+                ? 0
+                : e.key === 'End'
+                    ? items.length - 1
+                    : e.key === 'ArrowDown'
+                        ? (current + 1 + items.length) % items.length
+                        : (current - 1 + items.length) % items.length;
+            items[next].focus();
+            return;
+        }
+
         if (e.key !== 'Escape') return;
-        if (document.querySelector('#reports-filter-panel:not(.hidden)')) {
+        if (document.querySelector('#reports-filter-panel:not(.is-collapsed)')) {
             closeReportsFilter({ reset: true });
             document.getElementById('reports-filter-toggle')?.focus();
-        } else if (document.querySelector('.reports-row-menu:not(.hidden)')) {
+        } else if (openRowMenu) {
             closeReportsRowMenus({ restoreFocus: true });
-        } else if (document.querySelector('.reports-page-size-menu:not(.hidden)')) {
-            const menu = document.querySelector('.reports-page-size-menu:not(.hidden)');
-            const button = menu?.closest('.reports-page-size-dropdown')?.querySelector('.reports-page-size-button');
-            menu?.classList.add('hidden');
-            button?.setAttribute('aria-expanded', 'false');
-            button?.focus();
         }
     });
 
@@ -3693,68 +3784,18 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
 <script>
-    // Initialize TomSelect for district filter
     window.initializeReportesTomSelect = function() {
-        if (typeof TomSelect === 'undefined') return;
-        const tomSelectElements = document.querySelectorAll('.tomselect-select');
-        tomSelectElements.forEach(select => {
-            const field = select.closest('.district-filter-field');
-            field?.classList.remove('tomselect-ready');
-            select.style.display = 'none';
-            select.style.visibility = 'hidden';
+        const panel = document.getElementById('reports-filter-panel');
+        if (!panel || typeof window.AppFilterSelect?.initAll !== 'function') return;
 
-            if (select.tomselect) {
-                select.tomselect.destroy();
-            }
-
-            const staleWrapper = select.nextElementSibling;
-            if (staleWrapper?.classList.contains('ts-wrapper')) {
-                staleWrapper.remove();
-            }
-
-            const instance = new TomSelect(select, {
-                create: false,
-                allowEmptyOption: false,
-                placeholder: select.dataset.placeholder || 'Todos',
-                maxItems: 1,
-                searchField: ['text', 'value'],
-                closeAfterSelect: true,
-                dropdownParent: 'body',
-                render: {
-                    no_results: function() {
-                        return '<div class="no-results">Sin resultados</div>';
-                    }
-                },
-                onChange: function() {
-                    if (typeof syncReportsFilterPanel === 'function') syncReportsFilterPanel();
-                }
-            });
-
-            // Posicionar el dropdown correctamente
-            const control = instance.control;
-            const dropdown = instance.dropdown;
-            dropdown.classList.add('reports-ts-dropdown');
-
-            const positionDropdown = () => {
-                const rect = control.getBoundingClientRect();
-                dropdown.style.top = `${rect.bottom}px`;
-                dropdown.style.left = `${rect.left}px`;
-                dropdown.style.width = `${rect.width}px`;
-            };
-
-            // Posicionar cuando se abre
-            instance.on('dropdown_open', positionDropdown);
-            instance.on('type', positionDropdown);
-            instance.on('load', positionDropdown);
-            
-        });
-
-        document.querySelectorAll('.district-filter-field').forEach(field => {
-            field.classList.add('tomselect-ready');
-        });
-        if (typeof syncReportsFilterPanel === 'function') syncReportsFilterPanel();
+        window.AppFilterSelect.initAll(panel, (select) => ({
+            onChange: select.name === 'district_id' && typeof syncReportsFilterPanel === 'function'
+                ? syncReportsFilterPanel
+                : undefined,
+        }));
     };
 
     document.addEventListener('DOMContentLoaded', window.initializeReportesTomSelect);
+    window.addEventListener('app-filter-select:ready', window.initializeReportesTomSelect);
 </script>
 @endsection

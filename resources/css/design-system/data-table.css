@@ -27,11 +27,9 @@
   border-bottom: 0 !important;
 }
 
-/* Filter chips extend below the toolbar's border through legacy negative
-   margins. Draw the visible separator on that final white strip whenever the
-   selection bar follows it. */
-.ui-data-table__toolbar:has(+ .ui-data-table__bulk-actions:not(.hidden))
-  .ui-data-table__filter-chips:not(:empty) {
+/* Active chips form the toolbar's final white strip. Keep a subtle separator
+   before every table or card result area, including future listing screens. */
+.ui-data-table__filter-chips:not(:empty) {
   border-bottom: 1px solid #e5e7eb !important;
 }
 
