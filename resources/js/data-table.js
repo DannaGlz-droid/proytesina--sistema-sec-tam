@@ -2,6 +2,107 @@
  * Shared behavior for the data-table design system.
  * Module-specific DataTables configuration remains in each screen.
  */
+export function initDataTableSearch({
+    input,
+    clearButton,
+    initialValue = input?.value ?? '',
+    onSearch,
+    beforeSearch,
+    loadingDelay = 150,
+} = {}) {
+    if (!input || !clearButton || typeof onSearch !== 'function') return null;
+
+    const control = input.closest('.ui-data-table__search, .users-filter-search');
+    let appliedValue = String(initialValue ?? '').trim();
+    let loadingTimer = null;
+    let requestSequence = 0;
+
+    const syncClearButton = () => {
+        clearButton.classList.toggle('hidden', input.value.trim().length === 0);
+    };
+
+    const setLoading = (loading) => {
+        window.clearTimeout(loadingTimer);
+        loadingTimer = null;
+        input.setAttribute('aria-busy', loading ? 'true' : 'false');
+
+        if (!loading) {
+            control?.classList.remove('is-searching');
+            return;
+        }
+
+        loadingTimer = window.setTimeout(() => {
+            control?.classList.add('is-searching');
+        }, Math.max(0, Number(loadingDelay) || 0));
+    };
+
+    const search = async (nextValue = input.value, { force = false, focus = false } = {}) => {
+        const normalizedValue = String(nextValue ?? '').trim();
+        input.value = normalizedValue;
+        syncClearButton();
+
+        if (!force && normalizedValue === appliedValue) {
+            if (focus) input.focus();
+            return false;
+        }
+
+        const maySearch = await beforeSearch?.(normalizedValue, appliedValue);
+        if (maySearch === false) {
+            input.value = appliedValue;
+            syncClearButton();
+            if (focus) input.focus();
+            return false;
+        }
+
+        const sequence = ++requestSequence;
+        setLoading(true);
+
+        try {
+            await onSearch(normalizedValue, appliedValue);
+            if (sequence === requestSequence) appliedValue = normalizedValue;
+            return true;
+        } finally {
+            if (sequence === requestSequence) setLoading(false);
+            syncClearButton();
+            if (focus) input.focus();
+        }
+    };
+
+    const handleInput = () => syncClearButton();
+    const handleKeydown = (event) => {
+        if (event.key !== 'Enter') return;
+        event.preventDefault();
+        void search();
+    };
+    const handleClear = (event) => {
+        event.preventDefault();
+        void search('', { focus: true });
+    };
+
+    input.value = appliedValue;
+    input.setAttribute('aria-busy', 'false');
+    syncClearButton();
+    input.addEventListener('input', handleInput);
+    input.addEventListener('keydown', handleKeydown);
+    clearButton.addEventListener('click', handleClear);
+
+    return {
+        search,
+        sync: syncClearButton,
+        get value() {
+            return appliedValue;
+        },
+        destroy() {
+            window.clearTimeout(loadingTimer);
+            input.removeEventListener('input', handleInput);
+            input.removeEventListener('keydown', handleKeydown);
+            clearButton.removeEventListener('click', handleClear);
+            control?.classList.remove('is-searching');
+            input.setAttribute('aria-busy', 'false');
+        },
+    };
+}
+
 export function initDataTablePageSize({
     select,
     button,

@@ -1874,7 +1874,7 @@
 
     .statistics-failed-imports-page .failed-imports-card > .failed-imports-controls .users-filter-page-size {
         grid-column: 1 / -1 !important;
-        order: 2 !important;
+        order: 3 !important;
         width: 100% !important;
         min-width: 0 !important;
     }
@@ -1887,7 +1887,7 @@
 
     .statistics-failed-imports-page .failed-imports-card > .failed-imports-controls .users-filter-search {
         grid-column: 1 / -1 !important;
-        order: 3 !important;
+        order: 2 !important;
         width: 100% !important;
         min-width: 0 !important;
         max-width: none !important;

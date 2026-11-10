@@ -42,6 +42,7 @@ class DataTableComponentConsistencyTest extends TestCase
         $toolbar = file_get_contents(resource_path('views/components/ui/data-table/toolbar.blade.php'));
         $viewport = file_get_contents(resource_path('views/components/ui/data-table/viewport.blade.php'));
         $table = file_get_contents(resource_path('views/components/ui/data-table/table.blade.php'));
+        $footer = file_get_contents(resource_path('views/components/ui/data-table/footer.blade.php'));
 
         $this->assertSame(1, substr_count($css, "@import './design-system/data-table.css';"));
         $this->assertSame(1, substr_count($css, "@import './design-system/form-help.css';"));
@@ -49,6 +50,9 @@ class DataTableComponentConsistencyTest extends TestCase
         $this->assertStringContainsString("'app-table-toolbar'", $toolbar);
         $this->assertStringContainsString("'app-table-shell'", $viewport);
         $this->assertStringContainsString("'app-data-table'", $table);
+        $this->assertStringContainsString("'filteredTotal' => null", $footer);
+        $this->assertStringContainsString("'overallTotal' => null", $footer);
+        $this->assertStringContainsString('(de {{ $overallCount }} totales)', $footer);
         $this->assertStringContainsString('--data-table-row-min-height: 4.25rem;', $dataTableCss);
         $this->assertStringContainsString('--data-table-actions-width: 4rem;', $dataTableCss);
         $this->assertStringContainsString('--data-table-selected: #fdf2f5;', $dataTableCss);
@@ -208,6 +212,7 @@ class DataTableComponentConsistencyTest extends TestCase
     {
         $failedImports = file_get_contents(resource_path('views/estadisticas/failed-imports.blade.php'));
         $reports = file_get_contents(resource_path('views/reportes/publicaciones.blade.php'));
+        $serverPagination = file_get_contents(resource_path('views/vendor/pagination/data-table.blade.php'));
         $pageSize = file_get_contents(resource_path('views/components/ui/data-table/page-size.blade.php'));
         $search = file_get_contents(resource_path('views/components/ui/data-table/search.blade.php'));
         $behavior = file_get_contents(resource_path('js/data-table.js'));
@@ -227,11 +232,25 @@ class DataTableComponentConsistencyTest extends TestCase
         $this->assertStringContainsString('class="correction-form ui-form-fields"', $failedImports);
         $this->assertStringContainsString('failed-correction-section', $failedImports);
 
-        $this->assertStringContainsString('class="ui-data-table__footer reports-table-footer"', $reports);
+        $this->assertStringContainsString('<x-ui.data-table.footer', $reports);
+        $this->assertStringContainsString('class="reports-table-footer"', $reports);
+        $this->assertStringContainsString(':filtered-total="$publications->total()"', $reports);
+        $this->assertStringContainsString(':overall-total="$totalPublications"', $reports);
+        $this->assertStringContainsString("links('vendor.pagination.data-table')", $reports);
+        $this->assertStringContainsString('pagination-id="dt-pagination"', $reports);
+        $this->assertStringContainsString('class="fb-pagination"', $serverPagination);
+        $this->assertStringContainsString('fb-page-btn fb-page-num fb-page-active', $serverPagination);
+        $this->assertStringContainsString("document.querySelector('#dt-pagination .fb-pagination')", $reports);
+        $this->assertStringContainsString("item.classList.toggle('fb-page-mobile-hidden'", $reports);
+        $this->assertStringNotContainsString('reports-page-item', $reports);
         $this->assertStringContainsString('ui-data-table__filter-chips users-filter-chips', $reports);
         $this->assertStringContainsString('ui-data-table__bulk-actions reports-bulk-toolbar', $reports);
         $this->assertMatchesRegularExpression(
-            '/<x-ui\.data-table\.toolbar>\s*<form id="reports-filter-form"[^>]*class="users-filter-topbar">/',
+            '/<x-ui\.data-table\.toolbar>\s*<form id="reports-filter-form"[^>]*class="users-filter-form">[\s\S]*?<div class="users-filter-topbar">/',
+            $reports
+        );
+        $this->assertMatchesRegularExpression(
+            '/<form id="reports-filter-form"[\s\S]*?<div class="ui-data-table__filter-chips users-filter-chips"[\s\S]*?<\/form>\s*<\/x-ui\.data-table\.toolbar>/',
             $reports
         );
         $this->assertStringContainsString('users-filter-option--all', $reports);
@@ -277,5 +296,11 @@ class DataTableComponentConsistencyTest extends TestCase
         $this->assertStringContainsString("'clearVisible' => false", $search);
         $this->assertStringContainsString('beforeChange,', $behavior);
         $this->assertStringContainsString('if (mayChange === false) return;', $behavior);
+        $this->assertStringContainsString('export function initDataTableSearch({', $behavior);
+        $this->assertStringContainsString('initSearch: initDataTableSearch', file_get_contents(resource_path('js/app.js')));
+        $this->assertStringContainsString('window.AppDataTable?.initSearch({', $failedImports);
+        $this->assertStringContainsString('beforeSearch: nextSearch => confirmDiscardFailedImportChanges', $failedImports);
+        $this->assertStringContainsString('return loadFailedRecords(1);', $failedImports);
+        $this->assertStringNotContainsString("failedSearchInput?.addEventListener('keydown'", $failedImports);
     }
 }

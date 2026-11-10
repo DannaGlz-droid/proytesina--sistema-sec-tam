@@ -38,9 +38,10 @@
             </nav>
 
             <x-ui.data-table.toolbar>
-                <form id="reports-filter-form" method="GET" action="{{ route('reportes.index') }}" class="users-filter-topbar">
+                <form id="reports-filter-form" method="GET" action="{{ route('reportes.index') }}" class="users-filter-form">
                     <input type="hidden" name="tipo" id="filter-tipo-input" value="{{ request('tipo', 'todos') }}">
 
+                    <div class="users-filter-topbar">
                     <div class="users-filter-popover-wrap">
                         <x-filtros.boton
                             id="reports-filter-toggle"
@@ -153,10 +154,10 @@
                         :options="[12, 24, 48]"
                         :selected="(int) request('per_page', 12)"
                     />
-                </form>
+                    </div>
 
-            @if($activeFilterCount > 0)
-                <div class="ui-data-table__filter-chips users-filter-chips" aria-label="Filtros activos">
+                    @if($activeFilterCount > 0)
+                    <div class="ui-data-table__filter-chips users-filter-chips" aria-label="Filtros activos">
                         @if(request()->filled('status'))
                             <span class="users-filter-chip">
                                 <button type="button" class="users-filter-chip-label" data-open-filter-section="status" data-focus-filter="status" aria-label="Editar filtro Estado">Estado: {{ ucfirst(request('status')) }}</button>
@@ -181,8 +182,9 @@
                                 <button type="button" class="users-filter-chip-remove" data-clear-report-filter-url="{{ route('reportes.index', array_merge(request()->except(['order_by', 'page']), ['order_by' => 'updated_at:desc'])) }}" aria-label="Quitar filtro Orden"><i class="fas fa-times" aria-hidden="true"></i></button>
                             </span>
                         @endif
-                </div>
-            @endif
+                    </div>
+                    @endif
+                </form>
             </x-ui.data-table.toolbar>
 
             <div id="bulk-toolbar" class="ui-data-table__bulk-actions reports-bulk-toolbar app-table-bulk-inline hidden items-center gap-3" role="status" aria-live="polite">
@@ -473,31 +475,24 @@
                     @endforelse
             </section>
 
-            <footer class="ui-data-table__footer reports-table-footer">
-                <p>
+            <x-ui.data-table.footer
+                class="reports-table-footer"
+                info-id="reports-table-info"
+                pagination-id="dt-pagination"
+                :from="$publications->firstItem()"
+                :to="$publications->lastItem()"
+                :filtered-total="$publications->total()"
+                :overall-total="$totalPublications"
+            >
                     @if($publications->total() > 0)
-                        Mostrando <strong>{{ $publications->firstItem() }}-{{ $publications->lastItem() }}</strong> de <strong>{{ $publications->total() }}</strong>
-                        @if($publications->total() !== $totalPublications)
-                            <span class="reports-table-total">({{ $totalPublications }} totales)</span>
-                        @endif
+                    {{ $publications->onEachSide(2)->links('vendor.pagination.data-table') }}
                     @else
-                        Mostrando <strong>0-0</strong> de <strong>0</strong>
-                        @if($totalPublications > 0)
-                            <span class="reports-table-total">({{ $totalPublications }} totales)</span>
-                        @endif
+                    <div role="navigation" aria-label="Navegación de paginación" class="fb-pagination">
+                        <span class="fb-page-btn fb-page-first fb-page-disabled" aria-disabled="true">Anterior</span>
+                        <span class="fb-page-btn fb-page-last fb-page-disabled" aria-disabled="true">Siguiente</span>
+                    </div>
                     @endif
-                </p>
-                <div>
-                    @if($publications->total() > 0)
-                        {{ $publications->onEachSide(2)->links('vendor.pagination.reports') }}
-                    @else
-                        <nav role="navigation" aria-label="Navegación de paginación" class="reports-pagination">
-                            <span class="reports-page-item reports-page-edge is-disabled" aria-disabled="true">Anterior</span>
-                            <span class="reports-page-item reports-page-edge is-disabled" aria-disabled="true">Siguiente</span>
-                        </nav>
-                    @endif
-                </div>
-            </footer>
+            </x-ui.data-table.footer>
         </x-ui.data-table.panel>
     </main>
 
@@ -919,11 +914,11 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function updateReportsCompactPagination() {
-        const pagination = document.querySelector('.reports-pagination');
+        const pagination = document.querySelector('#dt-pagination .fb-pagination');
         if (!pagination) return;
 
-        const pageNumbers = Array.from(pagination.querySelectorAll('.reports-page-number'));
-        const current = Number(pagination.querySelector('.reports-page-number.is-active')?.textContent) || 1;
+        const pageNumbers = Array.from(pagination.querySelectorAll('.fb-page-num:not(.fb-page-ellipsis)'));
+        const current = Number(pagination.querySelector('.fb-page-active')?.textContent) || 1;
         const total = Math.max(...pageNumbers.map(item => Number(item.textContent) || 0), 0);
         const keep = new Set();
 
@@ -938,11 +933,11 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         pageNumbers.forEach(item => {
-            item.classList.toggle('reports-page-mobile-hidden', !keep.has(Number(item.textContent)));
+            item.classList.toggle('fb-page-mobile-hidden', !keep.has(Number(item.textContent)));
         });
 
         const seenGaps = new Set();
-        Array.from(pagination.querySelectorAll('.reports-page-ellipsis')).forEach(ellipsis => {
+        Array.from(pagination.querySelectorAll('.fb-page-ellipsis')).forEach(ellipsis => {
             const previous = pageNumbers
                 .filter(item => item.compareDocumentPosition(ellipsis) & Node.DOCUMENT_POSITION_FOLLOWING)
                 .filter(item => keep.has(Number(item.textContent)))
@@ -954,7 +949,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const show = previous && next
                 && Number(next.textContent) - Number(previous.textContent) > 1
                 && !seenGaps.has(gapKey);
-            ellipsis.classList.toggle('reports-page-mobile-hidden', !show);
+            ellipsis.classList.toggle('fb-page-mobile-hidden', !show);
             if (show) seenGaps.add(gapKey);
         });
     }

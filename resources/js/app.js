@@ -3,12 +3,13 @@ import './notifications-handler';
 import './filter-select';
 import './form-validation';
 import './number-input-wheel';
-import { initDataTablePageSize, initDataTableRowActions } from './data-table';
+import { initDataTablePageSize, initDataTableRowActions, initDataTableSearch } from './data-table';
 
 import Alpine from 'alpinejs';
 
 window.AppDataTable = Object.freeze({
     ...(window.AppDataTable || {}),
+    initSearch: initDataTableSearch,
     initPageSize: initDataTablePageSize,
     initRowActions: initDataTableRowActions,
 });

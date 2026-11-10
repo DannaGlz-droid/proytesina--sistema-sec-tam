@@ -222,6 +222,25 @@ select.app-filter-select {
   caret-color: transparent;
 }
 
+/* Short form catalogs do not expose a search box, but their empty control
+   still needs Tom Select's internal input to paint the placeholder. Keep it
+   visually present only until a real item is selected, without a text caret. */
+.ts-wrapper.app-filter-select.app-filter-select--form.single:not(.is-searchable):not(.has-items) .ts-control > input {
+  position: static !important;
+  width: auto !important;
+  min-width: 0 !important;
+  height: auto !important;
+  min-height: 0 !important;
+  flex: 1 1 auto !important;
+  margin: 0 !important;
+  overflow: visible !important;
+  clip: auto !important;
+  clip-path: none !important;
+  opacity: 1 !important;
+  pointer-events: none;
+  caret-color: transparent;
+}
+
 .ts-wrapper.app-filter-select .ts-control > input::placeholder {
   color: var(--ui-text-muted, #64748b);
   font-weight: 500;

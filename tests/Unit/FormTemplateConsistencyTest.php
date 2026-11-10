@@ -319,6 +319,15 @@ it('refreshes shared select searches immediately before Enter can use a stale op
         ->toContain('puede quedar activa una opción de la consulta anterior');
 });
 
+it('keeps placeholders visible in empty short form selects without restoring the stray caret', function (): void {
+    $styles = file_get_contents(dirname(__DIR__, 2).'/resources/css/design-system/filter-select.css');
+
+    expect($styles)
+        ->toContain('.ts-wrapper.app-filter-select.app-filter-select--form.single:not(.is-searchable):not(.has-items) .ts-control > input')
+        ->toMatch('/app-filter-select--form\.single:not\(\.is-searchable\):not\(\.has-items\)[^{]+\{[^}]*position:\s*static\s*!important;[^}]*opacity:\s*1\s*!important;[^}]*pointer-events:\s*none;/s')
+        ->toContain('caret-color: transparent;');
+});
+
 it('keeps the invalid border visible on native fields and shared form selects', function (): void {
     $styles = file_get_contents(dirname(__DIR__, 2).'/resources/css/app.css');
     $validation = file_get_contents(dirname(__DIR__, 2).'/resources/js/form-validation.js');

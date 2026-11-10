@@ -521,35 +521,12 @@ document.addEventListener('DOMContentLoaded', function() {
 
     const failedSearchInput = document.getElementById('search-failed-imports');
     const failedSearchClear = document.getElementById('clear-failed-imports-search');
-    const failedSearchControl = failedSearchInput?.closest('.users-filter-search');
     const failedPerPageSelect = document.getElementById('per-page-failed-imports');
     const failedPerPageButton = document.getElementById('per-page-failed-imports-button');
     const failedPerPageLabel = document.getElementById('per-page-failed-imports-label');
     const failedPerPageMenu = document.getElementById('per-page-failed-imports-menu');
+    let failedSearchController = null;
     let failedPageSizeController = null;
-
-    failedSearchInput?.setAttribute('aria-busy', 'false');
-    const updateFailedSearchClear = () => failedSearchClear?.classList.toggle('hidden', !failedSearchInput?.value);
-    const applyFailedSearch = async (nextSearch = failedSearchInput?.value || '') => {
-        const shouldContinue = await confirmDiscardFailedImportChanges({
-            question: nextSearch ? '¿Deseas aplicar otra búsqueda?' : '¿Deseas limpiar la búsqueda?',
-            confirmText: nextSearch ? 'Buscar sin guardar' : 'Limpiar sin guardar',
-        });
-        if (!shouldContinue) {
-            if (failedSearchInput) failedSearchInput.value = failedImportsSearch;
-            updateFailedSearchClear();
-            return false;
-        }
-
-        if (failedSearchInput) failedSearchInput.value = nextSearch;
-        failedImportsSearch = nextSearch.trim();
-        updateFailedSearchClear();
-        failedSearchControl?.classList.add('is-searching');
-        failedSearchInput?.setAttribute('aria-busy', 'true');
-        isInitialLoad = false;
-        loadFailedRecords(1);
-        return true;
-    };
 
     const failedImportsEmptyStateMarkup = () => {
         if (failedImportsSearch) {
@@ -572,16 +549,31 @@ document.addEventListener('DOMContentLoaded', function() {
         `;
     };
 
-    failedSearchInput?.addEventListener('input', updateFailedSearchClear);
-    failedSearchInput?.addEventListener('keydown', event => {
-        if (event.key === 'Enter') {
-            event.preventDefault();
-            void applyFailedSearch();
-        }
-    });
-    failedSearchClear?.addEventListener('click', () => {
-        void applyFailedSearch('');
-    });
+    const initializeFailedSearch = () => {
+        if (failedSearchController) return failedSearchController;
+
+        failedSearchController = window.AppDataTable?.initSearch({
+            input: failedSearchInput,
+            clearButton: failedSearchClear,
+            initialValue: failedImportsSearch,
+            beforeSearch: nextSearch => confirmDiscardFailedImportChanges({
+                question: nextSearch ? '¿Deseas aplicar otra búsqueda?' : '¿Deseas limpiar la búsqueda?',
+                confirmText: nextSearch ? 'Buscar sin guardar' : 'Limpiar sin guardar',
+            }),
+            onSearch: nextSearch => {
+                failedImportsSearch = nextSearch;
+                isInitialLoad = false;
+                return loadFailedRecords(1);
+            },
+        }) || null;
+
+        return failedSearchController;
+    };
+
+    if (!initializeFailedSearch()) {
+        window.addEventListener('app:data-table-ready', initializeFailedSearch, { once: true });
+    }
+
     document.getElementById('records-list')?.addEventListener('click', event => {
         const action = event.target.closest('[data-failed-state-action]');
         if (!action) return;
@@ -592,9 +584,7 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
 
-        void applyFailedSearch('').then(applied => {
-            if (applied) failedSearchInput.focus();
-        });
+        void failedSearchController?.search('', { focus: true });
     });
 
     const initializeFailedPageSize = () => {
@@ -646,7 +636,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         const query = new URLSearchParams({ page, per_page: failedImportsPerPage });
         if (failedImportsSearch) query.set('search', failedImportsSearch);
-        fetch(`/api/estadisticas/importaciones/${importId}/registros-fallidos?${query.toString()}`, {
+        return fetch(`/api/estadisticas/importaciones/${importId}/registros-fallidos?${query.toString()}`, {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
@@ -757,11 +747,6 @@ document.addEventListener('DOMContentLoaded', function() {
                         <button class="users-table-state-action" type="button" data-failed-state-action="retry">Reintentar</button>
                     </div>
                 `;
-            })
-            .finally(() => {
-                failedSearchControl?.classList.remove('is-searching');
-                failedSearchInput?.setAttribute('aria-busy', 'false');
-                updateFailedSearchClear();
             });
     }
 
