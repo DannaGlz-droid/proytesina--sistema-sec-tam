@@ -429,10 +429,25 @@ function selectIsSearchable(name) {
 
 document.addEventListener('DOMContentLoaded', function() {
     const importId = {{ $importId }};
-    let currentPage = 1;
+    const failedImportsAllowedPageSizes = [4, 6, 10];
+    const readFailedImportsViewState = (href = window.location.href) => {
+        const url = new URL(href, window.location.origin);
+        const requestedPage = Number.parseInt(url.searchParams.get('page') || '1', 10);
+        const requestedPageSize = Number.parseInt(url.searchParams.get('per_page') || '4', 10);
+
+        return {
+            page: Number.isFinite(requestedPage) && requestedPage > 0 ? requestedPage : 1,
+            perPage: failedImportsAllowedPageSizes.includes(requestedPageSize) ? requestedPageSize : 4,
+            search: String(url.searchParams.get('search') || '').trim(),
+        };
+    };
+    const initialFailedImportsViewState = readFailedImportsViewState();
+    let currentPage = initialFailedImportsViewState.page;
     let isInitialLoad = true;
-    let failedImportsPerPage = 4;
-    let failedImportsSearch = '';
+    let failedImportsPerPage = initialFailedImportsViewState.perPage;
+    let failedImportsSearch = initialFailedImportsViewState.search;
+    let failedImportsCurrentUrl = window.location.href;
+    let restoringFailedImportsHistory = false;
     let failedImportsPaginationState = {
         current_page: 1,
         last_page: 0,
@@ -442,6 +457,32 @@ document.addEventListener('DOMContentLoaded', function() {
         total_pending: 0,
     };
     const failedImportsNavigationState = { navigating: false, confirming: false };
+
+    function buildFailedImportsViewUrl(page = currentPage) {
+        const url = new URL(window.location.href);
+        url.searchParams.delete('page');
+        url.searchParams.delete('per_page');
+        url.searchParams.delete('search');
+
+        if (failedImportsSearch) url.searchParams.set('search', failedImportsSearch);
+        if (Number(page) > 1) url.searchParams.set('page', String(page));
+        if (failedImportsPerPage !== 4) url.searchParams.set('per_page', String(failedImportsPerPage));
+
+        return url;
+    }
+
+    function commitFailedImportsViewState(page, historyMode = 'push') {
+        currentPage = Math.max(1, Number(page) || 1);
+        const nextUrl = buildFailedImportsViewUrl(currentPage);
+
+        if (historyMode === 'replace') {
+            window.history.replaceState({ failedImportsView: true }, '', nextUrl);
+        } else if (historyMode === 'push' && nextUrl.href !== window.location.href) {
+            window.history.pushState({ failedImportsView: true }, '', nextUrl);
+        }
+
+        failedImportsCurrentUrl = nextUrl.href;
+    }
 
     function announceFailedImportStatus(message) {
         const announcer = document.getElementById('failed-imports-announcer');
@@ -525,8 +566,13 @@ document.addEventListener('DOMContentLoaded', function() {
     const failedPerPageButton = document.getElementById('per-page-failed-imports-button');
     const failedPerPageLabel = document.getElementById('per-page-failed-imports-label');
     const failedPerPageMenu = document.getElementById('per-page-failed-imports-menu');
+    if (failedSearchInput) failedSearchInput.value = failedImportsSearch;
+    if (failedPerPageSelect) failedPerPageSelect.value = String(failedImportsPerPage);
     let failedSearchController = null;
     let failedPageSizeController = null;
+    let failedRecordsAbortController = null;
+    let failedRecordGapAbortController = null;
+    let failedRecordsRequestSequence = 0;
 
     const failedImportsEmptyStateMarkup = () => {
         if (failedImportsSearch) {
@@ -556,14 +602,18 @@ document.addEventListener('DOMContentLoaded', function() {
             input: failedSearchInput,
             clearButton: failedSearchClear,
             initialValue: failedImportsSearch,
-            beforeSearch: nextSearch => confirmDiscardFailedImportChanges({
-                question: nextSearch ? '¿Deseas aplicar otra búsqueda?' : '¿Deseas limpiar la búsqueda?',
-                confirmText: nextSearch ? 'Buscar sin guardar' : 'Limpiar sin guardar',
-            }),
+            beforeSearch: nextSearch => restoringFailedImportsHistory
+                ? true
+                : confirmDiscardFailedImportChanges({
+                    question: nextSearch ? '¿Deseas aplicar otra búsqueda?' : '¿Deseas limpiar la búsqueda?',
+                    confirmText: nextSearch ? 'Buscar sin guardar' : 'Limpiar sin guardar',
+                }),
             onSearch: nextSearch => {
                 failedImportsSearch = nextSearch;
                 isInitialLoad = false;
-                return loadFailedRecords(1);
+                return loadFailedRecords(restoringFailedImportsHistory ? currentPage : 1, {
+                    history: restoringFailedImportsHistory ? 'none' : 'push',
+                });
             },
         }) || null;
 
@@ -613,13 +663,21 @@ document.addEventListener('DOMContentLoaded', function() {
     failedPerPageSelect?.addEventListener('change', event => {
         failedImportsPerPage = Number(event.target.value) || 4;
         isInitialLoad = false;
-        loadFailedRecords(1);
+        loadFailedRecords(1, { history: 'push' });
     });
 
-    function loadFailedRecords(page = 1) {
+    function loadFailedRecords(page = 1, { history = 'push' } = {}) {
         const loadingState = document.getElementById('loading-state');
         const recordsContainer = document.getElementById('records-container');
         const recordsList = document.getElementById('records-list');
+        const requestSequence = ++failedRecordsRequestSequence;
+
+        failedRecordsAbortController?.abort();
+        failedRecordGapAbortController?.abort();
+        failedRecordGapAbortController = null;
+
+        const requestController = new AbortController();
+        failedRecordsAbortController = requestController;
         
         // Only show loading state on initial load
         if (isInitialLoad) {
@@ -643,7 +701,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 'X-Requested-With': 'XMLHttpRequest',
                 'X-CSRF-TOKEN': csrfToken,
             },
-            credentials: 'same-origin' // Include cookies for authentication
+            credentials: 'same-origin', // Include cookies for authentication
+            signal: requestController.signal,
         })
             .then(response => {
                 if (!response.ok) {
@@ -652,6 +711,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 return response.json();
             })
             .then(data => {
+                if (
+                    failedRecordsAbortController !== requestController
+                    || failedRecordsRequestSequence !== requestSequence
+                ) return false;
+
                 loadingState.classList.add('hidden');
                 recordsContainer.classList.remove('hidden');
                 
@@ -686,6 +750,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     window.requestAnimationFrame(() => {
                         recordsList.style.opacity = '1';
                     });
+                    commitFailedImportsViewState(1, history);
                     return;
                 }
                 // Check if this is a paginated response (Laravel pagination object)
@@ -712,7 +777,8 @@ document.addEventListener('DOMContentLoaded', function() {
                             total_pending: Number(data.total_pending) || Number(paginationData.total) || 0,
                         });
                     }
-                    currentPage = page;
+                    const resolvedPage = Number(paginationData?.current_page) || page;
+                    commitFailedImportsViewState(resolvedPage, history);
                 } else {
                     recordsList.classList.toggle('is-search-empty', Boolean(failedImportsSearch));
                     recordsList.innerHTML = failedImportsEmptyStateMarkup();
@@ -727,9 +793,18 @@ document.addEventListener('DOMContentLoaded', function() {
                     window.requestAnimationFrame(() => {
                         recordsList.style.opacity = '1';
                     });
+                    commitFailedImportsViewState(1, history);
                 }
+
+                return true;
             })
             .catch(error => {
+                if (
+                    error.name === 'AbortError'
+                    || failedRecordsAbortController !== requestController
+                    || failedRecordsRequestSequence !== requestSequence
+                ) return false;
+
                 console.error('Error loading failed records:', error);
                 notifyFailedImport('No se pudieron cargar los registros fallidos. Intenta nuevamente.', 'error');
                 loadingState.classList.add('hidden');
@@ -747,6 +822,12 @@ document.addEventListener('DOMContentLoaded', function() {
                         <button class="users-table-state-action" type="button" data-failed-state-action="retry">Reintentar</button>
                     </div>
                 `;
+                return false;
+            })
+            .finally(() => {
+                if (failedRecordsAbortController === requestController) {
+                    failedRecordsAbortController = null;
+                }
             });
     }
 
@@ -1259,6 +1340,11 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function fillFailedRecordPageGap(recordsList) {
+        failedRecordGapAbortController?.abort();
+        const requestController = new AbortController();
+        const requestSequence = failedRecordsRequestSequence;
+        failedRecordGapAbortController = requestController;
+
         const query = new URLSearchParams({ page: currentPage, per_page: failedImportsPerPage });
         if (failedImportsSearch) query.set('search', failedImportsSearch);
         const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
@@ -1271,12 +1357,20 @@ document.addEventListener('DOMContentLoaded', function() {
                 'X-CSRF-TOKEN': csrfToken,
             },
             credentials: 'same-origin',
+            signal: requestController.signal,
         })
             .then(response => {
                 if (!response.ok) throw new Error(`HTTP Error: ${response.status}`);
                 return response.json();
             })
             .then(data => {
+                if (
+                    failedRecordGapAbortController !== requestController
+                    || failedRecordsRequestSequence !== requestSequence
+                    || !recordsList.isConnected
+                    || recordsList !== document.getElementById('records-list')
+                ) return;
+
                 if (!data?.ok || !data.data) throw new Error(data?.message || 'Invalid response');
 
                 const records = Array.isArray(data.data) ? data.data : (data.data.data || []);
@@ -1300,9 +1394,20 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             })
             .catch(error => {
+                if (
+                    error.name === 'AbortError'
+                    || failedRecordGapAbortController !== requestController
+                    || failedRecordsRequestSequence !== requestSequence
+                ) return;
+
                 // The primary action already succeeded. Preserve the remaining
                 // cards and let the next global list load fill the open slot.
                 console.error('Error filling failed-record page gap:', error);
+            })
+            .finally(() => {
+                if (failedRecordGapAbortController === requestController) {
+                    failedRecordGapAbortController = null;
+                }
             });
     }
 
@@ -1910,15 +2015,16 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!container) return;
         const activePage = failedImportsPaginationState.current_page;
         const totalPages = failedImportsPaginationState.last_page;
+        const pageHref = page => buildFailedImportsViewUrl(page).toString();
         const pageButton = page => page === activePage
             ? `<span class="fb-page-btn fb-page-num fb-page-active" aria-current="page">${page}</span>`
-            : `<a href="#" data-page="${page}" class="pagination-link-failed-imports fb-page-btn fb-page-num">${page}</a>`;
+            : `<a href="${pageHref(page)}" data-page="${page}" class="pagination-link-failed-imports fb-page-btn fb-page-num">${page}</a>`;
         const ellipsis = () => '<span class="fb-page-btn fb-page-num fb-page-ellipsis">...</span>';
         let html = '<div class="fb-pagination" role="navigation" aria-label="Paginación de registros fallidos">';
 
         html += activePage === 1 || totalPages === 0
             ? '<span class="fb-page-btn fb-page-first fb-page-disabled">Anterior</span>'
-            : `<a href="#" data-page="${activePage - 1}" class="pagination-link-failed-imports fb-page-btn fb-page-first">Anterior</a>`;
+            : `<a href="${pageHref(activePage - 1)}" data-page="${activePage - 1}" class="pagination-link-failed-imports fb-page-btn fb-page-first">Anterior</a>`;
 
         const compactMobilePagination = window.matchMedia('(max-width: 639px)').matches;
 
@@ -1948,7 +2054,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         html += activePage === totalPages || totalPages === 0
             ? '<span class="fb-page-btn fb-page-last fb-page-disabled">Siguiente</span>'
-            : `<a href="#" data-page="${activePage + 1}" class="pagination-link-failed-imports fb-page-btn fb-page-last">Siguiente</a>`;
+            : `<a href="${pageHref(activePage + 1)}" data-page="${activePage + 1}" class="pagination-link-failed-imports fb-page-btn fb-page-last">Siguiente</a>`;
         html += '</div>';
         container.innerHTML = html;
 
@@ -1961,7 +2067,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 });
                 if (!shouldContinue) return;
 
-                loadFailedRecords(Number(link.dataset.page));
+                loadFailedRecords(Number(link.dataset.page), { history: 'push' });
                 document.querySelector('.failed-imports-card')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
             });
         });
@@ -2018,7 +2124,38 @@ document.addEventListener('DOMContentLoaded', function() {
         event.returnValue = '';
     });
 
-    loadFailedRecords(1);
+    window.addEventListener('popstate', async () => {
+        const previousUrl = failedImportsCurrentUrl;
+        const nextState = readFailedImportsViewState(window.location.href);
+        const shouldContinue = await confirmDiscardFailedImportChanges({
+            question: '¿Deseas cambiar la vista?',
+            confirmText: 'Cambiar sin guardar',
+        });
+
+        if (!shouldContinue) {
+            window.history.pushState({ failedImportsView: true }, '', previousUrl);
+            return;
+        }
+
+        restoringFailedImportsHistory = true;
+        failedImportsSearch = nextState.search;
+        failedImportsPerPage = nextState.perPage;
+        currentPage = nextState.page;
+        failedSearchController?.setValue(failedImportsSearch);
+        failedPageSizeController?.update(String(failedImportsPerPage));
+        if (failedSearchInput && !failedSearchController) failedSearchInput.value = failedImportsSearch;
+        if (failedPerPageSelect && !failedPageSizeController) failedPerPageSelect.value = String(failedImportsPerPage);
+        isInitialLoad = false;
+
+        try {
+            await loadFailedRecords(currentPage, { history: 'none' });
+        } finally {
+            restoringFailedImportsHistory = false;
+            failedImportsCurrentUrl = window.location.href;
+        }
+    });
+
+    loadFailedRecords(currentPage, { history: 'replace' });
 });
 </script>
 @endpush

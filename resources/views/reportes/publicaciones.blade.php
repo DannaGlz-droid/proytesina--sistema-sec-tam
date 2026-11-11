@@ -135,6 +135,15 @@
                         </x-filtros.panel>
                     </div>
 
+                    @if($publications->isNotEmpty())
+                    <div class="reports-toolbar-selection">
+                        <label class="reports-select-page-control reports-select-page-control--toolbar" for="select-all-reports">
+                            <input id="select-all-reports" type="checkbox" aria-label="Seleccionar todos los reportes visibles">
+                            <span>Seleccionar página</span>
+                        </label>
+                    </div>
+                    @endif
+
                     <x-ui.data-table.search
                         id="search"
                         clear-id="clear-reports-search"
@@ -157,7 +166,7 @@
                     </div>
 
                     @if($activeFilterCount > 0)
-                    <div class="ui-data-table__filter-chips users-filter-chips" aria-label="Filtros activos">
+                    <div class="ui-data-table__filter-chips users-filter-chips" aria-label="Filtros activos" aria-live="polite">
                         @if(request()->filled('status'))
                             <span class="users-filter-chip">
                                 <button type="button" class="users-filter-chip-label" data-open-filter-section="status" data-focus-filter="status" aria-label="Editar filtro Estado">Estado: {{ ucfirst(request('status')) }}</button>
@@ -187,20 +196,24 @@
                 </form>
             </x-ui.data-table.toolbar>
 
-            <div id="bulk-toolbar" class="ui-data-table__bulk-actions reports-bulk-toolbar app-table-bulk-inline hidden items-center gap-3" role="status" aria-live="polite">
+            @if($publications->isNotEmpty())
+            <div id="bulk-toolbar" class="ui-data-table__bulk-actions reports-bulk-toolbar app-table-bulk-inline hidden items-center gap-3" role="group" aria-label="Selección de reportes visibles">
                 <div class="reports-bulk-summary">
-                    <span class="app-table-selection-marker" aria-hidden="true"></span>
                     <span id="selected-count" class="app-table-selection-count whitespace-nowrap"></span>
                 </div>
                 <span class="reports-bulk-context">En esta página</span>
-                <button id="bulk-download-files" type="button" class="reports-bulk-action reports-bulk-action--download" title="Descargar archivos seleccionados">
-                    <i class="fas fa-download" aria-hidden="true"></i><span>Descargar archivos</span>
-                </button>
-                <button id="clear-selection" type="button" class="reports-bulk-action reports-bulk-action--clear" title="Quitar selección">Quitar selección</button>
-                <button id="bulk-delete-reports" type="button" class="app-table-bulk-danger reports-bulk-delete" title="Eliminar seleccionados">
-                    <i class="fas fa-trash" aria-hidden="true"></i><span>Eliminar</span>
-                </button>
+                <div id="reports-bulk-actions" class="reports-bulk-actions">
+                    <button id="bulk-download-files" type="button" class="reports-bulk-action reports-bulk-action--download" title="Descargar archivos seleccionados">
+                        <i class="fas fa-download" aria-hidden="true"></i><span>Descargar archivos</span>
+                    </button>
+                    <button id="clear-selection" type="button" class="reports-bulk-action reports-bulk-action--clear" title="Quitar selección">Quitar selección</button>
+                    <button id="bulk-delete-reports" type="button" class="app-table-bulk-danger reports-bulk-delete" title="Eliminar seleccionados">
+                        <i class="fas fa-trash" aria-hidden="true"></i><span>Eliminar</span>
+                    </button>
+                </div>
+                <span id="reports-selection-status" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></span>
             </div>
+            @endif
 
             <div id="reports-table-error" class="reports-inline-error hidden" role="alert">
                 <i class="fas fa-exclamation-triangle" aria-hidden="true"></i>
@@ -682,6 +695,11 @@ document.addEventListener('DOMContentLoaded', function() {
         if (isLoading) panel.querySelector('#reports-table-error')?.classList.add('hidden');
     }
 
+    function restoreReportSearchFocus() {
+        const search = document.getElementById('search');
+        window.AppDataTable?.focusSearch(search);
+    }
+
     function replaceReportesPanelFromHtml(html, url, options = {}) {
         const parser = new DOMParser();
         const doc = parser.parseFromString(html, 'text/html');
@@ -708,14 +726,19 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         const targetUrl = new URL(url, window.location.origin).toString();
-        if (reportesPanelCache.has(targetUrl) && options.cache !== false) {
-            return Promise.resolve(replaceReportesPanelFromHtml(reportesPanelCache.get(targetUrl), targetUrl, options));
-        }
-
         if (reportesPanelAbortController) {
             reportesPanelAbortController.abort();
+            reportesPanelAbortController = null;
         }
-        reportesPanelAbortController = new AbortController();
+
+        if (reportesPanelCache.has(targetUrl) && options.cache !== false) {
+            const replaced = replaceReportesPanelFromHtml(reportesPanelCache.get(targetUrl), targetUrl, options);
+            setReportesPanelLoading(false);
+            return Promise.resolve(replaced);
+        }
+
+        const requestController = new AbortController();
+        reportesPanelAbortController = requestController;
         setReportesPanelLoading(true, options.search ? 'search' : 'refresh');
 
         return fetch(targetUrl, {
@@ -723,24 +746,26 @@ document.addEventListener('DOMContentLoaded', function() {
                 'X-Requested-With': 'XMLHttpRequest',
                 'Accept': 'text/html'
             },
-            signal: reportesPanelAbortController.signal
+            signal: requestController.signal
         })
         .then(response => {
             if (!response.ok) throw new Error(`HTTP ${response.status}`);
             return response.text().then(html => ({ html, finalUrl: response.url || targetUrl }));
         })
         .then(({ html, finalUrl }) => {
+            if (reportesPanelAbortController !== requestController) return false;
             reportesPanelCache.set(finalUrl, html);
             reportesPanelCache.set(targetUrl, html);
             return replaceReportesPanelFromHtml(html, finalUrl, options);
         })
         .catch(error => {
-            if (error.name === 'AbortError') return false;
+            if (error.name === 'AbortError' || reportesPanelAbortController !== requestController) return false;
             console.error('Error cargando reportes sin recargar:', error);
             getReportesPanel()?.querySelector('#reports-table-error')?.classList.remove('hidden');
             return false;
         })
         .finally(() => {
+            if (reportesPanelAbortController !== requestController) return;
             setReportesPanelLoading(false);
             reportesPanelAbortController = null;
         });
@@ -862,10 +887,13 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!form || !getReportesPanel()?.contains(form)) return;
 
         e.preventDefault();
+        const submittedFromSearch = document.activeElement?.id === 'search';
         loadReportesPanel(buildReportesUrlFromForm(form), {
             push: true,
             scroll: false,
-            search: document.activeElement?.id === 'search'
+            search: submittedFromSearch
+        }).then(replaced => {
+            if (submittedFromSearch && replaced) restoreReportSearchFocus();
         });
     });
 
@@ -1011,6 +1039,14 @@ document.addEventListener('DOMContentLoaded', function() {
         if (form) loadReportesPanel(buildReportesUrlFromForm(form), { push: true, scroll: false, cache: false });
     });
 
+    document.addEventListener('input', function(e) {
+        const search = e.target.closest('#search');
+        if (!search || !getReportesPanel()?.contains(search)) return;
+
+        const clearButton = search.closest('.users-filter-search')?.querySelector('#clear-reports-search');
+        clearButton?.classList.toggle('hidden', search.value.trim().length === 0);
+    });
+
     document.addEventListener('click', function(e) {
         const filterChipLabel = e.target.closest('[data-open-filter-section]');
         if (filterChipLabel && getReportesPanel()?.contains(filterChipLabel)) {
@@ -1058,7 +1094,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 scroll: false,
                 search: true,
                 cache: false
-            }).then(() => document.getElementById('search')?.focus());
+            }).then(replaced => {
+                if (replaced) restoreReportSearchFocus();
+            });
             return;
         }
 
@@ -3598,20 +3636,36 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // ========== MANEJO DE CHECKBOXES Y ELIMINACIÓN MASIVA DE REPORTES ==========
     // Función para actualizar la barra de herramientas y el contador
-    function toggleBulkToolbar() {
+    function toggleBulkToolbar({ announce = false } = {}) {
+        const panel = getReportesPanel();
         const toolbar = document.getElementById('bulk-toolbar');
         const counter = document.getElementById('selected-count');
-        const checked = document.querySelectorAll('.publication-check-btn:checked');
-        if (!toolbar || !counter) return;
+        const selectAll = document.getElementById('select-all-reports');
+        const actions = document.getElementById('reports-bulk-actions');
+        const announcer = document.getElementById('reports-selection-status');
+        const checkboxes = Array.from(panel?.querySelectorAll('.publication-check-btn') || []);
+        const checked = checkboxes.filter(checkbox => checkbox.checked);
+        if (!panel || !toolbar || !counter || !selectAll || !actions) return;
         
         // Actualizar todas las tarjetas
-        document.querySelectorAll('.publication-card-wrapper').forEach(card => {
+        panel.querySelectorAll('.publication-card-wrapper').forEach(card => {
             card.classList.remove('selected-card');
         });
-        
-        if (checked.length > 0) {
-            toolbar.classList.remove('hidden');
-            counter.textContent = `${checked.length} seleccionado${checked.length === 1 ? '' : 's'}`;
+
+        const selectedCount = checked.length;
+        const visibleCount = checkboxes.length;
+        const hasSelection = selectedCount > 0;
+        const allSelected = visibleCount > 0 && selectedCount === visibleCount;
+
+        selectAll.checked = allSelected;
+        selectAll.indeterminate = hasSelection && !allSelected;
+        selectAll.setAttribute('aria-label', allSelected
+            ? 'Quitar selección de todos los reportes visibles'
+            : 'Seleccionar todos los reportes visibles');
+        toolbar.classList.toggle('hidden', !hasSelection);
+
+        if (hasSelection) {
+            counter.textContent = `${selectedCount} seleccionado${selectedCount === 1 ? '' : 's'}`;
             // Resaltar SOLO las tarjetas seleccionadas
             checked.forEach(checkbox => {
                 const card = checkbox.closest('.publication-card-wrapper');
@@ -3620,12 +3674,27 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             });
         } else {
-            toolbar.classList.add('hidden');
+            counter.textContent = '';
+        }
+
+        if (announce && announcer) {
+            announcer.textContent = hasSelection
+                ? `${selectedCount} reporte${selectedCount === 1 ? '' : 's'} seleccionado${selectedCount === 1 ? '' : 's'} en esta página.`
+                : 'No hay reportes seleccionados.';
         }
     }
     document.addEventListener('change', function(e) {
+        const selectAll = e.target.closest('#select-all-reports');
+        if (selectAll && getReportesPanel()?.contains(selectAll)) {
+            getReportesPanel().querySelectorAll('.publication-check-btn').forEach(checkbox => {
+                checkbox.checked = selectAll.checked;
+            });
+            toggleBulkToolbar({ announce: true });
+            return;
+        }
+
         if (e.target.closest('.publication-check-btn') && getReportesPanel()?.contains(e.target)) {
-            toggleBulkToolbar();
+            toggleBulkToolbar({ announce: true });
         }
     });
 
@@ -3636,7 +3705,7 @@ document.addEventListener('DOMContentLoaded', function() {
             document.querySelectorAll('.publication-check-btn:checked').forEach(checkbox => {
                 checkbox.checked = false;
             });
-            toggleBulkToolbar();
+            toggleBulkToolbar({ announce: true });
             return;
         }
 

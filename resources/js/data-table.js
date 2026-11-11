@@ -2,6 +2,19 @@
  * Shared behavior for the data-table design system.
  * Module-specific DataTables configuration remains in each screen.
  */
+export function focusDataTableSearch(input) {
+    if (!input) return;
+
+    try {
+        input.focus({ preventScroll: true });
+    } catch (error) {
+        input.focus();
+    }
+
+    const cursorPosition = input.value.length;
+    input.setSelectionRange?.(cursorPosition, cursorPosition);
+}
+
 export function initDataTableSearch({
     input,
     clearButton,
@@ -42,7 +55,7 @@ export function initDataTableSearch({
         syncClearButton();
 
         if (!force && normalizedValue === appliedValue) {
-            if (focus) input.focus();
+            if (focus) focusDataTableSearch(input);
             return false;
         }
 
@@ -50,7 +63,7 @@ export function initDataTableSearch({
         if (maySearch === false) {
             input.value = appliedValue;
             syncClearButton();
-            if (focus) input.focus();
+            if (focus) focusDataTableSearch(input);
             return false;
         }
 
@@ -64,7 +77,7 @@ export function initDataTableSearch({
         } finally {
             if (sequence === requestSequence) setLoading(false);
             syncClearButton();
-            if (focus) input.focus();
+            if (focus) focusDataTableSearch(input);
         }
     };
 
@@ -89,6 +102,12 @@ export function initDataTableSearch({
     return {
         search,
         sync: syncClearButton,
+        setValue(nextValue, { focus = false } = {}) {
+            appliedValue = String(nextValue ?? '').trim();
+            input.value = appliedValue;
+            syncClearButton();
+            if (focus) focusDataTableSearch(input);
+        },
         get value() {
             return appliedValue;
         },

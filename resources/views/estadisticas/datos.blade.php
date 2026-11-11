@@ -1523,6 +1523,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     $('#dt-clear-deaths-btn').on('click', function() {
         $('#dt-search-deaths').val('');
+        window.AppDataTable?.focusSearch(document.getElementById('dt-search-deaths'));
         deathsSearchControl?.classList.add('is-searching');
         document.getElementById('dt-search-deaths')?.setAttribute('aria-busy', 'true');
         window.deathsTable.search('').draw();

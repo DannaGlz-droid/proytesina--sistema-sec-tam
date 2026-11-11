@@ -1037,6 +1037,7 @@
             $('#dt-clear-btn').on('click', function() {
                 $('#dt-search-users').val('');
                 syncUsersSearchClearButton();
+                window.AppDataTable?.focusSearch(document.getElementById('dt-search-users'));
                 beginUsersSearch();
                 table.search('').draw();
             });

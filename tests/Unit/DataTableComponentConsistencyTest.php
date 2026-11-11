@@ -20,6 +20,10 @@ class DataTableComponentConsistencyTest extends TestCase
         $this->assertStringContainsString('class="users-username-text"', $view);
         $this->assertStringContainsString('.users-username-text {', $css);
         $this->assertStringContainsString('<x-ui.data-table.footer', $view);
+        $this->assertStringContainsString(
+            "window.AppDataTable?.focusSearch(document.getElementById('dt-search-users'));",
+            $view
+        );
     }
 
     public function test_user_table_controls_use_the_shared_search_and_page_size_components(): void
@@ -105,6 +109,10 @@ class DataTableComponentConsistencyTest extends TestCase
         $this->assertStringContainsString('<x-ui.data-table.table id="deaths-table">', $view);
         $this->assertStringContainsString('class="dt-actions-cell px-3 py-2', $view);
         $this->assertStringContainsString('<x-ui.data-table.footer', $view);
+        $this->assertStringContainsString(
+            "window.AppDataTable?.focusSearch(document.getElementById('dt-search-deaths'));",
+            $view
+        );
         $this->assertStringContainsString('aria-label="Municipio de residencia" title="Municipio de residencia">Residencia</th>', $view);
         $this->assertStringContainsString('aria-label="Municipio de defunción" title="Municipio de defunción">Defunción</th>', $view);
         $this->assertStringContainsString('<x-ui.data-table.search', $filters);
@@ -242,9 +250,30 @@ class DataTableComponentConsistencyTest extends TestCase
         $this->assertStringContainsString('fb-page-btn fb-page-num fb-page-active', $serverPagination);
         $this->assertStringContainsString("document.querySelector('#dt-pagination .fb-pagination')", $reports);
         $this->assertStringContainsString("item.classList.toggle('fb-page-mobile-hidden'", $reports);
+        $this->assertStringContainsString('function restoreReportSearchFocus()', $reports);
+        $this->assertStringContainsString('if (submittedFromSearch && replaced) restoreReportSearchFocus();', $reports);
+        $this->assertStringContainsString('window.AppDataTable?.focusSearch(search);', $reports);
+        $this->assertStringContainsString("document.addEventListener('input', function(e)", $reports);
+        $this->assertStringContainsString("clearButton?.classList.toggle('hidden', search.value.trim().length === 0);", $reports);
+        $this->assertStringContainsString('const requestController = new AbortController();', $reports);
+        $this->assertStringContainsString('signal: requestController.signal', $reports);
+        $this->assertStringContainsString('if (reportesPanelAbortController !== requestController) return false;', $reports);
+        $this->assertStringContainsString('if (reportesPanelAbortController !== requestController) return;', $reports);
+        $this->assertMatchesRegularExpression(
+            '/reportesPanelAbortController\.abort\(\);[\s\S]*?reportesPanelCache\.has\(targetUrl\)/',
+            $reports
+        );
         $this->assertStringNotContainsString('reports-page-item', $reports);
         $this->assertStringContainsString('ui-data-table__filter-chips users-filter-chips', $reports);
         $this->assertStringContainsString('ui-data-table__bulk-actions reports-bulk-toolbar', $reports);
+        $this->assertStringContainsString('class="reports-toolbar-selection"', $reports);
+        $this->assertStringContainsString('id="select-all-reports"', $reports);
+        $this->assertStringNotContainsString('id="reports-visible-count"', $reports);
+        $this->assertStringContainsString("toolbar.classList.toggle('hidden', !hasSelection);", $reports);
+        $this->assertStringContainsString('id="reports-bulk-actions" class="reports-bulk-actions"', $reports);
+        $this->assertStringContainsString('selectAll.indeterminate = hasSelection && !allSelected;', $reports);
+        $this->assertStringContainsString("getReportesPanel().querySelectorAll('.publication-check-btn')", $reports);
+        $this->assertStringContainsString('toggleBulkToolbar({ announce: true });', $reports);
         $this->assertMatchesRegularExpression(
             '/<x-ui\.data-table\.toolbar>\s*<form id="reports-filter-form"[^>]*class="users-filter-form">[\s\S]*?<div class="users-filter-topbar">/',
             $reports
@@ -257,6 +286,7 @@ class DataTableComponentConsistencyTest extends TestCase
         $this->assertStringNotContainsString('class="reports-search"', $reports);
         $this->assertStringNotContainsString('class="reports-page-size"', $reports);
         $this->assertStringNotContainsString('class="reports-filter-chip"', $reports);
+        $this->assertStringContainsString('class="ui-data-table__filter-chips users-filter-chips" aria-label="Filtros activos" aria-live="polite"', $reports);
         $this->assertStringContainsString('class="users-filter-chip-label" data-open-filter-section="status"', $reports);
         $this->assertStringContainsString('class="users-filter-chip-remove" data-clear-report-filter-url=', $reports);
         $this->assertStringContainsString('data-filter-section="district"', $reports);
@@ -277,9 +307,22 @@ class DataTableComponentConsistencyTest extends TestCase
         $this->assertStringNotContainsString('reports-ts-dropdown', $reportsCss);
         $this->assertStringContainsString('.reports-row-menu::before {', $reportsCss);
         $this->assertStringContainsString('.reports-row-menu.opens-upward::before {', $reportsCss);
+        $this->assertStringContainsString('.reports-select-page-control {', $reportsCss);
+        $this->assertStringContainsString('.reports-select-page-control input:focus,', $reportsCss);
+        $this->assertStringContainsString('--tw-ring-color: transparent;', $reportsCss);
+        $this->assertStringContainsString('border-left-width: 3px;', $reportsCss);
+        $this->assertStringContainsString('border-top-color: var(--reports-category, #526278);', $reportsCss);
+        $this->assertStringContainsString('background: #eef2f6;', $reportsCss);
+        $this->assertStringContainsString('.reports-toolbar-selection {', $reportsCss);
+        $this->assertStringContainsString('.reports-toolbar-selection::before {', $reportsCss);
+        $this->assertStringContainsString('.reports-bulk-actions.hidden {', $reportsCss);
         $this->assertStringContainsString('.reports-publications-page .reports-table-card > .reports-type-tabs {', $reportsCss);
         $this->assertStringContainsString('padding: .65rem .75rem 0 !important;', $reportsCss);
         $this->assertStringContainsString('padding: .65rem .5rem 0 !important;', $reportsCss);
+        $this->assertStringContainsString('background-size: 220% 100%;', $reportsCss);
+        $this->assertStringContainsString('animation: reports-progress 1.15s linear infinite;', $reportsCss);
+        $this->assertStringContainsString('to { background-position: -120% 0; }', $reportsCss);
+        $this->assertStringNotContainsString('.reports-table-progress::after', $reportsCss);
         $this->assertStringContainsString('updateReportsCompactPagination', $reports);
         $this->assertStringContainsString('AppFilterPanel?.capture', $reports);
         $this->assertStringContainsString('AppFilterPanel?.restore', $reports);
@@ -297,10 +340,26 @@ class DataTableComponentConsistencyTest extends TestCase
         $this->assertStringContainsString('beforeChange,', $behavior);
         $this->assertStringContainsString('if (mayChange === false) return;', $behavior);
         $this->assertStringContainsString('export function initDataTableSearch({', $behavior);
+        $this->assertStringContainsString('export function focusDataTableSearch(input)', $behavior);
+        $this->assertStringContainsString('focusSearch: focusDataTableSearch', file_get_contents(resource_path('js/app.js')));
         $this->assertStringContainsString('initSearch: initDataTableSearch', file_get_contents(resource_path('js/app.js')));
         $this->assertStringContainsString('window.AppDataTable?.initSearch({', $failedImports);
-        $this->assertStringContainsString('beforeSearch: nextSearch => confirmDiscardFailedImportChanges', $failedImports);
-        $this->assertStringContainsString('return loadFailedRecords(1);', $failedImports);
+        $this->assertStringContainsString('beforeSearch: nextSearch => restoringFailedImportsHistory', $failedImports);
+        $this->assertStringContainsString("url.searchParams.get('page')", $failedImports);
+        $this->assertStringContainsString("url.searchParams.get('per_page')", $failedImports);
+        $this->assertStringContainsString("url.searchParams.get('search')", $failedImports);
+        $this->assertStringContainsString('window.history.pushState({ failedImportsView: true }', $failedImports);
+        $this->assertStringContainsString('window.history.replaceState({ failedImportsView: true }', $failedImports);
+        $this->assertStringContainsString("window.addEventListener('popstate', async () =>", $failedImports);
+        $this->assertStringContainsString("loadFailedRecords(currentPage, { history: 'replace' });", $failedImports);
+        $this->assertStringContainsString('setValue(nextValue, { focus = false } = {})', $behavior);
+        $this->assertStringContainsString('let failedRecordsAbortController = null;', $failedImports);
+        $this->assertStringContainsString('let failedRecordGapAbortController = null;', $failedImports);
+        $this->assertStringContainsString('const requestSequence = ++failedRecordsRequestSequence;', $failedImports);
+        $this->assertStringContainsString('failedRecordsAbortController?.abort();', $failedImports);
+        $this->assertStringContainsString('signal: requestController.signal,', $failedImports);
+        $this->assertStringContainsString('failedRecordsRequestSequence !== requestSequence', $failedImports);
+        $this->assertStringContainsString('recordsList !== document.getElementById(\'records-list\')', $failedImports);
         $this->assertStringNotContainsString("failedSearchInput?.addEventListener('keydown'", $failedImports);
     }
 }
