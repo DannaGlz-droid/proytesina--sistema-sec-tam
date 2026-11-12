@@ -3241,12 +3241,26 @@
   }
 
   .reports-toolbar-selection {
-    order: 2;
-    margin-left: auto;
+    grid-column: 1 / -1 !important;
+    grid-row: 3 !important;
+    width: 100%;
+    min-height: 1.35rem;
+    justify-self: start;
+    order: 4;
+    margin-left: 0;
   }
 
   .reports-toolbar-selection::before {
     display: none;
+  }
+
+  .reports-select-page-control--toolbar {
+    line-height: 1.2;
+  }
+
+  .reports-publications-page .reports-table-card > .app-table-toolbar
+    .app-standard-filter-panel.users-filter-panel {
+    grid-row: 4 !important;
   }
 
   .reports-bulk-context {

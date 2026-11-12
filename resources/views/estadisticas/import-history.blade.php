@@ -9,6 +9,23 @@
         <x-ui.page-header class="users-management-header" title="Historial de importaciones" description="Consulte las cargas realizadas, revise sus resultados y gestione las importaciones reversibles.">
             <x-slot:actions><a href="{{ route('statistic.data') }}" class="users-page-create-btn"><i class="fas fa-arrow-left" aria-hidden="true"></i>Volver a datos</a></x-slot:actions>
         </x-ui.page-header>
+        <section id="imports-overview" class="imports-overview" aria-label="Resumen del historial de importaciones" aria-busy="true">
+            <article class="imports-overview-item imports-overview-item--attention">
+                <span class="imports-overview-label">Registros por corregir</span>
+                <strong id="imports-overview-corrections" class="imports-overview-value">--</strong>
+                <small id="imports-overview-corrections-detail">Calculando el resumen</small>
+            </article>
+            <article class="imports-overview-item imports-overview-item--differences">
+                <span class="imports-overview-label">Folios con diferencias</span>
+                <strong id="imports-overview-differences" class="imports-overview-value">--</strong>
+                <small id="imports-overview-differences-detail">Calculando el resumen</small>
+            </article>
+            <article class="imports-overview-item imports-overview-item--latest">
+                <span class="imports-overview-label">Última importación</span>
+                <strong id="imports-overview-latest" class="imports-overview-file">Cargando historial</strong>
+                <small id="imports-overview-latest-detail">Espere un momento</small>
+            </article>
+        </section>
         <div class="app-table-card users-table-card imports-table-card">
             <div class="app-table-toolbar flex flex-row flex-wrap items-center justify-between gap-3 p-4">
                 <x-filtros.importaciones />
@@ -25,8 +42,7 @@
                     <thead class="text-xs"><tr>
                         <th scope="col" class="dt-checkbox-cell"><label class="users-checkbox-hitbox" for="select-all-imports" title="Selecciona únicamente cargas que pueden eliminarse del historial"><input id="select-all-imports" type="checkbox" aria-label="Seleccionar cargas eliminables visibles"></label></th>
                         <th scope="col" class="sorting sortable" data-sort-key="original_name">Archivo</th>
-                        <th scope="col" class="sorting sortable" data-sort-key="created_by">Cargado por</th>
-                        <th scope="col" class="sorting_desc sortable" data-sort-key="created_at">Fecha de carga</th>
+                        <th scope="col" class="sorting_desc sortable" data-sort-key="created_at">Fecha / cargado por</th>
                         <th scope="col">Resultado</th><th scope="col">Estado</th><th scope="col" class="dt-actions-cell"><span class="sr-only">Acciones</span></th>
                     </tr></thead>
                     <tbody id="imports-tbody"></tbody>
@@ -60,13 +76,13 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function importsLoadingRow() {
-        return `<tr class="users-table-state-row"><td colspan="7"><div class="users-table-skeleton" role="status" aria-label="Cargando importaciones"><span class="sr-only">Cargando importaciones</span><div></div><div></div><div></div><div></div><div></div></div></td></tr>`;
+        return `<tr class="users-table-state-row"><td colspan="6"><div class="users-table-skeleton" role="status" aria-label="Cargando importaciones"><span class="sr-only">Cargando importaciones</span><div></div><div></div><div></div><div></div><div></div></div></td></tr>`;
     }
 
     function importsMessageRow(message, tone = 'muted') {
         const error = tone === 'error';
         const kind = error ? 'error' : 'no-results';
-        return `<tr class="users-table-state-row users-table-state-row--${kind}"><td colspan="7"><div class="users-table-state users-table-state--${kind}" role="${error ? 'alert' : 'status'}">
+        return `<tr class="users-table-state-row users-table-state-row--${kind}"><td colspan="6"><div class="users-table-state users-table-state--${kind}" role="${error ? 'alert' : 'status'}">
             <i class="fas ${error ? 'fa-triangle-exclamation' : 'fa-magnifying-glass'}" aria-hidden="true"></i>
             <strong>${error ? 'No pudimos cargar el historial' : 'No encontramos resultados'}</strong>
             <span>${escapeHtml(message)}</span>
@@ -90,6 +106,7 @@ document.addEventListener('DOMContentLoaded', function () {
         allImports = [];
         filteredImports = [];
         currentPage = 1;
+        updateImportOverview([], true);
 
         const tbody = document.getElementById('imports-tbody');
         if (tbody) tbody.innerHTML = importsMessageRow('Revise la conexión e intente nuevamente.', 'error');
@@ -109,6 +126,63 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         return Number(imp.rows_imported || 0) === 0;
+    }
+
+    function pluralizeImport(value, singular, plural) {
+        return `${value} ${value === 1 ? singular : plural}`;
+    }
+
+    function updateImportOverview(imports, failed = false) {
+        const overview = document.getElementById('imports-overview');
+        if (!overview) return;
+
+        const correctionsValue = document.getElementById('imports-overview-corrections');
+        const correctionsDetail = document.getElementById('imports-overview-corrections-detail');
+        const differencesValue = document.getElementById('imports-overview-differences');
+        const differencesDetail = document.getElementById('imports-overview-differences-detail');
+        const latestValue = document.getElementById('imports-overview-latest');
+        const latestDetail = document.getElementById('imports-overview-latest-detail');
+
+        overview.setAttribute('aria-busy', 'false');
+        overview.classList.toggle('has-load-error', failed);
+
+        if (failed) {
+            correctionsValue.textContent = '—';
+            differencesValue.textContent = '—';
+            correctionsDetail.textContent = 'Resumen no disponible';
+            differencesDetail.textContent = 'Resumen no disponible';
+            latestValue.textContent = 'No se pudo consultar';
+            latestDetail.textContent = 'Reintente la carga del historial';
+            return;
+        }
+
+        const activeImports = imports.filter(item => !item.is_reversed);
+        const corrections = activeImports.reduce((total, item) => total + Number(item.rows_failed || 0), 0);
+        const correctionsImports = activeImports.filter(item => Number(item.rows_failed || 0) > 0).length;
+        const differences = activeImports.reduce((total, item) => total + Number(item.rows_changed_existing || item.changed_existing || 0), 0);
+        const differencesImports = activeImports.filter(item => Number(item.rows_changed_existing || item.changed_existing || 0) > 0).length;
+        const latest = [...imports].sort((a, b) => new Date(b.created_at) - new Date(a.created_at))[0];
+
+        correctionsValue.textContent = corrections.toLocaleString('es-MX');
+        correctionsDetail.textContent = correctionsImports
+            ? `En ${pluralizeImport(correctionsImports, 'importación', 'importaciones')}`
+            : 'No hay registros pendientes';
+        differencesValue.textContent = differences.toLocaleString('es-MX');
+        differencesDetail.textContent = differencesImports
+            ? `Detectados en ${pluralizeImport(differencesImports, 'importación', 'importaciones')}`
+            : 'No se detectaron diferencias';
+
+        if (!latest) {
+            latestValue.textContent = 'Sin importaciones';
+            latestDetail.textContent = 'El historial todavía está vacío';
+            return;
+        }
+
+        const latestDate = new Date(latest.created_at);
+        const latestAdded = Number(latest.rows_imported || 0);
+        latestValue.textContent = latest.original_name || 'Archivo sin nombre';
+        latestValue.title = latest.original_name || 'Archivo sin nombre';
+        latestDetail.textContent = `${latestDate.toLocaleDateString('es-MX')} · ${pluralizeImport(latestAdded, 'registro agregado', 'registros agregados')}`;
     }
 
     // Load imports on page load
@@ -259,21 +333,21 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     // Checkbox selection: select-all toggles the visible page
-    $('#select-all-imports').on('change', function() {
-        const visibleChecks = $('#imports-table tbody .row-check-import:not(:disabled)');
-        const checkedCount = visibleChecks.filter(':checked').length;
+    document.getElementById('select-all-imports')?.addEventListener('change', function() {
+        const visibleChecks = Array.from(document.querySelectorAll('#imports-table tbody .row-check-import:not(:disabled)'));
+        const checkedCount = visibleChecks.filter(input => input.checked).length;
         const shouldCheck = checkedCount !== visibleChecks.length;
-        visibleChecks.prop('checked', shouldCheck);
+        visibleChecks.forEach(input => { input.checked = shouldCheck; });
         updateImportSelectionState();
     });
 
     // Delegate click for row checkboxes
-    $('#imports-table tbody').on('change', '.row-check-import', function() {
-        updateImportSelectionState();
+    document.getElementById('imports-tbody')?.addEventListener('change', function(event) {
+        if (event.target.matches('.row-check-import')) updateImportSelectionState();
     });
 
-    $('#imports-table tbody').on('click', 'input.row-check-import, button, a', function(e) {
-        e.stopPropagation();
+    document.getElementById('imports-tbody')?.addEventListener('click', function(event) {
+        if (event.target.closest('input.row-check-import, button, a')) event.stopPropagation();
     });
 
     function restoreImportActionMenu(menu) {
@@ -375,17 +449,15 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     });
 
-    $('#clear-selected-imports').on('click', function() {
+    document.getElementById('clear-selected-imports')?.addEventListener('click', function() {
         clearVisibleImportSelection();
     });
 
     // Bulk delete action
-    $('#bulk-delete-imports').on('click', async function() {
-        const ids = [];
-        $('#imports-table tbody .row-check-import:checked').each(function() {
-            const id = $(this).data('id');
-            if (id) ids.push(id);
-        });
+    document.getElementById('bulk-delete-imports')?.addEventListener('click', async function() {
+        const ids = Array.from(document.querySelectorAll('#imports-table tbody .row-check-import:checked'))
+            .map(input => Number(input.dataset.id))
+            .filter(Boolean);
 
         if (!ids.length) {
             notifyImport('Selecciona al menos una importación eliminable.', 'warning');
@@ -401,34 +473,35 @@ document.addEventListener('DOMContentLoaded', function () {
 
         if (!confirmed) return;
 
-        $.ajax({
-            url: '{{ route('statistic.import-history.massDelete') }}',
-            method: 'POST',
-            headers: {
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-            },
-            data: { ids: ids },
-            success: function(res) {
-                if (res && res.ok) {
-                    const deletedImports = Number(res.deleted || 0);
-                    notifyImport(
-                        deletedImports === 1
-                            ? 'Se eliminó 1 importación del historial.'
-                            : `Se eliminaron ${deletedImports} importaciones del historial.`,
-                        'success'
-                    );
-                    clearVisibleImportSelection();
-                    loadImports();
-                } else {
-                    notifyImport(res.message || 'No se pudieron eliminar las importaciones. Intenta nuevamente.', 'error');
-                    console.error(res);
-                }
-            },
-            error: function(xhr) {
-                console.error(xhr);
-                notifyImport(xhr.responseJSON?.message || 'No se pudieron eliminar las importaciones. Intenta nuevamente.', 'error');
+        try {
+            const response = await fetch('{{ route('statistic.import-history.massDelete') }}', {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                },
+                body: JSON.stringify({ ids }),
+            });
+            const res = await response.json();
+
+            if (!response.ok || !res?.ok) {
+                throw new Error(res?.message || 'No se pudieron eliminar las importaciones. Intenta nuevamente.');
             }
-        });
+
+            const deletedImports = Number(res.deleted || 0);
+            notifyImport(
+                deletedImports === 1
+                    ? 'Se eliminó 1 importación del historial.'
+                    : `Se eliminaron ${deletedImports} importaciones del historial.`,
+                'success'
+            );
+            clearVisibleImportSelection();
+            loadImports();
+        } catch (error) {
+            console.error(error);
+            notifyImport(error.message || 'No se pudieron eliminar las importaciones. Intenta nuevamente.', 'error');
+        }
     });
 
     // Apply filters button - applies all filter changes
@@ -547,6 +620,7 @@ document.addEventListener('DOMContentLoaded', function () {
             if (json.ok && json.data && json.data.data) {
                 allImports = json.data.data;
                 filteredImports = [...allImports];
+                updateImportOverview(allImports);
                 sortImports();
                 updateSortUI();
                 currentPage = 1;
@@ -642,33 +716,39 @@ document.addEventListener('DOMContentLoaded', function () {
         const different = Number(imp.rows_changed_existing || imp.changed_existing || 0);
         const toCorrect = Number(imp.rows_failed || 0);
 
+        if (imp.status === 'failed') {
+            return '<div class="imports-result-empty imports-result-empty--failed"><strong>No se procesó</strong><small>El archivo no pudo procesarse</small></div>';
+        }
+
         if (added + unchanged + different + toCorrect === 0) {
             if (imp.status === 'processing') {
                 return '<div class="imports-result-empty"><strong>En proceso</strong><small>Calculando el resultado</small></div>';
             }
 
-            if (imp.status === 'failed') {
-                return '<div class="imports-result-empty"><strong>Sin resultado</strong><small>El archivo no pudo procesarse</small></div>';
-            }
+            return '<div class="imports-result-empty"><strong>Sin cambios</strong><small>No se agregaron ni modificaron registros</small></div>';
         }
 
-        const metric = (value, label, title, modifier = '') => `
-            <span class="imports-result-metric ${value === 0 ? 'is-zero' : ''} ${modifier}" title="${title}">
-                <strong>${value}</strong>
-                <small>${label}</small>
-            </span>`;
+        const metrics = [
+            { value: toCorrect, label: 'por corregir', modifier: 'imports-result-correction', title: 'Registros que requieren corrección' },
+            { value: different, label: 'con diferencias', modifier: 'imports-result-different', title: 'Folios existentes con información distinta; no fueron sobrescritos' },
+            { value: added, label: imp.is_reversed ? 'agregados originalmente' : 'agregados', modifier: 'imports-result-added', title: imp.is_reversed ? 'Registros que esta carga agregó antes de revertirse' : 'Registros nuevos guardados' },
+            { value: unchanged, label: 'ya existentes', modifier: 'imports-result-unchanged', title: 'Folios que ya existían con la misma información' },
+        ].filter(metric => metric.value > 0);
 
-        const correction = toCorrect > 0
-            ? `<a class="imports-result-metric imports-result-correction" href="/estadisticas/importaciones/${imp.id}/registros-fallidos" title="Abrir los registros que requieren corrección"><strong>${toCorrect}</strong><small>Por corregir <i class="fas fa-arrow-right" aria-hidden="true"></i></small></a>`
-            : metric(0, 'Por corregir', 'Registros que requieren corrección', 'imports-result-correction');
+        const description = metrics.map(metric => `${metric.value} ${metric.label}`).join(', ');
+        const metricMarkup = metrics.map(metric => {
+            const content = `<strong>${metric.value.toLocaleString('es-MX')}</strong><span>${metric.label}</span>`;
 
-        return `
-            <div class="imports-result-grid">
-                ${metric(added, 'Agregados', 'Registros nuevos guardados', 'imports-result-added')}
-                ${metric(unchanged, 'Ya existentes', 'Folios que ya existían con la misma información', 'imports-result-unchanged')}
-                ${metric(different, 'Diferencias', 'Folios existentes con información distinta; no fueron sobrescritos', 'imports-result-different')}
-                ${correction}
-            </div>`;
+            if (imp.is_reversed || metric.modifier === 'imports-result-unchanged') {
+                return `<span class="imports-result-text ${metric.modifier}" title="${metric.title}">${content}</span>`;
+            }
+
+            return metric.modifier === 'imports-result-correction'
+                ? `<a class="imports-result-badge ${metric.modifier}" href="/estadisticas/importaciones/${imp.id}/registros-fallidos" title="Abrir los registros que requieren corrección">${content}<i class="fas fa-arrow-right" aria-hidden="true"></i></a>`
+                : `<span class="imports-result-badge ${metric.modifier}" title="${metric.title}">${content}</span>`;
+        }).join('');
+
+        return `<div class="imports-result-list${imp.is_reversed ? ' is-reverted' : ''}" aria-label="${escapeHtml(description)}">${metricMarkup}</div>`;
     }
 
     function renderTable() {
@@ -691,21 +771,44 @@ document.addEventListener('DOMContentLoaded', function () {
             const row = document.createElement('tr');
             row.className = 'imports-table-row';
 
+            if (imp.is_reversed) {
+                row.classList.add('is-reversed');
+            }
+
                 const createdDate = new Date(imp.created_at);
                 const createdByName = [imp.created_by, imp.created_by_first_last_name, imp.created_by_second_last_name]
                     .filter(Boolean)
                     .join(' ') || 'Sistema';
                 const createdByUsername = imp.created_by_username ? `@${imp.created_by_username}` : '';
             
+            const addedRows = Number(imp.rows_imported || 0);
+            const differentRows = Number(imp.rows_changed_existing || imp.changed_existing || 0);
+            const failedRows = Number(imp.rows_failed || 0);
             const statusClass = imp.is_reversed ? 'status-reversed' : `status-${imp.status}`;
             const statusText = imp.is_reversed ? 'Revertido' : (imp.status === 'completed' ? 'Completado' : imp.status === 'processing' ? 'Procesando' : 'Fallido');
             const statusHelp = imp.is_reversed
-                ? 'Los datos agregados fueron retirados. El resultado muestra lo ocurrido antes de revertir la carga.'
+                ? (addedRows > 0
+                    ? 'Los datos agregados fueron retirados. El resultado muestra lo ocurrido antes de revertir la carga.'
+                    : 'La importación fue revertida, pero no había registros agregados que retirar.')
                 : (imp.status === 'completed'
                     ? 'La carga terminó y sus datos continúan aplicados.'
                     : (imp.status === 'processing'
                         ? 'La carga todavía se está procesando.'
                         : 'El archivo no pudo procesarse y no agregó datos.'));
+            if (!imp.is_reversed) {
+                if (failedRows > 0) {
+                    row.classList.add('has-corrections');
+                } else if (differentRows > 0) {
+                    row.classList.add('has-differences');
+                }
+            }
+            const statusNote = imp.is_reversed
+                ? (addedRows > 0 ? 'Datos retirados' : 'Sin cambios que retirar')
+                : (imp.status === 'processing'
+                    ? 'Resultado en curso'
+                    : (imp.status === 'failed'
+                        ? 'No se procesó'
+                        : (failedRows > 0 ? 'Requiere corrección' : (differentRows > 0 ? 'Con diferencias' : ''))));
             
             const canReverse = !imp.is_reversed && imp.status === 'completed';
             const canDeleteHistory = canDeleteImportHistory(imp);
@@ -723,14 +826,13 @@ document.addEventListener('DOMContentLoaded', function () {
 
             row.innerHTML = `
                 <td class="dt-checkbox-cell"><label class="users-checkbox-hitbox${canDeleteHistory ? '' : ' is-disabled'}" title="${escapeHtml(selectionTitle)}"><input class="row-check-import" data-id="${imp.id}" type="checkbox" ${canDeleteHistory ? '' : 'disabled'} aria-label="${escapeHtml(selectionTitle)}: ${escapeHtml(imp.original_name)}"></label></td>
-                <td><div class="imports-file-cell"><div><strong class="imports-file-name" tabindex="0" title="${escapeHtml(fileName)}" aria-label="Nombre completo del archivo: ${escapeHtml(fileName)}"><span class="imports-file-name-base">${escapeHtml(fileBaseName)}</span><span class="imports-file-name-extension">${escapeHtml(fileExtension)}</span></strong><small>${Number(imp.rows_total || 0)} filas</small></div></div></td>
-                <td><div class="imports-person-cell"><strong>${escapeHtml(createdByName)}</strong>${createdByUsername ? `<small>${escapeHtml(createdByUsername)}</small>` : ''}</div></td>
-                <td class="imports-date-cell"><strong>${createdDate.toLocaleDateString('es-MX')}</strong><small>${createdDate.toLocaleTimeString('es-MX', {hour:'2-digit', minute:'2-digit'})}</small></td>
-                <td><div class="imports-result-cell">${renderImportResult(imp)}</div></td>
-                <td class="imports-status-cell"><div class="imports-status ${statusClass}" title="${escapeHtml(statusHelp)}" aria-label="${statusText}. ${escapeHtml(statusHelp)}"><span class="imports-status-dot" aria-hidden="true"></span><span>${statusText}</span></div></td>
+                <td class="imports-file-column"><div class="imports-file-cell"><div><strong class="imports-file-name" tabindex="0" title="${escapeHtml(fileName)}" aria-label="Nombre completo del archivo: ${escapeHtml(fileName)}"><span class="imports-file-name-base">${escapeHtml(fileBaseName)}</span><span class="imports-file-name-extension">${escapeHtml(fileExtension)}</span></strong><small>${Number(imp.rows_total || 0).toLocaleString('es-MX')} filas</small></div></div></td>
+                <td class="imports-origin-column"><div class="imports-origin-cell"><strong class="imports-origin-date"><time datetime="${escapeHtml(String(imp.created_at || ''))}">${createdDate.toLocaleDateString('es-MX')} · ${createdDate.toLocaleTimeString('es-MX', {hour:'2-digit', minute:'2-digit'})}</time></strong><span class="imports-origin-user">${escapeHtml(createdByName)}${createdByUsername ? ` · ${escapeHtml(createdByUsername)}` : ''}</span></div></td>
+                <td class="imports-result-column"><div class="imports-result-cell">${renderImportResult(imp)}</div></td>
+                <td class="imports-status-cell"><div class="imports-status-wrap"><div class="imports-status ${statusClass}" title="${escapeHtml(statusHelp)}" aria-label="${statusText}. ${escapeHtml(statusHelp)}"><span class="imports-status-dot" aria-hidden="true"></span><span>${statusText}</span></div>${statusNote ? `<small class="imports-status-note">${statusNote}</small>` : ''}</div></td>
                 <td class="dt-actions-cell imports-actions-cell"><div class="users-row-menu-wrap"><button type="button" class="users-row-menu-button" data-import-menu-toggle aria-haspopup="menu" aria-expanded="false" aria-label="Acciones de ${escapeHtml(imp.original_name)}"><i class="fas fa-ellipsis-v" aria-hidden="true"></i></button><div class="users-row-menu hidden" data-import-action-menu role="menu">
-                    ${Number(imp.rows_failed || 0) > 0 ? `<a role="menuitem" class="users-row-menu-item" href="/estadisticas/importaciones/${imp.id}/registros-fallidos"><i class="fas fa-exclamation-circle users-row-menu-icon" aria-hidden="true"></i><span>Revisar y corregir</span></a>` : ''}
-                    <button type="button" role="menuitem" class="users-row-menu-item" data-reverse-import="${imp.id}" ${canReverse ? '' : 'disabled'}><i class="fas fa-undo users-row-menu-icon" aria-hidden="true"></i><span>Revertir</span></button>
+                    ${!imp.is_reversed && failedRows > 0 ? `<a role="menuitem" class="users-row-menu-item" href="/estadisticas/importaciones/${imp.id}/registros-fallidos"><i class="fas fa-exclamation-circle users-row-menu-icon" aria-hidden="true"></i><span>Revisar y corregir</span></a>` : ''}
+                    ${!imp.is_reversed ? `<button type="button" role="menuitem" class="users-row-menu-item" data-reverse-import="${imp.id}" ${canReverse ? '' : 'disabled'}><i class="fas fa-undo users-row-menu-icon" aria-hidden="true"></i><span>Revertir</span></button>` : ''}
                     <button type="button" role="menuitem" class="users-row-menu-item users-row-menu-item-danger" data-delete-import="${imp.id}" ${canDeleteHistory ? '' : 'disabled'} title="${escapeHtml(deleteHistoryTitle)}"><i class="fas fa-trash users-row-menu-icon" aria-hidden="true"></i><span>${canDeleteHistory ? 'Eliminar historial' : 'Revertir primero'}</span></button>
                 </div></div></td>
             `;
@@ -768,41 +870,50 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function updateImportSelectionState() {
-        const visibleChecks = $('#imports-table tbody .row-check-import:not(:disabled)');
-        const checkedCount = visibleChecks.filter(':checked').length;
+        const visibleChecks = Array.from(document.querySelectorAll('#imports-table tbody .row-check-import:not(:disabled)'));
+        const checkedCount = visibleChecks.filter(input => input.checked).length;
         const totalVisible = visibleChecks.length;
         const hasSelection = checkedCount > 0;
         const allSelected = totalVisible > 0 && checkedCount === totalVisible;
-        const selectAll = $('#select-all-imports');
+        const selectAll = document.getElementById('select-all-imports');
         const button = document.getElementById('bulk-delete-imports');
         const hasSelectableRows = totalVisible > 0;
 
-        selectAll.prop('checked', allSelected);
-        selectAll.prop('indeterminate', hasSelection && !allSelected);
-        selectAll.prop('disabled', !hasSelectableRows);
-        selectAll.attr(
-            'title',
-            hasSelectableRows
+        if (selectAll) {
+            selectAll.checked = allSelected;
+            selectAll.indeterminate = hasSelection && !allSelected;
+            selectAll.disabled = !hasSelectableRows;
+            selectAll.title = hasSelectableRows
                 ? 'Seleccionar importaciones eliminables en esta página'
-                : 'No hay importaciones eliminables en esta página'
-        );
+                : 'No hay importaciones eliminables en esta página';
+        }
 
+        document.querySelectorAll('#imports-table tbody .imports-table-row').forEach(row => {
+            row.classList.toggle('is-selected', Boolean(row.querySelector('.row-check-import')?.checked));
+        });
+
+        const bulkBar = document.getElementById('bulk-selection-bar-imports');
+        const clearButton = document.getElementById('clear-selected-imports');
+        const selectedCount = document.getElementById('bulk-selected-count-imports');
         if (hasSelection) {
-            $('#bulk-selection-bar-imports').removeClass('hidden').addClass('flex');
-            $('#clear-selected-imports').removeClass('hidden');
-            $('#bulk-selected-count-imports')
-                .text(checkedCount + ' seleccionada' + (checkedCount === 1 ? '' : 's'));
+            bulkBar?.classList.remove('hidden');
+            bulkBar?.classList.add('flex');
+            clearButton?.classList.remove('hidden');
+            if (selectedCount) selectedCount.textContent = checkedCount + ' seleccionada' + (checkedCount === 1 ? '' : 's');
             if (button) button.style.display = 'flex';
         } else {
-            $('#bulk-selection-bar-imports').addClass('hidden').removeClass('flex');
-            $('#clear-selected-imports').addClass('hidden');
-            $('#bulk-selected-count-imports').text('');
+            bulkBar?.classList.add('hidden');
+            bulkBar?.classList.remove('flex');
+            clearButton?.classList.add('hidden');
+            if (selectedCount) selectedCount.textContent = '';
             if (button) button.style.display = 'none';
         }
     }
 
     function clearVisibleImportSelection() {
-        $('#imports-table tbody .row-check-import:not(:disabled)').prop('checked', false);
+        document.querySelectorAll('#imports-table tbody .row-check-import:not(:disabled)').forEach(input => {
+            input.checked = false;
+        });
         updateImportSelectionState();
     }
 

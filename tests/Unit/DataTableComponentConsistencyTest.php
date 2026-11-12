@@ -315,6 +315,14 @@ class DataTableComponentConsistencyTest extends TestCase
         $this->assertStringContainsString('background: #eef2f6;', $reportsCss);
         $this->assertStringContainsString('.reports-toolbar-selection {', $reportsCss);
         $this->assertStringContainsString('.reports-toolbar-selection::before {', $reportsCss);
+        $this->assertMatchesRegularExpression(
+            '/@media \(max-width: 639px\)[\s\S]*?\.reports-toolbar-selection\s*\{[^}]*grid-column:\s*1 \/ -1\s*!important;[^}]*grid-row:\s*3\s*!important;[^}]*justify-self:\s*start;[^}]*margin-left:\s*0;/s',
+            $reportsCss
+        );
+        $this->assertMatchesRegularExpression(
+            '/@media \(max-width: 639px\)[\s\S]*?\.reports-publications-page \.reports-table-card > \.app-table-toolbar[\s\S]*?\.app-standard-filter-panel\.users-filter-panel\s*\{[^}]*grid-row:\s*4\s*!important;/s',
+            $reportsCss
+        );
         $this->assertStringContainsString('.reports-bulk-actions.hidden {', $reportsCss);
         $this->assertStringContainsString('.reports-publications-page .reports-table-card > .reports-type-tabs {', $reportsCss);
         $this->assertStringContainsString('padding: .65rem .75rem 0 !important;', $reportsCss);
