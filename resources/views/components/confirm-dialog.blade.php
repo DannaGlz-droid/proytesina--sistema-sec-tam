@@ -147,7 +147,7 @@
                 const parts = getDialogParts();
                 if (!parts) return;
 
-                const focusable = [parts.cancel, parts.accept].filter(element => element && !element.disabled);
+                const focusable = [parts.cancel, parts.accept].filter(element => element && !element.disabled && !element.classList.contains('hidden'));
                 const first = focusable[0];
                 const last = focusable[focusable.length - 1];
 
@@ -197,6 +197,10 @@
             }
             parts.cancel.textContent = options.cancelText || 'Cancelar';
             parts.accept.textContent = options.confirmText || 'Confirmar';
+            parts.cancel.classList.toggle('hidden', options.hideCancel === true);
+            parts.cancel.style.display = options.hideCancel === true ? 'none' : '';
+            parts.cancel.disabled = options.hideCancel === true;
+            parts.cancel.setAttribute('aria-hidden', options.hideCancel === true ? 'true' : 'false');
 
             parts.icon.className = config.icon;
             parts.icon.classList.add('confirm-dialog-icon');
@@ -211,7 +215,7 @@
             document.addEventListener('keydown', handleKeydown, true);
             requestAnimationFrame(() => {
                 parts.root.classList.add('is-open');
-                parts.cancel.focus();
+                (options.hideCancel === true ? parts.accept : parts.cancel).focus();
             });
             return new Promise(resolve => {
                 state.resolver = resolve;

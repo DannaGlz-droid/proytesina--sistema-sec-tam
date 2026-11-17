@@ -147,6 +147,7 @@ class DeathImportController extends Controller
             $existingDeathsByFolio = Death::whereNotNull('gov_folio')
                 ->get([
                     'id',
+                    'import_id',
                     'gov_folio',
                     'name',
                     'first_last_name',
@@ -192,6 +193,7 @@ class DeathImportController extends Controller
         $rowsChangedExisting = 0;
         $rowsConvertedMonths = 0;
         $failedRows = [];
+        $importDeathRecords = [];
 
         foreach ($sheets as $sheetIndex => $sheet) {
             if (empty($sheet)) continue;
@@ -457,11 +459,23 @@ class DeathImportController extends Controller
                         'death_cause_id' => $deathCause ? $deathCause->id : null,
                     ];
 
-                    if ($this->deathImportDataHasDifferences($existingDeath, $incomingDeathData)) {
+                    $recordResult = $this->deathImportDataHasDifferences($existingDeath, $incomingDeathData)
+                        ? 'different'
+                        : 'unchanged';
+
+                    if ($recordResult === 'different') {
                         $rowsChangedExisting++;
                     } else {
                         $rowsSkippedDuplicates++;
                     }
+
+                    $importDeathRecords[] = $this->importDeathRecordPayload(
+                        $importId,
+                        $existingDeath->id,
+                        $existingDeath->import_id,
+                        $folio,
+                        $recordResult
+                    );
 
                     continue;
                 }
@@ -516,6 +530,13 @@ class DeathImportController extends Controller
                 }
 
                 $rowsImported++;
+                $importDeathRecords[] = $this->importDeathRecordPayload(
+                    $importId,
+                    $d->id,
+                    $importId,
+                    $folio,
+                    'added'
+                );
             }
         }
 
@@ -532,6 +553,21 @@ class DeathImportController extends Controller
             $errorCsvPath = $csvName;
         }
 
+        $recordTraceComplete = false;
+        try {
+            DB::transaction(function () use ($importDeathRecords) {
+                foreach (array_chunk($importDeathRecords, 500) as $recordChunk) {
+                    DB::table('import_death_records')->insert($recordChunk);
+                }
+            });
+            $recordTraceComplete = true;
+        } catch (\Throwable $traceError) {
+            Log::error('Import completed without per-record trace', [
+                'import_id' => $importId,
+                'error' => $traceError->getMessage(),
+            ]);
+        }
+
         // update imports table
         DB::table('imports')->where('id', $importId)->update([
             'status' => 'completed',
@@ -540,6 +576,7 @@ class DeathImportController extends Controller
             'rows_failed' => $rowsFailed,
             'rows_skipped_duplicates' => $rowsSkippedDuplicates,
             'rows_changed_existing' => $rowsChangedExisting,
+            'record_trace_complete' => $recordTraceComplete,
             'error_csv_path' => $errorCsvPath,
             'updated_at' => now(),
         ]);
@@ -606,21 +643,107 @@ class DeathImportController extends Controller
                 return response()->json(['ok' => false, 'message' => 'Necesitas el rol Administrador para revertir una importación.'], 403);
             }
 
-            // Get import record
-            $import = DB::table('imports')->where('id', $importId)->first();
-            if (!$import) {
-                return response()->json(['ok' => false, 'message' => 'No se encontró la importación seleccionada.'], 404);
-            }
-
-            // Check if already reversed
-            if ($import->is_reversed) {
-                return response()->json(['ok' => false, 'message' => 'Esta importación ya fue revertida.'], 400);
-            }
-
             // Start transaction
             DB::beginTransaction();
 
             try {
+                $import = DB::table('imports')
+                    ->where('id', $importId)
+                    ->lockForUpdate()
+                    ->first();
+
+                if (!$import) {
+                    DB::rollBack();
+                    return response()->json(['ok' => false, 'message' => 'No se encontró la importación seleccionada.'], 404);
+                }
+
+                if ($import->is_reversed) {
+                    DB::rollBack();
+                    return response()->json(['ok' => false, 'message' => 'Esta importación ya fue revertida.'], 400);
+                }
+
+                if ($import->status !== 'completed') {
+                    DB::rollBack();
+                    return response()->json([
+                        'ok' => false,
+                        'message' => 'Solo se pueden revertir importaciones completadas.',
+                    ], 422);
+                }
+
+                $newerActiveQuery = fn () => DB::table('imports')
+                    ->whereIn('status', ['processing', 'completed'])
+                    ->where('is_reversed', false)
+                    ->where(function ($query) use ($import) {
+                        $query->where('created_at', '>', $import->created_at)
+                            ->orWhere(function ($sameTimestamp) use ($import) {
+                                $sameTimestamp->where('created_at', '=', $import->created_at)
+                                    ->where('id', '>', $import->id);
+                            });
+                    });
+
+                $newerActiveImport = null;
+                $blockCode = null;
+
+                if ((bool) ($import->record_trace_complete ?? false)) {
+                    $dependentImportId = DB::table('import_death_records as trace')
+                        ->join('imports as dependent', 'trace.import_id', '=', 'dependent.id')
+                        ->where('trace.source_import_id', $import->id)
+                        ->whereColumn('trace.source_import_id', '<>', 'trace.import_id')
+                        ->whereIn('trace.result', ['unchanged', 'different'])
+                        ->where('dependent.status', 'completed')
+                        ->where('dependent.is_reversed', false)
+                        ->orderByDesc('dependent.created_at')
+                        ->orderByDesc('dependent.id')
+                        ->value('dependent.id');
+
+                    if ($dependentImportId) {
+                        $newerActiveImport = DB::table('imports')
+                            ->where('id', $dependentImportId)
+                            ->lockForUpdate()
+                            ->first();
+                        $blockCode = 'dependent_active_import_exists';
+                    } else {
+                        // If a newer import could not record its trace, keep the safe
+                        // stack rule rather than assuming it is unrelated.
+                        $newerActiveImport = $newerActiveQuery()
+                            ->where(function ($query) {
+                                $query->where('status', 'processing')
+                                    ->orWhere('record_trace_complete', false);
+                            })
+                            ->orderByDesc('created_at')
+                            ->orderByDesc('id')
+                            ->lockForUpdate()
+                            ->first();
+                        $blockCode = $newerActiveImport ? 'newer_untraced_import_exists' : null;
+                    }
+                } else {
+                    // Historical imports only stored totals. Preserve the conservative
+                    // LIFO rule because their real dependencies cannot be reconstructed.
+                    $newerActiveImport = $newerActiveQuery()
+                        ->orderByDesc('created_at')
+                        ->orderByDesc('id')
+                        ->lockForUpdate()
+                        ->first();
+                    $blockCode = $newerActiveImport ? 'newer_active_import_exists' : null;
+                }
+
+                if ($newerActiveImport) {
+                    $blockMessage = $blockCode === 'dependent_active_import_exists'
+                        ? 'No se puede revertir todavía. Una importación activa posterior incluye registros de esta carga; reviértala primero para conservar completos los cortes acumulativos.'
+                        : 'No se puede revertir todavía. Existen importaciones activas posteriores sin trazabilidad completa; reviértalas primero para evitar dejar incompletos los cortes acumulativos.';
+                    DB::rollBack();
+                    return response()->json([
+                        'ok' => false,
+                        'code' => $blockCode,
+                        'message' => $blockMessage,
+                        'blocking_import' => [
+                            'id' => $newerActiveImport->id,
+                            'original_name' => $newerActiveImport->original_name,
+                            'created_at' => $newerActiveImport->created_at,
+                        ],
+                    ], 409);
+                }
+
                 // Get all deaths imported with this import_id
                 // We assume Death model has import_id field to track source
                 $deathsToDelete = Death::where('import_id', $importId)->get();
@@ -684,6 +807,8 @@ class DeathImportController extends Controller
                     'imports.rows_failed',
                     'imports.rows_skipped_duplicates',
                     'imports.rows_changed_existing',
+                    'imports.record_trace_complete',
+                    'imports.error_message',
                     'imports.is_reversed',
                     'imports.created_at',
                     'imports.updated_at',
@@ -700,6 +825,17 @@ class DeathImportController extends Controller
                 ])
                 ->orderBy('imports.created_at', 'desc')
                 ->paginate($perPage);
+
+            $importCollection = $imports->getCollection();
+            $this->attachImportRecordRelations($importCollection);
+            $importCollection->transform(function ($import) {
+                $import->failure_reason = $import->status === 'failed'
+                    ? $this->publicImportFailureReason($import->error_message ?? null)
+                    : null;
+                unset($import->error_message);
+
+                return $import;
+            });
 
             return response()->json(['ok' => true, 'data' => $imports]);
         } catch (\Throwable $e) {
@@ -808,6 +944,118 @@ class DeathImportController extends Controller
         }
     }
 
+    private function attachImportRecordRelations($imports): void
+    {
+        $importIds = $imports->pluck('id')->map(fn ($id) => (int) $id)->all();
+        if (empty($importIds)) {
+            return;
+        }
+
+        $includedFrom = DB::table('import_death_records as trace')
+            ->join('imports as source', 'trace.source_import_id', '=', 'source.id')
+            ->whereIn('trace.import_id', $importIds)
+            ->whereNotNull('trace.source_import_id')
+            ->whereColumn('trace.source_import_id', '<>', 'trace.import_id')
+            ->whereIn('trace.result', ['unchanged', 'different'])
+            ->select([
+                'trace.import_id',
+                'trace.source_import_id',
+                'source.original_name',
+                'source.created_at',
+            ])
+            ->selectRaw('COUNT(*) as records_count')
+            ->groupBy('trace.import_id', 'trace.source_import_id', 'source.original_name', 'source.created_at')
+            ->get()
+            ->groupBy('import_id');
+
+        $includedBy = DB::table('import_death_records as trace')
+            ->join('imports as dependent', 'trace.import_id', '=', 'dependent.id')
+            ->whereIn('trace.source_import_id', $importIds)
+            ->whereColumn('trace.source_import_id', '<>', 'trace.import_id')
+            ->whereIn('trace.result', ['unchanged', 'different'])
+            ->where('dependent.status', 'completed')
+            ->where('dependent.is_reversed', false)
+            ->select([
+                'trace.source_import_id',
+                'trace.import_id',
+                'dependent.original_name',
+                'dependent.created_at',
+            ])
+            ->selectRaw('COUNT(*) as records_count')
+            ->groupBy('trace.source_import_id', 'trace.import_id', 'dependent.original_name', 'dependent.created_at')
+            ->get()
+            ->groupBy('source_import_id');
+
+        $activeImports = DB::table('imports')
+            ->whereIn('status', ['processing', 'completed'])
+            ->where('is_reversed', false)
+            ->orderByDesc('created_at')
+            ->orderByDesc('id')
+            ->get(['id', 'original_name', 'created_at', 'status', 'record_trace_complete']);
+
+        foreach ($imports as $import) {
+            $from = collect($includedFrom->get($import->id, []))
+                ->sortByDesc('created_at')
+                ->values();
+            $by = collect($includedBy->get($import->id, []))
+                ->sortByDesc('created_at')
+                ->values();
+
+            $import->included_from = $from->map(fn ($relation) => [
+                'id' => (int) $relation->source_import_id,
+                'original_name' => $relation->original_name,
+                'created_at' => $relation->created_at,
+                'records_count' => (int) $relation->records_count,
+            ])->all();
+            $import->included_by = $by->map(fn ($relation) => [
+                'id' => (int) $relation->import_id,
+                'original_name' => $relation->original_name,
+                'created_at' => $relation->created_at,
+                'records_count' => (int) $relation->records_count,
+            ])->all();
+
+            $newerActive = $activeImports->filter(function ($candidate) use ($import) {
+                if ((int) $candidate->id === (int) $import->id) {
+                    return false;
+                }
+
+                $candidateTime = strtotime((string) $candidate->created_at);
+                $importTime = strtotime((string) $import->created_at);
+
+                return $candidateTime > $importTime
+                    || ($candidateTime === $importTime && (int) $candidate->id > (int) $import->id);
+            });
+
+            $blocker = null;
+            $blockReason = null;
+            if ((bool) $import->record_trace_complete) {
+                $blocker = $by->first();
+                if ($blocker) {
+                    $blockReason = 'included_by_active_import';
+                    $blocker = (object) [
+                        'id' => $blocker->import_id,
+                        'original_name' => $blocker->original_name,
+                        'created_at' => $blocker->created_at,
+                    ];
+                } else {
+                    $blocker = $newerActive
+                        ->first(fn ($candidate) => !(bool) $candidate->record_trace_complete);
+                    $blockReason = $blocker ? 'newer_import_without_trace' : null;
+                }
+            } else {
+                $blocker = $newerActive->first();
+                $blockReason = $blocker ? 'legacy_import_without_trace' : null;
+            }
+
+            $import->reversal_blocked_by = $blocker ? [
+                'id' => (int) $blocker->id,
+                'original_name' => $blocker->original_name,
+                'created_at' => $blocker->created_at,
+            ] : null;
+            $import->reversal_block_reason = $blockReason;
+        }
+    }
+
     private function canDeleteImportHistory($import): bool
     {
         if ((bool) ($import->is_reversed ?? false)) {
@@ -819,6 +1067,50 @@ class DeathImportController extends Controller
         }
 
         return (int) ($import->rows_imported ?? 0) === 0;
+    }
+
+    /**
+     * Convert internal import exceptions into a short, safe explanation for the UI.
+     * Never return the original exception because it can contain paths, SQL or
+     * third-party library details.
+     */
+    private function publicImportFailureReason(?string $message): string
+    {
+        $message = mb_strtolower(trim((string) $message), 'UTF-8');
+
+        if ($message === '') {
+            return 'Motivo no disponible';
+        }
+
+        if (str_contains($message, 'no contiene la estructura requerida')
+            || str_contains($message, 'faltan columnas')
+            || str_contains($message, 'columnas obligatorias')
+            || str_contains($message, 'encabezad')) {
+            return 'Faltan columnas requeridas';
+        }
+
+        if (str_contains($message, 'uploaded file was not found')
+            || str_contains($message, 'archivo no fue encontrado')
+            || str_contains($message, 'file not found')
+            || str_contains($message, 'no such file')
+            || str_contains($message, 'permission denied')
+            || str_contains($message, 'acceso denegado')) {
+            return 'No se pudo acceder al archivo';
+        }
+
+        if (str_contains($message, 'no se pudo leer el archivo')
+            || str_contains($message, 'zip archive')
+            || str_contains($message, 'not a valid')
+            || str_contains($message, 'invalid file')
+            || str_contains($message, 'unsupported format')
+            || str_contains($message, 'formato no compatible')
+            || str_contains($message, 'corrupt')
+            || str_contains($message, 'dañado')
+            || str_contains($message, 'encrypted')) {
+            return 'Archivo dañado o no compatible';
+        }
+
+        return 'Error interno al procesar';
     }
 
     /**
@@ -1150,6 +1442,7 @@ class DeathImportController extends Controller
                 $death->cie_cause_code = $cieCauseCode;
                 $death->cie_cause_description = $cieCauseDescription;
                 $death->save();
+                $this->recordImportedDeath($death);
 
                 $failedRecord->corrected_data = $rowData;
                 $failedRecord->status = 'imported';
@@ -1417,6 +1710,7 @@ class DeathImportController extends Controller
                 
                 $death->import_id = $failedRecord->import_id;
                 $death->save();
+                $this->recordImportedDeath($death);
 
                 // Mark the failed record as imported
                 $failedRecord->status = 'imported';
@@ -1743,6 +2037,47 @@ class DeathImportController extends Controller
             'error_details' => $errors,
             'status' => 'pending',
         ]);
+    }
+
+    private function importDeathRecordPayload(
+        int $importId,
+        ?int $deathId,
+        ?int $sourceImportId,
+        $folio,
+        string $result
+    ): array {
+        $timestamp = now();
+
+        return [
+            'import_id' => $importId,
+            'death_id' => $deathId,
+            'source_import_id' => $sourceImportId,
+            'gov_folio' => $folio !== null ? (string) $folio : null,
+            'result' => $result,
+            'created_at' => $timestamp,
+            'updated_at' => $timestamp,
+        ];
+    }
+
+    private function recordImportedDeath(Death $death): void
+    {
+        if (!$death->import_id) {
+            return;
+        }
+
+        DB::table('import_death_records')->updateOrInsert(
+            [
+                'import_id' => $death->import_id,
+                'death_id' => $death->id,
+            ],
+            $this->importDeathRecordPayload(
+                (int) $death->import_id,
+                (int) $death->id,
+                (int) $death->import_id,
+                $death->gov_folio,
+                'added'
+            )
+        );
     }
 
     /**

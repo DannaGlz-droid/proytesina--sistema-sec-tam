@@ -16,18 +16,11 @@
                                 <div id="customRangeSelectorImports" class="imports-filter-date-grid hidden"><label>Desde<input type="date" id="startDateImports" name="startDateImports"></label><label>Hasta<input type="date" id="endDateImports" name="endDateImports"></label></div>
                             </div>
                         </x-filtros.seccion>
-                        <x-filtros.seccion titulo="Estado">
-                            <div class="users-filter-options">
-                                @foreach(['completed' => 'Completado', 'reversed' => 'Revertido', 'failed' => 'Fallido', 'processing' => 'Procesando'] as $value => $label)
-                                    <label class="users-filter-option imports-filter-option"><input type="checkbox" name="statuses" value="{{ $value }}" class="status-checkbox sr-only"><span class="users-filter-check"><i class="fas fa-check" aria-hidden="true"></i></span><span>{{ $label }}</span></label>
-                                @endforeach
-                            </div>
-                        </x-filtros.seccion>
                         <x-filtros.seccion titulo="Usuario">
                             <div class="imports-filter-field"><label for="usuarioImports">Cargado por</label><x-filtros.select id="usuarioImports" name="usuarioImports" placeholder="Todos los usuarios"><option value="">Todos los usuarios</option></x-filtros.select></div>
                         </x-filtros.seccion>
                         <x-filtros.seccion titulo="Resultado">
-                            <label class="users-filter-option imports-filter-option"><input type="checkbox" id="conFallidos" name="conFallidos" class="sr-only"><span class="users-filter-check"><i class="fas fa-check" aria-hidden="true"></i></span><span>Con registros fallidos</span></label>
+                            <label class="users-filter-option imports-filter-option"><input type="checkbox" id="requiereAtencionImports" name="requiereAtencionImports" class="sr-only"><span class="users-filter-check"><i class="fas fa-check" aria-hidden="true"></i></span><span>Requieren atención</span></label>
                         </x-filtros.seccion>
                 </x-filtros.panel>
             </div>
@@ -84,9 +77,8 @@ document.addEventListener('DOMContentLoaded', function () {
         const chips = []; const rangeLabels = { today:'Hoy', week:'Últimos 7 días', month:'Últimos 30 días', year:'Último año' };
         if (dateRange?.value === 'custom') { const start = document.getElementById('startDateImports')?.value; const end = document.getElementById('endDateImports')?.value; if (start || end) chips.push({ key: 'date', label: 'Fecha: ' + (start || 'inicio') + ' – ' + (end || 'hoy') }); }
         else if (dateRange?.value && dateRange.value !== 'all') chips.push({ key: 'date', label: 'Fecha: ' + rangeLabels[dateRange.value] });
-        const statuses = Array.from(form.querySelectorAll('.status-checkbox:checked')).map(input => input.closest('label')?.innerText.trim()).filter(Boolean); if (statuses.length) chips.push({ key: 'status', label: 'Estado: ' + statuses.join(', ') });
         const user = document.getElementById('usuarioImports'); if (user?.value) chips.push({ key: 'user', label: 'Usuario: ' + (user.tomselect?.getItem(user.value)?.textContent?.trim() || user.value) });
-        if (document.getElementById('conFallidos')?.checked) chips.push({ key: 'result', label: 'Resultado: con fallidos' });
+        if (document.getElementById('requiereAtencionImports')?.checked) chips.push({ key: 'result', label: 'Resultado: requiere atención' });
         const chipsRoot = document.getElementById('importsFilterChips');
         if (chipsRoot) chipsRoot.innerHTML = chips.map(chip => '<span class="users-filter-chip"><span>' + escapeText(chip.label) + '</span><button type="button" data-clear-import-filter="' + chip.key + '" aria-label="Quitar ' + escapeText(chip.label) + '"><i class="fas fa-times" aria-hidden="true"></i></button></span>').join('');
         const count = document.getElementById('importsFilterCount'); if (count) { count.textContent = chips.length; count.classList.toggle('hidden', !chips.length); }
@@ -102,15 +94,13 @@ document.addEventListener('DOMContentLoaded', function () {
             const end = document.getElementById('endDateImports');
             if (start) start.value = '';
             if (end) end.value = '';
-        } else if (button.dataset.clearImportFilter === 'status') {
-            form.querySelectorAll('.status-checkbox').forEach(input => { input.checked = false; });
         } else if (button.dataset.clearImportFilter === 'user') {
             const user = document.getElementById('usuarioImports');
             if (user?.tomselect) user.tomselect.clear(true);
             else if (user) user.value = '';
         } else if (button.dataset.clearImportFilter === 'result') {
-            const failed = document.getElementById('conFallidos');
-            if (failed) failed.checked = false;
+            const attention = document.getElementById('requiereAtencionImports');
+            if (attention) attention.checked = false;
         }
 
         window.syncImportFilterUI();
