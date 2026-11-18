@@ -109,6 +109,19 @@ async function openImportHistory(page, viewport, dataset = imports) {
             },
         }),
     }));
+    await page.route('**/api/users/search**', route => {
+        const importers = Array.from(new Map(dataset.map(item => {
+            const fullName = [item.created_by, item.created_by_first_last_name, item.created_by_second_last_name].filter(Boolean).join(' ');
+            return [String(item.user_id), {
+                id: item.user_id,
+                name: item.created_by,
+                full_name: fullName,
+                username: item.created_by_username,
+                display_name: item.created_by_username ? `${fullName} (@${item.created_by_username})` : fullName,
+            }];
+        })).values());
+        return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(importers) });
+    });
     await page.goto('/estadisticas/historial-importaciones');
     const activeCount = dataset.filter(item => !item.is_reversed && item.status !== 'failed').length;
     try {
@@ -157,6 +170,7 @@ test('el historial conserva sus controles y resume los resultados reales', async
         'aria-label',
         '3 por corregir, 4 con diferencias, 2 agregados, 1 ya existente',
     );
+    await expect(page.getByRole('columnheader', { name: 'Resultado', exact: true })).toBeVisible();
     await expect(page.locator('#imports-tbody .imports-table-row').nth(1)).toHaveClass(/has-corrections/);
     await expect(page.locator('#imports-tbody .imports-status').nth(1)).toContainText('Completado');
     await expect(page.locator('#imports-tbody .imports-status').nth(1)).toHaveClass(/status-completed/);
@@ -185,12 +199,13 @@ test('el historial conserva sus controles y resume los resultados reales', async
 
     await page.getByRole('tab', { name: /Revertidas 2/ }).click();
     await expect(page.locator('#imports-tbody .imports-table-row')).toHaveCount(2);
+    await expect(page.getByRole('columnheader', { name: 'Resultado original', exact: true })).toBeVisible();
     await expect(page.locator('#dt-info')).toContainText('Mostrando 1-2 de 2');
     const reversedFileLeft = (await page.locator('#imports-tbody .imports-file-column').first().boundingBox())?.x;
     expect(Math.abs((activeFileLeft || 0) - (reversedFileLeft || 0))).toBeLessThanOrEqual(1);
     await expect(page.locator('#imports-tbody .imports-file-name').first()).toHaveCSS('color', activeFileColor);
     await expect(page.locator('.imports-result-list').first()).toHaveClass(/is-reverted/);
-    await expect(page.locator('.imports-result-list').first()).toHaveAttribute('aria-label', '6 pendientes descartados, 4 diferencias descartadas, 558 agregados originalmente');
+    await expect(page.locator('.imports-result-list').first()).toHaveAttribute('aria-label', '6 pendientes descartados, 4 diferencias, 558 agregados');
     await expect(page.locator('.imports-result-list').first().locator('.imports-result-badge')).toHaveCount(0);
     const reversedRow = page.locator('#imports-tbody .imports-table-row').first();
     await expect(reversedRow).toHaveClass(/is-reversed/);
@@ -209,6 +224,7 @@ test('el historial conserva sus controles y resume los resultados reales', async
     await page.getByRole('tab', { name: /Fallidas 1/ }).click();
     await expect(page.locator('#bulk-selection-bar-imports')).toHaveClass(/hidden/);
     await expect(page.locator('#imports-tbody .imports-table-row')).toHaveCount(1);
+    await expect(page.getByRole('columnheader', { name: 'Motivo de falla', exact: true })).toBeVisible();
     const failedRow = page.locator('#imports-tbody .imports-table-row').first();
     await expect(failedRow).toHaveClass(/is-failed/);
     await expect(failedRow.locator('.imports-file-name')).toHaveCSS('color', activeFileColor);
@@ -249,6 +265,47 @@ test('el resumen muestra el último intento aunque haya fallado', async ({ page 
     await expect(page.locator('.imports-overview-item--latest .imports-overview-label')).toHaveText('Última importación');
     await expect(page.locator('#imports-overview-latest')).toHaveText('archivo_con_columnas_invalidas.xlsx');
     await expect(page.locator('#imports-overview-latest-detail')).toContainText('Fallida · Faltan columnas requeridas');
+});
+
+test('los filtros cambian su contenido y su regla con cada pestaña', async ({ page }) => {
+    await openImportHistory(page, { width: 1440, height: 900 });
+
+    await page.locator('#importsFilterToggle').click();
+    await expect(page.locator('[data-import-filter-view="active"]')).toBeVisible();
+    await expect(page.locator('[data-import-filter-view="reversed"]')).toBeHidden();
+    await expect(page.locator('[data-import-filter-view="failed"]')).toBeHidden();
+    const userFilterSection = page.locator('[data-filter-section]').filter({ has: page.getByRole('button', { name: 'Usuario', exact: true }) });
+    await userFilterSection.getByRole('button', { name: 'Usuario', exact: true }).click();
+    await expect(page.locator('#usuarioImports option:checked')).toHaveText('Todos los usuarios');
+    await expect(page.locator('#usuarioImports option[value="1"]')).toContainText('Carlos Enrique Rodríguez Nava');
+
+    await page.getByRole('button', { name: 'Resultado', exact: true }).click();
+    await page.locator('#importsFilterPanel').getByText('Requiere corrección', { exact: true }).click();
+    await page.locator('#aplicarFiltrosImportaciones').click();
+    await expect(page.locator('#imports-tbody .imports-table-row')).toHaveCount(1);
+    await expect(page.locator('#importsFilterChips')).toContainText('Resultado: requiere corrección');
+
+    await page.getByRole('tab', { name: /Revertidas 2/ }).click();
+    await expect(page.locator('#importsFilterChips')).not.toContainText('Resultado: requiere corrección');
+    await page.locator('#importsFilterToggle').click();
+    await expect(page.locator('[data-import-filter-view="active"]')).toBeHidden();
+    await expect(page.locator('[data-import-filter-view="reversed"]')).toBeVisible();
+    await page.getByRole('button', { name: 'Efecto de la reversión', exact: true }).click();
+    await page.locator('#importsFilterPanel').getByText('No había datos aplicados', { exact: true }).click();
+    await page.locator('#aplicarFiltrosImportaciones').click();
+    await expect(page.locator('#imports-tbody .imports-table-row')).toHaveCount(1);
+    await expect(page.locator('#imports-tbody .imports-file-name')).toHaveText('archivo_revertido_sin_cambios.xlsx');
+
+    await page.getByRole('tab', { name: /Fallidas 1/ }).click();
+    await page.locator('#importsFilterToggle').click();
+    await expect(page.locator('[data-import-filter-view="reversed"]')).toBeHidden();
+    await expect(page.locator('[data-import-filter-view="failed"]')).toBeVisible();
+    await page.getByRole('button', { name: 'Motivo de falla', exact: true }).click();
+    await page.locator('[data-import-filter-view="failed"] .ts-control').click();
+    await page.locator('[data-import-filter-view="failed"] .ts-dropdown .option', { hasText: 'Columnas requeridas faltantes' }).click();
+    await page.locator('#aplicarFiltrosImportaciones').click();
+    await expect(page.locator('#imports-tbody .imports-table-row')).toHaveCount(1);
+    await expect(page.locator('#importsFilterChips')).toContainText('Motivo: Columnas requeridas faltantes');
 });
 
 test('la reversión explica el alcance y bloquea importaciones anteriores', async ({ page }) => {

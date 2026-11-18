@@ -46,6 +46,7 @@
     font-size: .76rem;
     font-weight: 600;
     cursor: pointer;
+    transition: border-color 150ms ease, color 150ms ease;
 }
 
 .statistics-import-history-page .imports-view-tab:hover {
@@ -73,6 +74,7 @@
     font-variant-numeric: tabular-nums;
     line-height: 1.25;
     text-align: center;
+    transition: background-color 150ms ease, color 150ms ease;
 }
 
 .statistics-import-history-page .imports-view-tab.is-active .imports-view-count {
@@ -888,6 +890,13 @@
 .statistics-import-history-page .imports-result-list.is-reverted .imports-result-text,
 .statistics-import-history-page .imports-result-list.is-reverted .imports-result-text strong {
     color: #66758a;
+}
+
+.statistics-import-history-page .imports-result-list.is-reverted .imports-result-text + .imports-result-text::before {
+    margin-right: .23rem;
+    color: #a0aec0;
+    content: "·";
+    font-weight: 400;
 }
 
 .statistics-import-history-page .imports-result-badge i {

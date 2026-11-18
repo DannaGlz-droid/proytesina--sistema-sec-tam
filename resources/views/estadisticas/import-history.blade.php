@@ -54,7 +54,7 @@
                         <th scope="col" class="dt-checkbox-cell"><label class="users-checkbox-hitbox" for="select-all-imports" title="Seleccionar registros visibles"><input id="select-all-imports" type="checkbox" aria-label="Seleccionar registros visibles"></label></th>
                         <th scope="col" class="sorting sortable" data-sort-key="original_name" tabindex="0" aria-sort="none">Archivo</th>
                         <th scope="col" class="sorting_desc sortable" data-sort-key="created_at" tabindex="0" aria-sort="descending">Fecha de carga / responsable</th>
-                        <th scope="col">Resultado</th><th scope="col">Estado</th><th scope="col" class="dt-actions-cell"><span class="sr-only">Acciones</span></th>
+                        <th id="imports-result-heading" scope="col">Resultado</th><th scope="col">Estado</th><th scope="col" class="dt-actions-cell"><span class="sr-only">Acciones</span></th>
                     </tr></thead>
                     <tbody id="imports-tbody"></tbody>
                 </table>
@@ -166,6 +166,18 @@ document.addEventListener('DOMContentLoaded', function () {
 
         const card = document.querySelector('.imports-table-card');
         card?.classList.toggle('is-active-view', currentImportView === 'active');
+
+        const resultHeading = document.getElementById('imports-result-heading');
+        if (resultHeading) {
+            const headings = {
+                active: 'Resultado',
+                reversed: 'Resultado original',
+                failed: 'Motivo de falla',
+            };
+            resultHeading.textContent = headings[currentImportView] || headings.active;
+        }
+
+        window.setImportFilterView?.(currentImportView);
 
     }
 
@@ -301,7 +313,12 @@ document.addEventListener('DOMContentLoaded', function () {
     const dateRangeSelect = document.getElementById('dateRangeImports');
     const startDateInput = document.getElementById('startDateImports');
     const endDateInput = document.getElementById('endDateImports');
-    const attentionCheckbox = document.getElementById('requiereAtencionImports');
+    const contextFilterInputs = Array.from(document.querySelectorAll('[data-import-context-filter]'));
+    const contextFilterSelects = Array.from(document.querySelectorAll('[data-import-context-select]'));
+    const selectedImportContextFilters = () => [
+        ...contextFilterInputs.filter(input => input.checked).map(input => input.value),
+        ...contextFilterSelects.flatMap(select => Array.from(select.selectedOptions).map(option => option.value)),
+    ];
     const usuarioSelect = document.getElementById('usuarioImports');
     const perPageSelect = document.getElementById('per-page-imports');
     const aplicarBtn = document.getElementById('aplicarFiltrosImportaciones');
@@ -326,10 +343,7 @@ document.addEventListener('DOMContentLoaded', function () {
             clearVisibleImportSelection();
             currentImportView = 'active';
             currentOverviewFilter = shouldClear ? null : filter;
-            if (attentionCheckbox) {
-                attentionCheckbox.checked = false;
-                attentionCheckbox.closest('.imports-filter-option')?.classList.remove('is-active');
-            }
+            window.clearImportContextFilters?.();
             currentPage = 1;
             filterImports();
             sortImports();
@@ -348,10 +362,7 @@ document.addEventListener('DOMContentLoaded', function () {
             clearVisibleImportSelection();
             currentImportView = nextView;
             currentOverviewFilter = null;
-            if (attentionCheckbox && currentImportView !== 'active') {
-                attentionCheckbox.checked = false;
-                attentionCheckbox.closest('.imports-filter-option')?.classList.remove('is-active');
-            }
+            window.setImportFilterView?.(currentImportView, true);
             currentPage = 1;
             filterImports();
             sortImports();
@@ -714,7 +725,8 @@ document.addEventListener('DOMContentLoaded', function () {
                 customRangeSelector.style.display = 'none';
             }
             
-            if (attentionCheckbox) attentionCheckbox.checked = false;
+            contextFilterInputs.forEach(input => { input.checked = false; });
+            contextFilterSelects.forEach(select => select.tomselect ? select.tomselect.clear(true) : Array.from(select.options).forEach(option => { option.selected = false; }));
             currentOverviewFilter = null;
             updateOverviewFilterState();
             
@@ -804,6 +816,7 @@ document.addEventListener('DOMContentLoaded', function () {
         .then(json => {
             if (json.ok && json.data && json.data.data) {
                 allImports = json.data.data;
+                window.syncImportUserFilterOptions?.(allImports);
                 updateImportOverview(allImports);
                 updateImportViewTabs();
                 filterImports();
@@ -828,7 +841,7 @@ document.addEventListener('DOMContentLoaded', function () {
         const searchTerm = document.getElementById('search-imports').value.toLowerCase();
         const dateRange = document.getElementById('dateRangeImports').value;
         const usuarioId = document.getElementById('usuarioImports').value; // Now this is an ID, not a name
-        const requiresAttention = Boolean(document.getElementById('requiereAtencionImports')?.checked);
+        const selectedContextFilters = selectedImportContextFilters();
         const startDate = document.getElementById('startDateImports').value;
         const endDate = document.getElementById('endDateImports').value;
 
@@ -881,9 +894,35 @@ document.addEventListener('DOMContentLoaded', function () {
                 }
             }
 
-            if (requiresAttention) {
+            if (selectedContextFilters.length) {
                 const differences = Number(imp.rows_changed_existing || imp.changed_existing || 0);
-                if (currentImportView !== 'active' || (Number(imp.rows_failed || 0) === 0 && differences === 0)) return false;
+                const corrections = Number(imp.rows_failed || 0);
+                const added = Number(imp.rows_imported || 0);
+                const failureReasons = {
+                    missing_columns: 'Faltan columnas requeridas',
+                    invalid_file: 'Archivo dañado o no compatible',
+                    unavailable_file: 'No se pudo acceder al archivo',
+                    internal_error: 'Error interno al procesar',
+                    unknown: 'Motivo no disponible',
+                };
+                let matchesContext = false;
+
+                if (currentImportView === 'active') {
+                    matchesContext = selectedContextFilters.some(filter =>
+                        (filter === 'corrections' && corrections > 0)
+                        || (filter === 'differences' && differences > 0)
+                    );
+                } else if (currentImportView === 'reversed') {
+                    matchesContext = selectedContextFilters.some(filter =>
+                        (filter === 'removed' && added > 0)
+                        || (filter === 'none' && added === 0)
+                    );
+                } else if (currentImportView === 'failed') {
+                    const reason = String(imp.failure_reason || 'Motivo no disponible');
+                    matchesContext = selectedContextFilters.some(filter => failureReasons[filter] === reason);
+                }
+
+                if (!matchesContext) return false;
             }
 
             if (currentOverviewFilter === 'corrections' && Number(imp.rows_failed || 0) === 0) {
@@ -933,14 +972,14 @@ document.addEventListener('DOMContentLoaded', function () {
             {
                 value: different,
                 label: imp.is_reversed
-                    ? (different === 1 ? 'diferencia descartada' : 'diferencias descartadas')
+                    ? (different === 1 ? 'diferencia' : 'diferencias')
                     : 'con diferencias',
                 modifier: 'imports-result-different',
                 title: imp.is_reversed
                     ? 'Diferencias descartadas al revertir la carga'
                     : 'Folios existentes con información distinta; no fueron sobrescritos',
             },
-            { value: added, label: imp.is_reversed ? (added === 1 ? 'agregado originalmente' : 'agregados originalmente') : (added === 1 ? 'agregado' : 'agregados'), modifier: 'imports-result-added', title: imp.is_reversed ? 'Registros que esta carga agregó antes de revertirse' : 'Registros nuevos guardados' },
+            { value: added, label: added === 1 ? 'agregado' : 'agregados', modifier: 'imports-result-added', title: imp.is_reversed ? 'Registros que esta carga agregó antes de revertirse' : 'Registros nuevos guardados' },
             { value: unchanged, label: unchanged === 1 ? 'ya existente' : 'ya existentes', modifier: 'imports-result-unchanged', title: 'Folios que ya existían con la misma información' },
         ].filter(metric => metric.value > 0);
 

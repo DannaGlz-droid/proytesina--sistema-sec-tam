@@ -77,6 +77,30 @@ it('uses the id as a stable tie breaker when imports share a timestamp', functio
         ->assertJsonPath('blocking_import.id', $newerImportId);
 });
 
+it('lists actual importers regardless of their role', function (): void {
+    $administratorRole = Role::create(['name' => 'Administrador']);
+    $leaderRole = Role::create(['name' => 'Líder estatal']);
+    $administrator = User::factory()->create(['role_id' => $administratorRole->id]);
+    $leader = User::factory()->create([
+        'role_id' => $leaderRole->id,
+        'name' => 'Carlos Enrique',
+        'first_last_name' => 'Rodríguez',
+        'second_last_name' => 'Nava',
+        'username' => 'lider_importador',
+    ]);
+    User::factory()->create(['role_id' => $leaderRole->id]);
+    createCompletedImportForReversal($leader, 'carga_lider.xlsx', '2026-11-16 10:00:00');
+
+    $response = $this->actingAs($administrator)
+        ->getJson(route('api.users.search', ['importers_only' => 1]));
+
+    $response->assertOk()
+        ->assertJsonCount(1)
+        ->assertJsonPath('0.id', $leader->id)
+        ->assertJsonPath('0.username', 'lider_importador')
+        ->assertJsonPath('0.display_name', 'Carlos Enrique Rodríguez Nava (@lider_importador)');
+});
+
 it('also blocks an older reversal while a later import is still processing', function (): void {
     $administrator = User::factory()->create([
         'role_id' => Role::create(['name' => 'Administrador'])->id,

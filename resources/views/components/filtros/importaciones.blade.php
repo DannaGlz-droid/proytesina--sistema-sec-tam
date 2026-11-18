@@ -19,8 +19,33 @@
                         <x-filtros.seccion titulo="Usuario">
                             <div class="imports-filter-field"><label for="usuarioImports">Cargado por</label><x-filtros.select id="usuarioImports" name="usuarioImports" placeholder="Todos los usuarios"><option value="">Todos los usuarios</option></x-filtros.select></div>
                         </x-filtros.seccion>
-                        <x-filtros.seccion titulo="Resultado">
-                            <label class="users-filter-option imports-filter-option"><input type="checkbox" id="requiereAtencionImports" name="requiereAtencionImports" class="sr-only"><span class="users-filter-check"><i class="fas fa-check" aria-hidden="true"></i></span><span>Requieren atención</span></label>
+                        <x-filtros.seccion titulo="Resultado" data-import-filter-view="active">
+                            <div class="users-filter-options">
+                                <label class="users-filter-option imports-filter-option"><input type="checkbox" id="resultadoCorreccionImports" value="corrections" class="sr-only" data-import-context-filter data-filter-label="Resultado: requiere corrección"><span class="users-filter-check"><i class="fas fa-check" aria-hidden="true"></i></span><span>Requiere corrección</span></label>
+                                <label class="users-filter-option imports-filter-option"><input type="checkbox" id="resultadoDiferenciasImports" value="differences" class="sr-only" data-import-context-filter data-filter-label="Resultado: con diferencias"><span class="users-filter-check"><i class="fas fa-check" aria-hidden="true"></i></span><span>Con diferencias</span></label>
+                            </div>
+                        </x-filtros.seccion>
+                        <x-filtros.seccion titulo="Efecto de la reversión" data-import-filter-view="reversed" hidden>
+                            <div class="users-filter-options">
+                                <label class="users-filter-option imports-filter-option"><input type="checkbox" id="reversionDatosRetiradosImports" value="removed" class="sr-only" data-import-context-filter data-filter-label="Reversión: se retiraron datos"><span class="users-filter-check"><i class="fas fa-check" aria-hidden="true"></i></span><span>Se retiraron datos</span></label>
+                                <label class="users-filter-option imports-filter-option"><input type="checkbox" id="reversionSinDatosImports" value="none" class="sr-only" data-import-context-filter data-filter-label="Reversión: no había datos aplicados"><span class="users-filter-check"><i class="fas fa-check" aria-hidden="true"></i></span><span>No había datos aplicados</span></label>
+                            </div>
+                        </x-filtros.seccion>
+                        <x-filtros.seccion titulo="Motivo de falla" data-import-filter-view="failed" hidden>
+                            <div class="imports-filter-field">
+                                <label for="motivoFallaImports">Motivos</label>
+                                <x-filtros.select id="motivoFallaImports" name="motivoFallaImports[]" placeholder="Todos los motivos" :searchable="false" multiple data-import-context-select data-collapsed-limit="1">
+                                @foreach([
+                                    'missing_columns' => 'Columnas requeridas faltantes',
+                                    'invalid_file' => 'Archivo dañado o incompatible',
+                                    'unavailable_file' => 'Archivo no disponible',
+                                    'internal_error' => 'Error de procesamiento',
+                                    'unknown' => 'Sin motivo registrado',
+                                ] as $value => $label)
+                                    <option value="{{ $value }}" data-filter-label="Motivo: {{ $label }}">{{ $label }}</option>
+                                @endforeach
+                                </x-filtros.select>
+                            </div>
                         </x-filtros.seccion>
                 </x-filtros.panel>
             </div>
@@ -46,6 +71,7 @@ document.addEventListener('DOMContentLoaded', function () {
     form.querySelectorAll('[data-filter-section]').forEach(section => section.querySelector('[data-filter-section-toggle]')?.addEventListener('click', function () { section.classList.toggle('is-open'); const open = section.classList.contains('is-open'); const icon = this.querySelector('i'); icon?.classList.toggle('fa-chevron-down', open); icon?.classList.toggle('fa-chevron-right', !open); }));
     const dateRange = document.getElementById('dateRangeImports');
     const customRange = document.getElementById('customRangeSelectorImports');
+    const contextSelects = Array.from(form.querySelectorAll('[data-import-context-select]'));
     const syncDateRange = () => customRange?.classList.toggle('hidden', dateRange?.value !== 'custom');
     dateRange?.addEventListener('change', syncDateRange);
     form.querySelectorAll('.imports-filter-option input').forEach(input => input.addEventListener('change', () => input.closest('.imports-filter-option')?.classList.toggle('is-active', input.checked)));
@@ -55,9 +81,11 @@ document.addEventListener('DOMContentLoaded', function () {
         if (dateRange && !dateRange.tomselect) window.AppFilterSelect.init(dateRange, { searchable: false });
         const user = document.getElementById('usuarioImports');
         if (user && !user.tomselect) window.AppFilterSelect.init(user, {
-            valueField: 'id', labelField: 'display_name', searchField: ['name','username'], maxItems: 1, create: false, preload: 'focus', placeholder: 'Todos los usuarios',
-            load: function (query, callback) { fetch('/api/users/search?importers_only=1&q=' + encodeURIComponent(query)).then(response => response.ok ? response.json() : []).then(items => callback(Array.isArray(items) ? items : [])).catch(() => callback([])); },
-            render: { option: function (data, escape) { const name = data.full_name || data.name || ''; const username = data.username ? '@' + data.username : ''; return '<div><strong>' + escape(name) + '</strong>' + (username ? '<small>' + escape(username) + '</small>' : '') + '</div>'; }, item: function (data, escape) { return '<div>' + escape(data.full_name || data.name || data.display_name || '') + '</div>'; } }
+            valueField: 'value', labelField: 'text', searchField: ['text','username'], maxItems: 1, create: false, allowEmptyOption: true, placeholder: 'Todos los usuarios',
+            render: { option: function (data, escape) { const name = data.full_name || data.name || data.text || 'Todos los usuarios'; const username = data.username ? '@' + data.username : ''; return '<div><strong>' + escape(name) + '</strong>' + (username ? '<small>' + escape(username) + '</small>' : '') + '</div>'; } }
+        });
+        contextSelects.forEach(select => {
+            if (!select.tomselect) window.AppFilterSelect.init(select, { searchable: false, collapsedLimit: 1 });
         });
         return true;
     }
@@ -78,7 +106,8 @@ document.addEventListener('DOMContentLoaded', function () {
         if (dateRange?.value === 'custom') { const start = document.getElementById('startDateImports')?.value; const end = document.getElementById('endDateImports')?.value; if (start || end) chips.push({ key: 'date', label: 'Fecha: ' + (start || 'inicio') + ' – ' + (end || 'hoy') }); }
         else if (dateRange?.value && dateRange.value !== 'all') chips.push({ key: 'date', label: 'Fecha: ' + rangeLabels[dateRange.value] });
         const user = document.getElementById('usuarioImports'); if (user?.value) chips.push({ key: 'user', label: 'Usuario: ' + (user.tomselect?.getItem(user.value)?.textContent?.trim() || user.value) });
-        if (document.getElementById('requiereAtencionImports')?.checked) chips.push({ key: 'result', label: 'Resultado: requiere atención' });
+        form.querySelectorAll('[data-import-context-filter]:checked').forEach(input => chips.push({ key: 'context:' + input.id, label: input.dataset.filterLabel || input.value }));
+        contextSelects.forEach(select => Array.from(select.selectedOptions).forEach(option => chips.push({ key: 'context-select:' + select.id + ':' + option.value, label: option.dataset.filterLabel || option.textContent.trim() })));
         const chipsRoot = document.getElementById('importsFilterChips');
         if (chipsRoot) chipsRoot.innerHTML = chips.map(chip => '<span class="users-filter-chip"><span>' + escapeText(chip.label) + '</span><button type="button" data-clear-import-filter="' + chip.key + '" aria-label="Quitar ' + escapeText(chip.label) + '"><i class="fas fa-times" aria-hidden="true"></i></button></span>').join('');
         const count = document.getElementById('importsFilterCount'); if (count) { count.textContent = chips.length; count.classList.toggle('hidden', !chips.length); }
@@ -98,9 +127,14 @@ document.addEventListener('DOMContentLoaded', function () {
             const user = document.getElementById('usuarioImports');
             if (user?.tomselect) user.tomselect.clear(true);
             else if (user) user.value = '';
-        } else if (button.dataset.clearImportFilter === 'result') {
-            const attention = document.getElementById('requiereAtencionImports');
-            if (attention) attention.checked = false;
+        } else if (button.dataset.clearImportFilter.startsWith('context:')) {
+            const input = document.getElementById(button.dataset.clearImportFilter.slice(8));
+            if (input) input.checked = false;
+        } else if (button.dataset.clearImportFilter.startsWith('context-select:')) {
+            const [, selectId, value] = button.dataset.clearImportFilter.split(':');
+            const select = document.getElementById(selectId);
+            if (select?.tomselect) select.tomselect.removeItem(value, true);
+            else if (select) Array.from(select.options).forEach(option => { if (option.value === value) option.selected = false; });
         }
 
         window.syncImportFilterUI();
@@ -108,6 +142,51 @@ document.addEventListener('DOMContentLoaded', function () {
     });
     document.getElementById('aplicarFiltrosImportaciones')?.addEventListener('click', () => { setPanel(false); window.setTimeout(window.syncImportFilterUI, 0); });
     document.getElementById('limpiarFiltrosImportaciones')?.addEventListener('click', () => window.setTimeout(window.syncImportFilterUI, 0));
+    window.setImportFilterView = function (view, clearContext = false) {
+        if (clearContext) {
+            form.querySelectorAll('[data-import-context-filter]').forEach(input => { input.checked = false; });
+            contextSelects.forEach(select => select.tomselect ? select.tomselect.clear(true) : Array.from(select.options).forEach(option => { option.selected = false; }));
+        }
+        form.querySelectorAll('[data-import-filter-view]').forEach(section => {
+            section.hidden = section.dataset.importFilterView !== view;
+        });
+        contextSelects.forEach(select => {
+            if (!select.tomselect) window.AppFilterSelect?.init(select, { searchable: false, collapsedLimit: 1 });
+        });
+        window.syncImportFilterUI();
+    };
+    window.clearImportContextFilters = function () {
+        form.querySelectorAll('[data-import-context-filter]').forEach(input => { input.checked = false; });
+        contextSelects.forEach(select => select.tomselect ? select.tomselect.clear(true) : Array.from(select.options).forEach(option => { option.selected = false; }));
+        window.syncImportFilterUI();
+    };
+    window.syncImportUserFilterOptions = function (imports) {
+        const user = document.getElementById('usuarioImports');
+        if (!user) return;
+
+        const options = Array.from(new Map((Array.isArray(imports) ? imports : []).map(item => {
+            const value = String(item.user_id ?? '');
+            const fullName = [item.created_by, item.created_by_first_last_name, item.created_by_second_last_name].filter(Boolean).join(' ').trim() || 'Usuario sin nombre';
+            const username = String(item.created_by_username || '').replace(/^@/, '');
+            return [value, { value, text: username ? `${fullName} (@${username})` : fullName, full_name: fullName, username }];
+        }).filter(([value]) => value)).values()).sort((a, b) => a.text.localeCompare(b.text, 'es'));
+        const currentValue = String(user.value || '');
+
+        if (user.tomselect) {
+            const select = user.tomselect;
+            select.clear(true);
+            select.clearOptions();
+            select.addOption({ value: '', text: 'Todos los usuarios' });
+            select.addOptions(options);
+            select.setValue(options.some(option => option.value === currentValue) ? currentValue : '', true);
+            select.refreshOptions(false);
+        } else {
+            user.replaceChildren(new Option('Todos los usuarios', ''));
+            options.forEach(option => user.add(new Option(option.text, option.value)));
+            user.value = options.some(option => option.value === currentValue) ? currentValue : '';
+        }
+    };
+    window.setImportFilterView('active');
     window.syncImportFilterUI();
 });
 </script>

@@ -36,8 +36,10 @@ class UserController extends Controller
         $query = User::query();
 
         if ($request->boolean('importers_only')) {
-            $query->whereHas('role', function ($roleQuery) {
-                $roleQuery->whereIn('name', ['Administrador', 'Coordinador']);
+            $query->whereExists(function ($importQuery) {
+                $importQuery->selectRaw('1')
+                    ->from('imports')
+                    ->whereColumn('imports.user_id', 'users.id');
             });
         }
 
