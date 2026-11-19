@@ -34,7 +34,8 @@
                         <x-filtros.seccion titulo="Motivo de falla" data-import-filter-view="failed" hidden>
                             <div class="imports-filter-field">
                                 <label for="motivoFallaImports">Motivos</label>
-                                <x-filtros.select id="motivoFallaImports" name="motivoFallaImports[]" placeholder="Todos los motivos" :searchable="false" multiple data-import-context-select data-collapsed-limit="1">
+                                <x-filtros.select id="motivoFallaImports" name="motivoFallaImports" placeholder="Todos los motivos" :searchable="false" data-import-context-select>
+                                <option value="all">Todos los motivos</option>
                                 @foreach([
                                     'missing_columns' => 'Columnas requeridas faltantes',
                                     'invalid_file' => 'Archivo dañado o incompatible',
@@ -63,11 +64,29 @@ document.addEventListener('DOMContentLoaded', function () {
     const panel = document.getElementById('importsFilterPanel');
     const toggle = document.getElementById('importsFilterToggle');
     if (!form || !panel || !toggle) return;
-    const setPanel = open => { panel.classList.toggle('is-collapsed', !open); toggle.setAttribute('aria-expanded', String(open)); };
+    const panelBody = panel.querySelector('.users-filter-panel-body');
+    const resetPanelScroll = () => {
+        if (panelBody) panelBody.scrollTop = 0;
+    };
+    const syncPanelAvailableHeight = () => {
+        if (window.matchMedia('(max-width: 639px)').matches) {
+            panel.style.removeProperty('max-height');
+            return;
+        }
+        const availableHeight = Math.max(240, Math.floor(window.innerHeight - toggle.getBoundingClientRect().bottom - 16));
+        panel.style.setProperty('max-height', availableHeight + 'px', 'important');
+    };
+    const setPanel = open => {
+        if (open) syncPanelAvailableHeight();
+        panel.classList.toggle('is-collapsed', !open);
+        toggle.setAttribute('aria-expanded', String(open));
+        if (open) window.requestAnimationFrame(resetPanelScroll);
+    };
     toggle.addEventListener('click', () => setPanel(panel.classList.contains('is-collapsed')));
     document.getElementById('closeImportsFilters')?.addEventListener('click', () => setPanel(false));
     document.addEventListener('click', event => { if (!event.target.closest('.users-filter-popover-wrap')) setPanel(false); });
     document.addEventListener('keydown', event => { if (event.key === 'Escape') setPanel(false); });
+    window.addEventListener('resize', () => { if (!panel.classList.contains('is-collapsed')) syncPanelAvailableHeight(); });
     form.querySelectorAll('[data-filter-section]').forEach(section => section.querySelector('[data-filter-section-toggle]')?.addEventListener('click', function () { section.classList.toggle('is-open'); const open = section.classList.contains('is-open'); const icon = this.querySelector('i'); icon?.classList.toggle('fa-chevron-down', open); icon?.classList.toggle('fa-chevron-right', !open); }));
     const dateRange = document.getElementById('dateRangeImports');
     const customRange = document.getElementById('customRangeSelectorImports');
@@ -85,7 +104,7 @@ document.addEventListener('DOMContentLoaded', function () {
             render: { option: function (data, escape) { const name = data.full_name || data.name || data.text || 'Todos los usuarios'; const username = data.username ? '@' + data.username : ''; return '<div><strong>' + escape(name) + '</strong>' + (username ? '<small>' + escape(username) + '</small>' : '') + '</div>'; } }
         });
         contextSelects.forEach(select => {
-            if (!select.tomselect) window.AppFilterSelect.init(select, { searchable: false, collapsedLimit: 1 });
+            if (!select.tomselect) window.AppFilterSelect.init(select, { searchable: false });
         });
         return true;
     }
@@ -107,7 +126,7 @@ document.addEventListener('DOMContentLoaded', function () {
         else if (dateRange?.value && dateRange.value !== 'all') chips.push({ key: 'date', label: 'Fecha: ' + rangeLabels[dateRange.value] });
         const user = document.getElementById('usuarioImports'); if (user?.value) chips.push({ key: 'user', label: 'Usuario: ' + (user.tomselect?.getItem(user.value)?.textContent?.trim() || user.value) });
         form.querySelectorAll('[data-import-context-filter]:checked').forEach(input => chips.push({ key: 'context:' + input.id, label: input.dataset.filterLabel || input.value }));
-        contextSelects.forEach(select => Array.from(select.selectedOptions).forEach(option => chips.push({ key: 'context-select:' + select.id + ':' + option.value, label: option.dataset.filterLabel || option.textContent.trim() })));
+        contextSelects.forEach(select => Array.from(select.selectedOptions).filter(option => option.value !== 'all').forEach(option => chips.push({ key: 'context-select:' + select.id + ':' + option.value, label: option.dataset.filterLabel || option.textContent.trim() })));
         const chipsRoot = document.getElementById('importsFilterChips');
         if (chipsRoot) chipsRoot.innerHTML = chips.map(chip => '<span class="users-filter-chip"><span>' + escapeText(chip.label) + '</span><button type="button" data-clear-import-filter="' + chip.key + '" aria-label="Quitar ' + escapeText(chip.label) + '"><i class="fas fa-times" aria-hidden="true"></i></button></span>').join('');
         const count = document.getElementById('importsFilterCount'); if (count) { count.textContent = chips.length; count.classList.toggle('hidden', !chips.length); }
@@ -133,8 +152,8 @@ document.addEventListener('DOMContentLoaded', function () {
         } else if (button.dataset.clearImportFilter.startsWith('context-select:')) {
             const [, selectId, value] = button.dataset.clearImportFilter.split(':');
             const select = document.getElementById(selectId);
-            if (select?.tomselect) select.tomselect.removeItem(value, true);
-            else if (select) Array.from(select.options).forEach(option => { if (option.value === value) option.selected = false; });
+            if (select?.tomselect) select.tomselect.setValue('all', true);
+            else if (select) select.value = 'all';
         }
 
         window.syncImportFilterUI();
@@ -145,19 +164,20 @@ document.addEventListener('DOMContentLoaded', function () {
     window.setImportFilterView = function (view, clearContext = false) {
         if (clearContext) {
             form.querySelectorAll('[data-import-context-filter]').forEach(input => { input.checked = false; });
-            contextSelects.forEach(select => select.tomselect ? select.tomselect.clear(true) : Array.from(select.options).forEach(option => { option.selected = false; }));
+            contextSelects.forEach(select => select.tomselect ? select.tomselect.setValue('all', true) : select.value = 'all');
         }
         form.querySelectorAll('[data-import-filter-view]').forEach(section => {
             section.hidden = section.dataset.importFilterView !== view;
         });
         contextSelects.forEach(select => {
-            if (!select.tomselect) window.AppFilterSelect?.init(select, { searchable: false, collapsedLimit: 1 });
+            if (!select.tomselect) window.AppFilterSelect?.init(select, { searchable: false });
         });
+        resetPanelScroll();
         window.syncImportFilterUI();
     };
     window.clearImportContextFilters = function () {
         form.querySelectorAll('[data-import-context-filter]').forEach(input => { input.checked = false; });
-        contextSelects.forEach(select => select.tomselect ? select.tomselect.clear(true) : Array.from(select.options).forEach(option => { option.selected = false; }));
+        contextSelects.forEach(select => select.tomselect ? select.tomselect.setValue('all', true) : select.value = 'all');
         window.syncImportFilterUI();
     };
     window.syncImportUserFilterOptions = function (imports) {

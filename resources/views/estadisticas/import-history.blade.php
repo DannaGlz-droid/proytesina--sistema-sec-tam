@@ -317,7 +317,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const contextFilterSelects = Array.from(document.querySelectorAll('[data-import-context-select]'));
     const selectedImportContextFilters = () => [
         ...contextFilterInputs.filter(input => input.checked).map(input => input.value),
-        ...contextFilterSelects.flatMap(select => Array.from(select.selectedOptions).map(option => option.value)),
+        ...contextFilterSelects.flatMap(select => Array.from(select.selectedOptions).map(option => option.value).filter(value => value && value !== 'all')),
     ];
     const usuarioSelect = document.getElementById('usuarioImports');
     const perPageSelect = document.getElementById('per-page-imports');
@@ -726,7 +726,7 @@ document.addEventListener('DOMContentLoaded', function () {
             }
             
             contextFilterInputs.forEach(input => { input.checked = false; });
-            contextFilterSelects.forEach(select => select.tomselect ? select.tomselect.clear(true) : Array.from(select.options).forEach(option => { option.selected = false; }));
+            contextFilterSelects.forEach(select => select.tomselect ? select.tomselect.setValue('all', true) : select.value = 'all');
             currentOverviewFilter = null;
             updateOverviewFilterState();
             

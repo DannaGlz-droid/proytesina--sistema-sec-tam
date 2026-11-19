@@ -280,6 +280,22 @@ test('los filtros cambian su contenido y su regla con cada pestaña', async ({ p
     await expect(page.locator('#usuarioImports option[value="1"]')).toContainText('Carlos Enrique Rodríguez Nava');
 
     await page.getByRole('button', { name: 'Resultado', exact: true }).click();
+    const filterFooterBottom = await page.locator('#importsFilterPanel .users-filter-panel-footer').evaluate(footer => footer.getBoundingClientRect().bottom);
+    expect(filterFooterBottom).toBeLessThanOrEqual((page.viewportSize()?.height || 0) - 4);
+    const filterPanelBody = page.locator('#importsFilterPanel .users-filter-panel-body');
+    await filterPanelBody.evaluate(body => {
+        body.style.height = '120px';
+        body.style.flex = 'none';
+        body.scrollTop = body.scrollHeight;
+    });
+    await expect.poll(() => filterPanelBody.evaluate(body => body.scrollTop)).toBeGreaterThan(0);
+    await page.locator('#importsFilterToggle').click();
+    await page.locator('#importsFilterToggle').click();
+    await expect.poll(() => filterPanelBody.evaluate(body => body.scrollTop)).toBe(0);
+    await filterPanelBody.evaluate(body => {
+        body.style.removeProperty('height');
+        body.style.removeProperty('flex');
+    });
     await page.locator('#importsFilterPanel').getByText('Requiere corrección', { exact: true }).click();
     await page.locator('#aplicarFiltrosImportaciones').click();
     await expect(page.locator('#imports-tbody .imports-table-row')).toHaveCount(1);
@@ -301,8 +317,8 @@ test('los filtros cambian su contenido y su regla con cada pestaña', async ({ p
     await expect(page.locator('[data-import-filter-view="reversed"]')).toBeHidden();
     await expect(page.locator('[data-import-filter-view="failed"]')).toBeVisible();
     await page.getByRole('button', { name: 'Motivo de falla', exact: true }).click();
-    await page.locator('[data-import-filter-view="failed"] .ts-control').click();
-    await page.locator('[data-import-filter-view="failed"] .ts-dropdown .option', { hasText: 'Columnas requeridas faltantes' }).click();
+    await expect(page.locator('#motivoFallaImports option:checked')).toHaveText('Todos los motivos');
+    await page.locator('#motivoFallaImports').selectOption('missing_columns');
     await page.locator('#aplicarFiltrosImportaciones').click();
     await expect(page.locator('#imports-tbody .imports-table-row')).toHaveCount(1);
     await expect(page.locator('#importsFilterChips')).toContainText('Motivo: Columnas requeridas faltantes');
