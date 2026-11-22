@@ -17,6 +17,7 @@
     'footerClass' => '',
     'cancelClass' => '',
     'applyClass' => '',
+    'role' => 'dialog',
 ])
 
 @php($resolvedTitleId = $titleId ?: $id . '-title')
@@ -24,8 +25,8 @@
 <aside
     id="{{ $id }}"
     {{ $attributes->class(['users-filter-panel', 'users-filter-menu', 'is-collapsed' => !$open]) }}
-    role="dialog"
-    aria-modal="false"
+    role="{{ $role }}"
+    @if($role === 'dialog') aria-modal="false" @endif
     aria-labelledby="{{ $resolvedTitleId }}"
     data-filter-popover-panel
 >

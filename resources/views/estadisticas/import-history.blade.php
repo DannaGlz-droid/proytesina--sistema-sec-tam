@@ -11,19 +11,24 @@
         </x-ui.page-header>
         <section id="imports-overview" class="imports-overview" aria-label="Resumen del historial de importaciones" aria-busy="true">
             <button type="button" class="imports-overview-item imports-overview-item--attention imports-overview-filter" data-import-overview-filter="corrections" aria-pressed="false">
-                <span class="imports-overview-label">Registros por corregir</span>
+                <span class="imports-overview-icon" aria-hidden="true"><i class="fas fa-circle-exclamation"></i></span>
                 <strong id="imports-overview-corrections" class="imports-overview-value">--</strong>
-                <small id="imports-overview-corrections-detail">Calculando el resumen</small>
+                <span class="imports-overview-copy"><span class="imports-overview-label">Registros por corregir</span><small id="imports-overview-corrections-detail">Calculando el resumen</small></span>
+                <i class="fas fa-chevron-right imports-overview-chevron" aria-hidden="true"></i>
             </button>
             <button type="button" class="imports-overview-item imports-overview-item--differences imports-overview-filter" data-import-overview-filter="differences" aria-pressed="false">
-                <span class="imports-overview-label">Folios con diferencias</span>
+                <span class="imports-overview-icon" aria-hidden="true"><i class="fas fa-code-compare"></i></span>
                 <strong id="imports-overview-differences" class="imports-overview-value">--</strong>
-                <small id="imports-overview-differences-detail">Calculando el resumen</small>
+                <span class="imports-overview-copy"><span class="imports-overview-label">Folios por revisar</span><small id="imports-overview-differences-detail">Calculando el resumen</small></span>
+                <i class="fas fa-chevron-right imports-overview-chevron" aria-hidden="true"></i>
             </button>
             <article class="imports-overview-item imports-overview-item--latest">
-                <span class="imports-overview-label">Última importación</span>
-                <strong id="imports-overview-latest" class="imports-overview-file">Cargando historial</strong>
-                <small id="imports-overview-latest-detail">Espere un momento</small>
+                <span class="imports-overview-icon" aria-hidden="true"><i class="fas fa-clock-rotate-left"></i></span>
+                <span class="imports-overview-copy">
+                    <span class="imports-overview-label">Última importación</span>
+                    <strong id="imports-overview-latest" class="imports-overview-file">--</strong>
+                    <small id="imports-overview-latest-detail">Calculando el resumen</small>
+                </span>
             </article>
         </section>
         <div class="app-table-card users-table-card imports-table-card">
@@ -39,7 +44,7 @@
                 </button>
             </div>
             <div class="app-table-toolbar flex flex-row flex-wrap items-center justify-between gap-3 p-4">
-                <x-filtros.importaciones />
+                <x-filtros.importaciones :inline="request()->query('filtros') === 'integrado'" />
                 <div id="bulk-selection-bar-imports" class="app-table-bulk-inline hidden items-center gap-3">
                     <div class="flex items-center gap-2"><span class="app-table-selection-marker"></span><span id="bulk-selected-count-imports" class="app-table-selection-count text-xs whitespace-nowrap"></span></div>
                     <span class="hidden xl:inline text-xs text-gray-500">En esta página</span>
@@ -166,6 +171,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
         const card = document.querySelector('.imports-table-card');
         card?.classList.toggle('is-active-view', currentImportView === 'active');
+        const overview = document.getElementById('imports-overview');
+        if (overview) overview.hidden = currentImportView !== 'active';
 
         const resultHeading = document.getElementById('imports-result-heading');
         if (resultHeading) {
@@ -186,15 +193,24 @@ document.addEventListener('DOMContentLoaded', function () {
             const filter = button.dataset.importOverviewFilter;
             const active = currentImportView === 'active' && currentOverviewFilter === filter;
             const matchCount = Number(button.dataset.matchCount || 0);
-            const label = filter === 'corrections' ? 'registros por corregir' : 'folios con diferencias';
+            const label = filter === 'corrections' ? 'registros por corregir' : 'folios por revisar';
 
             button.classList.toggle('is-filter-active', active);
+            button.classList.toggle('is-zero', matchCount === 0);
             button.setAttribute('aria-pressed', String(active));
             button.setAttribute('aria-label', active
                 ? `Mostrando importaciones con ${label}. Pulse para mostrar todas las activas.`
                 : `Mostrar importaciones con ${label}.`);
             button.disabled = matchCount === 0;
+
+            const icon = button.querySelector('.imports-overview-icon i');
+            if (icon) {
+                icon.className = matchCount === 0
+                    ? 'fas fa-circle-check'
+                    : `fas ${filter === 'corrections' ? 'fa-circle-exclamation' : 'fa-code-compare'}`;
+            }
         });
+
     }
 
     function pluralizeImport(value, singular, plural) {
@@ -219,7 +235,6 @@ document.addEventListener('DOMContentLoaded', function () {
         const differencesDetail = document.getElementById('imports-overview-differences-detail');
         const latestValue = document.getElementById('imports-overview-latest');
         const latestDetail = document.getElementById('imports-overview-latest-detail');
-
         overview.setAttribute('aria-busy', 'false');
         overview.classList.toggle('has-load-error', failed);
 
@@ -241,18 +256,18 @@ document.addEventListener('DOMContentLoaded', function () {
         const activeImports = imports.filter(item => getImportView(item) === 'active');
         const corrections = activeImports.reduce((total, item) => total + Number(item.rows_failed || 0), 0);
         const correctionsImports = activeImports.filter(item => Number(item.rows_failed || 0) > 0).length;
-        const differences = activeImports.reduce((total, item) => total + Number(item.rows_changed_existing || item.changed_existing || 0), 0);
-        const differencesImports = activeImports.filter(item => Number(item.rows_changed_existing || item.changed_existing || 0) > 0).length;
+        const differences = activeImports.reduce((total, item) => total + Number(item.pending_differences || 0), 0);
+        const differencesImports = activeImports.filter(item => Number(item.pending_differences || 0) > 0).length;
         const latest = [...imports].sort((a, b) => new Date(b.created_at) - new Date(a.created_at))[0];
 
         correctionsValue.textContent = corrections.toLocaleString('es-MX');
         correctionsDetail.textContent = correctionsImports
             ? `En ${pluralizeImport(correctionsImports, 'importación', 'importaciones')}`
-            : 'No hay registros pendientes';
+            : 'Todo al día';
         differencesValue.textContent = differences.toLocaleString('es-MX');
         differencesDetail.textContent = differencesImports
-            ? `Detectados en ${pluralizeImport(differencesImports, 'importación', 'importaciones')}`
-            : 'No se detectaron diferencias';
+            ? `En ${pluralizeImport(differencesImports, 'importación', 'importaciones')}`
+            : 'Todo al día';
 
         const correctionsButton = document.querySelector('[data-import-overview-filter="corrections"]');
         const differencesButton = document.querySelector('[data-import-overview-filter="differences"]');
@@ -266,39 +281,41 @@ document.addEventListener('DOMContentLoaded', function () {
 
         if (!latest) {
             latestValue.textContent = 'Sin importaciones';
+            latestValue.removeAttribute('title');
             latestDetail.textContent = 'El historial todavía está vacío';
+            latestDetail.removeAttribute('title');
             return;
         }
 
-        const latestDate = new Date(latest.created_at);
         const latestAdded = Number(latest.rows_imported || 0);
         const latestCorrections = Number(latest.rows_failed || 0);
-        const latestDifferences = Number(latest.rows_changed_existing || latest.changed_existing || 0);
+        const latestPendingDifferences = Number(latest.pending_differences || 0);
+        const latestResolvedDifferences = Number(latest.resolved_differences || 0);
         const latestUnchanged = Number(latest.rows_skipped_duplicates || latest.skipped_duplicates || 0);
         let latestResult = 'Sin cambios registrados';
 
         if (latest.is_reversed) {
-            latestResult = latestAdded > 0
-                ? 'Revertida · Datos retirados'
-                : 'Revertida · No agregó datos';
+            latestResult = latestAdded > 0 ? 'Revertida · Datos retirados' : 'Revertida · No agregó datos';
         } else if (latest.status === 'failed') {
-            latestResult = `Fallida · ${latest.failure_reason || 'Motivo no disponible'}`;
+            latestResult = `Fallida · ${latest.failure_reason || 'No se pudo procesar'}`;
         } else if (latest.status === 'processing') {
             latestResult = 'Procesamiento en curso';
         } else if (latestCorrections > 0) {
             latestResult = pluralizeImport(latestCorrections, 'registro por corregir', 'registros por corregir');
-        } else if (latestDifferences > 0) {
-            latestResult = pluralizeImport(latestDifferences, 'folio con diferencias', 'folios con diferencias');
-            if (latestAdded > 0) latestResult += ` · ${pluralizeImport(latestAdded, 'registro agregado', 'registros agregados')}`;
+        } else if (latestPendingDifferences > 0) {
+            latestResult = pluralizeImport(latestPendingDifferences, 'folio por revisar', 'folios por revisar');
         } else if (latestAdded > 0) {
             latestResult = pluralizeImport(latestAdded, 'registro agregado', 'registros agregados');
+        } else if (latestResolvedDifferences > 0) {
+            latestResult = pluralizeImport(latestResolvedDifferences, 'diferencia revisada', 'diferencias revisadas');
         } else if (latestUnchanged > 0) {
             latestResult = pluralizeImport(latestUnchanged, 'registro ya existente', 'registros ya existentes');
         }
 
-        latestValue.textContent = latest.original_name || 'Archivo sin nombre';
-        latestValue.title = latest.original_name || 'Archivo sin nombre';
-        latestDetail.textContent = `${latestDate.toLocaleDateString('es-MX')} · ${latestResult}`;
+        const latestName = latest.original_name || 'Archivo sin nombre';
+        latestValue.textContent = latestName;
+        latestValue.title = latestName;
+        latestDetail.textContent = `${formatImportDate(new Date(latest.created_at))} · ${latestResult}`;
         latestDetail.title = latestResult;
     }
 
@@ -333,6 +350,31 @@ document.addEventListener('DOMContentLoaded', function () {
 
     const importViewTabs = Array.from(document.querySelectorAll('[data-import-view]'));
     const overviewFilterButtons = Array.from(document.querySelectorAll('[data-import-overview-filter]'));
+    const overviewFilterInputs = {
+        corrections: document.getElementById('resultadoCorreccionImports'),
+        differences: document.getElementById('resultadoDiferenciasImports'),
+    };
+
+    function dispatchOverviewFilterChange() {
+        const type = currentOverviewFilter === 'corrections'
+            ? 'corregir'
+            : (currentOverviewFilter === 'differences' ? 'revisar' : null);
+        document.dispatchEvent(new CustomEvent('resumen:filtro', { detail: { tipo: type } }));
+    }
+
+    function syncOverviewFilterFromControls() {
+        const selectedResults = Object.entries(overviewFilterInputs)
+            .filter(([, input]) => input?.checked)
+            .map(([filter]) => filter);
+        const nextFilter = currentImportView === 'active' && selectedResults.length === 1
+            ? selectedResults[0]
+            : null;
+        const changed = currentOverviewFilter !== nextFilter;
+
+        currentOverviewFilter = nextFilter;
+        updateOverviewFilterState();
+        if (changed) dispatchOverviewFilterChange();
+    }
 
     overviewFilterButtons.forEach(button => {
         button.addEventListener('click', () => {
@@ -342,8 +384,11 @@ document.addEventListener('DOMContentLoaded', function () {
             const shouldClear = currentImportView === 'active' && currentOverviewFilter === filter;
             clearVisibleImportSelection();
             currentImportView = 'active';
-            currentOverviewFilter = shouldClear ? null : filter;
             window.clearImportContextFilters?.();
+            if (!shouldClear && overviewFilterInputs[filter]) {
+                overviewFilterInputs[filter].checked = true;
+            }
+            currentOverviewFilter = shouldClear ? null : filter;
             currentPage = 1;
             filterImports();
             sortImports();
@@ -351,6 +396,7 @@ document.addEventListener('DOMContentLoaded', function () {
             updateOverviewFilterState();
             renderTable();
             window.syncImportFilterUI?.();
+            dispatchOverviewFilterChange();
         });
     });
 
@@ -370,6 +416,7 @@ document.addEventListener('DOMContentLoaded', function () {
             updateOverviewFilterState();
             renderTable();
             window.syncImportFilterUI?.();
+            dispatchOverviewFilterChange();
         });
 
         tab.addEventListener('keydown', event => {
@@ -398,6 +445,7 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         }
 
+        syncOverviewFilterFromControls();
         filterImports();
         sortImports();
         currentPage = 1;
@@ -729,6 +777,7 @@ document.addEventListener('DOMContentLoaded', function () {
             contextFilterSelects.forEach(select => select.tomselect ? select.tomselect.setValue('all', true) : select.value = 'all');
             currentOverviewFilter = null;
             updateOverviewFilterState();
+            dispatchOverviewFilterChange();
             
             // Reset usuario select
             if (usuarioSelect) {
@@ -895,7 +944,7 @@ document.addEventListener('DOMContentLoaded', function () {
             }
 
             if (selectedContextFilters.length) {
-                const differences = Number(imp.rows_changed_existing || imp.changed_existing || 0);
+                const differences = Number(imp.pending_differences ?? imp.rows_changed_existing ?? imp.changed_existing ?? 0);
                 const corrections = Number(imp.rows_failed || 0);
                 const added = Number(imp.rows_imported || 0);
                 const failureReasons = {
@@ -925,15 +974,6 @@ document.addEventListener('DOMContentLoaded', function () {
                 if (!matchesContext) return false;
             }
 
-            if (currentOverviewFilter === 'corrections' && Number(imp.rows_failed || 0) === 0) {
-                return false;
-            }
-
-            if (currentOverviewFilter === 'differences'
-                && Number(imp.rows_changed_existing || imp.changed_existing || 0) === 0) {
-                return false;
-            }
-
             return true;
         });
     };
@@ -942,6 +982,11 @@ document.addEventListener('DOMContentLoaded', function () {
         const added = Number(imp.rows_imported || 0);
         const unchanged = Number(imp.rows_skipped_duplicates || imp.skipped_duplicates || 0);
         const different = Number(imp.rows_changed_existing || imp.changed_existing || 0);
+        const pendingDifferences = Number(imp.pending_differences || 0);
+        const resolvedDifferences = Number(imp.resolved_differences || 0);
+        const visibleDifferences = imp.is_reversed
+            ? different
+            : (pendingDifferences > 0 ? pendingDifferences : (resolvedDifferences > 0 ? resolvedDifferences : different));
         const toCorrect = Number(imp.rows_failed || 0);
 
         if (imp.status === 'failed') {
@@ -970,14 +1015,20 @@ document.addEventListener('DOMContentLoaded', function () {
                     : 'Registros que requieren corrección',
             },
             {
-                value: different,
+                value: visibleDifferences,
                 label: imp.is_reversed
                     ? (different === 1 ? 'diferencia' : 'diferencias')
-                    : 'con diferencias',
+                    : (pendingDifferences > 0
+                        ? 'por revisar'
+                        : (resolvedDifferences > 0
+                            ? (visibleDifferences === 1 ? 'diferencia revisada' : 'diferencias revisadas')
+                            : (visibleDifferences === 1 ? 'diferencia' : 'diferencias'))),
                 modifier: 'imports-result-different',
                 title: imp.is_reversed
                     ? 'Diferencias descartadas al revertir la carga'
-                    : 'Folios existentes con información distinta; no fueron sobrescritos',
+                    : (pendingDifferences > 0
+                        ? 'Comparar la información actual con la propuesta por este archivo'
+                        : 'Folios existentes con información distinta'),
             },
             { value: added, label: added === 1 ? 'agregado' : 'agregados', modifier: 'imports-result-added', title: imp.is_reversed ? 'Registros que esta carga agregó antes de revertirse' : 'Registros nuevos guardados' },
             { value: unchanged, label: unchanged === 1 ? 'ya existente' : 'ya existentes', modifier: 'imports-result-unchanged', title: 'Folios que ya existían con la misma información' },
@@ -993,7 +1044,9 @@ document.addEventListener('DOMContentLoaded', function () {
 
             return metric.modifier === 'imports-result-correction'
                 ? `<a class="imports-result-badge ${metric.modifier}" href="/estadisticas/importaciones/${imp.id}/registros-fallidos" title="Abrir los registros que requieren corrección">${content}<i class="fas fa-arrow-right" aria-hidden="true"></i></a>`
-                : `<span class="imports-result-badge ${metric.modifier}" title="${metric.title}">${content}</span>`;
+                : (metric.modifier === 'imports-result-different'
+                    ? `<a class="imports-result-badge ${metric.modifier}" href="/estadisticas/importaciones/${imp.id}/diferencias" title="Revisar las diferencias detectadas">${content}<i class="fas fa-arrow-right" aria-hidden="true"></i></a>`
+                    : `<span class="imports-result-badge ${metric.modifier}" title="${metric.title}">${content}</span>`);
         }).join('');
 
         return `<div class="imports-result-list${imp.is_reversed ? ' is-reverted' : ''}" aria-label="${escapeHtml(description)}">${metricMarkup}</div>`;
@@ -1044,7 +1097,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     : createdByName;
             
             const addedRows = Number(imp.rows_imported || 0);
-            const differentRows = Number(imp.rows_changed_existing || imp.changed_existing || 0);
+            const pendingDifferenceRows = Number(imp.pending_differences || 0);
             const failedRows = Number(imp.rows_failed || 0);
             const statusClass = imp.is_reversed ? 'status-reversed' : `status-${imp.status}`;
             const statusText = imp.is_reversed ? 'Revertido' : (imp.status === 'completed' ? 'Completado' : imp.status === 'processing' ? 'Procesando' : 'Fallido');
@@ -1060,7 +1113,7 @@ document.addEventListener('DOMContentLoaded', function () {
             if (!imp.is_reversed && imp.status === 'completed') {
                 if (failedRows > 0) {
                     row.classList.add('has-corrections');
-                } else if (differentRows > 0) {
+                } else if (pendingDifferenceRows > 0) {
                     row.classList.add('has-differences');
                 }
             }
@@ -1070,7 +1123,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     ? 'Resultado en curso'
                     : (imp.status === 'failed'
                         ? ''
-                        : (failedRows > 0 ? 'Requiere corrección' : (differentRows > 0 ? 'Con diferencias' : ''))));
+                        : (failedRows > 0 ? 'Requiere corrección' : (pendingDifferenceRows > 0 ? 'Requiere revisión' : ''))));
             
             const canReverse = !imp.is_reversed && imp.status === 'completed';
             const newerActiveImport = canReverse ? findNewerActiveImport(imp) : null;
@@ -1105,6 +1158,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 <td class="imports-status-cell"><div class="imports-status-wrap"><div class="imports-status ${statusClass}" title="${escapeHtml(statusHelp)}" aria-label="${statusText}. ${escapeHtml(statusHelp)}"><span class="imports-status-dot" aria-hidden="true"></span><span>${statusText}</span></div>${statusNote ? `<small class="imports-status-note">${statusNote}</small>` : ''}</div></td>
                 <td class="dt-actions-cell imports-actions-cell"><div class="users-row-menu-wrap"><button type="button" class="users-row-menu-button" data-import-menu-toggle aria-haspopup="menu" aria-expanded="false" aria-label="Acciones de ${escapeHtml(imp.original_name)}"><i class="fas fa-ellipsis-v" aria-hidden="true"></i></button><div class="users-row-menu hidden" data-import-action-menu role="menu">
                     ${currentImportView === 'active' && failedRows > 0 ? `<a role="menuitem" class="users-row-menu-item" href="/estadisticas/importaciones/${imp.id}/registros-fallidos"><i class="fas fa-exclamation-circle users-row-menu-icon" aria-hidden="true"></i><span>Revisar y corregir</span></a>` : ''}
+                    ${currentImportView === 'active' && pendingDifferenceRows > 0 ? `<a role="menuitem" class="users-row-menu-item" href="/estadisticas/importaciones/${imp.id}/diferencias"><i class="fas fa-code-compare users-row-menu-icon" aria-hidden="true"></i><span>Revisar diferencias</span></a>` : ''}
                     ${currentImportView === 'active' ? `<button type="button" role="menuitem" class="users-row-menu-item${isReversalBlocked ? ' is-reversal-blocked' : ''}" data-reverse-import="${imp.id}" title="${escapeHtml(reverseActionTitle)}" aria-label="${escapeHtml(isReversalBlocked ? `Revertir, bloqueado. ${reverseActionTitle}` : 'Revertir importación')}" ${canReverse ? '' : 'disabled'}><i class="fas ${isReversalBlocked ? 'fa-lock' : 'fa-undo'} users-row-menu-icon" aria-hidden="true"></i><span>${isReversalBlocked ? 'Revertir (bloqueado)' : 'Revertir'}</span></button>` : ''}
                     ${canDeleteHistory ? `<button type="button" role="menuitem" class="users-row-menu-item users-row-menu-item-danger" data-delete-import="${imp.id}" title="${escapeHtml(deleteHistoryTitle)}"><i class="fas fa-trash users-row-menu-icon" aria-hidden="true"></i><span>Eliminar historial</span></button>` : ''}
                 </div></div></td>

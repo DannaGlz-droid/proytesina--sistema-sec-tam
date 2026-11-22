@@ -3,7 +3,8 @@
         'statistic.data',
         'statistic.edit',
         'statistic.import-history-view',
-        'statistic.failed-imports-view'
+        'statistic.failed-imports-view',
+        'statistic.import-differences-view'
     );
     $statisticsChartsActive = request()->routeIs('estadisticas.graficas');
     $statisticsCreateActive = request()->routeIs('statistic.create');

@@ -104,6 +104,8 @@ Route::middleware('auth')->group(function () {
                 'causes' => $causes,
             ]);
         })->name('statistic.failed-imports-view');
+        Route::get('estadisticas/importaciones/{importId}/diferencias', [App\Http\Controllers\ImportDifferenceController::class, 'index'])
+            ->name('statistic.import-differences-view');
         Route::get('api/estadisticas/historial-importaciones', [App\Http\Controllers\DeathImportController::class, 'getImportHistory'])->name('statistic.import-history');
         Route::post('api/estadisticas/importaciones/mass-delete', [App\Http\Controllers\DeathImportController::class, 'massDelete'])->name('statistic.import-history.massDelete');
         Route::post('api/estadisticas/revertir-importacion/{importId}', [App\Http\Controllers\DeathImportController::class, 'reverseImport'])->name('statistic.reverse-import');
@@ -115,6 +117,10 @@ Route::middleware('auth')->group(function () {
         Route::post('api/estadisticas/registros-fallidos/{recordId}/corregir', [App\Http\Controllers\DeathImportController::class, 'saveFailedRecordCorrection'])->name('statistic.save-correction');
         Route::post('api/estadisticas/registros-fallidos/{recordId}/reintentar', [App\Http\Controllers\DeathImportController::class, 'retryFailedRecord'])->name('statistic.retry-failed');
         Route::post('api/estadisticas/registros-fallidos/{recordId}/descartar', [App\Http\Controllers\DeathImportController::class, 'discardFailedRecord'])->name('statistic.discard-failed');
+        Route::get('api/estadisticas/importaciones/{importId}/diferencias', [App\Http\Controllers\ImportDifferenceController::class, 'list'])
+            ->name('statistic.import-differences');
+        Route::post('api/estadisticas/diferencias/{differenceId}/resolver', [App\Http\Controllers\ImportDifferenceController::class, 'resolve'])
+            ->name('statistic.resolve-import-difference');
     });
 
     // ========== REPORTES - VER PUBLICACIONES (Todos los roles autenticados) ==========

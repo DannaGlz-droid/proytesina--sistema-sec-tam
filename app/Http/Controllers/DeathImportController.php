@@ -164,6 +164,8 @@ class DeathImportController extends Controller
                     'death_district_id',
                     'death_location_id',
                     'death_cause_id',
+                    'cie_cause_code',
+                    'cie_cause_description',
                 ])
                 ->keyBy(fn ($death) => strtoupper((string) $death->gov_folio));
         }
@@ -194,6 +196,7 @@ class DeathImportController extends Controller
         $rowsConvertedMonths = 0;
         $failedRows = [];
         $importDeathRecords = [];
+        $importDifferences = [];
 
         foreach ($sheets as $sheetIndex => $sheet) {
             if (empty($sheet)) continue;
@@ -437,10 +440,6 @@ class DeathImportController extends Controller
                 // changed records are reported for review, but never overwritten automatically.
                 $existingDeath = $existingDeathsByFolio->get(strtoupper((string) $folio));
                 if ($existingDeath) {
-                    // A repeated source file can enrich older records that were imported
-                    // before the original external location labels were preserved.
-                    $this->enrichImportedDetails($existingDeath, $importedDetails);
-
                     $incomingDeathData = [
                         'name' => $name,
                         'first_last_name' => $first,
@@ -457,16 +456,33 @@ class DeathImportController extends Controller
                         'death_district_id' => $incomingDeathDistrictId,
                         'death_location_id' => $deathLocation ? $deathLocation->id : null,
                         'death_cause_id' => $deathCause ? $deathCause->id : null,
+                        'cie_cause_code' => $cieCauseCode,
+                        'cie_cause_description' => $cieCauseDescription,
                     ];
 
-                    $recordResult = $this->deathImportDataHasDifferences($existingDeath, $incomingDeathData)
-                        ? 'different'
-                        : 'unchanged';
+                    $previousDeathData = $this->deathImportSnapshot($existingDeath);
+                    $changedFields = $this->deathImportChangedFields($previousDeathData, $incomingDeathData);
+                    $recordResult = $changedFields !== [] ? 'different' : 'unchanged';
 
                     if ($recordResult === 'different') {
                         $rowsChangedExisting++;
+                        $importDifferences[] = [
+                            'import_id' => $importId,
+                            'death_id' => $existingDeath->id,
+                            'source_import_id' => $existingDeath->import_id,
+                            'gov_folio' => $folio,
+                            'previous_values' => json_encode($previousDeathData, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
+                            'proposed_values' => json_encode($incomingDeathData, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
+                            'changed_fields' => json_encode($changedFields, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
+                            'status' => 'pending',
+                            'created_at' => now(),
+                            'updated_at' => now(),
+                        ];
                     } else {
                         $rowsSkippedDuplicates++;
+                        // Identical legacy records may safely receive missing descriptive
+                        // details without turning the import into an implicit update.
+                        $this->enrichImportedDetails($existingDeath, $importedDetails);
                     }
 
                     $importDeathRecords[] = $this->importDeathRecordPayload(
@@ -555,9 +571,12 @@ class DeathImportController extends Controller
 
         $recordTraceComplete = false;
         try {
-            DB::transaction(function () use ($importDeathRecords) {
+            DB::transaction(function () use ($importDeathRecords, $importDifferences) {
                 foreach (array_chunk($importDeathRecords, 500) as $recordChunk) {
                     DB::table('import_death_records')->insert($recordChunk);
+                }
+                foreach (array_chunk($importDifferences, 500) as $differenceChunk) {
+                    DB::table('import_differences')->insert($differenceChunk);
                 }
             });
             $recordTraceComplete = true;
@@ -807,6 +826,8 @@ class DeathImportController extends Controller
                     'imports.rows_failed',
                     'imports.rows_skipped_duplicates',
                     'imports.rows_changed_existing',
+                    DB::raw("(select count(*) from import_differences where import_differences.import_id = imports.id and import_differences.status = 'pending') as pending_differences"),
+                    DB::raw("(select count(*) from import_differences where import_differences.import_id = imports.id and import_differences.status in ('applied', 'kept', 'mixed')) as resolved_differences"),
                     'imports.record_trace_complete',
                     'imports.error_message',
                     'imports.is_reversed',
@@ -2238,11 +2259,45 @@ class DeathImportController extends Controller
         return null;
     }
 
-    private function deathImportDataHasDifferences(Death $death, array $incoming): bool
+    /** @return array<string, mixed> */
+    private function deathImportSnapshot(Death $death): array
     {
-        foreach (['name', 'first_last_name', 'second_last_name', 'sex'] as $field) {
-            if ($this->normalizeImportCompareString($death->{$field}) !== $this->normalizeImportCompareString($incoming[$field] ?? null)) {
-                return true;
+        return collect([
+            'name',
+            'first_last_name',
+            'second_last_name',
+            'age',
+            'age_years',
+            'age_months',
+            'age_days',
+            'sex',
+            'death_date',
+            'residence_municipality_id',
+            'death_municipality_id',
+            'district_id',
+            'death_district_id',
+            'death_location_id',
+            'death_cause_id',
+            'cie_cause_code',
+            'cie_cause_description',
+        ])->mapWithKeys(function (string $field) use ($death) {
+            $value = $death->{$field};
+            if ($field === 'death_date' && $value) {
+                $value = Carbon::parse($value)->format('Y-m-d');
+            }
+
+            return [$field => $value];
+        })->all();
+    }
+
+    /** @return array<int, string> */
+    private function deathImportChangedFields(array $previous, array $incoming): array
+    {
+        $changed = [];
+
+        foreach (['name', 'first_last_name', 'second_last_name', 'sex', 'cie_cause_code', 'cie_cause_description'] as $field) {
+            if ($this->normalizeImportCompareString($previous[$field] ?? null) !== $this->normalizeImportCompareString($incoming[$field] ?? null)) {
+                $changed[] = $field;
             }
         }
 
@@ -2258,12 +2313,21 @@ class DeathImportController extends Controller
             'death_location_id',
             'death_cause_id',
         ] as $field) {
-            if ($this->normalizeImportCompareInt($death->{$field}) !== $this->normalizeImportCompareInt($incoming[$field] ?? null)) {
-                return true;
+            if ($this->normalizeImportCompareInt($previous[$field] ?? null) !== $this->normalizeImportCompareInt($incoming[$field] ?? null)) {
+                $changed[] = $field;
             }
         }
 
-        return $this->normalizeImportCompareDate($death->death_date) !== $this->normalizeImportCompareDate($incoming['death_date'] ?? null);
+        if ($this->normalizeImportCompareDate($previous['death_date'] ?? null) !== $this->normalizeImportCompareDate($incoming['death_date'] ?? null)) {
+            $changed[] = 'death_date';
+        }
+
+        return $changed;
+    }
+
+    private function deathImportDataHasDifferences(Death $death, array $incoming): bool
+    {
+        return $this->deathImportChangedFields($this->deathImportSnapshot($death), $incoming) !== [];
     }
 
     private function externalImportLocationDetail(?string $source, ?string $resolvedCatalogName): ?string

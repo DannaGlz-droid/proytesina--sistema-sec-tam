@@ -10,6 +10,8 @@ const imports = [
         rows_failed: 0,
         rows_skipped_duplicates: 0,
         rows_changed_existing: 0,
+        pending_differences: 0,
+        resolved_differences: 0,
         is_reversed: false,
         created_at: '2026-11-06T16:31:00-06:00',
         user_id: 1,
@@ -27,6 +29,8 @@ const imports = [
         rows_failed: 3,
         rows_skipped_duplicates: 1,
         rows_changed_existing: 4,
+        pending_differences: 4,
+        resolved_differences: 0,
         is_reversed: false,
         created_at: '2026-10-26T18:39:00-06:00',
         user_id: 1,
@@ -44,6 +48,8 @@ const imports = [
         rows_failed: 6,
         rows_skipped_duplicates: 0,
         rows_changed_existing: 4,
+        pending_differences: 0,
+        resolved_differences: 4,
         is_reversed: true,
         created_at: '2026-08-24T18:14:00-06:00',
         user_id: 1,
@@ -61,6 +67,8 @@ const imports = [
         rows_failed: 0,
         rows_skipped_duplicates: 724,
         rows_changed_existing: 0,
+        pending_differences: 0,
+        resolved_differences: 0,
         is_reversed: true,
         created_at: '2026-07-01T10:00:00-06:00',
         user_id: 1,
@@ -78,6 +86,8 @@ const imports = [
         rows_failed: 0,
         rows_skipped_duplicates: 0,
         rows_changed_existing: 0,
+        pending_differences: 0,
+        resolved_differences: 0,
         failure_reason: 'Faltan columnas requeridas',
         is_reversed: false,
         created_at: '2026-06-30T09:00:00-06:00',
@@ -136,7 +146,9 @@ test('el historial conserva sus controles y resume los resultados reales', async
 
     await expect(page.locator('#imports-overview-corrections')).toHaveText('3');
     await expect(page.locator('#imports-overview-differences')).toHaveText('4');
+    await expect(page.locator('#imports-overview .imports-overview-item')).toHaveCount(3);
     await expect(page.locator('#imports-overview-latest')).toHaveText('ACCIDENTES 2024 AL 16 DE DIC 2024.xlsx');
+    await expect(page.locator('.imports-overview-item--latest')).not.toHaveAttribute('data-import-overview-filter');
     await expect(page.getByRole('tab', { name: /Activas 2/ })).toHaveAttribute('aria-selected', 'true');
     await expect(page.getByRole('tab', { name: /Revertidas 2/ })).toBeVisible();
     await expect(page.getByRole('tab', { name: /Fallidas 1/ })).toBeVisible();
@@ -168,7 +180,7 @@ test('el historial conserva sus controles y resume los resultados reales', async
     await expect(page.locator('.imports-file-icon')).toHaveCount(0);
     await expect(page.locator('.imports-result-list').nth(1)).toHaveAttribute(
         'aria-label',
-        '3 por corregir, 4 con diferencias, 2 agregados, 1 ya existente',
+        '3 por corregir, 4 por revisar, 2 agregados, 1 ya existente',
     );
     await expect(page.getByRole('columnheader', { name: 'Resultado', exact: true })).toBeVisible();
     await expect(page.locator('#imports-tbody .imports-table-row').nth(1)).toHaveClass(/has-corrections/);
@@ -182,22 +194,31 @@ test('el historial conserva sus controles y resume los resultados reales', async
     await correctionsFilter.click();
     await expect(correctionsFilter).toHaveAttribute('aria-pressed', 'true');
     await expect(correctionsFilter).toHaveClass(/is-filter-active/);
+    await expect(page.locator('#importsFilterCount')).toHaveText('1');
+    await expect(page.locator('#importsFilterChips')).toContainText('Resultado: requiere corrección');
     await expect(page.locator('#imports-tbody .imports-table-row')).toHaveCount(1);
     await expect(page.locator('#imports-tbody .imports-file-name')).toHaveText('meses_invalidos.xlsx');
     await expect(page.locator('#dt-info')).toContainText('Mostrando 1-1 de 1');
-    await correctionsFilter.click();
+    await page.getByRole('button', { name: 'Quitar Resultado: requiere corrección' }).click();
+    await expect(correctionsFilter).toHaveAttribute('aria-pressed', 'false');
+    await expect(page.locator('#importsFilterCount')).toBeHidden();
+    await expect(page.locator('#importsFilterChips')).toBeEmpty();
     await expect(page.locator('#imports-tbody .imports-table-row')).toHaveCount(2);
 
     await differencesFilter.click();
     await expect(differencesFilter).toHaveAttribute('aria-pressed', 'true');
+    await expect(page.locator('#importsFilterChips')).toContainText('Resultado: requiere revisión');
     await expect(page.locator('#imports-tbody .imports-table-row')).toHaveCount(1);
     await differencesFilter.click();
+    await expect(page.locator('#importsFilterChips')).toBeEmpty();
     await expect(page.locator('#imports-tbody .imports-table-row')).toHaveCount(2);
 
     const activeFileLeft = (await page.locator('#imports-tbody .imports-file-column').first().boundingBox())?.x;
     const activeFileColor = await page.locator('#imports-tbody .imports-file-name').first().evaluate(element => getComputedStyle(element).color);
 
     await page.getByRole('tab', { name: /Revertidas 2/ }).click();
+    await expect(page.locator('#imports-overview')).toBeHidden();
+    await expect(page.locator('#importsFilterChips')).toBeEmpty();
     await expect(page.locator('#imports-tbody .imports-table-row')).toHaveCount(2);
     await expect(page.getByRole('columnheader', { name: 'Resultado original', exact: true })).toBeVisible();
     await expect(page.locator('#dt-info')).toContainText('Mostrando 1-2 de 2');
@@ -238,33 +259,24 @@ test('el historial conserva sus controles y resume los resultados reales', async
     expect(rowHeight).toBeLessThanOrEqual(70);
 
     await page.getByRole('tab', { name: /Activas 2/ }).click();
+    await expect(page.locator('#imports-overview')).toBeVisible();
     await fileHeader.press('Enter');
     await expect(fileHeader).toHaveAttribute('aria-sort', 'ascending');
     await expect(dateHeader).toHaveAttribute('aria-sort', 'none');
 });
 
-test('el resumen prioriza pendientes sobre una cifra de cero agregados', async ({ page }) => {
+test('el resumen presenta un estado calmado cuando no hay pendientes', async ({ page }) => {
     const dataset = imports.map(item => item.id === 2
-        ? { ...item, created_at: '2026-11-16T18:11:00-06:00', rows_imported: 0 }
+        ? { ...item, rows_failed: 0, pending_differences: 0, resolved_differences: 4 }
         : item);
 
     await openImportHistory(page, { width: 1440, height: 900 }, dataset);
 
-    await expect(page.locator('#imports-overview-latest')).toHaveText('meses_invalidos.xlsx');
-    await expect(page.locator('#imports-overview-latest-detail')).toContainText('3 registros por corregir');
-    await expect(page.locator('#imports-overview-latest-detail')).not.toContainText('0 registros agregados');
-});
-
-test('el resumen muestra el último intento aunque haya fallado', async ({ page }) => {
-    const dataset = imports.map(item => item.id === 5
-        ? { ...item, created_at: '2026-11-16T19:15:00-06:00' }
-        : item);
-
-    await openImportHistory(page, { width: 1440, height: 900 }, dataset);
-
-    await expect(page.locator('.imports-overview-item--latest .imports-overview-label')).toHaveText('Última importación');
-    await expect(page.locator('#imports-overview-latest')).toHaveText('archivo_con_columnas_invalidas.xlsx');
-    await expect(page.locator('#imports-overview-latest-detail')).toContainText('Fallida · Faltan columnas requeridas');
+    await expect(page.locator('#imports-overview-corrections')).toHaveText('0');
+    await expect(page.locator('#imports-overview-differences')).toHaveText('0');
+    await expect(page.locator('[data-import-overview-filter="corrections"]')).toBeDisabled();
+    await expect(page.locator('[data-import-overview-filter="differences"]')).toBeDisabled();
+    await expect(page.locator('#imports-overview')).toContainText('Todo al día');
 });
 
 test('los filtros cambian su contenido y su regla con cada pestaña', async ({ page }) => {

@@ -1,14 +1,18 @@
-<section class="users-filter-card imports-filter-toolbar" aria-label="Controles del historial de importaciones">
-    <form id="filters-imports-form" class="users-filter-form" novalidate>
+@props(['inline' => false])
+
+<section @class(['users-filter-card', 'imports-filter-toolbar', 'imports-filter-toolbar--inline' => $inline]) aria-label="Controles del historial de importaciones">
+    <form id="filters-imports-form" class="users-filter-form" data-filter-layout="{{ $inline ? 'inline' : 'popover' }}" novalidate>
         <div class="users-filter-topbar">
             <div class="users-filter-popover-wrap">
                 <x-filtros.boton id="importsFilterToggle" controls="importsFilterPanel" count-id="importsFilterCount" class="app-standard-filter-toggle" />
+                @unless($inline)
                 <x-filtros.panel
                     id="importsFilterPanel"
                     clear-id="limpiarFiltrosImportaciones"
                     cancel-id="closeImportsFilters"
                     apply-id="aplicarFiltrosImportaciones"
-                    class="app-standard-filter-panel"
+                    class="app-standard-filter-panel imports-filter-panel {{ $inline ? 'imports-filter-panel--inline' : '' }}"
+                    :role="$inline ? 'region' : 'dialog'"
                 >
                         <x-filtros.seccion titulo="Fecha de carga" :abierto="true">
                             <div class="imports-filter-fields">
@@ -16,22 +20,22 @@
                                 <div id="customRangeSelectorImports" class="imports-filter-date-grid hidden"><label>Desde<input type="date" id="startDateImports" name="startDateImports"></label><label>Hasta<input type="date" id="endDateImports" name="endDateImports"></label></div>
                             </div>
                         </x-filtros.seccion>
-                        <x-filtros.seccion titulo="Usuario">
+                        <x-filtros.seccion titulo="Usuario" :abierto="$inline">
                             <div class="imports-filter-field"><label for="usuarioImports">Cargado por</label><x-filtros.select id="usuarioImports" name="usuarioImports" placeholder="Todos los usuarios"><option value="">Todos los usuarios</option></x-filtros.select></div>
                         </x-filtros.seccion>
-                        <x-filtros.seccion titulo="Resultado" data-import-filter-view="active">
+                        <x-filtros.seccion titulo="Resultado" :abierto="$inline" data-import-filter-view="active">
                             <div class="users-filter-options">
                                 <label class="users-filter-option imports-filter-option"><input type="checkbox" id="resultadoCorreccionImports" value="corrections" class="sr-only" data-import-context-filter data-filter-label="Resultado: requiere corrección"><span class="users-filter-check"><i class="fas fa-check" aria-hidden="true"></i></span><span>Requiere corrección</span></label>
-                                <label class="users-filter-option imports-filter-option"><input type="checkbox" id="resultadoDiferenciasImports" value="differences" class="sr-only" data-import-context-filter data-filter-label="Resultado: con diferencias"><span class="users-filter-check"><i class="fas fa-check" aria-hidden="true"></i></span><span>Con diferencias</span></label>
+                                <label class="users-filter-option imports-filter-option"><input type="checkbox" id="resultadoDiferenciasImports" value="differences" class="sr-only" data-import-context-filter data-filter-label="Resultado: requiere revisión"><span class="users-filter-check"><i class="fas fa-check" aria-hidden="true"></i></span><span>Requiere revisión</span></label>
                             </div>
                         </x-filtros.seccion>
-                        <x-filtros.seccion titulo="Efecto de la reversión" data-import-filter-view="reversed" hidden>
+                        <x-filtros.seccion titulo="Efecto de la reversión" :abierto="$inline" data-import-filter-view="reversed" hidden>
                             <div class="users-filter-options">
                                 <label class="users-filter-option imports-filter-option"><input type="checkbox" id="reversionDatosRetiradosImports" value="removed" class="sr-only" data-import-context-filter data-filter-label="Reversión: se retiraron datos"><span class="users-filter-check"><i class="fas fa-check" aria-hidden="true"></i></span><span>Se retiraron datos</span></label>
                                 <label class="users-filter-option imports-filter-option"><input type="checkbox" id="reversionSinDatosImports" value="none" class="sr-only" data-import-context-filter data-filter-label="Reversión: no había datos aplicados"><span class="users-filter-check"><i class="fas fa-check" aria-hidden="true"></i></span><span>No había datos aplicados</span></label>
                             </div>
                         </x-filtros.seccion>
-                        <x-filtros.seccion titulo="Motivo de falla" data-import-filter-view="failed" hidden>
+                        <x-filtros.seccion titulo="Motivo de falla" :abierto="$inline" data-import-filter-view="failed" hidden>
                             <div class="imports-filter-field">
                                 <label for="motivoFallaImports">Motivos</label>
                                 <x-filtros.select id="motivoFallaImports" name="motivoFallaImports" placeholder="Todos los motivos" :searchable="false" data-import-context-select>
@@ -49,10 +53,23 @@
                             </div>
                         </x-filtros.seccion>
                 </x-filtros.panel>
+                @endunless
             </div>
             <div class="users-filter-search"><i class="fas fa-search" aria-hidden="true"></i><input type="search" id="search-imports" placeholder="Buscar importaciones..." aria-label="Buscar importaciones" autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false" enterkeyhint="search" aria-busy="false"><span class="users-search-progress" aria-hidden="true"></span><button type="button" id="clear-imports-btn" class="hidden" title="Limpiar búsqueda" aria-label="Limpiar búsqueda"><i class="fas fa-times" aria-hidden="true"></i></button></div>
             <div class="app-table-page-size users-filter-page-size"><select id="per-page-imports" class="users-native-page-size" aria-hidden="true" tabindex="-1">@foreach([10,25,50,100] as $size)<option value="{{ $size }}" @selected($size === 10)>{{ $size }}</option>@endforeach</select><div class="users-page-size-dropdown"><button id="per-page-imports-button" type="button" class="users-page-size-button" aria-haspopup="listbox" aria-expanded="false"><span>Mostrar</span><strong id="per-page-imports-label">10</strong><i class="fas fa-list-ul users-page-size-icon" aria-hidden="true"></i></button><div id="per-page-imports-menu" class="users-page-size-menu hidden" role="listbox" aria-labelledby="per-page-imports-button">@foreach([10,25,50,100] as $size)<button type="button" role="option" class="users-page-size-option {{ $size === 10 ? 'is-active' : '' }}" data-value="{{ $size }}">{{ $size }}</button>@endforeach</div></div></div>
         </div>
+        @if($inline)
+            <x-filtros.panel
+                id="importsFilterPanel"
+                clear-id="limpiarFiltrosImportaciones"
+                cancel-id="closeImportsFilters"
+                apply-id="aplicarFiltrosImportaciones"
+                class="app-standard-filter-panel imports-filter-panel imports-filter-panel--inline"
+                role="region"
+            >
+                <x-filtros.importaciones-campos :inline="true" />
+            </x-filtros.panel>
+        @endif
         <div id="importsFilterChips" class="users-filter-chips" aria-live="polite"></div>
     </form>
 </section>
@@ -64,11 +81,16 @@ document.addEventListener('DOMContentLoaded', function () {
     const panel = document.getElementById('importsFilterPanel');
     const toggle = document.getElementById('importsFilterToggle');
     if (!form || !panel || !toggle) return;
+    const inlineLayout = form.dataset.filterLayout === 'inline';
     const panelBody = panel.querySelector('.users-filter-panel-body');
     const resetPanelScroll = () => {
         if (panelBody) panelBody.scrollTop = 0;
     };
     const syncPanelAvailableHeight = () => {
+        if (inlineLayout) {
+            panel.style.removeProperty('max-height');
+            return;
+        }
         if (window.matchMedia('(max-width: 639px)').matches) {
             panel.style.removeProperty('max-height');
             return;
@@ -84,7 +106,7 @@ document.addEventListener('DOMContentLoaded', function () {
     };
     toggle.addEventListener('click', () => setPanel(panel.classList.contains('is-collapsed')));
     document.getElementById('closeImportsFilters')?.addEventListener('click', () => setPanel(false));
-    document.addEventListener('click', event => { if (!event.target.closest('.users-filter-popover-wrap')) setPanel(false); });
+    document.addEventListener('click', event => { if (!inlineLayout && !event.target.closest('.users-filter-popover-wrap')) setPanel(false); });
     document.addEventListener('keydown', event => { if (event.key === 'Escape') setPanel(false); });
     window.addEventListener('resize', () => { if (!panel.classList.contains('is-collapsed')) syncPanelAvailableHeight(); });
     form.querySelectorAll('[data-filter-section]').forEach(section => section.querySelector('[data-filter-section-toggle]')?.addEventListener('click', function () { section.classList.toggle('is-open'); const open = section.classList.contains('is-open'); const icon = this.querySelector('i'); icon?.classList.toggle('fa-chevron-down', open); icon?.classList.toggle('fa-chevron-right', !open); }));
