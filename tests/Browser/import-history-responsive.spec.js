@@ -195,11 +195,11 @@ test('el historial conserva sus controles y resume los resultados reales', async
     await expect(correctionsFilter).toHaveAttribute('aria-pressed', 'true');
     await expect(correctionsFilter).toHaveClass(/is-filter-active/);
     await expect(page.locator('#importsFilterCount')).toHaveText('1');
-    await expect(page.locator('#importsFilterChips')).toContainText('Resultado: requiere corrección');
+    await expect(page.locator('#importsFilterChips')).toContainText('Resultado: por corregir');
     await expect(page.locator('#imports-tbody .imports-table-row')).toHaveCount(1);
     await expect(page.locator('#imports-tbody .imports-file-name')).toHaveText('meses_invalidos.xlsx');
     await expect(page.locator('#dt-info')).toContainText('Mostrando 1-1 de 1');
-    await page.getByRole('button', { name: 'Quitar Resultado: requiere corrección' }).click();
+    await page.getByRole('button', { name: 'Quitar Resultado: por corregir' }).click();
     await expect(correctionsFilter).toHaveAttribute('aria-pressed', 'false');
     await expect(page.locator('#importsFilterCount')).toBeHidden();
     await expect(page.locator('#importsFilterChips')).toBeEmpty();
@@ -207,7 +207,7 @@ test('el historial conserva sus controles y resume los resultados reales', async
 
     await differencesFilter.click();
     await expect(differencesFilter).toHaveAttribute('aria-pressed', 'true');
-    await expect(page.locator('#importsFilterChips')).toContainText('Resultado: requiere revisión');
+    await expect(page.locator('#importsFilterChips')).toContainText('Resultado: por revisar');
     await expect(page.locator('#imports-tbody .imports-table-row')).toHaveCount(1);
     await differencesFilter.click();
     await expect(page.locator('#importsFilterChips')).toBeEmpty();
@@ -308,18 +308,18 @@ test('los filtros cambian su contenido y su regla con cada pestaña', async ({ p
         body.style.removeProperty('height');
         body.style.removeProperty('flex');
     });
-    await page.locator('#importsFilterPanel').getByText('Requiere corrección', { exact: true }).click();
+    await page.locator('#importsFilterPanel').getByText('Por corregir', { exact: true }).click();
     await page.locator('#aplicarFiltrosImportaciones').click();
     await expect(page.locator('#imports-tbody .imports-table-row')).toHaveCount(1);
-    await expect(page.locator('#importsFilterChips')).toContainText('Resultado: requiere corrección');
+    await expect(page.locator('#importsFilterChips')).toContainText('Resultado: por corregir');
 
     await page.getByRole('tab', { name: /Revertidas 2/ }).click();
-    await expect(page.locator('#importsFilterChips')).not.toContainText('Resultado: requiere corrección');
+    await expect(page.locator('#importsFilterChips')).not.toContainText('Resultado: por corregir');
     await page.locator('#importsFilterToggle').click();
     await expect(page.locator('[data-import-filter-view="active"]')).toBeHidden();
     await expect(page.locator('[data-import-filter-view="reversed"]')).toBeVisible();
     await page.getByRole('button', { name: 'Efecto de la reversión', exact: true }).click();
-    await page.locator('#importsFilterPanel').getByText('No había datos aplicados', { exact: true }).click();
+    await page.locator('#importsFilterPanel').getByText('Sin datos aplicados', { exact: true }).click();
     await page.locator('#aplicarFiltrosImportaciones').click();
     await expect(page.locator('#imports-tbody .imports-table-row')).toHaveCount(1);
     await expect(page.locator('#imports-tbody .imports-file-name')).toHaveText('archivo_revertido_sin_cambios.xlsx');
@@ -334,6 +334,26 @@ test('los filtros cambian su contenido y su regla con cada pestaña', async ({ p
     await page.locator('#aplicarFiltrosImportaciones').click();
     await expect(page.locator('#imports-tbody .imports-table-row')).toHaveCount(1);
     await expect(page.locator('#importsFilterChips')).toContainText('Motivo: Columnas requeridas faltantes');
+});
+
+test('conserva la pestaña seleccionada al recargar', async ({ page }) => {
+    await openImportHistory(page, { width: 1440, height: 900 });
+
+    const reversedTab = page.getByRole('tab', { name: /Revertidas 2/ });
+    await reversedTab.click();
+    await expect(page).toHaveURL(/[?&]vista=revertidas(?:&|$)/);
+    await page.reload();
+    await expect(reversedTab).toHaveAttribute('aria-selected', 'true');
+    await expect(page.locator('#imports-overview')).toBeHidden();
+
+    const failedTab = page.getByRole('tab', { name: /Fallidas 1/ });
+    await failedTab.click();
+    await expect(page).toHaveURL(/[?&]vista=fallidas(?:&|$)/);
+    await page.reload();
+    await expect(failedTab).toHaveAttribute('aria-selected', 'true');
+
+    await page.getByRole('tab', { name: /Activas 2/ }).click();
+    await expect(page).not.toHaveURL(/[?&]vista=/);
 });
 
 test('la reversión explica el alcance y bloquea importaciones anteriores', async ({ page }) => {

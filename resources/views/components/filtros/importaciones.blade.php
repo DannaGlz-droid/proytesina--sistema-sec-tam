@@ -25,14 +25,14 @@
                         </x-filtros.seccion>
                         <x-filtros.seccion titulo="Resultado" :abierto="$inline" data-import-filter-view="active">
                             <div class="users-filter-options">
-                                <label class="users-filter-option imports-filter-option"><input type="checkbox" id="resultadoCorreccionImports" value="corrections" class="sr-only" data-import-context-filter data-filter-label="Resultado: requiere corrección"><span class="users-filter-check"><i class="fas fa-check" aria-hidden="true"></i></span><span>Requiere corrección</span></label>
-                                <label class="users-filter-option imports-filter-option"><input type="checkbox" id="resultadoDiferenciasImports" value="differences" class="sr-only" data-import-context-filter data-filter-label="Resultado: requiere revisión"><span class="users-filter-check"><i class="fas fa-check" aria-hidden="true"></i></span><span>Requiere revisión</span></label>
+                                <label class="users-filter-option imports-filter-option"><input type="checkbox" id="resultadoCorreccionImports" value="corrections" class="sr-only" data-import-context-filter data-filter-label="Resultado: por corregir"><span class="users-filter-check"><i class="fas fa-check" aria-hidden="true"></i></span><span>Por corregir</span></label>
+                                <label class="users-filter-option imports-filter-option"><input type="checkbox" id="resultadoDiferenciasImports" value="differences" class="sr-only" data-import-context-filter data-filter-label="Resultado: por revisar"><span class="users-filter-check"><i class="fas fa-check" aria-hidden="true"></i></span><span>Por revisar</span></label>
                             </div>
                         </x-filtros.seccion>
                         <x-filtros.seccion titulo="Efecto de la reversión" :abierto="$inline" data-import-filter-view="reversed" hidden>
                             <div class="users-filter-options">
-                                <label class="users-filter-option imports-filter-option"><input type="checkbox" id="reversionDatosRetiradosImports" value="removed" class="sr-only" data-import-context-filter data-filter-label="Reversión: se retiraron datos"><span class="users-filter-check"><i class="fas fa-check" aria-hidden="true"></i></span><span>Se retiraron datos</span></label>
-                                <label class="users-filter-option imports-filter-option"><input type="checkbox" id="reversionSinDatosImports" value="none" class="sr-only" data-import-context-filter data-filter-label="Reversión: no había datos aplicados"><span class="users-filter-check"><i class="fas fa-check" aria-hidden="true"></i></span><span>No había datos aplicados</span></label>
+                                <label class="users-filter-option imports-filter-option"><input type="checkbox" id="reversionDatosRetiradosImports" value="removed" class="sr-only" data-import-context-filter data-filter-label="Reversión: datos retirados"><span class="users-filter-check"><i class="fas fa-check" aria-hidden="true"></i></span><span>Datos retirados</span></label>
+                                <label class="users-filter-option imports-filter-option"><input type="checkbox" id="reversionSinDatosImports" value="none" class="sr-only" data-import-context-filter data-filter-label="Reversión: sin datos aplicados"><span class="users-filter-check"><i class="fas fa-check" aria-hidden="true"></i></span><span>Sin datos aplicados</span></label>
                             </div>
                         </x-filtros.seccion>
                         <x-filtros.seccion titulo="Motivo de falla" :abierto="$inline" data-import-filter-view="failed" hidden>

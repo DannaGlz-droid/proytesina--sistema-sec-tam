@@ -4,11 +4,13 @@
 
     @include('components.header-admin')
     @include('components.nav-estadisticas')
-
     <main class="users-management-page statistics-import-history-page px-4 lg:pl-10 pt-5 lg:pt-7 pb-8 lg:pb-10">
         <x-ui.page-header class="users-management-header" title="Historial de importaciones" description="Consulte las cargas realizadas, revise sus resultados y gestione las importaciones reversibles.">
             <x-slot:actions><a href="{{ route('statistic.data') }}" class="users-page-create-btn"><i class="fas fa-arrow-left" aria-hidden="true"></i>Volver a datos</a></x-slot:actions>
         </x-ui.page-header>
+        <nav class="imports-view-tabs-shell" aria-label="Vistas del historial de importaciones">
+            <x-imports-view-tabs />
+        </nav>
         <section id="imports-overview" class="imports-overview" aria-label="Resumen del historial de importaciones" aria-busy="true">
             <button type="button" class="imports-overview-item imports-overview-item--attention imports-overview-filter" data-import-overview-filter="corrections" aria-pressed="false">
                 <span class="imports-overview-icon" aria-hidden="true"><i class="fas fa-circle-exclamation"></i></span>
@@ -32,17 +34,6 @@
             </article>
         </section>
         <div class="app-table-card users-table-card imports-table-card">
-            <div class="imports-view-tabs" role="tablist" aria-label="Estado de las importaciones">
-                <button type="button" class="imports-view-tab is-active" role="tab" aria-selected="true" data-import-view="active">
-                    <span>Activas</span><span id="imports-view-count-active" class="imports-view-count">0</span>
-                </button>
-                <button type="button" class="imports-view-tab" role="tab" aria-selected="false" data-import-view="reversed">
-                    <span>Revertidas</span><span id="imports-view-count-reversed" class="imports-view-count">0</span>
-                </button>
-                <button type="button" class="imports-view-tab" role="tab" aria-selected="false" data-import-view="failed">
-                    <span>Fallidas</span><span id="imports-view-count-failed" class="imports-view-count">0</span>
-                </button>
-            </div>
             <div class="app-table-toolbar flex flex-row flex-wrap items-center justify-between gap-3 p-4">
                 <x-filtros.importaciones :inline="request()->query('filtros') === 'integrado'" />
                 <div id="bulk-selection-bar-imports" class="app-table-bulk-inline hidden items-center gap-3">
@@ -77,12 +68,41 @@ document.addEventListener('DOMContentLoaded', function () {
     let perPage = 10;
     let allImports = [];
     let filteredImports = [];
-    let currentImportView = 'active';
+    const statisticsDataUrl = @json(route('statistic.data'));
+    const importViewQueryValues = {
+        activas: 'active',
+        revertidas: 'reversed',
+        fallidas: 'failed',
+    };
+    const requestedImportView = new URLSearchParams(window.location.search).get('vista');
+    let currentImportView = importViewQueryValues[requestedImportView] || 'active';
     let currentOverviewFilter = null;
     let currentSort = {
         key: 'created_at',
         direction: 'desc'
     };
+
+    function syncImportViewUrl() {
+        const queryValue = {
+            reversed: 'revertidas',
+            failed: 'fallidas',
+        }[currentImportView];
+        const url = new URL(window.location.href);
+
+        if (queryValue) {
+            url.searchParams.set('vista', queryValue);
+        } else {
+            url.searchParams.delete('vista');
+        }
+
+        window.history.replaceState(window.history.state, '', url);
+    }
+
+    function importContinuationUrl(mode) {
+        const url = new URL(statisticsDataUrl, window.location.origin);
+        url.searchParams.set('importar', mode);
+        return `${url.pathname}${url.search}`;
+    }
 
     function notifyImport(message, type = 'success', duration = 3000) {
         if (typeof window.showToast === 'function') {
@@ -384,6 +404,7 @@ document.addEventListener('DOMContentLoaded', function () {
             const shouldClear = currentImportView === 'active' && currentOverviewFilter === filter;
             clearVisibleImportSelection();
             currentImportView = 'active';
+            syncImportViewUrl();
             window.clearImportContextFilters?.();
             if (!shouldClear && overviewFilterInputs[filter]) {
                 overviewFilterInputs[filter].checked = true;
@@ -407,6 +428,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
             clearVisibleImportSelection();
             currentImportView = nextView;
+            syncImportViewUrl();
             currentOverviewFilter = null;
             window.setImportFilterView?.(currentImportView, true);
             currentPage = 1;
@@ -1150,6 +1172,14 @@ document.addEventListener('DOMContentLoaded', function () {
             const fileRowsMarkup = imp.status === 'failed'
                 ? ''
                 : `<small>${Number(imp.rows_total || 0).toLocaleString('es-MX')} filas</small>`;
+            const failureReason = String(imp.error_summary || imp.failure_reason || '').trim();
+            const correctedFileReasons = ['Faltan columnas requeridas', 'Archivo dañado o no compatible'];
+            const failedImportMode = correctedFileReasons.includes(failureReason) ? 'corregido' : 'nuevamente';
+            const continuationAction = currentImportView === 'reversed'
+                ? `<a role="menuitem" class="users-row-menu-item" href="${escapeHtml(importContinuationUrl('nuevamente'))}"><i class="fas fa-file-import users-row-menu-icon" aria-hidden="true"></i><span>Importar nuevamente</span></a>`
+                : (currentImportView === 'failed'
+                    ? `<a role="menuitem" class="users-row-menu-item" href="${escapeHtml(importContinuationUrl(failedImportMode))}"><i class="fas ${failedImportMode === 'corregido' ? 'fa-file-circle-check' : 'fa-rotate-right'} users-row-menu-icon" aria-hidden="true"></i><span>${failedImportMode === 'corregido' ? 'Importar archivo corregido' : 'Importar nuevamente'}</span></a>`
+                    : '');
             row.innerHTML = `
                 ${selectionCell}
                 <td class="imports-file-column"><div class="imports-file-cell"><div><strong class="imports-file-name" tabindex="0" title="${escapeHtml(fileName)}" aria-label="Nombre completo del archivo: ${escapeHtml(fileName)}"><span class="imports-file-name-base">${escapeHtml(fileBaseName)}</span><span class="imports-file-name-extension">${escapeHtml(fileExtension)}</span></strong>${fileRowsMarkup}</div></div></td>
@@ -1160,6 +1190,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     ${currentImportView === 'active' && failedRows > 0 ? `<a role="menuitem" class="users-row-menu-item" href="/estadisticas/importaciones/${imp.id}/registros-fallidos"><i class="fas fa-exclamation-circle users-row-menu-icon" aria-hidden="true"></i><span>Revisar y corregir</span></a>` : ''}
                     ${currentImportView === 'active' && pendingDifferenceRows > 0 ? `<a role="menuitem" class="users-row-menu-item" href="/estadisticas/importaciones/${imp.id}/diferencias"><i class="fas fa-code-compare users-row-menu-icon" aria-hidden="true"></i><span>Revisar diferencias</span></a>` : ''}
                     ${currentImportView === 'active' ? `<button type="button" role="menuitem" class="users-row-menu-item${isReversalBlocked ? ' is-reversal-blocked' : ''}" data-reverse-import="${imp.id}" title="${escapeHtml(reverseActionTitle)}" aria-label="${escapeHtml(isReversalBlocked ? `Revertir, bloqueado. ${reverseActionTitle}` : 'Revertir importación')}" ${canReverse ? '' : 'disabled'}><i class="fas ${isReversalBlocked ? 'fa-lock' : 'fa-undo'} users-row-menu-icon" aria-hidden="true"></i><span>${isReversalBlocked ? 'Revertir (bloqueado)' : 'Revertir'}</span></button>` : ''}
+                    ${continuationAction}
                     ${canDeleteHistory ? `<button type="button" role="menuitem" class="users-row-menu-item users-row-menu-item-danger" data-delete-import="${imp.id}" title="${escapeHtml(deleteHistoryTitle)}"><i class="fas fa-trash users-row-menu-icon" aria-hidden="true"></i><span>Eliminar historial</span></button>` : ''}
                 </div></div></td>
             `;

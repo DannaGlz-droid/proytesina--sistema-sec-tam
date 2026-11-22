@@ -348,6 +348,8 @@ document.addEventListener('DOMContentLoaded', function () {
     var importOpen = document.getElementById('statistics-import-open');
     var importDialog = document.getElementById('statistics-import-dialog');
     var importCard = importDialog ? importDialog.querySelector('.statistics-import-dialog-card') : null;
+    var importTitle = document.getElementById('statistics-import-title');
+    var importDescription = document.getElementById('statistics-import-description');
     var fileInput = document.getElementById('fileInput');
     var dropArea = document.getElementById('statistics-import-dropzone');
     var importSubmit = document.getElementById('statistics-import-submit');
@@ -417,8 +419,32 @@ document.addEventListener('DOMContentLoaded', function () {
         importSubmit?.focus();
     }
 
-    function openDeathImportDialog() {
+    function configureDeathImportDialog(mode) {
+        var copy = {
+            corregido: {
+                title: 'Importar archivo corregido',
+                description: 'Seleccione la versión corregida del archivo. Se registrará como una importación nueva.',
+                action: 'Importar archivo corregido'
+            },
+            nuevamente: {
+                title: 'Importar nuevamente',
+                description: 'Seleccione el archivo que desea volver a importar. Se validará con los datos actuales y se registrará como una importación nueva.',
+                action: 'Importar nuevamente'
+            }
+        }[mode] || {
+            title: 'Importar datos',
+            description: 'Seleccione el archivo oficial de defunciones que desea cargar.',
+            action: 'Importar datos'
+        };
+
+        if (importTitle) importTitle.textContent = copy.title;
+        if (importDescription) importDescription.textContent = copy.description;
+        if (importDefault) importDefault.textContent = copy.action;
+    }
+
+    function openDeathImportDialog(mode) {
         if (!importDialog) return;
+        configureDeathImportDialog(mode);
         importPreviousFocus = document.activeElement;
         importDialog.classList.remove('hidden');
         importDialog.classList.add('flex');
@@ -485,7 +511,7 @@ document.addEventListener('DOMContentLoaded', function () {
         if (importCard) importCard.setAttribute('aria-busy', isImporting ? 'true' : 'false');
     }
 
-    importOpen?.addEventListener('click', openDeathImportDialog);
+    importOpen?.addEventListener('click', function () { openDeathImportDialog(); });
     importCloseControls.forEach(function (control) { control.addEventListener('click', requestCloseDeathImportDialog); });
     dropArea?.addEventListener('click', function () { fileInput?.click(); });
     importRemove?.addEventListener('click', function () {
@@ -493,6 +519,15 @@ document.addEventListener('DOMContentLoaded', function () {
         dropArea?.focus();
     });
     fileInput?.addEventListener('change', function (event) { selectDeathImportFile(event.target.files[0]); });
+
+    var importContinuationParams = new URLSearchParams(window.location.search);
+    var importContinuationMode = importContinuationParams.get('importar');
+    if (['corregido', 'nuevamente'].includes(importContinuationMode)) {
+        openDeathImportDialog(importContinuationMode);
+        var cleanImportUrl = new URL(window.location.href);
+        cleanImportUrl.searchParams.delete('importar');
+        window.history.replaceState(window.history.state, '', cleanImportUrl);
+    }
 
     if (dropArea) {
         ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(function (eventName) {
