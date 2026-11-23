@@ -236,6 +236,13 @@ test('el historial conserva sus controles y resume los resultados reales', async
     await expect(reversedRow.getByText('Revisar y corregir')).toHaveCount(0);
     await expect(reversedRow.locator('[data-delete-import]')).toBeEnabled();
     await expect(reversedRow.locator('.imports-status-note')).toHaveText('Datos retirados');
+    await reversedRow.locator('[data-import-menu-toggle]').click();
+    const reversedContinuationHref = await page.getByRole('menuitem', { name: 'Volver a importar' }).getAttribute('href');
+    const reversedContinuationUrl = new URL(reversedContinuationHref, 'http://localhost');
+    expect(reversedContinuationUrl.pathname).toBe('/estadisticas/datos');
+    expect(reversedContinuationUrl.searchParams.get('importar')).toBe('nuevamente');
+    expect(reversedContinuationUrl.searchParams.get('return_to')).toBe('/estadisticas/historial-importaciones?vista=revertidas');
+    await reversedRow.locator('[data-import-menu-toggle]').click();
     await expect(page.locator('#imports-tbody .imports-table-row').nth(1).locator('.imports-status-note')).toHaveText('No agregó datos');
     await page.locator('#select-all-imports').check();
     await expect(page.locator('#imports-tbody .row-check-import:checked')).toHaveCount(2);
@@ -255,6 +262,13 @@ test('el historial conserva sus controles y resume los resultados reales', async
     await expect(failedRow.locator('.imports-result-empty--failed strong, .imports-result-empty--failed small')).toHaveCount(0);
     await expect(failedRow.locator('.imports-status')).toContainText('Fallido');
     await expect(failedRow.locator('.imports-status-note')).toHaveCount(0);
+    await failedRow.locator('[data-import-menu-toggle]').click();
+    const failedContinuationHref = await page.getByRole('menuitem', { name: 'Importar corrección' }).getAttribute('href');
+    const failedContinuationUrl = new URL(failedContinuationHref, 'http://localhost');
+    expect(failedContinuationUrl.pathname).toBe('/estadisticas/datos');
+    expect(failedContinuationUrl.searchParams.get('importar')).toBe('corregido');
+    expect(failedContinuationUrl.searchParams.get('return_to')).toBe('/estadisticas/historial-importaciones?vista=fallidas');
+    await failedRow.locator('[data-import-menu-toggle]').click();
     const rowHeight = await page.locator('#imports-tbody .imports-table-row').first().evaluate(row => row.getBoundingClientRect().height);
     expect(rowHeight).toBeLessThanOrEqual(70);
 
@@ -367,10 +381,10 @@ test('la reversión explica el alcance y bloquea importaciones anteriores', asyn
     await expect(blockedReverseAction).toBeVisible();
     await expect(blockedReverseAction.locator('i')).toHaveClass(/fa-lock/);
     await blockedReverseAction.click();
-    await expect(page.locator('#report-confirm-title')).toHaveText('No se puede revertir todavía');
+    await expect(page.locator('#report-confirm-title')).toHaveText('No se puede revertir');
     await expect(page.locator('#report-confirm-description')).toContainText('ACCIDENTES 2024 AL 16 DE DIC 2024.xlsx');
     await expect(page.locator('#report-confirm-description')).toContainText('consistencia del historial');
-    await expect(page.locator('#report-confirm-description')).toContainText('cortes acumulativos');
+    await expect(page.locator('#report-confirm-description')).not.toContainText('cortes acumulativos');
     await expect(page.locator('#report-confirm-cancel')).toBeHidden();
     await page.locator('#report-confirm-accept').click();
 

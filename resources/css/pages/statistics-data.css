@@ -208,7 +208,7 @@
   line-height: 1.35;
 }
 
-.statistics-data-page .statistics-import-field-label > span {
+.statistics-data-page .statistics-import-field-label > .statistics-import-required {
   color: var(--ui-danger-text, #b91c1c);
 }
 

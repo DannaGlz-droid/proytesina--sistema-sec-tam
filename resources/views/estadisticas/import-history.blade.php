@@ -69,6 +69,7 @@ document.addEventListener('DOMContentLoaded', function () {
     let allImports = [];
     let filteredImports = [];
     const statisticsDataUrl = @json(route('statistic.data'));
+    const importHistoryUrl = @json(route('statistic.import-history-view'));
     const importViewQueryValues = {
         activas: 'active',
         revertidas: 'reversed',
@@ -98,9 +99,14 @@ document.addEventListener('DOMContentLoaded', function () {
         window.history.replaceState(window.history.state, '', url);
     }
 
-    function importContinuationUrl(mode) {
+    function importContinuationUrl(mode, returnView) {
         const url = new URL(statisticsDataUrl, window.location.origin);
+        const returnUrl = new URL(importHistoryUrl, window.location.origin);
         url.searchParams.set('importar', mode);
+        if (returnView && returnView !== 'active') {
+            returnUrl.searchParams.set('vista', returnView === 'reversed' ? 'revertidas' : 'fallidas');
+        }
+        url.searchParams.set('return_to', `${returnUrl.pathname}${returnUrl.search}`);
         return `${url.pathname}${url.search}`;
     }
 
@@ -1176,9 +1182,9 @@ document.addEventListener('DOMContentLoaded', function () {
             const correctedFileReasons = ['Faltan columnas requeridas', 'Archivo dañado o no compatible'];
             const failedImportMode = correctedFileReasons.includes(failureReason) ? 'corregido' : 'nuevamente';
             const continuationAction = currentImportView === 'reversed'
-                ? `<a role="menuitem" class="users-row-menu-item" href="${escapeHtml(importContinuationUrl('nuevamente'))}"><i class="fas fa-file-import users-row-menu-icon" aria-hidden="true"></i><span>Importar nuevamente</span></a>`
+                ? `<a role="menuitem" class="users-row-menu-item" href="${escapeHtml(importContinuationUrl('nuevamente', 'reversed'))}"><i class="fas fa-file-import users-row-menu-icon" aria-hidden="true"></i><span>Volver a importar</span></a>`
                 : (currentImportView === 'failed'
-                    ? `<a role="menuitem" class="users-row-menu-item" href="${escapeHtml(importContinuationUrl(failedImportMode))}"><i class="fas ${failedImportMode === 'corregido' ? 'fa-file-circle-check' : 'fa-rotate-right'} users-row-menu-icon" aria-hidden="true"></i><span>${failedImportMode === 'corregido' ? 'Importar archivo corregido' : 'Importar nuevamente'}</span></a>`
+                    ? `<a role="menuitem" class="users-row-menu-item" href="${escapeHtml(importContinuationUrl(failedImportMode, 'failed'))}"><i class="fas ${failedImportMode === 'corregido' ? 'fa-file-circle-check' : 'fa-rotate-right'} users-row-menu-icon" aria-hidden="true"></i><span>${failedImportMode === 'corregido' ? 'Importar corrección' : 'Volver a importar'}</span></a>`
                     : '');
             row.innerHTML = `
                 ${selectionCell}
@@ -1408,11 +1414,11 @@ document.addEventListener('DOMContentLoaded', function () {
             const blockingDate = new Date(newerActiveImport.created_at).toLocaleDateString('es-MX');
             const dependencyIsVerified = importItem?.reversal_block_reason === 'included_by_active_import';
             await window.confirmDialog({
-                title: 'No se puede revertir todavía',
+                title: 'No se puede revertir',
                 question: dependencyIsVerified
                     ? 'Otra importación activa incluye registros de esta carga.'
                     : 'Hay una importación activa posterior.',
-                description: `Primero revierta “${newerActiveImport.original_name || 'la carga posterior'}” del ${blockingDate}. Este orden conserva la consistencia del historial y evita dejar incompletos los cortes acumulativos.`,
+                description: `Primero revierta “${newerActiveImport.original_name || 'la carga posterior'}” del ${blockingDate} para conservar la consistencia del historial.`,
                 confirmText: 'Entendido',
                 hideCancel: true,
                 variant: 'warning'
@@ -1453,7 +1459,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 const blocker = json.blocking_import || {};
                 const blockingDate = blocker.created_at ? new Date(blocker.created_at).toLocaleDateString('es-MX') : 'una fecha posterior';
                 await window.confirmDialog({
-                    title: 'No se puede revertir todavía',
+                    title: 'No se puede revertir',
                     question: json.code === 'dependent_active_import_exists'
                         ? 'Otra importación activa incluye registros de esta carga.'
                         : 'El historial cambió y ahora existe una importación activa posterior.',

@@ -114,23 +114,19 @@ it('lists pending differences as a readable current-versus-proposed comparison',
     expect($fields['cie_cause_code']['proposed'])->toBe('X080');
 });
 
-it('keeps the card layout as default and offers an opt-in focused review', function (): void {
+it('offers one record-level comparison without alternate review modes', function (): void {
     $scenario = importDifferenceScenario();
 
     $this->actingAs($scenario['administrator'])
         ->get(route('statistic.import-differences-view', ['importId' => $scenario['importId']]))
         ->assertOk()
-        ->assertSee('Vista enfocada')
-        ->assertDontSee('Un registro a la vez');
-
-    $this->actingAs($scenario['administrator'])
-        ->get(route('statistic.import-differences-view', [
-            'importId' => $scenario['importId'],
-            'vista' => 'enfocada',
-        ]))
-        ->assertOk()
-        ->assertSee('Vista general')
-        ->assertDontSee('Un registro a la vez');
+        ->assertSee('Pendientes')
+        ->assertSee('Resueltas')
+        ->assertSee('Conservar actual')
+        ->assertSee('Usar archivo')
+        ->assertDontSee('Vista enfocada')
+        ->assertDontSee('Vista general')
+        ->assertDontSee('Aplicar a todos');
 });
 
 it('can combine decisions for independent fields and records the mixed resolution', function (): void {
@@ -283,6 +279,68 @@ it('can keep the current record without modifying it', function (): void {
 
     expect($scenario['death']->fresh()->death_cause_id)->toBe($scenario['previousCause']->id);
     $this->assertDatabaseHas('import_differences', ['id' => $scenario['difference']->id, 'status' => 'kept']);
+});
+
+it('can undo an applied record-level decision without overwriting unrelated data', function (): void {
+    $scenario = importDifferenceScenario();
+
+    $this->actingAs($scenario['administrator'])
+        ->postJson(route('statistic.resolve-import-difference', ['differenceId' => $scenario['difference']->id]), [
+            'decision' => 'apply',
+        ])
+        ->assertOk();
+
+    expect($scenario['death']->fresh()->death_cause_id)->toBe($scenario['proposedCause']->id);
+
+    $this->actingAs($scenario['administrator'])
+        ->postJson(route('statistic.undo-import-difference', ['differenceId' => $scenario['difference']->id]))
+        ->assertOk()
+        ->assertJsonPath('data.status', 'pending');
+
+    $death = $scenario['death']->fresh();
+    $difference = $scenario['difference']->fresh();
+    expect($death->death_cause_id)->toBe($scenario['previousCause']->id)
+        ->and($death->cie_cause_code)->toBe('X478')
+        ->and($death->name)->toBe('Geronimo')
+        ->and($difference->status)->toBe('pending')
+        ->and($difference->field_decisions)->toBeNull()
+        ->and($difference->resolved_at)->toBeNull();
+});
+
+it('reopens a kept decision when it is undone', function (): void {
+    $scenario = importDifferenceScenario();
+
+    $this->actingAs($scenario['administrator'])
+        ->postJson(route('statistic.resolve-import-difference', ['differenceId' => $scenario['difference']->id]), [
+            'decision' => 'keep',
+        ])
+        ->assertOk();
+
+    $this->actingAs($scenario['administrator'])
+        ->postJson(route('statistic.undo-import-difference', ['differenceId' => $scenario['difference']->id]))
+        ->assertOk();
+
+    expect($scenario['death']->fresh()->death_cause_id)->toBe($scenario['previousCause']->id)
+        ->and($scenario['difference']->fresh()->status)->toBe('pending');
+});
+
+it('refuses to undo when the resolved record changed afterward', function (): void {
+    $scenario = importDifferenceScenario();
+
+    $this->actingAs($scenario['administrator'])
+        ->postJson(route('statistic.resolve-import-difference', ['differenceId' => $scenario['difference']->id]), [
+            'decision' => 'apply',
+        ])
+        ->assertOk();
+
+    $scenario['death']->update(['cie_cause_code' => 'W999']);
+
+    $this->actingAs($scenario['administrator'])
+        ->postJson(route('statistic.undo-import-difference', ['differenceId' => $scenario['difference']->id]))
+        ->assertConflict();
+
+    expect($scenario['death']->fresh()->cie_cause_code)->toBe('W999')
+        ->and($scenario['difference']->fresh()->status)->toBe('applied');
 });
 
 it('separates pending and resolved differences for the selected import', function (): void {

@@ -68,7 +68,7 @@ class ImportDifferenceController extends Controller
         'cause_cie' => 'Causa y clasificación CIE',
     ];
 
-    public function index(Request $request, int $importId)
+    public function index(int $importId)
     {
         $import = DB::table('imports')->find($importId);
         abort_unless($import, 404);
@@ -78,7 +78,6 @@ class ImportDifferenceController extends Controller
             'importFileName' => $import->original_name ?? "Importación #{$importId}",
             'expectedDifferenceCount' => (int) ($import->rows_changed_existing ?? 0),
             'isPreview' => ($import->status ?? null) === 'preview',
-            'focusMode' => $request->query('vista') === 'enfocada',
         ]);
     }
 
@@ -94,9 +93,9 @@ class ImportDifferenceController extends Controller
             ->with('resolver:id,name,first_last_name,second_last_name')
             ->where('import_id', $importId)
             ->when($status === 'resolved', fn ($builder) => $builder->whereIn('status', ['applied', 'kept', 'mixed']))
-            ->when(!in_array($status, ['all', 'resolved'], true), fn ($builder) => $builder->where('status', $status))
+            ->when(! in_array($status, ['all', 'resolved'], true), fn ($builder) => $builder->where('status', $status))
             ->when($search !== '', function ($builder) use ($search) {
-                $term = '%' . $search . '%';
+                $term = '%'.$search.'%';
                 $builder->where(function ($nested) use ($term) {
                     $nested->where('gov_folio', 'like', $term)
                         ->orWhere('previous_values', 'like', $term)
@@ -153,7 +152,7 @@ class ImportDifferenceController extends Controller
                 }
 
                 $death = Death::query()->lockForUpdate()->find($difference->death_id);
-                if (!$death) {
+                if (! $death) {
                     return ['status' => 409, 'message' => 'El registro original ya no está disponible.'];
                 }
 
@@ -170,12 +169,12 @@ class ImportDifferenceController extends Controller
                 }
 
                 $decisions = [];
-                if (!empty($validated['decision'])) {
+                if (! empty($validated['decision'])) {
                     $decisions = array_fill_keys($changedFields, $validated['decision']);
                 } else {
                     foreach ($changedFields as $field) {
                         $decision = $validated['decisions'][$field] ?? null;
-                        if (!in_array($decision, ['apply', 'keep'], true)) {
+                        if (! in_array($decision, ['apply', 'keep'], true)) {
                             return [
                                 'status' => 422,
                                 'message' => 'Seleccione qué valor conservar en todos los campos.',
@@ -212,7 +211,7 @@ class ImportDifferenceController extends Controller
                         $difference->proposed_values[$field] ?? null
                     );
 
-                    if (!$currentMatchesPrevious && !$currentMatchesProposed) {
+                    if (! $currentMatchesPrevious && ! $currentMatchesProposed) {
                         return [
                             'status' => 409,
                             'message' => 'El registro cambió después de la importación. Recargue la revisión antes de decidir.',
@@ -221,8 +220,14 @@ class ImportDifferenceController extends Controller
                 }
 
                 $updates = [];
+                $resolutionChanges = [];
                 foreach ($changedFields as $field) {
-                    if ($decisions[$field] === 'apply') {
+                    if ($decisions[$field] === 'apply' && ! $this->valuesMatch(
+                        $field,
+                        $death->{$field},
+                        $difference->proposed_values[$field] ?? null
+                    )) {
+                        $resolutionChanges[$field] = $death->getRawOriginal($field);
                         $updates[$field] = $difference->proposed_values[$field] ?? null;
                     }
                 }
@@ -235,6 +240,7 @@ class ImportDifferenceController extends Controller
                     ? 'mixed'
                     : ($uniqueDecisions[0] === 'apply' ? 'applied' : 'kept');
                 $difference->field_decisions = $decisions;
+                $difference->resolution_changes = $resolutionChanges;
                 $difference->resolved_by_user_id = $request->user()?->id;
                 $difference->resolved_at = now();
                 $difference->save();
@@ -264,6 +270,90 @@ class ImportDifferenceController extends Controller
             return response()->json([
                 'ok' => false,
                 'message' => 'No se pudo guardar la decisión. Inténtelo nuevamente.',
+            ], 500);
+        }
+    }
+
+    public function undo(Request $request, int $differenceId)
+    {
+        try {
+            $result = DB::transaction(function () use ($differenceId, $request) {
+                $difference = ImportDifference::query()->lockForUpdate()->findOrFail($differenceId);
+
+                if (! in_array($difference->status, ['applied', 'kept', 'mixed'], true)) {
+                    return ['status' => 409, 'message' => 'Esta decisión ya no se puede deshacer.'];
+                }
+
+                if (! $difference->resolved_at || $difference->resolved_at->lt(now()->subMinutes(2))) {
+                    return ['status' => 409, 'message' => 'El tiempo para deshacer esta decisión terminó.'];
+                }
+
+                if ((int) $difference->resolved_by_user_id !== (int) $request->user()?->id) {
+                    return ['status' => 403, 'message' => 'Solo quien tomó la decisión puede deshacerla.'];
+                }
+
+                if (
+                    in_array($difference->status, ['applied', 'mixed'], true)
+                    && $difference->getRawOriginal('resolution_changes') === null
+                ) {
+                    return ['status' => 409, 'message' => 'Esta decisión no tiene información suficiente para deshacerse.'];
+                }
+
+                $death = Death::query()->lockForUpdate()->find($difference->death_id);
+                if (! $death) {
+                    return ['status' => 409, 'message' => 'El registro original ya no está disponible.'];
+                }
+
+                $resolutionChanges = $difference->resolution_changes ?? [];
+                foreach ($resolutionChanges as $field => $previousValue) {
+                    if (! in_array($field, self::EDITABLE_FIELDS, true)) {
+                        continue;
+                    }
+
+                    if (! $this->valuesMatch(
+                        $field,
+                        $death->{$field},
+                        $difference->proposed_values[$field] ?? null
+                    )) {
+                        return [
+                            'status' => 409,
+                            'message' => 'El registro cambió después de la decisión y ya no es seguro deshacerla.',
+                        ];
+                    }
+                }
+
+                if ($resolutionChanges !== []) {
+                    $death->fill($resolutionChanges)->save();
+                }
+
+                $difference->status = 'pending';
+                $difference->field_decisions = null;
+                $difference->resolution_changes = null;
+                $difference->resolved_by_user_id = null;
+                $difference->resolved_at = null;
+                $difference->save();
+
+                return [
+                    'status' => 200,
+                    'message' => 'La decisión se deshizo y el registro volvió a pendientes.',
+                    'data' => $this->present($difference->fresh('resolver')),
+                ];
+            });
+
+            return response()->json([
+                'ok' => $result['status'] === 200,
+                'message' => $result['message'],
+                'data' => $result['data'] ?? null,
+            ], $result['status']);
+        } catch (\Throwable $e) {
+            Log::error('Error undoing import difference resolution', [
+                'difference_id' => $differenceId,
+                'error' => $e->getMessage(),
+            ]);
+
+            return response()->json([
+                'ok' => false,
+                'message' => 'No se pudo deshacer la decisión. Inténtelo nuevamente.',
             ], 500);
         }
     }

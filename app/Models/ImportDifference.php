@@ -16,6 +16,7 @@ class ImportDifference extends Model
         'changed_fields',
         'status',
         'field_decisions',
+        'resolution_changes',
         'resolved_by_user_id',
         'resolved_at',
     ];
@@ -25,6 +26,7 @@ class ImportDifference extends Model
         'proposed_values' => 'array',
         'changed_fields' => 'array',
         'field_decisions' => 'array',
+        'resolution_changes' => 'array',
         'resolved_at' => 'datetime',
     ];
 

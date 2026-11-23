@@ -14,7 +14,7 @@
             <x-slot:actions>
                 <a href="{{ route('statistic.import-history-view') }}" class="users-page-create-btn">
                     <i class="fas fa-clock-rotate-left" aria-hidden="true"></i>
-                    Historial de cargas
+                    Historial de importaciones
                 </a>
                 <button id="statistics-import-open" type="button" class="users-page-create-btn" aria-haspopup="dialog" aria-controls="statistics-import-dialog">
                     <i class="fas fa-file-arrow-up" aria-hidden="true"></i>
@@ -198,7 +198,7 @@
                 <div class="ui-dialog__body statistics-import-dialog-body">
                     <div class="statistics-import-field">
                         <p id="statistics-import-field-label" class="statistics-import-field-label">
-                            Archivo de defunciones <span aria-hidden="true">*</span>
+                            <span id="statistics-import-field-copy">Archivo de defunciones</span> <span class="statistics-import-required" aria-hidden="true">*</span>
                         </p>
                         <button
                             id="statistics-import-dropzone"
@@ -350,6 +350,7 @@ document.addEventListener('DOMContentLoaded', function () {
     var importCard = importDialog ? importDialog.querySelector('.statistics-import-dialog-card') : null;
     var importTitle = document.getElementById('statistics-import-title');
     var importDescription = document.getElementById('statistics-import-description');
+    var importFieldCopy = document.getElementById('statistics-import-field-copy');
     var fileInput = document.getElementById('fileInput');
     var dropArea = document.getElementById('statistics-import-dropzone');
     var importSubmit = document.getElementById('statistics-import-submit');
@@ -367,6 +368,8 @@ document.addEventListener('DOMContentLoaded', function () {
     var importPreviousFocus = null;
     var deathImporting = false;
     var deathImportAwaitingDiscard = false;
+    var importContinuationReturnUrl = null;
+    var importHistoryPath = new URL(@json(route('statistic.import-history-view')), window.location.origin).pathname;
 
     function setDeathImportError(message) {
         if (!importError) return;
@@ -422,24 +425,46 @@ document.addEventListener('DOMContentLoaded', function () {
     function configureDeathImportDialog(mode) {
         var copy = {
             corregido: {
-                title: 'Importar archivo corregido',
-                description: 'Seleccione la versión corregida del archivo. Se registrará como una importación nueva.',
-                action: 'Importar archivo corregido'
+                title: 'Importar corrección',
+                description: 'Seleccione el archivo corregido. Se registrará como una importación nueva.',
+                field: 'Archivo',
+                action: 'Importar'
             },
             nuevamente: {
-                title: 'Importar nuevamente',
-                description: 'Seleccione el archivo que desea volver a importar. Se validará con los datos actuales y se registrará como una importación nueva.',
-                action: 'Importar nuevamente'
+                title: 'Volver a importar',
+                description: 'Seleccione el archivo. Se validará como una importación nueva.',
+                field: 'Archivo',
+                action: 'Importar'
             }
         }[mode] || {
             title: 'Importar datos',
             description: 'Seleccione el archivo oficial de defunciones que desea cargar.',
+            field: 'Archivo de defunciones',
             action: 'Importar datos'
         };
 
         if (importTitle) importTitle.textContent = copy.title;
         if (importDescription) importDescription.textContent = copy.description;
+        if (importFieldCopy) importFieldCopy.textContent = copy.field;
         if (importDefault) importDefault.textContent = copy.action;
+    }
+
+    function resolveImportContinuationReturn(rawUrl) {
+        if (!rawUrl) return null;
+
+        try {
+            var returnUrl = new URL(rawUrl, window.location.origin);
+            if (returnUrl.origin !== window.location.origin || returnUrl.pathname !== importHistoryPath) return null;
+            return `${returnUrl.pathname}${returnUrl.search}`;
+        } catch (error) {
+            return null;
+        }
+    }
+
+    function returnFromImportContinuation() {
+        if (!importContinuationReturnUrl) return false;
+        window.location.assign(importContinuationReturnUrl);
+        return true;
     }
 
     function openDeathImportDialog(mode) {
@@ -474,7 +499,7 @@ document.addEventListener('DOMContentLoaded', function () {
     async function requestCloseDeathImportDialog() {
         if (deathImporting || deathImportAwaitingDiscard) return;
         if (!selectedImportFile) {
-            closeDeathImportDialog();
+            if (!returnFromImportContinuation()) closeDeathImportDialog();
             return;
         }
 
@@ -488,7 +513,9 @@ document.addEventListener('DOMContentLoaded', function () {
             variant: 'warning'
         });
         deathImportAwaitingDiscard = false;
-        if (confirmed) closeDeathImportDialog();
+        if (confirmed) {
+            if (!returnFromImportContinuation()) closeDeathImportDialog();
+        }
         else importSubmit?.focus();
     }
 
@@ -523,9 +550,11 @@ document.addEventListener('DOMContentLoaded', function () {
     var importContinuationParams = new URLSearchParams(window.location.search);
     var importContinuationMode = importContinuationParams.get('importar');
     if (['corregido', 'nuevamente'].includes(importContinuationMode)) {
+        importContinuationReturnUrl = resolveImportContinuationReturn(importContinuationParams.get('return_to'));
         openDeathImportDialog(importContinuationMode);
         var cleanImportUrl = new URL(window.location.href);
         cleanImportUrl.searchParams.delete('importar');
+        cleanImportUrl.searchParams.delete('return_to');
         window.history.replaceState(window.history.state, '', cleanImportUrl);
     }
 
