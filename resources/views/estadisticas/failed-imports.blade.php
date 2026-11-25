@@ -16,7 +16,24 @@
                 <div class="failed-imports-file-context">
                     <span class="failed-imports-file-icon" aria-hidden="true"><i class="far fa-file-excel"></i></span>
                     <div>
-                        <strong title="{{ $importFileName }}">{{ $importFileName }}</strong>
+                        @php
+                            $fileExtensionPosition = strrpos($importFileName, '.');
+                            $importFileBaseName = $fileExtensionPosition > 0
+                                ? substr($importFileName, 0, $fileExtensionPosition)
+                                : $importFileName;
+                            $importFileExtension = $fileExtensionPosition > 0
+                                ? substr($importFileName, $fileExtensionPosition)
+                                : '';
+                        @endphp
+                        <strong
+                            class="failed-imports-file-name"
+                            tabindex="0"
+                            title="{{ $importFileName }}"
+                            aria-label="Nombre completo del archivo: {{ $importFileName }}"
+                        >
+                            <span class="failed-imports-file-name-base">{{ $importFileBaseName }}</span>
+                            <span class="failed-imports-file-name-extension">{{ $importFileExtension }}</span>
+                        </strong>
                         <small id="failed-imports-pending-count" aria-live="polite">Consultando registros pendientes…</small>
                     </div>
                 </div>

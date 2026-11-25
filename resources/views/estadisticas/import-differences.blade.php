@@ -24,8 +24,24 @@
                 <div class="failed-imports-file-context import-differences-file-context">
                     <span class="failed-imports-file-icon" aria-hidden="true"><i class="far fa-file-excel"></i></span>
                     <div>
-                        <strong title="{{ $importFileName }}">{{ $importFileName }}</strong>
-                        <small id="differences-pending-count">Consultando diferencias pendientes…</small>
+                        @php
+                            $fileExtensionPosition = strrpos($importFileName, '.');
+                            $importFileBaseName = $fileExtensionPosition > 0
+                                ? substr($importFileName, 0, $fileExtensionPosition)
+                                : $importFileName;
+                            $importFileExtension = $fileExtensionPosition > 0
+                                ? substr($importFileName, $fileExtensionPosition)
+                                : '';
+                        @endphp
+                        <strong
+                            class="import-differences-file-name"
+                            tabindex="0"
+                            title="{{ $importFileName }}"
+                            aria-label="Nombre completo del archivo: {{ $importFileName }}"
+                        >
+                            <span class="import-differences-file-name-base">{{ $importFileBaseName }}</span>
+                            <span class="import-differences-file-name-extension">{{ $importFileExtension }}</span>
+                        </strong>
                         @if ($isPreview ?? false)
                             <small class="import-differences-preview-note"><i class="fas fa-eye" aria-hidden="true"></i> Vista previa · decisiones deshabilitadas</small>
                         @endif
@@ -45,7 +61,7 @@
                     label-id="per-page-import-differences-label"
                     menu-id="per-page-import-differences-menu"
                     :options="[4, 6, 10]"
-                    :selected="4"
+                    :selected="10"
                 />
             </x-ui.data-table.toolbar>
 
@@ -143,6 +159,7 @@
                     <span>Registro actual</span>
                     <strong>${escapeHtml(field.previous)}</strong>
                 </div>
+                <span class="import-difference-row-arrow" aria-hidden="true">&rarr;</span>
                 <div class="import-difference-plain-value import-difference-plain-value--imported">
                     <span>Archivo importado</span>
                     <strong>${escapeHtml(field.proposed)}</strong>
@@ -151,33 +168,37 @@
 
         const disabled = isPreview ? 'disabled title="Las decisiones están deshabilitadas en la vista previa"' : '';
         return `
-            <article class="import-difference-card is-pending" data-difference-id="${item.id}">
-                <header class="import-difference-card-header">
-                    <div class="import-difference-person">
-                        <span class="import-difference-person-icon" aria-hidden="true"><i class="far fa-user"></i></span>
+            <article class="record-card import-difference-card is-pending" data-difference-id="${item.id}">
+                <header class="import-difference-compact-header">
+                    <span class="import-difference-status-icon" aria-hidden="true">
+                        <i class="far fa-user"></i>
+                    </span>
+                    <div class="import-difference-compact-person">
                         <div>
                             <h2 title="${escapeHtml(item.person_name)}">${escapeHtml(item.person_name)}</h2>
-                            <p>Folio ${escapeHtml(item.gov_folio || 'sin folio')}</p>
+                            <p>Folio ${escapeHtml(item.gov_folio || 'Sin folio')}</p>
                         </div>
                     </div>
-                    <span class="import-difference-status">${fieldSummary}</span>
+                    <span class="import-difference-field-count">${fieldSummary}</span>
                 </header>
-                <div class="import-difference-comparison-head" aria-hidden="true">
-                    <span></span>
-                    <span><i class="fas fa-database"></i> Registro actual</span>
-                    <span><i class="fas fa-file-import"></i> Archivo importado</span>
-                </div>
-                <div class="import-difference-comparison-body">${fields}</div>
-                <footer class="import-difference-card-actions">
-                    <span>Decisión para todo el registro</span>
-                    <div>
+                <section class="import-difference-comparison-section" aria-label="Campos con diferencias">
+                    <div class="import-difference-card-column-head" aria-hidden="true">
+                        <span class="import-difference-column-title"><i class="far fa-rectangle-list"></i> Campo</span>
+                        <span>Registro actual</span>
+                        <span></span>
+                        <span>Archivo importado</span>
+                    </div>
+                    <div class="import-difference-comparison-body">${fields}</div>
+                </section>
+                <footer class="import-difference-compact-actions">
+                    <span aria-hidden="true"></span>
                         <button type="button" class="ui-button ui-button--secondary" data-difference-decision="keep" ${disabled}>
                             Conservar actual
                         </button>
-                        <button type="button" class="ui-button ui-button--primary" data-difference-decision="apply" ${disabled}>
+                    <span aria-hidden="true"></span>
+                        <button type="button" class="ui-button ui-button--secondary" data-difference-decision="apply" ${disabled}>
                             Usar archivo
                         </button>
-                    </div>
                 </footer>
             </article>`;
     }
@@ -185,15 +206,30 @@
     function renderResolvedCard(item) {
         const meta = [item.resolved_by ? `Por ${item.resolved_by}` : '', resolvedDate(item.resolved_at)].filter(Boolean).join(' · ');
         return `
-            <article class="import-difference-card import-difference-card--resolved" data-difference-id="${item.id}">
-                <div class="import-difference-resolved-person">
-                    <h2 title="${escapeHtml(item.person_name)}">${escapeHtml(item.person_name)}</h2>
-                    <p>Folio ${escapeHtml(item.gov_folio || 'sin folio')}</p>
+            <article class="record-card import-difference-card import-difference-card--resolved" data-difference-id="${item.id}">
+                <div class="failed-record-error import-difference-alert is-corrected">
+                    <span class="failed-record-error-icon"><i class="fas fa-circle-check" aria-hidden="true"></i></span>
+                    <div>
+                        <p class="failed-record-error-title">${escapeHtml(statusLabel(item.status))}</p>
+                        ${meta ? `<ul class="error-messages"><li>${escapeHtml(meta)}</li></ul>` : ''}
+                    </div>
                 </div>
-                <div class="import-difference-resolution">
-                    <strong><i class="fas fa-circle-check" aria-hidden="true"></i>${escapeHtml(statusLabel(item.status))}</strong>
-                </div>
-                ${meta ? `<span class="import-difference-resolution-meta">${escapeHtml(meta)}</span>` : ''}
+                <section class="failed-correction-section import-difference-identity-section">
+                    <div class="failed-correction-section-heading">
+                        <i class="far fa-user" aria-hidden="true"></i>
+                        <h2>Información de la persona</h2>
+                    </div>
+                    <div class="import-difference-identity-grid">
+                        <div class="import-difference-readonly-field">
+                            <span>Nombre</span>
+                            <strong title="${escapeHtml(item.person_name)}">${escapeHtml(item.person_name)}</strong>
+                        </div>
+                        <div class="import-difference-readonly-field">
+                            <span>Folio</span>
+                            <strong>${escapeHtml(item.gov_folio || 'Sin folio')}</strong>
+                        </div>
+                    </div>
+                </section>
             </article>`;
     }
 
@@ -265,9 +301,6 @@
             if (!records.length) renderEmpty(payload.counts.total);
             document.getElementById('difference-count-pending').textContent = payload.counts.pending;
             document.getElementById('difference-count-resolved').textContent = payload.counts.resolved;
-            document.getElementById('differences-pending-count').textContent = payload.counts.pending === 1
-                ? '1 diferencia pendiente'
-                : `${payload.counts.pending} diferencias pendientes`;
             const first = page.total ? page.from : 0;
             const last = page.total ? page.to : 0;
             info.innerHTML = page.total

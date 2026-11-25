@@ -1498,6 +1498,24 @@ body .users-management-page.statistics-import-history-page .imports-table-card >
     white-space: nowrap;
 }
 
+.statistics-failed-imports-page .failed-imports-file-context .failed-imports-file-name {
+    display: flex;
+    min-width: 0;
+    max-width: 100%;
+}
+
+.statistics-failed-imports-page .failed-imports-file-name-base {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.statistics-failed-imports-page .failed-imports-file-name-extension {
+    flex: 0 0 auto;
+    white-space: nowrap;
+}
+
 .statistics-failed-imports-page .failed-imports-file-context small {
     color: #66758d;
     font-size: .75rem;
@@ -2980,63 +2998,76 @@ body .users-management-page.statistics-import-history-page .imports-table-card >
 
 .statistics-import-differences-page .import-differences-tabs {
     display: flex;
-    gap: 1.4rem;
-    min-height: 3rem;
-    align-items: flex-end;
+    gap: 1.35rem;
+    min-height: 3.1rem;
+    align-items: end;
+    overflow-x: auto;
     border-bottom: 1px solid #e2e8f0;
     padding: 0 1.25rem;
     background: #fff;
+    scrollbar-width: none;
+}
+
+.statistics-import-differences-page .import-differences-tabs::-webkit-scrollbar {
+    display: none;
 }
 
 .statistics-import-differences-page .import-differences-tab {
     position: relative;
     display: inline-flex;
-    min-height: 3rem;
+    min-height: 3.1rem;
+    flex: 0 0 auto;
     align-items: center;
-    gap: .45rem;
+    gap: .42rem;
+    padding: .15rem .08rem 0;
     border: 0;
+    border-bottom: 2px solid transparent;
     background: transparent;
-    color: #526278;
-    font-size: .82rem;
+    color: #64748b;
+    font-family: "Open Sans", sans-serif;
+    font-size: .76rem;
     font-weight: 600;
+    cursor: pointer;
+    transition: border-color 150ms ease, color 150ms ease;
 }
 
 .statistics-import-differences-page .import-differences-tab::after {
-    position: absolute;
-    right: 0;
-    bottom: -1px;
-    left: 0;
-    height: 2px;
-    background: transparent;
-    content: "";
+    display: none;
 }
 
 .statistics-import-differences-page .import-differences-tab span {
     display: inline-flex;
-    min-width: 1.35rem;
-    height: 1.25rem;
+    min-width: 1.25rem;
     align-items: center;
     justify-content: center;
     border-radius: 999px;
-    background: #eef2f7;
-    padding: 0 .38rem;
-    color: #526278;
-    font-size: .68rem;
+    background: #eef1f5;
+    padding: .08rem .34rem;
+    color: #536279;
+    font-size: .64rem;
     font-variant-numeric: tabular-nums;
+    line-height: 1.25;
+    text-align: center;
+    transition: background-color 150ms ease, color 150ms ease;
 }
 
-.statistics-import-differences-page .import-differences-tab:hover,
+.statistics-import-differences-page .import-differences-tab:hover {
+    color: #334155;
+}
+
 .statistics-import-differences-page .import-differences-tab.is-active {
-    color: var(--difference-accent);
+    border-bottom-color: #7b1039;
+    color: #7b1039;
 }
 
-.statistics-import-differences-page .import-differences-tab.is-active::after {
-    background: var(--difference-accent);
+.statistics-import-differences-page .import-differences-tab.is-active span {
+    background: #f7e9ee;
+    color: #7b1039;
 }
 
 .statistics-import-differences-page .import-differences-tab:focus-visible {
-    border-radius: .25rem;
-    outline: 2px solid rgb(111 13 55 / 25%);
+    border-radius: .2rem;
+    outline: 2px solid #7b1039;
     outline-offset: 2px;
 }
 
@@ -4396,5 +4427,603 @@ body .users-management-page.statistics-import-history-page .imports-table-card >
         grid-template-columns: minmax(0, 1fr);
         gap: .45rem;
         padding: .8rem .75rem;
+    }
+}
+
+/* Import differences: visual parity with failed imports */
+.statistics-import-differences-page .import-differences-list,
+.statistics-import-differences-page .import-differences-loading-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    align-items: start;
+    gap: .9rem;
+    background: #fafafa;
+    padding: 1rem;
+}
+
+.statistics-import-differences-page .record-card.import-difference-card {
+    display: block;
+    overflow: hidden;
+    min-height: 0;
+    border: 1px solid var(--failed-line) !important;
+    border-top: 1px solid var(--failed-line) !important;
+    border-radius: var(--ui-radius-panel, 10px) !important;
+    background: #fff !important;
+    box-shadow: 0 4px 14px rgba(49, 46, 42, .04) !important;
+}
+
+.statistics-import-differences-page .record-card.import-difference-card:hover {
+    border-color: var(--ui-border, #cbd5e1) !important;
+    border-top-color: var(--ui-border, #cbd5e1) !important;
+    background: #fff !important;
+    box-shadow: 0 7px 18px rgba(49, 46, 42, .065) !important;
+}
+
+.statistics-import-differences-page .record-card > .import-difference-alert {
+    border-bottom-color: #f0d9a8 !important;
+    background: #fffbf3 !important;
+    box-shadow: inset 3px 0 0 #c58a22 !important;
+}
+
+.statistics-import-differences-page .import-difference-alert .failed-record-error-icon {
+    color: #a66700 !important;
+}
+
+.statistics-import-differences-page .import-difference-alert .failed-record-error-title,
+.statistics-import-differences-page .record-card > .import-difference-alert .error-messages {
+    color: #704500 !important;
+}
+
+.statistics-import-differences-page .record-card > .import-difference-alert.is-corrected {
+    border-bottom-color: var(--ui-success-border, #bbf7d0) !important;
+    background: #f8fcf9 !important;
+    box-shadow: inset 3px 0 0 var(--failed-success) !important;
+}
+
+.statistics-import-differences-page .import-difference-alert.is-corrected .failed-record-error-icon,
+.statistics-import-differences-page .import-difference-alert.is-corrected .failed-record-error-title,
+.statistics-import-differences-page .record-card > .import-difference-alert.is-corrected .error-messages {
+    color: var(--failed-success-text) !important;
+}
+
+.statistics-import-differences-page .import-difference-identity-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.65fr) minmax(12rem, .75fr);
+    gap: .85rem;
+    padding: .82rem .9rem .95rem;
+}
+
+.statistics-import-differences-page .import-difference-readonly-field {
+    min-width: 0;
+}
+
+.statistics-import-differences-page .import-difference-readonly-field span {
+    display: block;
+    margin-bottom: .32rem;
+    color: var(--failed-muted);
+    font-size: .72rem;
+    font-weight: 500;
+}
+
+.statistics-import-differences-page .import-difference-readonly-field strong {
+    display: flex;
+    min-height: 2.45rem;
+    align-items: center;
+    overflow: hidden;
+    border-radius: 7px;
+    background: #f5f7f9;
+    padding: .55rem .7rem;
+    color: var(--failed-ink);
+    font-size: .8rem;
+    font-weight: 500;
+    line-height: 1.35;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.statistics-import-differences-page .import-difference-comparison-head,
+.statistics-import-differences-page .import-difference-field-row {
+    display: grid;
+    grid-template-columns: minmax(8.5rem, .62fr) repeat(2, minmax(0, 1fr));
+    gap: .85rem;
+}
+
+.statistics-import-differences-page .import-difference-comparison-head {
+    border: 0;
+    background: #fff;
+    padding: .72rem .9rem .38rem;
+    color: var(--failed-muted);
+    font-size: .7rem;
+    font-weight: 600;
+}
+
+.statistics-import-differences-page .import-difference-comparison-body {
+    display: grid;
+    gap: .62rem;
+    padding: 0 .9rem .95rem;
+}
+
+.statistics-import-differences-page .import-difference-field-row {
+    min-height: 0;
+    align-items: stretch;
+    border: 0;
+    padding: 0;
+}
+
+.statistics-import-differences-page .import-difference-field-label {
+    display: flex;
+    align-items: center;
+    padding: .55rem 0;
+    color: var(--failed-ink);
+    font-size: .76rem;
+    font-weight: 600;
+}
+
+.statistics-import-differences-page .import-difference-plain-value {
+    display: flex;
+    min-height: 2.65rem;
+    align-items: center;
+    border: 0;
+    border-radius: 7px;
+    background: #f5f7f9;
+    padding: .55rem .7rem;
+    color: var(--failed-ink);
+}
+
+.statistics-import-differences-page .import-difference-plain-value--current {
+    background: #f5f7f9;
+}
+
+.statistics-import-differences-page .import-difference-plain-value--imported {
+    border: 1px solid #efddb8;
+    background: #fffbf3;
+    color: #704500;
+}
+
+.statistics-import-differences-page .import-difference-plain-value strong {
+    color: inherit;
+    font-size: .8rem;
+    font-weight: 500;
+    line-height: 1.38;
+}
+
+.statistics-import-differences-page .action-buttons-view.import-difference-card-actions {
+    display: flex;
+    min-height: 0;
+    align-items: center;
+    justify-content: flex-end;
+    gap: .55rem !important;
+    border: 0;
+    background: #fff;
+    padding: .7rem .9rem !important;
+}
+
+.statistics-import-differences-page .action-buttons-view.import-difference-card-actions .ui-button {
+    width: auto !important;
+    min-width: 0 !important;
+    min-height: 34px !important;
+}
+
+.statistics-import-differences-page .import-difference-card--resolved {
+    display: block !important;
+    min-height: 0;
+    padding: 0;
+}
+
+.statistics-import-differences-page .import-difference-card--resolved .import-difference-identity-section {
+    border-bottom: 0;
+}
+
+@media (max-width: 760px) {
+    .statistics-import-differences-page .import-difference-identity-grid {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .statistics-import-differences-page .import-difference-comparison-head {
+        display: none;
+    }
+
+    .statistics-import-differences-page .import-difference-field-row {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .statistics-import-differences-page .import-difference-field-label {
+        grid-column: 1 / -1;
+        padding: 0 0 .1rem;
+    }
+
+    .statistics-import-differences-page .import-difference-plain-value {
+        display: block;
+    }
+
+    .statistics-import-differences-page .import-difference-plain-value span {
+        display: block;
+        margin-bottom: .25rem;
+        color: var(--failed-muted);
+        font-size: .68rem;
+        font-weight: 600;
+    }
+}
+
+@media (max-width: 639px) {
+    .statistics-import-differences-page .import-differences-list,
+    .statistics-import-differences-page .import-differences-loading-grid {
+        padding: .75rem;
+    }
+
+    .statistics-import-differences-page .import-difference-field-row {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .statistics-import-differences-page .import-difference-plain-value + .import-difference-plain-value {
+        margin-top: 0;
+    }
+
+    .statistics-import-differences-page .action-buttons-view.import-difference-card-actions {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .statistics-import-differences-page .action-buttons-view.import-difference-card-actions .ui-button {
+        width: 100% !important;
+    }
+}
+
+/* Import differences: compact comparison list */
+.statistics-import-differences-page .import-differences-controls {
+    padding-block: .65rem !important;
+}
+
+.statistics-import-differences-page .import-differences-file-context {
+    min-height: 2.5rem;
+}
+
+.statistics-import-differences-page .import-differences-file-name {
+    display: flex;
+    min-width: 0;
+    max-width: 100%;
+}
+
+.statistics-import-differences-page .import-differences-file-name-base {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.statistics-import-differences-page .import-differences-file-name-extension {
+    flex: 0 0 auto;
+    white-space: nowrap;
+}
+
+.statistics-import-differences-page .import-differences-tabs {
+    min-height: 3.1rem;
+    align-items: flex-end;
+    padding-block: 0;
+    padding-inline: 1.25rem;
+}
+
+.statistics-import-differences-page .import-differences-tab {
+    min-height: 3.1rem;
+    padding: .15rem .08rem 0;
+}
+
+@media (max-width: 767px) {
+    .statistics-import-differences-page .import-differences-tabs {
+        min-height: 2.9rem;
+        gap: 1rem;
+        padding: 0 .85rem;
+    }
+
+    .statistics-import-differences-page .import-differences-tab {
+        min-height: 2.9rem;
+    }
+}
+
+.statistics-import-differences-page .import-differences-list,
+.statistics-import-differences-page .import-differences-loading-grid {
+    gap: .85rem;
+    padding: 1rem 1.25rem 1.25rem;
+}
+
+.statistics-import-differences-page .record-card.import-difference-card {
+    overflow: hidden;
+    width: 100%;
+    max-width: 68rem;
+    margin-inline: auto;
+    border-radius: .65rem !important;
+    background: #fff !important;
+}
+
+.statistics-import-differences-page .record-card.import-difference-card.is-pending {
+    border: 1px solid var(--ui-border, #cbd5e1) !important;
+    box-shadow: 0 5px 16px rgba(49, 46, 42, .065) !important;
+    transition: border-color .18s ease, box-shadow .18s ease !important;
+}
+
+.statistics-import-differences-page .record-card.import-difference-card.is-pending:hover {
+    border-color: #b9c5d3 !important;
+    box-shadow: 0 8px 20px rgba(49, 46, 42, .085) !important;
+}
+
+.statistics-import-differences-page .import-difference-compact-header {
+    display: grid;
+    grid-template-columns: 1.5rem minmax(0, 1fr) auto;
+    min-height: 3.65rem;
+    align-items: start;
+    gap: .58rem;
+    border-bottom: 1px solid var(--failed-line);
+    background: var(--ui-surface-soft, #f8fafc);
+    padding: .7rem 1rem .72rem;
+    box-shadow: none;
+}
+
+.statistics-import-differences-page .import-difference-status-icon {
+    display: inline-flex;
+    width: 1.4rem;
+    height: 1.4rem;
+    align-items: center;
+    justify-content: center;
+    color: var(--ui-text-secondary, #475569);
+    font-size: .84rem;
+}
+
+.statistics-import-differences-page .import-difference-compact-person {
+    display: flex;
+    min-width: 0;
+    align-items: center;
+}
+
+.statistics-import-differences-page .import-difference-compact-person > div {
+    min-width: 0;
+}
+
+.statistics-import-differences-page .import-difference-compact-person h2 {
+    overflow: hidden;
+    margin: 0;
+    color: var(--failed-ink);
+    font-size: .82rem;
+    font-weight: 650;
+    line-height: 1.35;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.statistics-import-differences-page .import-difference-compact-person p {
+    display: flex;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: .3rem;
+    margin: .12rem 0 0;
+    color: var(--failed-muted);
+    font-size: .71rem;
+    font-variant-numeric: tabular-nums;
+}
+
+.statistics-import-differences-page .import-difference-card-column-head,
+.statistics-import-differences-page .import-difference-field-row,
+.statistics-import-differences-page .import-difference-compact-actions {
+    display: grid;
+    grid-template-columns: minmax(8.5rem, 10rem) minmax(0, 1fr) 1.5rem minmax(0, 1fr);
+    column-gap: .65rem;
+}
+
+.statistics-import-differences-page .import-difference-card-column-head {
+    align-items: center;
+    min-height: 2.375rem;
+    border-bottom: 1px solid var(--failed-line);
+    background: var(--failed-section);
+    padding: .48rem 1rem;
+    color: var(--failed-muted);
+    font-size: .67rem;
+    font-weight: 600;
+}
+
+.statistics-import-differences-page .import-difference-card-column-head > span:nth-child(2),
+.statistics-import-differences-page .import-difference-card-column-head > span:nth-child(4) {
+    padding-inline: .7rem;
+}
+
+.statistics-import-differences-page .import-difference-column-title {
+    display: inline-flex;
+    align-items: center;
+    gap: .4rem;
+    color: var(--failed-ink);
+    font-size: .72rem;
+}
+
+.statistics-import-differences-page .import-difference-column-title i {
+    width: 1rem;
+    color: var(--ui-text-secondary, #475569);
+    font-size: .78rem;
+    text-align: center;
+}
+
+.statistics-import-differences-page .import-difference-field-count {
+    align-self: center;
+    color: var(--failed-muted);
+    font-size: .72rem;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.statistics-import-differences-page .import-difference-meta-separator {
+    color: #a6b0bd;
+}
+
+.statistics-import-differences-page .import-difference-comparison-body {
+    gap: 0;
+    background: #fff;
+    padding: .32rem 1rem .62rem;
+}
+
+.statistics-import-differences-page .import-difference-field-row {
+    align-items: stretch;
+    border: 0;
+    padding: 0;
+}
+
+.statistics-import-differences-page .import-difference-field-label {
+    align-self: start;
+    padding: .66rem .25rem .66rem 0;
+    color: var(--failed-muted);
+    font-size: .71rem;
+    font-weight: 550;
+    line-height: 1.35;
+}
+
+.statistics-import-differences-page .import-difference-plain-value {
+    min-height: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    padding: .66rem .7rem;
+}
+
+.statistics-import-differences-page .import-difference-plain-value--current {
+    background: #f5f7fa;
+    color: var(--failed-ink);
+}
+
+.statistics-import-differences-page .import-difference-plain-value--imported {
+    border: 0;
+    background: #fbfaf7;
+    color: var(--failed-ink);
+}
+
+.statistics-import-differences-page .import-difference-plain-value strong {
+    font-size: .77rem;
+    line-height: 1.35;
+}
+
+.statistics-import-differences-page .import-difference-plain-value--current strong {
+    font-weight: 600;
+}
+
+.statistics-import-differences-page .import-difference-plain-value--imported strong {
+    font-weight: 600;
+}
+
+.statistics-import-differences-page .import-difference-row-arrow {
+    align-self: center;
+    color: #98a2b3;
+    font-size: .86rem;
+    line-height: 1;
+    text-align: center;
+}
+
+.statistics-import-differences-page .import-difference-compact-actions {
+    align-items: center;
+    border-top: 1px solid var(--failed-line);
+    background: #fff;
+    padding: .7rem .9rem;
+}
+
+.statistics-import-differences-page .import-difference-compact-actions .ui-button {
+    width: 100%;
+    max-width: 12rem;
+    min-height: 36px;
+    justify-self: center;
+    padding-inline: .85rem;
+    font-size: .74rem;
+}
+
+.statistics-import-differences-page .import-difference-compact-actions .ui-button:not(:disabled) {
+    border-color: #9eacbd;
+    background: #fff;
+    color: var(--failed-ink);
+    font-weight: 600;
+    box-shadow: 0 1px 2px rgba(49, 46, 42, .045);
+}
+
+.statistics-import-differences-page .import-difference-compact-actions .ui-button:not(:disabled):hover {
+    border-color: var(--ui-primary, #760b35);
+    background: #fff8fb;
+    color: var(--ui-primary, #760b35);
+    box-shadow: 0 0 0 2px rgba(118, 11, 53, .06);
+}
+
+.statistics-import-differences-page .import-difference-compact-actions .ui-button:not(:disabled):active {
+    transform: translateY(1px);
+}
+
+.statistics-import-differences-page .import-difference-compact-actions .ui-button:disabled {
+    border-color: #d7dee8;
+    background: #f8fafc;
+    color: #64748b;
+    opacity: .78;
+}
+
+@media (max-width: 760px) {
+    .statistics-import-differences-page .import-difference-card-column-head {
+        display: none;
+    }
+
+    .statistics-import-differences-page .import-difference-field-row {
+        grid-template-columns: minmax(0, 1fr) 1.5rem minmax(0, 1fr);
+    }
+
+    .statistics-import-differences-page .import-difference-field-label {
+        grid-column: 1 / -1;
+        padding: .35rem 0 0;
+    }
+
+    .statistics-import-differences-page .import-difference-compact-actions {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .statistics-import-differences-page .import-difference-compact-actions > span {
+        display: none;
+    }
+
+    .statistics-import-differences-page .import-difference-compact-actions .ui-button {
+        max-width: none;
+    }
+
+    .statistics-import-differences-page .import-difference-compact-header {
+        grid-template-columns: 1.5rem minmax(0, 1fr);
+    }
+
+    .statistics-import-differences-page .import-difference-field-count {
+        grid-column: 2;
+        justify-self: start;
+    }
+}
+
+@media (max-width: 639px) {
+    .statistics-import-differences-page .import-differences-list,
+    .statistics-import-differences-page .import-differences-loading-grid {
+        padding: .75rem;
+    }
+
+    .statistics-import-differences-page .import-difference-compact-person h2 {
+        white-space: normal;
+    }
+}
+
+@media (max-width: 520px) {
+    .statistics-import-differences-page .import-difference-field-row {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .statistics-import-differences-page .import-difference-row-arrow {
+        display: none;
+    }
+
+    .statistics-import-differences-page .import-difference-plain-value {
+        display: block;
+        padding-block: .28rem;
+    }
+
+    .statistics-import-differences-page .import-difference-plain-value span {
+        display: block;
+        margin-bottom: .12rem;
+        color: var(--failed-muted);
+        font-size: .66rem;
+        font-weight: 600;
+    }
+
+    .statistics-import-differences-page .import-difference-compact-actions {
+        grid-template-columns: minmax(0, 1fr);
     }
 }
