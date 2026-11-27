@@ -92,6 +92,25 @@ function importDifferenceScenario(): array
     return compact('administrator', 'importId', 'death', 'difference', 'previousCause', 'proposedCause');
 }
 
+function addImportDifferenceRecord(array $scenario, string $folio): array
+{
+    $death = $scenario['death']->replicate();
+    $death->gov_folio = $folio;
+    $death->save();
+
+    $difference = $scenario['difference']->replicate();
+    $difference->death_id = $death->id;
+    $difference->gov_folio = $folio;
+    $difference->status = 'pending';
+    $difference->field_decisions = null;
+    $difference->resolution_changes = null;
+    $difference->resolved_by_user_id = null;
+    $difference->resolved_at = null;
+    $difference->save();
+
+    return compact('death', 'difference');
+}
+
 it('lists pending differences as a readable current-versus-proposed comparison', function (): void {
     $scenario = importDifferenceScenario();
 
@@ -281,6 +300,47 @@ it('can keep the current record without modifying it', function (): void {
     $this->assertDatabaseHas('import_differences', ['id' => $scenario['difference']->id, 'status' => 'kept']);
 });
 
+it('confirms a default batch decision while preserving explicit exceptions', function (): void {
+    $scenario = importDifferenceScenario();
+    $exception = addImportDifferenceRecord($scenario, '240395897');
+
+    $this->actingAs($scenario['administrator'])
+        ->postJson(route('statistic.resolve-import-differences-batch', ['importId' => $scenario['importId']]), [
+            'default_decision' => 'apply',
+            'exceptions' => [
+                ['id' => $exception['difference']->id, 'decision' => 'keep'],
+            ],
+        ])
+        ->assertOk()
+        ->assertJsonPath('ok', true)
+        ->assertJsonPath('data.total', 2)
+        ->assertJsonPath('data.applied', 1)
+        ->assertJsonPath('data.kept', 1);
+
+    expect($scenario['death']->fresh()->death_cause_id)->toBe($scenario['proposedCause']->id)
+        ->and($exception['death']->fresh()->death_cause_id)->toBe($scenario['previousCause']->id)
+        ->and($scenario['difference']->fresh()->status)->toBe('applied')
+        ->and($exception['difference']->fresh()->status)->toBe('kept');
+});
+
+it('rolls back every batch decision when one record changed after import', function (): void {
+    $scenario = importDifferenceScenario();
+    $conflict = addImportDifferenceRecord($scenario, '240395898');
+    $conflict['death']->update(['cie_cause_code' => 'W999']);
+
+    $this->actingAs($scenario['administrator'])
+        ->postJson(route('statistic.resolve-import-differences-batch', ['importId' => $scenario['importId']]), [
+            'default_decision' => 'apply',
+            'exceptions' => [],
+        ])
+        ->assertConflict()
+        ->assertJsonPath('ok', false);
+
+    expect($scenario['death']->fresh()->death_cause_id)->toBe($scenario['previousCause']->id)
+        ->and($scenario['difference']->fresh()->status)->toBe('pending')
+        ->and($conflict['difference']->fresh()->status)->toBe('pending');
+});
+
 it('can undo an applied record-level decision without overwriting unrelated data', function (): void {
     $scenario = importDifferenceScenario();
 
@@ -368,7 +428,20 @@ it('separates pending and resolved differences for the selected import', functio
         ]))
         ->assertOk()
         ->assertJsonCount(1, 'data.data')
-        ->assertJsonPath('data.data.0.status', 'kept');
+        ->assertJsonPath('data.data.0.status', 'kept')
+        ->assertJsonPath('data.data.0.can_undo', true)
+        ->assertJsonPath('data.data.0.undo_expires_at', fn ($value) => is_string($value) && $value !== '');
+
+    $scenario['difference']->update(['resolved_at' => now()->subMinutes(3)]);
+
+    $this->actingAs($scenario['administrator'])
+        ->getJson(route('statistic.import-differences', [
+            'importId' => $scenario['importId'],
+            'status' => 'resolved',
+        ]))
+        ->assertOk()
+        ->assertJsonPath('data.data.0.can_undo', false)
+        ->assertJsonPath('data.data.0.undo_expires_at', null);
 });
 
 it('refuses to overwrite a record that changed after the import', function (): void {

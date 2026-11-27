@@ -274,6 +274,74 @@ class ImportDifferenceController extends Controller
         }
     }
 
+    public function resolveBatch(Request $request, int $importId)
+    {
+        $validated = $request->validate([
+            'default_decision' => ['required', Rule::in(['apply', 'keep'])],
+            'exceptions' => ['sometimes', 'array', 'max:500'],
+            'exceptions.*.id' => ['required', 'integer', 'distinct'],
+            'exceptions.*.decision' => ['required', Rule::in(['apply', 'keep'])],
+        ]);
+
+        $exceptionDecisions = collect($validated['exceptions'] ?? [])->mapWithKeys(
+            fn (array $exception) => [(int) $exception['id'] => $exception['decision']]
+        );
+
+        try {
+            $result = DB::transaction(function () use ($importId, $validated, $exceptionDecisions, $request) {
+                $differences = ImportDifference::query()
+                    ->where('import_id', $importId)
+                    ->where('status', 'pending')
+                    ->orderBy('id')
+                    ->lockForUpdate()
+                    ->get();
+
+                if ($differences->isEmpty()) {
+                    throw new \UnexpectedValueException('Ya no hay diferencias pendientes para confirmar.');
+                }
+
+                $pendingIds = $differences->pluck('id')->map(fn ($id) => (int) $id);
+                if ($exceptionDecisions->keys()->diff($pendingIds)->isNotEmpty()) {
+                    throw new \UnexpectedValueException('Algunas diferencias cambiaron mientras se preparaban las decisiones. Recargue la revisión.');
+                }
+
+                $counts = ['apply' => 0, 'keep' => 0];
+                foreach ($differences as $difference) {
+                    $decision = $exceptionDecisions->get((int) $difference->id, $validated['default_decision']);
+                    $this->resolvePendingRecord($difference, $decision, $request->user()?->id);
+                    $counts[$decision]++;
+                }
+
+                return [
+                    'total' => $differences->count(),
+                    'applied' => $counts['apply'],
+                    'kept' => $counts['keep'],
+                ];
+            });
+
+            return response()->json([
+                'ok' => true,
+                'message' => "Se confirmaron {$result['total']} decisiones: {$result['applied']} con el archivo y {$result['kept']} conservando el registro actual.",
+                'data' => $result,
+            ]);
+        } catch (\UnexpectedValueException $e) {
+            return response()->json([
+                'ok' => false,
+                'message' => $e->getMessage(),
+            ], 409);
+        } catch (\Throwable $e) {
+            Log::error('Error resolving import differences in batch', [
+                'import_id' => $importId,
+                'error' => $e->getMessage(),
+            ]);
+
+            return response()->json([
+                'ok' => false,
+                'message' => 'No se pudieron guardar las decisiones. No se aplicó ningún cambio.',
+            ], 500);
+        }
+    }
+
     public function undo(Request $request, int $differenceId)
     {
         try {
@@ -358,6 +426,70 @@ class ImportDifferenceController extends Controller
         }
     }
 
+    private function resolvePendingRecord(ImportDifference $difference, string $decision, ?int $userId): void
+    {
+        if ($difference->status !== 'pending') {
+            throw new \UnexpectedValueException('Una de las diferencias ya fue atendida. Recargue la revisión.');
+        }
+
+        $death = Death::query()->lockForUpdate()->find($difference->death_id);
+        if (! $death) {
+            throw new \UnexpectedValueException('Uno de los registros originales ya no está disponible.');
+        }
+
+        $changedFields = array_values(array_intersect(
+            $difference->changed_fields ?? [],
+            self::EDITABLE_FIELDS
+        ));
+
+        if ($changedFields === []) {
+            throw new \UnexpectedValueException('Una diferencia no contiene campos disponibles para revisar.');
+        }
+
+        foreach ($changedFields as $field) {
+            $currentMatchesPrevious = $this->valuesMatch(
+                $field,
+                $death->{$field},
+                $difference->previous_values[$field] ?? null
+            );
+            $currentMatchesProposed = $this->valuesMatch(
+                $field,
+                $death->{$field},
+                $difference->proposed_values[$field] ?? null
+            );
+
+            if (! $currentMatchesPrevious && ! $currentMatchesProposed) {
+                throw new \UnexpectedValueException('Un registro cambió después de la importación. No se aplicó ninguna decisión; recargue la revisión.');
+            }
+        }
+
+        $updates = [];
+        $resolutionChanges = [];
+        if ($decision === 'apply') {
+            foreach ($changedFields as $field) {
+                if (! $this->valuesMatch(
+                    $field,
+                    $death->{$field},
+                    $difference->proposed_values[$field] ?? null
+                )) {
+                    $resolutionChanges[$field] = $death->getRawOriginal($field);
+                    $updates[$field] = $difference->proposed_values[$field] ?? null;
+                }
+            }
+        }
+
+        if ($updates !== []) {
+            $death->fill($updates)->save();
+        }
+
+        $difference->status = $decision === 'apply' ? 'applied' : 'kept';
+        $difference->field_decisions = array_fill_keys($changedFields, $decision);
+        $difference->resolution_changes = $resolutionChanges;
+        $difference->resolved_by_user_id = $userId;
+        $difference->resolved_at = now();
+        $difference->save();
+    }
+
     private function present(ImportDifference $difference): array
     {
         $previous = $difference->previous_values ?? [];
@@ -402,6 +534,11 @@ class ImportDifferenceController extends Controller
             ];
         }
 
+        $undoExpiresAt = $difference->resolved_at?->copy()->addMinutes(2);
+        $canUndo = in_array($difference->status, ['applied', 'kept', 'mixed'], true)
+            && (int) $difference->resolved_by_user_id === (int) auth()->id()
+            && $undoExpiresAt?->isFuture();
+
         return [
             'id' => $difference->id,
             'import_id' => $difference->import_id,
@@ -413,6 +550,8 @@ class ImportDifferenceController extends Controller
             'field_decisions' => $decisions,
             'resolved_at' => optional($difference->resolved_at)?->toIso8601String(),
             'resolved_by' => $difference->resolver?->full_name,
+            'can_undo' => $canUndo,
+            'undo_expires_at' => $canUndo ? $undoExpiresAt?->toIso8601String() : null,
         ];
     }
 

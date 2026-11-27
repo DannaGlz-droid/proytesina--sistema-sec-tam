@@ -121,6 +121,8 @@ Route::middleware('auth')->group(function () {
             ->name('statistic.import-differences');
         Route::post('api/estadisticas/diferencias/{differenceId}/resolver', [App\Http\Controllers\ImportDifferenceController::class, 'resolve'])
             ->name('statistic.resolve-import-difference');
+        Route::post('api/estadisticas/importaciones/{importId}/diferencias/resolver-lote', [App\Http\Controllers\ImportDifferenceController::class, 'resolveBatch'])
+            ->name('statistic.resolve-import-differences-batch');
         Route::post('api/estadisticas/diferencias/{differenceId}/deshacer', [App\Http\Controllers\ImportDifferenceController::class, 'undo'])
             ->name('statistic.undo-import-difference');
     });
